@@ -3,6 +3,7 @@ import sbt._
 object Dependencies {
 
   object DependencyVersions {
+    val AWS = "1.11.400"
     val PureConfig = "0.10.1"
     val Monix = "3.1.0"
     val Circe = "0.11.1"
@@ -15,18 +16,21 @@ object Dependencies {
     val Scalatest = "3.0.4"
     val Scalacheck = "1.13.5"
     val Mockito = "2.18.3"
+    val Cats = "2.0.0"
   }
 
   val S3Main = Seq(
-    "io.monix" %% "monix-reactive" % DependencyVersions.Monix,
-    "com.github.pureconfig"     %% "pureconfig"            % DependencyVersions.PureConfig,
-    "com.typesafe"              % "config"                 % DependencyVersions.TypesafeConfig,
+    "io.monix" %% "monix-reactive"          % DependencyVersions.Monix,
+    "com.amazonaws"                         % "aws-java-sdk-core" % DependencyVersions.AWS,
+    "com.amazonaws"                         % "aws-java-sdk-s3" % DependencyVersions.AWS,
+    "org.typelevel" %% "cats-core"          % DependencyVersions.Cats,
+    "com.github.pureconfig" %% "pureconfig" % DependencyVersions.PureConfig
   )
 
   val TestDependencies = Seq(
-    "org.scalatest"             %% "scalatest"             % DependencyVersions.Scalatest,
-    "org.scalacheck"            %% "scalacheck"            % DependencyVersions.Scalacheck,
-    "org.mockito"               %  "mockito-core"          % DependencyVersions.Mockito,
+    "org.scalatest" %% "scalatest"   % DependencyVersions.Scalatest,
+    "org.scalacheck" %% "scalacheck" % DependencyVersions.Scalacheck,
+    "org.mockito"                    % "mockito-core" % DependencyVersions.Mockito
   )
 
   val S3 = S3Main ++ TestDependencies.map(_ % Test) ++ TestDependencies.map(_ % IntegrationTest)
