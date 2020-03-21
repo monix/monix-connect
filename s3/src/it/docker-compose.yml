@@ -1,0 +1,36 @@
+---
+version: '3'
+services:
+  cassandra:
+    image: cassandra:3.11.2
+    hostname: cassandra
+    ports:
+      - '9042:9042'
+    volumes:
+      - .:/tmp
+
+  cloriko-service:
+    image: cloriko:${APPLICATION_VERSION}
+    hostname: cloriko
+    depends_on:
+      - cassandra
+    ports:
+      - '8080:8080'
+    environment:
+      - JVM_MIN_NON_HEAP_RAM=100000000
+      - JVM_MAX_RAM_PERCENTAGE=90
+      - JVM_MAX_RAM_FRACTION=1
+      - CASSANDRA_HOST=cassandra
+      - LOG_LEVEL=DEBUG
+      - CASSANDRA_LOG_LEVEL=INFO
+
+  query-cassandra:
+    image: cassandra:3.11.2
+    hostname: query-cassandra
+    ports:
+      - '9043:9042'
+    volumes:
+      - .:/tmp
+    command: cqlsh cassandra
+#CREATE TABLE CLO(username text, podId text, PRIMARY KEY (username)) ;
+#CREATE KEYSPACE default

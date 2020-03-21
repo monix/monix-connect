@@ -1,0 +1,3 @@
+class S3SinkSpec {
+
+}
