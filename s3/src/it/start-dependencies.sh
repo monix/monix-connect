@@ -10,7 +10,3 @@ docker-compose -f ./docker-compose.yml rm -f localstack
 
 echo -e "Docker ps."
 docker ps
-
-sleep 5
-
-sbt clean it:test

@@ -18,7 +18,7 @@ project/target/*
 *.class
 *password*
 repositories.sbt
-master/it/test-data/
+monix-s3/it/test-data/
 
 .idea/gradle.xml
 .generated/

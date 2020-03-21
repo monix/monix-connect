@@ -12,5 +12,4 @@ object S3Config {
 
   def load(): S3Config = loadConfigOrThrow[S3Config]
 
-
 }

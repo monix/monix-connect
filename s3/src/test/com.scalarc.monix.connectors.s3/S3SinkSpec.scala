@@ -1,5 +1,7 @@
 package com.scalarc.monix.connectors.s3
 
-class S3Sink {
+import org.scalatest.FlatSpec
+
+class S3SinkSpec extends FlatSpec {
 
 }
