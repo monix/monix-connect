@@ -20,7 +20,15 @@ lazy val s3 = (project in file("s3"))
   )
   .enablePlugins(JavaAppPackaging, DockerPlugin)
 
-
+lazy val dynamoDB = (project in file("dynamodb"))
+  .configs(IntegrationTest)
+  .settings(Defaults.itSettings)
+  .settings(
+    name := "monix-dynamodb",
+    libraryDependencies ++= S3,
+    version := "0.0.1"
+  )
+  .enablePlugins(JavaAppPackaging, DockerPlugin)
 
 
 
