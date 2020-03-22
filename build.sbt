@@ -1,52 +1,34 @@
 import Dependencies._
 
-enablePlugins(PlayScala)
-
-PB.protocVersion := "-v3.10.0"
-
 lazy val root = (project in file("."))
   .settings(
     inThisBuild(List(
-      organization := "com.cloriko",
+      organization := "com.scalarc",
       scalaVersion := "2.12.10",
       version      := Version.version
     )),
-    name := "cloriko"
-  ).aggregate(master, frontend, slave)
-
-lazy val frontend = (project in file("frontend"))
-  .settings(
-    name := "cloriko-frontend",
-    libraryDependencies ++= FrontendDependencies,
-    version := "0.0.3"
-  ).enablePlugins(PlayScala)
-
-lazy val common = (project in file("common"))
-  .settings(
-    name := "cloriko-common",
-    libraryDependencies ++= MasterSlaveDependencies,
-    version := "0.0.2"
+    name := "monix-connectors"
   )
-  .enablePlugins(JavaAppPackaging, DockerPlugin)
 
-lazy val master = (project in file("master"))
+lazy val s3 = (project in file("s3"))
+  .configs(IntegrationTest)
+  .settings(Defaults.itSettings)
   .settings(
-    name := "cloriko-master",
-    libraryDependencies ++= MasterDependencies,
+    name := "monix-s3",
+    libraryDependencies ++= S3,
     version := "0.0.1"
   )
-  .dependsOn(frontend, common)
   .enablePlugins(JavaAppPackaging, DockerPlugin)
 
-lazy val slave = (project in file("slave"))
+lazy val dynamoDB = (project in file("dynamodb"))
+  .configs(IntegrationTest)
+  .settings(Defaults.itSettings)
   .settings(
-    name := "cloriko-slave",
-    version := Version.version
+    name := "monix-dynamodb",
+    libraryDependencies ++= S3,
+    version := "0.0.1"
   )
-  .dependsOn(master, common)
   .enablePlugins(JavaAppPackaging, DockerPlugin)
-
-
 
 
 
