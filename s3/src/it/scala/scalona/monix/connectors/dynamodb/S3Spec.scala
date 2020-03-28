@@ -1,10 +1,11 @@
-package scalarc.monix.connectors.s3
+package scalona.monix.connectors.dynamodb
 
 import monix.reactive.{Consumer, Observable}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import monix.execution.Scheduler.Implicits.global
 import org.scalacheck.Gen
-import scalarc.monix.connectors.s3.domain.{Done, S3Object}
+import scalarc.monix.connectors.dynamodb.domain.{Done, S3Object}
+import scalona.monix.connectors.dynamodb.domain.{Done, S3Object}
 class S3Spec extends WordSpecLike with Matchers with BeforeAndAfterAll {
 
   private val bucketName = "sample-bucket"

@@ -1,14 +1,15 @@
-package scalarc.monix.connectors.s3
+package scalona.monix.connectors.dynamodb
 
 import com.amazonaws.services.s3.AmazonS3
 import monix.reactive.{Consumer, Observable, Observer}
 import monix.execution.Ack
 import monix.eval.Task
-import scalarc.monix.connectors.s3.domain.{Done, S3Object}
+import scalarc.monix.connectors.dynamodb.domain.S3Object
+import scalona.monix.connectors.dynamodb.domain.{Done, S3Object}
 
 import scala.util.{Failure, Success, Try}
 
-private[s3] class S3(s3Client: AmazonS3) {
+private[dynamodb] class S3(s3Client: AmazonS3) {
 
   def sink: Consumer[S3Object, Either[Throwable, Done]] = {
     Consumer.create[S3Object, Either[Throwable, Done]] { (_, _, callback) =>
