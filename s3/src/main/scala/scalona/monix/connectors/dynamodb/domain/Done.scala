@@ -1,3 +1,3 @@
-package scalarc.monix.connectors.dynamodb.domain
+package scalona.monix.connectors.dynamodb.domain
 
 case class Done()
