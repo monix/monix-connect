@@ -1,19 +1,19 @@
-package com.scalarc.monix.connectors.s3
+package scalona.monix.connectors.dynamodb
 
 import com.amazonaws.auth.{AWSStaticCredentialsProvider, AnonymousAWSCredentials}
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.regions.Regions.DEFAULT_REGION
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
-import com.scalarc.monix.connectors.s3.S3AppConfig.S3Config
+import S3AppConfig.S3Config
 
 object S3Client {
   def apply(): AmazonS3 = {
     val s3Config: S3Config = S3AppConfig.load()
     AmazonS3ClientBuilder
-      .standard
+      .standard()
+      .withPathStyleAccessEnabled(s3Config.pathStyleAccess)
       .withEndpointConfiguration(new EndpointConfiguration(s3Config.endPoint, DEFAULT_REGION.getName))
-      .withCredentials(new AWSStaticCredentialsProvider(new AnonymousAWSCredentials()))
-      .withPathStyleAccessEnabled(true)
+      .withCredentials(s3Config.awsCredentials)
       .build
   }
 }
