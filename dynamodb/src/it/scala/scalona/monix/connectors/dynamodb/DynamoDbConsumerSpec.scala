@@ -6,6 +6,7 @@ import monix.reactive.{Consumer, Observable}
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers, WordSpecLike}
 import software.amazon.awssdk.services.dynamodb.model._
 import org.scalatest.concurrent.ScalaFutures._
+import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 
 class DynamoDbConsumerSpec extends WordSpecLike with Matchers with DynamoDbFixture with BeforeAndAfterAll {
 
@@ -16,11 +17,12 @@ class DynamoDbConsumerSpec extends WordSpecLike with Matchers with DynamoDbFixtu
     GetItemRequest.builder().tableName("tableName").key(keyMap.asJava).attributesToGet("data").build()
    */
 
+  implicit val client: DynamoDbAsyncClient = DynamoDbClient()
   s"${DynamoDbConsumer}.build() " should {
 
     s"create a reactive $Consumer" that {
 
-      s"accepts a stream of `CreateTableRequest` and returns `CreateTableResponses`" in {
+      s"receives `CreateTableRequests` and returns `CreateTableResponses`" in {
         //given
         val consumer: Consumer[CreateTableRequest, Observable[Task[CreateTableResponse]]] =
           DynamoDbConsumer().build[CreateTableRequest, CreateTableResponse]
@@ -46,6 +48,26 @@ class DynamoDbConsumerSpec extends WordSpecLike with Matchers with DynamoDbFixtu
         createTableResponse.tableDescription().tableName() shouldEqual citiesTableName
         createTableResponse.tableDescription().keySchema() should contain theSameElementsAs cityKeySchema
         createTableResponse.tableDescription().attributeDefinitions() should contain theSameElementsAs cityAttrDef
+      }
+
+      s"receives `PutItemRequest` and returns `PutItemResponse` " in {
+        createCitiesTable()
+        val consumer: Consumer[PutItemRequest, Observable[Task[PutItemResponse]]] =
+          DynamoDbConsumer().build[PutItemRequest, PutItemResponse]
+        val request: PutItemRequest = putItemRequest(citiesTableName, citiesMappAttr)
+
+        //when
+        val stream: Task[Observable[Task[PutItemResponse]]] =
+          Observable.fromIterable(Iterable(request)).consumeWith(consumer)
+
+        //then
+        val response: PutItemResponse = {
+          stream
+            .runSyncUnsafe()
+            .consumeWith(Consumer.head)
+            .runSyncUnsafe()
+            .runSyncUnsafe()
+        }
       }
     }
   }

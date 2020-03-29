@@ -1,9 +1,25 @@
 package scalona.monix.connectors.dynamodb
 
-import org.scalacheck.Gen
-import software.amazon.awssdk.services.dynamodb.model.{AttributeDefinition, CreateTableRequest, DeleteTableRequest, KeySchemaElement, KeyType, ProvisionedThroughput, ScalarAttributeType}
+import java.util.concurrent.CompletableFuture
 
+import org.scalacheck.Gen
+import software.amazon.awssdk.services.dynamodb.{DynamoDbAsyncClient, DynamoDbClient}
+import software.amazon.awssdk.services.dynamodb.model.{AttributeDefinition, AttributeValue, CreateTableRequest, CreateTableResponse, DeleteTableRequest, KeySchemaElement, KeyType, ProvisionedThroughput, PutItemRequest, ScalarAttributeType}
+import scala.collection.JavaConverters._
 trait DynamoDbFixture {
+
+
+  val strAttr: String => AttributeValue = value => AttributeValue.builder().s(value).build()
+  val numAttr: Int => AttributeValue = value => AttributeValue.builder().n(value.toString).build()
+
+  val citiesMappAttr: Map[String, AttributeValue] = Map("city" -> strAttr("Barcelona"), "population" -> numAttr(10000000))
+
+  def putItemRequest(tableName: String, mapAttr: Map[String, AttributeValue]) =
+    PutItemRequest
+      .builder()
+      .tableName(tableName)
+      .item(mapAttr.asJava)
+      .build()
 
   protected val cityKeySchema: List[KeySchemaElement] = {
     List(
@@ -34,6 +50,11 @@ trait DynamoDbFixture {
       .attributeDefinitions(attributeDefinition: _*)
       .provisionedThroughput(provisionedThroughput)
       .build()
+  }
+
+  protected def createCitiesTable()(implicit client: DynamoDbAsyncClient): CompletableFuture[CreateTableResponse] = {
+    val request: CreateTableRequest = createTableRequest(tableName = "cities", schema = cityKeySchema, attributeDefinition = cityAttrDef)
+    client.createTable(request)
   }
 
   def deleteTable(tableName: String): Unit = {

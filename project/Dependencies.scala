@@ -37,10 +37,10 @@ object Dependencies {
   val S3 = S3Main ++ TestDependencies.map(_ % Test) ++ TestDependencies.map(_ % IntegrationTest)
 
   private val DynamoDbMain = Seq(
-    "io.monix" %% "monix-reactive"          % DependencyVersions.Monix,
-    "com.amazonaws"                         % "aws-java-sdk-core" % DependencyVersions.AWS,
-    "com.amazonaws"                         % "aws-java-sdk-dynamodb" % DependencyVersions.AWS,
-    "software.amazon.awssdk" % "dynamodb" % DependencyVersions.AwsSdk2Version,
+    "io.monix" %% "monix-reactive" % DependencyVersions.Monix,
+     "com.amazonaws"                         % "aws-java-sdk-core" % DependencyVersions.AWS,
+    // "com.amazonaws"                       % "aws-java-sdk-dynamodb" % DependencyVersions.AWS, //todo compatibility with java sdk aws
+    "software.amazon.awssdk"                % "dynamodb" % DependencyVersions.AwsSdk2Version,
     "org.typelevel" %% "cats-core"          % DependencyVersions.Cats,
     "com.github.pureconfig" %% "pureconfig" % DependencyVersions.PureConfig
   )
