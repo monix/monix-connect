@@ -20,13 +20,8 @@ object Dependencies {
     val Cats = "2.0.0"
   }
 
-  private val S3Main = Seq(
-    "io.monix" %% "monix-reactive"          % DependencyVersions.Monix,
-    "com.amazonaws"                         % "aws-java-sdk-core" % DependencyVersions.AWS,
-    "com.amazonaws"                         % "aws-java-sdk-s3" % DependencyVersions.AWS,
-    "org.typelevel" %% "cats-core"          % DependencyVersions.Cats,
-    "com.github.pureconfig" %% "pureconfig" % DependencyVersions.PureConfig
-  )
+
+
 
   private val TestDependencies = Seq(
     "org.scalatest" %% "scalatest"   % DependencyVersions.Scalatest,
@@ -34,9 +29,23 @@ object Dependencies {
     "org.mockito"                    % "mockito-core" % DependencyVersions.Mockito
   )
 
-  val S3 = S3Main ++ TestDependencies.map(_ % Test) ++ TestDependencies.map(_ % IntegrationTest)
+  private val CommonMain = Seq(
+    "io.monix" %% "monix-reactive"          % DependencyVersions.Monix,
+  )
 
-  private val DynamoDbMain = Seq(
+  val Common = CommonMain ++ TestDependencies.map(_ % Test)
+
+  private val S3Dependecies = Seq(
+    "io.monix" %% "monix-reactive"          % DependencyVersions.Monix,
+    "com.amazonaws"                         % "aws-java-sdk-core" % DependencyVersions.AWS,
+    "com.amazonaws"                         % "aws-java-sdk-s3" % DependencyVersions.AWS,
+    "org.typelevel" %% "cats-core"          % DependencyVersions.Cats,
+    "com.github.pureconfig" %% "pureconfig" % DependencyVersions.PureConfig
+  )
+
+  val S3 = S3Dependecies ++ TestDependencies.map(_ % Test) ++ TestDependencies.map(_ % IntegrationTest)
+
+  private val DynamoDbDependencies = Seq(
     "io.monix" %% "monix-reactive" % DependencyVersions.Monix,
      "com.amazonaws"                         % "aws-java-sdk-core" % DependencyVersions.AWS,
     // "com.amazonaws"                       % "aws-java-sdk-dynamodb" % DependencyVersions.AWS, //todo compatibility with java sdk aws
@@ -45,5 +54,6 @@ object Dependencies {
     "com.github.pureconfig" %% "pureconfig" % DependencyVersions.PureConfig
   )
 
-  val DynamoDb = DynamoDbMain ++ TestDependencies.map(_ % Test) ++ TestDependencies.map(_ % IntegrationTest)
+  val DynamoDb = DynamoDbDependencies ++ TestDependencies.map(_ % Test) ++ TestDependencies.map(_ % IntegrationTest)
+
 }

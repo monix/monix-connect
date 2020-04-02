@@ -57,8 +57,8 @@ trait DynamoDbFixture {
     client.createTable(request)
   }
 
-  def deleteTable(tableName: String): Unit = {
+  def deleteTable(tableName: String)(implicit client: DynamoDbAsyncClient): Unit = {
     val deleteRequest: DeleteTableRequest = DeleteTableRequest.builder().tableName(citiesTableName).build()
-    DynamoDbClient().deleteTable(deleteRequest)
+    client.deleteTable(deleteRequest)
   }
 }
