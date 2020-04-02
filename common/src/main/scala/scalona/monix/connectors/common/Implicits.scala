@@ -2,7 +2,7 @@ package scalona.monix.connectors.common
 
 import monix.reactive.Observable
 
-object ObservableImplicits {
+object Implicits {
 
   type Transformer[A, B] = Observable[A] => Observable[B]
 
