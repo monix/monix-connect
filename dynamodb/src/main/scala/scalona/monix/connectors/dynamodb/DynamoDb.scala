@@ -40,7 +40,7 @@ object DynamoDb {
 
   def transformer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
     implicit dynamoDbOp: DynamoDbOp[In, Out],
-    client: DynamoDbAsyncClient = DynamoDbClient()): Transformer[In, Future[Out]] = { inObservable: Observable[In] =>
-    inObservable.map(dynamoDbOp.execute(_).asScala)
+    client: DynamoDbAsyncClient = DynamoDbClient()): Transformer[In, Task[Out]] = { inObservable: Observable[In] =>
+    inObservable.map(in => Task.fromFuture(dynamoDbOp.execute(in).asScala))
   }
 }

@@ -4,38 +4,39 @@ import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.{Consumer, Observable}
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers, WordSpecLike}
-import software.amazon.awssdk.services.dynamodb.model._
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.concurrent.ScalaFutures._
+import software.amazon.awssdk.services.dynamodb.model._
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
+import scalona.monix.connectors.common.Implicits._
 
-class DynamoDbConsumerSpec extends WordSpecLike with Matchers with ScalaFutures with DynamoDbFixture with BeforeAndAfterAll {
+import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
 
-  /*val key = AttributeValue.builder().s("key1").build()
-  val value = AttributeValue.builder().n("1").build()
-  val keyMap = Map("keyCol" -> key, "valCol" -> value)
-  val getItemRequest: GetItemRequest =
-    GetItemRequest.builder().tableName("tableName").key(keyMap.asJava).attributesToGet("data").build()
-   */
+class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers with ScalaFutures with DynamoDbFixture with BeforeAndAfterAll {
 
+  implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 100.milliseconds)
   implicit val client: DynamoDbAsyncClient = DynamoDbClient()
-  s"${DynamoDb}.build() " should {
 
-    s"create a reactive $Consumer" that {
+  s"${DynamoDb}.transformer() " should {
 
-      s"receives `CreateTableRequests` and returns `CreateTableResponses`" in {
+    s"create a reactive Transformer" that {
+
+      s"receives `CreateTableRequests` and transforms them to `CreateTableResponses`" in {
+
         //given
         val consumer: Consumer[CreateTableRequest, Task[CreateTableResponse]] =
           DynamoDb.consumer[CreateTableRequest, CreateTableResponse]
         val request = createTableRequest(tableName = citiesTableName, schema = cityKeySchema, attributeDefinition = cityAttrDef)
 
         //when
-        val f: Task[CreateTableResponse] =
+        val t: Task[CreateTableResponse] =
           Observable.fromIterable(Iterable(request)).consumeWith(consumer).runSyncUnsafe()
 
         //then
-
-        whenReady(f.runToFuture) { response: CreateTableResponse =>
+        whenReady(t.runToFuture) { response: CreateTableResponse =>
           response shouldBe a[CreateTableResponse]
           response.tableDescription().hasKeySchema shouldBe true
           response.tableDescription().hasAttributeDefinitions shouldBe true
@@ -48,22 +49,25 @@ class DynamoDbConsumerSpec extends WordSpecLike with Matchers with ScalaFutures 
       }
 
       s"receives `PutItemRequest` and returns `PutItemResponse` " in {
+
+        //given
         createCitiesTable()
         val consumer: Consumer[PutItemRequest, Task[PutItemResponse]] =
           DynamoDb.consumer[PutItemRequest, PutItemResponse]
         val request: PutItemRequest = putItemRequest(citiesTableName, citiesMappAttr)
 
         //when
-        val stream: Task[Task[PutItemResponse]] =
-          Observable.fromIterable(Iterable(request)).consumeWith(consumer)
+        val t: Task[PutItemResponse] =
+          Observable.fromIterable(Iterable(request)).consumeWith(consumer).runSyncUnsafe()
 
         //then
-
-
+        whenReady(t.runToFuture) { response =>
+          response shouldBe a[PutItemResponse]
+          response.attributes().asScala should contain theSameElementsAs request.item().asScala
+        }
       }
     }
   }
-
 
   override def beforeAll(): Unit = {
     super.beforeAll()

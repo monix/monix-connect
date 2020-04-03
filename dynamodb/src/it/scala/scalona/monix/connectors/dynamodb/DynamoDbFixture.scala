@@ -3,12 +3,13 @@ package scalona.monix.connectors.dynamodb
 import java.util.concurrent.CompletableFuture
 
 import org.scalacheck.Gen
-import software.amazon.awssdk.services.dynamodb.{DynamoDbAsyncClient, DynamoDbClient}
+import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.{AttributeDefinition, AttributeValue, CreateTableRequest, CreateTableResponse, DeleteTableRequest, KeySchemaElement, KeyType, ProvisionedThroughput, PutItemRequest, ScalarAttributeType}
-import scala.collection.JavaConverters._
+
+import scala.jdk.CollectionConverters._
+
 trait DynamoDbFixture {
-
-
+  
   val strAttr: String => AttributeValue = value => AttributeValue.builder().s(value).build()
   val numAttr: Int => AttributeValue = value => AttributeValue.builder().n(value.toString).build()
 
