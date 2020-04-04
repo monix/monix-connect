@@ -13,10 +13,8 @@ trait DynamoDbFixture {
   val strAttr: String => AttributeValue = value => AttributeValue.builder().s(value).build()
   val numAttr: Int => AttributeValue = value => AttributeValue.builder().n(value.toString).build()
 
-  val pickCitizens = Gen.oneOf(1 to 100000)
-  val item = (city: String, citizens: Int) =>  Map("city" -> strAttr(city), "population" -> numAttr(citizens))
-
-  def genItem: Gen[Map[String, AttributeValue]] = Gen.oneOf(Seq(item("BCN", pickCitizens.sample.get)))
+  val genCitizenId = Gen.oneOf(1 to 100000)
+  val item = (city: String, citizens: Int) =>  Map("city" -> strAttr(city), "citizenId" -> numAttr(citizens))
 
   def putItemRequest(tableName: String, mapAttr: Map[String, AttributeValue]): PutItemRequest =
     PutItemRequest
@@ -25,20 +23,20 @@ trait DynamoDbFixture {
       .item(mapAttr.asJava)
       .build()
 
-  def genPutItemRequest: Gen[PutItemRequest] = Gen.oneOf(Seq(putItemRequest(tableName,  item("Barcelonaaa", 10))))
+  def genPutItemRequest: Gen[PutItemRequest] = Gen.oneOf(Seq(putItemRequest(tableName,  item(Gen.alphaLowerStr.sample.get, genCitizenId.sample.get))))
   def genPutItemRequests = Gen.listOfN(10, genPutItemRequest)
 
   protected val keySchema: List[KeySchemaElement] = {
     List(
       KeySchemaElement.builder().attributeName("city").keyType(KeyType.HASH).build(),
-      KeySchemaElement.builder().attributeName("population").keyType(KeyType.RANGE).build()
+      KeySchemaElement.builder().attributeName("citizenId").keyType(KeyType.RANGE).build()
     )
   }
 
   protected val tableDefinition: List[AttributeDefinition] = {
     List(
       AttributeDefinition.builder().attributeName("city").attributeType(ScalarAttributeType.S).build(),
-      AttributeDefinition.builder().attributeName("population").attributeType(ScalarAttributeType.N).build()
+      AttributeDefinition.builder().attributeName("citizenId").attributeType(ScalarAttributeType.N).build()
     )
   }
 
