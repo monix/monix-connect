@@ -8,6 +8,16 @@ lazy val root = (project in file("."))
     name := "monix-connectors"
   )
 
+lazy val common = (project in file("common"))
+  .configs(IntegrationTest)
+  .settings(Defaults.itSettings)
+  .settings(
+    name := "monix-common",
+    libraryDependencies ++= Dependencies.Common,
+    version := "0.0.1"
+  )
+  .enablePlugins(JavaAppPackaging)
+
 lazy val s3 = (project in file("s3"))
   .configs(IntegrationTest)
   .settings(Defaults.itSettings)
@@ -27,6 +37,4 @@ lazy val dynamoDB = (project in file("dynamodb"))
     version := "0.0.1"
   )
   .enablePlugins(JavaAppPackaging, DockerPlugin)
-
-
-
+  .dependsOn(common)
