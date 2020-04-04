@@ -24,12 +24,11 @@ class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers with ScalaFutur
 
     s"create a reactive Transformer" that {
 
-      s"receives `CreateTableRequests` and transforms them to `CreateTableResponses`" in {
-
+      s"consumes a single `CreateTableRequest` and materializes to `CreateTableResponse`" in {
         //given
         val consumer: Consumer[CreateTableRequest, Task[CreateTableResponse]] =
           DynamoDb.consumer[CreateTableRequest, CreateTableResponse]
-        val request = createTableRequest(tableName = citiesTableName, schema = cityKeySchema, attributeDefinition = cityAttrDef)
+        val request = createTableRequest(tableName = tableName, schema = keySchema, attributeDefinition = tableDefinition)
 
         //when
         val t: Task[CreateTableResponse] =
@@ -42,19 +41,17 @@ class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers with ScalaFutur
           response.tableDescription().hasAttributeDefinitions shouldBe true
           response.tableDescription().hasGlobalSecondaryIndexes shouldBe false
           response.tableDescription().hasReplicas shouldBe false
-          response.tableDescription().tableName() shouldEqual citiesTableName
-          response.tableDescription().keySchema() should contain theSameElementsAs cityKeySchema
-          response.tableDescription().attributeDefinitions() should contain theSameElementsAs cityAttrDef
+          response.tableDescription().tableName() shouldEqual tableName
+          response.tableDescription().keySchema() should contain theSameElementsAs keySchema
+          response.tableDescription().attributeDefinitions() should contain theSameElementsAs tableDefinition
         }
       }
 
-      s"receives `PutItemRequest` and returns `PutItemResponse` " in {
-
+      s"consumes a single `PutItemRequest` and materializes to `PutItemResponse` " in {
         //given
-        createCitiesTable()
         val consumer: Consumer[PutItemRequest, Task[PutItemResponse]] =
           DynamoDb.consumer[PutItemRequest, PutItemResponse]
-        val request: PutItemRequest = putItemRequest(citiesTableName, citiesMappAttr)
+        val request: PutItemRequest = genPutItemRequest.sample.get
 
         //when
         val t: Task[PutItemResponse] =
@@ -66,15 +63,34 @@ class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers with ScalaFutur
           response.attributes().asScala should contain theSameElementsAs request.item().asScala
         }
       }
+
+      s"consumes multiples `PutItemRequests` and materializes to `PutItemResponse` " in {
+        //given
+        val consumer: Consumer[PutItemRequest, Task[PutItemResponse]] =
+          DynamoDb.consumer[PutItemRequest, PutItemResponse]
+        val requests: List[PutItemRequest] = genPutItemRequests.sample.get
+
+        //when
+        val t: Task[PutItemResponse] =
+          Observable.fromIterable(requests).consumeWith(consumer).runSyncUnsafe()
+
+        //then
+        whenReady(t.runToFuture) { response =>
+          response shouldBe a[PutItemResponse]
+          response.attributes().asScala should contain theSameElementsAs requests.last.item().asScala
+        }
+      }
     }
   }
 
   override def beforeAll(): Unit = {
     super.beforeAll()
-    deleteTable(citiesTableName)
+    deleteTable(tableName)
+    createCitiesTable()
   }
 
   override def afterAll(): Unit = {
+    deleteTable(tableName)
     super.afterAll()
   }
 }

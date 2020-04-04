@@ -1,16 +1,12 @@
 package scalona.monix.connectors.dynamodb
 
-import java.util.concurrent.CompletableFuture
-
-import monix.reactive.{Consumer, MulticastStrategy, Observable, Observer}
+import monix.reactive.{ Consumer, Observable, Observer }
 import monix.execution.Ack
 import monix.eval.Task
-import monix.reactive.subjects.ConcurrentSubject
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
-import software.amazon.awssdk.services.dynamodb.model.{DynamoDbRequest, DynamoDbResponse}
+import software.amazon.awssdk.services.dynamodb.model.{ DynamoDbRequest, DynamoDbResponse }
 import scalona.monix.connectors.common.Implicits.Transformer
 
-import scala.concurrent.Future
 import scala.jdk.FutureConverters._
 
 object DynamoDb {
@@ -18,7 +14,7 @@ object DynamoDb {
   def consumer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
     implicit dynamoDbOp: DynamoDbOp[In, Out],
     client: DynamoDbAsyncClient = DynamoDbClient()): Consumer[In, Task[Out]] = {
-    Consumer.create[In, Task[Out]] { (scheduler, _, callback) =>
+    Consumer.create[In, Task[Out]] { (_, _, callback) =>
       new Observer.Sync[In] {
         private var dynamoDbResponse: Task[Out] = _
 

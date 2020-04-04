@@ -9,27 +9,33 @@ import software.amazon.awssdk.services.dynamodb.model.{AttributeDefinition, Attr
 import scala.jdk.CollectionConverters._
 
 trait DynamoDbFixture {
-  
+
   val strAttr: String => AttributeValue = value => AttributeValue.builder().s(value).build()
   val numAttr: Int => AttributeValue = value => AttributeValue.builder().n(value.toString).build()
 
-  val citiesMappAttr: Map[String, AttributeValue] = Map("city" -> strAttr("Barcelona"), "population" -> numAttr(10000000))
+  val pickCitizens = Gen.oneOf(1 to 100000)
+  val item = (city: String, citizens: Int) =>  Map("city" -> strAttr(city), "population" -> numAttr(citizens))
 
-  def putItemRequest(tableName: String, mapAttr: Map[String, AttributeValue]) =
+  def genItem: Gen[Map[String, AttributeValue]] = Gen.oneOf(Seq(item("BCN", pickCitizens.sample.get)))
+
+  def putItemRequest(tableName: String, mapAttr: Map[String, AttributeValue]): PutItemRequest =
     PutItemRequest
       .builder()
       .tableName(tableName)
       .item(mapAttr.asJava)
       .build()
 
-  protected val cityKeySchema: List[KeySchemaElement] = {
+  def genPutItemRequest: Gen[PutItemRequest] = Gen.oneOf(Seq(putItemRequest(tableName,  item("Barcelonaaa", 10))))
+  def genPutItemRequests = Gen.listOfN(10, genPutItemRequest)
+
+  protected val keySchema: List[KeySchemaElement] = {
     List(
       KeySchemaElement.builder().attributeName("city").keyType(KeyType.HASH).build(),
       KeySchemaElement.builder().attributeName("population").keyType(KeyType.RANGE).build()
     )
   }
 
-  protected val cityAttrDef: List[AttributeDefinition] = {
+  protected val tableDefinition: List[AttributeDefinition] = {
     List(
       AttributeDefinition.builder().attributeName("city").attributeType(ScalarAttributeType.S).build(),
       AttributeDefinition.builder().attributeName("population").attributeType(ScalarAttributeType.N).build()
@@ -38,7 +44,7 @@ trait DynamoDbFixture {
 
   protected val baseProvisionedThroughput = ProvisionedThroughput.builder().readCapacityUnits(10L).writeCapacityUnits(10L).build()
 
-  val citiesTableName = "cities_test"
+  val tableName = "cities_test"
 
   def createTableRequest(tableName: String = Gen.alphaLowerStr.sample.get,
                          schema: List[KeySchemaElement],
@@ -54,12 +60,12 @@ trait DynamoDbFixture {
   }
 
   protected def createCitiesTable()(implicit client: DynamoDbAsyncClient): CompletableFuture[CreateTableResponse] = {
-    val request: CreateTableRequest = createTableRequest(tableName = "cities", schema = cityKeySchema, attributeDefinition = cityAttrDef)
+    val request: CreateTableRequest = createTableRequest(tableName = "cities", schema = keySchema, attributeDefinition = tableDefinition)
     client.createTable(request)
   }
 
   def deleteTable(tableName: String)(implicit client: DynamoDbAsyncClient): Unit = {
-    val deleteRequest: DeleteTableRequest = DeleteTableRequest.builder().tableName(citiesTableName).build()
+    val deleteRequest: DeleteTableRequest = DeleteTableRequest.builder().tableName(tableName).build()
     client.deleteTable(deleteRequest)
   }
 }

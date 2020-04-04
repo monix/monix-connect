@@ -13,10 +13,12 @@ import scalona.monix.connectors.common.Implicits.Transformer
 import scalona.monix.connectors.common.Implicits._
 
 import scala.jdk.CollectionConverters._
+import scala.concurrent.duration._
 
 class DynamoDbTransformerSpec
   extends AnyWordSpecLike with Matchers with ScalaFutures with DynamoDbFixture with BeforeAndAfterAll {
 
+  implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 100.milliseconds)
   implicit val client: DynamoDbAsyncClient = DynamoDbClient()
   s"${DynamoDb}.transformer() " should {
 
@@ -27,7 +29,7 @@ class DynamoDbTransformerSpec
         val transformer: Transformer[CreateTableRequest, Task[CreateTableResponse]] =
           DynamoDb.transformer[CreateTableRequest, CreateTableResponse]
         val request =
-          createTableRequest(tableName = citiesTableName, schema = cityKeySchema, attributeDefinition = cityAttrDef)
+          createTableRequest(tableName = tableName, schema = keySchema, attributeDefinition = tableDefinition)
 
         //when
         val ob: Observable[Task[CreateTableResponse]] =
@@ -43,20 +45,19 @@ class DynamoDbTransformerSpec
           response.tableDescription().hasAttributeDefinitions shouldBe true
           response.tableDescription().hasGlobalSecondaryIndexes shouldBe false
           response.tableDescription().hasReplicas shouldBe false
-          response.tableDescription().tableName() shouldEqual citiesTableName
-          response.tableDescription().keySchema() should contain theSameElementsAs cityKeySchema
-          response.tableDescription().attributeDefinitions() should contain theSameElementsAs cityAttrDef
+          response.tableDescription().tableName() shouldEqual tableName
+          response.tableDescription().keySchema() should contain theSameElementsAs keySchema
+          response.tableDescription().attributeDefinitions() should contain theSameElementsAs tableDefinition
         }
       }
     }
 
-    s"receives `PutItemRequest` and returns `PutItemResponse` " in {
-
+    s"receives a single`PutItemRequest` and returns `PutItemResponse` " in {
       //given
       createCitiesTable()
       val transformer: Transformer[PutItemRequest, Task[PutItemResponse]] =
         DynamoDb.transformer[PutItemRequest, PutItemResponse]
-      val request: PutItemRequest = putItemRequest(citiesTableName, citiesMappAttr)
+      val request: PutItemRequest = genPutItemRequest.sample.get
 
       //when
       val t: Task[PutItemResponse] =
@@ -68,14 +69,35 @@ class DynamoDbTransformerSpec
         response.attributes().asScala should contain theSameElementsAs request.item().asScala
       }
     }
+
+    s"receives multiple `PutItemRequests` and returns `PutItemResponses` " in {
+      //given
+      val transformer: Transformer[PutItemRequest, Task[PutItemResponse]] =
+        DynamoDb.transformer[PutItemRequest, PutItemResponse]
+      val requests: List[PutItemRequest] = genPutItemRequests.sample.get
+
+      //when
+      val responses: List[Task[PutItemResponse]] =
+        Observable.fromIterable(requests).transform(transformer).toListL.runToFuture.futureValue
+
+      //then
+      requests.zip(responses).foreach { case (req: PutItemRequest, f: Task[PutItemResponse]) =>
+        whenReady(f.runToFuture) { response =>
+          response shouldBe a[PutItemResponse]
+          response.attributes().asScala should contain theSameElementsAs req.item().asScala
+        }
+      }
+    }
   }
 
   override def beforeAll(): Unit = {
     super.beforeAll()
-    deleteTable(citiesTableName)
+    deleteTable(tableName)
+    createCitiesTable()
   }
 
   override def afterAll(): Unit = {
+    createCitiesTable()
     super.afterAll()
   }
 }
