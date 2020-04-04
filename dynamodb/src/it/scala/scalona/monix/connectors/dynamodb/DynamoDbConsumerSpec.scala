@@ -2,7 +2,7 @@ package scalona.monix.connectors.dynamodb
 
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
-import monix.reactive.{Consumer, Observable}
+import monix.reactive.{ Consumer, Observable }
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
@@ -14,8 +14,10 @@ import scalona.monix.connectors.common.Implicits._
 
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
+import scala.jdk.FutureConverters._
 
-class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers with ScalaFutures with DynamoDbFixture with BeforeAndAfterAll {
+class DynamoDbConsumerSpec
+  extends AnyWordSpecLike with Matchers with ScalaFutures with DynamoDbFixture with BeforeAndAfterAll {
 
   implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 100.milliseconds)
   implicit val client: DynamoDbAsyncClient = DynamoDbClient()
@@ -28,7 +30,8 @@ class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers with ScalaFutur
         //given
         val consumer: Consumer[CreateTableRequest, Task[CreateTableResponse]] =
           DynamoDb.consumer[CreateTableRequest, CreateTableResponse]
-        val request = createTableRequest(tableName = tableName, schema = keySchema, attributeDefinition = tableDefinition)
+        val request =
+          createTableRequest(tableName = tableName, schema = keySchema, attributeDefinition = tableDefinition)
 
         //when
         val t: Task[CreateTableResponse] =
@@ -78,6 +81,29 @@ class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers with ScalaFutur
         whenReady(t.runToFuture) { response =>
           response shouldBe a[PutItemResponse]
           response.attributes().asScala should contain theSameElementsAs requests.last.item().asScala
+        }
+      }
+
+      s"consumes a single `GetItemRequest` and materializes to `GetItemResponse` " in {
+        //given
+        val city = "Barcelona"
+        val citizenId = 11292
+        val debt: Int = 1015
+        client.putItem(putItemRequest(tableName, city, citizenId, debt)).asScala.futureValue
+
+        val request: GetItemRequest = getItemRequest(tableName, city, citizenId)
+        val consumer: Consumer[GetItemRequest, Task[GetItemResponse]] = DynamoDb.consumer
+
+        //when
+        val t: Task[GetItemResponse] =
+          Observable.fromIterable(Iterable(request)).consumeWith(consumer).runSyncUnsafe()
+
+        //then
+        whenReady(t.runToFuture) { response =>
+          response shouldBe a[GetItemResponse]
+          response.hasItem shouldBe true
+          response.item() should contain key "debt"
+          response.item().values().asScala.head.n().toDouble shouldBe debt
         }
       }
     }

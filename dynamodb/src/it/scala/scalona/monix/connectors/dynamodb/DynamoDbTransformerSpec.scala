@@ -14,6 +14,7 @@ import scalona.monix.connectors.common.Implicits._
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
+import scala.jdk.FutureConverters._
 
 class DynamoDbTransformerSpec
   extends AnyWordSpecLike with Matchers with ScalaFutures with DynamoDbFixture with BeforeAndAfterAll {
@@ -24,7 +25,7 @@ class DynamoDbTransformerSpec
 
     s"create a reactive `Transformer`" that {
 
-      s"receives `CreateTableRequests` and returns `CreateTableResponses`" in {
+      s"receives `CreateTableRequests` and transforms to `CreateTableResponses`" in {
         //given
         val transformer: Transformer[CreateTableRequest, Task[CreateTableResponse]] =
           DynamoDb.transformer[CreateTableRequest, CreateTableResponse]
@@ -52,7 +53,7 @@ class DynamoDbTransformerSpec
       }
     }
 
-    s"receives a single`PutItemRequest` and returns `PutItemResponse` " in {
+    s"receives a single`PutItemRequest` and transforms to `PutItemResponse` " in {
       //given
       createCitiesTable()
       val transformer: Transformer[PutItemRequest, Task[PutItemResponse]] =
@@ -70,7 +71,7 @@ class DynamoDbTransformerSpec
       }
     }
 
-    s"receives multiple `PutItemRequests` and returns `PutItemResponses` " in {
+    s"receives multiple `PutItemRequests` and transforms to `PutItemResponses` " in {
       //given
       val transformer: Transformer[PutItemRequest, Task[PutItemResponse]] =
         DynamoDb.transformer[PutItemRequest, PutItemResponse]
@@ -86,6 +87,28 @@ class DynamoDbTransformerSpec
           response shouldBe a[PutItemResponse]
           response.attributes().asScala should contain theSameElementsAs req.item().asScala
         }
+      }
+    }
+
+    s"consumes a single `GetItemRequest` and transforms to `GetItemResponse` " in {
+      //given
+      val city = "London"
+      val citizenId = 613371
+      val debt: Int = 550
+      client.putItem(putItemRequest(tableName, city, citizenId, debt)).asScala.futureValue
+      val request: GetItemRequest = getItemRequest(tableName, city, citizenId)
+      val transformer: Transformer[GetItemRequest, Task[GetItemResponse]] = DynamoDb.transformer
+
+      //when
+      val t: Task[GetItemResponse] =
+        Observable.fromIterable(Iterable(request)).transform(transformer).headL.runToFuture.futureValue
+
+      //then
+      whenReady(t.runToFuture) { response =>
+        response shouldBe a[GetItemResponse]
+        response.hasItem shouldBe true
+        response.item() should contain key "debt"
+        response.item().values().asScala.head.n().toDouble shouldBe debt
       }
     }
   }
