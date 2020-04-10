@@ -1,4 +1,4 @@
-package scalona.monix.connectors.dynamodb
+package scalona.monix.connectors.s3
 
 import com.amazonaws.auth.{AWSStaticCredentialsProvider, AnonymousAWSCredentials}
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration

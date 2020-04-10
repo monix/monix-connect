@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+    <Appenders>
+        <Console name="console" target="SYSTEM_OUT">
+            <JSONLayout compact="true" properties="false" eventEol="true">
+                <KeyValuePair key="id" value="$${ctx:id:-}"/>
+                <KeyValuePair key="username" value="$${ctx:username:-}"/>
+                <KeyValuePair key="slaveId" value="$${ctx:slaveid:-}"/>
+            </JSONLayout>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <Root level="${env:ROOT_LOG_LEVEL:-WARN}">
+            <AppenderRef ref="console"/>
+        </Root>
+        <Logger name="com.cloriko" level="${env:LOG_LEVEL:-INFO}" />
+        <Logger name="io.monix" level="${env:LOG_LEVEL:-INFO}" />
+        <Logger name="org.http4s" level="${env:LOG_LEVEL:-WARN}" />
+    </Loggers>
+</Configuration>

@@ -56,4 +56,13 @@ object Dependencies {
 
   val DynamoDb = DynamoDbDependencies ++ TestDependencies.map(_ % Test) ++ TestDependencies.map(_ % IntegrationTest)
 
+  private val RedisDependencies = Seq(
+    "io.monix" %% "monix-reactive" % DependencyVersions.Monix,
+    "io.lettuce" % "lettuce-core" % "5.1.2.RELEASE",
+    "org.typelevel" %% "cats-core"          % DependencyVersions.Cats,
+    "com.github.pureconfig" %% "pureconfig" % DependencyVersions.PureConfig
+  )
+
+  val Redis = RedisDependencies ++ TestDependencies.map(_ % Test) ++ TestDependencies.map(_ % IntegrationTest)
+
 }

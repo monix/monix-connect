@@ -1,4 +1,4 @@
-package scalona.monix.connectors.dynamodb
+package scalona.monix.connectors.s3
 
 import pureconfig._
 import pureconfig.generic.ProductHint
