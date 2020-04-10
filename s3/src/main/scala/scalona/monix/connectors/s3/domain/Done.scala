@@ -1,3 +1,3 @@
-package scalona.monix.connectors.dynamodb.domain
+package scalona.monix.connectors.s3.domain
 
 case class Done()
