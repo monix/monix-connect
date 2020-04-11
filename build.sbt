@@ -38,3 +38,14 @@ lazy val dynamoDB = (project in file("dynamodb"))
   )
   .enablePlugins(JavaAppPackaging, DockerPlugin)
   .dependsOn(common)
+
+lazy val redis = (project in file("redis"))
+  .configs(IntegrationTest)
+  .settings(Defaults.itSettings)
+  .settings(
+    name := "monix-redis",
+    libraryDependencies ++= Dependencies.Redis,
+    version := "0.0.1"
+  )
+  .enablePlugins(JavaAppPackaging, DockerPlugin)
+  .dependsOn(common)

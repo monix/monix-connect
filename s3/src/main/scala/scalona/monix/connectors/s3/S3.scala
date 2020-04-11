@@ -1,12 +1,13 @@
-package scalona.monix.connectors.dynamodb
+package scalona.monix.connectors.s3
 
 import com.amazonaws.services.s3.AmazonS3
-import monix.reactive.{ Consumer, Observer }
+import monix.reactive.{Consumer, Observer}
 import monix.execution.Ack
 import monix.eval.Task
-import scalona.monix.connectors.dynamodb.domain.{ Done, S3Object }
+import scalona.monix.connectors.dynamodb.domain.S3Object
+import scalona.monix.connectors.s3.domain.{Done, S3Object}
 
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
 private[dynamodb] class S3(s3Client: AmazonS3) {
 
