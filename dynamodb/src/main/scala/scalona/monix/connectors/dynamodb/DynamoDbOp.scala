@@ -14,7 +14,6 @@ sealed trait DynamoDbOp[In <: DynamoDbRequest, Out <: DynamoDbResponse] {
 
 object DynamoDbOp {
 
-//  implicit val amazon: AmazonDynamoDBAsync = ???
   implicit val createTableOp = new DynamoDbOp[CreateTableRequest, CreateTableResponse] {
     def execute(request: software.amazon.awssdk.services.dynamodb.model.CreateTableRequest)(
       implicit client: DynamoDbAsyncClient): CompletableFuture[CreateTableResponse] = {

@@ -1,11 +1,11 @@
 lazy val root = (project in file("."))
   .settings(
     inThisBuild(List(
-      organization := "com.scalarc",
+      organization := "scalona",
       scalaVersion := "2.13.1",
       version      := Version.version
     )),
-    name := "monix-connectors"
+    name := "monix-connect"
   )
 
 lazy val common = (project in file("common"))
@@ -48,4 +48,3 @@ lazy val redis = (project in file("redis"))
     version := "0.0.1"
   )
   .enablePlugins(JavaAppPackaging, DockerPlugin)
-  .dependsOn(common)

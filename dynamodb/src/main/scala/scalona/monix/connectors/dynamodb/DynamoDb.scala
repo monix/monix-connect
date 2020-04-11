@@ -5,7 +5,6 @@ import monix.execution.Ack
 import monix.eval.Task
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.{ DynamoDbRequest, DynamoDbResponse }
-import scalona.monix.connectors.common.Implicits.Transformer
 
 import scala.jdk.FutureConverters._
 

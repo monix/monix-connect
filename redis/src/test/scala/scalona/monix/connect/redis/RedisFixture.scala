@@ -1,4 +1,4 @@
-package scalona.monix.connectors.redis
+package scalona.monix.connect.redis
 
 import io.lettuce.core.{KeyValue, RedisFuture}
 import io.lettuce.core.api.async.RedisAsyncCommands

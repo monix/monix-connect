@@ -1,4 +1,4 @@
-package scalona.monix.connectors.redis
+package scalona.monix.connect.redis
 
 import java.util.Date
 

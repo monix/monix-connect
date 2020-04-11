@@ -1,4 +1,4 @@
-package scalona.monix.connectors.s3
+package scalona.monix.connect.s3
 
 import pureconfig._
 import pureconfig.generic.ProductHint

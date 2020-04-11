@@ -1,4 +1,4 @@
-package scalona.monix.connectors.s3
+package scalona.monix.connect.s3
 
 import com.amazonaws.auth.{AWSStaticCredentialsProvider, AnonymousAWSCredentials}
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
