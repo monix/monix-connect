@@ -9,8 +9,6 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model._
-import scalona.monix.connectors.common.Implicits.Transformer
-import scalona.monix.connectors.common.Implicits._
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._

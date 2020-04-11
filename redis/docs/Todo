@@ -1,3 +1,6 @@
-List of non yet implemented redis operations:
-
+-List of non yet implemented redis operations:
 select, expireat, geoadd, geohash, geopos, geodist, georadius, georadiusbymemeber, lolwut, memory doctor, memory help, malloc-stats, purge, stats, usage, module_list, load, unload, monitor, object, ping, psubscribe, pubsub, punsubscribe, script debug, exusts, flush, kill, load, getbit, getRange, replicaof, getbit, getRange, subscribe, sync, psync,typed, unsubscribe  //wait, zcount, zrangebylex,  zrevrangebylex, zrangebyscore, zremrangebylex, zremrangebytank, zremrangebyscore, zrevrange, zrevrangebtscore, zlexcount
+-BDD unit tests for all of the methods defined in Redis object
+-Documentation
+-Examples
+-Implicit redis client from config

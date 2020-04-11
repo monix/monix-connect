@@ -1,4 +1,4 @@
-package scalona.monix.connectors.common
+package scalona.monix.connect.common
 
 import monix.reactive.Observable
 

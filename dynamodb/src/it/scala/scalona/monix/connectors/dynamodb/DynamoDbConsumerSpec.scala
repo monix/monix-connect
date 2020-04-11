@@ -10,7 +10,6 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.concurrent.ScalaFutures._
 import software.amazon.awssdk.services.dynamodb.model._
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
-import scalona.monix.connectors.common.Implicits._
 
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._

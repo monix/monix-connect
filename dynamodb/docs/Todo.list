@@ -1,0 +1,5 @@
+-Unit testing
+-Documentation
+-Implementation of pending dynamodb request/response operations
+-Examples
+-Implicit dynamodb client from config

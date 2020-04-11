@@ -1,12 +1,12 @@
-package scalona.monix.connectors.s3
+package scalona.monix.connect.s3
 
+import com.amazonaws.services.s3.model.PutObjectResult
 import monix.reactive.{Consumer, Observable}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import monix.execution.Scheduler.Implicits.global
 import org.scalacheck.Gen
-import scalona.monix.connectors.dynamodb.domain.{Done, S3Object}
-import scalona.monix.connectors.s3.domain.{Done, S3Object}
-import scalona.monix.connectors.s3.{S3, S3Client}
+import scalona.monix.connect.s3.domain.S3Object
+
 class S3Spec extends WordSpecLike with Matchers with BeforeAndAfterAll {
 
   private val bucketName = "sample-bucket"
@@ -16,10 +16,10 @@ class S3Spec extends WordSpecLike with Matchers with BeforeAndAfterAll {
       //given
       val key: String = Gen.alphaLowerStr.sample.get
       val content: String = Gen.alphaLowerStr.sample.get
-      val s3Sink: Consumer[S3Object, Either[Throwable, Done]] = S3().sink
+      val s3Sink: Consumer[S3Object, Either[Throwable, PutObjectResult]] = S3().sink
 
       //when
-      val maybePutResult: Either[Throwable, Done] = {
+      val maybePutResult: Either[Throwable, PutObjectResult] = {
         Observable
           .fromIterable(List(S3Object(bucketName, key, content)))
           .consumeWith(s3Sink)
@@ -28,7 +28,7 @@ class S3Spec extends WordSpecLike with Matchers with BeforeAndAfterAll {
 
       //then
       maybePutResult.isRight shouldBe true
-      maybePutResult.right.get shouldBe a[Done]
+      maybePutResult.right.get shouldBe a[PutObjectResult]
       //val actualContent: String = S3Client().getObjectAsString(bucketName, key) todo check s3 file content
       //content shouldBe actualContent
     }
@@ -38,10 +38,10 @@ class S3Spec extends WordSpecLike with Matchers with BeforeAndAfterAll {
     //given
     val key: String = Gen.alphaLowerStr.sample.get
     val content: String = Gen.alphaLowerStr.sample.get
-    val s3Sink: Consumer[S3Object, Either[Throwable, Done]] = S3().sink
+    val s3Sink: Consumer[S3Object, Either[Throwable, PutObjectResult]] = S3().sink
 
     //when
-    val maybePutResult: Either[Throwable, Done] = {
+    val maybePutResult: Either[Throwable, PutObjectResult] = {
       Observable
         .fromIterable(List(S3Object(bucketName, key, content)))
         .consumeWith(s3Sink)
@@ -50,7 +50,7 @@ class S3Spec extends WordSpecLike with Matchers with BeforeAndAfterAll {
 
     //then
     maybePutResult.isRight shouldBe true
-    maybePutResult.right.get shouldBe a[Done]
+    maybePutResult.right.get shouldBe a[PutObjectResult]
     //val actualContent: String = S3Client().getObjectAsString(bucketName, key) todo check s3 file content
     //content shouldBe actualContent
   }
