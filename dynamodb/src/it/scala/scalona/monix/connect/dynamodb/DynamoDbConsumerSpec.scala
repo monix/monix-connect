@@ -1,4 +1,4 @@
-package scalona.monix.connectors.dynamodb
+package scalona.monix.connect.dynamodb
 
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global

@@ -1,4 +1,4 @@
-package scalona.monix.connectors.dynamodb
+package scalona.monix.connect.dynamodb
 
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
@@ -7,6 +7,8 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
+import scalona.monix.connect.common.Stream.Transformer
+import scalona.monix.connect.common.Stream.Implicits._
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model._
 

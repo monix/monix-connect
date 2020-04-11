@@ -1,7 +1,8 @@
-package scalona.monix.connectors.dynamodb
+package scalona.monix.connect.dynamodb
 
 import java.net.URI
 
+import DynamoAppConfig.DynamoDbConfig
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.regions.Region
 
