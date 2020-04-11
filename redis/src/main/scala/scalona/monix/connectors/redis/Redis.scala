@@ -1,6 +1,5 @@
 package scalona.monix.connectors.redis
 
-import java.util
 import java.util.Date
 
 import io.lettuce.core.api.StatefulRedisConnection
@@ -10,6 +9,7 @@ import monix.reactive.Observable
 
 import scala.jdk.CollectionConverters._
 import scala.jdk.FutureConverters._
+import concurrent.Future
 
 object Redis {
 
@@ -92,10 +92,10 @@ object Redis {
   def hget[K, V](key: K, field: K)(implicit connection: StatefulRedisConnection[K, V]): Task[V] =
     Task.from(connection.async().hget(key, field))
 
-  def hgetall[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[util.Map[K, V]] =
-    Task.from(connection.async().hgetall(key))
+  def hgetall[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Map[K, V]] =
+    Task.from(connection.async().hgetall(key)).map(_.asScala.toMap)
 
-  def hincby[K, V](key: K, field: K, amount: Long)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
+  def hincrby[K, V](key: K, field: K, amount: Long)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
     Task.from(connection.async().hincrby(key, field, amount)).map(_.longValue)
 
   def hincbyfloat[K, V](key: K, field: K, amount: Float)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
@@ -107,14 +107,14 @@ object Redis {
   def hlen[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
     Task.from(connection.async().hlen(key)).map(_.longValue)
 
-  def hmget[K, V](key: K, fields: Seq[K])(implicit connection: StatefulRedisConnection[K, V]): Observable[KeyValue[K, V]] =
+  def hmget[K, V](key: K, fields: K*)(implicit connection: StatefulRedisConnection[K, V]): Observable[KeyValue[K, V]] =
     Observable.fromReactivePublisher(connection.reactive().hmget(key, fields: _*))
 
   def hmset[K, V](key: K, map: Map[K, V])(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
     Task.from(connection.async().hmset(key, map.asJava))
 
   def hset[K, V](key: K, field: K, value: V)(implicit connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-    Task.from(connection.async().hset(key, field, value)).map(_.booleanValue)
+    Task.fromFuture(connection.async().hset(key, field, value).asScala).map(_.booleanValue)
 
   //Not in redis api
   def hsetExpire[K, V](key: K, field: K, value: V, seconds: Long)(

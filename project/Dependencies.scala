@@ -16,24 +16,23 @@ object Dependencies {
 
     val Scalatest = "3.1.1"
     val Scalacheck = "1.14.3"
-    val Mockito = "2.18.3"
+    val Mockito = "1.13.1"
     val Cats = "2.0.0"
   }
 
 
 
 
-  private val TestDependencies = Seq(
+  private val CommonTestDependencies = Seq(
     "org.scalatest" %% "scalatest"   % DependencyVersions.Scalatest,
     "org.scalacheck" %% "scalacheck" % DependencyVersions.Scalacheck,
-    "org.mockito"                    % "mockito-core" % DependencyVersions.Mockito
-  )
+    "org.mockito" %% "mockito-scala" % DependencyVersions.Mockito)
 
   private val CommonMain = Seq(
-    "io.monix" %% "monix-reactive"          % DependencyVersions.Monix,
+    "io.monix" %% "monix-reactive"          % DependencyVersions.Monix
   )
 
-  val Common = CommonMain ++ TestDependencies.map(_ % Test)
+  val Common = CommonMain ++ CommonTestDependencies.map(_ % Test)
 
   private val S3Dependecies = Seq(
     "io.monix" %% "monix-reactive"          % DependencyVersions.Monix,
@@ -43,7 +42,7 @@ object Dependencies {
     "com.github.pureconfig" %% "pureconfig" % DependencyVersions.PureConfig
   )
 
-  val S3 = S3Dependecies ++ TestDependencies.map(_ % Test) ++ TestDependencies.map(_ % IntegrationTest)
+  val S3 = S3Dependecies ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(_ % IntegrationTest)
 
   private val DynamoDbDependencies = Seq(
     "io.monix" %% "monix-reactive" % DependencyVersions.Monix,
@@ -54,7 +53,7 @@ object Dependencies {
     "com.github.pureconfig" %% "pureconfig" % DependencyVersions.PureConfig
   )
 
-  val DynamoDb = DynamoDbDependencies ++ TestDependencies.map(_ % Test) ++ TestDependencies.map(_ % IntegrationTest)
+  val DynamoDb = DynamoDbDependencies ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(_ % IntegrationTest)
 
   private val RedisDependencies = Seq(
     "io.monix" %% "monix-reactive" % DependencyVersions.Monix,
@@ -63,6 +62,6 @@ object Dependencies {
     "com.github.pureconfig" %% "pureconfig" % DependencyVersions.PureConfig
   )
 
-  val Redis = RedisDependencies ++ TestDependencies.map(_ % Test) ++ TestDependencies.map(_ % IntegrationTest)
+  val Redis = RedisDependencies ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(_ % IntegrationTest)
 
 }
