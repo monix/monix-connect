@@ -4,18 +4,20 @@ import java.nio.ByteBuffer
 
 import monix.eval.Task
 import org.scalacheck.Gen
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
+import org.scalatest.BeforeAndAfterAll
 import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadResponse, PutObjectResponse}
+import org.scalatest.wordspec.AnyWordSpecLike
+import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
-import scala.jdk.FutureConverters._
 import monix.execution.Scheduler.Implicits.global
-import monix.reactive.Observable
+import monix.reactive.{Consumer, Observable}
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 
 import scala.util.{Failure, Success, Try}
+
 class S3AsyncSpec
-  extends WordSpecLike with Matchers with BeforeAndAfterAll with ScalaFutures with S3Fixture with Eventually {
+  extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with ScalaFutures with S3Fixture with Eventually {
 
   private val bucketName = "sample-bucket"
   implicit val s3Client = s3AsyncClient
@@ -23,6 +25,7 @@ class S3AsyncSpec
   override implicit val patienceConfig = PatienceConfig(10.seconds, 100.milliseconds)
 
   s"${S3}" should {
+
     "implement putObject method" that {
 
       s"uploads the passed ByteBuffer to the respective s3 bucket and key" when {
@@ -65,29 +68,67 @@ class S3AsyncSpec
         }
       }
     }
-  }
 
-  it should {
-    "perform multipart upload" in {
-      //given
-      val key = Gen.alphaLowerStr.sample.get
-      val content = ByteBuffer.wrap(Gen.alphaUpperStr.sample.get.getBytes)
-      val stream = Observable.fromIterable(Seq(content))
+    "correctly perform a multipart upload" when {
 
-      //when
-      val t: Task[CompleteMultipartUploadResponse] = S3.multipartUpload(bucketName, key, stream)
+      "the observable contain a single ByteBuffer" in {
+        //given
+        val key = Gen.alphaLowerStr.sample.get
+        val content = ByteBuffer.wrap(Gen.alphaUpperStr.sample.get.getBytes)
+        val stream = Observable.fromIterable(Seq(content))
 
-      //then
-      whenReady(t.runToFuture) { completeMultipartUpload =>
-        val s3Object: ByteBuffer = S3.getObject(bucketName, key).runSyncUnsafe()
-        s3SyncClient.doesObjectExist(bucketName, key) shouldBe true
-        completeMultipartUpload shouldBe a[CompleteMultipartUploadResponse]
-        s3Object.array() shouldBe content.array()
+        //when
+        val t: Task[CompleteMultipartUploadResponse] = S3.multipartUpload(bucketName, key, stream)
+
+        //then
+        whenReady(t.runToFuture) { completeMultipartUpload =>
+          val s3Object: ByteBuffer = S3.getObject(bucketName, key).runSyncUnsafe()
+          s3SyncClient.doesObjectExist(bucketName, key) shouldBe true
+          completeMultipartUpload shouldBe a[CompleteMultipartUploadResponse]
+          s3Object.array() shouldBe content.array()
+        }
       }
-    }
-  }
 
-  it should {
+      "the observable of chunks is consumed with multipartUploadConsumer" in {
+        //given
+        val key = Gen.alphaLowerStr.sample.get
+        val content: Array[Byte] = Gen.alphaUpperStr.sample.get.getBytes
+        val consumer: Consumer[Array[Byte], Task[CompleteMultipartUploadResponse]] =
+          S3.multipartUploadConsumer(bucketName, key)
+        val ob = Observable.fromIterable(Seq(content))
+
+        //when
+        val t: Task[CompleteMultipartUploadResponse] = ob.consumeWith(consumer).flatten
+
+        //then
+        whenReady(t.runToFuture) { completeMultipartUpload =>
+          val s3Object: ByteBuffer = S3.getObject(bucketName, key).runSyncUnsafe()
+          s3SyncClient.doesObjectExist(bucketName, key) shouldBe true
+          completeMultipartUpload shouldBe a[CompleteMultipartUploadResponse]
+          s3Object.array() shouldBe content
+        }
+      }
+
+      /* "the observable of chunks is consumed with multipartUploadConsumer" in {
+        //given
+        val key = Gen.alphaLowerStr.sample.get
+        val contentList: Seq[Array[Byte]] =
+          Gen.listOfN(1, Gen.alphaStr).sample.get.map(_.getBytes)
+        val stream = Observable.fromIterable(contentList)
+
+        //when
+        val t: Task[CompleteMultipartUploadResponse] = S3.multipartUpload(bucketName, key, stream, Some("application/octet-stream"))
+
+        //then
+        whenReady(t.runToFuture) { completeMultipartUpload =>
+          val s3Object: ByteBuffer = S3.getObject(bucketName, key).runSyncUnsafe()
+          s3SyncClient.doesObjectExist(bucketName, key) shouldBe true
+          completeMultipartUpload shouldBe a[CompleteMultipartUploadResponse]
+          s3Object.array() shouldBe contentList.map(_.array()).flatten
+        }
+      }*/
+    }
+
     "download a ByteBuffer of an existing s3 object" in {
       //given
       val key = Gen.alphaLowerStr.sample.get
@@ -105,16 +146,19 @@ class S3AsyncSpec
     }
   }
 
+  def genPart() = Gen.oneOf(Seq(List.fill(1000)(Gen.alphaStr.sample.get).mkString("_")))
+
   override def beforeAll(): Unit = {
     super.beforeAll()
     Try(s3SyncClient.createBucket(bucketName)) match {
-      case Failure(exception) => info(s"The attempt to create bucket $bucketName failed since it already existed, exception: $exception")
+      case Failure(exception) =>
+        info(s"The attempt to create bucket $bucketName failed since it already existed, exception: $exception")
       case Success(_) => info(s"Bucket $bucketName created successfully")
     }
   }
 
   override def afterAll(): Unit = {
     super.afterAll()
-    s3SyncClient.deleteBucket(bucketName)
+    //s3SyncClient.deleteBucket(bucketName)
   }
 }
