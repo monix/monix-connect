@@ -1,23 +1,47 @@
 package scalona.monix.connect.s3
 
 import java.nio.ByteBuffer
+import java.util.concurrent.CompletableFuture
 
-
-import monix.reactive.{Consumer, Observable, Observer}
-import monix.execution.{Ack, Scheduler}
+import monix.reactive.{ Consumer, Observable, Observer }
+import monix.execution.{ Ack, Scheduler }
 import monix.eval.Task
-import scalona.monix.connect.S3RequestBuilder
-import software.amazon.awssdk.awscore.AwsRequestOverrideConfiguration
-import software.amazon.awssdk.core.async.AsyncRequestBody
+import software.amazon.awssdk.core.async.{ AsyncRequestBody, AsyncResponseTransformer, SdkPublisher }
 import software.amazon.awssdk.services.s3.S3AsyncClient
-import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadRequest, CompleteMultipartUploadResponse, CompletedMultipartUpload, CompletedPart, CreateMultipartUploadRequest, DeleteBucketRequest, DeleteObjectRequest, DeleteObjectsRequest, EncodingType, GetObjectAclRequest, GetObjectAclResponse, GetObjectRequest, GetObjectResponse, ListObjectsResponse, ListObjectsV2Request, ListObjectsV2Response, PutObjectRequest, PutObjectResponse, RequestPayer, S3Object, UploadPartRequest, UploadPartResponse}
-import monix.execution.cancelables.SingleAssignCancelable
+import software.amazon.awssdk.services.s3.model.{ GetObjectAclRequest, GetObjectAclResponse, GetObjectRequest, GetObjectResponse, PutObjectRequest, PutObjectResponse }
 
-import scala.util.{Failure, Success, Try}
+import scala.jdk.FutureConverters._
 
-private[dynamodb] class S3(s3Client: AmazonS3) {
+object S3 {
 
-  def sink: Consumer[S3Object, Either[Throwable, PutObjectResult]] = {
+  //todo delimit content type to enum
+  def putObject(
+    bucketName: String,
+    key: String,
+    content: ByteBuffer,
+    contentLength: Option[Long] = None,
+    contentType: Option[String] = None)(implicit s3Client: S3AsyncClient, s: Scheduler): Task[PutObjectResponse] = {
+    val contentLenght: Long = contentLength.getOrElse(content.array().length.toLong)
+    val putObjectRequest = PutObjectRequest
+      .builder()
+      .bucket(bucketName)
+      .contentLength(contentLenght)
+      .contentType(contentType.getOrElse("plain/text"))
+      .key(key)
+      .build()
+    val requestBody = AsyncRequestBody.fromPublisher(Task(content).toReactivePublisher)
+    Task.fromFuture(
+      s3Client.putObject(putObjectRequest, requestBody).asScala
+    )
+  }
+
+  def getObject(bucketName: String, key: String)(implicit s3Client: S3AsyncClient): Task[ByteBuffer] = {
+    val getObjectrequest = GetObjectRequest.builder().bucket(bucketName).key(key).build()
+    Task.fromFuture(s3Client.getObject(getObjectrequest, new MonixS3AsyncResponseTransformer).asScala).flatten
+  }
+
+  /*def putObjectConsumer()(
+    implicit s3Client: S3AsyncClient): Consumer[S3Object, Either[Throwable, PutObjectResult]] = {
     Consumer.create[S3Object, Either[Throwable, PutObjectResult]] { (_, _, callback) =>
       new Observer.Sync[S3Object] {
         private var putObjectResult: Either[Throwable, PutObjectResult] = _
@@ -40,13 +64,6 @@ private[dynamodb] class S3(s3Client: AmazonS3) {
         }
       }
     }
-  }
+  }*/
 
-  def getObjectAsString(bucket: String, key: String): Task[String] = {
-    Task(s3Client.getObjectAsString(bucket, key))
-  }
-}
-
-object S3 {
-  def apply(s3Client: AmazonS3 = S3Client()): S3 = new S3(s3Client)
 }
