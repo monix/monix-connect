@@ -5,14 +5,14 @@ import monix.execution.{ Ack, Callback, Scheduler }
 import monix.execution.cancelables.AssignableCancelable
 import monix.reactive.Consumer
 import monix.reactive.observers.Subscriber
+import scalona.monix.connect.S3RequestBuilder
 import software.amazon.awssdk.core.async.AsyncRequestBody
 import software.amazon.awssdk.services.s3.S3AsyncClient
-import software.amazon.awssdk.services.s3.model.{ CompleteMultipartUploadRequest, CompleteMultipartUploadResponse, CompletedMultipartUpload, CompletedPart, CreateMultipartUploadRequest, UploadPartRequest }
+import software.amazon.awssdk.services.s3.model.{ CompleteMultipartUploadResponse, CompletedPart, CreateMultipartUploadRequest, UploadPartRequest }
 
 import scala.jdk.FutureConverters._
-import scala.jdk.CollectionConverters._
 
-private[s3] class MultipartUploadConsumer(bucketName: String, key: String, contentType: Option[String] = None)(
+private[s3] class MultipartUploadConsumer(bucket: String, key: String, contentType: Option[String] = None)(
   implicit s3Client: S3AsyncClient)
   extends Consumer.Sync[Array[Byte], Task[CompleteMultipartUploadResponse]] {
 
@@ -21,16 +21,12 @@ private[s3] class MultipartUploadConsumer(bucketName: String, key: String, conte
     s: Scheduler): (Subscriber.Sync[Array[Byte]], AssignableCancelable) = {
     val out = new Subscriber.Sync[Array[Byte]] {
       implicit val scheduler = s
-      private[this] var isDone = false
-      val partCounter = 0
-      var completedParts: List[Task[CompletedPart]] = List()
-      val multiPartUploadrequest: CreateMultipartUploadRequest = CreateMultipartUploadRequest
-        .builder()
-        .bucket(bucketName)
-        .contentType(contentType.getOrElse("plain/text"))
-        .key(key)
-        .build()
-      val uploadId: String =
+      private[this] var hasMinSize = false //todo contemplate if chunks comply with minimum size of 5MB
+      private[this] val partN = 0
+      private[this] var completedParts: List[Task[CompletedPart]] = List()
+      private[this] val multiPartUploadrequest: CreateMultipartUploadRequest =
+        S3RequestBuilder.multipartUploadRequest(bucket, key, contentType)
+      private[this] val uploadId: String =
         Task
           .fromFuture(
             s3Client
@@ -41,24 +37,18 @@ private[s3] class MultipartUploadConsumer(bucketName: String, key: String, conte
           .runSyncUnsafe()
 
       def onNext(chunk: Array[Byte]): Ack = {
-        val uploadPartRequest = UploadPartRequest
-          .builder()
-          .bucket(bucketName)
-          .key(key)
-          .partNumber(partCounter)
-          .uploadId(uploadId)
-          .contentLength(chunk.size.toLong)
-          .build()
+        val uploadPartReq: UploadPartRequest =
+          S3RequestBuilder.uploadPartRequest(bucket, key, partN, uploadId, chunk.size.toLong)
         val asyncRequestBody = AsyncRequestBody.fromBytes(chunk)
         val completedPart: Task[CompletedPart] = Task
           .fromFuture(
             s3Client
               .uploadPart(
-                uploadPartRequest,
+                uploadPartReq,
                 asyncRequestBody
               )
               .asScala)
-          .map(resp => CompletedPart.builder().partNumber(partCounter).eTag(resp.eTag()).build())
+          .map(resp => S3RequestBuilder.completedPart(partN, resp))
         completedParts = completedPart :: completedParts
         monix.execution.Ack.Continue
       }
@@ -66,17 +56,12 @@ private[s3] class MultipartUploadConsumer(bucketName: String, key: String, conte
       def onComplete(): Unit = {
         val completeMultipartUploadResp: Task[CompleteMultipartUploadResponse] = Task.sequence(completedParts).flatMap {
           completedParts =>
-            val completedMultipartUpload = CompletedMultipartUpload.builder().parts(completedParts.asJava).build()
+            val completeMultipartUploadrequest = S3RequestBuilder
+              .completeMultipartUploadRquest(bucket, key, uploadId, completedParts)
             Task.fromFuture(
               s3Client
                 .completeMultipartUpload(
-                  CompleteMultipartUploadRequest
-                    .builder()
-                    .bucket(bucketName)
-                    .key(key)
-                    .uploadId(uploadId)
-                    .multipartUpload(completedMultipartUpload)
-                    .build()
+                  completeMultipartUploadrequest
                 )
                 .asScala
             )

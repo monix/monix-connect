@@ -43,8 +43,7 @@ object Dependencies {
 
   private val S3Test = Seq(
   "com.amazonaws"                         % "aws-java-sdk-core" % DependencyVersions.AWS,
-  "com.amazonaws"                         % "aws-java-sdk-s3" % DependencyVersions.AWS,
-    "io.findify" % "s3mock_2.12" % "0.2.4"
+  "com.amazonaws"                         % "aws-java-sdk-s3" % DependencyVersions.AWS
   ).map(_ % Test)
 
   val S3 = S3Dependecies ++ S3Test ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(_ % IntegrationTest)

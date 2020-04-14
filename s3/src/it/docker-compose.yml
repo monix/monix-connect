@@ -17,4 +17,3 @@ services:
       retries: 3
 
     command: server --compat /data
-

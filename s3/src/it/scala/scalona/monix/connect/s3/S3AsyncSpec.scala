@@ -2,6 +2,9 @@ package scalona.monix.connect.s3
 
 import java.nio.ByteBuffer
 
+import akka.actor.ActorSystem
+import akka.stream.scaladsl.{Keep, Sink, Source}
+import akka.util.ByteString
 import monix.eval.Task
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
@@ -11,7 +14,8 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
 import monix.execution.Scheduler.Implicits.global
-import monix.reactive.{Consumer, Observable}
+import monix.execution.cancelables.SingleAssignCancelable
+import monix.reactive.{Consumer, Observable, Observer}
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 
 import scala.util.{Failure, Success, Try}
@@ -19,6 +23,7 @@ import scala.util.{Failure, Success, Try}
 class S3AsyncSpec
   extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with ScalaFutures with S3Fixture with Eventually {
 
+  implicit val actorSystem = ActorSystem("test")
   private val bucketName = "sample-bucket"
   implicit val s3Client = s3AsyncClient
 
@@ -71,24 +76,6 @@ class S3AsyncSpec
 
     "correctly perform a multipart upload" when {
 
-      "the observable contain a single ByteBuffer" in {
-        //given
-        val key = Gen.alphaLowerStr.sample.get
-        val content = ByteBuffer.wrap(Gen.alphaUpperStr.sample.get.getBytes)
-        val stream = Observable.fromIterable(Seq(content))
-
-        //when
-        val t: Task[CompleteMultipartUploadResponse] = S3.multipartUpload(bucketName, key, stream)
-
-        //then
-        whenReady(t.runToFuture) { completeMultipartUpload =>
-          val s3Object: ByteBuffer = S3.getObject(bucketName, key).runSyncUnsafe()
-          s3SyncClient.doesObjectExist(bucketName, key) shouldBe true
-          completeMultipartUpload shouldBe a[CompleteMultipartUploadResponse]
-          s3Object.array() shouldBe content.array()
-        }
-      }
-
       "the observable of chunks is consumed with multipartUploadConsumer" in {
         //given
         val key = Gen.alphaLowerStr.sample.get
@@ -108,25 +95,6 @@ class S3AsyncSpec
           s3Object.array() shouldBe content
         }
       }
-
-      /* "the observable of chunks is consumed with multipartUploadConsumer" in {
-        //given
-        val key = Gen.alphaLowerStr.sample.get
-        val contentList: Seq[Array[Byte]] =
-          Gen.listOfN(1, Gen.alphaStr).sample.get.map(_.getBytes)
-        val stream = Observable.fromIterable(contentList)
-
-        //when
-        val t: Task[CompleteMultipartUploadResponse] = S3.multipartUpload(bucketName, key, stream, Some("application/octet-stream"))
-
-        //then
-        whenReady(t.runToFuture) { completeMultipartUpload =>
-          val s3Object: ByteBuffer = S3.getObject(bucketName, key).runSyncUnsafe()
-          s3SyncClient.doesObjectExist(bucketName, key) shouldBe true
-          completeMultipartUpload shouldBe a[CompleteMultipartUploadResponse]
-          s3Object.array() shouldBe contentList.map(_.array()).flatten
-        }
-      }*/
     }
 
     "download a ByteBuffer of an existing s3 object" in {
@@ -146,7 +114,7 @@ class S3AsyncSpec
     }
   }
 
-  def genPart() = Gen.oneOf(Seq(List.fill(1000)(Gen.alphaStr.sample.get).mkString("_")))
+  def genPart(): Gen[String] = Gen.oneOf(Seq(List.fill(1000)(Gen.alphaStr.sample.get).mkString("_")))
 
   override def beforeAll(): Unit = {
     super.beforeAll()
