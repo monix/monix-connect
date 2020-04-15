@@ -1,9 +1,19 @@
 ---
 version: '3'
 services:
-  localstack:
-    image: localstack/localstack:latest
+  minio:
+    image: minio/minio
     ports:
-      - '4572:4572'
+      - "9000:9000"
+    volumes:
+      - ./minio/data:/data
     environment:
-      - SERVICES=s3
+      - MINIO_ACCESS_KEY=TESTKEY
+      - MINIO_SECRET_KEY=TESTSECRET
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+    command: server --compat /data

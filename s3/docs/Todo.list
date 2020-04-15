@@ -1,5 +1,5 @@
--Multipart update and download
--Unit testing
+-Refine multipart update
+-Add testing coverage
 -Documentation
 -Examples
 -Implicit aws client from config

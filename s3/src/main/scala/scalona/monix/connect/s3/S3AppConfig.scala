@@ -2,22 +2,19 @@ package scalona.monix.connect.s3
 
 import pureconfig._
 import pureconfig.generic.ProductHint
-import com.amazonaws.regions.Regions.DEFAULT_REGION
-import com.amazonaws.auth.{AWSCredentialsProvider, AWSStaticCredentialsProvider, AnonymousAWSCredentials, DefaultAWSCredentialsProviderChain}
 import pureconfig.generic.auto._
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
+import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider
 
 object S3AppConfig {
 
   implicit val confHint: ProductHint[AppConfig] = ProductHint[AppConfig](ConfigFieldMapping(SnakeCase, SnakeCase))
 
   case class S3Config(endPoint: String, pathStyleAccess: Boolean, credentials: AwsCredentialsConfig, region: AwsRegionConfig) {
-    val awsCredentials: AWSCredentialsProvider = credentials.provider match {
-      case "anonymous" => new AWSStaticCredentialsProvider(new AnonymousAWSCredentials())
-      case "default" => new DefaultAWSCredentialsProviderChain()
-    }
-    val awsRegion: String = region.provider match {
-      case "static" => region.default.getOrElse(DEFAULT_REGION.getName)
-      case "default" => ""
+    val awsCredentials: AwsCredentialsProvider = credentials.provider match {
+      case "anonymous" => AnonymousCredentialsProvider.create()
+      case "default" => DefaultCredentialsProvider.create()
     }
   }
   case class AwsRegionConfig(provider: String, default: Option[String])
