@@ -2,28 +2,23 @@ package scalona.monix.connect.s3
 
 import java.nio.ByteBuffer
 
-import akka.actor.ActorSystem
-import akka.stream.scaladsl.{Keep, Sink, Source}
-import akka.util.ByteString
 import monix.eval.Task
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
-import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadResponse, PutObjectResponse}
+import software.amazon.awssdk.services.s3.model.{ CompleteMultipartUploadResponse, PutObjectResponse }
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
 import monix.execution.Scheduler.Implicits.global
-import monix.execution.cancelables.SingleAssignCancelable
-import monix.reactive.{Consumer, Observable, Observer}
-import org.scalatest.concurrent.{Eventually, ScalaFutures}
+import monix.reactive.{ Consumer, Observable }
+import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 class S3AsyncSpec
   extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with ScalaFutures with S3Fixture with Eventually {
 
-  implicit val actorSystem = ActorSystem("test")
   private val bucketName = "sample-bucket"
   implicit val s3Client = s3AsyncClient
 

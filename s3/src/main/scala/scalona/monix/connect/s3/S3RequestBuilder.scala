@@ -1,20 +1,19 @@
 package scalona.monix.connect
 
-import monix.eval.Task
-import monix.reactive.Consumer
-import software.amazon.awssdk.awscore.AwsRequestOverrideConfiguration
-import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadRequest, CompletedMultipartUpload, CompletedPart, CreateMultipartUploadRequest, EncodingType, ListObjectsRequest, ListObjectsV2Request, PutObjectRequest, RequestPayer, UploadPartRequest, UploadPartResponse}
+import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadRequest, CompletedMultipartUpload, CompletedPart, CreateBucketRequest, CreateMultipartUploadRequest, DeleteBucketRequest, DeleteObjectRequest, EncodingType, ListObjectsRequest, ListObjectsV2Request, PutObjectRequest, RequestPayer, UploadPartRequest, UploadPartResponse}
 
 import scala.jdk.CollectionConverters._
+
 object S3RequestBuilder {
 
-  def putObjectRequest(bucket: String, key: String, contentLenght: Long, contentType: Option[String]) = PutObjectRequest
-    .builder()
-    .bucket(bucket)
-    .key(key)
-    .contentLength(contentLenght)
-    .contentType(contentType.getOrElse("plain/text"))
-    .build()
+  def putObjectRequest(bucket: String, key: String, contentLenght: Long, contentType: Option[String]) =
+    PutObjectRequest
+      .builder()
+      .bucket(bucket)
+      .key(key)
+      .contentLength(contentLenght)
+      .contentType(contentType.getOrElse("plain/text"))
+      .build()
 
   def uploadPartRequest(bucketName: String, key: String, partN: Int, uploadId: String, contentLenght: Long) =
     UploadPartRequest
@@ -54,7 +53,7 @@ object S3RequestBuilder {
 
   def listObjectV2(
     bucket: String,
-    continuationToken: Option[String],
+    continuationToken: Option[String] = None,
     delimiter: Option[String] = None,
     marker: Option[String] = None,
     maxKeys: Option[Int] = None,
@@ -63,7 +62,7 @@ object S3RequestBuilder {
     continuationToken.map(listObjectsBuilder.continuationToken(_))
     delimiter.map(listObjectsBuilder.delimiter(_))
     maxKeys.map(listObjectsBuilder.maxKeys(_))
-    prefix.map(listObjectsBuilder.prefix(_))//requestPayer, overrideAwsConf
+    prefix.map(listObjectsBuilder.prefix(_)) //requestPayer, overrideAwsConf
     listObjectsBuilder.build()
   }
 
@@ -81,6 +80,28 @@ object S3RequestBuilder {
     marker.map(listObjectsBuilder.marker(_))
     maxKeys.map(listObjectsBuilder.maxKeys(_))
     listObjectsBuilder.build()
+  }
+
+  def deleteObject(bucket: String, key: String): DeleteObjectRequest = {
+    DeleteObjectRequest
+      .builder()
+      .bucket(bucket)
+      .key(key)
+      .build()
+  }
+
+  def deleteBucket(bucket: String): DeleteBucketRequest = {
+    DeleteBucketRequest
+      .builder()
+      .bucket(bucket)
+      .build()
+  }
+
+  def createBucket(bucket: String): CreateBucketRequest = {
+    CreateBucketRequest
+      .builder()
+      .bucket(bucket)
+      .build()
   }
 
 }
