@@ -1,11 +1,17 @@
 package scalona.monix.connect.s3
 
-import com.amazonaws.services.s3.AmazonS3
-import com.amazonaws.services.s3.model.PutObjectResult
-import monix.reactive.{Consumer, Observer}
-import monix.execution.Ack
+import java.nio.ByteBuffer
+
+
+import monix.reactive.{Consumer, Observable, Observer}
+import monix.execution.{Ack, Scheduler}
 import monix.eval.Task
-import scalona.monix.connect.s3.domain.{Done, S3Object}
+import scalona.monix.connect.S3RequestBuilder
+import software.amazon.awssdk.awscore.AwsRequestOverrideConfiguration
+import software.amazon.awssdk.core.async.AsyncRequestBody
+import software.amazon.awssdk.services.s3.S3AsyncClient
+import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadRequest, CompleteMultipartUploadResponse, CompletedMultipartUpload, CompletedPart, CreateMultipartUploadRequest, DeleteBucketRequest, DeleteObjectRequest, DeleteObjectsRequest, EncodingType, GetObjectAclRequest, GetObjectAclResponse, GetObjectRequest, GetObjectResponse, ListObjectsResponse, ListObjectsV2Request, ListObjectsV2Response, PutObjectRequest, PutObjectResponse, RequestPayer, S3Object, UploadPartRequest, UploadPartResponse}
+import monix.execution.cancelables.SingleAssignCancelable
 
 import scala.util.{Failure, Success, Try}
 
