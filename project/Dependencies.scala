@@ -29,7 +29,8 @@ object Dependencies {
     "org.mockito" %% "mockito-scala" % DependencyVersions.Mockito)
 
   private val CommonMain = Seq(
-    "io.monix" %% "monix-reactive"          % DependencyVersions.Monix
+    "io.monix" %% "monix-reactive"          % DependencyVersions.Monix,
+    "com.typesafe.akka" %% "akka-stream" % "2.6.4"
   )
 
   val Common = CommonMain ++ CommonTestDependencies.map(_ % Test)
