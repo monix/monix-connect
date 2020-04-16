@@ -8,6 +8,16 @@ lazy val root = (project in file("."))
     name := "monix-connect"
   )
 
+lazy val akka = (project in file("akka"))
+  .configs(IntegrationTest)
+  .settings(Defaults.itSettings)
+  .settings(
+    name := "monix-akka",
+    libraryDependencies ++= Dependencies.Akka,
+    version := "0.0.1"
+  )
+  .enablePlugins(JavaAppPackaging)
+
 lazy val common = (project in file("common"))
   .configs(IntegrationTest)
   .settings(Defaults.itSettings)
