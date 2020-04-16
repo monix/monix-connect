@@ -19,6 +19,8 @@ object Dependencies {
     val Scalacheck = "1.14.3"
     val Mockito = "1.13.1"
     val Cats = "2.0.0"
+
+    val AkkaStreams = "2.6.4"
   }
 
   private val CommonTestDependencies = Seq(
@@ -27,9 +29,15 @@ object Dependencies {
     "org.mockito" %% "mockito-scala" % DependencyVersions.Mockito
   )
 
+  private val AkkaMain = Seq(
+    "io.monix" %% "monix-reactive"          % DependencyVersions.Monix,
+    "com.typesafe.akka" %% "akka-stream" % DependencyVersions.AkkaStreams
+  )
+
+  val Akka = AkkaMain ++ CommonTestDependencies.map(_ % Test)
+
   private val CommonMain = Seq(
     "io.monix" %% "monix-reactive"          % DependencyVersions.Monix,
-    "com.typesafe.akka" %% "akka-stream" % "2.6.4"
   )
 
   val Common = CommonMain ++ CommonTestDependencies.map(_ % Test)
