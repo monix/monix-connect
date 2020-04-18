@@ -1,0 +1,2 @@
+- Implement proto parquet writer or integrate with parquet4s
+- Create examples for writing to local directory, hdfs and s3
