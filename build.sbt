@@ -1,3 +1,5 @@
+import org.scalafmt.sbt.ScalafmtPlugin.autoImport._
+
 lazy val root = (project in file("."))
   .settings(
     inThisBuild(List(
@@ -34,7 +36,8 @@ lazy val dynamoDB = (project in file("dynamodb"))
   .settings(
     name := "monix-dynamodb",
     libraryDependencies ++= Dependencies.DynamoDb,
-    version := "0.0.1"
+    version := "0.0.1",
+    scalafmtOnCompile := true,
   )
   .enablePlugins(JavaAppPackaging, DockerPlugin)
   .dependsOn(common)
@@ -48,7 +51,6 @@ lazy val parquet = (project in file("parquet"))
     version := "0.0.1"
   )
   .enablePlugins(JavaAppPackaging, DockerPlugin)
-  .dependsOn(akka, common)
 
 lazy val s3 = (project in file("s3"))
   .configs(IntegrationTest)

@@ -4,8 +4,6 @@
 
 package cloriko.monix.connect.parquet
 
-import java.io.File
-
 import org.apache.hadoop.conf.Configuration
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
