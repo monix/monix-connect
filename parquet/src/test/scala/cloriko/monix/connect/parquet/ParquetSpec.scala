@@ -24,7 +24,7 @@ class ParquetSpec extends AnyWordSpecLike with Matchers with AvroParquetFixture 
       //given
       val n: Int = 2
       val file: String = genFile()
-      val records: List[GenericRecord] = genUsersInfo(n).sample.get.map(userInfoToRecord)
+      val records: List[GenericRecord] = genAvroUsers(n).sample.get.map(userInfoToRecord)
       val w: ParquetWriter[GenericRecord] = parquetWriter(file, conf, schema)
 
       //when
@@ -35,7 +35,7 @@ class ParquetSpec extends AnyWordSpecLike with Matchers with AvroParquetFixture 
         .runSyncUnsafe()
 
       //then
-      val parquetContent: List[GenericRecord] = fromParquet[GenericRecord](file, conf)
+      val parquetContent: List[GenericRecord] = fromParquet[GenericRecord](file, conf, avroParquetReader(file, conf))
       parquetContent.length shouldEqual n
       parquetContent should contain theSameElementsAs records
     }
@@ -43,9 +43,8 @@ class ParquetSpec extends AnyWordSpecLike with Matchers with AvroParquetFixture 
     "read from parquet file" in {
       //given
       val n: Int = 4
-      val records: List[GenericRecord] = genUsersInfo(n).sample.get.map(userInfoToRecord)
+      val records: List[GenericRecord] = genAvroUsers(n).sample.get.map(userInfoToRecord)
       val file = genFile()
-
       Observable
         .fromIterable(records)
         .consumeWith(Parquet.writer(parquetWriter(file, conf, schema)))
@@ -53,7 +52,9 @@ class ParquetSpec extends AnyWordSpecLike with Matchers with AvroParquetFixture 
         .runSyncUnsafe()
 
       //when
-      val result: List[GenericRecord] = Parquet.reader(parquetReader(file, conf)).toListL.runSyncUnsafe()
+      val result: List[GenericRecord] = Parquet.reader(avroParquetReader(file, conf)).toListL.runSyncUnsafe()
+
+      //then
       result.length shouldEqual n
       result should contain theSameElementsAs records
     }

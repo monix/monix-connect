@@ -7,7 +7,7 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.parquet.hadoop.ParquetReader
 
 import monix.execution.Ack
-private[parquet] class ParquetPublisher[T <: GenericRecord](reader: ParquetReader[T]) {
+private[parquet] class ParquetPublisher[T](reader: ParquetReader[T]) {
 
   private def readRecords(sub: Subscriber[T]): Task[Unit] = {
     val t = Task(reader.read())
@@ -31,5 +31,5 @@ private[parquet] class ParquetPublisher[T <: GenericRecord](reader: ParquetReade
 }
 
 object ParquetPublisher {
-  def apply[T <: GenericRecord](reader: ParquetReader[T]): ParquetPublisher[T] = new ParquetPublisher(reader)
+  def apply[T](reader: ParquetReader[T]): ParquetPublisher[T] = new ParquetPublisher(reader)
 }

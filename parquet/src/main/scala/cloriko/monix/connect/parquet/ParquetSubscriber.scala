@@ -8,7 +8,7 @@ import monix.reactive.observers.Subscriber
 import org.apache.avro.generic.GenericRecord
 import org.apache.parquet.hadoop.ParquetWriter
 
-class ParquetSubscriber[T <: GenericRecord](parquetWriter: ParquetWriter[T]) extends Consumer.Sync[T, Task[Unit]] {
+class ParquetSubscriber[T](parquetWriter: ParquetWriter[T]) extends Consumer.Sync[T, Task[Unit]] {
 
   def createSubscriber(
     callback: Callback[Throwable, Task[Unit]],
