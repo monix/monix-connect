@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package cloriko.monix.connect.parquet.tes;
+
+message ProtoUser {
+    int32 id = 1;
+    string name = 2;
+}

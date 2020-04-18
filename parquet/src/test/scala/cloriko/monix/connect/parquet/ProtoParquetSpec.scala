@@ -6,38 +6,35 @@ package cloriko.monix.connect.parquet
 
 import java.io.File
 
-import monix.eval.Task
-import monix.execution.Scheduler
-import monix.reactive.{ Consumer, Observable }
+import cloriko.monix.connect.parquet.tes.User.ProtoUser
+import monix.execution.Scheduler.Implicits.global
+import monix.reactive.Observable
 import org.apache.avro.generic.GenericRecord
+import org.apache.hadoop.fs.Path
 import org.apache.parquet.hadoop.ParquetWriter
+import org.apache.parquet.proto.{ProtoParquetWriter, ProtoWriteSupport}
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-import monix.execution.Scheduler.Implicits.global
-import org.scalatest.BeforeAndAfterAll
 
-class ParquetSpec extends AnyWordSpecLike with Matchers with AvroParquetFixture with BeforeAndAfterAll {
+class ProtoParquetSpec extends AnyWordSpecLike with Matchers with AvroParquetFixture with BeforeAndAfterAll {
 
   s"${Parquet}" should {
 
     "write avro records in parquet" in {
       //given
       val n: Int = 2
-      val file: String = genFile()
+      val file: String = "testParquet"
       val records: List[GenericRecord] = genUsersInfo(n).sample.get.map(userInfoToRecord)
-      val w: ParquetWriter[GenericRecord] = parquetWriter(file, conf, schema)
 
+      val support = new ProtoWriteSupport[ProtoUser](classOf[ProtoUser])
+
+      val protoWriter = new ParquetWriter[ProtoUser](new Path(file), support)
+
+      protoWriter.write(ProtoUser.newBuilder().setId(1).setName("").build())
+      protoWriter.close()
       //when
-      Observable
-        .fromIterable(records)
-        .consumeWith(Parquet.writer(w))
-        .runSyncUnsafe()
-        .runSyncUnsafe()
 
-      //then
-      val parquetContent: List[GenericRecord] = fromParquet[GenericRecord](file, conf)
-      parquetContent.length shouldEqual n
-      parquetContent should contain theSameElementsAs records
     }
 
     "read from parquet file" in {

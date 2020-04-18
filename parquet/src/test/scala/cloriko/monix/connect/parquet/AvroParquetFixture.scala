@@ -6,10 +6,10 @@ package cloriko.monix.connect.parquet
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.avro.Schema
-import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
+import org.apache.avro.generic.{ GenericRecord, GenericRecordBuilder }
 import org.apache.hadoop.fs.Path
-import org.apache.parquet.avro.{AvroParquetReader, AvroParquetWriter, AvroReadSupport}
-import org.apache.parquet.hadoop.{ParquetReader, ParquetWriter}
+import org.apache.parquet.avro.{ AvroParquetReader, AvroParquetWriter, AvroReadSupport }
+import org.apache.parquet.hadoop.{ ParquetReader, ParquetWriter }
 import org.apache.parquet.hadoop.util.HadoopInputFile
 import org.scalacheck.Gen
 
@@ -17,12 +17,12 @@ trait AvroParquetFixture {
 
   case class UserInfo(id: String, name: String)
   val schema: Schema = new Schema.Parser().parse(
-    "{\"type\":\"record\",\"name\":\"UserInfo\",\"fields\":[{\"name\":\"id\",\"type\":\"string\"},{\"name\":\"name\",\"type\":\"string\"}]}"
-  )
+    "{\"type\":\"record\",\"name\":\"UserInfo\",\"fields\":[{\"name\":\"id\",\"type\":\"string\"},{\"name\":\"name\",\"type\":\"string\"}]}")
 
   val genUserInfo: Gen[UserInfo] =
     Gen.oneOf(Seq(UserInfo(id = Gen.alphaStr.sample.get, name = Gen.alphaLowerStr.sample.get)))
   val genUsersInfo: Int => Gen[List[UserInfo]] = n => Gen.listOfN(n, genUserInfo)
+
 
   val folder: String = "./" + Gen.alphaLowerStr.sample.get
   val genFile: () => String = () => folder + "/" + Gen.alphaLowerStr.sample.get + ".parquet"

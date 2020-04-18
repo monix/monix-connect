@@ -1,3 +1,4 @@
+import sbt.Keys.sourceManaged
 import sbt._
 
 object Dependencies {
@@ -57,10 +58,13 @@ object Dependencies {
 
   private val ParquetDependecies = Seq(
     "io.monix" %% "monix-reactive"          % DependencyVersions.Monix,
-    "com.lightbend.akka" %% "akka-stream-alpakka-avroparquet" % DependencyVersions.AkkaAvroParquet,
-    "org.apache.parquet" % "parquet-avro" % "1.10.0",
+    "org.apache.parquet" % "parquet-avro" % "1.11.0",
+    "org.apache.parquet" % "parquet-hadoop" % "1.11.0",
+    "org.apache.parquet" % "parquet-protobuf" % "1.11.0",
+    "com.twitter.elephantbird" % "elephant-bird" % "4.17",
     "org.apache.hadoop" % "hadoop-client" % "3.2.1",
     "org.apache.hadoop" % "hadoop-common" % "3.2.1",
+    "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"
   )
 
   val Parquet = ParquetDependecies ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(_ % IntegrationTest)
@@ -69,7 +73,7 @@ object Dependencies {
     "io.monix" %% "monix-reactive"          % DependencyVersions.Monix,
     "software.amazon.awssdk"                % "s3" % DependencyVersions.S3,
     "org.typelevel" %% "cats-core"          % DependencyVersions.Cats,
-    "com.github.pureconfig" %% "pureconfig" % DependencyVersions.PureConfig,
+    "com.github.pureconfig" %% "pureconfig" % DependencyVersions.PureConfig
   )
 
   private val S3Test = Seq(
