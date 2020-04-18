@@ -9,10 +9,18 @@ requires those components.
 See below the list of available [connectors](#Connectors).  
 
 ## Connectors
+1. [Akka Streams](#Akka Streams)
+2. [Common](#Akka)
+3. [Parquet](#Parquet)
+4. [DynamoDB](#DynamoDB)
+5. [Redis](#Redis)
+6. [S3](#S3)
 
-1. [DynamoDB](#DynamoDB)
-2. [Redis](#Redis)
-3. [S3](#S3)
+### Akka Streams
+
+### Common _(Not a connector)_
+
+### Parquet
 
 ### DynamoDB
 _Amazon DynamoDB_ is a key-value and document database that performs at any scale in a single-digit millisecond.
