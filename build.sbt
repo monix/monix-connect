@@ -28,16 +28,6 @@ lazy val common = (project in file("common"))
   )
   .enablePlugins(JavaAppPackaging)
 
-lazy val s3 = (project in file("s3"))
-  .configs(IntegrationTest)
-  .settings(Defaults.itSettings)
-  .settings(
-    name := "monix-s3",
-    libraryDependencies ++= Dependencies.S3,
-    version := "0.0.1"
-  )
-  .enablePlugins(JavaAppPackaging, DockerPlugin)
-
 lazy val dynamoDB = (project in file("dynamodb"))
   .configs(IntegrationTest)
   .settings(Defaults.itSettings)
@@ -48,6 +38,27 @@ lazy val dynamoDB = (project in file("dynamodb"))
   )
   .enablePlugins(JavaAppPackaging, DockerPlugin)
   .dependsOn(common)
+
+lazy val parquet = (project in file("parquet"))
+  .configs(IntegrationTest)
+  .settings(Defaults.itSettings)
+  .settings(
+    name := "monix-parquet",
+    libraryDependencies ++= Dependencies.Parquet,
+    version := "0.0.1"
+  )
+  .enablePlugins(JavaAppPackaging, DockerPlugin)
+  .dependsOn(akka, common)
+
+lazy val s3 = (project in file("s3"))
+  .configs(IntegrationTest)
+  .settings(Defaults.itSettings)
+  .settings(
+    name := "monix-s3",
+    libraryDependencies ++= Dependencies.S3,
+    version := "0.0.1"
+  )
+  .enablePlugins(JavaAppPackaging, DockerPlugin)
 
 lazy val redis = (project in file("redis"))
   .configs(IntegrationTest)

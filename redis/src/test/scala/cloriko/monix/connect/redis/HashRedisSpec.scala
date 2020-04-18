@@ -1,4 +1,4 @@
-package scalona.monix.connect.redis
+package cloriko.monix.connect.redis
 
 import io.lettuce.core.KeyValue
 import io.lettuce.core.api.StatefulRedisConnection

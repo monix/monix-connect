@@ -1,4 +1,4 @@
-package scalona.monix.connect.redis
+package cloriko.monix.connect.redis
 
 import java.util.Date
 
@@ -11,7 +11,7 @@ import scala.jdk.CollectionConverters._
 import scala.jdk.FutureConverters._
 import concurrent.Future
 
-object Redis {
+object  Redis {
 
   implicit val redisFutureTaskLike = new TaskLike[RedisFuture] {
     def apply[A](rf: RedisFuture[A]): Task[A] =

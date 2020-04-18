@@ -1,5 +1,6 @@
 package cloriko.monix.connect.akka
 
+import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import monix.eval.Task
@@ -34,5 +35,7 @@ object AkkaStreams {
     }
 
   }
+
+  lazy val sharedActorSystem = ActorSystem("Monix-Connect")
 
 }
