@@ -7,6 +7,7 @@ package cloriko.monix.connect.parquet
 import java.io.File
 
 import monix.eval.Task
+import monix.execution.Scheduler
 import monix.reactive.{Consumer, Observable}
 import org.apache.avro.generic.GenericRecord
 import org.apache.parquet.hadoop.ParquetWriter
@@ -15,9 +16,9 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import monix.execution.Scheduler.Implicits.global
 import org.scalatest.BeforeAndAfterAll
 
-class ParquetConsumerSpec extends AnyWordSpecLike with Matchers with AvroParquetFixture with BeforeAndAfterAll {
+class ParquetSpec extends AnyWordSpecLike with Matchers with AvroParquetFixture with BeforeAndAfterAll {
 
-  s"${AvroParquet}" should {
+  s"${Parquet}" should {
 
     "write avro records in parquet" in {
       //given
@@ -25,12 +26,11 @@ class ParquetConsumerSpec extends AnyWordSpecLike with Matchers with AvroParquet
       val file: String = genFile()
       val records: List[GenericRecord] = genUsersInfo(n).sample.get.map(userInfoToRecord)
       val w: ParquetWriter[GenericRecord] = parquetWriter(file, conf, schema)
-      val consumer: Consumer[GenericRecord, Task[GenericRecord]] = AvroParquet.writer(w)
 
       //when
       Observable
         .fromIterable(records)
-        .consumeWith(consumer)
+        .consumeWith(Parquet.writer(w))
         .runSyncUnsafe()
         .runSyncUnsafe()
 
@@ -48,12 +48,12 @@ class ParquetConsumerSpec extends AnyWordSpecLike with Matchers with AvroParquet
 
       Observable
         .fromIterable(records)
-        .consumeWith(AvroParquet.writer(parquetWriter(file, conf, schema)))
+        .consumeWith(Parquet.writer(parquetWriter(file, conf, schema)))
         .runSyncUnsafe()
         .runSyncUnsafe()
 
       //when
-      val result: List[GenericRecord] = AvroParquet.reader(parquetReader(file, conf)).toListL.runSyncUnsafe()
+      val result: List[GenericRecord] = Parquet.reader(parquetReader(file, conf)).toListL.runSyncUnsafe()
       result.length shouldEqual n
       result should contain theSameElementsAs records
     }
