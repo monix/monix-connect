@@ -9,7 +9,8 @@ import software.amazon.awssdk.regions.Region.AWS_GLOBAL
 object AsyncClient {
   def apply(): S3AsyncClient = {
     val s3Config: S3Config = S3AppConfig.load()
-    S3AsyncClient.builder()
+    S3AsyncClient
+      .builder()
       .credentialsProvider(s3Config.awsCredentials)
       .region(AWS_GLOBAL)
       .endpointOverride(URI.create(s3Config.endPoint))

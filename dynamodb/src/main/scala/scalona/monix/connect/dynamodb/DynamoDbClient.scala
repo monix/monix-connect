@@ -9,7 +9,8 @@ import software.amazon.awssdk.regions.Region
 object DynamoDbClient {
   def apply(): DynamoDbAsyncClient = {
     val config: DynamoDbConfig = DynamoAppConfig.load()
-    DynamoDbAsyncClient.builder()
+    DynamoDbAsyncClient
+      .builder()
       .credentialsProvider(config.awsCredProvider)
       .endpointOverride(new URI(config.endPoint))
       .region(Region.AWS_GLOBAL)

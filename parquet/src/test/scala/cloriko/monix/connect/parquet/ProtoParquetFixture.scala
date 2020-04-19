@@ -14,7 +14,7 @@ import org.scalacheck.Gen
 trait ProtoParquetFixture extends ParquetFixture {
 
   val genProtoDoc: Gen[ProtoDoc] = for {
-    id <- Gen.choose(1, 10000)
+    id   <- Gen.choose(1, 10000)
     name <- Gen.alphaLowerStr
   } yield {
     ProtoDoc.newBuilder().setId(id).setName(name).build()

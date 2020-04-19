@@ -2,11 +2,11 @@ package scalona.monix.connect.dynamodb
 
 import java.util.concurrent.CompletableFuture
 
-import software.amazon.awssdk.services.dynamodb.model.{BatchGetItemRequest, CreateTableRequest, CreateTableResponse, DeleteTableResponse, PutItemResponse}
+import software.amazon.awssdk.services.dynamodb.model.{ BatchGetItemRequest, CreateTableRequest, CreateTableResponse, DeleteTableResponse, PutItemResponse }
 //import com.amazonaws.services.dynamodbv2.model.{BatchGetItemRequest, BatchGetItemResult, BatchWriteItemRequest, BatchWriteItemResult}
 //import com.amazonaws.{AmazonWebServiceRequest, AmazonWebServiceResponse, ResponseMetadata}
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
-import software.amazon.awssdk.services.dynamodb.model.{ PutItemRequest, DeleteTableRequest, DeleteTableResponse, BatchGetItemResponse, BatchWriteItemRequest, BatchWriteItemResponse, DynamoDbRequest, DynamoDbResponse, GetItemRequest, GetItemResponse }
+import software.amazon.awssdk.services.dynamodb.model.{ BatchGetItemResponse, BatchWriteItemRequest, BatchWriteItemResponse, DeleteTableRequest, DeleteTableResponse, DynamoDbRequest, DynamoDbResponse, GetItemRequest, GetItemResponse, PutItemRequest }
 
 sealed trait DynamoDbOp[In <: DynamoDbRequest, Out <: DynamoDbResponse] {
   def execute(dynamoDbRequest: In)(implicit client: DynamoDbAsyncClient): CompletableFuture[Out]
@@ -29,15 +29,13 @@ object DynamoDbOp {
   }
 
   implicit val putItemOp = new DynamoDbOp[PutItemRequest, PutItemResponse] {
-    def execute(request: PutItemRequest)(
-      implicit client: DynamoDbAsyncClient): CompletableFuture[PutItemResponse] = {
+    def execute(request: PutItemRequest)(implicit client: DynamoDbAsyncClient): CompletableFuture[PutItemResponse] = {
       client.putItem(request)
     }
   }
 
   implicit val getItemOp = new DynamoDbOp[GetItemRequest, GetItemResponse] {
-    def execute(request: GetItemRequest)(
-      implicit client: DynamoDbAsyncClient): CompletableFuture[GetItemResponse] = {
+    def execute(request: GetItemRequest)(implicit client: DynamoDbAsyncClient): CompletableFuture[GetItemResponse] = {
       client.getItem(request)
     }
   }

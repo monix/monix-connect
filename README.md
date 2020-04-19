@@ -1,11 +1,13 @@
-# Monix Connect
- 
-The Monix Connect is an open source initiative to implement stream integrations,
-components and helpers for [Monix](https://monix.io/). The usage of these connectors would 
- reduce the boilerplate code, help the developer to easily integrate a different set of data sources 
- with the monix ecosystem, making the developers to reduce their learning curve on building projects that 
-requires those components.
+# Monix Connect        [![travis-badge][]][travis] 
 
+ [travis]:                https://travis-ci.com/Cloriko/monix-connect
+ [travis-badge]:          https://travis-ci.com/Cloriko/monix-connect.svg?branch=master
+ 
+Monix Connect is an open source initiative to implement stream integrations for [Monix](https://monix.io/).
+ A connector describes the connection between the application and a specific data point, which could be a file, a database or any system in which the appication 
+ can interact by sending or receiving information. Therefore, the aim of this project is to catch the most common
+  connections that users could need when developing reactive applications with Monix, these would basically reduce boilerplate code and furthermore, will let the users to greatly save time and complexity in their implementing projects.
+  
 See below the list of available [connectors](#Connectors).  
 
 ## Connectors

@@ -5,17 +5,17 @@ import java.util.concurrent.CompletableFuture
 
 import monix.eval.Task
 import monix.reactive.Observable
-import software.amazon.awssdk.core.async.{AsyncResponseTransformer, SdkPublisher}
+import software.amazon.awssdk.core.async.{ AsyncResponseTransformer, SdkPublisher }
 import software.amazon.awssdk.services.s3.model.GetObjectResponse
 
-private[s3] class MonixS3AsyncResponseTransformer extends AsyncResponseTransformer[GetObjectResponse, Task[ByteBuffer]] {
+private[s3] class MonixS3AsyncResponseTransformer
+  extends AsyncResponseTransformer[GetObjectResponse, Task[ByteBuffer]] {
   val future = new CompletableFuture[Task[ByteBuffer]]()
   override def prepare(): CompletableFuture[Task[ByteBuffer]] = future
 
   override def onResponse(response: GetObjectResponse): Unit = ()
 
-  override def onStream(publisher: SdkPublisher[ByteBuffer]): Unit =
-  {
+  override def onStream(publisher: SdkPublisher[ByteBuffer]): Unit = {
     future.complete(Observable.fromReactivePublisher(publisher).headL)
     ()
   }

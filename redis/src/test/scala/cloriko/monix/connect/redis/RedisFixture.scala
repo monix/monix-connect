@@ -1,6 +1,6 @@
 package cloriko.monix.connect.redis
 
-import io.lettuce.core.{KeyValue, RedisFuture}
+import io.lettuce.core.{ KeyValue, RedisFuture }
 import io.lettuce.core.api.async.RedisAsyncCommands
 import io.lettuce.core.api.reactive.RedisReactiveCommands
 import org.scalacheck.Gen
