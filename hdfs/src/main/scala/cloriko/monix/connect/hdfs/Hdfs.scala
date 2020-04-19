@@ -8,7 +8,7 @@ import org.apache.hadoop.io.compress.CompressionCodec
 
 object Hdfs {
 
-  def writer(fs: FileSystem, path: Path)(implicit scheduler: Scheduler): Consumer[Array[Byte], Task[Int]] = {
+  def write(fs: FileSystem, path: Path)(implicit scheduler: Scheduler): Consumer[Array[Byte], Task[Int]] = {
     new HdfsSubscriber(fs, path)
   }
 

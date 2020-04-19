@@ -11,19 +11,24 @@ Monix Connect is an open source initiative to implement stream integrations for 
 See below the list of available [connectors](#Connectors).  
 
 ---
+
 ## Connectors
 1. [Akka](#Akka)
-2. [Common](#Akka)
-3. [Parquet](#Parquet)
+2. [Parquet](#Parquet)
+3. [Hdfs](#Hdfs)
 4. [DynamoDB](#DynamoDB)
 5. [Redis](#Redis)
 6. [S3](#S3)
+2. [Common](#Common)
 
 ---
 ### Akka
 This module makes interoperability with akka streams easier by simply defining implicit extended classes for reactive stream conversions between akka and monix.
+
 These implicit extended classes needs to be imported from: `cloriko.monix.connect.akka.Implicits._`.
-Therefore the signatures `.asObservable` and `.asConsumer` would be available from the `Source`, `Flow`, and `Sink`.
+Therefore, under the scope of the import the signatures `.asObservable` and `.asConsumer` would be available from the `Source`, `Flow`, and `Sink`.
+The two methods does not need to be typed as it has been done explicitly in the example table, the compiler will infer it for you.
+
 The below table shows these conversions in more detail:  
 
   | _Akka_ | _Monix_ | _Using_ |
@@ -38,6 +43,46 @@ from [Alpakka](https://doc.akka.io/docs/alpakka/current/index.html) or any other
 ---
 ### Parquet
 
+The is connector provides with stream integrations for reading and writing into and from parquet files in the _local system_, _hdfs_ or _s3_.
+ 
+ These two signatures depends on a implementation of the _apache parquet_  `ParquetWriter[T]` and `ParquetReader[T]` to be passed.
+
+The below example shows how to construct a parquet consumer that expects _Protobuf_ messages and pushes 
+them into the same parquet file of the specified location.
+```scala
+import cloriko.monix.connect.parquet.Parquet
+import org.apache.parquet.avro.AvroParquetReader
+import org.apache.parquet.hadoop.ParquetWriter
+import org.apache.hadoop.conf.Configuration
+
+val file: String = "/invented/file/path"
+val conf = new Configuration()
+val messages: List[ProtoMessage] 
+val writeSupport = new ProtoWriteSupport[ProtoMessage](classOf[ProtoMessage])
+val w = new ParquetWriter[ProtoMessage](new Path(file), writeSupport)
+Observable
+ .fromIterable(messages)
+ .consumeWith(Parquet.writer(w))
+//ProtoMessage implements [[com.google.protobuf.Message]]
+```
+
+On the other hand, the following code shows how to pull _Avro_ records from a parquet file:
+
+```scala
+import cloriko.monix.connect.parquet.Parquet
+import org.apache.parquet.avro.AvroParquetReader
+import org.apache.parquet.hadoop.util.HadoopInputFile
+
+val r: ParquetReader[AvroRecord] = {
+ AvroParquetReader
+  .builder[AvroRecord](HadoopInputFile.fromPath(new Path(file), conf))
+  .withConf(conf)
+  .build()
+}
+
+val ob: Observable[AvroRecord] = Parquet.reader(r)
+//AvroRecord implements [[org.apache.avro.generic.GenericRecord]]
+```
 ---
 ### DynamoDB
 _Amazon DynamoDB_ is a key-value and document database that performs at any scale in a single-digit millisecond.
@@ -53,7 +98,7 @@ See below an example of transforming and consuming DynamoDb operations with moni
 Required import: `scalona.monix.connect.dynamodb.DynamoDb`
  
 Transformer:
-```
+```scala
 Observable
 .fromIterable(dynamoDbRequests) 
 .transform(DynamoDb.transofrmer()) //for each element transforms the request operations into its respective response 
@@ -62,12 +107,19 @@ Observable
 
 Consumer: 
 
-```
+```scala
 Observable
 .fromIterable(dynamoDbRequests)
-.consumeWith(DynamoDb.consumer()) //a safe and syncronous consumer that executes each dynamodb request passed  
-//the materialized value would be Task[DynamoDBResponse]
+.consumeWith(DynamoDb.consumer()) //a safe and syncronous consumer that executes dynamodb requests  
+//the materialized value would be of type Task[DynamoDBResponse]
 ```
+---
+### Hdfs
+A connector that allows to write and read from files of any size stored in [HDFS](https://hadoop.apache.org/docs/r1.2.1/hdfs_design.html).
+
+The methods to perform these operations are exposed under the scala object ```cloriko.monix.connect.hdfs.Hdfs```, in which
+it has been constructed on top of the _apache hadoop_ api.  
+
 ---
 ### Redis
 _Redis_ is an open source, in-memory data structure store, used as a database, cache and message broker providing high availability, scalability and a outstanding performance. 
@@ -105,5 +157,3 @@ Amazon Simple Storage Service (S3) is an object storage service that offers indu
 It allows data storage of any amount of data, commonly used as a Data Lake for Big Data applications.
 
 ---
-_(Not a connector)_
-### Common 

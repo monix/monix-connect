@@ -26,7 +26,7 @@ class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with
     "write and read back a single chunk of bytes" in new HdfsFixture {
       //given
       val path: Path = new Path(genFileName.sample.get)
-      val hdfsWriter: Consumer[Array[Byte], Task[Int]] = Hdfs.writer(fs, path)
+      val hdfsWriter: Consumer[Array[Byte], Task[Int]] = Hdfs.write(fs, path)
       val chunk: Array[Byte] = genChunk.sample.get
 
       //when

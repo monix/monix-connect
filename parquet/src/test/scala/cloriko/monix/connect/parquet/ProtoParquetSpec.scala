@@ -65,7 +65,7 @@ class ProtoParquetSpec
     "read from parquet file that at most have one record" in {
       //given
       val records: ProtoDoc = genProtoDoc.sample.get
-      val file = genFile()
+      val file: String = genFile()
       Observable
         .pure(records)
         .consumeWith(Parquet.writer(protoParquetWriter(file)))
