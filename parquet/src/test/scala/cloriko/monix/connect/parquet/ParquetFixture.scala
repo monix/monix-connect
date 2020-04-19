@@ -4,14 +4,8 @@
 
 package cloriko.monix.connect.parquet
 
-import cloriko.monix.connect.parquet.tes.User.ProtoUser
-import org.apache.avro.Schema
-import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
-import org.apache.parquet.avro.{AvroParquetReader, AvroParquetWriter, AvroReadSupport}
-import org.apache.parquet.hadoop.util.HadoopInputFile
-import org.apache.parquet.hadoop.{ParquetReader, ParquetWriter}
+import org.apache.parquet.hadoop.ParquetReader
 import org.scalacheck.Gen
 
 trait ParquetFixture {

@@ -28,7 +28,6 @@ class ParquetSubscriber[T](parquetWriter: ParquetWriter[T]) extends Consumer.Syn
 
       override def onNext(record: T): Ack = {
         parquetWriter.write(record)
-
         monix.execution.Ack.Continue
       }
     }

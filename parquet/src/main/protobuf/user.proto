@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package cloriko.monix.connect.parquet.tes;
 
-message ProtoUser {
+message ProtoDoc {
     int32 id = 1;
     string name = 2;
 }
