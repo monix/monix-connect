@@ -26,7 +26,7 @@ class HdfsSpec
   private val conf = new Configuration()
   conf.set("fs.default.name", s"hdfs://localhost:$port")
   val fs: FileSystem = FileSystem.get(conf)
-  
+
   s"${Hdfs}" should {
     "write and read back a single chunk of bytes" in new HdfsFixture {
       //given
@@ -36,7 +36,7 @@ class HdfsSpec
 
       //when
       val offset = Observable
-        .fromIterable(List(chunk))
+        .pure(chunk)
         .consumeWith(hdfsWriter)
         .runSyncUnsafe()
         .runSyncUnsafe()
