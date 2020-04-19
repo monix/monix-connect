@@ -1,4 +1,4 @@
-import org.scalafmt.sbt.ScalafmtPlugin.autoImport._
+//libraryDependencies += "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"
 
 lazy val root = (project in file("."))
   .settings(
@@ -36,9 +36,7 @@ lazy val dynamoDB = (project in file("dynamodb"))
   .settings(
     name := "monix-dynamodb",
     libraryDependencies ++= Dependencies.DynamoDb,
-    version := "0.0.1",
-    scalafmtOnCompile := true,
-  )
+    version := "0.0.1")
   .enablePlugins(JavaAppPackaging, DockerPlugin)
   .dependsOn(common)
 
@@ -48,7 +46,14 @@ lazy val parquet = (project in file("parquet"))
   .settings(
     name := "monix-parquet",
     libraryDependencies ++= Dependencies.Parquet,
-    version := "0.0.1"
+    version := "0.0.1",
+    PB.targets in Compile := Seq(
+      scalapb.gen() -> (sourceManaged in Compile).value
+    ),
+    PB.targets in Compile := Seq(
+      scalapb.gen(javaConversions=true) -> (sourceManaged in Compile).value,
+      PB.gens.java -> (sourceManaged in Compile).value
+    )
   )
   .enablePlugins(JavaAppPackaging, DockerPlugin)
 

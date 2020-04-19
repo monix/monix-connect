@@ -8,11 +8,11 @@ import org.apache.avro.generic.GenericRecord
 
 object Parquet {
 
-  def writer[T <: GenericRecord](writer: ParquetWriter[T])(implicit scheduler: Scheduler): Consumer[T, Task[Unit]] = {
+  def writer[T](writer: ParquetWriter[T])(implicit scheduler: Scheduler): Consumer[T, Task[Unit]] = {
     new ParquetSubscriber[T](writer)
   }
 
-  def reader[T <: GenericRecord](reader: ParquetReader[T])(implicit scheduler: Scheduler): Observable[T] = {
+  def reader[T](reader: ParquetReader[T])(implicit scheduler: Scheduler): Observable[T] = {
     ParquetPublisher(reader).create
   }
 

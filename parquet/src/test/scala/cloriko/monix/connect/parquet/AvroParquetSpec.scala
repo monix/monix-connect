@@ -6,9 +6,7 @@ package cloriko.monix.connect.parquet
 
 import java.io.File
 
-import monix.eval.Task
-import monix.execution.Scheduler
-import monix.reactive.{Consumer, Observable}
+import monix.reactive.Observable
 import org.apache.avro.generic.GenericRecord
 import org.apache.parquet.hadoop.ParquetWriter
 import org.scalatest.matchers.should.Matchers
@@ -16,7 +14,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import monix.execution.Scheduler.Implicits.global
 import org.scalatest.BeforeAndAfterAll
 
-class ParquetSpec extends AnyWordSpecLike with Matchers with AvroParquetFixture with BeforeAndAfterAll {
+class AvroParquetSpec extends AnyWordSpecLike with Matchers with AvroParquetFixture with BeforeAndAfterAll {
 
   s"${Parquet}" should {
 
@@ -24,7 +22,7 @@ class ParquetSpec extends AnyWordSpecLike with Matchers with AvroParquetFixture 
       //given
       val n: Int = 2
       val file: String = genFile()
-      val records: List[GenericRecord] = genUsersInfo(n).sample.get.map(userInfoToRecord)
+      val records: List[GenericRecord] = genAvroUsers(n).sample.get.map(avroDocToRecord)
       val w: ParquetWriter[GenericRecord] = parquetWriter(file, conf, schema)
 
       //when
@@ -35,17 +33,16 @@ class ParquetSpec extends AnyWordSpecLike with Matchers with AvroParquetFixture 
         .runSyncUnsafe()
 
       //then
-      val parquetContent: List[GenericRecord] = fromParquet[GenericRecord](file, conf)
+      val parquetContent: List[GenericRecord] = fromParquet[GenericRecord](file, conf, avroParquetReader(file, conf))
       parquetContent.length shouldEqual n
       parquetContent should contain theSameElementsAs records
     }
 
     "read from parquet file" in {
       //given
-      val n: Int = 4
-      val records: List[GenericRecord] = genUsersInfo(n).sample.get.map(userInfoToRecord)
+      val n: Int = 1
+      val records: List[GenericRecord] = genAvroUsers(n).sample.get.map(avroDocToRecord)
       val file = genFile()
-
       Observable
         .fromIterable(records)
         .consumeWith(Parquet.writer(parquetWriter(file, conf, schema)))
@@ -53,7 +50,9 @@ class ParquetSpec extends AnyWordSpecLike with Matchers with AvroParquetFixture 
         .runSyncUnsafe()
 
       //when
-      val result: List[GenericRecord] = Parquet.reader(parquetReader(file, conf)).toListL.runSyncUnsafe()
+      val result: List[GenericRecord] = Parquet.reader(avroParquetReader(file, conf)).toListL.runSyncUnsafe()
+
+      //then
       result.length shouldEqual n
       result should contain theSameElementsAs records
     }
