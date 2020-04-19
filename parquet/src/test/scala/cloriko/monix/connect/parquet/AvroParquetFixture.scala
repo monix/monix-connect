@@ -22,7 +22,7 @@ trait AvroParquetFixture extends ParquetFixture {
   conf.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, true)
 
   val genAvroUser: Gen[AvroDoc] = for {
-    id <- Gen.choose(1, 10000)
+    id   <- Gen.choose(1, 10000)
     name <- Gen.alphaLowerStr
   } yield { AvroDoc(id, name) }
 

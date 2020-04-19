@@ -15,7 +15,8 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
-class ProtoParquetSpec extends AnyWordSpecLike with Matchers with ProtoParquetFixture with AvroParquetFixture with BeforeAndAfterAll {
+class ProtoParquetSpec
+  extends AnyWordSpecLike with Matchers with ProtoParquetFixture with AvroParquetFixture with BeforeAndAfterAll {
 
   s"${Parquet}" should {
 
@@ -56,7 +57,8 @@ class ProtoParquetSpec extends AnyWordSpecLike with Matchers with ProtoParquetFi
         .runSyncUnsafe()
 
       //then
-      val avroDocs: List[AvroDoc] = fromParquet[GenericRecord](file, conf, avroParquetReader(file, conf)).map(recordToAvroDoc)
+      val avroDocs: List[AvroDoc] =
+        fromParquet[GenericRecord](file, conf, avroParquetReader(file, conf)).map(recordToAvroDoc)
       avroDocs.equiv(messages) shouldBe true
     }
 

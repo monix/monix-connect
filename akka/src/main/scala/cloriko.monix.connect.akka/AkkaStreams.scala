@@ -2,12 +2,12 @@ package cloriko.monix.connect.akka
 
 import akka.actor.ActorSystem
 import akka.stream.Materializer
-import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
+import akka.stream.scaladsl.{ Flow, Keep, Sink, Source }
 import monix.eval.Task
 import monix.execution.Scheduler
 import monix.execution.cancelables.SingleAssignCancelable
-import monix.reactive.{Consumer, Observable, Observer}
-import org.reactivestreams.{Publisher, Subscriber}
+import monix.reactive.{ Consumer, Observable, Observer }
+import org.reactivestreams.{ Publisher, Subscriber }
 
 import scala.concurrent.Future
 

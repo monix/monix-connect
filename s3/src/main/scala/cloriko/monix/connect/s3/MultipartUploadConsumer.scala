@@ -1,13 +1,13 @@
 package cloriko.monix.connect.s3
 
 import monix.eval.Task
-import monix.execution.{Ack, Callback, Scheduler}
+import monix.execution.{ Ack, Callback, Scheduler }
 import monix.execution.cancelables.AssignableCancelable
 import monix.reactive.Consumer
 import monix.reactive.observers.Subscriber
 import software.amazon.awssdk.core.async.AsyncRequestBody
 import software.amazon.awssdk.services.s3.S3AsyncClient
-import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadResponse, CompletedPart, CreateMultipartUploadRequest, UploadPartRequest}
+import software.amazon.awssdk.services.s3.model.{ CompleteMultipartUploadResponse, CompletedPart, CreateMultipartUploadRequest, UploadPartRequest }
 
 import scala.jdk.FutureConverters._
 

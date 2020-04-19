@@ -4,21 +4,16 @@ import java.io.File
 
 import monix.eval.Task
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.fs.{ FileSystem, Path }
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
-import org.apache.hadoop.hdfs.{HdfsConfiguration, MiniDFSCluster}
-import monix.reactive.{Consumer, Observable}
+import org.scalatest.{ BeforeAndAfterAll, BeforeAndAfterEach }
+import org.apache.hadoop.hdfs.{ HdfsConfiguration, MiniDFSCluster }
+import monix.reactive.{ Consumer, Observable }
 import org.scalatest.concurrent.ScalaFutures
 import monix.execution.Scheduler.Implicits.global
 
-class HdfsSpec
-  extends AnyWordSpecLike
-    with Matchers
-    with BeforeAndAfterAll
-    with BeforeAndAfterEach
-    with ScalaFutures {
+class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with ScalaFutures {
 
   private var miniHdfs: MiniDFSCluster = _
   private val dir = "./temp/hadoop"
@@ -53,14 +48,12 @@ class HdfsSpec
     val baseDir = new File(dir, "test")
     val miniDfsConf = new HdfsConfiguration
     miniDfsConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, baseDir.getAbsolutePath)
-    miniHdfs = new MiniDFSCluster
-    .Builder(miniDfsConf)
+    miniHdfs = new MiniDFSCluster.Builder(miniDfsConf)
       .nameNodePort(port)
       .format(true)
       .build()
     miniHdfs.waitClusterUp()
   }
-
 
   override protected def afterAll(): Unit = {
     fs.close()

@@ -7,7 +7,7 @@ import monix.execution.Scheduler
 import monix.eval.Task
 import software.amazon.awssdk.core.async.AsyncRequestBody
 import software.amazon.awssdk.services.s3.S3AsyncClient
-import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadResponse, CreateBucketResponse, DeleteBucketResponse, DeleteObjectResponse, GetObjectRequest, ListObjectsResponse, ListObjectsV2Response, PutObjectRequest, PutObjectResponse}
+import software.amazon.awssdk.services.s3.model.{ CompleteMultipartUploadResponse, CreateBucketResponse, DeleteBucketResponse, DeleteObjectResponse, GetObjectRequest, ListObjectsResponse, ListObjectsV2Response, PutObjectRequest, PutObjectResponse }
 
 import scala.jdk.FutureConverters._
 
