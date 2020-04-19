@@ -21,8 +21,9 @@ object Dependencies {
     val Mockito = "1.13.1"
     val Cats = "2.0.0"
 
-    val AkkaAvroParquet = "2.0.0-RC2"
     val AkkaStreams = "2.6.4"
+
+    val Hadoop = "3.1.1"
   }
 
   private val CommonTestDependencies = Seq(
@@ -55,6 +56,16 @@ object Dependencies {
 
   val DynamoDb = DynamoDbDependencies ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(
     _                                                                 % IntegrationTest)
+
+  private val HdfsDependecies = Seq(
+    "io.monix" %% "monix-reactive"          % DependencyVersions.Monix,
+    "org.apache.hadoop" % "hadoop-client" % DependencyVersions.Hadoop,
+    "org.apache.hadoop" % "hadoop-common" % DependencyVersions.Hadoop % Test classifier "tests",
+    "org.apache.hadoop" % "hadoop-hdfs" % DependencyVersions.Hadoop % Test classifier "tests",
+    "org.apache.hadoop" % "hadoop-minicluster" % DependencyVersions.Hadoop
+  )
+
+  val Hdfs = HdfsDependecies ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(_ % IntegrationTest)
 
   private val ParquetDependecies = Seq(
     "io.monix" %% "monix-reactive"          % DependencyVersions.Monix,

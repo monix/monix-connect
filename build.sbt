@@ -40,6 +40,15 @@ lazy val dynamoDB = (project in file("dynamodb"))
   .enablePlugins(JavaAppPackaging, DockerPlugin)
   .dependsOn(common)
 
+lazy val hdfs = (project in file("hdfs"))
+  .configs(IntegrationTest)
+  .settings(Defaults.itSettings)
+  .settings(
+    name := "monix-hdfs",
+    libraryDependencies ++= Dependencies.Hdfs,
+    version := "0.0.1"
+  )
+
 lazy val parquet = (project in file("parquet"))
   .configs(IntegrationTest)
   .settings(Defaults.itSettings)

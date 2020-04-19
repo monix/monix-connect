@@ -21,22 +21,21 @@ class ProtoParquetSpec extends AnyWordSpecLike with Matchers with ProtoParquetFi
 
     "write exactly a single protobuf message in parquet file" in {
       //given
-      val n: Int = 1
       val file: String = genFile()
-      val messages: List[ProtoDoc] = genProtoDocs(n).sample.get
+      val messages: ProtoDoc = genProtoDoc.sample.get
       val writer: ParquetWriter[ProtoDoc] = protoParquetWriter(file)
 
       //when
       Observable
-        .fromIterable(messages)
+        .pure(messages)
         .consumeWith(Parquet.writer(writer))
         .runSyncUnsafe()
         .runSyncUnsafe()
 
       //then
       val parquetContent: List[ProtoDoc.Builder] = fromProtoParquet(file, conf)
-      parquetContent.length shouldEqual n
-      parquetContent.map(_.build()) should contain theSameElementsAs messages
+      parquetContent.length shouldEqual 1
+      parquetContent.map(_.build()) should contain theSameElementsAs List(messages)
       //parquetContent.map(_.getId()) should contain theSameElementsAs messages //this would fail if the proto parquet reader would have been instanciated as ProtoDoc
       //this tests only passes when there is only one element in the file,
       // since the proto parquet reader is broken and only will return the builder of the last element in the file
@@ -63,13 +62,10 @@ class ProtoParquetSpec extends AnyWordSpecLike with Matchers with ProtoParquetFi
 
     "read from parquet file that at most have one record" in {
       //given
-      val n: Int = 1
-      val records: List[ProtoDoc] = genProtoDocs(n).sample.get
-      println("Records: " + records.mkString(", "))
-
+      val records: ProtoDoc = genProtoDoc.sample.get
       val file = genFile()
       Observable
-        .fromIterable(records)
+        .pure(records)
         .consumeWith(Parquet.writer(protoParquetWriter(file)))
         .runSyncUnsafe()
         .runSyncUnsafe()
@@ -78,8 +74,8 @@ class ProtoParquetSpec extends AnyWordSpecLike with Matchers with ProtoParquetFi
       val l: List[ProtoDoc.Builder] = Parquet.reader(protoParquetReader(file, conf)).toListL.runSyncUnsafe()
 
       //then
-      l.length shouldEqual n
-      l.map(_.build()) should contain theSameElementsAs records
+      l.length shouldEqual 1
+      l.map(_.build()) should contain theSameElementsAs List(records)
     }
   }
 
