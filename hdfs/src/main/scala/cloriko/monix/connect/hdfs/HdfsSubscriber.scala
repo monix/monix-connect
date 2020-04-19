@@ -6,6 +6,7 @@ import monix.execution.cancelables.AssignableCancelable
 import monix.reactive.Consumer
 import monix.reactive.observers.Subscriber
 import org.apache.hadoop.fs.{ FileSystem, Path }
+
 class HdfsSubscriber(fs: FileSystem, path: Path) extends Consumer.Sync[Array[Byte], Task[Int]] {
 
   def createSubscriber(
