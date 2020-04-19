@@ -1,6 +1,6 @@
-# Monix Connect        [![travis-badge][]][travis] 
+# - Monix Connect - [![travis-badge][]][travis] 
 
- [travis]:                https://travis-ci.com/Cloriko/monix-connect
+ [travis]:                https://travis-ci.com/github/Cloriko/monix-connect
  [travis-badge]:          https://travis-ci.com/Cloriko/monix-connect.svg?branch=master
  
 Monix Connect is an open source initiative to implement stream integrations for [Monix](https://monix.io/).
@@ -10,20 +10,35 @@ Monix Connect is an open source initiative to implement stream integrations for 
   
 See below the list of available [connectors](#Connectors).  
 
+---
 ## Connectors
-1. [Akka Streams](#Akka Streams)
+1. [Akka](#Akka)
 2. [Common](#Akka)
 3. [Parquet](#Parquet)
 4. [DynamoDB](#DynamoDB)
 5. [Redis](#Redis)
 6. [S3](#S3)
 
-### Akka Streams
+---
+### Akka
+This module makes interoperability with akka streams easier by simply defining implicit extended classes for reactive stream conversions between akka and monix.
+These implicit extended classes needs to be imported from: `cloriko.monix.connect.akka.Implicits._`.
+Therefore the signatures `.asObservable` and `.asConsumer` would be available from the `Source`, `Flow`, and `Sink`.
+The below table shows these conversions in more detail:  
 
-### Common _(Not a connector)_
+  | _Akka_ | _Monix_ | _Using_ |
+  | :---: | :---: | :---: | 
+  | _Source[+In, +Mat]_ | _Observable[+In]_ | `source.asObservable[In]` |
+  | _Flow[+In, -Out,+Mat]_ | _Consumer[+In, Task[-Out]]_ | `flow.asConsumer[Out]` |
+  | _Sink[-In, +Out <: Future[Mat]]_ | _Consumer[In, Task[+Mat]_ | `sink.asConsumer[Mat]` |
 
+Notice that this interoperability would allow the Monix user to take advantage of the already pre built integrations 
+from [Alpakka](https://doc.akka.io/docs/alpakka/current/index.html) or any other Akka Streams implementation.
+
+---
 ### Parquet
 
+---
 ### DynamoDB
 _Amazon DynamoDB_ is a key-value and document database that performs at any scale in a single-digit millisecond.
 In which of the world's fastest growing enterprises depend on it to support their mission-critical workloads.
@@ -53,7 +68,7 @@ Observable
 .consumeWith(DynamoDb.consumer()) //a safe and syncronous consumer that executes each dynamodb request passed  
 //the materialized value would be Task[DynamoDBResponse]
 ```
-
+---
 ### Redis
 _Redis_ is an open source, in-memory data structure store, used as a database, cache and message broker providing high availability, scalability and a outstanding performance. 
 It supports data structures such as string, hashes, lists, sets, sorted sets with range queries, streams and more.
@@ -83,8 +98,12 @@ needed for operating with the lettuce _reactive_ and _async_ apis that returns t
   | __hmget__ | _RedisFuture<java.utli.List<KeyValue<K, V>>>_ | _Flux<KeyValue<K, V>>_ | _Observable[KeyValue[K, V]_ |
   | __...__ |  | |  |
 
+
+---
 ### S3
 Amazon Simple Storage Service (S3) is an object storage service that offers industry leading scalability, availability, security and performance.
 It allows data storage of any amount of data, commonly used as a Data Lake for Big Data applications.
 
-
+---
+_(Not a connector)_
+### Common 
