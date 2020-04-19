@@ -6,7 +6,7 @@ package cloriko.monix.connect.parquet
 
 import java.io.File
 
-import cloriko.monix.connect.parquet.tes.User.ProtoUser
+import cloriko.monix.connect.parquet.test.User.ProtoDoc
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
 import org.apache.avro.generic.GenericRecord
@@ -23,8 +23,8 @@ class ProtoParquetSpec extends AnyWordSpecLike with Matchers with ProtoParquetFi
       //given
       val n: Int = 1
       val file: String = genFile()
-      val messages: List[ProtoUser] = genProtoUsers(n).sample.get
-      val writer: ParquetWriter[ProtoUser] = protoParquetWriter(file)
+      val messages: List[ProtoDoc] = genProtoDocs(n).sample.get
+      val writer: ParquetWriter[ProtoDoc] = protoParquetWriter(file)
 
       //when
       Observable
@@ -34,7 +34,7 @@ class ProtoParquetSpec extends AnyWordSpecLike with Matchers with ProtoParquetFi
         .runSyncUnsafe()
 
       //then
-      val parquetContent: List[ProtoUser.Builder] = fromProtoParquet(file, conf)
+      val parquetContent: List[ProtoDoc.Builder] = fromProtoParquet(file, conf)
       parquetContent.length shouldEqual n
       parquetContent.map(_.build()) should contain theSameElementsAs messages
       //parquetContent.map(_.getId()) should contain theSameElementsAs messages //this would fail if the proto parquet reader would have been instanciated as ProtoDoc
@@ -46,8 +46,8 @@ class ProtoParquetSpec extends AnyWordSpecLike with Matchers with ProtoParquetFi
       //given
       val n: Int = 4
       val file: String = genFile()
-      val messages: List[ProtoUser] = genProtoUsers(n).sample.get
-      val writer: ParquetWriter[ProtoUser] = protoParquetWriter(file)
+      val messages: List[ProtoDoc] = genProtoDocs(n).sample.get
+      val writer: ParquetWriter[ProtoDoc] = protoParquetWriter(file)
 
       //when
       Observable
@@ -59,12 +59,12 @@ class ProtoParquetSpec extends AnyWordSpecLike with Matchers with ProtoParquetFi
       //then
       val avroDocs: List[AvroDoc] = fromParquet[GenericRecord](file, conf, avroParquetReader(file, conf)).map(recordToAvroDoc)
       avroDocs.equiv(messages) shouldBe true
-     }
+    }
 
     "read from parquet file that at most have one record" in {
       //given
       val n: Int = 1
-      val records: List[ProtoUser] = genProtoUsers(n).sample.get
+      val records: List[ProtoDoc] = genProtoDocs(n).sample.get
       println("Records: " + records.mkString(", "))
 
       val file = genFile()
@@ -75,8 +75,7 @@ class ProtoParquetSpec extends AnyWordSpecLike with Matchers with ProtoParquetFi
         .runSyncUnsafe()
 
       //when
-      val l: List[ProtoUser.Builder] = Parquet.reader(protoParquetReader(file, conf)).toListL.runSyncUnsafe()
-
+      val l: List[ProtoDoc.Builder] = Parquet.reader(protoParquetReader(file, conf)).toListL.runSyncUnsafe()
 
       //then
       l.length shouldEqual n
@@ -85,10 +84,10 @@ class ProtoParquetSpec extends AnyWordSpecLike with Matchers with ProtoParquetFi
   }
 
   implicit class ExtendedAvroDocList(x: List[AvroDoc]) {
-    def singleEquiv(x: AvroDoc, y: ProtoUser): Boolean =
+    def singleEquiv(x: AvroDoc, y: ProtoDoc): Boolean =
       ((x.id == y.getId) && (x.name == y.getName))
-    def equiv(y: List[ProtoUser]): Boolean =
-      x.zip(y).map{ case (a, p) => singleEquiv(a, p) }.filterNot(b => b).isEmpty
+    def equiv(y: List[ProtoDoc]): Boolean =
+      x.zip(y).map { case (a, p) => singleEquiv(a, p) }.filterNot(b => b).isEmpty
   }
 
   override def afterAll(): Unit = {

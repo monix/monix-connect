@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package cloriko.monix.connect.parquet.tes;
+package cloriko.monix.connect.parquet.test;
 
 message ProtoDoc {
     int32 id = 1;
