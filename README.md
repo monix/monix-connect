@@ -188,7 +188,54 @@ needed for operating with the lettuce _reactive_ and _async_ apis that returns t
 
 ---
 ### S3
-Amazon Simple Storage Service (S3) is an object storage service that offers industry leading scalability, availability, security and performance.
-It allows data storage of any amount of data, commonly used as a Data Lake for Big Data applications.
+_Amazon Simple Storage Service (S3)_, the object storage service that offers industry leading scalability, availability, security and performance.
+It allows data storage of any amount of data, commonly used as a data lake for big data applications which can now be easily integrated with monix.
+ 
+ The module has been implemented using the `S3AsyncClient` since it only exposes non blocking methods. 
+ Therefore, all of the monix s3 methods defined in the `S3` object would expect an implicit instance of 
+ this class to be in the scope of the call.
+  
+ First, let's start using basic operations, starting by _create_ and _delete_ buckets:
+ ```scala
+import cloriko.monix.connect.s3.S3
+
+val bucketName: String = "myBucket" 
+val _: Task[CreateBucketResponse] = S3.createBucket(bucketName)
+val _: Task[DeleteBucketResponse] = S3.deleteBucket(bucketName)
+```
+
+You can also operate at object level within a bucket with:
+ ```scala
+val bucketName: String = "myBucket" 
+val _: Task[DeleteObjectResponse] = S3.deleteObject(bucketName)
+val _: Task[ListObjectsResponse] = S3.listObjects(bucketName)
+```
+
+On the other hand, to get and put objects:
+ ```scala
+import java.nio.ByteBuffer
+
+val bucketName: String = "myBucket" 
+
+//get example
+val objectKey: String = "/object/file.txt"
+val _: Task[ByteBuffer] = S3.getObject(bucketName, objectKey)
+
+//put object example
+val content: ByteBuffer= ByteBuffer.wrap("file content".getBytes())
+val _: Task[PutObjectResponse] = S3.putObject(bucketName, objectKey, content)
+
+//multipart consumer that expects byte buffer chunks
+val multipartConsumer: Consumer[Array[Byte], Task[CompleteMultipartUploadResponse]] =
+  S3.multipartUpload(bucketName, objectKey)
+
+val _: Task[CompleteMultipartUploadResponse] = {
+Observable
+  .pure(content)
+  .consumeWith(multipartConsumer=
+}
+```
+
+
 
 ---
