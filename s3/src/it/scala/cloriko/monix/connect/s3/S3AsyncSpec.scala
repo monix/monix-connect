@@ -49,7 +49,7 @@ class S3AsyncSpec
         "contentLength and contentType are defined respectively as the array lenght and 'application/json'" in {
           //given
           val key = Gen.alphaLowerStr.sample.get
-          val content = Gen.alphaUpperStr.sample.get
+          val content: String = Gen.alphaUpperStr.sample.get
 
           //when
           val t: Task[PutObjectResponse] = S3.putObject(
