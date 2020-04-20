@@ -148,7 +148,7 @@ Now that we have a stream of bytes coming in, it can be transformed as we want,
   using the pre-built monix hdfs consumer implemented in this project.
  ```scala
 val destinationPath: Path = new Path("/destination/hdfs/file_dest.txt")
-val hdfsWriter: Consumer[Array[Byte], Task[Int]] = Hdfs.write(fs, destinationPath)
+val hdfsWriter: Consumer[Array[Byte], Task[Int]] = Hdfs.write(fs, destinationPath) //wip
 
 //Eventually it will return the size of the written file
 val t: Task[Int] = ob.consumeWith(hdfsWriter) 
@@ -225,14 +225,14 @@ val _: Task[ByteBuffer] = S3.getObject(bucketName, objectKey)
 val content: ByteBuffer= ByteBuffer.wrap("file content".getBytes())
 val _: Task[PutObjectResponse] = S3.putObject(bucketName, objectKey, content)
 
-//multipart consumer that expects byte buffer chunks
+//multipart consumer that expects byte buffer chunks (wip)
 val multipartConsumer: Consumer[Array[Byte], Task[CompleteMultipartUploadResponse]] =
   S3.multipartUpload(bucketName, objectKey)
 
 val _: Task[CompleteMultipartUploadResponse] = {
 Observable
-  .pure(content)
-  .consumeWith(multipartConsumer=
+  .pure(content) 
+  .consumeWith(multipartConsumer)
 }
 ```
 
