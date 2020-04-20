@@ -115,10 +115,45 @@ Observable
 ```
 ---
 ### Hdfs
-A connector that allows to write and read from files of any size stored in [HDFS](https://hadoop.apache.org/docs/r1.2.1/hdfs_design.html).
+A connector that allows to progresively write and read from files of any size stored in [HDFS](https://hadoop.apache.org/docs/r1.2.1/hdfs_design.html).
 
 The methods to perform these operations are exposed under the scala object ```cloriko.monix.connect.hdfs.Hdfs```, in which
-it has been constructed on top of the _apache hadoop_ api.  
+it has been constructed on top of the the official _apache hadoop_ api.  
+
+The following import is a common requirement for all those methods defined in the `Hdfs` object:
+``` scala
+import org.apache.hadoop.fs.FileSystem
+//The abstract representation of a file system which could be a distributed or a local one.
+
+import org.apache.hadoop.fs.Path
+//Represents a file or directory in a FileSystem
+
+import org.apache.hadoop.io.compress.CompressionCodec
+//This will be optional, but basically it encapsulates a streaming compression/decompression pair.
+```
+On continuation, an example on how to construct a pipeline that reads from the specified hdfs file.
+
+```scala
+//First we need to create the hadoop requirements mentioned above.
+val conf = new Configuration() //Provides access to the hadoop configurable parameters
+val fs: FileSystem = FileSystem.get(conf)
+val sourcePath: Path = new Path("/source/hdfs/file_source.txt")
+val chunkSize: Int = 8192 //size of the chunks to be pulled
+
+//Once we have the hadoop classes we can create the hdfs monix reader
+val ob: Observable[Array[Byte]] = Hdfs.read(fs, path, chunkSize)
+```
+Now that we have a stream of bytes coming in, it can be transformed as we want,
+ but in this case we will write them back to another location 
+  using the pre-built monix hdfs consumer implemented in this project.
+ ```scala
+val destinationPath: Path = new Path("/destination/hdfs/file_dest.txt")
+val hdfsWriter: Consumer[Array[Byte], Task[Int]] = Hdfs.write(fs, destinationPath)
+
+//Eventually it will return the size of the written file
+val t: Task[Int] = ob.consumeWith(hdfsWriter) 
+ ```
+
 
 ---
 ### Redis
