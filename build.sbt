@@ -3,12 +3,14 @@
 lazy val root = (project in file("."))
   .settings(
     inThisBuild(List(
-      organization := "scalona",
+      organization := "cloriko",
       scalaVersion := "2.13.1",
       version      := Version.version
     )),
     name := "monix-connect"
   )
+  .aggregate(akka, common, dynamoDB, hdfs, parquet, s3, redis)
+  .dependsOn(akka, common, dynamoDB, hdfs, parquet, s3, redis)
 
 lazy val akka = (project in file("akka"))
   .configs(IntegrationTest)

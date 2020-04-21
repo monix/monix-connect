@@ -25,25 +25,30 @@ object Redis {
     Task.from(connection.async().bitcount(key)).map(_.toLong)
 
   def brpop[K, V](source: Seq[K], timeout: Long)(
-    implicit connection: StatefulRedisConnection[K, V]): Task[KeyValue[K, V]] =
+    implicit
+    connection: StatefulRedisConnection[K, V]): Task[KeyValue[K, V]] =
     Task.from(connection.async().brpop(timeout, source: _*).asScala)
 
   def brpoplpush[K, V](source: K, destination: K, timeout: Long)(
-    implicit connection: StatefulRedisConnection[K, V]): Task[V] =
+    implicit
+    connection: StatefulRedisConnection[K, V]): Task[V] =
     Task.from(connection.async().brpoplpush(timeout, source, destination))
 
   def brpoplpush[K, V](source: K, destination: K, timeout: Long, ttl: Long)(
-    implicit connection: StatefulRedisConnection[K, V]): Task[V] =
+    implicit
+    connection: StatefulRedisConnection[K, V]): Task[V] =
     Task
       .from(connection.async().brpoplpush(timeout, source, destination))
       .flatMap(v => Task.from(connection.async().ttl(destination)).map(_ => v))
 
   def bzpopmin[K, V](keys: Seq[K], timeout: Long)(
-    implicit connection: StatefulRedisConnection[K, V]): Task[KeyValue[K, ScoredValue[V]]] =
+    implicit
+    connection: StatefulRedisConnection[K, V]): Task[KeyValue[K, ScoredValue[V]]] =
     Task.from(connection.async().bzpopmin(timeout, keys: _*))
 
   def bzpopmax[K, V](keys: Seq[K], timeout: Long)(
-    implicit connection: StatefulRedisConnection[K, V]): Task[KeyValue[K, ScoredValue[V]]] =
+    implicit
+    connection: StatefulRedisConnection[K, V]): Task[KeyValue[K, ScoredValue[V]]] =
     Task.from(connection.async().bzpopmax(timeout, keys: _*))
 
   def dbsize[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
@@ -102,7 +107,8 @@ object Redis {
     Task.from(connection.async().hincrby(key, field, amount)).map(_.longValue)
 
   def hincbyfloat[K, V](key: K, field: K, amount: Float)(
-    implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
+    implicit
+    connection: StatefulRedisConnection[K, V]): Task[Long] =
     Task.from(connection.async().hincrbyfloat(key, field, amount)).map(_.longValue)
 
   def hkeys[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[List[K]] =
@@ -122,7 +128,8 @@ object Redis {
 
   //Not in redis api
   def hsetExpire[K, V](key: K, field: K, value: V, seconds: Long)(
-    implicit client: StatefulRedisConnection[K, V]): Task[Boolean] =
+    implicit
+    client: StatefulRedisConnection[K, V]): Task[Boolean] =
     Task
       .from(client.async().hset(key, field, value).asScala)
       .flatMap(_ => Task.from(client.async().expire(key, seconds)).map(_.booleanValue))
@@ -158,7 +165,8 @@ object Redis {
     Task.from(connection.async().lindex(key, index))
 
   def linsert[K, V](key: K, before: Boolean, pivot: V, value: V)(
-    implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
+    implicit
+    connection: StatefulRedisConnection[K, V]): Task[Long] =
     Task.from(connection.async().linsert(key, before, pivot, value)).map(_.longValue)
 
   def llen[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
@@ -189,7 +197,8 @@ object Redis {
     Task.from(connection.async().mget(keys: _*)).map(_.asScala.toList)
 
   def migrate[K, V](host: String, port: Int, key: K, db: Int, timeout: Long)(
-    implicit connection: StatefulRedisConnection[K, V]): Task[String] =
+    implicit
+    connection: StatefulRedisConnection[K, V]): Task[String] =
     Task.from(connection.async().migrate(host, port, key, db, timeout))
 
   def move[K, V](key: K, db: Int)(implicit connection: StatefulRedisConnection[K, V]): Task[Boolean] =
@@ -223,7 +232,8 @@ object Redis {
     Task.from(connection.async().pfmerge(destkey, sourcekeys: _*))
 
   def psetex[K, V](key: K, milliseconds: Long, value: V)(
-    implicit connection: StatefulRedisConnection[K, V]): Task[String] =
+    implicit
+    connection: StatefulRedisConnection[K, V]): Task[String] =
     Task.from(connection.async().psetex(key, milliseconds, value))
 
   def pttl[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
@@ -251,7 +261,8 @@ object Redis {
     Task.from(connection.async().renamenx(key, newkey)).map(_.booleanValue)
 
   def restore[K, V](key: K, ttl: Long, value: Array[Byte])(
-    implicit connection: StatefulRedisConnection[K, V]): Task[String] =
+    implicit
+    connection: StatefulRedisConnection[K, V]): Task[String] =
     Task.from(connection.async().restore(key, ttl, value))
 
   def role[K, V]()(implicit connection: StatefulRedisConnection[K, V]): Task[List[Any]] =
@@ -315,7 +326,8 @@ object Redis {
     Task.from(connection.async().smembers(key)).map(_.asScala.toSet)
 
   def smove[K, V](source: K, destination: K, member: V)(
-    implicit connection: StatefulRedisConnection[K, V]): Task[Boolean] =
+    implicit
+    connection: StatefulRedisConnection[K, V]): Task[Boolean] =
     Task.from(connection.async().smove(source, destination, member)).map(_.booleanValue)
 
   def sort[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[List[V]] =
@@ -370,7 +382,8 @@ object Redis {
     Task.from(connection.async().zcard(key)).map(_.longValue)
 
   def zincrby[K, V](key: K, amount: Double, value: V)(
-    implicit connection: StatefulRedisConnection[K, V]): Task[Double] =
+    implicit
+    connection: StatefulRedisConnection[K, V]): Task[Double] =
     Task.from(connection.async().zincrby(key, amount, value)).map(_.doubleValue)
 
   def zinterstore[K, V](destination: K, keys: List[K])(implicit connection: StatefulRedisConnection[K, V]): Task[Long] = //add alternatives
@@ -380,14 +393,16 @@ object Redis {
     Task.from(connection.async().zpopmax(key))
 
   def zpopmax[K, V](key: K, count: Long)(
-    implicit connection: StatefulRedisConnection[K, V]): Task[List[ScoredValue[V]]] =
+    implicit
+    connection: StatefulRedisConnection[K, V]): Task[List[ScoredValue[V]]] =
     Task.from(connection.async().zpopmax(key, count)).map(_.asScala.toList)
 
   def zpopmin[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[ScoredValue[V]] =
     Task.from(connection.async().zpopmin(key))
 
   def zpopmin[K, V](key: K, count: Long)(
-    implicit connection: StatefulRedisConnection[K, V]): Task[List[ScoredValue[V]]] =
+    implicit
+    connection: StatefulRedisConnection[K, V]): Task[List[ScoredValue[V]]] =
     Task.from(connection.async().zpopmin(key, count)).map(_.asScala.toList)
 
   def zrange[K, V](key: K, start: Long, stop: Long)(implicit connection: StatefulRedisConnection[K, V]): Task[List[V]] =

@@ -12,7 +12,8 @@ import software.amazon.awssdk.services.s3.model.{ CompleteMultipartUploadRespons
 import scala.jdk.FutureConverters._
 
 private[s3] class MultipartUploadConsumer(bucket: String, key: String, contentType: Option[String] = None)(
-  implicit s3Client: S3AsyncClient)
+  implicit
+  s3Client: S3AsyncClient)
   extends Consumer.Sync[Array[Byte], Task[CompleteMultipartUploadResponse]] {
 
   def createSubscriber(
@@ -31,8 +32,7 @@ private[s3] class MultipartUploadConsumer(bucket: String, key: String, contentTy
             s3Client
               .createMultipartUpload(multiPartUploadrequest)
               .asScala
-              .map(_.uploadId())
-          )
+              .map(_.uploadId()))
           .runSyncUnsafe()
 
       def onNext(chunk: Array[Byte]): Ack = {
@@ -44,8 +44,7 @@ private[s3] class MultipartUploadConsumer(bucket: String, key: String, contentTy
             s3Client
               .uploadPart(
                 uploadPartReq,
-                asyncRequestBody
-              )
+                asyncRequestBody)
               .asScala)
           .map(resp => S3RequestBuilder.completedPart(partN, resp))
         completedParts = completedPart :: completedParts
@@ -60,10 +59,8 @@ private[s3] class MultipartUploadConsumer(bucket: String, key: String, contentTy
             Task.fromFuture(
               s3Client
                 .completeMultipartUpload(
-                  completeMultipartUploadrequest
-                )
-                .asScala
-            )
+                  completeMultipartUploadrequest)
+                .asScala)
         }
         callback.onSuccess(completeMultipartUploadResp)
       }
