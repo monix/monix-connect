@@ -2,8 +2,8 @@ package cloriko.monix.connect.hdfs
 
 import monix.eval.Task
 import monix.execution.Scheduler
-import monix.reactive.{ Consumer, Observable }
-import org.apache.hadoop.fs.{ FileSystem, Path }
+import monix.reactive.{Consumer, Observable}
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.io.compress.CompressionCodec
 
 object Hdfs {

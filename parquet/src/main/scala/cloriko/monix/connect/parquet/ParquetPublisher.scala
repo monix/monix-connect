@@ -1,7 +1,7 @@
 package cloriko.monix.connect.parquet
 
 import monix.eval.Task
-import monix.reactive.{ Observable, OverflowStrategy }
+import monix.reactive.{Observable, OverflowStrategy}
 import monix.reactive.observers.Subscriber
 import org.apache.parquet.hadoop.ParquetReader
 
@@ -24,9 +24,7 @@ private[parquet] class ParquetPublisher[T](reader: ParquetReader[T]) {
   }
 
   val create: Observable[T] =
-    Observable.create(OverflowStrategy.Unbounded) { sub =>
-      readRecords(sub).runToFuture(sub.scheduler)
-    }
+    Observable.create(OverflowStrategy.Unbounded) { sub => readRecords(sub).runToFuture(sub.scheduler) }
 }
 
 object ParquetPublisher {

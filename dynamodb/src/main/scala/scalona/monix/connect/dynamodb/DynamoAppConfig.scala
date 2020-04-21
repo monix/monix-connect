@@ -3,7 +3,12 @@ package scalona.monix.connect.dynamodb
 import pureconfig._
 import pureconfig.generic.ProductHint
 import com.amazonaws.regions.Regions.DEFAULT_REGION
-import software.amazon.awssdk.auth.credentials.{ AwsBasicCredentials, AwsCredentialsProvider, DefaultCredentialsProvider, StaticCredentialsProvider }
+import software.amazon.awssdk.auth.credentials.{
+  AwsBasicCredentials,
+  AwsCredentialsProvider,
+  DefaultCredentialsProvider,
+  StaticCredentialsProvider
+}
 import pureconfig.generic.auto._
 object DynamoAppConfig {
 

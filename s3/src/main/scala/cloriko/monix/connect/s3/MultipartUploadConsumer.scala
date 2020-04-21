@@ -1,13 +1,18 @@
 package cloriko.monix.connect.s3
 
 import monix.eval.Task
-import monix.execution.{ Ack, Callback, Scheduler }
+import monix.execution.{Ack, Callback, Scheduler}
 import monix.execution.cancelables.AssignableCancelable
 import monix.reactive.Consumer
 import monix.reactive.observers.Subscriber
 import software.amazon.awssdk.core.async.AsyncRequestBody
 import software.amazon.awssdk.services.s3.S3AsyncClient
-import software.amazon.awssdk.services.s3.model.{ CompleteMultipartUploadResponse, CompletedPart, CreateMultipartUploadRequest, UploadPartRequest }
+import software.amazon.awssdk.services.s3.model.{
+  CompleteMultipartUploadResponse,
+  CompletedPart,
+  CreateMultipartUploadRequest,
+  UploadPartRequest
+}
 
 import scala.jdk.FutureConverters._
 
@@ -42,9 +47,7 @@ private[s3] class MultipartUploadConsumer(bucket: String, key: String, contentTy
         val completedPart: Task[CompletedPart] = Task
           .fromFuture(
             s3Client
-              .uploadPart(
-                uploadPartReq,
-                asyncRequestBody)
+              .uploadPart(uploadPartReq, asyncRequestBody)
               .asScala)
           .map(resp => S3RequestBuilder.completedPart(partN, resp))
         completedParts = completedPart :: completedParts
@@ -58,8 +61,7 @@ private[s3] class MultipartUploadConsumer(bucket: String, key: String, contentTy
               .completeMultipartUploadRquest(bucket, key, uploadId, completedParts)
             Task.fromFuture(
               s3Client
-                .completeMultipartUpload(
-                  completeMultipartUploadrequest)
+                .completeMultipartUpload(completeMultipartUploadrequest)
                 .asScala)
         }
         callback.onSuccess(completeMultipartUploadResp)

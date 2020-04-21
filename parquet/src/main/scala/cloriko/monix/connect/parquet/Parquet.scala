@@ -1,9 +1,9 @@
 package cloriko.monix.connect.parquet
 
-import org.apache.parquet.hadoop.{ ParquetReader, ParquetWriter }
+import org.apache.parquet.hadoop.{ParquetReader, ParquetWriter}
 import monix.eval.Task
 import monix.execution.Scheduler
-import monix.reactive.{ Consumer, Observable }
+import monix.reactive.{Consumer, Observable}
 import org.apache.avro.generic.GenericRecord
 
 object Parquet {

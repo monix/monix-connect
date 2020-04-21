@@ -2,11 +2,28 @@ package scalona.monix.connect.dynamodb
 
 import java.util.concurrent.CompletableFuture
 
-import software.amazon.awssdk.services.dynamodb.model.{ BatchGetItemRequest, CreateTableRequest, CreateTableResponse, DeleteTableResponse, PutItemResponse }
+import software.amazon.awssdk.services.dynamodb.model.{
+  BatchGetItemRequest,
+  CreateTableRequest,
+  CreateTableResponse,
+  DeleteTableResponse,
+  PutItemResponse
+}
 //import com.amazonaws.services.dynamodbv2.model.{BatchGetItemRequest, BatchGetItemResult, BatchWriteItemRequest, BatchWriteItemResult}
 //import com.amazonaws.{AmazonWebServiceRequest, AmazonWebServiceResponse, ResponseMetadata}
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
-import software.amazon.awssdk.services.dynamodb.model.{ BatchGetItemResponse, BatchWriteItemRequest, BatchWriteItemResponse, DeleteTableRequest, DeleteTableResponse, DynamoDbRequest, DynamoDbResponse, GetItemRequest, GetItemResponse, PutItemRequest }
+import software.amazon.awssdk.services.dynamodb.model.{
+  BatchGetItemResponse,
+  BatchWriteItemRequest,
+  BatchWriteItemResponse,
+  DeleteTableRequest,
+  DeleteTableResponse,
+  DynamoDbRequest,
+  DynamoDbResponse,
+  GetItemRequest,
+  GetItemResponse,
+  PutItemRequest
+}
 
 sealed trait DynamoDbOp[In <: DynamoDbRequest, Out <: DynamoDbResponse] {
   def execute(dynamoDbRequest: In)(implicit client: DynamoDbAsyncClient): CompletableFuture[Out]

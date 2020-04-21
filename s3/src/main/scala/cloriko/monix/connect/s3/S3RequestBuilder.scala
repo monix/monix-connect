@@ -1,6 +1,21 @@
 package cloriko.monix.connect.s3
 
-import software.amazon.awssdk.services.s3.model.{ CompleteMultipartUploadRequest, CompletedMultipartUpload, CompletedPart, CreateBucketRequest, CreateMultipartUploadRequest, DeleteBucketRequest, DeleteObjectRequest, EncodingType, ListObjectsRequest, ListObjectsV2Request, PutObjectRequest, RequestPayer, UploadPartRequest, UploadPartResponse }
+import software.amazon.awssdk.services.s3.model.{
+  CompleteMultipartUploadRequest,
+  CompletedMultipartUpload,
+  CompletedPart,
+  CreateBucketRequest,
+  CreateMultipartUploadRequest,
+  DeleteBucketRequest,
+  DeleteObjectRequest,
+  EncodingType,
+  ListObjectsRequest,
+  ListObjectsV2Request,
+  PutObjectRequest,
+  RequestPayer,
+  UploadPartRequest,
+  UploadPartResponse
+}
 
 import scala.jdk.CollectionConverters._
 

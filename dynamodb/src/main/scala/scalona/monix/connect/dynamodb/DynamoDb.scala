@@ -1,11 +1,11 @@
 package scalona.monix.connect.dynamodb
 
 import cloriko.monix.connect.common.Transformer.Transformer
-import monix.reactive.{ Consumer, Observable, Observer }
+import monix.reactive.{Consumer, Observable, Observer}
 import monix.execution.Ack
 import monix.eval.Task
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
-import software.amazon.awssdk.services.dynamodb.model.{ DynamoDbRequest, DynamoDbResponse }
+import software.amazon.awssdk.services.dynamodb.model.{DynamoDbRequest, DynamoDbResponse}
 
 import scala.jdk.FutureConverters._
 
