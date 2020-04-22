@@ -2,10 +2,10 @@ package cloriko.monix.connect.akka
 
 import akka.NotUsed
 import akka.actor.ActorSystem
-import akka.stream.scaladsl.{Flow, Sink, Source}
+import akka.stream.scaladsl.{ Flow, Sink, Source }
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
-import monix.reactive.{Consumer, Observable}
+import monix.reactive.{ Consumer, Observable }
 import org.scalacheck.Gen
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers

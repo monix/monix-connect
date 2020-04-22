@@ -1,7 +1,9 @@
-//libraryDependencies += "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"
 
+val IT = config("it") extend Test
 lazy val root = (project in file("."))
+  .configs(IntegrationTest, IT)
   .settings(
+    Defaults.itSettings,
     inThisBuild(List(
       organization := "cloriko",
       scalaVersion := "2.13.1",
@@ -9,55 +11,46 @@ lazy val root = (project in file("."))
     )),
     name := "monix-connect"
   )
-  .aggregate(akka, common, dynamoDB, hdfs, parquet, s3, redis)
-  .dependsOn(akka, common, dynamoDB, hdfs, parquet, s3, redis)
+  .aggregate(akka, dynamoDB, hdfs, parquet, s3, redis)
+  .dependsOn(akka, dynamoDB, hdfs, parquet, s3, redis)
+
 
 lazy val akka = (project in file("akka"))
-  .configs(IntegrationTest)
-  .settings(Defaults.itSettings)
   .settings(
     name := "monix-akka",
     libraryDependencies ++= Dependencies.Akka,
-    version := "0.0.1"
+    version := Version.version
   )
   .enablePlugins(JavaAppPackaging)
 
 lazy val common = (project in file("common"))
-  .configs(IntegrationTest)
-  .settings(Defaults.itSettings)
   .settings(
     name := "monix-common",
     libraryDependencies ++= Dependencies.Common,
-    version := "0.0.1"
+    version := Version.version
   )
-  .enablePlugins(JavaAppPackaging)
 
 lazy val dynamoDB = (project in file("dynamodb"))
-  .configs(IntegrationTest)
-  .settings(Defaults.itSettings)
+  .configs(IntegrationTest, IT)
   .settings(
+    Defaults.itSettings,
     name := "monix-dynamodb",
     libraryDependencies ++= Dependencies.DynamoDb,
-    version := "0.0.1")
-  .enablePlugins(JavaAppPackaging, DockerPlugin)
+    version := Version.version)
   .dependsOn(common)
 
 lazy val hdfs = (project in file("hdfs"))
-  .configs(IntegrationTest)
-  .settings(Defaults.itSettings)
   .settings(
     name := "monix-hdfs",
     libraryDependencies ++= Dependencies.Hdfs,
-    version := "0.0.1"
+    version := Version.version
   )
 
 lazy val parquet = (project in file("parquet"))
-  .configs(IntegrationTest)
-  .settings(Defaults.itSettings)
   .settings(
     name := "monix-parquet",
     libraryDependencies ++= Dependencies.Parquet,
-    version := "0.0.1",
+    version := Version.version,
     PB.targets in Compile := Seq(
       scalapb.gen() -> (sourceManaged in Compile).value
     ),
@@ -69,14 +62,13 @@ lazy val parquet = (project in file("parquet"))
   .enablePlugins(JavaAppPackaging, DockerPlugin)
 
 lazy val s3 = (project in file("s3"))
-  .configs(IntegrationTest)
-  .settings(Defaults.itSettings)
+  .configs(IntegrationTest, IT)
   .settings(
+    Defaults.itSettings,
     name := "monix-s3",
     libraryDependencies ++= Dependencies.S3,
-    version := "0.0.1"
+    version := Version.version
   )
-  .enablePlugins(JavaAppPackaging, DockerPlugin)
 
 lazy val redis = (project in file("redis"))
   .configs(IntegrationTest)
@@ -84,6 +76,6 @@ lazy val redis = (project in file("redis"))
   .settings(
     name := "monix-redis",
     libraryDependencies ++= Dependencies.Redis,
-    version := "0.0.1"
+    version := Version.version
   )
   .enablePlugins(JavaAppPackaging, DockerPlugin)

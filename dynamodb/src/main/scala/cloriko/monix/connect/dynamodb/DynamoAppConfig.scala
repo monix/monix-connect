@@ -1,4 +1,4 @@
-package scalona.monix.connect.dynamodb
+package cloriko.monix.connect.dynamodb
 
 import pureconfig._
 import pureconfig.generic.ProductHint

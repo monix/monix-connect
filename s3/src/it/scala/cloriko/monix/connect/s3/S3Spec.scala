@@ -16,7 +16,7 @@ import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 
 import scala.util.{ Failure, Success, Try }
 
-class S3AsyncSpec
+class S3Spec
   extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with ScalaFutures with S3Fixture with Eventually {
 
   private val bucketName = "sample-bucket"
@@ -113,15 +113,11 @@ class S3AsyncSpec
 
   override def beforeAll(): Unit = {
     super.beforeAll()
-    Try(s3SyncClient.createBucket(bucketName)) match {
-      case Failure(exception) =>
-        info(s"The attempt to create bucket $bucketName failed since it already existed, exception: $exception")
-      case Success(_) => info(s"Bucket $bucketName created successfully")
-    }
+    s3SyncClient.createBucket(bucketName)
   }
 
   override def afterAll(): Unit = {
     super.afterAll()
-    //s3SyncClient.deleteBucket(bucketName)
+    s3SyncClient.deleteBucket(bucketName)
   }
 }

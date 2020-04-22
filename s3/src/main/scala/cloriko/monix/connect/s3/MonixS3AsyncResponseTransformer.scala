@@ -5,7 +5,7 @@ import java.util.concurrent.CompletableFuture
 
 import monix.eval.Task
 import monix.reactive.Observable
-import software.amazon.awssdk.core.async.{AsyncResponseTransformer, SdkPublisher}
+import software.amazon.awssdk.core.async.{ AsyncResponseTransformer, SdkPublisher }
 import software.amazon.awssdk.services.s3.model.GetObjectResponse
 
 private[s3] class MonixS3AsyncResponseTransformer

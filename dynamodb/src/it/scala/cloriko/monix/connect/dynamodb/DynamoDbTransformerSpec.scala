@@ -1,5 +1,7 @@
-package scalona.monix.connect.dynamodb
+package cloriko.monix.connect.dynamodb
 
+import cloriko.monix.connect.common.Operators.Transformer
+import cloriko.monix.connect.common.Operators.Implicits._
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable

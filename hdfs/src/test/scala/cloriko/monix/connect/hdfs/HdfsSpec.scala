@@ -4,12 +4,12 @@ import java.io.File
 
 import monix.eval.Task
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.fs.{ FileSystem, Path }
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
-import org.apache.hadoop.hdfs.{HdfsConfiguration, MiniDFSCluster}
-import monix.reactive.{Consumer, Observable}
+import org.scalatest.{ BeforeAndAfterAll, BeforeAndAfterEach }
+import org.apache.hadoop.hdfs.{ HdfsConfiguration, MiniDFSCluster }
+import monix.reactive.{ Consumer, Observable }
 import org.scalatest.concurrent.ScalaFutures
 import monix.execution.Scheduler.Implicits.global
 

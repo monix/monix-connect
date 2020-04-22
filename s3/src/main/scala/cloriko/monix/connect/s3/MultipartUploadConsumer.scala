@@ -1,7 +1,7 @@
 package cloriko.monix.connect.s3
 
 import monix.eval.Task
-import monix.execution.{Ack, Callback, Scheduler}
+import monix.execution.{ Ack, Callback, Scheduler }
 import monix.execution.cancelables.AssignableCancelable
 import monix.reactive.Consumer
 import monix.reactive.observers.Subscriber
