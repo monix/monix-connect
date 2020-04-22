@@ -3,8 +3,8 @@ package cloriko.monix.connect.redis
 import java.util.Date
 
 import io.lettuce.core.api.StatefulRedisConnection
-import io.lettuce.core.{ KeyValue, RedisFuture, ScoredValue, TransactionResult }
-import monix.eval.{ Task, TaskLike }
+import io.lettuce.core.{KeyValue, RedisFuture, ScoredValue, TransactionResult}
+import monix.eval.{Task, TaskLike}
 import monix.reactive.Observable
 
 import scala.jdk.CollectionConverters._

@@ -17,6 +17,8 @@ project/target/*
 #s3
 s3/src/it/minio
 s3/src/it/minio/*
+scripts/minio
+scripts/minio/*
 
 /dist
 *.class

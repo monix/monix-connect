@@ -1,11 +1,11 @@
 package cloriko.monix.connect.hdfs
 
 import monix.eval.Task
-import monix.execution.{ Ack, Callback, Scheduler }
+import monix.execution.{Ack, Callback, Scheduler}
 import monix.execution.cancelables.AssignableCancelable
 import monix.reactive.Consumer
 import monix.reactive.observers.Subscriber
-import org.apache.hadoop.fs.{ FileSystem, Path }
+import org.apache.hadoop.fs.{FileSystem, Path}
 
 class HdfsSubscriber(fs: FileSystem, path: Path) extends Consumer.Sync[Array[Byte], Task[Int]] {
 

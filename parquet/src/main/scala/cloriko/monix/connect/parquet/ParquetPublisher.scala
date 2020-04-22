@@ -1,7 +1,7 @@
 package cloriko.monix.connect.parquet
 
 import monix.eval.Task
-import monix.reactive.{ Observable, OverflowStrategy }
+import monix.reactive.{Observable, OverflowStrategy}
 import monix.reactive.observers.Subscriber
 import org.apache.parquet.hadoop.ParquetReader
 

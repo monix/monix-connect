@@ -5,16 +5,16 @@ import java.nio.ByteBuffer
 import monix.eval.Task
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
-import software.amazon.awssdk.services.s3.model.{ CompleteMultipartUploadResponse, PutObjectResponse }
+import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadResponse, CreateBucketRequest, PutObjectResponse}
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
 import monix.execution.Scheduler.Implicits.global
-import monix.reactive.{ Consumer, Observable }
-import org.scalatest.concurrent.{ Eventually, ScalaFutures }
+import monix.reactive.{Consumer, Observable}
+import org.scalatest.concurrent.{Eventually, ScalaFutures}
 
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
 class S3Spec
   extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with ScalaFutures with S3Fixture with Eventually {
@@ -94,8 +94,10 @@ class S3Spec
 
     "download a ByteBuffer of an existing s3 object" in {
       //given
-      val key = Gen.alphaLowerStr.sample.get
-      val content = Gen.alphaUpperStr.sample.get
+      val key: String = Gen.alphaLowerStr.sample.get
+      val content: String = Gen.alphaUpperStr.sample.get
+      val bucket: String = Gen.alphaLowerStr.sample.get.substring(0, 6)
+      s3SyncClient.createBucket(bucket)
       s3SyncClient.putObject(bucketName, key, content)
 
       //when
@@ -113,11 +115,11 @@ class S3Spec
 
   override def beforeAll(): Unit = {
     super.beforeAll()
-    s3SyncClient.createBucket(bucketName)
+    //s3SyncClient.createBucket(bucketName)
   }
 
   override def afterAll(): Unit = {
     super.afterAll()
-    s3SyncClient.deleteBucket(bucketName)
+    //s3SyncClient.deleteBucket(bucketName)
   }
 }
