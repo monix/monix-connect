@@ -5,9 +5,9 @@ set -e
 CURRENT_DIR=$(pwd)
 echo "CURRENT_DIR=$CURRENT_DIR"
 
-docker stop minio localstack
-docker rm minio localstack
-docker-compose -f ./docker-compose.yml up -d minio localstack
+docker stop $(docker ps -a -q)
+docker rm $(docker ps -a -q)
+docker-compose -f docker-compose.yml up -d minio localstack
 
 sleep 40
 

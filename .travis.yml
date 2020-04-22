@@ -12,7 +12,7 @@ script:
   - sbt ++$TRAVIS_SCALA_VERSION test
   - sbt scalafmtCheckAll
   - sbt test
-  - sh scripts/start-dependencies.sh
+  - sh start-dependencies.sh
   - sbt it:test
 
 
