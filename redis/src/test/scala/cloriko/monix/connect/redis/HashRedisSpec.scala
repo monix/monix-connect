@@ -10,7 +10,7 @@ import org.mockito.MockitoSugar.mock
 import org.mockito.MockitoSugar.verify
 import org.mockito.MockitoSugar.when
 import org.mockito.IdiomaticMockito
-import org.scalatest.{ BeforeAndAfterAll, BeforeAndAfterEach }
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 import scala.jdk.CollectionConverters._
 

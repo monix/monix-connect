@@ -1,5 +1,5 @@
----
-version: '3'
+version: "3.7"
+
 services:
   minio:
     image: minio/minio
@@ -12,8 +12,15 @@ services:
       - MINIO_SECRET_KEY=TESTSECRET
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
+      interval: 35s
       timeout: 20s
       retries: 3
 
     command: server --compat /data
+
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - '4569:4569'
+    environment:
+      - SERVICES=dynamodb

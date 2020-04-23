@@ -1,6 +1,6 @@
-package scalona.monix.connect.dynamodb
+package cloriko.monix.connect.dynamodb
 
-import cloriko.monix.connect.common.Transformer.Transformer
+import cloriko.monix.connect.common.Operators.Transformer
 import monix.reactive.{Consumer, Observable, Observer}
 import monix.execution.Ack
 import monix.eval.Task
@@ -12,7 +12,8 @@ import scala.jdk.FutureConverters._
 object DynamoDb {
 
   def consumer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
-    implicit dynamoDbOp: DynamoDbOp[In, Out],
+    implicit
+    dynamoDbOp: DynamoDbOp[In, Out],
     client: DynamoDbAsyncClient = DynamoDbClient()): Consumer[In, Task[Out]] = {
     Consumer.create[In, Task[Out]] { (_, _, callback) =>
       new Observer.Sync[In] {
@@ -35,7 +36,8 @@ object DynamoDb {
   }
 
   def transformer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
-    implicit dynamoDbOp: DynamoDbOp[In, Out],
+    implicit
+    dynamoDbOp: DynamoDbOp[In, Out],
     client: DynamoDbAsyncClient = DynamoDbClient()): Transformer[In, Task[Out]] = { inObservable: Observable[In] =>
     inObservable.map(in => Task.fromFuture(dynamoDbOp.execute(in).asScala))
   }

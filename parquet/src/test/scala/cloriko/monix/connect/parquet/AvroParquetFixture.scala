@@ -6,10 +6,10 @@ package cloriko.monix.connect.parquet
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.avro.Schema
-import org.apache.avro.generic.{ GenericRecord, GenericRecordBuilder }
+import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 import org.apache.hadoop.fs.Path
-import org.apache.parquet.avro.{ AvroParquetReader, AvroParquetWriter, AvroReadSupport }
-import org.apache.parquet.hadoop.{ ParquetReader, ParquetWriter }
+import org.apache.parquet.avro.{AvroParquetReader, AvroParquetWriter, AvroReadSupport}
+import org.apache.parquet.hadoop.{ParquetReader, ParquetWriter}
 import org.apache.parquet.hadoop.util.HadoopInputFile
 import org.scalacheck.Gen
 

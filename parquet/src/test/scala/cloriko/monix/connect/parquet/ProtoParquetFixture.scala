@@ -7,8 +7,8 @@ package cloriko.monix.connect.parquet
 import cloriko.monix.connect.parquet.test.User.ProtoDoc
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
-import org.apache.parquet.hadoop.{ ParquetReader, ParquetWriter }
-import org.apache.parquet.proto.{ ProtoParquetReader, ProtoReadSupport, ProtoWriteSupport }
+import org.apache.parquet.hadoop.{ParquetReader, ParquetWriter}
+import org.apache.parquet.proto.{ProtoParquetReader, ProtoReadSupport, ProtoWriteSupport}
 import org.scalacheck.Gen
 
 trait ProtoParquetFixture extends ParquetFixture {

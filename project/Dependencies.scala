@@ -65,7 +65,7 @@ object Dependencies {
     "org.apache.hadoop" % "hadoop-minicluster" % DependencyVersions.Hadoop
   )
 
-  val Hdfs = HdfsDependecies ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(_ % IntegrationTest)
+  val Hdfs = HdfsDependecies ++ CommonTestDependencies.map(_ % Test)
 
   private val ParquetDependecies = Seq(
     "io.monix" %% "monix-reactive"          % DependencyVersions.Monix,
@@ -78,21 +78,17 @@ object Dependencies {
     "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"
   )
 
-  val Parquet = ParquetDependecies ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(_ % IntegrationTest)
+  val Parquet = ParquetDependecies ++ CommonTestDependencies.map(_ % Test)
 
   private val S3Dependecies = Seq(
     "io.monix" %% "monix-reactive"          % DependencyVersions.Monix,
     "software.amazon.awssdk"                % "s3" % DependencyVersions.S3,
     "org.typelevel" %% "cats-core"          % DependencyVersions.Cats,
-    "com.github.pureconfig" %% "pureconfig" % DependencyVersions.PureConfig
+    "com.github.pureconfig" %% "pureconfig" % DependencyVersions.PureConfig,
+    "com.amazonaws"                         % "aws-java-sdk-core" % DependencyVersions.AWS % IntegrationTest,
+    "com.amazonaws"                         % "aws-java-sdk-s3" % DependencyVersions.AWS %  IntegrationTest
   )
-
-  private val S3Test = Seq(
-  "com.amazonaws"                         % "aws-java-sdk-core" % DependencyVersions.AWS,
-  "com.amazonaws"                         % "aws-java-sdk-s3" % DependencyVersions.AWS
-  ).map(_ % Test)
-
-  val S3 = S3Dependecies ++ S3Test ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(_ % IntegrationTest)
+  val S3 = S3Dependecies ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(_ % IntegrationTest)
 
   private val RedisDependencies = Seq(
     "io.monix" %% "monix-reactive"          % DependencyVersions.Monix,
@@ -101,7 +97,6 @@ object Dependencies {
     "com.github.pureconfig" %% "pureconfig" % DependencyVersions.PureConfig
   )
 
-  val Redis = RedisDependencies ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(
-    _                                                           % IntegrationTest)
+  val Redis = RedisDependencies ++ CommonTestDependencies.map(_ % Test)
 
 }

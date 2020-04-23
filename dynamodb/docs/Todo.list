@@ -1,3 +1,4 @@
+-Fix DynamoDb tests failing in the pipeline
 -Unit testing
 -Documentation
 -Implementation of pending dynamodb request/response operations

@@ -5,18 +5,18 @@ import java.nio.ByteBuffer
 import monix.eval.Task
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
-import software.amazon.awssdk.services.s3.model.{ CompleteMultipartUploadResponse, PutObjectResponse }
+import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadResponse, CreateBucketRequest, PutObjectResponse}
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
 import monix.execution.Scheduler.Implicits.global
-import monix.reactive.{ Consumer, Observable }
-import org.scalatest.concurrent.{ Eventually, ScalaFutures }
+import monix.reactive.{Consumer, Observable}
+import org.scalatest.concurrent.{Eventually, ScalaFutures}
 
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
-class S3AsyncSpec
+class S3Spec
   extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with ScalaFutures with S3Fixture with Eventually {
 
   private val bucketName = "sample-bucket"
@@ -94,8 +94,8 @@ class S3AsyncSpec
 
     "download a ByteBuffer of an existing s3 object" in {
       //given
-      val key = Gen.alphaLowerStr.sample.get
-      val content = Gen.alphaUpperStr.sample.get
+      val key: String = Gen.alphaLowerStr.sample.get
+      val content: String = Gen.alphaUpperStr.sample.get
       s3SyncClient.putObject(bucketName, key, content)
 
       //when
@@ -114,14 +114,8 @@ class S3AsyncSpec
   override def beforeAll(): Unit = {
     super.beforeAll()
     Try(s3SyncClient.createBucket(bucketName)) match {
-      case Failure(exception) =>
-        info(s"The attempt to create bucket $bucketName failed since it already existed, exception: $exception")
-      case Success(_) => info(s"Bucket $bucketName created successfully")
+      case Success(_) => info(s"Created S3 bucket ${bucketName} ")
+      case Failure(e) => info(s"Failed to create s3 bucket ${bucketName} with exception: ${e.getMessage}")
     }
-  }
-
-  override def afterAll(): Unit = {
-    super.afterAll()
-    //s3SyncClient.deleteBucket(bucketName)
   }
 }
