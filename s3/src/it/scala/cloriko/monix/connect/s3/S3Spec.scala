@@ -96,8 +96,6 @@ class S3Spec
       //given
       val key: String = Gen.alphaLowerStr.sample.get
       val content: String = Gen.alphaUpperStr.sample.get
-      val bucket: String = Gen.alphaLowerStr.sample.get.substring(0, 6)
-      s3SyncClient.createBucket(bucket)
       s3SyncClient.putObject(bucketName, key, content)
 
       //when
@@ -115,11 +113,9 @@ class S3Spec
 
   override def beforeAll(): Unit = {
     super.beforeAll()
-    //s3SyncClient.createBucket(bucketName)
-  }
-
-  override def afterAll(): Unit = {
-    super.afterAll()
-    //s3SyncClient.deleteBucket(bucketName)
+    Try(s3SyncClient.createBucket(bucketName)) match {
+      case Success(_) => info(s"Created S3 bucket ${bucketName} ")
+      case Failure(e) => info(s"Failed to create s3 bucket ${bucketName} with exception: ${e.getMessage}")
+    }
   }
 }

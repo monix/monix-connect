@@ -2,11 +2,14 @@ package cloriko.monix.connect.dynamodb
 
 import java.util.concurrent.CompletableFuture
 
+import monix.eval.Task
 import org.scalacheck.Gen
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
-import software.amazon.awssdk.services.dynamodb.model.{ AttributeDefinition, AttributeValue, CreateTableRequest, CreateTableResponse, DeleteTableRequest, GetItemRequest, KeySchemaElement, KeyType, ProvisionedThroughput, PutItemRequest, ScalarAttributeType }
+import software.amazon.awssdk.services.dynamodb.model.{AttributeDefinition, AttributeValue, CreateTableRequest, CreateTableResponse, DeleteTableRequest, DeleteTableResponse, GetItemRequest, KeySchemaElement, KeyType, ProvisionedThroughput, PutItemRequest, ScalarAttributeType}
 
 import scala.jdk.CollectionConverters._
+import scala.jdk.FutureConverters._
+import scala.util.{Failure, Success, Try}
 
 trait DynamoDbFixture {
 
@@ -70,14 +73,18 @@ trait DynamoDbFixture {
       .build()
   }
 
-  protected def createCitiesTable()(implicit client: DynamoDbAsyncClient): CompletableFuture[CreateTableResponse] = {
+  protected def createTable(table: String)(implicit client: DynamoDbAsyncClient): Unit = {
     val request: CreateTableRequest =
-      createTableRequest(tableName = "cities", schema = keySchema, attributeDefinition = tableDefinition)
-    client.createTable(request)
+      createTableRequest(tableName = table, schema = keySchema, attributeDefinition = tableDefinition)
+    Try(Task.fromFuture(client.createTable(request).asScala)) match {
+      case Success(_) => println(s"Table ${table} was created")
+      case Failure(exception) => println("Failed to create table cities with exception: " + exception)
+    }
+
   }
 
-  def deleteTable(tableName: String)(implicit client: DynamoDbAsyncClient): Unit = {
+  def deleteTable(tableName: String)(implicit client: DynamoDbAsyncClient): Task[DeleteTableResponse] = {
     val deleteRequest: DeleteTableRequest = DeleteTableRequest.builder().tableName(tableName).build()
-    client.deleteTable(deleteRequest)
+    Task.deferFuture(client.deleteTable(deleteRequest).asScala)
   }
 }

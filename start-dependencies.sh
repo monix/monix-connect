@@ -9,10 +9,8 @@ docker-compose -f ./docker-compose.yml stop minio
 docker-compose -f ./docker-compose.yml rm -f minio
 docker-compose -f docker-compose.yml up -d minio localstack
 
-sleep 40
+sleep 50
 
 echo -e "Docker ps."
 docker ps
-
-sbt it:test
 
