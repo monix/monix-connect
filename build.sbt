@@ -5,7 +5,7 @@ lazy val root = (project in file("."))
   .settings(
     Defaults.itSettings,
     inThisBuild(List(
-      organization := "cloriko",
+      organization := "monix",
       scalaVersion := "2.13.1",
       version      := Version.version
     )),
