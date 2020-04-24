@@ -4,6 +4,7 @@
 
  [travis]:                https://travis-ci.com/github/monix/monix-connect
  [travis-badge]:          https://travis-ci.com/monix/monix-connect.svg?branch=master
+ ⚠️ :warning::construction:🚧
 Monix Connect is an **experimental** initiative to implement stream integrations for [Monix](https://monix.io/).
  A connector describes the connection between the application and a specific data point, which could be a file, a database or any system in which the appication 
  can interact by sending or receiving information. Therefore, the aim of this project is to catch the most common
