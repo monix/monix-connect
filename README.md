@@ -54,7 +54,10 @@ The is connector provides with stream integrations for reading and writing into 
 The below example shows how to construct a parquet consumer that expects _Protobuf_ messages and pushes 
 them into the same parquet file of the specified location.
 ```scala
-
+import monix.connect.parquet.Parquet
+import org.apache.parquet.avro.AvroParquetReader
+import org.apache.parquet.hadoop.ParquetWriter
+import org.apache.hadoop.conf.Configuration
 
 val file: String = "/invented/file/path"
 val conf = new Configuration()
@@ -70,7 +73,9 @@ Observable
 On the other hand, the following code shows how to pull _Avro_ records from a parquet file:
 
 ```scala
-
+import monix.connect.parquet.Parquet
+import org.apache.parquet.avro.AvroParquetReader
+import org.apache.parquet.hadoop.util.HadoopInputFile
 
 val r: ParquetReader[AvroRecord] = {
  AvroParquetReader
@@ -120,7 +125,7 @@ The methods to perform these operations are exposed under the scala object ```mo
 it has been constructed on top of the the official _apache hadoop_ api.  
 
 The following import is a common requirement for all those methods defined in the `Hdfs` object:
-``` scala
+```scala
 import org.apache.hadoop.fs.FileSystem
 //The abstract representation of a file system which could be a distributed or a local one.
 import org.apache.hadoop.fs.Path
