@@ -4,10 +4,28 @@ import sbt.Keys.version
 import scala.xml.Elem
 import scala.xml.transform.{RewriteRule, RuleTransformer}
 
+// The Monix Connect version with which we must keep binary compatibility.
+// https://github.com/typesafehub/migration-manager/wiki/Sbt-plugin
+val monixSeries = "0.0.0"
+
+lazy val doNotPublishArtifact = Seq(
+  publishArtifact := false,
+  publishArtifact in (Compile, packageDoc) := false,
+  publishArtifact in (Compile, packageSrc) := false,
+  publishArtifact in (Compile, packageBin) := false
+)
+
+lazy val warnUnusedImport = Seq(
+  scalacOptions ++= Seq("-Ywarn-unused-import"),
+  scalacOptions in (Compile, console) --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports"),
+  scalacOptions in Test --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports")
+)
+
 lazy val sharedSettings = warnUnusedImport ++ Seq(
+
   organization := "io.monix",
   scalaVersion := "2.13.1",
-  crossScalaVersions := Seq("2.11.12", "2.12.10", "2.13.1"),
+  crossScalaVersions := Seq("2.12.10", "2.13.1"),
 
   scalacOptions ++= Seq(
     // warnings
@@ -19,7 +37,6 @@ lazy val sharedSettings = warnUnusedImport ++ Seq(
     "-language:implicitConversions",
     "-language:experimental.macros",
   ),
-
   scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
     case Some((2, v)) if v <= 12 =>
       Seq(
@@ -33,7 +50,6 @@ lazy val sharedSettings = warnUnusedImport ++ Seq(
         "-Ymacro-annotations",
       )
   }),
-
   // Linter
   scalacOptions ++= Seq(
     // Turns all warnings into errors ;-)
@@ -52,22 +68,9 @@ lazy val sharedSettings = warnUnusedImport ++ Seq(
     "-Xlint:delayedinit-select", // Selecting member of DelayedInit
     "-Xlint:package-object-classes", // Class or object defined in package object
   ),
-  scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((2, majorVersion)) if majorVersion <= 12 =>
-      Seq(
-        "-Xlint:inaccessible", // warn about inaccessible types in method signatures
-        "-Xlint:by-name-right-associative", // By-name parameter of right associative operator
-        "-Xlint:unsound-match" // Pattern match may not be typesafe
-      )
-    case _ =>
-      Seq.empty
-  }),
 
   // Turning off fatal warnings for ScalaDoc, otherwise we can't release.
   scalacOptions in (Compile, doc) ~= (_ filterNot (_ == "-Xfatal-warnings")),
-
-  // For working with partially-applied types
-  addCompilerPlugin("org.typelevel" % "kind-projector" % "0.11.0" cross CrossVersion.full),
 
   // ScalaDoc settings
   autoAPIMappings := true,
@@ -91,23 +94,17 @@ lazy val sharedSettings = warnUnusedImport ++ Seq(
   logBuffered in Test := false,
   logBuffered in IntegrationTest := false,
 
-  resolvers ++= Seq(
-    "Typesafe Releases" at "https://repo.typesafe.com/typesafe/releases",
-    Resolver.sonatypeRepo("releases")
-  ),
-
   // https://github.com/sbt/sbt/issues/2654
   incOptions := incOptions.value.withLogRecompileOnMacro(false),
 
   // -- Settings meant for deployment on oss.sonatype.org
-  sonatypeProfileName := organization.value,
-
+  /*sonatypeProfileName := organization.value, todo add sonatype
   credentials += Credentials(
     "Sonatype Nexus Repository Manager",
     "oss.sonatype.org",
     sys.env.getOrElse("SONATYPE_USER", ""),
     sys.env.getOrElse("SONATYPE_PASS", "")
-  ),
+  ),*/
 
   publishMavenStyle := true,
   publishTo := Some(
@@ -134,7 +131,9 @@ lazy val sharedSettings = warnUnusedImport ++ Seq(
   },
 
   licenses := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
-  homepage := Some(url("https://monix.io")),
+
+  //homepage := Some(url("https://monix.io")), //todo homepage settings
+
   headerLicense := Some(HeaderLicense.Custom(
     """|Copyright (c) 2014-2020 by The Monix Project Developers.
        |See the project homepage at: https://monix.io
@@ -152,24 +151,48 @@ lazy val sharedSettings = warnUnusedImport ++ Seq(
        |limitations under the License."""
       .stripMargin)),
 
-  scmInfo := Some(
-    ScmInfo(
-      url("https://github.com/monix/monix"),
-      "scm:git@github.com:monix/monix.git"
-    )),
+  //todo add scm
 
   developers := List(
     Developer(
       id="paualarco",
-      name="Pau Alarco Nedelcu",
-      email="noreply@alexn.org",
+      name="Pau Alarcon",
+      email="pau.alarcon.b@gmail.com",
       url=url("https://github.com/paualarco")
-    ))
+    )),
+    doctestTestFramework := DoctestTestFramework.ScalaTest,
+    doctestTestFramework := DoctestTestFramework.ScalaCheck,
+    doctestOnlyCodeBlocksMode := true
 )
+
+lazy val unidocSettings = Seq(
+  unidocProjectFilter in (ScalaUnidoc, unidoc) :=
+    inProjects(akka, common, dynamoDB, hdfs, s3),
+  scalacOptions in (ScalaUnidoc, unidoc) +=
+    "-Xfatal-warnings",
+  scalacOptions in (ScalaUnidoc, unidoc) --=
+    Seq("-Ywarn-unused-import", "-Ywarn-unused:imports"),
+  scalacOptions in (ScalaUnidoc, unidoc) ++=
+    Opts.doc.title(s"Monix Connect"),
+  scalacOptions in (ScalaUnidoc, unidoc) ++=
+    Opts.doc.sourceUrl(s"https://github.com/monix/monix-connect/tree/v${version.value}€{FILE_PATH}.scala"),
+  //scalacOptions in (ScalaUnidoc, unidoc) ++=
+  //  Seq("-doc-root-content", file("rootdoc.txt").getAbsolutePath), //todo check usage
+  scalacOptions in (ScalaUnidoc, unidoc) ++=
+    Opts.doc.version(s"${version.value}")
+)
+
+def profile: Project => Project = pr => {
+  val withCoverage = sys.env.getOrElse("SBT_PROFILE", "") match {
+    case "coverage" => pr
+    case _ => pr.disablePlugins(scoverage.ScoverageSbtPlugin)
+  }
+  withCoverage.enablePlugins(AutomateHeaderPlugin)
+}
 
 val IT = config("it") extend Test
 
-lazy val root = (project in file("."))
+lazy val monix-connect = (project in file("."))
   .configs(IntegrationTest, IT)
   .settings(
     Defaults.itSettings,
@@ -186,15 +209,16 @@ lazy val root = (project in file("."))
 
 
 lazy val akka = (project in file("akka"))
+  .configure(profile)
   .settings(
     name := "monix-akka",
     libraryDependencies ++= Dependencies.Akka,
     version := Version.version,
     scalafmtOnCompile := true
   )
-  .enablePlugins(JavaAppPackaging)
 
 lazy val common = (project in file("common"))
+  .configure(profile)
   .settings(
     name := "monix-common",
     libraryDependencies ++= Dependencies.Common,
@@ -203,6 +227,7 @@ lazy val common = (project in file("common"))
   )
 
 lazy val dynamoDB = (project in file("dynamodb"))
+  .configure(profile)
   .configs(IntegrationTest, IT)
   .settings(
     Defaults.itSettings,
@@ -211,9 +236,10 @@ lazy val dynamoDB = (project in file("dynamodb"))
     version := Version.version,
     scalafmtOnCompile := true
   )
-  .dependsOn(common)
+  .dependsOn(common % "compile->compile; test->test")
 
 lazy val hdfs = (project in file("hdfs"))
+  .configure(profile)
   .settings(
     name := "monix-hdfs",
     libraryDependencies ++= Dependencies.Hdfs,
@@ -222,6 +248,7 @@ lazy val hdfs = (project in file("hdfs"))
   )
 
 lazy val parquet = (project in file("parquet"))
+  .configure(profile)
   .settings(
     name := "monix-parquet",
     libraryDependencies ++= Dependencies.Parquet,
@@ -238,6 +265,7 @@ lazy val parquet = (project in file("parquet"))
   .enablePlugins(JavaAppPackaging, DockerPlugin)
 
 lazy val s3 = (project in file("s3"))
+  .configure(profile)
   .configs(IntegrationTest, IT)
   .settings(
     Defaults.itSettings,
@@ -248,8 +276,7 @@ lazy val s3 = (project in file("s3"))
   )
 
 lazy val redis = (project in file("redis"))
-  .configs(IntegrationTest)
-  .settings(Defaults.itSettings)
+  .configure(profile)
   .settings(
     scalafmtOnCompile := true,
     name := "monix-redis",
@@ -257,3 +284,5 @@ lazy val redis = (project in file("redis"))
     version := Version.version
   )
   .enablePlugins(JavaAppPackaging, DockerPlugin)
+
+//todo add release settings

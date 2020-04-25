@@ -20,6 +20,10 @@ s3/src/it/minio/*
 minio
 minio/*
 
+#hadoop
+temp
+temp/*
+
 /dist
 *.class
 *password*

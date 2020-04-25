@@ -1,5 +1,6 @@
 package monix.connect.dynamodb
 
+import monix.connect.common.Operators.Transformer
 import monix.reactive.{Consumer, Observable, Observer}
 import monix.execution.Ack
 import monix.eval.Task
