@@ -8,7 +8,7 @@ import scala.xml.transform.{RewriteRule, RuleTransformer}
 // https://github.com/typesafehub/migration-manager/wiki/Sbt-plugin
 val monixSeries = "0.0.0"
 
-lazy val connectors = akka :: common :: dynamoDB :: hdfs :: parquet :: redis :: s3 :: Nil
+//lazy val connectors = akka :: common :: dynamoDB :: hdfs :: parquet :: redis :: s3 :: Nil
 
 lazy val doNotPublishArtifact = Seq(
   publishArtifact := false,
@@ -34,13 +34,13 @@ lazy val sharedSettings = Seq(
     "-language:experimental.macros",
   ),
   //warnUnusedImports
-  scalacOptions ++= Seq("-Ywarn-unused-import"),
+  //scalacOptions ++= Seq("-Ywarn-unused-import"),
   scalacOptions in (Compile, console) --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports"),
   scalacOptions in Test --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports"),
   // Linter
   scalacOptions ++= Seq(
     // Turns all warnings into errors ;-)
-    "-Xfatal-warnings",
+    //"-Xfatal-warnings", todo activate flag
     // Enables linter options
     "-Xlint:adapted-args", // warn if an argument list is modified to match the receiver
     "-Xlint:nullary-unit", // warn when nullary methods return Unit
@@ -57,7 +57,7 @@ lazy val sharedSettings = Seq(
   ),
 
   // Turning off fatal warnings for ScalaDoc, otherwise we can't release.
-  scalacOptions in (Compile, doc) ~= (_ filterNot (_ == "-Xfatal-warnings")),
+  //scalacOptions in (Compile, doc) ~= (_ filterNot (_ == "-Xfatal-warnings")),
 
   // ScalaDoc settings
   autoAPIMappings := true,
@@ -122,7 +122,7 @@ lazy val sharedSettings = Seq(
 
   //homepage := Some(url("https://monix.io")), //todo homepage settings
 
- /* headerLicense := Some(HeaderLicense.Custom(
+  headerLicense := Some(HeaderLicense.Custom(
     """|Copyright (c) 2014-2020 by The Monix Project Developers.
        |See the project homepage at: https://monix.io
        |
@@ -137,7 +137,7 @@ lazy val sharedSettings = Seq(
        |WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
        |See the License for the specific language governing permissions and
        |limitations under the License."""
-      .stripMargin)),*/
+      .stripMargin)),
 
   //todo add scm
 
@@ -154,8 +154,8 @@ lazy val sharedSettings = Seq(
 )
 
 lazy val unidocSettings = Seq(
-  unidocProjectFilter in (ScalaUnidoc, unidoc) :=
-    inProjects(akka, common, dynamoDB, hdfs, s3),
+  //unidocProjectFilter in (ScalaUnidoc, unidoc) :=
+    //inProjects(akka, common, dynamoDB, hdfs, s3),
   scalacOptions in (ScalaUnidoc, unidoc) +=
     "-Xfatal-warnings",
   scalacOptions in (ScalaUnidoc, unidoc) --=
@@ -178,6 +178,42 @@ def profile: Project => Project = pr => {
   withCoverage.enablePlugins(AutomateHeaderPlugin)
 }
 
+val IT = config("it") extend Test
+
+lazy val monix = (project in file("."))
+  .configs(IntegrationTest, IT)
+  .settings(sharedSettings)
+  .settings(name := "monix-connect")
+  .aggregate(akka, redis)
+  .dependsOn(akka, redis)
+  //.aggregate(akka, common, dynamoDB, hdfs, parquet, s3)
+  //.dependsOn(akka, common, dynamoDB, hdfs, parquet, s3)
+
+lazy val redis = monixConnector("redis", Dependencies.Redis)
+
+lazy val akka = monixConnector("akka", Dependencies.Akka)
+/*
+lazy val common = monixConnector("common", Dependencies.Common)
+
+lazy val dynamoDB = monixConnector("dynamodb", Dependencies.DynamoDb)
+  .dependsOn(common % "compile->compile; test->test")
+
+lazy val hdfs = monixConnector("hdfs", Dependencies.Hdfs)
+
+val scalaPBSettings = Seq(
+  PB.targets in Compile := Seq(
+    scalapb.gen() -> (sourceManaged in Compile).value
+  ),
+  PB.targets in Compile := Seq(
+    scalapb.gen(javaConversions=true) -> (sourceManaged in Compile).value,
+    PB.gens.java -> (sourceManaged in Compile).value
+  )
+)
+lazy val parquet = monixConnector("parquet", Dependencies.Parquet, scalaPBSettings)
+
+lazy val s3 = monixConnector("s3", Dependencies.S3)
+*/
+
 def monixConnector(connectorName: String, projectDependencies: Seq[ModuleID], additionalSettings: sbt.Def.SettingsDefinition*): Project =
   Project(id = connectorName, base = file(connectorName))
     .enablePlugins(AutomateHeaderPlugin)
@@ -185,88 +221,9 @@ def monixConnector(connectorName: String, projectDependencies: Seq[ModuleID], ad
       name := s"monix-$connectorName",
       libraryDependencies ++= projectDependencies,
       Defaults.itSettings)
+    .settings(sharedSettings)
     .settings(additionalSettings: _*)
     .configure(profile)
     .configs(IntegrationTest, IT)
-
-val IT = config("it") extend Test
-
-lazy val monix = (project in file("."))
-  .configs(IntegrationTest, IT)
-  .settings(sharedSettings)
-  .settings(name := "monix-connect")
-  .aggregate(akka, common, dynamoDB, hdfs, parquet, s3)
-  .dependsOn(akka, common, dynamoDB, hdfs, parquet, s3)
-
-lazy val akka = (project in file("akka"))
-  .configure(profile)
-  .settings(
-    name := "monix-akka",
-    libraryDependencies ++= Dependencies.Akka,
-    version := Version.version,
-    scalafmtOnCompile := true,
-    headerLicense := None)
-
-lazy val common = (project in file("common"))
-  .configure(profile)
-  .settings(
-    name := "monix-common",
-    libraryDependencies ++= Dependencies.Common,
-    version := Version.version,
-    scalafmtOnCompile := true
-  )
-
-lazy val dynamoDB = (project in file("dynamodb"))
-  .configure(profile)
-  .configs(IntegrationTest, IT)
-  .settings(
-    Defaults.itSettings,
-    name := "monix-dynamodb",
-    libraryDependencies ++= Dependencies.DynamoDb,
-    version := Version.version,
-    scalafmtOnCompile := true
-  )
-  .dependsOn(common % "compile->compile; test->test")
-
-lazy val hdfs = (project in file("hdfs"))
-  .configure(profile)
-  .settings(
-    name := "monix-hdfs",
-    libraryDependencies ++= Dependencies.Hdfs,
-    version := Version.version,
-    scalafmtOnCompile := true
-  )
-
-lazy val parquet = (project in file("parquet"))
-  .configure(profile)
-  .settings(
-    name := "monix-parquet",
-    libraryDependencies ++= Dependencies.Parquet,
-    version := Version.version,
-    scalafmtOnCompile := true,
-      PB.targets in Compile := Seq(
-      scalapb.gen() -> (sourceManaged in Compile).value
-    ),
-    PB.targets in Compile := Seq(
-      scalapb.gen(javaConversions=true) -> (sourceManaged in Compile).value,
-      PB.gens.java -> (sourceManaged in Compile).value
-    )
-  )
-  .enablePlugins(JavaAppPackaging, DockerPlugin)
-
-lazy val s3 = (project in file("s3"))
-  .configure(profile)
-  .configs(IntegrationTest, IT)
-  .settings(
-    Defaults.itSettings,
-    scalafmtOnCompile := true,
-    name := "monix-s3",
-    libraryDependencies ++= Dependencies.S3,
-    version := Version.version
-  )
-
-lazy val redis = monixConnector("redis", Dependencies.Redis)
-
-
 
 //todo add release settings
