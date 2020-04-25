@@ -977,7 +977,7 @@ import io.monix.connect.gcs.configuration._
 
 // Create a new Storage Bucket
 val config = BucketConfig(name = "bucket")
-val bucket: Task[Bucket] = GoogleStorageBucket(config)
+val bucket: Task[Bucket] = Bucket(config)
 
 // Upload a File
 val file0 = new File("/tmp/myfile0.txt")

@@ -2,15 +2,17 @@ package io.monix.connect.gcs
 
 import java.nio.file.Path
 
-import com.google.cloud.storage
+import com.google.cloud.{storage => google}
 import com.google.cloud.storage.{BlobId, BucketInfo, Storage, StorageOptions}
 import io.monix.connect.gcs.configuration.{BlobInfo, BucketConfig}
 import io.monix.connect.gcs.streaming.{StorageDownloader, StorageUploader}
 import monix.eval.Task
 
-final class Bucket(s: Storage, bucket: storage.Bucket)
+final class Bucket(storage: google.Storage, bucket: google.Bucket)
   extends StorageUploader
     with StorageDownloader {
+
+  implicit val s = storage
 
   /**
    * Retrieves a GCS Blob by name from this Bucket.
@@ -18,7 +20,7 @@ final class Bucket(s: Storage, bucket: storage.Bucket)
    * @param name the name of the blob.
    */
   def getBlob(name: String): Task[Blob] =
-    Task(s.get(BlobId.of(bucket.getName, name)))
+    Task(storage.get(BlobId.of(bucket.getName, name)))
       .map(b => new Blob(b))
 
   /**
@@ -49,11 +51,11 @@ final class Bucket(s: Storage, bucket: storage.Bucket)
       .map(_.toBlobInfo(blobId))
       .getOrElse(BlobInfo.fromBlobId(blobId))
 
-    uploadToBucket(blobInfo, path, chunkSize)(s)
+    uploadToBucket(blobInfo, path, chunkSize)
   }
 
   /**
-   * Downloads a file from this storage bucket. In <code>chunkSize</code> batches using a <code>ReadChannel<code>.
+   * Downloads a file from this storage bucket, in <code>chunkSize</code> batches using a <code>ReadChannel<code>.
    *
    * Example:
    * {{{
@@ -66,30 +68,29 @@ final class Bucket(s: Storage, bucket: storage.Bucket)
    *    b <- bucket
    *    _ <- b.download(fileName, file)
    *   } yield println("Downloaded File")
-   *
    * }}}
    *
    * @param path the path to the file.
    * @param chunkSize the maximum upload chuck size.
    */
-  def download(name: String, path: Path, chunkSize: 4096): Task[Unit] = {
+  def download(name: String, path: Path, chunkSize: Int = 4096): Task[Unit] = {
     val blobId = BlobId.of(bucket.getName, name)
-    downloadFromBucket(blobId, path, chunkSize)(s)
+    downloadFromBucket(blobId, path, chunkSize)
   }
 }
 
 object Bucket {
 
-  private def getStorageInstance(): Task[Storage] =
+  private def getStorageInstance: Task[Storage] =
     Task(StorageOptions.getDefaultInstance.getService)
 
-  private def getBucketInstance(gcs: Storage, bucketInfo: BucketInfo): Task[storage.Bucket] =
+  private def getBucketInstance(gcs: Storage, bucketInfo: BucketInfo): Task[google.Bucket] =
     Task(gcs.create(bucketInfo))
 
   // TODO: Check if bucket exists before creating.
   def apply(config: BucketConfig): Task[Bucket] = {
     for {
-      storage    <- getStorageInstance()
+      storage    <- getStorageInstance
       bucketInfo <- config.getBucketInfo()
       bucket     <- getBucketInstance(storage, bucketInfo)
     } yield new Bucket(storage, bucket)
