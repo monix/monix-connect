@@ -38,6 +38,8 @@ But you can also only include to a specific connector to your library dependenci
 4. [Parquet](#Parquet)
 5. [Redis](#Redis)
 6. [S3](#S3)
+7. [GCS](#GCS)
+8. [Common](#Common)
 
 ---
 ## Akka
@@ -904,7 +906,11 @@ ob.fromIterable(chunks).consumeWith(multipartUploadConsumer)
 ```
 
 ### Local test environment - Set up
+---
+### GCS - Google Cloud Storage
 
+_Cloud Storage_ provides worldwide, highly durable object storage that scales to exabytes of data.
+You can access data instantly from any storage class
 For AWS S3 local testing we went with [minio](https://github.com/minio/minio) instead of localstack, since we found an [issue](https://github.com/localstack/localstack/issues/538) that can block you on writing your functional tests.
 
 Add the following service description to your `docker-compose.yaml` file:
@@ -963,6 +969,40 @@ Now you are ready to run your application!
 _Note that the above example defines the client as `implicit`, since it is how the api will expect this one._
 
 ---
+```scala
+import java.io.File
+
+import io.monix.connect.gcs._
+import io.monix.connect.gcs.configuration._
+
+// Create a new Storage Bucket
+val config = BucketConfig(name = "bucket")
+val bucket: Task[Bucket] = GoogleStorageBucket(config)
+
+// Upload a File
+val file0 = new File("/tmp/myfile0.txt")
+val metadata = BlobInfo(
+  contentType = Some("text/plain")
+)
+
+val blob0: Task[Blob] = {
+  for {
+    bucket <- bucket
+    blob   <- b.upload(file0, metadata)
+  } yield blob
+}
+
+// Download a Blobs content
+val file1 = new File("/tmp/myfile1.txt")
+val blob1 = {
+  for {
+    blob <- blob0
+    _    <- blob.downloadTo(file1.getPath)
+  } yield ()
+}
+
+```
+
 
 ### Contributing
 

@@ -98,6 +98,7 @@ object Dependencies {
 
   private val GcsDependencies = Seq(
     "io.monix"          %% "monix-reactive"       % DependencyVersions.Monix,
+    "org.typelevel"     %% "cats-core"            % DependencyVersions.Cats,
     "com.google.cloud"   % "google-cloud-storage" % "1.107.0"
   )
 
