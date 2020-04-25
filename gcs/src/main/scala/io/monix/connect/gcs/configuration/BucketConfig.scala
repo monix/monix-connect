@@ -19,22 +19,24 @@ final case class BucketConfig(name: String,
                               cors: List[Cors] = List.empty[Cors],
                               defaultAcl: List[Acl] = List.empty[Acl],
                               lifecycleRules: List[LifecycleRule] = List.empty[LifecycleRule],
-                              logging: Option[BucketInfo.Logging],
+                              logging: Option[BucketInfo.Logging] = None,
                               indexPage: Option[String] = None,
                               notFoundPage: Option[String] = None,
                               defaultKmsKeyName: Option[String] = None,
                               defaultEventBasedHold: Option[Boolean] = None,
                               iamConfiguration: Option[IamConfiguration] = None) {
 
-  private[gcs] def getBucketInfo(): Task[BucketInfo] = Task {
+  private[gcs] def getBucketInfo: Task[BucketInfo] = Task {
     val builder = BucketInfo.newBuilder(name)
     location.foreach(builder.setLocation)
     storageClass.foreach(builder.setStorageClass)
-    versioningEnabled.foreach(b => builder.setVersioningEnabled(b))
-    retentionPeriod.foreach(rp => builder.setRetentionPeriod(rp.toMillis))
-    requesterPays.foreach(b => builder.setRequesterPays(b))
     logging.foreach(builder.setLogging)
+    retentionPeriod.foreach(rp => builder.setRetentionPeriod(rp.toMillis))
     defaultEventBasedHold.foreach(evb => builder.setDefaultEventBasedHold(evb))
+
+    // Booleans
+    versioningEnabled.foreach(b => builder.setVersioningEnabled(b))
+    requesterPays.foreach(b => builder.setRequesterPays(b))
 
     // Security and Access Control
     builder.setAcl(acl.asJava)

@@ -20,30 +20,20 @@ final case class BlobInfo(contentType: Option[String] = None,
                           eventBasedHold: Option[Boolean] = None,
                           temporaryHold: Option[Boolean] = None) {
 
-
   def toBlobInfo(blobId: BlobId): gcs.BlobInfo = {
     val builder = gcs.BlobInfo.newBuilder(blobId)
-
-    // Content
     contentType.foreach(builder.setContentType)
     contentDisposition.foreach(builder.setContentDisposition)
     contentLanguage.foreach(builder.setContentLanguage)
     contentEncoding.foreach(builder.setContentEncoding)
     cacheControl.foreach(builder.setCacheControl)
-
-    // CRC
     crc32c.foreach(builder.setCrc32c)
     crc32cFromHexString.foreach(builder.setCrc32cFromHexString)
-
-    // MD5
     md5.foreach(builder.setMd5)
     md5FromHexString.foreach(builder.setMd5FromHexString)
-
     storageClass.foreach(builder.setStorageClass)
     temporaryHold.foreach(b => builder.setEventBasedHold(b))
     eventBasedHold.foreach(b => builder.setEventBasedHold(b))
-
-    // Iterables
     builder.setAcl(acl.asJava)
     builder.setMetadata(metadata.asJava)
 

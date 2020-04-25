@@ -976,7 +976,7 @@ import io.monix.connect.gcs._
 import io.monix.connect.gcs.configuration._
 
 // Create a new Storage Bucket
-val config = BucketConfig(name = "bucket")
+val config: BucketConfig = BucketConfig("mybucket")
 val bucket: Task[Bucket] = Bucket(config)
 
 // Upload a File

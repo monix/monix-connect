@@ -6,6 +6,7 @@ import java.nio.file.{Files, Path}
 
 import com.google.cloud.WriteChannel
 import com.google.cloud.storage.{BlobInfo, Storage}
+import io.monix.connect.gcs.Blob
 import monix.eval.Task
 import monix.reactive.Observable
 import io.monix.connect.{gcs => monix}
@@ -46,13 +47,14 @@ trait StorageUploader {
 
   private def getBlobById(blobInfo: BlobInfo)(implicit s: Storage): Task[monix.Blob] = {
     Task(s.get(blobInfo.getBlobId))
-      .map(new monix.Blob(_))
+      .map(Blob.apply)
   }
 
   protected def uploadToBucket(blobInfo: BlobInfo, path: Path, chunkSize: Int)(implicit s: Storage): Task[monix.Blob] = {
     if (Files.size(path) <= chunkSize) {
       Task.evalAsync(s.create(blobInfo, Files.readAllBytes(path)))
-        .map(new monix.Blob(_))
+        .map(Blob.apply)
+
     } else {
       for {
         _    <- upload(blobInfo, path, chunkSize).completedL
