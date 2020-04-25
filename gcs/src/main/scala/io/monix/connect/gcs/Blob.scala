@@ -1,18 +1,18 @@
 package io.monix.connect.gcs
 
-import java.io.OutputStream
 import java.nio.file.Path
 
 import com.google.cloud.storage
+import com.google.cloud.storage.Storage
+import io.monix.connect.gcs.streaming.StorageDownloader
 import monix.eval.Task
 
-final class Blob(blob: storage.Blob) {
+final class Blob(blob: storage.Blob) extends StorageDownloader {
 
-  def downloadTo(path: Path): Task[Unit] =
-    Task(blob.downloadTo(path))
+  implicit val storage: Storage = blob.getStorage
 
-  def downloadTo(outputStream: OutputStream): Task[Unit] =
-    Task(blob.downloadTo(outputStream))
+  def downloadTo(path: Path, chunkSize: Int): Task[Unit] =
+    downloadFromBucket(blob.getBlobId, path, chunkSize)
 
   def exists(): Task[Boolean] =
     Task(blob.exists())

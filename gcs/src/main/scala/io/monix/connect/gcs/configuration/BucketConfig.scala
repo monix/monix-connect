@@ -3,13 +3,13 @@ package io.monix.connect.gcs.configuration
 import com.google.cloud.storage.BucketInfo.{IamConfiguration, LifecycleRule}
 import com.google.cloud.storage.{Acl, BucketInfo, Cors, StorageClass}
 import io.monix.connect.gcs.configuration.BucketConfig.Location
+import monix.eval.Task
+import scala.jdk.CollectionConverters._
 
 import scala.concurrent.duration.FiniteDuration
 
 final case class BucketConfig(name: String,
                               location: Option[Location] = None,
-                              writeBufferSize: Int = 4096,
-                              readBufferSize: Int = 4096,
                               labels: Map[String, String] = Map.empty[String, String],
                               requesterPays: Option[Boolean] = None,
                               versioningEnabled: Option[Boolean] = None,
@@ -24,7 +24,34 @@ final case class BucketConfig(name: String,
                               notFoundPage: Option[String] = None,
                               defaultKmsKeyName: Option[String] = None,
                               defaultEventBasedHold: Option[Boolean] = None,
-                              iamConfiguration: Option[IamConfiguration] = None)
+                              iamConfiguration: Option[IamConfiguration] = None) {
+
+  private[gcs] def getBucketInfo(): Task[BucketInfo] = Task {
+    val builder = BucketInfo.newBuilder(name)
+    location.foreach(builder.setLocation)
+    storageClass.foreach(builder.setStorageClass)
+    versioningEnabled.foreach(b => builder.setVersioningEnabled(b))
+    retentionPeriod.foreach(rp => builder.setRetentionPeriod(rp.toMillis))
+    requesterPays.foreach(b => builder.setRequesterPays(b))
+    logging.foreach(builder.setLogging)
+    defaultEventBasedHold.foreach(evb => builder.setDefaultEventBasedHold(evb))
+
+    // Security and Access Control
+    builder.setAcl(acl.asJava)
+    builder.setDefaultAcl(defaultAcl.asJava)
+    builder.setCors(cors.asJava)
+    builder.setLifecycleRules(lifecycleRules.asJava)
+    iamConfiguration.foreach(builder.setIamConfiguration)
+    defaultKmsKeyName.foreach(builder.setDefaultKmsKeyName)
+
+    // Pages and Metadata
+    builder.setLabels(labels.asJava)
+    indexPage.foreach(builder.setNotFoundPage)
+    notFoundPage.foreach(builder.setNotFoundPage)
+
+    builder.build()
+  }
+}
 
 object BucketConfig {
 

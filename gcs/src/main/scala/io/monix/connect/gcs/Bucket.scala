@@ -1,74 +1,97 @@
 package io.monix.connect.gcs
 
-import java.io.File
+import java.nio.file.Path
 
-import com.google.cloud.storage.{Option => _, Bucket => _, _}
 import com.google.cloud.storage
+import com.google.cloud.storage.{BlobId, BucketInfo, Storage, StorageOptions}
 import io.monix.connect.gcs.configuration.{BlobInfo, BucketConfig}
+import io.monix.connect.gcs.streaming.{StorageDownloader, StorageUploader}
 import monix.eval.Task
 
-import scala.jdk.CollectionConverters._
+final class Bucket(s: Storage, bucket: storage.Bucket)
+  extends StorageUploader
+    with StorageDownloader {
 
-final class Bucket(storage: Storage, bucket: storage.Bucket, writeBufferSize: Int, readBufferSize: Int)
-  extends StorageUploader {
-
-  implicit val s: Storage = storage
-  implicit val b: storage.Bucket = bucket
-
+  /**
+   * Retrieves a GCS Blob by name from this Bucket.
+   *
+   * @param name the name of the blob.
+   */
   def getBlob(name: String): Task[Blob] =
-    Task(storage.get(BlobId.of(bucket.getName, name)))
+    Task(s.get(BlobId.of(bucket.getName, name)))
+      .map(b => new Blob(b))
 
-  def upload(file: File, config: Option[BlobInfo]): Task[Blob] = {
-    val blobId = BlobId.of(bucket.getName, file.getName)
-    val blobInfo = config.map(_.toBlobInfo(blobId))
+  /**
+   * Uploads a file to this storage bucket. If the file is less than or equal to <code>chunkSize</code> the file is
+   * uploaded with a single request, if it is larger, then the file is uploaded in <code>chunkSize</code>
+   * batches using a <code>WriteChannel<code>.
+   *
+   * Example:
+   * {{{
+   *
+   *   val file = Paths.get("/tmp/data.txt")
+   *   val bucket: Task[Bucket] = ???
+   *
+   *   for {
+   *    b <- bucket
+   *    _ <- b.upload(file)
+   *   } yield println("Uploaded File")
+   *
+   * }}}
+   *
+   * @param path the path to the file.
+   * @param chunkSize the maximum upload chuck size.
+   * @param config an optional configuration object for the file.
+   */
+  def upload(path: Path, chunkSize: Int = 4096, config: Option[BlobInfo] = None): Task[Blob] = {
+    val blobId = BlobId.of(bucket.getName, path.getFileName.toString)
+    val blobInfo = config
+      .map(_.toBlobInfo(blobId))
       .getOrElse(BlobInfo.fromBlobId(blobId))
 
-    uploadToBucket(blobInfo, file, writeBufferSize)
+    uploadToBucket(blobInfo, path, chunkSize)(s)
+  }
+
+  /**
+   * Downloads a file from this storage bucket. In <code>chunkSize</code> batches using a <code>ReadChannel<code>.
+   *
+   * Example:
+   * {{{
+   *
+   *   val fileName = "data"
+   *   val file = Paths.get("/tmp/data.txt")
+   *   val bucket: Task[Bucket] = ???
+   *
+   *   for {
+   *    b <- bucket
+   *    _ <- b.download(fileName, file)
+   *   } yield println("Downloaded File")
+   *
+   * }}}
+   *
+   * @param path the path to the file.
+   * @param chunkSize the maximum upload chuck size.
+   */
+  def download(name: String, path: Path, chunkSize: 4096): Task[Unit] = {
+    val blobId = BlobId.of(bucket.getName, name)
+    downloadFromBucket(blobId, path, chunkSize)(s)
   }
 }
 
 object Bucket {
 
-  private def getBucketInfo(config: BucketConfig): Task[BucketInfo] = Task {
-    val builder = BucketInfo.newBuilder(config.name)
-    config.location.foreach(builder.setLocation)
-    config.storageClass.foreach(builder.setStorageClass)
-    config.versioningEnabled.foreach(b => builder.setVersioningEnabled(b))
-    config.retentionPeriod.foreach(rp => builder.setRetentionPeriod(rp.toMillis))
-    config.requesterPays.foreach(b => builder.setRequesterPays(b))
-    config.logging.foreach(builder.setLogging)
-    config.defaultEventBasedHold.foreach(evb => builder.setDefaultEventBasedHold(evb))
-
-    // Security and Access Control
-    builder.setAcl(config.acl.asJava)
-    builder.setDefaultAcl(config.defaultAcl.asJava)
-    builder.setCors(config.cors.asJava)
-    builder.setLifecycleRules(config.lifecycleRules.asJava)
-    config.iamConfiguration.foreach(builder.setIamConfiguration)
-    config.defaultKmsKeyName.foreach(builder.setDefaultKmsKeyName)
-
-    // Pages and Metadata
-    builder.setLabels(config.labels.asJava)
-    config.indexPage.foreach(builder.setNotFoundPage)
-    config.notFoundPage.foreach(builder.setNotFoundPage)
-
-    builder.build()
-  }
-
-  // TODO: Add alternative authentication methods.
   private def getStorageInstance(): Task[Storage] =
     Task(StorageOptions.getDefaultInstance.getService)
 
-  // TODO: Handle Options
-  private def getBucketInstance(storage: Storage, bucketInfo: BucketInfo): Task[Bucket] =
-    Task(storage.create(bucketInfo))
+  private def getBucketInstance(gcs: Storage, bucketInfo: BucketInfo): Task[storage.Bucket] =
+    Task(gcs.create(bucketInfo))
 
   // TODO: Check if bucket exists before creating.
   def apply(config: BucketConfig): Task[Bucket] = {
     for {
       storage    <- getStorageInstance()
-      bucketInfo <- getBucketInfo(config)
+      bucketInfo <- config.getBucketInfo()
       bucket     <- getBucketInstance(storage, bucketInfo)
-    } yield new Bucket(storage, bucket, config.writeBufferSize, config.readBufferSize)
+    } yield new Bucket(storage, bucket)
   }
 }
