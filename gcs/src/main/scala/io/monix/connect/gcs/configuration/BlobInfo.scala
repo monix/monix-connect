@@ -1,7 +1,7 @@
 package io.monix.connect.gcs.configuration
 
 import com.google.cloud.storage.{Acl, BlobId, StorageClass}
-import com.google.cloud.{storage => gcs}
+import com.google.cloud.{storage => google}
 
 import scala.jdk.CollectionConverters._
 
@@ -20,8 +20,8 @@ final case class BlobInfo(contentType: Option[String] = None,
                           eventBasedHold: Option[Boolean] = None,
                           temporaryHold: Option[Boolean] = None) {
 
-  def toBlobInfo(blobId: BlobId): gcs.BlobInfo = {
-    val builder = gcs.BlobInfo.newBuilder(blobId)
+  private[gcs] def toBlobInfo(blobId: BlobId): google.BlobInfo = {
+    val builder = google.BlobInfo.newBuilder(blobId)
     contentType.foreach(builder.setContentType)
     contentDisposition.foreach(builder.setContentDisposition)
     contentLanguage.foreach(builder.setContentLanguage)
@@ -42,6 +42,6 @@ final case class BlobInfo(contentType: Option[String] = None,
 }
 
 object BlobInfo {
-  def fromBlobId(blobId: BlobId): gcs.BlobInfo =
-    gcs.BlobInfo.newBuilder(blobId).build()
+  private[gcs] def fromBlobId(blobId: BlobId): google.BlobInfo =
+    google.BlobInfo.newBuilder(blobId).build()
 }

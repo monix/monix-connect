@@ -42,11 +42,9 @@ final class Blob(blob: google.Blob) extends StorageDownloader {
   def signUrl(duration: FiniteDuration, options: Storage.SignUrlOption*): Task[URL] =
     Task(blob.signUrl(duration.toMillis, TimeUnit.MILLISECONDS, options: _*))
 
-
   // ------------------------------------------------------------------------------- //
-  def generatedId: String = {
+  def generatedId: String =
     blob.getGeneratedId
-  }
 
   def cacheControl: Option[String] =
     Option(blob.getCacheControl)
@@ -75,10 +73,10 @@ final class Blob(blob: google.Blob) extends StorageDownloader {
   def componentCount: Int =
     blob.getComponentCount
 
-  def eTag(): String =
+  def eTag: String =
     blob.getEtag
 
-  def md5(): Option[String] =
+  def md5: Option[String] =
     Option(blob.getMd5)
 
   def md5ToHexString: Option[String] =
