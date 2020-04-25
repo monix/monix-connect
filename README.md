@@ -232,7 +232,30 @@ Observable
   .consumeWith(multipartConsumer)
 }
 ```
-
-
-
 ---
+
+## Contributing
+
+The Monix project welcomes contributions from anybody wishing to
+participate.  All code or documentation that is provided must be
+licensed with the same license that Monix is licensed with (Apache
+2.0, see LICENSE.txt).
+
+People are expected to follow the
+[Scala Code of Conduct](./CODE_OF_CONDUCT.md) when
+discussing Monix on GitHub, Gitter channel, or other venues.
+
+Feel free to open an issue if you notice a bug, have an idea for a
+feature, or have a question about the code. Pull requests are also
+gladly accepted. For more information, check out the
+[contributor guide](CONTRIBUTING.md).
+
+If you'd like to donate in order to help with ongoing maintenance:
+
+<a href="https://www.patreon.com/bePatron?u=6102596"><img label="Become a Patron!" src="https://c5.patreon.com/external/logo/become_a_patron_button@2x.png" height="40" /></a>
+
+## License
+
+All code in this repository is licensed under the Apache License,
+Version 2.0.  See [LICENCE.txt](./LICENSE.txt).
+
