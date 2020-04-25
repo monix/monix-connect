@@ -1,5 +1,6 @@
 package monix.connect.dynamodb
 
+import monix.connect.common.Operators.Transformer
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
@@ -10,6 +11,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model._
+import monix.connect.common.Operators.Implicits._
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._

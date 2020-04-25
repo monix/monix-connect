@@ -8,6 +8,8 @@ import scala.xml.transform.{RewriteRule, RuleTransformer}
 // https://github.com/typesafehub/migration-manager/wiki/Sbt-plugin
 val monixSeries = "0.0.0"
 
+lazy val connectors = akka :: common :: dynamoDB :: hdfs :: parquet :: redis :: s3 :: Nil
+
 lazy val doNotPublishArtifact = Seq(
   publishArtifact := false,
   publishArtifact in (Compile, packageDoc) := false,
@@ -15,18 +17,12 @@ lazy val doNotPublishArtifact = Seq(
   publishArtifact in (Compile, packageBin) := false
 )
 
-lazy val warnUnusedImport = Seq(
-  scalacOptions ++= Seq("-Ywarn-unused-import"),
-  scalacOptions in (Compile, console) --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports"),
-  scalacOptions in Test --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports")
-)
-
-lazy val sharedSettings = warnUnusedImport ++ Seq(
-
+lazy val sharedSettings = Seq(
   organization := "io.monix",
   scalaVersion := "2.13.1",
+  version      := Version.version,
   crossScalaVersions := Seq("2.12.10", "2.13.1"),
-
+  scalafmtOnCompile := true,
   scalacOptions ++= Seq(
     // warnings
     "-unchecked", // able additional warnings where generated code depends on assumptions
@@ -37,19 +33,10 @@ lazy val sharedSettings = warnUnusedImport ++ Seq(
     "-language:implicitConversions",
     "-language:experimental.macros",
   ),
-  scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((2, v)) if v <= 12 =>
-      Seq(
-        // possibly deprecated options
-        "-Ywarn-inaccessible",
-        // absolutely necessary for Iterant
-        "-Ypartial-unification",
-      )
-    case _ =>
-      Seq(
-        "-Ymacro-annotations",
-      )
-  }),
+  //warnUnusedImports
+  scalacOptions ++= Seq("-Ywarn-unused-import"),
+  scalacOptions in (Compile, console) --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports"),
+  scalacOptions in Test --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports"),
   // Linter
   scalacOptions ++= Seq(
     // Turns all warnings into errors ;-)
@@ -117,7 +104,6 @@ lazy val sharedSettings = warnUnusedImport ++ Seq(
   isSnapshot := version.value endsWith "SNAPSHOT",
   publishArtifact in Test := false,
   pomIncludeRepository := { _ => false }, // removes optional dependencies
-
   // For evicting Scoverage out of the generated POM
   // See: https://github.com/scoverage/sbt-scoverage/issues/153
   pomPostProcess := { (node: xml.Node) =>
@@ -130,11 +116,13 @@ lazy val sharedSettings = warnUnusedImport ++ Seq(
     }).transform(node).head
   },
 
+  headerLicense := None,
+
   licenses := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
 
   //homepage := Some(url("https://monix.io")), //todo homepage settings
 
-  headerLicense := Some(HeaderLicense.Custom(
+ /* headerLicense := Some(HeaderLicense.Custom(
     """|Copyright (c) 2014-2020 by The Monix Project Developers.
        |See the project homepage at: https://monix.io
        |
@@ -149,7 +137,7 @@ lazy val sharedSettings = warnUnusedImport ++ Seq(
        |WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
        |See the License for the specific language governing permissions and
        |limitations under the License."""
-      .stripMargin)),
+      .stripMargin)),*/
 
   //todo add scm
 
@@ -190,23 +178,25 @@ def profile: Project => Project = pr => {
   withCoverage.enablePlugins(AutomateHeaderPlugin)
 }
 
+def monixConnector(connectorName: String, projectDependencies: Seq[ModuleID], additionalSettings: sbt.Def.SettingsDefinition*): Project =
+  Project(id = connectorName, base = file(connectorName))
+    .enablePlugins(AutomateHeaderPlugin)
+    .settings(
+      name := s"monix-$connectorName",
+      libraryDependencies ++= projectDependencies,
+      Defaults.itSettings)
+    .settings(additionalSettings: _*)
+    .configure(profile)
+    .configs(IntegrationTest, IT)
+
 val IT = config("it") extend Test
 
-lazy val monix-connect = (project in file("."))
+lazy val monix = (project in file("."))
   .configs(IntegrationTest, IT)
-  .settings(
-    Defaults.itSettings,
-    inThisBuild(List(
-      organization := "monix",
-      scalaVersion := "2.13.1",
-      version      := Version.version
-    )),
-    name := "monix-connect",
-    scalafmtOnCompile := true
-)
-  .aggregate(akka, dynamoDB, hdfs, parquet, s3, redis)
-  .dependsOn(akka, dynamoDB, hdfs, parquet, s3, redis)
-
+  .settings(sharedSettings)
+  .settings(name := "monix-connect")
+  .aggregate(akka, common, dynamoDB, hdfs, parquet, s3)
+  .dependsOn(akka, common, dynamoDB, hdfs, parquet, s3)
 
 lazy val akka = (project in file("akka"))
   .configure(profile)
@@ -214,8 +204,8 @@ lazy val akka = (project in file("akka"))
     name := "monix-akka",
     libraryDependencies ++= Dependencies.Akka,
     version := Version.version,
-    scalafmtOnCompile := true
-  )
+    scalafmtOnCompile := true,
+    headerLicense := None)
 
 lazy val common = (project in file("common"))
   .configure(profile)
@@ -275,14 +265,8 @@ lazy val s3 = (project in file("s3"))
     version := Version.version
   )
 
-lazy val redis = (project in file("redis"))
-  .configure(profile)
-  .settings(
-    scalafmtOnCompile := true,
-    name := "monix-redis",
-    libraryDependencies ++= Dependencies.Redis,
-    version := Version.version
-  )
-  .enablePlugins(JavaAppPackaging, DockerPlugin)
+lazy val redis = monixConnector("redis", Dependencies.Redis)
+
+
 
 //todo add release settings
