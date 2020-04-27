@@ -1,13 +1,13 @@
 # Contributing to Monix Connect
 
-The Monix project welcomes contributions from anybody wishing to participate.
+The Monix Connect project welcomes contributions from anybody wishing to participate.
 All code or documentation that is provided must be licensed with the same
 license that Monix is licensed with (Apache 2.0, see LICENSE.txt).
 
 ## Code of Conduct
 
 People are expected to follow the [Scala Code of Conduct](https://www.scala-lang.org/conduct/)
-when discussing Monix on the Github page, Gitter channel, or other venues.
+when discussing Monix Connect on the Github page, Gitter channel, or other venues.
 
 We hope that our community will be respectful, helpful, and kind. If you find 
 yourself embroiled in a situation that becomes heated, or that fails to live up 
@@ -31,18 +31,10 @@ escalate into larger problems.
 4. When the work is completed, verify it with following commands:
 
 ```
-sbt scalafmtAll
+sbt scalafmtAll //it should be formatted on compile time
 sbt test
-sbt it:test
-sbt mimaReportBinaryIssues
+sbt it:test //triggers integration tests for each of the connectors
 ```
-
-If `mimaReportBinaryIssues` fails, it means there are binary incompatibilities.
-- If you're working on stable version (e.g. last released version is `3.0.0` or similar) then we will have to implement the change
-in a way that passes this test. There are few useful guidelines [here](https://github.com/jatcwang/binary-compatibility-guide) 
-but do not hesitate to submit a Pull Request anyway and ask Maintainers for help.
-- If you're not working on stable version (e.g. last released version is `3.0.0-RC3` or similar), just add proper filter
-[here](project/MimaFilters.scala). You should be able to find it in the failure output.
 
 5. Submit a Pull Request.
 
@@ -69,8 +61,9 @@ but do not hesitate to submit a Pull Request anyway and ask Maintainers for help
    
 ## Finding Starting Point
 
-If you want to contribute but you don't know where to start - have a look at [low-hanging fruit](https://github.com/monix/monix/issues?q=is%3Aopen+is%3Aissue+label%3A%22low-hanging+fruit%22) or [help wanted](https://github.com/monix/monix/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) issues.
-If there aren't any, have unclear description or seem too complicated - visit [monix/monix](https://gitter.im/monix/monix) Gitter channel.
+If you want to contribute but you don't know where to start - have a look at [issues](https://github.com/monix/monix-connect/issues).
+If there aren't any, have unclear description or seem too complicated - visit [monix/monix](https://gitter.im/monix/monix) Gitter channel, there is 
+currently tons of work to be done like: code documentation, web documentation, improving existing connectors as well as improving test coverage or even adding a new one. 
 Gitter is a go-to place in case you have any questions or need guidance since we're more than happy to help new contributors regardless of their experience.
    
 ## License
