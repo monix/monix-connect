@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 
 import com.google.cloud.storage.Blob.BlobSourceOption
 import com.google.cloud.storage.Storage.{BlobTargetOption, SignUrlOption}
-import com.google.cloud.storage.{Acl, Blob, BlobId, BlobInfo, StorageClass, Blob => GoogleBlob, Option => _}
+import com.google.cloud.storage.{Acl, BlobId, BlobInfo, StorageClass, Blob => GoogleBlob, Option => _}
 import com.google.cloud.{storage => google}
 import io.monix.connect.gcs.configuration.BlobConfig
 import io.monix.connect.gcs.utiltiies.StorageDownloader
@@ -28,9 +28,15 @@ import scala.jdk.CollectionConverters._
  */
 final class Blob(underlying: GoogleBlob) extends StorageDownloader {
 
+  /**
+   * Checks if this blob exists.
+   */
   def exists(options: BlobSourceOption*): Task[Boolean] =
     Task(underlying.exists(options: _*))
 
+  /**
+   * Fetches current blob's latest information. Returns None if the blob does not exist.
+   */
   def reload(options: BlobSourceOption*): Task[Option[Blob]] =
     Task(underlying.reload(options: _*)).map { optBlob =>
       Option(optBlob).map(Blob.apply)
@@ -101,19 +107,22 @@ final class Blob(underlying: GoogleBlob) extends StorageDownloader {
    * want to require users to explicitly log in. Signing a URL requires a service account signer.
    *
    * If an instance of [[com.google.auth.ServiceAccountSigner]] was passed to [[com.google.cloud.storage.StorageOptions]]
-   * builder via [[setCredentials]] or the default credentials are being used and the environment variable
-   * [[GOOGLE_APPLICATION_CREDENTIALS]] is set or your application is running in App Engine, then this function will
-   * use those credentials to sign the URL.
+   * builder via [[com.google.cloud.storage.StorageOptions#setCredentials]] or the default credentials are being
+   * used and the environment variable 'GOOGLE_APPLICATION_CREDENTIALS' is set or your application is running in
+   * App Engine, then this function will use those credentials to sign the URL.
    *
    * If the credentials passed to [[com.google.cloud.storage.StorageOptions]] do not implement
    * [[com.google.auth.ServiceAccountSigner]] (this is the case, for instance, for Compute Engine credentials and
-   * Google Cloud SDK credentials) then function will throw an [[IllegalStateException]] unless an implementation of
-   * [[com.google.auth.ServiceAccountSigner]] is passed using the [[SignUrlOption#signWith(ServiceAccountSigner)]]
+   * Google Cloud SDK credentials) then this function will throw an [[IllegalStateException]] unless an implementation
+   * of [[com.google.auth.ServiceAccountSigner]] is passed using the [[SignUrlOption#signWith(ServiceAccountSigner)]]
    * option.
    */
   def signUrl(duration: FiniteDuration, options: SignUrlOption*): Task[URL] =
     Task(underlying.signUrl(duration.toMillis, TimeUnit.MILLISECONDS, options: _*))
 
+
+
+  // TODO: Document use case for below functions, retrieving blob metadata is unsafe due to the usage of null.
   // ------------------------------------------------------------------------------- //
   def generatedId: String =
     underlying.getGeneratedId
@@ -121,87 +130,87 @@ final class Blob(underlying: GoogleBlob) extends StorageDownloader {
   def cacheControl: Option[String] =
     Option(underlying.getCacheControl)
 
-  def acl: List[Acl] =
-    underlying.getAcl.asScala.toList
+  def getAcl: List[Acl] =
+    underlying.getAcl().asScala.toList
 
-  def owner: Acl.Entity =
+  def getOwner: Acl.Entity =
     underlying.getOwner
 
-  def size: lang.Long =
+  def getSize: lang.Long =
     underlying.getSize
 
-  def contentType: Option[String] =
+  def getContentType: Option[String] =
     Option(underlying.getContentType)
 
-  def contentEncoding: Option[String] =
+  def getContentEncoding: Option[String] =
     Option(underlying.getContentEncoding)
 
-  def contentDisposition: Option[String] =
+  def getContentDisposition: Option[String] =
     Option(underlying.getContentDisposition)
 
-  def contentLanguage: Option[String] =
+  def getContentLanguage: Option[String] =
     Option(underlying.getContentLanguage)
 
-  def componentCount: Int =
+  def getComponentCount: Int =
     underlying.getComponentCount
 
-  def eTag: String =
+  def getEtag: String =
     underlying.getEtag
 
-  def md5: Option[String] =
+  def getMd5: Option[String] =
     Option(underlying.getMd5)
 
-  def md5ToHexString: Option[String] =
+  def getMd5ToHexString: Option[String] =
     Option(underlying.getMd5ToHexString)
 
-  def crc32c: Option[String] =
+  def getCrc32c: Option[String] =
     Option(underlying.getCrc32c)
 
-  def crc32cToHexString: Option[String] =
+  def getCrc32cToHexString: Option[String] =
     Option(underlying.getCrc32cToHexString)
 
-  def mediaLink: URL =
+  def getMediaLink: URL =
     new URL(underlying.getMediaLink)
 
-  def metadata: Map[String, String] =
+  def getMetadata: Map[String, String] =
     Option(underlying.getMetadata)
       .map(_.asScala.toMap)
       .getOrElse(Map.empty[String, String])
 
-  def generation: Long =
+  def getGeneration: Long =
     underlying.getGeneration
 
-  def metaGeneration: Long =
+  def getMetageneration: Long =
     underlying.getMetageneration
 
-  def deletedAt: Instant =
+  def getDeleteTime: Instant =
     Instant.ofEpochMilli(underlying.getDeleteTime)
 
-  def updatedAt: Instant =
+  def getUpdateTime: Instant =
     Instant.ofEpochMilli(underlying.getUpdateTime)
 
-  def createdAt: Instant =
+  def getCreateTime: Instant =
     Instant.ofEpochMilli(underlying.getCreateTime)
 
   def isDirectory: Boolean =
     underlying.isDirectory
 
-  def customerEncryption: BlobInfo.CustomerEncryption =
+  def getCustomerEncryption: BlobInfo.CustomerEncryption =
     underlying.getCustomerEncryption
 
-  def storageClass: StorageClass =
+  def getStorageClass: StorageClass =
     underlying.getStorageClass
 
-  def kmsKeyName: String =
+  def getKmsKeyName: String =
     underlying.getKmsKeyName
 
-  def eventBasedHold: Option[Boolean] =
+  def getEventBasedHold: Option[Boolean] =
     Option(underlying.getEventBasedHold)
 
-  def temporaryHold: Option[lang.Boolean] =
+  def getTemporaryHold: Option[lang.Boolean] =
     Option(underlying.getTemporaryHold)
 
-  def retentionExpirationTime: Option[Instant] =
+  def getRetentionExpirationTime: Option[Instant] =
     Option(underlying.getRetentionExpirationTime)
       .map(ts => Instant.ofEpochMilli(ts))
 }
