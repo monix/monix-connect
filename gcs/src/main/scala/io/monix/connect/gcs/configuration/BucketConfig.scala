@@ -3,10 +3,9 @@ package io.monix.connect.gcs.configuration
 import com.google.cloud.storage.BucketInfo.{IamConfiguration, LifecycleRule}
 import com.google.cloud.storage.{Acl, BucketInfo, Cors, StorageClass}
 import io.monix.connect.gcs.configuration.BucketConfig.Location
-import monix.eval.Task
-import scala.jdk.CollectionConverters._
 
 import scala.concurrent.duration.FiniteDuration
+import scala.jdk.CollectionConverters._
 
 final case class BucketConfig(name: String,
                               location: Option[Location] = None,
@@ -26,7 +25,7 @@ final case class BucketConfig(name: String,
                               defaultEventBasedHold: Option[Boolean] = None,
                               iamConfiguration: Option[IamConfiguration] = None) {
 
-  private[gcs] def getBucketInfo: Task[BucketInfo] = Task {
+  private[gcs] def getBucketInfo: BucketInfo = {
     val builder = BucketInfo.newBuilder(name)
     location.foreach(builder.setLocation)
     storageClass.foreach(builder.setStorageClass)
@@ -62,8 +61,8 @@ object BucketConfig {
   object Locations {
 
     // Regions
-    lazy val `NORTHAMERICA-NORTHEAST1`: Location = "NORTHAMERICA-NORTHEAST1"
-    lazy val `US-CENTRAL1`: Location = "US-CENTRAL1"
+    lazy val `northamerica-northeast-1`: Location = "NORTHAMERICA-NORTHEAST1"
+    lazy val `us-central1`: Location = "US-CENTRAL1"
     lazy val `US-EAST1`: Location = "US-EAST1"
     lazy val `US-EAST4`: Location = "US-EAST4"
     lazy val `US-WEST1`: Location = "US-WEST1"

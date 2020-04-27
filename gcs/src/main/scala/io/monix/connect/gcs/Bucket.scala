@@ -2,136 +2,201 @@ package io.monix.connect.gcs
 
 import java.nio.file.Path
 
-import com.google.api.gax.paging.Page
-import com.google.cloud.{storage, storage => google}
-import com.google.cloud.storage.{BlobId, BucketInfo, Storage, StorageOptions}
-import io.monix.connect.gcs.configuration.{BlobInfo, BucketConfig}
-import io.monix.connect.gcs.streaming.{StorageDownloader, StorageUploader}
+import cats.data.NonEmptyList
+import com.google.cloud.storage.Bucket.BucketSourceOption
+import com.google.cloud.storage.Storage.{BlobGetOption, BlobListOption, BlobWriteOption, BucketTargetOption}
+import com.google.cloud.storage.{Acl, BlobId, Bucket => GoogleBucket}
+import io.monix.connect.gcs.configuration.BlobConfig
+import io.monix.connect.gcs.utiltiies.{Paging, StorageDownloader, StorageUploader}
 import monix.eval.Task
 import monix.reactive.Observable
 
 import scala.jdk.CollectionConverters._
 
-final class Bucket(storage: google.Storage, bucket: google.Bucket)
-  extends StorageUploader
-    with StorageDownloader {
-
-  implicit val s = storage
+/**
+ * This class wraps the [[com.google.cloud.storage.Bucket]] class, providing an idiomatic scala API
+ * handling null values with [[Option]] where applicable, as well as wrapping all side-effectful calls
+ * in [[monix.eval.Task]] or [[monix.reactive.Observable]].
+ *
+ * Example:
+ * {{{
+ *   import monix.reactive.Observable
+ *   import io.monix.connect.gcs.{Storage, Bucket}
+ *
+ *   val config = BucketConfig(
+ *      name = "mybucket"
+ *   )
+ *
+ *   val storage = Storage.create().memoize
+ *   val bucket  = storage.createBucket(config).memoize
+ *
+ *   (for {
+ *      bucket <- Observable.fromTask(bucket)
+ *      blobs  <- bucket.list()
+ *   } yield println(blob.name)).completeL
+ * }}}
+ */
+final class Bucket private(underlying: GoogleBucket)
+  extends StorageUploader with StorageDownloader with Paging {
 
   /**
-   * Retrieves a GCS Blob by name from this Bucket.
-   *
-   * @param name the name of the blob.
+   * Checks if this bucket exists.
    */
-  def getBlob(name: String): Task[Option[Blob]] =
-    Task(storage.get(BlobId.of(bucket.getName, name)))
-      .map(Option(_))
-      .map(Blob.apply)
+  def exists(options: BucketSourceOption*): Task[Boolean] =
+    Task(underlying.exists(options: _*))
 
   /**
-   * Uploads a file to this storage bucket. If the file is less than or equal to <code>chunkSize</code> the file is
-   * uploaded with a single request, if it is larger, then the file is uploaded in <code>chunkSize</code>
-   * batches using a <code>WriteChannel<code>.
-   *
-   * Example:
-   * {{{
-   *
-   *   val file = Paths.get("/tmp/data.txt")
-   *   val bucket: Task[Bucket] = ???
-   *
-   *   for {
-   *    b <- bucket
-   *    _ <- b.upload(file)
-   *   } yield println("Uploaded File")
-   *
-   * }}}
-   *
-   * @param path the path to the file.
-   * @param chunkSize the maximum upload chuck size.
-   * @param config an optional configuration object for the file.
+   * Reloads and refreshes this buckets data, returning a new Bucket instance.
    */
-  def upload(path: Path, chunkSize: Int = 4096, config: Option[BlobInfo] = None): Task[Blob] = {
-    val blobId = BlobId.of(bucket.getName, path.getFileName.toString)
-    val blobInfo = config
-      .map(_.toBlobInfo(blobId))
-      .getOrElse(BlobInfo.fromBlobId(blobId))
+  def reload(options: BucketSourceOption*): Task[Option[Bucket]] =
+    Task(underlying.reload(options: _*)).map { optBucket =>
+      Option(optBucket).map(Bucket.apply)
+    }
 
-    uploadToBucket(blobInfo, path, chunkSize)
+  /**
+   * Updates this bucket with the provided options, returning the newly updated
+   * Bucket instance.
+   *
+   * By default no checks are made on the metadata generation of the current bucket. If
+   * you want to update the information only if the current bucket metadata are at their latest
+   * version use the [[BucketTargetOption.metagenerationMatch]] option.
+   */
+  def update(options: BucketTargetOption*): Task[Bucket] =
+    Task(underlying.update(options: _*))
+      .map(Bucket.apply)
+
+  /**
+   * Deletes this bucket.
+   */
+  def delete(options: BucketSourceOption*): Task[Boolean] =
+    Task(underlying.delete(options: _*))
+
+  /**
+   * Returns the requested blob in this bucket or None if it isn't found.
+   */
+  def getBlob(name: String, options: BlobGetOption*): Task[Option[Blob]] = {
+    Task(underlying.get(name, options: _*)).map { optBlob =>
+      Option(optBlob).map(Blob.apply)
+    }
   }
 
   /**
-   * Downloads a file from this storage bucket, in <code>chunkSize</code> batches using a <code>ReadChannel<code>.
-   *
-   * Example:
-   * {{{
-   *
-   *   val fileName = "data"
-   *   val file = Paths.get("/tmp/data.txt")
-   *   val bucket: Task[Bucket] = ???
-   *
-   *   for {
-   *    b <- bucket
-   *    _ <- b.download(fileName, file)
-   *   } yield println("Downloaded File")
-   * }}}
-   *
-   * @param path the path to the file.
-   * @param chunkSize the maximum upload chuck size.
+   * Returns an [[Observable]] of the requested blobs, if one doesn't exist null is
+   * returned and filtered out of the result set.
    */
-  def download(name: String, path: Path, chunkSize: Int = 4096): Task[Unit] = {
-    val blobId = BlobId.of(bucket.getName, name)
-    downloadFromBucket(blobId, path, chunkSize)
+  def getBlobs(names: NonEmptyList[String]): Observable[Blob] = {
+    Observable
+      .fromTask(Task(underlying.get(names.toList.asJava)))
+      .concatMapIterable(_.asScala.toList)
+      .filter(_ != null)
+      .map(Blob.apply)
   }
 
   /**
    * Returns a [[Observable]] of all blobs in this [[Bucket]].
-   *
-   * Example:
-   * {{{
-   *
-   *   val config: BucketConfig = BucketConfig("mybucket")
-   *   val bucket: Task[Bucket] = Bucket(config)
-   *
-   *   for {
-   *     source <- bucket
-   *     blobs  <- source.list().map(b => println(b.name)).completeL
-   *   } yield ()
-   *
-   * }}}
-   *
-   * @param options options for listing blobs.
    */
-  def list(options: Storage.BlobListOption*): Observable[Blob] = {
-    def next(page: Page[google.Blob]): Task[(Page[google.Blob], Page[google.Blob])] = {
-      if (!page.hasNextPage) {
-        Task.now((page, page))
-      } else {
-        Task(page.getNextPage).map(next => (page, next))
-      }
-    }
-
-    Observable.fromAsyncStateAction(next)(bucket.list(options: _*))
-      .takeWhileInclusive(_.hasNextPage)
-      .concatMapIterable(_.iterateAll().asScala.toList)
-      .map(Blob.apply)
+  def listBlobs(options: BlobListOption*): Observable[Blob] = {
+    walk(Task(underlying.list(options: _*))).map(Blob.apply)
   }
+
+  /**
+   * TODO: Documentation
+   */
+  def upload(name: String, path: Path, chunkSize: Int, config: Option[BlobConfig], options: BlobWriteOption*): Task[Unit] = {
+    val blobId = BlobId.of(underlying.getName, name)
+    val blobInfo = config
+      .map(_.toBlobInfo(blobId))
+      .getOrElse(BlobConfig.fromBlobId(blobId))
+
+    uploadToBucket(underlying.getStorage, blobInfo, path, chunkSize, options: _*)
+  }
+
+  /**
+   * TODO: Documentation
+   */
+  def download(name: String, path: Path, chunkSize: Int = 4096): Task[Unit] = {
+    val blobId = BlobId.of(underlying.getName, name)
+    downloadFromBucket(underlying.getStorage, underlying.getName, blobId, path, chunkSize)
+  }
+
+  /**
+   * Creates a new ACL entry on this bucket.
+   */
+  def createAcl(acl: Acl): Task[Acl] =
+    Task(underlying.createAcl(acl))
+
+  /**
+   * Returns the ACL entry for the specified entity on this bucket or None if not found.
+   */
+  def getAcl(acl: Acl.Entity): Task[Option[Acl]] =
+    Task(underlying.getAcl(acl)).map(Option(_))
+
+  /**
+   * Updates an ACL entry on this bucket.
+   */
+  def updateAcl(acl: Acl): Task[Acl] =
+    Task(underlying.updateAcl(acl))
+
+  /**
+   * Deletes the ACL entry for the specified entity on this bucket.
+   */
+  def deleteAcl(acl: Acl.Entity): Task[Boolean] =
+    Task(underlying.deleteAcl(acl))
+
+  /**
+   * Returns a [[Observable]] of all the ACL Entries for this [[Bucket]].
+   */
+  def listAcls(): Observable[Acl] = {
+    Observable
+      .fromTask(Task(underlying.listAcls()))
+      .concatMapIterable(_.asScala.toList)
+  }
+
+  /**
+   * Creates a new default blob ACL entry on this bucket. Default ACLs are applied to a new blob within the bucket
+   * when no ACL was provided for that blob.
+   */
+  def createDefaultAcl(acl: Acl): Task[Acl] =
+    Task(underlying.createDefaultAcl(acl))
+
+  /**
+   * Returns the default object ACL entry for the specified entity on this bucket or None if
+   * not found.
+   */
+  def getDefaultAcl(acl: Acl.Entity): Task[Option[Acl]] =
+    Task(underlying.getDefaultAcl(acl)).map(Option(_))
+
+  /**
+   * Updates a default blob ACL entry on this bucket.
+   */
+  def updateDefaultAcl(acl: Acl): Task[Acl] =
+    Task(underlying.updateDefaultAcl(acl))
+
+  /**
+   * Deletes the default object ACL entry for the specified entity on this bucket.
+   */
+  def deleteDefaultAcl(acl: Acl.Entity): Task[Boolean] =
+    Task(underlying.deleteDefaultAcl(acl))
+
+  /**
+   * Returns a [[Observable]] of all the default Blob ACL Entries for this [[Bucket]].
+   */
+  def listDefaultAcls(): Observable[Acl] = {
+    Observable
+      .fromTask(Task(underlying.listDefaultAcls()))
+      .concatMapIterable(_.asScala.toList)
+  }
+
+  /**
+   * Locks bucket retention policy. Requires a local metageneration value in the request.
+   */
+  def lockRetentionPolicy(options: BucketTargetOption*): Task[Bucket] =
+    Task(underlying.lockRetentionPolicy(options: _*))
+      .map(Bucket.apply)
 }
 
 object Bucket {
-
-  // TODO: Abstract into it's own class, handle different authentication methods.
-  private def getStorageInstance: Task[Storage] =
-    Task(StorageOptions.getDefaultInstance.getService)
-
-  private def getBucketInstance(gcs: Storage, bucketInfo: BucketInfo): Task[google.Bucket] =
-    Task(gcs.create(bucketInfo))
-
-  // TODO: Check if bucket exists before creating.
-  def apply(config: BucketConfig): Task[Bucket] = {
-    for {
-      storage    <- getStorageInstance
-      bucketInfo <- config.getBucketInfo()
-      bucket     <- getBucketInstance(storage, bucketInfo)
-    } yield new Bucket(storage, bucket)
+  private[gcs] def apply(bucket: GoogleBucket): Bucket = {
+    new Bucket(bucket)
   }
 }

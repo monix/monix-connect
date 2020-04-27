@@ -6,132 +6,203 @@ import java.nio.file.Path
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 
-import com.google.cloud.storage.{Option => _, _}
+import com.google.cloud.storage.Blob.BlobSourceOption
+import com.google.cloud.storage.Storage.{BlobTargetOption, SignUrlOption}
+import com.google.cloud.storage.{Acl, Blob, BlobId, BlobInfo, StorageClass, Blob => GoogleBlob, Option => _}
 import com.google.cloud.{storage => google}
-import io.monix.connect.gcs.streaming.StorageDownloader
+import io.monix.connect.gcs.configuration.BlobConfig
+import io.monix.connect.gcs.utiltiies.StorageDownloader
 import monix.eval.Task
 
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 
-final class Blob(blob: google.Blob) extends StorageDownloader {
+/**
+ * This class wraps the [[com.google.cloud.storage.Blob]] class, providing an idiomatic scala API
+ * handling null values with [[Option]] where applicable, as well as wrapping all side-effectful calls
+ * in [[monix.eval.Task]] or [[monix.reactive.Observable]].
+ *
+ * @define copyToNote Forcing an Async Boundary, this function potentially spins until the copy is done. If the src and
+ *                    dst are in the same location and share the same storage class the request is done in one RPC call,
+ *                    otherwise multiple calls are issued.
+ */
+final class Blob(underlying: GoogleBlob) extends StorageDownloader {
 
-  implicit val s: Storage = blob.getStorage
+  def exists(options: BlobSourceOption*): Task[Boolean] =
+    Task(underlying.exists(options: _*))
 
+  def reload(options: BlobSourceOption*): Task[Option[Blob]] =
+    Task(underlying.reload(options: _*)).map { optBlob =>
+      Option(optBlob).map(Blob.apply)
+    }
+
+  /**
+   * Updates the blob's information. Bucket or blob's name cannot be changed by this method. If you
+   * want to rename the blob or move it to a different bucket use the [[copyTo]] and [[delete]] operations.
+   */
+  def update(options: BlobTargetOption*): Task[Blob] = {
+    Task(underlying.update(options: _*))
+      .map(Blob.apply)
+  }
+
+  /**
+   * Updates the blob's information. Bucket or blob's name cannot be changed by this method. If you
+   * want to rename the blob or move it to a different bucket use the [[copyTo]] and [[delete]] operations.
+   */
+  def update(config: BlobConfig, options: BlobTargetOption*): Task[Blob] = {
+    val update = config.toBlobInfo(underlying.getBlobId)
+    Task(underlying.getStorage.update(update, options: _*))
+      .map(Blob.apply)
+  }
+
+  def delete(options: BlobSourceOption*): Task[Boolean] =
+    Task(underlying.delete(options: _*))
+
+  /**
+   * Copies this blob to the target Blob.
+   *
+   * $copyToNote
+   */
+  def copyTo(targetBlob: BlobId, options: BlobSourceOption*): Task[Blob] =
+    Task.evalAsync(underlying.copyTo(targetBlob, options: _*))
+      .map(_.getResult)
+      .map(Blob.apply)
+
+  /**
+   * Copies this blob to the target Bucket.
+   *
+   * $copyToNote
+   */
+  def copyTo(targetBucket: String, options: BlobSourceOption*): Task[Blob] =
+    Task.evalAsync(underlying.copyTo(targetBucket, options: _*))
+      .map(_.getResult)
+      .map(Blob.apply)
+
+  /**
+   * Copies this blob to the target Blob in the target Bucket.
+   *
+   * $copyToNote
+   */
+  def copyTo(targetBucket: String, targetBlob: String, options: BlobSourceOption*): Task[Blob] =
+    Task.evalAsync(underlying.copyTo(targetBucket, targetBlob, options: _*))
+      .map(_.getResult)
+      .map(Blob.apply)
+
+  /**
+   * TODO: Documentation
+   */
   def downloadTo(path: Path, chunkSize: Int = 4096): Task[Unit] =
-    downloadFromBucket(blob.getBlobId, path, chunkSize)
+    downloadFromBucket(underlying.getStorage, underlying.getBucket, underlying.getBlobId, path, chunkSize)
 
-  def exists(options: google.Blob.BlobSourceOption*): Task[Boolean] =
-    Task(blob.exists(options: _*))
-
-  def reload(options: google.Blob.BlobSourceOption*): Task[Unit] =
-    Task(blob.reload(options: _*))
-
-  def delete(options: google.Blob.BlobSourceOption*): Task[Boolean] =
-    Task(blob.delete(options: _*))
-
-  def copyTo(targetBlob: BlobId, options: google.Blob.BlobSourceOption*): Task[Blob] =
-    Task(blob.copyTo(targetBlob, options: _*)).map(_.getResult).map(Blob.apply)
-
-  def copyTo(targetBucket: String, options: google.Blob.BlobSourceOption*): Task[Blob] =
-    Task(blob.copyTo(targetBucket, options: _*)).map(_.getResult).map(Blob.apply)
-
-  def copyTo(targetBucket: String, targetBlob: String, options: google.Blob.BlobSourceOption*): Task[Blob] =
-    Task(blob.copyTo(targetBucket, targetBlob, options: _*)).map(_.getResult).map(Blob.apply)
-
-  def signUrl(duration: FiniteDuration, options: Storage.SignUrlOption*): Task[URL] =
-    Task(blob.signUrl(duration.toMillis, TimeUnit.MILLISECONDS, options: _*))
+  /**
+   * Generates a signed URL for this blob. If you want to allow access for a fixed amount of time to
+   * this blob, you can use this method to generate a URL that is only valid within a certain time
+   * period. This is particularly useful if you don't want publicly accessible blobs, but also don't
+   * want to require users to explicitly log in. Signing a URL requires a service account signer.
+   *
+   * If an instance of [[com.google.auth.ServiceAccountSigner]] was passed to [[com.google.cloud.storage.StorageOptions]]
+   * builder via [[setCredentials]] or the default credentials are being used and the environment variable
+   * [[GOOGLE_APPLICATION_CREDENTIALS]] is set or your application is running in App Engine, then this function will
+   * use those credentials to sign the URL.
+   *
+   * If the credentials passed to [[com.google.cloud.storage.StorageOptions]] do not implement
+   * [[com.google.auth.ServiceAccountSigner]] (this is the case, for instance, for Compute Engine credentials and
+   * Google Cloud SDK credentials) then function will throw an [[IllegalStateException]] unless an implementation of
+   * [[com.google.auth.ServiceAccountSigner]] is passed using the [[SignUrlOption#signWith(ServiceAccountSigner)]]
+   * option.
+   */
+  def signUrl(duration: FiniteDuration, options: SignUrlOption*): Task[URL] =
+    Task(underlying.signUrl(duration.toMillis, TimeUnit.MILLISECONDS, options: _*))
 
   // ------------------------------------------------------------------------------- //
   def generatedId: String =
-    blob.getGeneratedId
+    underlying.getGeneratedId
 
   def cacheControl: Option[String] =
-    Option(blob.getCacheControl)
+    Option(underlying.getCacheControl)
 
   def acl: List[Acl] =
-    blob.getAcl.asScala.toList
+    underlying.getAcl.asScala.toList
 
   def owner: Acl.Entity =
-    blob.getOwner
+    underlying.getOwner
 
   def size: lang.Long =
-    blob.getSize
+    underlying.getSize
 
   def contentType: Option[String] =
-    Option(blob.getContentType)
+    Option(underlying.getContentType)
 
   def contentEncoding: Option[String] =
-    Option(blob.getContentEncoding)
+    Option(underlying.getContentEncoding)
 
   def contentDisposition: Option[String] =
-    Option(blob.getContentDisposition)
+    Option(underlying.getContentDisposition)
 
   def contentLanguage: Option[String] =
-    Option(blob.getContentLanguage)
+    Option(underlying.getContentLanguage)
 
   def componentCount: Int =
-    blob.getComponentCount
+    underlying.getComponentCount
 
   def eTag: String =
-    blob.getEtag
+    underlying.getEtag
 
   def md5: Option[String] =
-    Option(blob.getMd5)
+    Option(underlying.getMd5)
 
   def md5ToHexString: Option[String] =
-    Option(blob.getMd5ToHexString)
+    Option(underlying.getMd5ToHexString)
 
   def crc32c: Option[String] =
-    Option(blob.getCrc32c)
+    Option(underlying.getCrc32c)
 
   def crc32cToHexString: Option[String] =
-    Option(blob.getCrc32cToHexString)
+    Option(underlying.getCrc32cToHexString)
 
   def mediaLink: URL =
-    new URL(blob.getMediaLink)
+    new URL(underlying.getMediaLink)
 
   def metadata: Map[String, String] =
-    Option(blob.getMetadata)
+    Option(underlying.getMetadata)
       .map(_.asScala.toMap)
       .getOrElse(Map.empty[String, String])
 
   def generation: Long =
-    blob.getGeneration
+    underlying.getGeneration
 
   def metaGeneration: Long =
-    blob.getMetageneration
+    underlying.getMetageneration
 
   def deletedAt: Instant =
-    Instant.ofEpochMilli(blob.getDeleteTime)
+    Instant.ofEpochMilli(underlying.getDeleteTime)
 
   def updatedAt: Instant =
-    Instant.ofEpochMilli(blob.getUpdateTime)
+    Instant.ofEpochMilli(underlying.getUpdateTime)
 
   def createdAt: Instant =
-    Instant.ofEpochMilli(blob.getCreateTime)
+    Instant.ofEpochMilli(underlying.getCreateTime)
 
   def isDirectory: Boolean =
-    blob.isDirectory
+    underlying.isDirectory
 
   def customerEncryption: BlobInfo.CustomerEncryption =
-    blob.getCustomerEncryption
+    underlying.getCustomerEncryption
 
   def storageClass: StorageClass =
-    blob.getStorageClass
+    underlying.getStorageClass
 
-  def kmsKeyName: String = {
-    blob.getKmsKeyName
-  }
+  def kmsKeyName: String =
+    underlying.getKmsKeyName
 
   def eventBasedHold: Option[Boolean] =
-    Option(blob.getEventBasedHold)
+    Option(underlying.getEventBasedHold)
 
   def temporaryHold: Option[lang.Boolean] =
-    Option(blob.getTemporaryHold)
+    Option(underlying.getTemporaryHold)
 
   def retentionExpirationTime: Option[Instant] =
-    Option(blob.getRetentionExpirationTime)
+    Option(underlying.getRetentionExpirationTime)
       .map(ts => Instant.ofEpochMilli(ts))
 }
 
