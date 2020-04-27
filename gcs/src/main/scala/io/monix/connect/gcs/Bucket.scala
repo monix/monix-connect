@@ -112,7 +112,7 @@ final class Bucket(storage: google.Storage, bucket: google.Bucket)
 
     Observable.fromAsyncStateAction(next)(bucket.list(options: _*))
       .takeWhileInclusive(_.hasNextPage)
-      .flatMap(page => Observable.fromIterable(page.iterateAll().asScala))
+      .concatMapIterable(_.iterateAll().asScala.toList)
       .map(Blob.apply)
   }
 }
