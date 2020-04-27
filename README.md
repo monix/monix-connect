@@ -1,14 +1,19 @@
-# - Monix Connect - [![travis-badge][]][travis] 
+# Monix Connect  
 
- [travis]:                https://travis-ci.com/github/Cloriko/monix-connect
- [travis-badge]:          https://travis-ci.com/Cloriko/monix-connect.svg?branch=master
+[![travis-badge][]][travis] 
+[![Gitter](https://badges.gitter.im/monix/monix-connect.svg)](https://gitter.im/monix/monix-connect?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
+ [travis]:                https://travis-ci.com/github/monix/monix-connect
+ [travis-badge]:          https://travis-ci.com/monix/monix-connect.svg?branch=master
  
-Monix Connect is an open source initiative to implement stream integrations for [Monix](https://monix.io/).
+ ⚠️ This space is under construction 🚧 
+ 
+Monix Connect is an **experimental** initiative to implement stream integrations for [Monix](https://monix.io/).
  A connector describes the connection between the application and a specific data point, which could be a file, a database or any system in which the appication 
  can interact by sending or receiving information. Therefore, the aim of this project is to catch the most common
   connections that users could need when developing reactive applications with Monix, these would basically reduce boilerplate code and furthermore, will let the users to greatly save time and complexity in their implementing projects.
-  
-See below the list of available [connectors](#Connectors).  
+ 
+  See below the list of available [connectors](#Connectors).  
 
 ---
 
@@ -19,13 +24,12 @@ See below the list of available [connectors](#Connectors).
 4. [DynamoDB](#DynamoDB)
 5. [Redis](#Redis)
 6. [S3](#S3)
-2. [Common](#Common)
 
 ---
 ### Akka
 This module makes interoperability with akka streams easier by simply defining implicit extended classes for reactive stream conversions between akka and monix.
 
-These implicit extended classes needs to be imported from: `cloriko.monix.connect.akka.Implicits._`.
+These implicit extended classes needs to be imported from: `monix.connect.akka.Implicits._`.
 Therefore, under the scope of the import the signatures `.asObservable` and `.asConsumer` would be available from the `Source`, `Flow`, and `Sink`.
 The two methods does not need to be typed as it has been done explicitly in the example table, the compiler will infer it for you.
 
@@ -50,7 +54,7 @@ The is connector provides with stream integrations for reading and writing into 
 The below example shows how to construct a parquet consumer that expects _Protobuf_ messages and pushes 
 them into the same parquet file of the specified location.
 ```scala
-import cloriko.monix.connect.parquet.Parquet
+import monix.connect.parquet.Parquet
 import org.apache.parquet.avro.AvroParquetReader
 import org.apache.parquet.hadoop.ParquetWriter
 import org.apache.hadoop.conf.Configuration
@@ -69,7 +73,7 @@ Observable
 On the other hand, the following code shows how to pull _Avro_ records from a parquet file:
 
 ```scala
-import cloriko.monix.connect.parquet.Parquet
+import monix.connect.parquet.Parquet
 import org.apache.parquet.avro.AvroParquetReader
 import org.apache.parquet.hadoop.util.HadoopInputFile
 
@@ -117,17 +121,15 @@ Observable
 ### Hdfs
 A connector that allows to progresively write and read from files of any size stored in [HDFS](https://hadoop.apache.org/docs/r1.2.1/hdfs_design.html).
 
-The methods to perform these operations are exposed under the scala object ```cloriko.monix.connect.hdfs.Hdfs```, in which
+The methods to perform these operations are exposed under the scala object ```monix.connect.hdfs.Hdfs```, in which
 it has been constructed on top of the the official _apache hadoop_ api.  
 
 The following import is a common requirement for all those methods defined in the `Hdfs` object:
-``` scala
+```scala
 import org.apache.hadoop.fs.FileSystem
 //The abstract representation of a file system which could be a distributed or a local one.
-
 import org.apache.hadoop.fs.Path
 //Represents a file or directory in a FileSystem
-
 import org.apache.hadoop.io.compress.CompressionCodec
 //This will be optional, but basically it encapsulates a streaming compression/decompression pair.
 ```
@@ -197,7 +199,6 @@ It allows data storage of any amount of data, commonly used as a data lake for b
   
  First, let's start using basic operations, starting by _create_ and _delete_ buckets:
  ```scala
-import cloriko.monix.connect.s3.S3
 
 val bucketName: String = "myBucket" 
 val _: Task[CreateBucketResponse] = S3.createBucket(bucketName)
@@ -225,7 +226,8 @@ val _: Task[ByteBuffer] = S3.getObject(bucketName, objectKey)
 val content: ByteBuffer= ByteBuffer.wrap("file content".getBytes())
 val _: Task[PutObjectResponse] = S3.putObject(bucketName, objectKey, content)
 
-//multipart consumer that expects byte buffer chunks (wip)
+
+//multipart consumer that expects byte buffer chunks 
 val multipartConsumer: Consumer[Array[Byte], Task[CompleteMultipartUploadResponse]] =
   S3.multipartUpload(bucketName, objectKey)
 
@@ -235,7 +237,27 @@ Observable
   .consumeWith(multipartConsumer)
 }
 ```
-
-
-
 ---
+
+## Contributing
+
+
+The Monix Connect project welcomes contributions from anybody wishing to
+participate.  All code or documentation that is provided must be
+licensed with the same license that Monix Connect is licensed with (Apache
+2.0, see LICENSE.txt).
+
+People are expected to follow the
+[Scala Code of Conduct](./CODE_OF_CONDUCT.md) when
+discussing Monix on GitHub, Gitter channel, or other venues.
+
+Feel free to open an issue if you notice a bug, you have a question about the code,
+ an idea for an existing connector or even for adding a new one. Pull requests are also
+gladly accepted. For more information, check out the
+[contributor guide](CONTRIBUTING.md).
+
+## License
+
+All code in this repository is licensed under the Apache License,
+Version 2.0. See [LICENCE.txt](./LICENSE.txt).
+

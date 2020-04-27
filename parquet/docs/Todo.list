@@ -1,3 +1,0 @@
-- Investigate issue while reading parquet as a proto schema
-- Generate proto classes from test resources and not from main
-- Create examples for writing to local directory, hdfs and s3
