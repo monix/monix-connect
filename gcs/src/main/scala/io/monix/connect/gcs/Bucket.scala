@@ -6,7 +6,7 @@ import cats.data.NonEmptyList
 import com.google.cloud.storage.Bucket.BucketSourceOption
 import com.google.cloud.storage.Storage.{BlobGetOption, BlobListOption, BlobWriteOption, BucketTargetOption}
 import com.google.cloud.storage.{Acl, BlobId, Bucket => GoogleBucket}
-import io.monix.connect.gcs.configuration.BlobConfig
+import io.monix.connect.gcs.configuration.BlobInfo
 import io.monix.connect.gcs.utiltiies.{Paging, StorageDownloader, StorageUploader}
 import monix.eval.Task
 import monix.reactive.Observable
@@ -27,8 +27,8 @@ import scala.jdk.CollectionConverters._
  *      name = "mybucket"
  *   )
  *
- *   val storage = Storage.create().memoize
- *   val bucket  = storage.createBucket(config).memoize
+ *   val storage: Task[Storage] = Storage.create().memoize
+ *   val bucket: Task[Bucket] = storage.flatMap(_.createBucket(config)).memoize
  *
  *   (for {
  *      bucket <- Observable.fromTask(bucket)
@@ -102,12 +102,8 @@ final class Bucket private(underlying: GoogleBucket)
   /**
    * TODO: Documentation
    */
-  def upload(name: String, path: Path, chunkSize: Int, config: Option[BlobConfig], options: BlobWriteOption*): Task[Unit] = {
-    val blobId = BlobId.of(underlying.getName, name)
-    val blobInfo = config
-      .map(_.toBlobInfo(blobId))
-      .getOrElse(BlobConfig.fromBlobId(blobId))
-
+  def upload(info: BlobInfo.Create, path: Path, chunkSize: Int, options: BlobWriteOption*): Task[Unit] = {
+    val blobInfo = BlobInfo.toJava(info, underlying.getName)
     uploadToBucket(underlying.getStorage, blobInfo, path, chunkSize, options: _*)
   }
 
@@ -147,8 +143,7 @@ final class Bucket private(underlying: GoogleBucket)
    * Returns a [[Observable]] of all the ACL Entries for this [[Bucket]].
    */
   def listAcls(): Observable[Acl] = {
-    Observable
-      .fromTask(Task(underlying.listAcls()))
+    Observable.fromTask(Task(underlying.listAcls()))
       .concatMapIterable(_.asScala.toList)
   }
 
@@ -191,8 +186,7 @@ final class Bucket private(underlying: GoogleBucket)
    * Locks bucket retention policy. Requires a local metageneration value in the request.
    */
   def lockRetentionPolicy(options: BucketTargetOption*): Task[Bucket] =
-    Task(underlying.lockRetentionPolicy(options: _*))
-      .map(Bucket.apply)
+    Task(underlying.lockRetentionPolicy(options: _*)).map(Bucket.apply)
 }
 
 object Bucket {

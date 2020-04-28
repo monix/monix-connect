@@ -1,18 +1,17 @@
 package io.monix.connect.gcs
 
-import java.lang
 import java.net.URL
 import java.nio.file.Path
-import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 import com.google.cloud.storage.Blob.BlobSourceOption
 import com.google.cloud.storage.Storage.{BlobTargetOption, SignUrlOption}
-import com.google.cloud.storage.{Acl, BlobId, BlobInfo, StorageClass, Blob => GoogleBlob, Option => _}
+import com.google.cloud.storage.{Acl, BlobId, Blob => GoogleBlob, Option => _}
 import com.google.cloud.{storage => google}
-import io.monix.connect.gcs.configuration.BlobConfig
+import io.monix.connect.gcs.configuration.BlobInfo
 import io.monix.connect.gcs.utiltiies.StorageDownloader
 import monix.eval.Task
+import monix.reactive.Observable
 
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
@@ -27,6 +26,12 @@ import scala.jdk.CollectionConverters._
  *                    otherwise multiple calls are issued.
  */
 final class Blob(underlying: GoogleBlob) extends StorageDownloader {
+
+  /**
+   * TODO: Documentation
+   */
+  def downloadTo(path: Path, chunkSize: Int = 4096): Task[Unit] =
+    downloadFromBucket(underlying.getStorage, underlying.getBucket, underlying.getBlobId, path, chunkSize)
 
   /**
    * Checks if this blob exists.
@@ -55,8 +60,8 @@ final class Blob(underlying: GoogleBlob) extends StorageDownloader {
    * Updates the blob's information. Bucket or blob's name cannot be changed by this method. If you
    * want to rename the blob or move it to a different bucket use the [[copyTo]] and [[delete]] operations.
    */
-  def update(config: BlobConfig, options: BlobTargetOption*): Task[Blob] = {
-    val update = config.toBlobInfo(underlying.getBlobId)
+  def update(blobInfo: BlobInfo.Update, options: BlobTargetOption*): Task[Blob] = {
+    val update = BlobInfo.toJava(blobInfo, underlying.getName, underlying.getBucket)
     Task(underlying.getStorage.update(update, options: _*))
       .map(Blob.apply)
   }
@@ -95,12 +100,6 @@ final class Blob(underlying: GoogleBlob) extends StorageDownloader {
       .map(Blob.apply)
 
   /**
-   * TODO: Documentation
-   */
-  def downloadTo(path: Path, chunkSize: Int = 4096): Task[Unit] =
-    downloadFromBucket(underlying.getStorage, underlying.getBucket, underlying.getBlobId, path, chunkSize)
-
-  /**
    * Generates a signed URL for this blob. If you want to allow access for a fixed amount of time to
    * this blob, you can use this method to generate a URL that is only valid within a certain time
    * period. This is particularly useful if you don't want publicly accessible blobs, but also don't
@@ -120,99 +119,43 @@ final class Blob(underlying: GoogleBlob) extends StorageDownloader {
   def signUrl(duration: FiniteDuration, options: SignUrlOption*): Task[URL] =
     Task(underlying.signUrl(duration.toMillis, TimeUnit.MILLISECONDS, options: _*))
 
+  /**
+   * Creates a new ACL entry on this Blob.
+   */
+  def createAcl(acl: Acl): Task[Acl] =
+    Task(underlying.createAcl(acl))
 
+  /**
+   * Returns the [[Acl]] entry for the specified entity on this [[Blob]] or [[None]] if not found.
+   */
+  def getAcl(acl: Acl.Entity): Task[Option[Acl]] =
+    Task(underlying.getAcl(acl)).map(Option(_))
 
-  // TODO: Document use case for below functions, retrieving blob metadata is unsafe due to the usage of null.
-  // ------------------------------------------------------------------------------- //
-  def generatedId: String =
-    underlying.getGeneratedId
+  /**
+   * Updates an ACL entry on this [[Blob]].
+   */
+  def updateAcl(acl: Acl): Task[Acl] =
+    Task(underlying.updateAcl(acl))
 
-  def cacheControl: Option[String] =
-    Option(underlying.getCacheControl)
+  /**
+   * Deletes the [[Acl]] entry for the specified [[com.google.cloud.storage.Acl.Entity]] on this [[Blob]].
+   */
+  def deleteAcl(acl: Acl.Entity): Task[Boolean] =
+    Task(underlying.deleteAcl(acl))
 
-  def getAcl: List[Acl] =
-    underlying.getAcl().asScala.toList
+  /**
+   * Returns an [[Observable]] of all the [[Acl]] Entries for this [[Blob]].
+   */
+  def listAcls(): Observable[Acl] = {
+    Observable
+      .fromTask(Task(underlying.listAcls()))
+      .concatMapIterable(_.asScala.toList)
+  }
 
-  def getOwner: Acl.Entity =
-    underlying.getOwner
-
-  def getSize: lang.Long =
-    underlying.getSize
-
-  def getContentType: Option[String] =
-    Option(underlying.getContentType)
-
-  def getContentEncoding: Option[String] =
-    Option(underlying.getContentEncoding)
-
-  def getContentDisposition: Option[String] =
-    Option(underlying.getContentDisposition)
-
-  def getContentLanguage: Option[String] =
-    Option(underlying.getContentLanguage)
-
-  def getComponentCount: Int =
-    underlying.getComponentCount
-
-  def getEtag: String =
-    underlying.getEtag
-
-  def getMd5: Option[String] =
-    Option(underlying.getMd5)
-
-  def getMd5ToHexString: Option[String] =
-    Option(underlying.getMd5ToHexString)
-
-  def getCrc32c: Option[String] =
-    Option(underlying.getCrc32c)
-
-  def getCrc32cToHexString: Option[String] =
-    Option(underlying.getCrc32cToHexString)
-
-  def getMediaLink: URL =
-    new URL(underlying.getMediaLink)
-
-  def getMetadata: Map[String, String] =
-    Option(underlying.getMetadata)
-      .map(_.asScala.toMap)
-      .getOrElse(Map.empty[String, String])
-
-  def getGeneration: Long =
-    underlying.getGeneration
-
-  def getMetageneration: Long =
-    underlying.getMetageneration
-
-  def getDeleteTime: Instant =
-    Instant.ofEpochMilli(underlying.getDeleteTime)
-
-  def getUpdateTime: Instant =
-    Instant.ofEpochMilli(underlying.getUpdateTime)
-
-  def getCreateTime: Instant =
-    Instant.ofEpochMilli(underlying.getCreateTime)
-
-  def isDirectory: Boolean =
-    underlying.isDirectory
-
-  def getCustomerEncryption: BlobInfo.CustomerEncryption =
-    underlying.getCustomerEncryption
-
-  def getStorageClass: StorageClass =
-    underlying.getStorageClass
-
-  def getKmsKeyName: String =
-    underlying.getKmsKeyName
-
-  def getEventBasedHold: Option[Boolean] =
-    Option(underlying.getEventBasedHold)
-
-  def getTemporaryHold: Option[lang.Boolean] =
-    Option(underlying.getTemporaryHold)
-
-  def getRetentionExpirationTime: Option[Instant] =
-    Option(underlying.getRetentionExpirationTime)
-      .map(ts => Instant.ofEpochMilli(ts))
+  /**
+   * Returns all the metadata associated with this Blob instance.
+   */
+  def blobInfo: BlobInfo = BlobInfo.fromJava(underlying)
 }
 
 object Blob {
