@@ -17,8 +17,6 @@
 
 package monix.connect.redis
 
-import java.lang
-
 import io.lettuce.core.api.StatefulRedisConnection
 import io.lettuce.core._
 import monix.eval.Task
@@ -27,7 +25,9 @@ import monix.reactive.Observable
 import scala.jdk.CollectionConverters._
 
 /**
-  * For mor info see [[io.lettuce.core.api.async.RedisStringAsyncCommands]]
+  * @see The reference to lettuce api:
+  *      [[io.lettuce.core.api.async.RedisStringAsyncCommands]] and
+  *      [[io.lettuce.core.api.reactive.RedisStringReactiveCommands]]
   */
 private[redis] trait RedisString {
 
@@ -51,13 +51,6 @@ private[redis] trait RedisString {
     */
   def bitcount[K, V](key: K, start: Long, end: Long)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
     Task.from(connection.async().bitcount(key, start, end)).map(_.longValue)
-
-  /* /**
-   * Execute {@code BITFIELD} with its subcommands.
-   * @return Long bulk-reply the results from the bitfield commands.
-   */
-  def bitfield[K, V](key: K, bitFieldArgs: BitFieldArgs)(implicit connection: StatefulRedisConnection[K, V]): Observable[Optional[Long]] =
-    Observable.fromReactivePublisher(connection.reactive().bitfield(key, bitFieldArgs)).map(_.optional.map(_.longValue))*/
 
   /**
     * Find first bit set or clear in a string.

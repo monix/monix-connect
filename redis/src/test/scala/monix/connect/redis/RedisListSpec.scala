@@ -56,7 +56,7 @@ class RedisListSpec
     //given
     val timeout: Long = genLong.sample.get
     val keys: List[K] = genRedisKeys.sample.get
-    when(asyncRedisCommands.blpop(timeout, keys: _*)).thenReturn(KVRedisFuture)
+    when(asyncRedisCommands.blpop(timeout, keys: _*)).thenReturn(MockRedisFuture[KeyValue[String, Int]])
 
     //when
     val t = Redis.blpop(timeout, keys: _*)
@@ -70,7 +70,7 @@ class RedisListSpec
     //given
     val timeout: Long = genLong.sample.get
     val keys: List[K] = genRedisKeys.sample.get
-    when(asyncRedisCommands.brpop(timeout, keys: _*)).thenReturn(KVRedisFuture)
+    when(asyncRedisCommands.brpop(timeout, keys: _*)).thenReturn(MockRedisFuture[KeyValue[String, Int]])
 
     //when
     val t = Redis.brpop(timeout, keys: _*)
@@ -85,7 +85,7 @@ class RedisListSpec
     val timeout: Long = genLong.sample.get
     val source: K = genRedisKey.sample.get
     val dest: K = genRedisKey.sample.get
-    when(asyncRedisCommands.brpoplpush(timeout, source, dest)).thenReturn(intRedisFuture)
+    when(asyncRedisCommands.brpoplpush(timeout, source, dest)).thenReturn(MockRedisFuture[Int])
 
     //when
     val t = Redis.brpoplpush(timeout, source, dest)
@@ -99,7 +99,7 @@ class RedisListSpec
     //given
     val index: Long = genLong.sample.get
     val key: K = genRedisKey.sample.get
-    when(asyncRedisCommands.lindex(key, index)).thenReturn(vRedisFuture)
+    when(asyncRedisCommands.lindex(key, index)).thenReturn(MockRedisFuture[V])
 
     //when
     val t = Redis.lindex(key, index)
@@ -113,7 +113,7 @@ class RedisListSpec
     //given
     val index: Long = genLong.sample.get
     val key: K = genRedisKey.sample.get
-    when(asyncRedisCommands.lindex(key, index)).thenReturn(vRedisFuture)
+    when(asyncRedisCommands.lindex(key, index)).thenReturn(MockRedisFuture[V])
 
     //when
     val t = Redis.lindex(key, index)
@@ -126,7 +126,7 @@ class RedisListSpec
   it should "implement llen" in {
     //given
     val key: String = genRedisKey.sample.get
-    when(asyncRedisCommands.llen(key)).thenReturn(longRedisFuture)
+    when(asyncRedisCommands.llen(key)).thenReturn(MockRedisFuture[java.lang.Long])
 
     //when
     val t = Redis.llen(key)

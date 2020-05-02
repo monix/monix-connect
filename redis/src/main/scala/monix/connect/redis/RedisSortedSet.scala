@@ -22,6 +22,11 @@ import io.lettuce.core.{KeyValue, Limit, Range, ScoredValue, ScoredValueScanCurs
 import monix.eval.Task
 import monix.reactive.Observable
 
+/**
+  * @see The reference Lettuce Api at:
+  *      [[io.lettuce.core.api.async.RedisSortedSetAsyncCommands]] and
+  *      [[io.lettuce.core.api.reactive.RedisSortedSetReactiveCommands]]
+  */
 private[redis] trait RedisSortedSet {
 
   /**

@@ -22,6 +22,11 @@ import io.lettuce.core.ValueScanCursor
 import monix.eval.Task
 import monix.reactive.Observable
 
+/**
+  * @see The reference to lettuce api:
+  *      [[io.lettuce.core.api.async.RedisSetAsyncCommands]] and
+  *      [[io.lettuce.core.api.reactive.RedisSetReactiveCommands]]
+  */
 private[redis] trait RedisSet {
 
   /**

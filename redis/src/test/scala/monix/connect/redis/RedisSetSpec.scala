@@ -65,7 +65,7 @@ class RedisSetSpec
   it should "implement scard" in {
     //given
     val key: String = genRedisKey.sample.get
-    when(asyncRedisCommands.scard(key)).thenReturn(longRedisFuture)
+    when(asyncRedisCommands.scard(key)).thenReturn(MockRedisFuture[java.lang.Long])
 
     //when
     val t = RedisSet.scard(key)
@@ -92,7 +92,7 @@ class RedisSetSpec
     //given
     val dest: String = genRedisKey.sample.get
     val keys: List[String] = genRedisKeys.sample.get
-    when(asyncRedisCommands.sdiffstore(dest, keys: _*)).thenReturn(longRedisFuture)
+    when(asyncRedisCommands.sdiffstore(dest, keys: _*)).thenReturn(MockRedisFuture[java.lang.Long])
 
     //when
     val t = RedisSet.sdiffstore(dest, keys: _*)

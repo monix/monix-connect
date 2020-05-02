@@ -57,24 +57,10 @@ trait RedisFixture {
     v <- Gen.chooseNum(1, 10000)
   } yield (k, v)
   val genKvMap: Gen[Map[K, V]] = Gen.mapOfN(10, genKV)
-
+  //mocks
   def MockRedisConnection[K, V]: StatefulRedisConnection[K, V] = mock[StatefulRedisConnection[K, V]]
   def MockRedisFuture[V]: RedisFuture[V] = mock[RedisFuture[V]]
+  def MockFlux[T]: Flux[T] = mock[Flux[T]]
   val asyncRedisCommands = mock[RedisAsyncCommands[String, Int]]
   val reactiveRedisCommands = mock[RedisReactiveCommands[String, Int]]
-  val boolRedisFuture = mock[RedisFuture[java.lang.Boolean]]
-  val intRedisFuture = mock[RedisFuture[Int]]
-  val doubleRedisFuture = mock[RedisFuture[java.lang.Double]]
-  val MapScanCursorRedisFuture = mock[RedisFuture[MapScanCursor[String, Int]]]
-  val longRedisFuture = mock[RedisFuture[java.lang.Long]]
-  val strRedisFuture = mock[RedisFuture[String]]
-  val strListRedisFuture = mock[RedisFuture[java.util.List[String]]]
-  val KVRedisFuture: RedisFuture[KeyValue[String, Int]] = mock[RedisFuture[KeyValue[String, Int]]]
-
-  def MockFlux[T]: Flux[T] = mock[Flux[T]]
-  val kFlux = mock[Flux[String]]
-  val kVFlux = mock[Flux[KeyValue[String, Int]]]
-  val mapRedisFuture = mock[RedisFuture[java.util.Map[String, Int]]]
-  val vRedisFuture = mock[RedisFuture[Int]]
-  val vListRedisFuture = mock[RedisFuture[java.util.List[Int]]]
 }

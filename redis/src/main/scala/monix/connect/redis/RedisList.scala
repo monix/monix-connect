@@ -26,28 +26,25 @@ private[redis] trait RedisList {
 
   /**
     * Remove and get the first element in a list, or block until one is available.
-    * @return KeyValue&lt;K,V&gt; array-reply specifically:
-    *         A { @literal null} multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk
-    *                      with the first element being the name of the key where an element was popped and the second element being the
-    *                      value of the popped element.
+    * @return A null multi-bulk when no element could be popped and the timeout expired.
+    *         A two-element multi-bulk with the first element being the name of the key
+    *         where an element was popped and the second element being the value of the popped element.
     */
   def blpop[K, V](timeout: Long, keys: K*)(implicit connection: StatefulRedisConnection[K, V]): Task[KeyValue[K, V]] =
     Task.from(connection.async().blpop(timeout, keys: _*))
 
   /**
     * Remove and get the last element in a list, or block until one is available.
-    * @return KeyValue&lt;K,V&gt; array-reply specifically:
-    *         A { @literal null} multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk
-    *                      with the first element being the name of the key where an element was popped and the second element being the
-    *                      value of the popped element.
+    * @return A null multi-bulk when no element could be popped and the timeout expired.
+    *          A two-element multi-bulk with the first element being the name of the key
+    *          where an element was popped and the second element being the value of the popped element.
     */
   def brpop[K, V](timeout: Long, keys: K*)(implicit connection: StatefulRedisConnection[K, V]): Task[KeyValue[K, V]] =
     Task.from(connection.async().brpop(timeout, keys: _*))
 
   /**
     * Pop a value from a list, push it to another list and return it; or block until one is available.
-    * @return V bulk-string-reply the element being popped from { @code source} and pushed to { @code destination}. If
-    *                                                                   { @code timeout} is reached, a
+    * @return The element being popped from source and pushed to destination.
     */
   def brpoplpush[K, V](timeout: Long, source: K, destination: K)(
     implicit
@@ -56,15 +53,14 @@ private[redis] trait RedisList {
 
   /**
     * Get an element from a list by its index.
-    * @return V bulk-string-reply the requested element, or { @literal null} when { @code index} is out of range.
+    * @return The requested element, or null when index is out of range.
     */
   def lindex[K, V](key: K, index: Long)(implicit connection: StatefulRedisConnection[K, V]): Task[V] =
     Task.from(connection.async().lindex(key, index))
 
   /**
     * Insert an element before or after another element in a list.
-    * @return Long integer-reply the length of the list after the insert operation, or { @code -1} when the value { @code pivot}
-    *                                                                                          was not found.
+    * @return The length of the list after the insert operation, or -1 when the value pivot was not found.
     */
   def linsert[K, V](key: K, before: Boolean, pivot: V, value: V)(
     implicit
@@ -80,14 +76,14 @@ private[redis] trait RedisList {
 
   /**
     * Remove and get the first element in a list.
-    * @return V bulk-string-reply the value of the first element, or { @literal null} when { @code key} does not exist.
+    * @return The value of the first element, or null when key does not exist.
     */
   def lpop[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[V] =
     Task.from(connection.async().lpop(key))
 
   /**
     * Prepend one or multiple values to a list.
-    * @return Long integer-reply the length of the list after the push operations.
+    * @return The length of the list after the push operations.
     */
   def lpush[K, V](key: K, values: V*)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
     Task.from(connection.async().lpush(key, values: _*)).map(_.longValue)

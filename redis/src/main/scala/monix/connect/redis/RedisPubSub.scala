@@ -23,6 +23,11 @@ import monix.reactive.Observable
 
 import scala.jdk.CollectionConverters._
 
+/**
+  * @see The reference Lettuce Api at:
+  *      [[io.lettuce.core.api.async.BaseRedisAsyncCommands]] and
+  *      [[io.lettuce.core.api.reactive.BaseRedisReactiveCommands]]
+  */
 trait RedisPubSub {
 
   /**

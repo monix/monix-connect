@@ -70,7 +70,8 @@ lazy val sharedSettings = Seq(
   concurrentRestrictions in Global += Tags.limit(Tags.Test, 1),
   logBuffered in Test            := false,
   logBuffered in IntegrationTest := false,
-  // https://github.com/sbt/sbt/issues/2654
+  dependencyClasspath in IntegrationTest := (dependencyClasspath in IntegrationTest).value ++ (exportedProducts in Test).value,
+    // https://github.com/sbt/sbt/issues/2654
   incOptions := incOptions.value.withLogRecompileOnMacro(false),
 
   // todo add sonatype

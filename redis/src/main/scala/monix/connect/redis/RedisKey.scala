@@ -90,12 +90,6 @@ private[redis] trait RedisKey {
     connection: StatefulRedisConnection[K, V]): Task[String] =
     Task.from(connection.async().migrate(host, port, key, db, timeout))
 
-  /*
-  def migrate[K, V](host: String, port: Int, db: Int, timeout: Long, migrateArgs: MigrateArgs[K])(
-    implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().migrate(host, port, db, timeout, migrateArgs))
-   */
-
   /**
     * Move a key to another database.
     * @return True if the move operation succeeded, false if not.
@@ -190,11 +184,6 @@ private[redis] trait RedisKey {
     implicit
     connection: StatefulRedisConnection[K, V]): Task[String] =
     Task.from(connection.async().restore(key, ttl, value))
-  /*
-  def restore[K, V](key: K, value: Array[Byte], args: RestoreArgs)(
-    implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().restore(key, value, args))
-   */
 
   /**
     * Sort the elements in a list, set or sorted set.
@@ -202,14 +191,6 @@ private[redis] trait RedisKey {
     */
   def sort[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Observable[V] =
     Observable.fromReactivePublisher(connection.reactive().sort(key))
-
-  /* /**
-   * Sort the elements in a list, set or sorted set.
-   * @return Number of values.
-   */
-  def sortStore[K, V](key: K, sortArgs: SortArgs, destination: K)(
-    implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().sortStore(key, sortArgs, destination)).map(_.longValue)*/
 
   /**
     * Touch one or more keys. Touch sets the last accessed time for a key. Non-exsitent keys wont get created.
@@ -239,13 +220,6 @@ private[redis] trait RedisKey {
   def scan[K, V]()(implicit connection: StatefulRedisConnection[K, V]): Task[KeyScanCursor[K]] =
     Task.from(connection.async().scan())
 
-  /* def scan[K, V](scanArgs: ScanArgs)(implicit connection: StatefulRedisConnection[K, V]): Task[KeyScanCursor[K]] =
-    Task.from(connection.async().scan())
-
-  def scan[K, V](scanCursor: ScanCursor, scanArgs: ScanArgs)(
-    implicit connection: StatefulRedisConnection[K, V]): Task[KeyScanCursor[K]] =
-    Task.from(connection.async().scan(scanCursor, scanArgs))
-   */
   def scan[K, V](scanCursor: ScanCursor)(implicit connection: StatefulRedisConnection[K, V]): Task[KeyScanCursor[K]] =
     Task.from(connection.async().scan(scanCursor))
 

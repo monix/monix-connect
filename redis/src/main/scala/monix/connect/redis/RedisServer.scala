@@ -23,6 +23,11 @@ import monix.eval.Task
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 
+/**
+  * @see The reference Lettuce Api at:
+  *      [[io.lettuce.core.api.async.RedisServerAsyncCommands]] and
+  *      [[io.lettuce.core.api.reactive.RedisServerReactiveCommands]]
+  */
 private[redis] trait RedisServer {
 
   /**

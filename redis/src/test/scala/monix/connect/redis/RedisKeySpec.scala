@@ -21,7 +21,7 @@ import java.time.Instant
 import java.util.Date
 
 import io.lettuce.core.api.StatefulRedisConnection
-import io.lettuce.core.{KeyScanCursor, KeyValue, MapScanCursor, ScanArgs, ScanCursor}
+import io.lettuce.core.{KeyScanCursor, ScanCursor}
 import monix.eval.Task
 import monix.reactive.Observable
 import org.mockito.IdiomaticMockito
@@ -30,8 +30,6 @@ import org.scalacheck.Gen
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
-
-import scala.jdk.CollectionConverters._
 
 class RedisKeySpec
   extends AnyFlatSpec with Matchers with IdiomaticMockito with BeforeAndAfterEach with BeforeAndAfterAll

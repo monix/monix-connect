@@ -112,16 +112,6 @@ private[redis] trait RedisHash {
   def hscan[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[MapScanCursor[K, V]] =
     Task.from(connection.async().hscan(key))
 
-  /*
-  def hscan[K, V](key: K, scanArgs: ScanArgs)(
-    implicit connection: StatefulRedisConnection[K, V]): Task[MapScanCursor[K, V]] =
-    Task.from(connection.async().hscan(key, scanArgs))
-
-  def hscan[K, V](key: K, scanCursor: ScanCursor, scanArgs: ScanArgs)(
-    implicit connection: StatefulRedisConnection[K, V]): Task[MapScanCursor[K, V]] =
-    Task.from(connection.async().hscan(key, scanCursor, scanArgs))
-   */
-
   def hscan[K, V](key: K, scanCursor: ScanCursor)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[MapScanCursor[K, V]] =

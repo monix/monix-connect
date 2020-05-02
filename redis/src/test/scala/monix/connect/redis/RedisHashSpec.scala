@@ -17,7 +17,7 @@
 
 package monix.connect.redis
 
-import io.lettuce.core.{KeyValue, MapScanCursor, ScanArgs, ScanCursor}
+import io.lettuce.core.{KeyValue, MapScanCursor, RedisFuture, ScanArgs, ScanCursor}
 import io.lettuce.core.api.StatefulRedisConnection
 import monix.eval.Task
 import monix.reactive.Observable
@@ -27,6 +27,7 @@ import org.mockito.MockitoSugar.verify
 import org.mockito.MockitoSugar.when
 import org.mockito.IdiomaticMockito
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import reactor.core.publisher.Flux
 
 import scala.jdk.CollectionConverters._
 
@@ -55,7 +56,7 @@ class RedisHashSpec
     //given
     val k: String = genRedisKey.sample.get
     val field: String = genRedisKey.sample.get
-    when(asyncRedisCommands.hexists(k, field)).thenReturn(boolRedisFuture)
+    when(asyncRedisCommands.hexists(k, field)).thenReturn(MockRedisFuture[java.lang.Boolean])
 
     //when
     val t = RedisHash.hexists(k, field)
@@ -69,7 +70,7 @@ class RedisHashSpec
     //given
     val k: String = genRedisKey.sample.get
     val field: String = genRedisKey.sample.get
-    when(asyncRedisCommands.hget(k, field)).thenReturn(vRedisFuture)
+    when(asyncRedisCommands.hget(k, field)).thenReturn(MockRedisFuture[V])
 
     //when
     val t = RedisHash.hget(k, field)
@@ -85,7 +86,7 @@ class RedisHashSpec
     val field: String = genRedisKey.sample.get
     val v: Int = genRedisValue.sample.get
 
-    when(asyncRedisCommands.hincrby(k, field, v)).thenReturn(longRedisFuture)
+    when(asyncRedisCommands.hincrby(k, field, v)).thenReturn(MockRedisFuture[java.lang.Long])
 
     //when
     val t = RedisHash.hincrby(k, field, v)
@@ -101,7 +102,7 @@ class RedisHashSpec
     val field: String = genRedisKey.sample.get
     val v: Int = genRedisValue.sample.get
 
-    when(asyncRedisCommands.hincrbyfloat(k, field, v)).thenReturn(doubleRedisFuture)
+    when(asyncRedisCommands.hincrbyfloat(k, field, v)).thenReturn(MockRedisFuture[java.lang.Double])
 
     //when
     val t = RedisHash.hincrbyfloat(k, field, v)
@@ -114,7 +115,7 @@ class RedisHashSpec
   it should "implement hgetall operation" in {
     //given
     val k: String = genRedisKey.sample.get
-    when(asyncRedisCommands.hgetall(k)).thenReturn(mapRedisFuture)
+    when(asyncRedisCommands.hgetall(k)).thenReturn(MockRedisFuture[java.util.Map[String, Int]])
 
     //when
     val t = RedisHash.hgetall(k)
@@ -127,7 +128,7 @@ class RedisHashSpec
   it should "implement hkeys operation" in {
     //given
     val k: String = genRedisKey.sample.get
-    when(reactiveRedisCommands.hkeys(k)).thenReturn(kFlux)
+    when(reactiveRedisCommands.hkeys(k)).thenReturn(MockFlux[String])
 
     //when
     val t = RedisHash.hkeys(k)
@@ -140,7 +141,7 @@ class RedisHashSpec
   it should "implement hlen operation" in {
     //given
     val k: String = genRedisKey.sample.get
-    when(asyncRedisCommands.hlen(k)).thenReturn(longRedisFuture)
+    when(asyncRedisCommands.hlen(k)).thenReturn(MockRedisFuture[java.lang.Long])
 
     //when
     val t = RedisHash.hlen(k)
@@ -154,7 +155,7 @@ class RedisHashSpec
     //given
     val k: String = genRedisKey.sample.get
     val fields: List[String] = genRedisKeys.sample.get
-    when(reactiveRedisCommands.hmget(k, fields: _*)).thenReturn(kVFlux)
+    when(reactiveRedisCommands.hmget(k, fields: _*)).thenReturn(MockFlux[KeyValue[String, Int]])
 
     //when
     val ob = RedisHash.hmget(k, fields: _*)
@@ -170,7 +171,7 @@ class RedisHashSpec
     val n = 5
     val k: String = genRedisKey.sample.get
     val map: Map[String, Int] = genRedisKeys.sample.get.zip(genRedisValues.sample.get).toMap
-    when(asyncRedisCommands.hmset(k, map.asJava)).thenReturn(strRedisFuture)
+    when(asyncRedisCommands.hmset(k, map.asJava)).thenReturn(MockRedisFuture[String])
 
     //when
     val t = RedisHash.hmset(k, map)
@@ -185,8 +186,8 @@ class RedisHashSpec
     val k: String = genRedisKey.sample.get
     val scanCursor = mock[ScanCursor]
 
-    when(asyncRedisCommands.hscan(k)).thenReturn(MapScanCursorRedisFuture)
-    when(asyncRedisCommands.hscan(k, scanCursor)).thenReturn(MapScanCursorRedisFuture)
+    when(asyncRedisCommands.hscan(k)).thenReturn(MockRedisFuture[MapScanCursor[String, Int]])
+    when(asyncRedisCommands.hscan(k, scanCursor)).thenReturn(MockRedisFuture[MapScanCursor[String, Int]])
 
     //when
     val t1 = RedisHash.hscan(k)
@@ -206,7 +207,7 @@ class RedisHashSpec
     val field: String = genRedisKey.sample.get
     val value: Int = genRedisValue.sample.get
     when(connection.async()).thenAnswer(asyncRedisCommands)
-    when(asyncRedisCommands.hset(key, field, value)).thenReturn(boolRedisFuture)
+    when(asyncRedisCommands.hset(key, field, value)).thenReturn(MockRedisFuture[java.lang.Boolean])
 
     //when
     val t = RedisHash.hset(key, field, value)
@@ -222,7 +223,7 @@ class RedisHashSpec
     val field: String = genRedisKey.sample.get
     val value: Int = genRedisValue.sample.get
     when(connection.async()).thenAnswer(asyncRedisCommands)
-    when(asyncRedisCommands.hsetnx(key, field, value)).thenReturn(boolRedisFuture)
+    when(asyncRedisCommands.hsetnx(key, field, value)).thenReturn(MockRedisFuture[java.lang.Boolean])
 
     //when
     val t = RedisHash.hsetnx(key, field, value)
@@ -237,7 +238,7 @@ class RedisHashSpec
     val key: String = genRedisKey.sample.get
     val field: String = genRedisKey.sample.get
     when(connection.async()).thenAnswer(asyncRedisCommands)
-    when(asyncRedisCommands.hstrlen(key, field)).thenReturn(longRedisFuture)
+    when(asyncRedisCommands.hstrlen(key, field)).thenReturn(MockRedisFuture[java.lang.Long])
 
     //when
     val t = RedisHash.hstrlen(key, field)
@@ -253,7 +254,7 @@ class RedisHashSpec
     val field: String = genRedisKey.sample.get
     val v: Int = genRedisValue.sample.get
 
-    when(asyncRedisCommands.hincrby(k, field, v)).thenReturn(longRedisFuture)
+    when(asyncRedisCommands.hincrby(k, field, v)).thenReturn(MockRedisFuture[java.lang.Long])
 
     //when
     val t = RedisHash.hincrby(k, field, v)

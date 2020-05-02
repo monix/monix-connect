@@ -18,7 +18,7 @@
 package monix.connect.redis
 
 import io.lettuce.core.api.StatefulRedisConnection
-import io.lettuce.core.{Limit, Range, StreamMessage, XClaimArgs, XReadArgs, Consumer => LConsumer}
+import io.lettuce.core.{Limit, Range, StreamMessage, Consumer => LConsumer}
 import monix.eval.Task
 import monix.reactive.Observable
 import io.lettuce.core.XReadArgs.StreamOffset
@@ -30,7 +30,7 @@ import io.lettuce.core.XReadArgs.StreamOffset
   * an abstract data type represented in memory, they implement more powerful opperations,
   * to overcome the limits of the log file itself.
   * Check the official documentation to see the available operations at: https://redis.io/commands#stream
-  * @see The reference Lettuce Api at:
+  * @see The reference to lettuce api:
   *      [[io.lettuce.core.api.async.RedisStreamAsyncCommands]] and
   *      [[io.lettuce.core.api.reactive.RedisStreamReactiveCommands]]
   *

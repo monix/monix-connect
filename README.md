@@ -19,9 +19,9 @@ Monix Connect is an **experimental** initiative to implement stream integrations
 
 ## Connectors
 1. [Akka](#Akka)
-2. [Parquet](#Parquet)
+2. [DynamoDB](#DynamoDB)
 3. [Hdfs](#Hdfs)
-4. [DynamoDB](#DynamoDB)
+4. [Parquet](#Parquet)
 5. [Redis](#Redis)
 6. [S3](#S3)
 
@@ -41,8 +41,10 @@ The below table shows these conversions in more detail:
   | _Flow[+In, -Out,+Mat]_ | _Consumer[+In, Task[-Out]]_ | `flow.asConsumer[Out]` |
   | _Sink[-In, +Out <: Future[Mat]]_ | _Consumer[In, Task[+Mat]_ | `sink.asConsumer[Mat]` |
 
+
 Notice that this interoperability would allow the Monix user to take advantage of the already pre built integrations 
 from [Alpakka](https://doc.akka.io/docs/alpakka/current/index.html) or any other Akka Streams implementation.
+
 ---
 ### DynamoDB
 _Amazon DynamoDB_ is a key-value and document database that performs at any scale in a single-digit millisecond.
@@ -157,7 +159,7 @@ val ob: Observable[AvroRecord] = Parquet.reader(r)
 
 ---
 ## Redis
-####Introduction
+#### Introduction
 _Redis_ is an open source, in-memory data structure store, used as a database, cache and message broker providing high availability, scalability and a outstanding performance. 
 It supports data structures such as string, hashes, lists, sets, sorted sets with range queries, streams and more.
 There are a set of [commands](https://redis.io/commands) already defined to inter-operate with Redis, in which most of them are also available from the java api.
@@ -178,7 +180,7 @@ At the same time that it returns the right values from scala lang and not form j
   | __hvals__ | _RedisFuture<java.utli.List<V>>_ | _Flux<V<V>>_ | _Observable[V]_ |
   | __...__ | ... | ... | ... |
   
-####Getting started
+#### Getting started
 
 The Redis provides a wide range of commands to perform a different range of operations, in which it has been splitted between 15 different groups. 
 In which the Monix connector only currenly provides support for the most common used ones. in the following 
