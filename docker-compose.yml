@@ -24,3 +24,8 @@ services:
       - '4569:4569'
     environment:
       - SERVICES=dynamodb
+
+  redis:
+    image: redis
+    ports:
+      - 6379:6379

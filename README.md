@@ -43,50 +43,6 @@ The below table shows these conversions in more detail:
 
 Notice that this interoperability would allow the Monix user to take advantage of the already pre built integrations 
 from [Alpakka](https://doc.akka.io/docs/alpakka/current/index.html) or any other Akka Streams implementation.
-
----
-### Parquet
-
-The is connector provides with stream integrations for reading and writing into and from parquet files in the _local system_, _hdfs_ or _s3_.
- 
- These two signatures depends on a implementation of the _apache parquet_  `ParquetWriter[T]` and `ParquetReader[T]` to be passed.
-
-The below example shows how to construct a parquet consumer that expects _Protobuf_ messages and pushes 
-them into the same parquet file of the specified location.
-```scala
-import monix.connect.parquet.Parquet
-import org.apache.parquet.avro.AvroParquetReader
-import org.apache.parquet.hadoop.ParquetWriter
-import org.apache.hadoop.conf.Configuration
-
-val file: String = "/invented/file/path"
-val conf = new Configuration()
-val messages: List[ProtoMessage] 
-val writeSupport = new ProtoWriteSupport[ProtoMessage](classOf[ProtoMessage])
-val w = new ParquetWriter[ProtoMessage](new Path(file), writeSupport)
-Observable
- .fromIterable(messages)
- .consumeWith(Parquet.writer(w))
-//ProtoMessage implements [[com.google.protobuf.Message]]
-```
-
-On the other hand, the following code shows how to pull _Avro_ records from a parquet file:
-
-```scala
-import monix.connect.parquet.Parquet
-import org.apache.parquet.avro.AvroParquetReader
-import org.apache.parquet.hadoop.util.HadoopInputFile
-
-val r: ParquetReader[AvroRecord] = {
- AvroParquetReader
-  .builder[AvroRecord](HadoopInputFile.fromPath(new Path(file), conf))
-  .withConf(conf)
-  .build()
-}
-
-val ob: Observable[AvroRecord] = Parquet.reader(r)
-//AvroRecord implements [[org.apache.avro.generic.GenericRecord]]
-```
 ---
 ### DynamoDB
 _Amazon DynamoDB_ is a key-value and document database that performs at any scale in a single-digit millisecond.
@@ -99,7 +55,7 @@ Therefore, `monix-dynamodb` makes possible to use a generic implementation of `O
 
 See below an example of transforming and consuming DynamoDb operations with monix.
 
-Required import: `scalona.monix.connect.dynamodb.DynamoDb`
+Required import: `monix.connect.dynamodb.DynamoDb`
  
 Transformer:
 ```scala
@@ -155,39 +111,121 @@ val hdfsWriter: Consumer[Array[Byte], Task[Int]] = Hdfs.write(fs, destinationPat
 //Eventually it will return the size of the written file
 val t: Task[Int] = ob.consumeWith(hdfsWriter) 
  ```
+---
+### Parquet
 
+The is connector provides with stream integrations for reading and writing into and from parquet files in the _local system_, _hdfs_ or _s3_.
+ 
+ These two signatures depends on a implementation of the _apache parquet_  `ParquetWriter[T]` and `ParquetReader[T]` to be passed.
+
+The below example shows how to construct a parquet consumer that expects _Protobuf_ messages and pushes 
+them into the same parquet file of the specified location.
+```scala
+import monix.connect.parquet.Parquet
+import org.apache.parquet.avro.AvroParquetReader
+import org.apache.parquet.hadoop.ParquetWriter
+import org.apache.hadoop.conf.Configuration
+
+val file: String = "/invented/file/path"
+val conf = new Configuration()
+val messages: List[ProtoMessage] 
+val writeSupport = new ProtoWriteSupport[ProtoMessage](classOf[ProtoMessage])
+val w = new ParquetWriter[ProtoMessage](new Path(file), writeSupport)
+Observable
+ .fromIterable(messages)
+ .consumeWith(Parquet.writer(w))
+//ProtoMessage implements [[com.google.protobuf.Message]]
+```
+
+On the other hand, the following code shows how to pull _Avro_ records from a parquet file:
+
+```scala
+import monix.connect.parquet.Parquet
+import org.apache.parquet.avro.AvroParquetReader
+import org.apache.parquet.hadoop.util.HadoopInputFile
+
+val r: ParquetReader[AvroRecord] = {
+ AvroParquetReader
+  .builder[AvroRecord](HadoopInputFile.fromPath(new Path(file), conf))
+  .withConf(conf)
+  .build()
+}
+
+val ob: Observable[AvroRecord] = Parquet.reader(r)
+//AvroRecord implements [[org.apache.avro.generic.GenericRecord]]
+```
 
 ---
-### Redis
+## Redis
+####Introduction
 _Redis_ is an open source, in-memory data structure store, used as a database, cache and message broker providing high availability, scalability and a outstanding performance. 
 It supports data structures such as string, hashes, lists, sets, sorted sets with range queries, streams and more.
 There are a set of [commands](https://redis.io/commands) already defined to inter-operate with Redis, in which most of them are also available from the java api.
 
-The most common java library used for inter-operating with Redis from [lettuce](https://lettuce.io/), it defines fully non blocking Redis client built with netty that provides Reactive, Asyncronous and Syncronous Data Access.
-
-So here is where `monix-redis` comes in, it is built on top of lettuce and allows the developer to avoid the boilerplate 
+This connector has been built on top of [lettuce](https://lettuce.io/), the most popular java library for operating with a non blocking Redis client.
+llows the developer to avoid the boilerplate 
 needed for operating with the lettuce _reactive_ and _async_ apis that returns the
- [Reactor](https://projectreactor.io/docs/core/release/reference/) reactive streams implementation on form of 
- (`Mono<T>` and `Flux<T>`) and `RedisFuture[T]` respectively. At the same time that the returning values
- are from scala lang and not form java, making it nicer to work with.
+
+Them `monix-redis` creates the inter-operability between the reactive types returned by the lettuce api like (`Mono<T>` and `Flux<T>`) from  [Reactor](https://projectreactor.io/docs/core/release/reference/) or `RedisFuture[T]`
+At the same time that it returns the right values from scala lang and not form java, resulting in a greatly reduction of boilerplate code that makes the user to have a nice experience while integrating 
+ redis operations using monix.
+ See an example in below table: 
  
- The whole implementations can be found in `scalona.monix.connect.redis.Redis`, in which all af them takes type parameters that would represent the
- redis key `K` and value `V` type. It will also find an implicit value of type `StatefulRedisConnection[K, V]`, in which 
- the user can pass the implementation to use such as _Cluster_, _PubSub_, _MasterSlave_...
- 
- Below you can find a table that shows the mapping between the java lettuce api to scala monix by using as an example
- some of the most common redis operations. 
- 
-  |  | Lettuce _Async_ | Lettuce _Reactive_ | _Monix_ |
+  | Signature | Lettuce _Async_ | Lettuce _Reactive_ | _Monix_ |
   | :---: | :---: | :---: | :---: |
   | __del__ | _RedisFuture<java.lang.Long>_ | _Mono<java.lang.Long>_ | _Task[scala.Long]_  |
   | __hset__ | _RedisFuture<java.lang.Boolean>_ | _Mono<java.lang.Boolean>_ | _Task[scala.Boolean]_ |
-  | __hgetall__ | _RedisFuture<java.utli.Map<K, V>>_ | _Mono<java.utli.Map<K, V>>_ |  _Task[collection.immutable.Map[K, V]_ |
-  | __hkeys__ | _RedisFuture<java.utli.List<K>>_ | _Mono<java.utli.List<K, V>>_ | _Task[collection.immutable.List[K, V]_ |
-  | __hmget__ | _RedisFuture<java.utli.List<KeyValue<K, V>>>_ | _Flux<KeyValue<K, V>>_ | _Observable[KeyValue[K, V]_ |
-  | __...__ |  | |  |
+  | __hvals__ | _RedisFuture<java.utli.List<V>>_ | _Flux<V<V>>_ | _Observable[V]_ |
+  | __...__ | ... | ... | ... |
+  
+####Getting started
 
+The Redis provides a wide range of commands to perform a different range of operations, in which it has been splitted between 15 different groups. 
+In which the Monix connector only currenly provides support for the most common used ones. in the following 
+groups/modules:  ([Keys](https://redis.io/commands#generic), [Hashes](https://redis.io/commands#hash), [List](https://redis.io/commands#list), [Pub/Sub](https://redis.io/commands#pubsub), [Server](https://redis.io/commands#server), [Sets](https://redis.io/commands#set), [SortedSets](https://redis.io/commands#sorted_set), [Streams](https://redis.io/commands#stream) and [Strings](https://redis.io/commands#string)).
+Each of these modules has its own object located under `monix.connect.redis`, being `Redis` the one that aggregates all of them. But they can be individually used too.
 
+The only thing you need to do for start using it is to have an implicit `StatefulRedisConnection[K, V]` in the scope. 
+ 
+ See below a complete demonstration on how to compose a different set of Redis command from different 
+ modules in the same for comprehension:
+
+```scala
+import monix.connect.redis.Redis
+import io.lettuce.core.RedisClient
+import io.lettuce.core.api.StatefulRedisConnection
+
+val redisClient: RedisClient = RedisClient.create("redis://host:port")
+implicit val connection: StatefulRedisConnection[String, String] = redisClient.connect()
+val k1: K 
+val value: V
+val k2: K
+val values: List[V] 
+val k3: K
+
+val (v: String, len: Long, l: List[V], keys: List[K]) = {
+  for {
+    _ <- Redis.flushall()                 //removes all keys
+    _ <- Redis.touch(k1)                  //creates the `k1`
+    _ <- Redis.set(k1, value)             //insert the single `value` to `k2`
+    _ <- Redis.rename(k1, k2)             //rename `k1` to `k2`
+    _ <- Redis.lpush(k3, values: _*)      //push all the elements of the list to `k3`
+    v <- Redis.get(k2)                    //get the element in `k2`
+    _ <- Redis.lpushx(k3, v)              //pre-append v to the list in `k3`
+    _ <- Redis.del(k2)                    //delete key `k2`
+    len <- Redis.llen(k3)                 //lenght of the list
+    l <- Redis.lrange(k3, 0, len).toListL //this is not safe unless you have a reasonable limit
+    keys <- Redis.keys("*").toListL       //get all the keys
+  } yield (v, len, l, keys)
+}.runSyncUnsafe() // this is unsafe, and only used for testing purposes
+
+//after this comprehnsion of redis operations it can be confirmed that:
+v shouldBe value
+len shouldBe values.size + 1
+l should contain theSameElementsAs value :: values
+keys.size shouldBe 1
+keys.head shouldBe k3
+```
 ---
 ### S3
 _Amazon Simple Storage Service (S3)_, the object storage service that offers industry leading scalability, availability, security and performance.

@@ -17,28 +17,64 @@
 
 package monix.connect.redis
 
-import io.lettuce.core.{KeyValue, RedisFuture}
+import io.lettuce.core.api.StatefulRedisConnection
+import io.lettuce.core.{KeyValue, MapScanCursor, RedisFuture, ScoredValue}
 import io.lettuce.core.api.async.RedisAsyncCommands
 import io.lettuce.core.api.reactive.RedisReactiveCommands
 import org.scalacheck.Gen
 import reactor.core.publisher.Flux
 import org.mockito.MockitoSugar.mock
+import io.lettuce.core.Range
 
 trait RedisFixture {
-  val genRedisKey: () => String = () => Gen.alphaStr.sample.get
-  val genRedisKeys: Int => List[String] = n => Gen.listOfN(n, Gen.alphaStr).sample.get
-  val genRedisValue: () => Int = () => Gen.choose(0, 10000).sample.get
-  val genRedisValues: Int => List[Int] = n => Gen.listOfN(n, Gen.choose(0, 10000)).sample.get
 
+  type K = String
+  type V = Int
+  val genLong: Gen[Long] = Gen.chooseNum(1, 100000).map(_.toLong)
+  val genDouble: Gen[Double] = Gen.chooseNum[Double](1, 100000)
+  val genInt: Gen[Int] = Gen.chooseNum[Int](1, 100000)
+  val genBool: Gen[Boolean] = Gen.oneOf(Seq(true, false))
+  val genRedisKey: Gen[String] = Gen.alphaStr
+  val genRedisKeys: Gen[List[String]] = for {
+    n    <- Gen.chooseNum(1, 10)
+    keys <- Gen.listOfN(n, Gen.alphaStr)
+  } yield keys
+  val genBytes: Gen[Array[Byte]] = Gen.alphaLowerStr.map(_.getBytes)
+
+  val genRedisValue: Gen[V] = Gen.choose(0, 10000)
+  val genRedisValues: Gen[List[V]] = for {
+    n      <- Gen.chooseNum(2, 10)
+    values <- Gen.listOfN(n, Gen.choose(0, 10000))
+  } yield values
+  val unboundedRange = Range.unbounded()
+  val genScoredValue: Gen[ScoredValue[V]] = for {
+    score <- genDouble
+    value <- genRedisValue
+  } yield ScoredValue.just(score, value)
+  val genScoredValues: Gen[List[ScoredValue[V]]] = Gen.listOf(genScoredValue)
+  val genKV: Gen[(K, V)] = for {
+    k <- Gen.alphaLowerStr
+    v <- Gen.chooseNum(1, 10000)
+  } yield (k, v)
+  val genKvMap: Gen[Map[K, V]] = Gen.mapOfN(10, genKV)
+
+  def MockRedisConnection[K, V]: StatefulRedisConnection[K, V] = mock[StatefulRedisConnection[K, V]]
+  def MockRedisFuture[V]: RedisFuture[V] = mock[RedisFuture[V]]
   val asyncRedisCommands = mock[RedisAsyncCommands[String, Int]]
   val reactiveRedisCommands = mock[RedisReactiveCommands[String, Int]]
   val boolRedisFuture = mock[RedisFuture[java.lang.Boolean]]
+  val intRedisFuture = mock[RedisFuture[Int]]
+  val doubleRedisFuture = mock[RedisFuture[java.lang.Double]]
+  val MapScanCursorRedisFuture = mock[RedisFuture[MapScanCursor[String, Int]]]
   val longRedisFuture = mock[RedisFuture[java.lang.Long]]
   val strRedisFuture = mock[RedisFuture[String]]
   val strListRedisFuture = mock[RedisFuture[java.util.List[String]]]
-  val kVFluxRedisFuture = mock[Flux[KeyValue[String, Int]]]
+  val KVRedisFuture: RedisFuture[KeyValue[String, Int]] = mock[RedisFuture[KeyValue[String, Int]]]
+
+  def MockFlux[T]: Flux[T] = mock[Flux[T]]
+  val kFlux = mock[Flux[String]]
+  val kVFlux = mock[Flux[KeyValue[String, Int]]]
   val mapRedisFuture = mock[RedisFuture[java.util.Map[String, Int]]]
   val vRedisFuture = mock[RedisFuture[Int]]
   val vListRedisFuture = mock[RedisFuture[java.util.List[Int]]]
-
 }

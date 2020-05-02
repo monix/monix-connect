@@ -15,8 +15,18 @@
  * limitations under the License.
  */
 
-package monix.connect.redis
+package monix.connect
 
-object Redis
-  extends RedisKey with RedisHash with RedisList with RedisPubSub with RedisSet with RedisSortedSet with RedisStream
-  with RedisString with RedisServer
+import io.lettuce.core.RedisFuture
+import monix.eval.{Task, TaskLike}
+
+import scala.jdk.FutureConverters._
+
+package object redis {
+
+  private[redis] implicit val fromRedisFutureLike = new TaskLike[RedisFuture] {
+    def apply[A](rf: RedisFuture[A]): Task[A] =
+      Task.fromFuture(rf.asScala)
+  }
+
+}
