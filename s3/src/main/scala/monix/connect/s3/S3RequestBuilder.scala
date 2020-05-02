@@ -36,7 +36,7 @@ import software.amazon.awssdk.services.s3.model.{
 
 import scala.jdk.CollectionConverters._
 
-object S3RequestBuilder {
+private[s3] object S3RequestBuilder {
 
   def putObjectRequest(bucket: String, key: String, contentLenght: Long, contentType: Option[String]) =
     PutObjectRequest

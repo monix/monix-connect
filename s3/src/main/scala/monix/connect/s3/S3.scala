@@ -58,10 +58,10 @@ object S3 {
     Task.deferFuture(s3Client.putObject(putObjectRequest, requestBody).asScala)
   }
 
-  def multipartUploadConsumer(bucketName: String, key: String, contentType: Option[String] = None)(
+  def multipartUpload(bucketName: String, key: String, chunkSize: Int = 5242880, contentType: Option[String] = None)(
     implicit
     s3Client: S3AsyncClient): Consumer[Array[Byte], Task[CompleteMultipartUploadResponse]] = {
-    new MultipartUploadConsumer(bucketName, key, contentType)
+    new MultipartUploadConsumer(bucketName, key, chunkSize, contentType)
   }
 
   def deleteObject(bucket: String, key: String)(implicit s3Client: S3AsyncClient): Task[DeleteObjectResponse] = {

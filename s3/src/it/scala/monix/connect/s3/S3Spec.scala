@@ -71,13 +71,34 @@ class S3Spec
 
     "correctly perform a multipart upload" when {
 
-      "the observable of chunks is consumed with multipartUploadConsumer" in {
+      "a single chunk is consumed with multipartUpload" in {
         //given
         val key = Gen.alphaLowerStr.sample.get
         val content: Array[Byte] = Gen.alphaUpperStr.sample.get.getBytes
         val consumer: Consumer[Array[Byte], Task[CompleteMultipartUploadResponse]] =
-          S3.multipartUploadConsumer(bucketName, key)
-        val ob = Observable.fromIterable(Seq(content))
+          S3.multipartUpload(bucketName, key)
+        val ob = Observable.pure(content)
+
+        //when
+        val t: Task[CompleteMultipartUploadResponse] = ob.consumeWith(consumer).flatten
+        Thread.sleep(1000)
+
+        //then
+        whenReady(t.runToFuture) { completeMultipartUpload =>
+          val s3Object: ByteBuffer = S3.getObject(bucketName, key).runSyncUnsafe()
+          s3SyncClient.doesObjectExist(bucketName, key) shouldBe true
+          completeMultipartUpload shouldBe a[CompleteMultipartUploadResponse]
+          s3Object.array() shouldBe content
+        }
+      }
+
+      "multiple chunks are consumed with multipartUploadConsumer" in {
+        //given
+        val key = Gen.alphaLowerStr.sample.get
+        val chunks: List[Array[Byte]] = Gen.listOfN(3, Gen.alphaUpperStr).map(_.map(_.getBytes)).sample.get
+        val consumer: Consumer[Array[Byte], Task[CompleteMultipartUploadResponse]] =
+          S3.multipartUpload(bucketName, key)
+        val ob: Observable[Array[Byte]] = Observable.fromIterable(chunks)
 
         //when
         val t: Task[CompleteMultipartUploadResponse] = ob.consumeWith(consumer).flatten
@@ -87,7 +108,7 @@ class S3Spec
           val s3Object: ByteBuffer = S3.getObject(bucketName, key).runSyncUnsafe()
           s3SyncClient.doesObjectExist(bucketName, key) shouldBe true
           completeMultipartUpload shouldBe a[CompleteMultipartUploadResponse]
-          s3Object.array() shouldBe content
+          s3Object.array() shouldBe chunks.flatten
         }
       }
     }

@@ -33,7 +33,7 @@ import software.amazon.awssdk.services.s3.model.{
 
 import scala.jdk.FutureConverters._
 
-private[s3] class MultipartUploadConsumer(bucket: String, key: String, contentType: Option[String] = None)(
+private[s3] class MultipartUploadConsumer(bucket: String, key: String, minChunkSize: Int = 5 * 1024 * 1024, contentType: Option[String] = None)(
   implicit
   s3Client: S3AsyncClient)
   extends Consumer.Sync[Array[Byte], Task[CompleteMultipartUploadResponse]] {
@@ -43,45 +43,54 @@ private[s3] class MultipartUploadConsumer(bucket: String, key: String, contentTy
     s: Scheduler): (Subscriber.Sync[Array[Byte]], AssignableCancelable) = {
     val out = new Subscriber.Sync[Array[Byte]] {
       implicit val scheduler = s
-      private[this] var hasMinSize = false //todo contemplate if chunks comply with minimum size of 5MB
       private[this] val partN = 0
       private[this] var completedParts: List[Task[CompletedPart]] = List()
       private[this] val multiPartUploadrequest: CreateMultipartUploadRequest =
         S3RequestBuilder.multipartUploadRequest(bucket, key, contentType)
-      private[this] val uploadId: String =
+      private var stashed: Array[Byte] = Array.emptyByteArray
+      private[this] val uploadId: Task[String] =
         Task
           .fromFuture(
             s3Client
               .createMultipartUpload(multiPartUploadrequest)
               .asScala
               .map(_.uploadId()))
-          .runSyncUnsafe()
+          .memoize
+      println("Uuid: " + uploadId.runSyncUnsafe())
 
       def onNext(chunk: Array[Byte]): Ack = {
-        val uploadPartReq: UploadPartRequest =
-          S3RequestBuilder.uploadPartRequest(bucket, key, partN, uploadId, chunk.size.toLong)
-        val asyncRequestBody = AsyncRequestBody.fromBytes(chunk)
-        val completedPart: Task[CompletedPart] = Task
-          .fromFuture(
-            s3Client
-              .uploadPart(uploadPartReq, asyncRequestBody)
-              .asScala)
-          .map(resp => S3RequestBuilder.completedPart(partN, resp))
-        completedParts = completedPart :: completedParts
+        if (chunk.length < 2000) {
+          stashed = stashed ++ chunk
+        } else {
+          completedParts = {
+            for {
+              uid           <- uploadId
+              completedPart <- completePart(bucket, key, partN, uid, stashed)
+            } yield completedPart
+          } :: completedParts
+          stashed = Array.emptyByteArray
+        }
         monix.execution.Ack.Continue
       }
 
       def onComplete(): Unit = {
-        val completeMultipartUploadResp: Task[CompleteMultipartUploadResponse] = Task.sequence(completedParts).flatMap {
-          completedParts =>
-            val completeMultipartUploadrequest = S3RequestBuilder
-              .completeMultipartUploadRquest(bucket, key, uploadId, completedParts)
-            Task.fromFuture(
-              s3Client
-                .completeMultipartUpload(completeMultipartUploadrequest)
-                .asScala)
+        if (!stashed.isEmpty) {
+          completedParts = {
+            for {
+              uid           <- uploadId
+              completedPart <- completePart(bucket, key, partN, uid, stashed)
+            } yield completedPart
+          } :: completedParts
         }
-        callback.onSuccess(completeMultipartUploadResp)
+        val response: Task[CompleteMultipartUploadResponse] = for {
+          uid            <- uploadId
+          completedParts <- Task.sequence(completedParts)
+          completeMultipartUpload <- {
+            val request = S3RequestBuilder.completeMultipartUploadRquest(bucket, key, uid, completedParts)
+            Task.from(s3Client.completeMultipartUpload(request))
+          }
+        } yield completeMultipartUpload
+        callback.onSuccess(response)
       }
 
       def onError(ex: Throwable): Unit =
@@ -90,4 +99,18 @@ private[s3] class MultipartUploadConsumer(bucket: String, key: String, contentTy
 
     (out, AssignableCancelable.dummy)
   }
+
+  def completePart(
+    bucket: String,
+    key: String,
+    partNumber: Int,
+    uploadId: String,
+    chunk: Array[Byte]): Task[CompletedPart] = {
+    val request: UploadPartRequest =
+      S3RequestBuilder.uploadPartRequest(bucket, key, partNumber, uploadId, chunk.size.toLong)
+    Task
+      .from(s3Client.uploadPart(request, AsyncRequestBody.fromBytes(chunk)))
+      .map(resp => S3RequestBuilder.completedPart(partNumber, resp))
+  }
+
 }
