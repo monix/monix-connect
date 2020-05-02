@@ -2,8 +2,8 @@ package monix.connect.gcs
 
 import com.google.cloud.storage.Storage._
 import com.google.cloud.storage.{StorageOptions, Storage => GoogleStorage}
-import io.monix.connect.gcs.configuration.BucketConfig
-import io.monix.connect.gcs.utiltiies.Paging
+import monix.connect.gcs.configuration.BucketConfig
+import monix.connect.gcs.utiltiies.Paging
 import monix.eval.Task
 import monix.reactive.Observable
 

@@ -2,7 +2,7 @@ package monix.connect.gcs.configuration
 
 import com.google.cloud.storage.BucketInfo.{IamConfiguration, LifecycleRule}
 import com.google.cloud.storage.{Acl, BucketInfo, Cors, StorageClass}
-import io.monix.connect.gcs.configuration.BucketConfig.Location
+import monix.connect.gcs.configuration.BucketConfig.Location
 
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
