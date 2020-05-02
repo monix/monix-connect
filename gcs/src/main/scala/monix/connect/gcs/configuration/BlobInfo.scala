@@ -1,4 +1,4 @@
-package io.monix.connect.gcs.configuration
+package monix.connect.gcs.configuration
 
 import java.time.Instant
 
@@ -40,59 +40,23 @@ final case class BlobInfo(name: String,
 
 object BlobInfo {
 
+  final case class Metadata(contentType: Option[String] = None,
+                            contentDisposition: Option[String] = None,
+                            contentLanguage: Option[String] = None,
+                            contentEncoding: Option[String] = None,
+                            cacheControl: Option[String] = None,
+                            crc32c: Option[String] = None,
+                            crc32cFromHexString: Option[String] = None,
+                            md5: Option[String] = None,
+                            md5FromHexString: Option[String] = None,
+                            metadata: Map[String, String] = Map.empty[String, String],
+                            storageClass: Option[StorageClass] = None,
+                            acl: List[Acl] = List.empty[Acl],
+                            eventBasedHold: Option[Boolean] = None,
+                            temporaryHold: Option[Boolean] = None)
 
-  final case class Create(name: String,
-                          contentType: Option[String] = None,
-                          contentDisposition: Option[String] = None,
-                          contentLanguage: Option[String] = None,
-                          contentEncoding: Option[String] = None,
-                          cacheControl: Option[String] = None,
-                          crc32c: Option[String] = None,
-                          crc32cFromHexString: Option[String] = None,
-                          md5: Option[String] = None,
-                          md5FromHexString: Option[String] = None,
-                          metadata: Map[String, String] = Map.empty[String, String],
-                          storageClass: Option[StorageClass] = None,
-                          acl: List[Acl] = List.empty[Acl],
-                          eventBasedHold: Option[Boolean] = None,
-                          temporaryHold: Option[Boolean] = None)
-
-  final case class Update(contentType: Option[String] = None,
-                          contentDisposition: Option[String] = None,
-                          contentLanguage: Option[String] = None,
-                          contentEncoding: Option[String] = None,
-                          cacheControl: Option[String] = None,
-                          crc32c: Option[String] = None,
-                          crc32cFromHexString: Option[String] = None,
-                          md5: Option[String] = None,
-                          md5FromHexString: Option[String] = None,
-                          metadata: Map[String, String] = Map.empty[String, String],
-                          storageClass: Option[StorageClass] = None,
-                          acl: List[Acl] = List.empty[Acl],
-                          eventBasedHold: Option[Boolean] = None,
-                          temporaryHold: Option[Boolean] = None)
-
-  private[gcs] def toJava(info: BlobInfo.Update, name: String, bucket: String): GoogleBlobInfo = {
+  private[gcs] def toJava(bucket: String, name: String, info: BlobInfo.Metadata): GoogleBlobInfo = {
     val builder = GoogleBlobInfo.newBuilder(BlobId.of(bucket, name))
-    info.contentType.foreach(builder.setContentType)
-    info.contentDisposition.foreach(builder.setContentDisposition)
-    info.contentLanguage.foreach(builder.setContentLanguage)
-    info.contentEncoding.foreach(builder.setContentEncoding)
-    info.cacheControl.foreach(builder.setCacheControl)
-    info.crc32c.foreach(builder.setCrc32c)
-    info.crc32cFromHexString.foreach(builder.setCrc32cFromHexString)
-    info.md5.foreach(builder.setMd5)
-    info.md5FromHexString.foreach(builder.setMd5FromHexString)
-    info.storageClass.foreach(builder.setStorageClass)
-    info.temporaryHold.foreach(b => builder.setEventBasedHold(b))
-    info.eventBasedHold.foreach(b => builder.setEventBasedHold(b))
-    builder.setAcl(info.acl.asJava)
-    builder.setMetadata(info.metadata.asJava)
-    builder.build()
-  }
-
-  private[gcs] def toJava(info: BlobInfo.Create, bucket: String): GoogleBlobInfo = {
-    val builder = GoogleBlobInfo.newBuilder(BlobId.of(bucket, info.name))
     info.contentType.foreach(builder.setContentType)
     info.contentDisposition.foreach(builder.setContentDisposition)
     info.contentLanguage.foreach(builder.setContentLanguage)

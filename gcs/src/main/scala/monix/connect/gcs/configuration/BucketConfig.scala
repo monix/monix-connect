@@ -1,4 +1,4 @@
-package io.monix.connect.gcs.configuration
+package monix.connect.gcs.configuration
 
 import com.google.cloud.storage.BucketInfo.{IamConfiguration, LifecycleRule}
 import com.google.cloud.storage.{Acl, BucketInfo, Cors, StorageClass}

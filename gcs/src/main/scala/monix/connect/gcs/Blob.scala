@@ -1,4 +1,4 @@
-package io.monix.connect.gcs
+package monix.connect.gcs
 
 import java.net.URL
 import java.nio.file.Path
@@ -8,8 +8,8 @@ import com.google.cloud.storage.Blob.BlobSourceOption
 import com.google.cloud.storage.Storage.{BlobTargetOption, SignUrlOption}
 import com.google.cloud.storage.{Acl, BlobId, Blob => GoogleBlob, Option => _}
 import com.google.cloud.{storage => google}
-import io.monix.connect.gcs.configuration.BlobInfo
-import io.monix.connect.gcs.utiltiies.StorageDownloader
+import monix.connect.gcs.configuration.BlobInfo
+import monix.connect.gcs.utiltiies.StorageDownloader
 import monix.eval.Task
 import monix.reactive.Observable
 
@@ -60,8 +60,8 @@ final class Blob(underlying: GoogleBlob) extends StorageDownloader {
    * Updates the blob's information. Bucket or blob's name cannot be changed by this method. If you
    * want to rename the blob or move it to a different bucket use the [[copyTo]] and [[delete]] operations.
    */
-  def update(blobInfo: BlobInfo.Update, options: BlobTargetOption*): Task[Blob] = {
-    val update = BlobInfo.toJava(blobInfo, underlying.getName, underlying.getBucket)
+  def update(metadata: BlobInfo.Metadata, options: BlobTargetOption*): Task[Blob] = {
+    val update = BlobInfo.toJava(underlying.getBucket, underlying.getName, metadata)
     Task(underlying.getStorage.update(update, options: _*))
       .map(Blob.apply)
   }

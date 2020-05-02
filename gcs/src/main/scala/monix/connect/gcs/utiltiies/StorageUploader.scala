@@ -1,4 +1,4 @@
-package io.monix.connect.gcs.utiltiies
+package monix.connect.gcs.utiltiies
 
 import java.io.FileInputStream
 import java.nio.ByteBuffer

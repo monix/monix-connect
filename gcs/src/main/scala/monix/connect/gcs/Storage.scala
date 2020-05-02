@@ -1,4 +1,4 @@
-package io.monix.connect.gcs
+package monix.connect.gcs
 
 import com.google.cloud.storage.Storage._
 import com.google.cloud.storage.{StorageOptions, Storage => GoogleStorage}

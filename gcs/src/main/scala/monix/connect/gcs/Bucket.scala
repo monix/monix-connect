@@ -1,4 +1,4 @@
-package io.monix.connect.gcs
+package monix.connect.gcs
 
 import java.nio.file.Path
 
@@ -6,8 +6,8 @@ import cats.data.NonEmptyList
 import com.google.cloud.storage.Bucket.BucketSourceOption
 import com.google.cloud.storage.Storage.{BlobGetOption, BlobListOption, BlobWriteOption, BucketTargetOption}
 import com.google.cloud.storage.{Acl, BlobId, Bucket => GoogleBucket}
-import io.monix.connect.gcs.configuration.BlobInfo
-import io.monix.connect.gcs.utiltiies.{Paging, StorageDownloader, StorageUploader}
+import monix.connect.gcs.configuration.BlobInfo
+import monix.connect.gcs.utiltiies.{Paging, StorageDownloader, StorageUploader}
 import monix.eval.Task
 import monix.reactive.Observable
 
@@ -102,8 +102,8 @@ final class Bucket private(underlying: GoogleBucket)
   /**
    * TODO: Documentation
    */
-  def upload(info: BlobInfo.Create, path: Path, chunkSize: Int, options: BlobWriteOption*): Task[Unit] = {
-    val blobInfo = BlobInfo.toJava(info, underlying.getName)
+  def upload(name: String, metadata: BlobInfo.Metadata, path: Path, chunkSize: Int, options: BlobWriteOption*): Task[Unit] = {
+    val blobInfo = BlobInfo.toJava(underlying.getName, name, metadata)
     uploadToBucket(underlying.getStorage, blobInfo, path, chunkSize, options: _*)
   }
 

@@ -1,4 +1,4 @@
-package io.monix.connect.gcs.utiltiies
+package monix.connect.gcs.utiltiies
 
 import java.io.FileOutputStream
 import java.nio.channels.Channels
