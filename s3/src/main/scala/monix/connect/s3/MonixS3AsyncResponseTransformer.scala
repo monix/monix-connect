@@ -25,15 +25,25 @@ import monix.reactive.Observable
 import software.amazon.awssdk.core.async.{AsyncResponseTransformer, SdkPublisher}
 import software.amazon.awssdk.services.s3.model.GetObjectResponse
 
+/**
+  * Transformer implementation from aws sdk publisher to a completable future
+  * which is required by the signature [[S3.getObject()]]
+  */
 private[s3] class MonixS3AsyncResponseTransformer
   extends AsyncResponseTransformer[GetObjectResponse, Task[ByteBuffer]] {
   val future = new CompletableFuture[Task[ByteBuffer]]()
+
   override def prepare(): CompletableFuture[Task[ByteBuffer]] = future
 
   override def onResponse(response: GetObjectResponse): Unit = ()
 
   override def onStream(publisher: SdkPublisher[ByteBuffer]): Unit = {
-    future.complete(Observable.fromReactivePublisher(publisher).headL)
+    future.complete(
+      Observable
+        .fromReactivePublisher(publisher)
+        .foldLeftL(Array.emptyByteArray){
+          (buffer, chunk) => buffer ++ chunk.array()
+        }.map(ByteBuffer.wrap(_)))
     ()
   }
   override def exceptionOccurred(error: Throwable): Unit = {

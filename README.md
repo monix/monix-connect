@@ -265,17 +265,25 @@ val _: Task[ByteBuffer] = S3.getObject(bucketName, objectKey)
 //put object example
 val content: ByteBuffer= ByteBuffer.wrap("file content".getBytes())
 val _: Task[PutObjectResponse] = S3.putObject(bucketName, objectKey, content)
+}
+```
 
+And finally, for dealing with large streams of data you can use the `multipartUpload` consumer.
+This one will make partial uploads from the chunks passed to, avoiding failures when sending big payloads in the  
+http request or causing any JVM overhead failure.
 
+```scala
 //multipart consumer that expects byte buffer chunks 
+
+// given an observable of chunks of data (Array[Byte]) 
+val ob: Observable[Array[Byte]]
+
+// and a multipart upload consumer
 val multipartConsumer: Consumer[Array[Byte], Task[CompleteMultipartUploadResponse]] =
   S3.multipartUpload(bucketName, objectKey)
 
-val _: Task[CompleteMultipartUploadResponse] = {
-Observable
-  .pure(content) 
-  .consumeWith(multipartConsumer)
-}
+// then
+ob.from(chunks).consumeWith(multipartConsumer)
 ```
 ---
 

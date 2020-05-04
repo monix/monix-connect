@@ -31,9 +31,14 @@ import software.amazon.awssdk.services.s3.model.{
   UploadPartRequest
 }
 
-import scala.jdk.FutureConverters._
-
-private[s3] class MultipartUploadConsumer(bucket: String, key: String, minChunkSize: Int = 5 * 1024 * 1024, contentType: Option[String] = None)(
+/**
+  * Implement the functionality to perform an S3 multipart update from received chunks of data.
+ */
+private[s3] class MultipartUploadConsumer(
+  bucket: String,
+  key: String,
+  minChunkSize: Int = awsMinChunkSize,
+  contentType: Option[String] = None)(
   implicit
   s3Client: S3AsyncClient)
   extends Consumer.Sync[Array[Byte], Task[CompleteMultipartUploadResponse]] {
@@ -43,42 +48,49 @@ private[s3] class MultipartUploadConsumer(bucket: String, key: String, minChunkS
     s: Scheduler): (Subscriber.Sync[Array[Byte]], AssignableCancelable) = {
     val out = new Subscriber.Sync[Array[Byte]] {
       implicit val scheduler = s
-      private[this] val partN = 0
-      private[this] var completedParts: List[Task[CompletedPart]] = List()
-      private[this] val multiPartUploadrequest: CreateMultipartUploadRequest =
-        S3RequestBuilder.multipartUploadRequest(bucket, key, contentType)
-      private var stashed: Array[Byte] = Array.emptyByteArray
-      private[this] val uploadId: Task[String] =
+      private var partN = 0
+      private var completedParts: List[Task[CompletedPart]] = List.empty[Task[CompletedPart]]
+      private val createRequest: CreateMultipartUploadRequest =
+        S3RequestBuilder.createMultipartUploadRequest(bucket, key, contentType)
+      private var buffer: Array[Byte] = Array.emptyByteArray
+      private val uploadId: Task[String] =
         Task
-          .fromFuture(
-            s3Client
-              .createMultipartUpload(multiPartUploadrequest)
-              .asScala
-              .map(_.uploadId()))
+          .from(s3Client.createMultipartUpload(createRequest))
+          .map(_.uploadId())
           .memoize
-      println("Uuid: " + uploadId.runSyncUnsafe())
 
+      /**
+      * 
+       * If the chunk lenght is bigger than the minimum size, perfom the part request,
+       * in case it is not, the chunk is added to the buffer waiting the next chunk to be sent together.
+       */
       def onNext(chunk: Array[Byte]): Ack = {
-        if (chunk.length < 2000) {
-          stashed = stashed ++ chunk
+        if (chunk.length < minChunkSize) {
+          buffer = buffer ++ chunk
         } else {
+          partN += 1
           completedParts = {
             for {
               uid           <- uploadId
-              completedPart <- completePart(bucket, key, partN, uid, stashed)
+              completedPart <- completePart(bucket, key, partN, uid, buffer)
             } yield completedPart
           } :: completedParts
-          stashed = Array.emptyByteArray
+          buffer = Array.emptyByteArray
         }
         monix.execution.Ack.Continue
       }
 
+      /**
+      * Checks that the buffer is not empty and performs the last part request of the buffer in case it was not.
+       * Finally it creates a request to indicate that the multipart upload was completed,
+       * and it is passed to the callback.
+       */
       def onComplete(): Unit = {
-        if (!stashed.isEmpty) {
+        if (!buffer.isEmpty) {
           completedParts = {
             for {
               uid           <- uploadId
-              completedPart <- completePart(bucket, key, partN, uid, stashed)
+              completedPart <- completePart(bucket, key, partN, uid, buffer)
             } yield completedPart
           } :: completedParts
         }
@@ -96,10 +108,14 @@ private[s3] class MultipartUploadConsumer(bucket: String, key: String, minChunkS
       def onError(ex: Throwable): Unit =
         callback.onError(ex)
     }
-
-    (out, AssignableCancelable.dummy)
+    (out, AssignableCancelable.single())
   }
 
+  /**
+  * Abstracts the functionality to upload a single part to S3.
+   * It is called for those received chunks that were bigger than minimum size,
+   * or later when the stream is completed and the last part represents the rest of the buffer.
+   */
   def completePart(
     bucket: String,
     key: String,

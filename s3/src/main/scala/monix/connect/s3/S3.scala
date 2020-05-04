@@ -24,27 +24,35 @@ import monix.execution.Scheduler
 import monix.eval.Task
 import software.amazon.awssdk.core.async.AsyncRequestBody
 import software.amazon.awssdk.services.s3.S3AsyncClient
-import software.amazon.awssdk.services.s3.model.{
-  CompleteMultipartUploadResponse,
-  CreateBucketResponse,
-  DeleteBucketResponse,
-  DeleteObjectResponse,
-  GetObjectRequest,
-  ListObjectsResponse,
-  ListObjectsV2Response,
-  PutObjectRequest,
-  PutObjectResponse
-}
+import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadResponse, CreateBucketResponse, DeleteBucketResponse, DeleteObjectResponse, GetObjectRequest, ListObjectsResponse, ListObjectsV2Response, PutObjectRequest, PutObjectResponse}
 
 import scala.jdk.FutureConverters._
 
 object S3 {
 
-  def getObject(bucketName: String, key: String)(implicit s3Client: S3AsyncClient): Task[ByteBuffer] = {
+  /**
+    *
+    * @param bucketName
+    * @param key
+    * @param s3Client
+    * @return
+    */
+  def getObject(bucketName: String, key: String)(implicit s3Client: S3AsyncClient): Task[Array[Byte]] = {
     val getObjectrequest = GetObjectRequest.builder().bucket(bucketName).key(key).build()
-    Task.fromFuture(s3Client.getObject(getObjectrequest, new MonixS3AsyncResponseTransformer).asScala).flatten
+    Task.from(s3Client.getObject(getObjectrequest, new MonixS3AsyncResponseTransformer)).flatten.map(_.array)
   }
 
+  /**
+    *
+    * @param bucketName
+    * @param key
+    * @param content
+    * @param contentLength
+    * @param contentType
+    * @param s3Client
+    * @param s
+    * @return
+    */
   def putObject(
     bucketName: String,
     key: String,
@@ -58,24 +66,62 @@ object S3 {
     Task.deferFuture(s3Client.putObject(putObjectRequest, requestBody).asScala)
   }
 
-  def multipartUpload(bucketName: String, key: String, chunkSize: Int = 5242880, contentType: Option[String] = None)(
+  /**
+  * Uploads an S3 object by making multiple http requests (parts) of the received chunks of bytes.
+   * @param bucketName The bucket name where the object will be stored
+   * @param key Path where the object will be stored.
+   * @param chunkSize Size of the chunks (parts) that will be sent in the http body. (the minimum size is set by default, don't use a lower one)
+   * @param contentType Content type in which the http request will be sent.
+   * @param s3Client Implicit instance of the s3 client of type [[S3AsyncClient]]
+   * @return Returns the confirmation of the multipart upload as [[CompleteMultipartUploadResponse]]
+   */
+  def multipartUpload(bucketName: String, key: String, chunkSize: Int = awsMinChunkSize, contentType: Option[String] = None)(
     implicit
     s3Client: S3AsyncClient): Consumer[Array[Byte], Task[CompleteMultipartUploadResponse]] = {
     new MultipartUploadConsumer(bucketName, key, chunkSize, contentType)
   }
 
+  /**
+    *
+    * @param bucket
+    * @param key
+    * @param s3Client
+    * @return
+    */
   def deleteObject(bucket: String, key: String)(implicit s3Client: S3AsyncClient): Task[DeleteObjectResponse] = {
-    Task.deferFuture(s3Client.deleteObject(S3RequestBuilder.deleteObject(bucket, key)).asScala)
+    Task.from(s3Client.deleteObject(S3RequestBuilder.deleteObject(bucket, key)))
   }
 
+  /**
+    *
+    * @param bucket
+    * @param s3Client
+    * @return
+    */
   def deleteBucket(bucket: String)(implicit s3Client: S3AsyncClient): Task[DeleteBucketResponse] = {
-    Task.deferFuture(s3Client.deleteBucket(S3RequestBuilder.deleteBucket(bucket)).asScala)
+    Task.from(s3Client.deleteBucket(S3RequestBuilder.deleteBucket(bucket)))
   }
 
+  /**
+    *
+    * @param bucket
+    * @param s3Client
+    * @return
+    */
   def createBucket(bucket: String)(implicit s3Client: S3AsyncClient): Task[CreateBucketResponse] = {
-    Task.deferFuture(s3Client.createBucket(S3RequestBuilder.createBucket(bucket)).asScala)
+    Task.from(s3Client.createBucket(S3RequestBuilder.createBucket(bucket)))
   }
 
+  /**
+    *
+    * @param bucket
+    * @param delimiter
+    * @param marker
+    * @param maxKeys
+    * @param prefix
+    * @param s3Client
+    * @return
+    */
   def listObjects(
     bucket: String,
     delimiter: Option[String] = None,
@@ -84,13 +130,21 @@ object S3 {
     prefix: Option[String] = None)(implicit s3Client: S3AsyncClient): Task[ListObjectsResponse] = {
     val request =
       S3RequestBuilder.listObject(bucket, delimiter, marker, maxKeys, prefix)
-    Task.deferFuture(s3Client.listObjects(request).asScala)
+    Task.from(s3Client.listObjects(request))
   }
 
-  def listObjectsV2(bucket: String)(implicit s3Client: S3AsyncClient): Task[ListObjectsV2Response] = {
-    Task.deferFuture(s3Client.listObjectsV2(S3RequestBuilder.listObjectV2(bucket)).asScala)
-  }
 
+  /**
+  *
+    * @param bucket
+    * @param continuationToken
+    * @param delimiter
+    * @param marker
+    * @param maxKeys
+    * @param prefix
+    * @param s3Client
+    * @return
+    */
   def listObjectsV2(
     bucket: String,
     continuationToken: Option[String] = None,
@@ -99,7 +153,7 @@ object S3 {
     maxKeys: Option[Int] = None,
     prefix: Option[String] = None)(implicit s3Client: S3AsyncClient): Task[ListObjectsV2Response] = {
     val request = S3RequestBuilder.listObjectV2(bucket, continuationToken, delimiter, marker, maxKeys, prefix)
-    Task.deferFuture(s3Client.listObjectsV2(request).asScala)
+    Task.from(s3Client.listObjectsV2(request))
   }
 
 }

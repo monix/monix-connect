@@ -25,19 +25,24 @@ import software.amazon.awssdk.services.s3.model.{
   CreateMultipartUploadRequest,
   DeleteBucketRequest,
   DeleteObjectRequest,
-  EncodingType,
   ListObjectsRequest,
   ListObjectsV2Request,
   PutObjectRequest,
-  RequestPayer,
   UploadPartRequest,
   UploadPartResponse
 }
 
 import scala.jdk.CollectionConverters._
 
+/**
+* A class that provides converter methods that given the required set of parameters for that
+  * conversion, it builds the relative AWS java object.
+  */
 private[s3] object S3RequestBuilder {
 
+  /**
+    * A builder for [[PutObjectRequest]]
+    */
   def putObjectRequest(bucket: String, key: String, contentLenght: Long, contentType: Option[String]) =
     PutObjectRequest
       .builder()
@@ -47,6 +52,9 @@ private[s3] object S3RequestBuilder {
       .contentType(contentType.getOrElse("plain/text"))
       .build()
 
+  /**
+    * A builder for [[UploadPartRequest]]
+    */
   def uploadPartRequest(bucketName: String, key: String, partN: Int, uploadId: String, contentLenght: Long) =
     UploadPartRequest
       .builder()
@@ -57,10 +65,16 @@ private[s3] object S3RequestBuilder {
       .contentLength(contentLenght)
       .build()
 
-  def completedPart(partN: Int, uploadPartResp: UploadPartResponse) =
+  /**
+    * A builder for [[CompletedPart]]
+    */
+  def completedPart(partN: Int, uploadPartResp: UploadPartResponse): CompletedPart =
     CompletedPart.builder().partNumber(partN).eTag(uploadPartResp.eTag()).build()
 
-  def multipartUploadRequest(bucketName: String, key: String, contentType: Option[String]) =
+  /**
+    * A builder for [[CreateMultipartUploadRequest]]
+    */
+  def createMultipartUploadRequest(bucketName: String, key: String, contentType: Option[String]): CreateMultipartUploadRequest =
     CreateMultipartUploadRequest
       .builder()
       .bucket(bucketName)
@@ -68,6 +82,9 @@ private[s3] object S3RequestBuilder {
       .contentType(contentType.getOrElse("plain/text"))
       .build()
 
+  /**
+    * A builder for [[CompleteMultipartUploadRequest]]
+    */
   def completeMultipartUploadRquest(
     bucket: String,
     key: String,
@@ -83,27 +100,15 @@ private[s3] object S3RequestBuilder {
       .build()
   }
 
-  def listObjectV2(
-    bucket: String,
-    continuationToken: Option[String] = None,
-    delimiter: Option[String] = None,
-    marker: Option[String] = None,
-    maxKeys: Option[Int] = None,
-    prefix: Option[String] = None) = {
-    val listObjectsBuilder = ListObjectsV2Request.builder().bucket(bucket)
-    continuationToken.map(listObjectsBuilder.continuationToken(_))
-    delimiter.map(listObjectsBuilder.delimiter(_))
-    maxKeys.map(listObjectsBuilder.maxKeys(_))
-    prefix.map(listObjectsBuilder.prefix(_)) //requestPayer, overrideAwsConf
-    listObjectsBuilder.build()
-  }
-
+  /**
+    * A builder for [[ListObjectsRequest]]
+    */
   def listObject(
-    bucket: String,
-    delimiter: Option[String] = None,
-    marker: Option[String] = None,
-    maxKeys: Option[Int] = None,
-    prefix: Option[String] = None): ListObjectsRequest = {
+                  bucket: String,
+                  delimiter: Option[String] = None,
+                  marker: Option[String] = None,
+                  maxKeys: Option[Int] = None,
+                  prefix: Option[String] = None): ListObjectsRequest = {
     val listObjectsBuilder = ListObjectsRequest
       .builder()
       .bucket(bucket)
@@ -114,6 +119,27 @@ private[s3] object S3RequestBuilder {
     listObjectsBuilder.build()
   }
 
+  /**
+    * A builder for [[ListObjectsV2Request]]
+    */
+  def listObjectV2(
+    bucket: String,
+    continuationToken: Option[String] = None,
+    delimiter: Option[String] = None,
+    marker: Option[String] = None,
+    maxKeys: Option[Int] = None,
+    prefix: Option[String] = None): ListObjectsV2Request = {
+    val listObjectsBuilder = ListObjectsV2Request.builder().bucket(bucket)
+    continuationToken.map(listObjectsBuilder.continuationToken(_))
+    delimiter.map(listObjectsBuilder.delimiter(_))
+    maxKeys.map(listObjectsBuilder.maxKeys(_))
+    prefix.map(listObjectsBuilder.prefix(_)) //requestPayer, overrideAwsConf
+    listObjectsBuilder.build()
+  }
+
+  /**
+    * A builder for [[DeleteObjectRequest]]
+    */
   def deleteObject(bucket: String, key: String): DeleteObjectRequest = {
     DeleteObjectRequest
       .builder()
@@ -122,6 +148,9 @@ private[s3] object S3RequestBuilder {
       .build()
   }
 
+  /**
+    * A builder for [[DeleteBucketRequest]]
+    */
   def deleteBucket(bucket: String): DeleteBucketRequest = {
     DeleteBucketRequest
       .builder()
@@ -129,6 +158,9 @@ private[s3] object S3RequestBuilder {
       .build()
   }
 
+  /**
+    * A builder for [[CreateBucketRequest]]
+    */
   def createBucket(bucket: String): CreateBucketRequest = {
     CreateBucketRequest
       .builder()
