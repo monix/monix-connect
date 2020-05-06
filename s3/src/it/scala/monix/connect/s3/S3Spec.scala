@@ -1,6 +1,5 @@
 package monix.connect.s3
 
-import java.nio.ByteBuffer
 import java.io.FileInputStream
 
 import monix.eval.Task
@@ -40,7 +39,7 @@ class S3Spec
           val content = Gen.alphaUpperStr.sample.get
 
           //when
-          val t: Task[PutObjectResponse] = S3.putObject(bucketName, key, ByteBuffer.wrap(content.getBytes()))
+          val t: Task[PutObjectResponse] = S3.putObject(bucketName, key, content.getBytes())
 
           //then
           whenReady(t.runToFuture) { putResponse =>
@@ -59,9 +58,9 @@ class S3Spec
           val t: Task[PutObjectResponse] = S3.putObject(
             bucketName,
             key,
-            ByteBuffer.wrap(content.getBytes()),
-            Some(content.length),
-            Some("appliction/json"))
+            content.getBytes(),
+            Some(content.length)
+          )
 
           //then
           whenReady(t.runToFuture) { putResponse =>
@@ -74,11 +73,10 @@ class S3Spec
         "the payload is bigger" in {
           //given
           val key: String = Gen.alphaLowerStr.sample.get
-          val content: Array[Byte] = downloadFromFile(resourceFile("payload.txt")).get
-          println("Content: " + content.size)
+          val content: Array[Byte] = downloadFromFile(resourceFile("empty.txt")).get
 
           //when
-          val t: Task[PutObjectResponse] = S3.putObject(bucketName, key, ByteBuffer.wrap(content))
+          val t: Task[PutObjectResponse] = S3.putObject(bucketName, key, content)
 
           //then
           whenReady(t.runToFuture) { putResponse =>
@@ -95,7 +93,7 @@ class S3Spec
           val content: Array[Byte] = Array.emptyByteArray
 
           //when
-          val t: Task[PutObjectResponse] = S3.putObject(bucketName, key, ByteBuffer.wrap(content))
+          val t: Task[PutObjectResponse] = S3.putObject(bucketName, key, content)
 
           //then
           whenReady(t.runToFuture) { putResponse =>

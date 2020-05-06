@@ -26,8 +26,8 @@ import software.amazon.awssdk.core.async.{AsyncResponseTransformer, SdkPublisher
 import software.amazon.awssdk.services.s3.model.GetObjectResponse
 
 /**
-  * Transformer implementation from aws sdk publisher to a completable future
-  * which is required by the signature [[S3.getObject()]]
+  * An implementation of the [[AsyncResponseTransformer]] that will transform an incoming
+  * stream of chunks [[ByteBuffer]] published from a [[SdkPublisher]] as a monix [[Task]].
   */
 private[s3] class MonixS3AsyncResponseTransformer
   extends AsyncResponseTransformer[GetObjectResponse, Task[ByteBuffer]] {
