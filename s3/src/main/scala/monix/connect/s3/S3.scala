@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
  * See the project homepage at: https://monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -81,7 +81,8 @@ object S3 {
     grantWrite: Option[String] = None,
     grantWriteACP: Option[String] = None,
     objectLockEnabledForBucket: Option[Boolean] = None)(
-    implicit s3Client: S3AsyncClient): Task[CreateBucketResponse] = {
+    implicit
+    s3Client: S3AsyncClient): Task[CreateBucketResponse] = {
     Task.from(
       s3Client.createBucket(
         S3RequestBuilder.createBucket(
@@ -223,8 +224,7 @@ object S3 {
     sseCustomerAlgorithm: Option[String] = None,
     sseCustomerKey: Option[String] = None,
     sseCustomerKeyMD5: Option[String] = None,
-    versionId: Option[String] = None
-  )(implicit s3Client: S3AsyncClient): Task[Array[Byte]] = {
+    versionId: Option[String] = None)(implicit s3Client: S3AsyncClient): Task[Array[Byte]] = {
     val request: GetObjectRequest = S3RequestBuilder.getObjectRequest(
       bucket,
       key,
@@ -341,7 +341,7 @@ object S3 {
     * Uploads an S3 object by making multiple http requests (parts) of the received chunks of bytes.
     *
     * Example:
-    *{{{
+    * {{{
     *   import monix.connect.s3.S3
     *
     *   val key: String = "sample/key/to/s3/object"
@@ -466,7 +466,8 @@ object S3 {
     sseCustomerKeyMD5: Option[String] = None,
     ssekmsEncryptionContext: Option[String] = None,
     ssekmsKeyId: Option[String] = None)(
-    implicit s3Client: S3AsyncClient,
+    implicit
+    s3Client: S3AsyncClient,
     scheduler: Scheduler): Task[PutObjectResponse] = {
     val actualLenght: Long = contentLength.getOrElse(content.length.toLong)
     val request: PutObjectRequest =
@@ -504,7 +505,8 @@ object S3 {
     * @return It returns the response from the http put object request as [[PutObjectResponse]].
     */
   def putObject(request: PutObjectRequest, content: Array[Byte])(
-    implicit s3Client: S3AsyncClient,
+    implicit
+    s3Client: S3AsyncClient,
     scheduler: Scheduler): Task[PutObjectResponse] = {
     val requestBody: AsyncRequestBody =
       AsyncRequestBody.fromPublisher(Task(ByteBuffer.wrap(content)).toReactivePublisher)

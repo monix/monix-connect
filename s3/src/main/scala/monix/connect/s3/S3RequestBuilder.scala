@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
  * See the project homepage at: https://monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -256,8 +256,7 @@ private[s3] object S3RequestBuilder {
     requestPayer: Option[String] = None,
     sseCustomerAlgorithm: Option[String] = None,
     sseCustomerKey: Option[String] = None,
-    sseCustomerKeyMD5: Option[String] = None
-  ): UploadPartRequest = {
+    sseCustomerKeyMD5: Option[String] = None): UploadPartRequest = {
     val request =
       UploadPartRequest
         .builder()

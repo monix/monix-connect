@@ -8,7 +8,7 @@
  
  ⚠️ This space is under construction 🚧 
  
-Monix Connect is an **experimental** initiative to implement stream integrations for [Monix](https://monix.io/).
+Monix Connect is an initiative to implement stream integrations for [Monix](https://monix.io/).
  A connector describes the connection between the application and a specific data point, which could be a file, a database or any system in which the appication 
  can interact by sending or receiving information. Therefore, the aim of this project is to catch the most common
   connections that users could need when developing reactive applications with Monix, these would basically reduce boilerplate code and furthermore, will let the users to greatly save time and complexity in their implementing projects.
@@ -20,10 +20,10 @@ Monix Connect is an **experimental** initiative to implement stream integrations
 ## Connectors
 1. [Akka](#Akka)
 2. [DynamoDB](#DynamoDB)
-3. [Hdfs](#Hadoop Distributed File System (HDFS))
+3. [Hdfs](#HDFS))
 4. [Parquet](#Parquet)
 5. [Redis](#Redis)
-6. [S3](#Amazon Simple Storage Service (S3))
+6. [S3](#S3))
 
 ---
 ### Akka
@@ -76,7 +76,7 @@ Observable
 //the materialized value would be of type Task[DynamoDBResponse]
 ```
 ---
-### Hadoop Distributed File System (HDFS)
+### HDFS
 
 A connector that allows to progresively write and read from files of any size stored in [HDFS](https://hadoop.apache.org/docs/r1.2.1/hdfs_design.html).
 
@@ -230,8 +230,8 @@ keys.size shouldBe 1
 keys.head shouldBe k3
 ```
 ---
-### Amazon Simple Storage Service (S3)
-_The object storage service that offers industry leading scalability, availability, security and performance.
+### S3
+The object storage service that offers industry leading scalability, availability, security and performance.
 It allows data storage of any amount of data, commonly used as a data lake for big data applications which can now be easily integrated with monix.
  
  The module has been implemented using the `S3AsyncClient` since it only exposes non blocking methods. 

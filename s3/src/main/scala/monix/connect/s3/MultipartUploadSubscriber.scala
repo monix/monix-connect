@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
  * See the project homepage at: https://monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -147,7 +147,8 @@ private[s3] class MultipartUploadSubscriber(
     * or later when the last chunk arrives representing the completion of the stream.
     */
   def uploadPart(bucket: String, key: String, partNumber: Int, uploadId: Task[String], chunk: Array[Byte])(
-    implicit scheduler: Scheduler): Unit = {
+    implicit
+    scheduler: Scheduler): Unit = {
 
     val completedPart = {
       for {
