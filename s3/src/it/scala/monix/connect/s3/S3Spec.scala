@@ -132,7 +132,7 @@ class S3Spec
       "download a s3 object bigger than 1MB as byte array" in {
         //given
         val key = Gen.alphaLowerStr.sample.get
-        val inputStream = Task(new FileInputStream(resourceFile("testfile.csv")))
+        val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
         val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
         val consumer: Consumer[Array[Byte], Task[CompleteMultipartUploadResponse]] =
           S3.multipartUpload(bucketName, key)
@@ -199,10 +199,10 @@ class S3Spec
         }
       }
 
-      "a single chunk bigger than the minimum size (5MB)" in {
+      "a single chunk of size (1MB)" in {
         //given
         val key = Gen.alphaLowerStr.sample.get
-        val inputStream = Task(new FileInputStream(resourceFile("testfile.csv")))
+        val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
         val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
         val consumer: Consumer[Array[Byte], Task[CompleteMultipartUploadResponse]] =
           S3.multipartUpload(bucketName, key)
@@ -223,8 +223,10 @@ class S3Spec
       "multiple chunks bigger than minimum size (5MB)" in {
         //given
         val key = Gen.alphaLowerStr.sample.get
-        val inputStream = Task(new FileInputStream(resourceFile("testfile.csv")))
-        val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
+        val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
+        val ob: Observable[Array[Byte]] = Observable
+          .fromInputStream(inputStream)
+          .foldLeft(Array.emptyByteArray)((acc, chunk) => acc ++ chunk ++ chunk ++ chunk ++ chunk ++ chunk ++ chunk) //duplicates each chunk * 6
         val consumer: Consumer[Array[Byte], Task[CompleteMultipartUploadResponse]] =
           S3.multipartUpload(bucketName, key)
 

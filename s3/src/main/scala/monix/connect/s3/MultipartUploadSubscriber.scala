@@ -160,6 +160,7 @@ private[s3] class MultipartUploadSubscriber(
         partN = partNumber,
         uploadId = uploadId,
         contentLenght = chunk.size.toLong,
+        requestPayer = requestPayer,
         sseCustomerAlgorithm = sseCustomerAlgorithm,
         sseCustomerKey = sseCustomerKey,
         sseCustomerKeyMD5 = sseCustomerKeyMD5

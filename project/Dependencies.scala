@@ -17,7 +17,7 @@ object Dependencies {
     val ScalaLogging = "3.9.2"
 
     val Scalatest = "3.1.1"
-    val Scalacheck = "1.14.3"
+    val Scalacheck = "1.14.0"
     val Mockito = "1.13.1"
     val Cats = "2.0.0"
 
@@ -86,7 +86,8 @@ object Dependencies {
     "org.typelevel" %% "cats-core"          % DependencyVersions.Cats,
     "com.github.pureconfig" %% "pureconfig" % DependencyVersions.PureConfig,
     "com.amazonaws"                         % "aws-java-sdk-core" % DependencyVersions.AWS % IntegrationTest,
-    "com.amazonaws"                         % "aws-java-sdk-s3" % DependencyVersions.AWS %  IntegrationTest
+    "com.amazonaws"                         % "aws-java-sdk-s3" % DependencyVersions.AWS %  IntegrationTest,
+    "org.scalatestplus" %% "scalacheck-1-14" % "3.1.1.1" % Test
   )
   val S3 = S3Dependecies ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(_ % IntegrationTest)
 

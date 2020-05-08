@@ -203,13 +203,13 @@ object S3 {
     ifNoneMatch: Option[String] = None,
     ifUnmodifiedSince: Option[Instant] = None,
     range: Option[String] = None,
-    responseExpires: Option[Instant] = None,
-    versionId: Option[String] = None,
+    requestPayer: Option[String] = None,
+    partNumber: Option[Int] = None,
     sseCustomerAlgorithm: Option[String] = None,
     sseCustomerKey: Option[String] = None,
     sseCustomerKeyMD5: Option[String] = None,
-    requestPayer: Option[String] = None,
-    partNumber: Option[Int] = None)(implicit s3Client: S3AsyncClient): Task[Array[Byte]] = {
+    versionId: Option[String] = None
+    )(implicit s3Client: S3AsyncClient): Task[Array[Byte]] = {
     val request: GetObjectRequest = S3RequestBuilder.getObjectRequest(
       bucket,
       key,
@@ -217,13 +217,13 @@ object S3 {
       ifModifiedSince,
       ifNoneMatch,
       ifUnmodifiedSince,
+      partNumber,
       range,
-      versionId,
+      requestPayer,
       sseCustomerAlgorithm,
       sseCustomerKey,
       sseCustomerKeyMD5,
-      requestPayer,
-      partNumber
+      versionId
     )
     Task.from(s3Client.getObject(request, new MonixS3AsyncResponseTransformer)).flatten.map(_.array)
   }
@@ -264,7 +264,7 @@ object S3 {
     prefix: Option[String] = None,
     requestPayer: Option[String] = None)(implicit s3Client: S3AsyncClient): Task[ListObjectsResponse] = {
     val request: ListObjectsRequest =
-      S3RequestBuilder.listObject(bucket, marker, maxKeys, prefix, requestPayer)
+      S3RequestBuilder.listObjects(bucket, marker, maxKeys, prefix, requestPayer)
     Task.from(s3Client.listObjects(request))
   }
 
@@ -306,7 +306,7 @@ object S3 {
     startAfter: Option[String],
     requestPayer: Option[String])(implicit s3Client: S3AsyncClient): Task[ListObjectsV2Response] = {
     val request: ListObjectsV2Request =
-      S3RequestBuilder.listObjectV2(bucket, continuationToken, fetchOwner, maxKeys, prefix, startAfter, requestPayer)
+      S3RequestBuilder.listObjectsV2(bucket, continuationToken, fetchOwner, maxKeys, prefix, startAfter, requestPayer)
     Task.from(s3Client.listObjectsV2(request))
   }
 

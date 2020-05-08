@@ -44,66 +44,58 @@ import scala.jdk.CollectionConverters._
 private[s3] object S3RequestBuilder {
 
   /**
-    * A builder that only accepts the minimum required fields to build a [[GetObjectRequest]].
-    *
-    * @param bucket The S3 bucket name
-    * @param key The location of the object in s3.
-    * @return An instance of [[GetObjectRequest]]
+    * A builder for [[DeleteBucketRequest]]
     */
-  def getObjectRequest(
-    bucket: String,
-    key: String,
-    ifMatch: Option[String] = None,
-    ifModifiedSince: Option[Instant] = None,
-    ifNoneMatch: Option[String] = None,
-    ifUnmodifiedSince: Option[Instant] = None,
-    range: Option[String] = None,
-    versionId: Option[String] = None,
-    sseCustomerAlgorithm: Option[String] = None,
-    sseCustomerKey: Option[String] = None,
-    sseCustomerKeyMD5: Option[String] = None,
-    requestPayer: Option[String] = None,
-    partNumber: Option[Int] = None): GetObjectRequest = {
-    val request: GetObjectRequest.Builder = GetObjectRequest.builder().bucket(bucket).key(key)
-    ifMatch.map(request.ifMatch(_))
-    ifModifiedSince.map(request.ifModifiedSince(_))
-    ifNoneMatch.map(request.ifNoneMatch(_))
-    ifUnmodifiedSince.map(request.ifUnmodifiedSince(_))
-    range.map(request.range(_))
-    versionId.map(request.versionId(_))
-    sseCustomerAlgorithm.map(request.sseCustomerAlgorithm(_))
-    sseCustomerKey.map(request.sseCustomerKey(_))
-    sseCustomerKeyMD5.map(request.sseCustomerKeyMD5(_))
+  def deleteBucket(bucket: String): DeleteBucketRequest = {
+    DeleteBucketRequest
+      .builder()
+      .bucket(bucket)
+      .build()
+  }
+
+  /**
+    * A builder for [[DeleteObjectRequest]]
+    */
+  def deleteObject(
+                    bucket: String,
+                    key: String,
+                    bypassGovernanceRetention: Option[Boolean] = None,
+                    mfa: Option[String] = None,
+                    requestPayer: Option[String] = None,
+                    versionId: Option[String] = None): DeleteObjectRequest = {
+    val request = DeleteObjectRequest
+      .builder()
+      .bucket(bucket)
+      .key(key)
+    bypassGovernanceRetention.map(request.bypassGovernanceRetention(_))
+    mfa.map(request.mfa(_))
     requestPayer.map(request.requestPayer(_))
-    partNumber.map(request.partNumber(_))
+    versionId.map(request.versionId(_))
     request.build()
   }
 
   /**
-    * A builder for [[UploadPartRequest]]
+    * A builder for [[CreateBucketRequest]]
     */
-  def uploadPartRequest(
-    bucket: String,
-    key: String,
-    partN: Int,
-    uploadId: String,
-    contentLenght: Long,
-    sseCustomerAlgorithm: Option[String] = None,
-    sseCustomerKey: Option[String] = None,
-    sseCustomerKeyMD5: Option[String] = None,
-    requestPayer: Option[String] = None): UploadPartRequest = {
-    val request =
-      UploadPartRequest
-        .builder()
-        .bucket(bucket)
-        .key(key)
-        .partNumber(partN)
-        .uploadId(uploadId)
-        .contentLength(contentLenght) //todo checK optionality
-    sseCustomerAlgorithm.map(request.sseCustomerAlgorithm(_))
-    sseCustomerKey.map(request.sseCustomerKey(_))
-    sseCustomerKeyMD5.map(request.sseCustomerKeyMD5(_))
-    requestPayer.map(request.requestPayer(_))
+  def createBucket(
+                    bucket: String,
+                    acl: Option[String] = None,
+                    grantFullControl: Option[String] = None,
+                    grantRead: Option[String] = None,
+                    grantReadACP: Option[String] = None,
+                    grantWrite: Option[String] = None,
+                    grantWriteACP: Option[String] = None,
+                    objectLockEnabledForBucket: Option[Boolean] = None): CreateBucketRequest = {
+    val request = CreateBucketRequest
+      .builder()
+      .bucket(bucket)
+    acl.map(request.acl(_))
+    grantFullControl.map(request.grantFullControl(_))
+    grantRead.map(request.grantRead(_))
+    grantReadACP.map(request.grantReadACP(_))
+    grantWrite.map(request.grantWrite(_))
+    grantWriteACP.map(request.grantWriteACP(_))
+    objectLockEnabledForBucket.map(request.objectLockEnabledForBucket(_))
     request.build()
   }
 
@@ -118,24 +110,44 @@ private[s3] object S3RequestBuilder {
       .build()
 
   /**
+    * A builder for [[CompleteMultipartUploadRequest]]
+    */
+  def completeMultipartUploadRquest(
+                                     bucket: String,
+                                     key: String,
+                                     uploadId: String,
+                                     completedParts: List[CompletedPart],
+                                     requestPayer: Option[String]): CompleteMultipartUploadRequest = {
+    val completedMultipartUpload = CompletedMultipartUpload.builder.parts(completedParts.asJava).build()
+    val request: CompleteMultipartUploadRequest.Builder = CompleteMultipartUploadRequest
+      .builder()
+      .bucket(bucket)
+      .key(key)
+      .uploadId(uploadId)
+      .multipartUpload(completedMultipartUpload)
+    requestPayer.map(request.requestPayer(_))
+    request.build()
+  }
+
+  /**
     * A builder for [[CreateMultipartUploadRequest]]
     */
   def createMultipartUploadRequest(
-    bucket: String,
-    key: String,
-    contentType: Option[String] = None,
-    acl: Option[String],
-    grantFullControl: Option[String],
-    grantRead: Option[String],
-    grantReadACP: Option[String],
-    grantWriteACP: Option[String],
-    requestPayer: Option[String],
-    serverSideEncryption: Option[String],
-    sseCustomerAlgorithm: Option[String],
-    sseCustomerKey: Option[String],
-    sseCustomerKeyMD5: Option[String],
-    ssekmsEncryptionContext: Option[String],
-    ssekmsKeyId: Option[String]): CreateMultipartUploadRequest = {
+                                    bucket: String,
+                                    key: String,
+                                    contentType: Option[String] = None,
+                                    acl: Option[String] = None,
+                                    grantFullControl: Option[String] = None,
+                                    grantRead: Option[String] = None,
+                                    grantReadACP: Option[String] = None,
+                                    grantWriteACP: Option[String] = None,
+                                    requestPayer: Option[String] = None,
+                                    serverSideEncryption: Option[String] = None,
+                                    sseCustomerAlgorithm: Option[String] = None,
+                                    sseCustomerKey: Option[String] = None,
+                                    sseCustomerKeyMD5: Option[String] = None,
+                                    ssekmsEncryptionContext: Option[String] = None,
+                                    ssekmsKeyId: Option[String] = None): CreateMultipartUploadRequest = {
     val request: CreateMultipartUploadRequest.Builder = CreateMultipartUploadRequest
       .builder()
       .bucket(bucket)
@@ -157,34 +169,50 @@ private[s3] object S3RequestBuilder {
   }
 
   /**
-    * A builder for [[CompleteMultipartUploadRequest]]
+    * A builder that only accepts the minimum required fields to build a [[GetObjectRequest]].
+    *
+    * @param bucket The S3 bucket name
+    * @param key The location of the object in s3.
+    * @return An instance of [[GetObjectRequest]]
     */
-  def completeMultipartUploadRquest(
+  def getObjectRequest(
     bucket: String,
     key: String,
-    uploadId: String,
-    completedParts: List[CompletedPart],
-    requestPayer: Option[String]): CompleteMultipartUploadRequest = {
-    val completedMultipartUpload = CompletedMultipartUpload.builder.parts(completedParts.asJava).build()
-    val request: CompleteMultipartUploadRequest.Builder = CompleteMultipartUploadRequest
-      .builder()
-      .bucket(bucket)
-      .key(key)
-      .uploadId(uploadId)
-      .multipartUpload(completedMultipartUpload)
+    ifMatch: Option[String] = None,
+    ifModifiedSince: Option[Instant] = None,
+    ifNoneMatch: Option[String] = None,
+    ifUnmodifiedSince: Option[Instant] = None,
+    partNumber: Option[Int] = None,
+    range: Option[String] = None,
+    requestPayer: Option[String] = None,
+    sseCustomerAlgorithm: Option[String] = None,
+    sseCustomerKey: Option[String] = None,
+    sseCustomerKeyMD5: Option[String] = None,
+    versionId: Option[String] = None): GetObjectRequest = {
+    val request: GetObjectRequest.Builder = GetObjectRequest.builder().bucket(bucket).key(key)
+    ifMatch.map(request.ifMatch(_))
+    ifModifiedSince.map(request.ifModifiedSince(_))
+    ifNoneMatch.map(request.ifNoneMatch(_))
+    ifUnmodifiedSince.map(request.ifUnmodifiedSince(_))
+    range.map(request.range(_))
+    versionId.map(request.versionId(_))
+    sseCustomerAlgorithm.map(request.sseCustomerAlgorithm(_))
+    sseCustomerKey.map(request.sseCustomerKey(_))
+    sseCustomerKeyMD5.map(request.sseCustomerKeyMD5(_))
     requestPayer.map(request.requestPayer(_))
+    partNumber.map(request.partNumber(_))
     request.build()
   }
 
   /**
     * A builder for [[ListObjectsRequest]]
     */
-  def listObject(
-    bucket: String,
-    marker: Option[String] = None,
-    maxKeys: Option[Int] = None,
-    prefix: Option[String] = None,
-    requestPayer: Option[String] = None): ListObjectsRequest = {
+  def listObjects(
+                  bucket: String,
+                  marker: Option[String] = None,
+                  maxKeys: Option[Int] = None,
+                  prefix: Option[String] = None,
+                  requestPayer: Option[String] = None): ListObjectsRequest = {
     val request = ListObjectsRequest
       .builder()
       .bucket(bucket)
@@ -198,14 +226,14 @@ private[s3] object S3RequestBuilder {
   /**
     * A builder for [[ListObjectsV2Request]]
     */
-  def listObjectV2(
-    bucket: String,
-    continuationToken: Option[String] = None,
-    fetchOwner: Option[Boolean] = None,
-    maxKeys: Option[Int] = None,
-    prefix: Option[String] = None,
-    startAfter: Option[String] = None,
-    requestPayer: Option[String]): ListObjectsV2Request = {
+  def listObjectsV2(
+                    bucket: String,
+                    continuationToken: Option[String] = None,
+                    fetchOwner: Option[Boolean] = None,
+                    maxKeys: Option[Int] = None,
+                    prefix: Option[String] = None,
+                    startAfter: Option[String] = None,
+                    requestPayer: Option[String] = None): ListObjectsV2Request = {
     val request = ListObjectsV2Request.builder().bucket(bucket)
     fetchOwner.map(request.fetchOwner(_))
     startAfter.map(request.startAfter(_))
@@ -217,58 +245,31 @@ private[s3] object S3RequestBuilder {
   }
 
   /**
-    * A builder for [[DeleteObjectRequest]]
+    * A builder for [[UploadPartRequest]]
     */
-  def deleteObject(
+  def uploadPartRequest(
     bucket: String,
     key: String,
-    bypassGovernanceRetention: Option[Boolean] = None,
-    mfa: Option[String] = None,
+    partN: Int,
+    uploadId: String,
+    contentLenght: Long,
     requestPayer: Option[String] = None,
-    versionId: Option[String] = None): DeleteObjectRequest = {
-    val request = DeleteObjectRequest
-      .builder()
-      .bucket(bucket)
-      .key(key)
-    bypassGovernanceRetention.map(request.bypassGovernanceRetention(_))
-    mfa.map(request.mfa(_))
+    sseCustomerAlgorithm: Option[String] = None,
+    sseCustomerKey: Option[String] = None,
+    sseCustomerKeyMD5: Option[String] = None,
+    ): UploadPartRequest = {
+    val request =
+      UploadPartRequest
+        .builder()
+        .bucket(bucket)
+        .key(key)
+        .partNumber(partN)
+        .uploadId(uploadId)
+        .contentLength(contentLenght) //todo checK optionality
+    sseCustomerAlgorithm.map(request.sseCustomerAlgorithm(_))
+    sseCustomerKey.map(request.sseCustomerKey(_))
+    sseCustomerKeyMD5.map(request.sseCustomerKeyMD5(_))
     requestPayer.map(request.requestPayer(_))
-    versionId.map(request.versionId(_))
-    request.build()
-  }
-
-  /**
-    * A builder for [[DeleteBucketRequest]]
-    */
-  def deleteBucket(bucket: String): DeleteBucketRequest = {
-    DeleteBucketRequest
-      .builder()
-      .bucket(bucket)
-      .build()
-  }
-
-  /**
-    * A builder for [[CreateBucketRequest]]
-    */
-  def createBucket(
-    bucket: String,
-    acl: Option[String] = None,
-    grantFullControl: Option[String] = None,
-    grantRead: Option[String] = None,
-    grantReadACP: Option[String] = None,
-    grantWrite: Option[String] = None,
-    grantWriteACP: Option[String] = None,
-    objectLockEnabledForBucket: Option[Boolean] = None): CreateBucketRequest = {
-    val request = CreateBucketRequest
-      .builder()
-      .bucket(bucket)
-    acl.map(request.acl(_))
-    grantFullControl.map(request.grantFullControl(_))
-    grantRead.map(request.grantRead(_))
-    grantReadACP.map(request.grantReadACP(_))
-    grantWrite.map(request.grantWrite(_))
-    grantWriteACP.map(request.grantWriteACP(_))
-    objectLockEnabledForBucket.map(request.objectLockEnabledForBucket(_))
     request.build()
   }
 
@@ -278,7 +279,7 @@ private[s3] object S3RequestBuilder {
   def putObjectRequest(
     bucket: String,
     key: String,
-    contentLenght: Long,
+    contentLenght: Long, //todo check optionallity
     contentType: Option[String] = None,
     acl: Option[String],
     grantFullControl: Option[String],
