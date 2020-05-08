@@ -57,12 +57,12 @@ private[s3] object S3RequestBuilder {
     * A builder for [[DeleteObjectRequest]]
     */
   def deleteObject(
-                    bucket: String,
-                    key: String,
-                    bypassGovernanceRetention: Option[Boolean] = None,
-                    mfa: Option[String] = None,
-                    requestPayer: Option[String] = None,
-                    versionId: Option[String] = None): DeleteObjectRequest = {
+    bucket: String,
+    key: String,
+    bypassGovernanceRetention: Option[Boolean] = None,
+    mfa: Option[String] = None,
+    requestPayer: Option[String] = None,
+    versionId: Option[String] = None): DeleteObjectRequest = {
     val request = DeleteObjectRequest
       .builder()
       .bucket(bucket)
@@ -78,14 +78,14 @@ private[s3] object S3RequestBuilder {
     * A builder for [[CreateBucketRequest]]
     */
   def createBucket(
-                    bucket: String,
-                    acl: Option[String] = None,
-                    grantFullControl: Option[String] = None,
-                    grantRead: Option[String] = None,
-                    grantReadACP: Option[String] = None,
-                    grantWrite: Option[String] = None,
-                    grantWriteACP: Option[String] = None,
-                    objectLockEnabledForBucket: Option[Boolean] = None): CreateBucketRequest = {
+    bucket: String,
+    acl: Option[String] = None,
+    grantFullControl: Option[String] = None,
+    grantRead: Option[String] = None,
+    grantReadACP: Option[String] = None,
+    grantWrite: Option[String] = None,
+    grantWriteACP: Option[String] = None,
+    objectLockEnabledForBucket: Option[Boolean] = None): CreateBucketRequest = {
     val request = CreateBucketRequest
       .builder()
       .bucket(bucket)
@@ -113,11 +113,11 @@ private[s3] object S3RequestBuilder {
     * A builder for [[CompleteMultipartUploadRequest]]
     */
   def completeMultipartUploadRquest(
-                                     bucket: String,
-                                     key: String,
-                                     uploadId: String,
-                                     completedParts: List[CompletedPart],
-                                     requestPayer: Option[String]): CompleteMultipartUploadRequest = {
+    bucket: String,
+    key: String,
+    uploadId: String,
+    completedParts: List[CompletedPart],
+    requestPayer: Option[String]): CompleteMultipartUploadRequest = {
     val completedMultipartUpload = CompletedMultipartUpload.builder.parts(completedParts.asJava).build()
     val request: CompleteMultipartUploadRequest.Builder = CompleteMultipartUploadRequest
       .builder()
@@ -133,26 +133,26 @@ private[s3] object S3RequestBuilder {
     * A builder for [[CreateMultipartUploadRequest]]
     */
   def createMultipartUploadRequest(
-                                    bucket: String,
-                                    key: String,
-                                    contentType: Option[String] = None,
-                                    acl: Option[String] = None,
-                                    grantFullControl: Option[String] = None,
-                                    grantRead: Option[String] = None,
-                                    grantReadACP: Option[String] = None,
-                                    grantWriteACP: Option[String] = None,
-                                    requestPayer: Option[String] = None,
-                                    serverSideEncryption: Option[String] = None,
-                                    sseCustomerAlgorithm: Option[String] = None,
-                                    sseCustomerKey: Option[String] = None,
-                                    sseCustomerKeyMD5: Option[String] = None,
-                                    ssekmsEncryptionContext: Option[String] = None,
-                                    ssekmsKeyId: Option[String] = None): CreateMultipartUploadRequest = {
+    bucket: String,
+    key: String,
+    contentType: Option[String] = None,
+    acl: Option[String] = None,
+    grantFullControl: Option[String] = None,
+    grantRead: Option[String] = None,
+    grantReadACP: Option[String] = None,
+    grantWriteACP: Option[String] = None,
+    requestPayer: Option[String] = None,
+    serverSideEncryption: Option[String] = None,
+    sseCustomerAlgorithm: Option[String] = None,
+    sseCustomerKey: Option[String] = None,
+    sseCustomerKeyMD5: Option[String] = None,
+    ssekmsEncryptionContext: Option[String] = None,
+    ssekmsKeyId: Option[String] = None): CreateMultipartUploadRequest = {
     val request: CreateMultipartUploadRequest.Builder = CreateMultipartUploadRequest
       .builder()
       .bucket(bucket)
       .key(key)
-      .contentType(contentType.getOrElse("plain/text"))
+    contentType.map(request.contentType(_))
     acl.map(request.acl(_))
     grantFullControl.map(request.grantFullControl(_))
     grantRead.map(request.grantRead(_))
@@ -208,11 +208,11 @@ private[s3] object S3RequestBuilder {
     * A builder for [[ListObjectsRequest]]
     */
   def listObjects(
-                  bucket: String,
-                  marker: Option[String] = None,
-                  maxKeys: Option[Int] = None,
-                  prefix: Option[String] = None,
-                  requestPayer: Option[String] = None): ListObjectsRequest = {
+    bucket: String,
+    marker: Option[String] = None,
+    maxKeys: Option[Int] = None,
+    prefix: Option[String] = None,
+    requestPayer: Option[String] = None): ListObjectsRequest = {
     val request = ListObjectsRequest
       .builder()
       .bucket(bucket)
@@ -227,13 +227,13 @@ private[s3] object S3RequestBuilder {
     * A builder for [[ListObjectsV2Request]]
     */
   def listObjectsV2(
-                    bucket: String,
-                    continuationToken: Option[String] = None,
-                    fetchOwner: Option[Boolean] = None,
-                    maxKeys: Option[Int] = None,
-                    prefix: Option[String] = None,
-                    startAfter: Option[String] = None,
-                    requestPayer: Option[String] = None): ListObjectsV2Request = {
+    bucket: String,
+    continuationToken: Option[String] = None,
+    fetchOwner: Option[Boolean] = None,
+    maxKeys: Option[Int] = None,
+    prefix: Option[String] = None,
+    startAfter: Option[String] = None,
+    requestPayer: Option[String] = None): ListObjectsV2Request = {
     val request = ListObjectsV2Request.builder().bucket(bucket)
     fetchOwner.map(request.fetchOwner(_))
     startAfter.map(request.startAfter(_))
@@ -256,8 +256,8 @@ private[s3] object S3RequestBuilder {
     requestPayer: Option[String] = None,
     sseCustomerAlgorithm: Option[String] = None,
     sseCustomerKey: Option[String] = None,
-    sseCustomerKeyMD5: Option[String] = None,
-    ): UploadPartRequest = {
+    sseCustomerKeyMD5: Option[String] = None
+  ): UploadPartRequest = {
     val request =
       UploadPartRequest
         .builder()
@@ -279,7 +279,7 @@ private[s3] object S3RequestBuilder {
   def putObjectRequest(
     bucket: String,
     key: String,
-    contentLenght: Long, //todo check optionallity
+    contentLenght: Option[Long],
     contentType: Option[String] = None,
     acl: Option[String],
     grantFullControl: Option[String],
@@ -297,8 +297,8 @@ private[s3] object S3RequestBuilder {
       .builder()
       .bucket(bucket)
       .key(key)
-    request.contentLength(contentLenght) //todo
-    request.contentType(contentType.getOrElse("plain/text")) //todo check optionality
+    contentLenght.map(request.contentLength(_))
+    contentType.map(request.contentType(_))
     acl.map(request.acl(_))
     grantFullControl.map(request.grantFullControl(_))
     grantRead.map(request.grantRead(_))

@@ -18,23 +18,19 @@
 package monix.connect.s3
 
 import monix.eval.Task
-import monix.execution.{Ack, Callback, Scheduler}
 import monix.execution.cancelables.AssignableCancelable
+import monix.execution.{Ack, Callback, Scheduler}
 import monix.reactive.Consumer
 import monix.reactive.observers.Subscriber
 import software.amazon.awssdk.core.async.AsyncRequestBody
 import software.amazon.awssdk.services.s3.S3AsyncClient
-import software.amazon.awssdk.services.s3.model.{
-  CompleteMultipartUploadRequest,
-  CompleteMultipartUploadResponse,
-  CompletedPart,
-  CreateMultipartUploadRequest,
-  UploadPartRequest
-}
+import software.amazon.awssdk.services.s3.model._
+import scala.util.control.NonFatal
 
 /**
-  * A multipart upload is an upload to Amazon S3 that is creating by uploading individual pieces of an object (parts),
-  * then telling Amazon S3 to complete the multipart upload and concatenate all the individual pieces together into a single object.
+  * An Amazon S3 multipart uploads is an write operation made progresively on individual chunks of an object (parts),
+  * that finishes with a message to S3 that multipart upload is completed, in which the concatenation
+  * of each of the individual chunks will end up stored into the same object.
   * Implement the functionality to perform an S3 multipart update from received chunks of data.
   */
 private[s3] class MultipartUploadSubscriber(
@@ -56,38 +52,43 @@ private[s3] class MultipartUploadSubscriber(
   requestPayer: Option[String])(
   implicit
   s3Client: S3AsyncClient)
-  extends Consumer.Sync[Array[Byte], Task[CompleteMultipartUploadResponse]] {
+  extends Consumer.Sync[Array[Byte], CompleteMultipartUploadResponse] {
 
+  private val createRequest: CreateMultipartUploadRequest =
+    S3RequestBuilder.createMultipartUploadRequest(
+      bucket = bucket,
+      key = key,
+      contentType = contentType,
+      acl = acl,
+      grantFullControl = grantFullControl,
+      grantRead = grantRead,
+      grantReadACP = grantReadACP,
+      grantWriteACP = grantWriteACP,
+      requestPayer = requestPayer,
+      serverSideEncryption = serverSideEncryption,
+      sseCustomerAlgorithm = sseCustomerAlgorithm,
+      sseCustomerKey = sseCustomerKey,
+      sseCustomerKeyMD5 = sseCustomerKeyMD5,
+      ssekmsEncryptionContext = ssekmsEncryptionContext,
+      ssekmsKeyId = ssekmsKeyId
+    )
+
+  private val uploadId: Task[String] =
+    Task
+      .from(s3Client.createMultipartUpload(createRequest))
+      .map(_.uploadId())
+      .memoize
+
+  private var buffer: Array[Byte] = Array.emptyByteArray
+
+  private var completedParts: List[CompletedPart] = List.empty[CompletedPart]
+
+  private var partN = 1
   def createSubscriber(
-    callback: Callback[Throwable, Task[CompleteMultipartUploadResponse]],
+    callback: Callback[Throwable, CompleteMultipartUploadResponse],
     s: Scheduler): (Subscriber.Sync[Array[Byte]], AssignableCancelable) = {
     val out = new Subscriber.Sync[Array[Byte]] {
       implicit val scheduler = s
-      private var partN = 1
-      private var completedParts: List[Task[CompletedPart]] = List.empty[Task[CompletedPart]]
-      private val createRequest: CreateMultipartUploadRequest =
-        S3RequestBuilder.createMultipartUploadRequest(
-          bucket = bucket,
-          key = key,
-          contentType = contentType,
-          acl = acl,
-          grantFullControl = grantFullControl,
-          grantRead = grantRead,
-          grantReadACP = grantReadACP,
-          grantWriteACP = grantWriteACP,
-          requestPayer = requestPayer,
-          serverSideEncryption = serverSideEncryption,
-          sseCustomerAlgorithm = sseCustomerAlgorithm,
-          sseCustomerKey = sseCustomerKey,
-          sseCustomerKeyMD5 = sseCustomerKeyMD5,
-          ssekmsEncryptionContext = ssekmsEncryptionContext,
-          ssekmsKeyId = ssekmsKeyId)
-      private var buffer: Array[Byte] = Array.emptyByteArray
-      private val uploadId: Task[String] =
-        Task
-          .from(s3Client.createMultipartUpload(createRequest))
-          .map(_.uploadId())
-          .memoize
 
       /**
         *
@@ -99,13 +100,12 @@ private[s3] class MultipartUploadSubscriber(
         if (chunk.length < minChunkSize) {
           buffer = buffer ++ chunk
         } else {
+          try {
+            uploadPart(bucket, key, partN, uploadId, buffer)
+          } catch {
+            case ex if NonFatal(ex) => onError(ex)
+          }
           partN += 1
-          completedParts = {
-            for {
-              uid           <- uploadId
-              completedPart <- completePart(bucket, key, partN, uid, buffer)
-            } yield completedPart
-          } :: completedParts
           buffer = Array.emptyByteArray
         }
         monix.execution.Ack.Continue
@@ -118,22 +118,21 @@ private[s3] class MultipartUploadSubscriber(
         */
       def onComplete(): Unit = {
         if (!buffer.isEmpty) {
-          completedParts = {
-            for {
-              uid           <- uploadId
-              completedPart <- completePart(bucket, key, partN, uid, buffer)
-            } yield completedPart
-          } :: completedParts
+          try {
+            uploadPart(bucket, key, partN, uploadId, buffer)
+          } catch {
+            case ex if NonFatal(ex) => onError(ex)
+          }
         }
         val response: Task[CompleteMultipartUploadResponse] = for {
           uid            <- uploadId
-          completedParts <- Task.sequence(completedParts)
+          completedParts <- Task(completedParts)
           completeMultipartUpload <- {
             val request = S3RequestBuilder.completeMultipartUploadRquest(bucket, key, uid, completedParts, requestPayer)
             Task.from(s3Client.completeMultipartUpload(request))
           }
         } yield completeMultipartUpload
-        callback.onSuccess(response)
+        callback.onSuccess(response.runSyncUnsafe())
       }
 
       def onError(ex: Throwable): Unit =
@@ -147,27 +146,32 @@ private[s3] class MultipartUploadSubscriber(
     * It should only be called when the received for chunks bigger than minimum size,
     * or later when the last chunk arrives representing the completion of the stream.
     */
-  def completePart(
-    bucket: String,
-    key: String,
-    partNumber: Int,
-    uploadId: String,
-    chunk: Array[Byte]): Task[CompletedPart] = {
-    val request: UploadPartRequest =
-      S3RequestBuilder.uploadPartRequest(
-        bucket = bucket,
-        key = key,
-        partN = partNumber,
-        uploadId = uploadId,
-        contentLenght = chunk.size.toLong,
-        requestPayer = requestPayer,
-        sseCustomerAlgorithm = sseCustomerAlgorithm,
-        sseCustomerKey = sseCustomerKey,
-        sseCustomerKeyMD5 = sseCustomerKeyMD5
-      )
-    Task
-      .from(s3Client.uploadPart(request, AsyncRequestBody.fromBytes(chunk)))
-      .map(resp => S3RequestBuilder.completedPart(partNumber, resp))
+  def uploadPart(bucket: String, key: String, partNumber: Int, uploadId: Task[String], chunk: Array[Byte])(
+    implicit scheduler: Scheduler): Unit = {
+
+    val completedPart = {
+      for {
+        uid <- uploadId
+        request <- Task {
+          S3RequestBuilder.uploadPartRequest(
+            bucket = bucket,
+            key = key,
+            partN = partNumber,
+            uploadId = uid,
+            contentLenght = chunk.size.toLong,
+            requestPayer = requestPayer,
+            sseCustomerAlgorithm = sseCustomerAlgorithm,
+            sseCustomerKey = sseCustomerKey,
+            sseCustomerKeyMD5 = sseCustomerKeyMD5
+          )
+        }
+        completedPart <- Task
+          .from(s3Client.uploadPart(request, AsyncRequestBody.fromBytes(chunk)))
+          .map(resp => S3RequestBuilder.completedPart(partNumber, resp))
+      } yield completedPart
+    }.runSyncUnsafe()
+
+    completedParts = completedPart :: completedParts
   }
 
 }

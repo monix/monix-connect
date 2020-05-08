@@ -41,9 +41,8 @@ private[s3] class MonixS3AsyncResponseTransformer
     future.complete(
       Observable
         .fromReactivePublisher(publisher)
-        .foldLeftL(Array.emptyByteArray){
-          (buffer, chunk) => buffer ++ chunk.array()
-        }.map(ByteBuffer.wrap(_)))
+        .foldLeftL(Array.emptyByteArray) { (buffer, chunk) => buffer ++ chunk.array() }
+        .map(ByteBuffer.wrap(_)))
     ()
   }
   override def exceptionOccurred(error: Throwable): Unit = {

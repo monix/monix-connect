@@ -209,7 +209,7 @@ trait S3Fixture {
   val genPutObjectParams = for {
     bucket                  <- Gen.alphaLowerStr
     key                     <- Gen.alphaLowerStr
-    contentLenght           <- Gen.choose[Long](1, 1000)
+    contentLenght           <- Gen.option(Gen.choose[Long](1, 1000))
     contentType             <- genOptionStr
     acl                     <- genOptionStr
     grantFullControl        <- genOptionStr

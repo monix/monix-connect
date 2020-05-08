@@ -19,24 +19,33 @@ package monix.connect.s3
 
 import java.time.Instant
 
-import org.mockito.IdiomaticMockito
 import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
-import software.amazon.awssdk.services.s3.S3AsyncClient
-import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadRequest, CompletedPart, CreateBucketRequest, CreateMultipartUploadRequest, DeleteBucketRequest, DeleteObjectRequest, GetObjectRequest, ListObjectsRequest, ListObjectsV2Request, PutObjectRequest, UploadPartRequest, UploadPartResponse}
+import software.amazon.awssdk.services.s3.model.{
+  CompleteMultipartUploadRequest,
+  CompletedPart,
+  CreateBucketRequest,
+  CreateMultipartUploadRequest,
+  DeleteBucketRequest,
+  DeleteObjectRequest,
+  GetObjectRequest,
+  ListObjectsRequest,
+  ListObjectsV2Request,
+  PutObjectRequest,
+  UploadPartRequest,
+  UploadPartResponse
+}
 
 import scala.jdk.CollectionConverters._
 
 class S3RequestBuilderSpec
-  extends AnyWordSpecLike with IdiomaticMockito with BeforeAndAfterEach with Matchers with BeforeAndAfterAll
+  extends AnyWordSpecLike with BeforeAndAfterEach with Matchers with BeforeAndAfterAll
   with ScalaCheckDrivenPropertyChecks with S3Fixture {
 
-  implicit val client: S3AsyncClient = mock[S3AsyncClient]
   override def beforeAll(): Unit = {
-    //when(client.createBucket(any[CreateBucketRequest])).thenAnswer(mock[CompletableFuture[CreateBucketResponse]])
     super.beforeAll()
   }
 
@@ -151,7 +160,7 @@ class S3RequestBuilderSpec
           //then
           request.bucket shouldBe bucket
           request.key shouldBe key
-          //request.contentType shouldBe contentType.orNull //todo content type as optional
+          request.contentType shouldBe contentType.orNull
           request.aclAsString shouldBe acl.orNull
           request.grantFullControl shouldBe grantFullControl.orNull
           request.grantRead shouldBe grantRead.orNull
@@ -308,20 +317,29 @@ class S3RequestBuilderSpec
       //given
       forAll(genUploadPartParams) {
         case (
-          bucket: String,
-          key: String,
-          partN: Int,
-          uploadId: String,
-          contentLenght: Long,
-          requestPayer: Option[String],
-          sseCustomerAlgorithm: Option[String],
-        sseCustomerKey: Option[String],
-        sseCustomerKeyMD5: Option[String],
-        ) =>
+            bucket: String,
+            key: String,
+            partN: Int,
+            uploadId: String,
+            contentLenght: Long,
+            requestPayer: Option[String],
+            sseCustomerAlgorithm: Option[String],
+            sseCustomerKey: Option[String],
+            sseCustomerKeyMD5: Option[String]
+            ) =>
           //when
           val request: UploadPartRequest =
             S3RequestBuilder
-              .uploadPartRequest(bucket, key, partN, uploadId, contentLenght, requestPayer, sseCustomerAlgorithm, sseCustomerKey,  sseCustomerKeyMD5)
+              .uploadPartRequest(
+                bucket,
+                key,
+                partN,
+                uploadId,
+                contentLenght,
+                requestPayer,
+                sseCustomerAlgorithm,
+                sseCustomerKey,
+                sseCustomerKeyMD5)
 
           //then
           request.bucket shouldBe bucket
@@ -339,22 +357,22 @@ class S3RequestBuilderSpec
     s"correctly build `PutObjectRequest`" in {
       forAll(genPutObjectParams) {
         case (
-          bucket: String,
-          key: String,
-          contentLenght: Long,
-          contentType: Option[String],
-          acl: Option[String],
-          grantFullControl: Option[String],
-          grantRead: Option[String],
-          grantReadACP: Option[String],
-          grantWriteACP: Option[String],
-          requestPayer: Option[String],
-          serverSideEncryption: Option[String],
-          sseCustomerAlgorithm: Option[String],
-          sseCustomerKey: Option[String],
-          sseCustomerKeyMD5: Option[String],
-          ssekmsEncryptionContext: Option[String],
-          ssekmsKeyId: Option[String]) =>
+            bucket: String,
+            key: String,
+            contentLenght: Option[Long],
+            contentType: Option[String],
+            acl: Option[String],
+            grantFullControl: Option[String],
+            grantRead: Option[String],
+            grantReadACP: Option[String],
+            grantWriteACP: Option[String],
+            requestPayer: Option[String],
+            serverSideEncryption: Option[String],
+            sseCustomerAlgorithm: Option[String],
+            sseCustomerKey: Option[String],
+            sseCustomerKeyMD5: Option[String],
+            ssekmsEncryptionContext: Option[String],
+            ssekmsKeyId: Option[String]) =>
           //when
           val request: PutObjectRequest =
             S3RequestBuilder
@@ -380,8 +398,8 @@ class S3RequestBuilderSpec
           //then
           request.bucket shouldBe bucket
           request.key shouldBe key
-          request.contentLength shouldBe contentLenght
-          //request.contentType shouldBe contentType.orNull //todo content type as optional
+          request.contentLength shouldBe contentLenght.getOrElse(null)
+          request.contentType shouldBe contentType.orNull
           request.aclAsString shouldBe acl.orNull
           request.grantFullControl shouldBe grantFullControl.orNull
           request.grantRead shouldBe grantRead.orNull

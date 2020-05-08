@@ -19,7 +19,7 @@ import org.scalatest.concurrent.{Eventually, ScalaFutures}
 
 import scala.util.{Failure, Success, Try}
 
-class S3Spec
+class S3ITest
   extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with ScalaFutures with S3Fixture with Eventually {
 
   private val bucketName = "sample-bucket"
@@ -134,9 +134,9 @@ class S3Spec
         val key = Gen.alphaLowerStr.sample.get
         val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
         val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
-        val consumer: Consumer[Array[Byte], Task[CompleteMultipartUploadResponse]] =
+        val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
           S3.multipartUpload(bucketName, key)
-        val _: CompleteMultipartUploadResponse = ob.consumeWith(consumer).flatten.runSyncUnsafe()
+        val _: CompleteMultipartUploadResponse = ob.consumeWith(consumer).runSyncUnsafe()
 
         //when
         val t = S3.getObject(bucketName, key)
@@ -161,12 +161,12 @@ class S3Spec
         //given
         val key = Gen.alphaLowerStr.sample.get
         val content: Array[Byte] = Gen.alphaUpperStr.sample.get.getBytes
-        val consumer: Consumer[Array[Byte], Task[CompleteMultipartUploadResponse]] =
+        val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
           S3.multipartUpload(bucketName, key)
         val ob = Observable.pure(content)
 
         //when
-        val t: Task[CompleteMultipartUploadResponse] = ob.consumeWith(consumer).flatten
+        val t: Task[CompleteMultipartUploadResponse] = ob.consumeWith(consumer)
 
         //then
         whenReady(t.runToFuture) { completeMultipartUpload =>
@@ -181,12 +181,12 @@ class S3Spec
         //given
         val key = Gen.alphaLowerStr.sample.get
         val chunks: List[Array[Byte]] = Gen.listOfN(10, Gen.alphaUpperStr).map(_.map(_.getBytes)).sample.get
-        val consumer: Consumer[Array[Byte], Task[CompleteMultipartUploadResponse]] =
+        val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
           S3.multipartUpload(bucketName, key)
         val ob: Observable[Array[Byte]] = Observable.fromIterable(chunks)
 
         //when
-        val t: Task[CompleteMultipartUploadResponse] = ob.consumeWith(consumer).flatten
+        val t: Task[CompleteMultipartUploadResponse] = ob.consumeWith(consumer)
 
         //then
         whenReady(t.runToFuture) { completeMultipartUpload =>
@@ -204,11 +204,11 @@ class S3Spec
         val key = Gen.alphaLowerStr.sample.get
         val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
         val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
-        val consumer: Consumer[Array[Byte], Task[CompleteMultipartUploadResponse]] =
+        val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
           S3.multipartUpload(bucketName, key)
 
         //when
-        val t: Task[CompleteMultipartUploadResponse] = ob.consumeWith(consumer).flatten
+        val t: Task[CompleteMultipartUploadResponse] = ob.consumeWith(consumer)
 
         //then
         val expectedArrayByte = ob.foldLeft(Array.emptyByteArray)((acc, bytes) => acc ++ bytes).headL.runSyncUnsafe()
@@ -226,20 +226,22 @@ class S3Spec
         val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
         val ob: Observable[Array[Byte]] = Observable
           .fromInputStream(inputStream)
-          .foldLeft(Array.emptyByteArray)((acc, chunk) => acc ++ chunk ++ chunk ++ chunk ++ chunk ++ chunk ++ chunk) //duplicates each chunk * 6
-        val consumer: Consumer[Array[Byte], Task[CompleteMultipartUploadResponse]] =
+          .foldLeft(Array.emptyByteArray)((acc, chunk) => acc ++ chunk ++ chunk ++ chunk ++ chunk ++ chunk) //duplicates each chunk * 5
+        val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
           S3.multipartUpload(bucketName, key)
 
         //when
-        val t: Task[CompleteMultipartUploadResponse] = ob.consumeWith(consumer).flatten
+        val t: Task[CompleteMultipartUploadResponse] = ob.consumeWith(consumer)
 
         //then
         val expectedArrayByte = ob.foldLeft(Array.emptyByteArray)((acc, bytes) => acc ++ bytes).headL.runSyncUnsafe()
-        whenReady(t.runToFuture) { completeMultipartUpload =>
-          val s3Object: Array[Byte] = download(bucketName, key).get
-          s3SyncClient.doesObjectExist(bucketName, key) shouldBe true
-          completeMultipartUpload shouldBe a[CompleteMultipartUploadResponse]
-          s3Object shouldBe expectedArrayByte
+        val completeMultipartUpload = t.runSyncUnsafe()
+        eventually {
+            val s3Object: Array[Byte] = download(bucketName, key).get
+            s3SyncClient.doesObjectExist(bucketName, key) shouldBe true
+            completeMultipartUpload shouldBe a[CompleteMultipartUploadResponse]
+            s3Object shouldBe expectedArrayByte
+
         }
       }
     }

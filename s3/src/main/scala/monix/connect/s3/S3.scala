@@ -25,7 +25,23 @@ import monix.execution.Scheduler
 import monix.eval.Task
 import software.amazon.awssdk.core.async.AsyncRequestBody
 import software.amazon.awssdk.services.s3.S3AsyncClient
-import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadResponse, CreateBucketRequest, CreateBucketResponse, DeleteBucketRequest, DeleteBucketResponse, DeleteObjectRequest, DeleteObjectResponse, GetObjectRequest, ListObjectsRequest, ListObjectsResponse, ListObjectsV2Request, ListObjectsV2Response, PutObjectRequest, PutObjectResponse, ServerSideEncryption}
+import software.amazon.awssdk.services.s3.model.{
+  CompleteMultipartUploadResponse,
+  CreateBucketRequest,
+  CreateBucketResponse,
+  DeleteBucketRequest,
+  DeleteBucketResponse,
+  DeleteObjectRequest,
+  DeleteObjectResponse,
+  GetObjectRequest,
+  ListObjectsRequest,
+  ListObjectsResponse,
+  ListObjectsV2Request,
+  ListObjectsV2Response,
+  PutObjectRequest,
+  PutObjectResponse,
+  ServerSideEncryption
+}
 
 import scala.jdk.FutureConverters._
 
@@ -209,7 +225,7 @@ object S3 {
     sseCustomerKey: Option[String] = None,
     sseCustomerKeyMD5: Option[String] = None,
     versionId: Option[String] = None
-    )(implicit s3Client: S3AsyncClient): Task[Array[Byte]] = {
+  )(implicit s3Client: S3AsyncClient): Task[Array[Byte]] = {
     val request: GetObjectRequest = S3RequestBuilder.getObjectRequest(
       bucket,
       key,
@@ -375,7 +391,7 @@ object S3 {
     ssekmsKeyId: Option[String] = None,
     requestPayer: Option[String] = None)(
     implicit
-    s3Client: S3AsyncClient): Consumer[Array[Byte], Task[CompleteMultipartUploadResponse]] = {
+    s3Client: S3AsyncClient): Consumer[Array[Byte], CompleteMultipartUploadResponse] = {
     new MultipartUploadSubscriber(
       bucket = bucket,
       key = key,
@@ -458,7 +474,7 @@ object S3 {
       S3RequestBuilder.putObjectRequest(
         bucketName,
         key,
-        actualLenght,
+        Some(actualLenght),
         contentType,
         acl,
         grantFullControl,
