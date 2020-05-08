@@ -43,7 +43,7 @@ import scala.jdk.CollectionConverters._
 
 class S3RequestBuilderSpec
   extends AnyWordSpecLike with BeforeAndAfterEach with Matchers with BeforeAndAfterAll
-  with ScalaCheckDrivenPropertyChecks with S3Fixture {
+  with ScalaCheckDrivenPropertyChecks with S3RequestGenerators {
 
   override def beforeAll(): Unit = {
     super.beforeAll()

@@ -39,8 +39,7 @@ import software.amazon.awssdk.services.s3.model.{
   ListObjectsV2Request,
   ListObjectsV2Response,
   PutObjectRequest,
-  PutObjectResponse,
-  ServerSideEncryption
+  PutObjectResponse
 }
 
 import scala.jdk.FutureConverters._

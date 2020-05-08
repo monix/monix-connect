@@ -84,7 +84,6 @@ object Dependencies {
     "io.monix" %% "monix-reactive"          % DependencyVersions.Monix,
     "software.amazon.awssdk"                % "s3" % DependencyVersions.S3,
     "org.typelevel" %% "cats-core"          % DependencyVersions.Cats,
-    "com.github.pureconfig" %% "pureconfig" % DependencyVersions.PureConfig,
     "com.amazonaws"                         % "aws-java-sdk-core" % DependencyVersions.AWS % IntegrationTest,
     "com.amazonaws"                         % "aws-java-sdk-s3" % DependencyVersions.AWS %  IntegrationTest,
     "org.scalatestplus" %% "scalacheck-1-14" % "3.1.1.1" % Test
