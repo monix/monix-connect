@@ -178,7 +178,7 @@ object S3 {
     * for more specific requests.
     *
     * Example:
-    * {{{
+    * {
     *   import software.amazon.awssdk.services.s3.S3AsyncClient
     *   import monix.eval.Task
     *
@@ -188,7 +188,7 @@ object S3 {
     *   val key: String= "path/to/test.csv"
     *
     *   val t: Task[Array[Byte]] = S3.getObject(bucketName, key)(s3Client)
-    * }}}
+    * }
     *
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/mediastoredata/model/GetObjectRequest.html
     * @param bucket               The S3 bucket name of the object to get.
@@ -344,7 +344,7 @@ object S3 {
     * Uploads an S3 object by making multiple http requests (parts) of the received chunks of bytes.
     *
     * Example:
-    * {{{
+    * {
     *   import monix.eval.Task
     *   import monix.reactive.{Observable, Consumer}
     *   import monix.connect.s3.S3
@@ -362,8 +362,8 @@ object S3 {
     *  val t: Task[CompleteMultipartUploadResponse] =
     *     Observable.pure(content)
     *     .consumeWith(multipartUploadConsumer)
+    * }
     *
-    * }}}
     *
     * @param bucket                  The bucket name where the object will be stored
     * @param key                     Key where the object will be stored.
@@ -425,7 +425,7 @@ object S3 {
     * Uploads a new object to the specified Amazon S3 bucket.
     *
     * Example:
-    * {{{
+    * {
     *    import monix.eval.Task
     *     import software.amazon.awssdk.services.s3.S3AsyncClient
     *    import software.amazon.awssdk.services.s3.model.PutObjectResponse
@@ -439,7 +439,7 @@ object S3 {
     *    val content: Array[Byte] = "Whatever".getBytes()
     *
     *    val t: Task[PutObjectResponse] = S3.putObject(bucket, key, content)(s3Client, scheduler)
-    * }}}
+    * }
     *
     * @param bucketName    Bucket where this request will upload a new object to
     * @param key           Key under which to store the new object
