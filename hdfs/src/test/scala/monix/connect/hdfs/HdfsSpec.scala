@@ -59,7 +59,7 @@ class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with
       offset shouldBe chunk.size
     }
 
-    "write and read back multiple chunks of bytes" in new HdfsFixture {
+    "write and read back multiple chunks" in new HdfsFixture {
       //given
       val path: Path = new Path(genFileName.sample.get)
       val hdfsWriter: Consumer[Array[Byte], Long] = Hdfs.write(fs, path)
@@ -76,6 +76,43 @@ class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with
       r shouldBe chunks.flatten
       offset shouldBe chunks.flatten.size
     }
+
+    "allow to overwrite if enabled" in new HdfsFixture {
+      //given
+      val path: Path = new Path(genFileName.sample.get)
+      val hdfsWriter: Consumer[Array[Byte], Long] = Hdfs.write(fs, path, overwrite = true)
+      val chunksA: List[Array[Byte]] = genChunks.sample.get
+      val chunksB: List[Array[Byte]] = genChunks.sample.get
+      val existedBefore: Boolean = fs.exists(path)
+
+      //when
+      val offsetA: Long = Observable
+        .from(chunksA)
+        .consumeWith(hdfsWriter)
+        .runSyncUnsafe()
+
+      //then
+      val resultA: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
+      existedBefore shouldBe false
+      fs.exists(path) shouldBe true
+      existedBefore
+      resultA shouldBe chunksA.flatten
+      offsetA shouldBe chunksA.flatten.size
+
+      //and when
+      val offsetB: Long = Observable
+        .from(chunksB)
+        .consumeWith(hdfsWriter)
+        .runSyncUnsafe()
+
+      //then
+      fs.exists(path)
+      val resultB: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
+      resultB shouldBe chunksB.flatten
+      offsetB shouldBe chunksB.flatten.size
+    }
+
+    
 
   }
 

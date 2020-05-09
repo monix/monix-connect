@@ -26,6 +26,8 @@ import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 import scala.util.control.NonFatal
 
 /**
+  * A subscriber implementation for writing to HDFS.
+  *
  * @see https://hadoop.apache.org/docs/r2.8.2/api/org/apache/hadoop/fs/FileSystem.html
  * @see https://hadoop.apache.org/docs/r0.23.11/hadoop-project-dist/hadoop-common/core-default.xml
  * @param fs
@@ -39,11 +41,11 @@ import scala.util.control.NonFatal
  */
 private[hdfs] class HdfsSubscriber(fs: FileSystem,
                                     path: Path,
-                                   appendEnabled: Boolean = false,
                                     overwrite: Boolean = true,
                                     bufferSize: Int = 4096,
                                     replication: Short = 3,
-                                    blockSize: Int = 134217728 ) extends Consumer.Sync[Array[Byte], Long] {
+                                    blockSize: Int = 134217728,
+                                   appendEnabled: Boolean = false) extends Consumer.Sync[Array[Byte], Long] {
 
   def createSubscriber(
                         callback: Callback[Throwable, Long],
