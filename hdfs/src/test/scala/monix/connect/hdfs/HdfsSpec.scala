@@ -30,6 +30,8 @@ import monix.reactive.{Consumer, Observable}
 import org.scalatest.concurrent.ScalaFutures
 import monix.execution.Scheduler.Implicits.global
 
+import scala.util.Try
+
 class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with ScalaFutures {
 
   private var miniHdfs: MiniDFSCluster = _
@@ -37,9 +39,12 @@ class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with
   private val port: Int = 54310
   private val conf = new Configuration()
   conf.set("fs.default.name", s"hdfs://localhost:$port")
+  conf.setBoolean("dfs.support.append", true)
+  conf.set("dfs.client.block.write.replace-datanode-on-failure.policy", "NEVER") //needed for performing append operation on hadoop-minicluster
   val fs: FileSystem = FileSystem.get(conf)
 
   s"${Hdfs}" should {
+
 
     "write and read back a single chunk of bytes" in new HdfsFixture {
       //given
@@ -95,7 +100,6 @@ class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with
       val resultA: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
       existedBefore shouldBe false
       fs.exists(path) shouldBe true
-      existedBefore
       resultA shouldBe chunksA.flatten
       offsetA shouldBe chunksA.flatten.size
 
@@ -105,14 +109,84 @@ class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with
         .consumeWith(hdfsWriter)
         .runSyncUnsafe()
 
-      //then
-      fs.exists(path)
+      //and then
       val resultB: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
+      fs.exists(path) shouldBe true
       resultB shouldBe chunksB.flatten
       offsetB shouldBe chunksB.flatten.size
     }
 
-    
+    "fail (throwing FileAlreadyExistsException) when trying to overwrite when the option is disabled, leaving the original file untouched" in new HdfsFixture {
+      //given
+      val path: Path = new Path(genFileName.sample.get)
+      val hdfsWriter: Consumer[Array[Byte], Long] = Hdfs.write(fs, path, overwrite = false)
+      val chunksA: List[Array[Byte]] = genChunks.sample.get
+      val chunksB: List[Array[Byte]] = genChunks.sample.get
+      val existedBefore: Boolean = fs.exists(path)
+
+      //when
+      val offsetA: Long = Observable
+        .from(chunksA)
+        .consumeWith(hdfsWriter)
+        .runSyncUnsafe()
+
+      //then
+      val resultA: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
+      existedBefore shouldBe false
+      fs.exists(path) shouldBe true
+      resultA shouldBe chunksA.flatten
+      offsetA shouldBe chunksA.flatten.size
+
+      //and when
+      val failedOverwriteAttemt: Try[Long] = Try {
+        Observable
+          .from(chunksB)
+          .consumeWith(hdfsWriter)
+          .runSyncUnsafe() //it should throw an `org.apache.hadoop.fs.FileAlreadyExistsException`
+      }
+
+      //and then
+      val resultAA: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
+      failedOverwriteAttemt.isFailure shouldBe true
+      fs.exists(path) shouldBe true
+      resultAA shouldBe chunksA.flatten
+      resultAA.size shouldBe chunksA.flatten.size
+    }
+
+    "allow appending to existing files" in new HdfsFixture {
+      //given
+      val path: Path = new Path(genFileName.sample.get)
+      val chunksA: List[Array[Byte]] = genChunks.sample.get
+      val chunksB: List[Array[Byte]] = genChunks.sample.get
+      val existedBefore: Boolean = fs.exists(path)
+      val expectedContent: List[Byte] = (chunksA ++ chunksB).flatten
+
+      //when
+      val offsetA: Long = Observable
+        .from(chunksA)
+        .consumeWith(Hdfs.write(fs, path))
+        .runSyncUnsafe()
+
+      //then
+      val resultA: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
+      existedBefore shouldBe false
+      fs.exists(path) shouldBe true
+      resultA shouldBe chunksA.flatten
+      offsetA shouldBe chunksA.flatten.size
+
+      //and when
+      val finalOffset: Long = Observable
+        .from(chunksB)
+        .consumeWith(Hdfs.append(fs, path))
+        .runSyncUnsafe()
+
+      //and then
+      val finalResult: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
+      fs.exists(path) shouldBe true
+      finalResult shouldBe expectedContent
+      finalOffset shouldBe chunksB.flatten.size
+    }
+
 
   }
 
