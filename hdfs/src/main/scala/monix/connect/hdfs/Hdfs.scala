@@ -25,16 +25,65 @@ import org.apache.hadoop.io.compress.CompressionCodec
 
 object Hdfs {
 
-  def write(fs: FileSystem, path: Path)(implicit scheduler: Scheduler): Consumer[Array[Byte], Task[Int]] = {
+  /**
+   * The subscriber implementation of an HDFS append writer.
+   * I expects chunks of bytes to be passed and it synchronously writes them to the specified [[path]].
+   * If the chunk is an empty byte array, then no bytes are written, so nothing happens.
+   *
+   * @param fs An abstract base class for a fairly generic filesystem.
+   *           Any potentially usage of the Hadoop Distributed File System should be written to use a FileSystem object.
+   *           The Hadoop DFS is a multi-machine system that appears as a single disk.
+   *           It's useful because of its fault tolerance and potentially very large capacity.
+   * @param path Names a file or directory in a [[FileSystem]]. Path strings use slash as the directory separator.
+   * @param scheduler An implicit [[Scheduler]] instance to be in the scope of the call.
+   * @return A [[Long]] that represents the number of bytes that has been written.
+   */
+  def append(fs: FileSystem, path: Path)(implicit scheduler: Scheduler): Consumer[Array[Byte], Long] = {
+    new HdfsSubscriber(fs, path, appendEnabled = true)
+  }
+
+  /**
+   * The subscriber implementation of an HDFS writer.
+   * I expects chunks of bytes to be passed and it synchronously writes them to the specified [[path]].
+   * If the chunk is an empty byte array, then no bytes are written, so nothing happens.
+   *
+   * @param fs An abstract base class for a fairly generic filesystem.
+   *           Any potentially usage of the Hadoop Distributed File System should be written to use a FileSystem object.
+   *           The Hadoop DFS is a multi-machine system that appears as a single disk.
+   *           It's useful because of its fault tolerance and potentially very large capacity.
+   * @param path Names a file or directory in a [[FileSystem]]. Path strings use slash as the directory separator.
+   * @param scheduler An implicit [[Scheduler]] instance to be in the scope of the call.
+   * @return A [[Long]] that represents the number of bytes that has been written.
+   */
+  def write(fs: FileSystem, path: Path)(implicit scheduler: Scheduler): Consumer[Array[Byte], Long] = {
     new HdfsSubscriber(fs, path)
   }
 
+  /**
+   *
+   * @param fs An abstract base class for a fairly generic filesystem.
+   *           Any potentially usage of the Hadoop Distributed File System should be written to use a FileSystem object.
+   * @param path Names a file or directory in a [[FileSystem]]. Path strings use slash as the directory separator.
+   * @param chunkSize The maximum length of the emitted arrays of bytes.
+   * @param scheduler An implicit [[Scheduler]] instance to be in the scope of the call.
+   * @return An [[Observable]] of chunks of bytes with the size specified by [[chunkSize]].
+   */
   def read(fs: FileSystem, path: Path, chunkSize: Int = 8192)(
     implicit
     scheduler: Scheduler): Observable[Array[Byte]] = {
     Observable.fromInputStream(Task(fs.open(path)), chunkSize)
   }
 
+  /**
+   *
+   * @param fs An abstract base class for a fairly generic filesystem.
+   *           Any potentially usage of the Hadoop Distributed File System should be written to use a FileSystem object.
+   * @param path Names a file or directory in a [[FileSystem]]. Path strings use slash as the directory separator.
+   * @param chunkSize The maximum length of the emitted arrays of bytes.
+   * @param codec An instance of a [[CompressionCodec]], that will encapsulates the logic of a streaming compression/decompression.
+   * @param scheduler An implicit [[Scheduler]] instance to be in the scope of the call.
+   * @return An [[Observable]] of chunks of bytes with the size specified by [[chunkSize]].
+   */
   def readCompressed(fs: FileSystem, path: Path, chunkSize: Int = 8192, codec: CompressionCodec)(
     implicit
     scheduler: Scheduler): Observable[Array[Byte]] = {

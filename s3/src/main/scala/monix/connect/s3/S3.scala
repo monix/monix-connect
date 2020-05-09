@@ -348,10 +348,10 @@ object S3 {
     *   import monix.eval.Task
     *   import monix.reactive.{Observable, Consumer}
     *   import monix.connect.s3.S3
-    *    import software.amazon.awssdk.services.s3.S3AsyncClient
+    *   import software.amazon.awssdk.services.s3.S3AsyncClient
     *   import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadResponse
     *
-    *    implicit val s3Client: S3AsyncClient = ???
+    *   implicit val s3Client: S3AsyncClient = ???
     *
     *   val bucketName: String = "sampleBucketName"
     *   val key: String = "sample/key/to/s3/object"
@@ -363,7 +363,6 @@ object S3 {
     *     Observable.pure(content)
     *     .consumeWith(multipartUploadConsumer)
     * }
-    *
     *
     * @param bucket                  The bucket name where the object will be stored
     * @param key                     Key where the object will be stored.

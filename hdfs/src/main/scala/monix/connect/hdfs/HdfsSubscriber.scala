@@ -17,42 +17,82 @@
 
 package monix.connect.hdfs
 
-import monix.eval.Task
-import monix.execution.{Ack, Callback, Scheduler}
 import monix.execution.cancelables.AssignableCancelable
+import monix.execution.{Ack, Callback, Scheduler}
 import monix.reactive.Consumer
 import monix.reactive.observers.Subscriber
-import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 
-class HdfsSubscriber(fs: FileSystem, path: Path) extends Consumer.Sync[Array[Byte], Task[Int]] {
+import scala.util.control.NonFatal
+
+/**
+ * @see https://hadoop.apache.org/docs/r2.8.2/api/org/apache/hadoop/fs/FileSystem.html
+ * @see https://hadoop.apache.org/docs/r0.23.11/hadoop-project-dist/hadoop-common/core-default.xml
+ * @param fs
+ * @param path
+ * @param overwrite   When a file with this name already exists, then if true, the file will be overwritten.
+ *                    And if false an [[java.io.IOException]] will be thrown.
+ *                    Files are overwritten by default.
+ * @param bufferSize  The size of the buffer to be used.
+ * @param replication The replication factor.
+ * @param blockSize   The default block size for new files, in bytes. Being 128 MB the default value.
+ */
+private[hdfs] class HdfsSubscriber(fs: FileSystem,
+                                    path: Path,
+                                   appendEnabled: Boolean = false,
+                                    overwrite: Boolean = true,
+                                    bufferSize: Int = 4096,
+                                    replication: Short = 3,
+                                    blockSize: Int = 134217728 ) extends Consumer.Sync[Array[Byte], Long] {
 
   def createSubscriber(
-    callback: Callback[Throwable, Task[Int]],
-    s: Scheduler): (Subscriber.Sync[Array[Byte]], AssignableCancelable) = {
+                        callback: Callback[Throwable, Long],
+                        s: Scheduler): (Subscriber.Sync[Array[Byte]], AssignableCancelable) = {
     val sub = new Subscriber.Sync[Array[Byte]] {
-      val out = fs.create(path)
-      var off = 0
+      val out: FSDataOutputStream = createOrAppendFS(fs, path, appendEnabled, overwrite, bufferSize, replication, blockSize)
+      var off: Long = 0
 
       override implicit def scheduler: Scheduler = s
 
       override def onComplete() = {
         out.close()
-        callback.onSuccess(Task(off))
+        callback.onSuccess(off)
       }
 
       override def onError(ex: Throwable): Unit = {
+        out.close()
         callback.onError(ex)
       }
 
-      override def onNext(elem: Array[Byte]): Ack = {
-        val len = elem.length
-        out.write(elem, off, len)
+      override def onNext(chunk: Array[Byte]): Ack = {
+        val len: Int = chunk.size
+        try {
+          out.write(chunk)
+        } catch { case e if NonFatal(e) => callback.onError(e) }
         off += len
         Ack.Continue
       }
     }
 
-    (sub, AssignableCancelable.dummy)
+    (sub, AssignableCancelable.single)
   }
 
+  /**
+   * A builder for creating an instance of [[FSDataOutputStream]] that
+   * @return
+   */
+  protected def createOrAppendFS(fs: FileSystem,
+                               path: Path,
+                               appendEnabled: Boolean,
+                               overwrite: Boolean,
+                               bufferSize: Int,
+                               replication: Short,
+                               blockSize: Int): FSDataOutputStream = {
+    if (appendEnabled) {
+      fs.append(path, bufferSize)
+    }
+    else fs.create(path, overwrite, bufferSize, replication, blockSize)
+  }
 }
+
+

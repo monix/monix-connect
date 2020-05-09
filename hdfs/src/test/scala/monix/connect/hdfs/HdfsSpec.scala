@@ -40,10 +40,11 @@ class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with
   val fs: FileSystem = FileSystem.get(conf)
 
   s"${Hdfs}" should {
+
     "write and read back a single chunk of bytes" in new HdfsFixture {
       //given
       val path: Path = new Path(genFileName.sample.get)
-      val hdfsWriter: Consumer[Array[Byte], Task[Int]] = Hdfs.write(fs, path)
+      val hdfsWriter: Consumer[Array[Byte], Long] = Hdfs.write(fs, path)
       val chunk: Array[Byte] = genChunk.sample.get
 
       //when
@@ -51,12 +52,29 @@ class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with
         .pure(chunk)
         .consumeWith(hdfsWriter)
         .runSyncUnsafe()
-        .runSyncUnsafe()
 
       //then
       val r: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
       r shouldBe chunk
       offset shouldBe chunk.size
+    }
+
+    "write and read back multiple chunks of bytes" in new HdfsFixture {
+      //given
+      val path: Path = new Path(genFileName.sample.get)
+      val hdfsWriter: Consumer[Array[Byte], Long] = Hdfs.write(fs, path)
+      val chunks: List[Array[Byte]] = genChunks.sample.get
+
+      //when
+      val offset: Long = Observable
+        .from(chunks)
+        .consumeWith(hdfsWriter)
+        .runSyncUnsafe()
+
+      //then
+      val r: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
+      r shouldBe chunks.flatten
+      offset shouldBe chunks.flatten.size
     }
 
   }
