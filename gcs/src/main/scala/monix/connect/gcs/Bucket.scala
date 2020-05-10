@@ -223,10 +223,9 @@ final class Bucket private(underlying: GoogleBucket)
    * Returns an [[Observable]] of the requested blobs, if one doesn't exist null is
    * returned and filtered out of the result set.
    */
-  def getBlobs(names: NonEmptyList[String]): Observable[Blob] = {
+  def getBlobs(names: NonEmptyList[String]): Observable[Blob] = Observable.suspend {
     Observable
-      .fromTask(Task(underlying.get(names.toList.asJava)))
-      .concatMapIterable(_.asScala.toList)
+      .fromIterable(underlying.get(names.toList.asJava).asScala)
       .filter(_ != null)
       .map(Blob.apply)
   }
