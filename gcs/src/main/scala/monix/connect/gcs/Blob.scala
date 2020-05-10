@@ -88,6 +88,7 @@ final class Blob(underlying: GoogleBlob)
       bytes <- download(underlying.getStorage, underlying.getName, blobId, chunkSize)
     } yield bos.write(bytes)).completedL
   }
+
   /**
    * Checks if this blob exists.
    */
@@ -116,7 +117,7 @@ final class Blob(underlying: GoogleBlob)
    * want to rename the blob or move it to a different bucket use the [[copyTo]] and [[delete]] operations.
    */
   def update(metadata: BlobInfo.Metadata, options: BlobTargetOption*): Task[Blob] = {
-    val update = BlobInfo.toJava(underlying.getBucket, underlying.getName, metadata)
+    val update = BlobInfo.toJava(underlying.getBucket, underlying.getName, Some(metadata))
     Task(underlying.getStorage.update(update, options: _*))
       .map(Blob.apply)
   }
