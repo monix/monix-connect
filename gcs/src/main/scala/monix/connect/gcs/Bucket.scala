@@ -160,15 +160,15 @@ final class Bucket private(underlying: GoogleBucket)
    *
    *   for {
    *      b <- bucket
-   *      _ <- bucket.uploadFrom("blob1", Paths.get("file.txt"))
+   *      _ <- bucket.uploadFromFile("blob1", Paths.get("file.txt"))
    *   } yield println("File Uploaded Successfully")
    * }}}
    */
-  def uploadFrom(name: String,
-                 path: Path,
-                 metadata: Option[BlobInfo.Metadata] = None,
-                 chunkSize: Int = 4096,
-                 options: List[BlobWriteOption] = List.empty[BlobWriteOption]
+  def uploadFromFile(name: String,
+                     path: Path,
+                     metadata: Option[BlobInfo.Metadata] = None,
+                     chunkSize: Int = 4096,
+                     options: List[BlobWriteOption] = List.empty[BlobWriteOption]
   ): Task[Unit] = {
     val blobInfo = BlobInfo.toJava(underlying.getName, name, metadata)
     upload(underlying.getStorage, blobInfo, chunkSize, options: _*).flatMap { consumer =>
