@@ -26,6 +26,7 @@ The below list comprehends the current set of connectors that are available to u
 5. [Redis](https://monix.github.io/monix-connect/docs/redis)
 6. [S3](https://monix.github.io/monix-connect/docs/s3)
 
+7. [GCS](#GCS)
 ### Contributing
 
 The Monix Connect project welcomes contributions from anybody wishing to

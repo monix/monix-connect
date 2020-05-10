@@ -16,6 +16,8 @@ object Dependencies {
     val Scalacheck = "1.14.0"
     val Mockito = "1.13.1"
     val Cats = "2.0.0"
+    val Hadoop = "3.1.1"
+    val GCS = "1.107.0"
   }
 
   private def commonDependencies(hasIntegrationTest: Boolean = false): Seq[sbt.ModuleID] = {
@@ -87,4 +89,12 @@ object Dependencies {
 
   val Redis = RedisDependencies ++ CommonProjectDependencies ++ CommonTestDependencies.map(_ % Test)
 
+
+  private val GcsDependencies = Seq(
+    "io.monix"          %% "monix-reactive"       % DependencyVersions.Monix,
+    "org.typelevel"     %% "cats-core"            % DependencyVersions.Cats,
+    "com.google.cloud"   % "google-cloud-storage" % "1.107.0"
+  )
+
+  val GCS = GcsDependencies
 }
