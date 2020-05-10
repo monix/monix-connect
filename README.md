@@ -8,7 +8,7 @@
  
  ⚠️ This space is under construction 🚧 
  
-Monix Connect is an **experimental** initiative to implement stream integrations for [Monix](https://monix.io/).
+Monix Connect is an initiative to implement stream integrations for [Monix](https://monix.io/).
  A connector describes the connection between the application and a specific data point, which could be a file, a database or any system in which the appication 
  can interact by sending or receiving information. Therefore, the aim of this project is to catch the most common
   connections that users could need when developing reactive applications with Monix, these would basically reduce boilerplate code and furthermore, will let the users to greatly save time and complexity in their implementing projects.
@@ -20,7 +20,7 @@ Monix Connect is an **experimental** initiative to implement stream integrations
 ## Connectors
 1. [Akka](#Akka)
 2. [DynamoDB](#DynamoDB)
-3. [Hdfs](#Hdfs)
+3. [Hdfs](#HDFS)
 4. [Parquet](#Parquet)
 5. [Redis](#Redis)
 6. [S3](#S3)
@@ -76,7 +76,8 @@ Observable
 //the materialized value would be of type Task[DynamoDBResponse]
 ```
 ---
-### Hdfs
+### HDFS
+
 A connector that allows to progresively write and read from files of any size stored in [HDFS](https://hadoop.apache.org/docs/r1.2.1/hdfs_design.html).
 
 The methods to perform these operations are exposed under the scala object ```monix.connect.hdfs.Hdfs```, in which
@@ -230,15 +231,42 @@ keys.head shouldBe k3
 ```
 ---
 ### S3
-_Amazon Simple Storage Service (S3)_, the object storage service that offers industry leading scalability, availability, security and performance.
+The object storage service that offers industry leading scalability, availability, security and performance.
 It allows data storage of any amount of data, commonly used as a data lake for big data applications which can now be easily integrated with monix.
  
  The module has been implemented using the `S3AsyncClient` since it only exposes non blocking methods. 
  Therefore, all of the monix s3 methods defined in the `S3` object would expect an implicit instance of 
  this class to be in the scope of the call.
   
- First, let's start using basic operations, starting by _create_ and _delete_ buckets:
+ First thing is to create the s3 client that will allow us to authenticate and create an channel between our 
+ application and the AWS S3 service. 
+ 
+ So the below code shows an example on how to set up this connection. Note that in this case 
+  the authentication is done thorugh AWS S3 using access and secret keys, 
+  but you might use another method such as IAM roles.
+ 
  ```scala
+import java.net.URI
+import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+import software.amazon.awssdk.services.s3.S3AsyncClient
+import software.amazon.awssdk.regions.Region.AWS_GLOBAL
+
+val basicAWSCredentials: AwsBasicCredentials = AwsBasicCredentials.create(s3AccessKey, s3SecretKey)
+val credentialsProvider: StaticCredentialsProvider = StaticCredentialsProvider.create(basicAWSCredentials)
+
+// Note that the client is defined as implicit, this is on purpose since each of the methods defined in
+// the monix s3 connector will expect that.
+ implicit val s3Client: S3AsyncClient = S3AsyncClient
+    .builder()
+    .credentialsProvider(credentialsProvider)
+    .region(AWS_GLOBAL)
+    .endpointOverride(URI.create(endPoint))//this one is used to point to the localhost s3 service, not used in prod 
+    .build
+```
+ 
+Once we have configured the s3 client, let's start with the basic operations to _create_ and _delete_ buckets:
+ ```scala
+import software.amazon.awssdk.services.s3.model.{CreateBucketResponse, DeleteBucketResponse}
 
 val bucketName: String = "myBucket" 
 val _: Task[CreateBucketResponse] = S3.createBucket(bucketName)
@@ -247,6 +275,8 @@ val _: Task[DeleteBucketResponse] = S3.deleteBucket(bucketName)
 
 You can also operate at object level within a bucket with:
  ```scala
+import software.amazon.awssdk.services.s3.model.{DeleteObjectResponse, ListObjectsResponse}
+
 val bucketName: String = "myBucket" 
 val _: Task[DeleteObjectResponse] = S3.deleteObject(bucketName)
 val _: Task[ListObjectsResponse] = S3.listObjects(bucketName)
@@ -254,28 +284,41 @@ val _: Task[ListObjectsResponse] = S3.listObjects(bucketName)
 
 On the other hand, to get and put objects:
  ```scala
-import java.nio.ByteBuffer
+import software.amazon.awssdk.services.s3.model.PutObjectResponse
 
 val bucketName: String = "myBucket" 
 
 //get example
 val objectKey: String = "/object/file.txt"
-val _: Task[ByteBuffer] = S3.getObject(bucketName, objectKey)
+val _: Task[Array[Byte]] = S3.getObject(bucketName, objectKey)
 
 //put object example
-val content: ByteBuffer= ByteBuffer.wrap("file content".getBytes())
+val content: Array[Byte] = "file content".getBytes()
 val _: Task[PutObjectResponse] = S3.putObject(bucketName, objectKey, content)
+}
+```
+
+Finally, for dealing with large files of data you might want to use the `multipartUpload` consumer.
+This one consumes an observable and synchronously makes partial uploads of the incoming chunks. 
+
+Thus, it reduces substantially the risk on having jvm overhead errors or getting http requests failures, 
+since the whole file does not need to be allocated in the memory and the http request body won't be that big. 
+
+The partial uploads can be fine tuned by the minimum chunksize that will be sent, being 5MB the default minimum size (equally as an integer value of 5242880).
+
+```scala
+import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadResponse
 
 
-//multipart consumer that expects byte buffer chunks 
-val multipartConsumer: Consumer[Array[Byte], Task[CompleteMultipartUploadResponse]] =
+// given an strem of chunks (Array[Byte]) 
+val ob: Observable[Array[Byte]] = Observable.fromIterable(chunks)
+
+// and a multipart upload consumer
+val multipartUploadConsumer: Consumer[Array[Byte], Task[CompleteMultipartUploadResponse]] =
   S3.multipartUpload(bucketName, objectKey)
 
-val _: Task[CompleteMultipartUploadResponse] = {
-Observable
-  .pure(content) 
-  .consumeWith(multipartConsumer)
-}
+// then
+ob.fromIterable(chunks).consumeWith(multipartUploadConsumer)
 ```
 ---
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
  * See the project homepage at: https://monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,15 +25,24 @@ import monix.reactive.Observable
 import software.amazon.awssdk.core.async.{AsyncResponseTransformer, SdkPublisher}
 import software.amazon.awssdk.services.s3.model.GetObjectResponse
 
+/**
+  * An implementation of the [[AsyncResponseTransformer]] that will transform an incoming
+  * stream of chunks [[ByteBuffer]] published from a [[SdkPublisher]] as a monix [[Task]].
+  */
 private[s3] class MonixS3AsyncResponseTransformer
   extends AsyncResponseTransformer[GetObjectResponse, Task[ByteBuffer]] {
   val future = new CompletableFuture[Task[ByteBuffer]]()
+
   override def prepare(): CompletableFuture[Task[ByteBuffer]] = future
 
   override def onResponse(response: GetObjectResponse): Unit = ()
 
   override def onStream(publisher: SdkPublisher[ByteBuffer]): Unit = {
-    future.complete(Observable.fromReactivePublisher(publisher).headL)
+    future.complete(
+      Observable
+        .fromReactivePublisher(publisher)
+        .foldLeftL(Array.emptyByteArray) { (buffer, chunk) => buffer ++ chunk.array() }
+        .map(ByteBuffer.wrap(_)))
     ()
   }
   override def exceptionOccurred(error: Throwable): Unit = {

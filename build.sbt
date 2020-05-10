@@ -110,7 +110,7 @@ lazy val sharedSettings = Seq(
   licenses      := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
   //homepage := Some(url("https://monix.io")), //todo homepage settings
   headerLicense := Some(HeaderLicense.Custom(
-    """|Copyright (c) 2014-2020 by The Monix Connect Project Developers.
+    """|Copyright (c) 2020-2020 by The Monix Connect Project Developers.
        |See the project homepage at: https://monix.io
        |
        |Licensed under the Apache License, Version 2.0 (the "License");
