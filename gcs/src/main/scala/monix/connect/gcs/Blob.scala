@@ -9,7 +9,7 @@ import com.google.cloud.storage.Storage.{BlobTargetOption, SignUrlOption}
 import com.google.cloud.storage.{Acl, BlobId, Blob => GoogleBlob, Option => _}
 import com.google.cloud.{storage => google}
 import monix.connect.gcs.configuration.BlobInfo
-import monix.connect.gcs.utiltiies.StorageDownloader
+import monix.connect.gcs.utiltiies.{FileIO, StorageDownloader}
 import monix.eval.Task
 import monix.reactive.Observable
 
@@ -25,14 +25,69 @@ import scala.jdk.CollectionConverters._
  *                    dst are in the same location and share the same storage class the request is done in one RPC call,
  *                    otherwise multiple calls are issued.
  */
-final class Blob(underlying: GoogleBlob) extends StorageDownloader {
+final class Blob(underlying: GoogleBlob)
+  extends StorageDownloader
+    with FileIO {
 
   /**
-   * TODO: Documentation
+   * Downloads a Blob from GCS, returning an Observable containing the bytes in chunks of length chunkSize.
+   *
+   * Example:
+   * {{{
+   *   import java.nio.charset.StandardCharsets
+   *
+   *   import monix.reactive.Observable
+   *   import monix.connect.gcs.{Storage, Bucket}
+   *
+   *   val config = BucketConfig(
+   *      name = "mybucket"
+   *   )
+   *
+   *   val storage: Task[Storage] = Storage.create().memoize
+   *   val bucket: Task[Bucket] = storage.flatMap(_.createBucket(config)).memoize
+   *
+   *   // Download the blob contents to a String and print it to the console.
+   *   for {
+   *      bucket <- bucket
+   *      bytes  <- b.download("blob1").foldLeftL(Array.emptyByteArray)(_ ++ _)
+   *   } yield println(new String(bytes, StandardCharsets.UTF_8))
+   * }}}
+   *
    */
-  def downloadTo(path: Path, chunkSize: Int = 4096): Task[Unit] =
-    downloadFromBucket(underlying.getStorage, underlying.getBucket, underlying.getBlobId, path, chunkSize)
+  def download(name: String, chunkSize: Int = 4096): Observable[Array[Byte]] = {
+    download(underlying.getStorage, underlying.getName, BlobId.of(underlying.getName, name), chunkSize)
+  }
 
+  /**
+   * Allows downloading a Blob from GCS directly to the specified file.
+   *
+   * Example:
+   * {{{
+   *   import java.nio.file.Paths
+   *
+   *   import monix.reactive.Observable
+   *   import monix.connect.gcs.{Storage, Bucket}
+   *
+   *   val config = BucketConfig(
+   *      name = "mybucket"
+   *   )
+   *
+   *   val storage: Task[Storage] = Storage.create().memoize
+   *   val bucket: Task[Bucket] = storage.flatMap(_.createBucket(config)).memoize
+   *
+   *   for {
+   *      b <- bucket
+   *      _ <- bucket.downloadToFile("blob1", Paths.get("file.txt"))
+   *   } yield println("File downloaded Successfully")
+   * }}}
+   */
+  def downloadToFile(name: String, path: Path, chunkSize: Int = 4096): Task[Unit] = {
+    val blobId = BlobId.of(underlying.getName, name)
+    (for {
+      bos   <- openFileOutputStream(path)
+      bytes <- download(underlying.getStorage, underlying.getName, blobId, chunkSize)
+    } yield bos.write(bytes)).completedL
+  }
   /**
    * Checks if this blob exists.
    */
@@ -48,7 +103,7 @@ final class Blob(underlying: GoogleBlob) extends StorageDownloader {
     }
 
   /**
-   * Updates the blob's information. Bucket or blob's name cannot be changed by this method. If you
+   * Updates the blob's information. The Blob's name cannot be changed by this method. If you
    * want to rename the blob or move it to a different bucket use the [[copyTo]] and [[delete]] operations.
    */
   def update(options: BlobTargetOption*): Task[Blob] = {
@@ -147,9 +202,9 @@ final class Blob(underlying: GoogleBlob) extends StorageDownloader {
    * Returns an [[Observable]] of all the [[Acl]] Entries for this [[Blob]].
    */
   def listAcls(): Observable[Acl] = {
-    Observable
-      .fromTask(Task(underlying.listAcls()))
-      .concatMapIterable(_.asScala.toList)
+    Observable.suspend {
+      Observable.fromIterable(underlying.listAcls().asScala)
+    }
   }
 
   /**

@@ -55,22 +55,25 @@ object BlobInfo {
                             eventBasedHold: Option[Boolean] = None,
                             temporaryHold: Option[Boolean] = None)
 
-  private[gcs] def toJava(bucket: String, name: String, info: BlobInfo.Metadata): GoogleBlobInfo = {
+  private[gcs] def toJava(bucket: String, name: String, metadata: Option[BlobInfo.Metadata]): GoogleBlobInfo = {
     val builder = GoogleBlobInfo.newBuilder(BlobId.of(bucket, name))
-    info.contentType.foreach(builder.setContentType)
-    info.contentDisposition.foreach(builder.setContentDisposition)
-    info.contentLanguage.foreach(builder.setContentLanguage)
-    info.contentEncoding.foreach(builder.setContentEncoding)
-    info.cacheControl.foreach(builder.setCacheControl)
-    info.crc32c.foreach(builder.setCrc32c)
-    info.crc32cFromHexString.foreach(builder.setCrc32cFromHexString)
-    info.md5.foreach(builder.setMd5)
-    info.md5FromHexString.foreach(builder.setMd5FromHexString)
-    info.storageClass.foreach(builder.setStorageClass)
-    info.temporaryHold.foreach(b => builder.setEventBasedHold(b))
-    info.eventBasedHold.foreach(b => builder.setEventBasedHold(b))
-    builder.setAcl(info.acl.asJava)
-    builder.setMetadata(info.metadata.asJava)
+    metadata.foreach { options =>
+      options.contentType.foreach(builder.setContentType)
+      options.contentDisposition.foreach(builder.setContentDisposition)
+      options.contentLanguage.foreach(builder.setContentLanguage)
+      options.contentEncoding.foreach(builder.setContentEncoding)
+      options.cacheControl.foreach(builder.setCacheControl)
+      options.crc32c.foreach(builder.setCrc32c)
+      options.crc32cFromHexString.foreach(builder.setCrc32cFromHexString)
+      options.md5.foreach(builder.setMd5)
+      options.md5FromHexString.foreach(builder.setMd5FromHexString)
+      options.storageClass.foreach(builder.setStorageClass)
+      options.temporaryHold.foreach(b => builder.setEventBasedHold(b))
+      options.eventBasedHold.foreach(b => builder.setEventBasedHold(b))
+      builder.setAcl(options.acl.asJava)
+      builder.setMetadata(options.metadata.asJava)
+    }
+
     builder.build()
   }
 

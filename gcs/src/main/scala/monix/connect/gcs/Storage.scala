@@ -1,5 +1,9 @@
 package monix.connect.gcs
 
+import java.io.FileInputStream
+import java.nio.file.Path
+
+import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.storage.Storage._
 import com.google.cloud.storage.{StorageOptions, Storage => GoogleStorage}
 import monix.connect.gcs.configuration.BucketConfig
@@ -33,7 +37,19 @@ final class Storage(underlying: GoogleStorage) extends Paging {
 }
 
 object Storage {
+
   def create(): Task[Storage] = {
     Task(StorageOptions.getDefaultInstance.getService).map(new Storage(_))
+  }
+
+  def create(projectId: String, credentials: Path): Task[Storage] = {
+    Task {
+      StorageOptions
+        .newBuilder()
+        .setProjectId(projectId)
+        .setCredentials(GoogleCredentials.fromStream(new FileInputStream(credentials.toFile)))
+        .build()
+        .getService
+    }.map(new Storage(_))
   }
 }

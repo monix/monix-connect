@@ -1,5 +1,6 @@
 package monix.connect.gcs
 
+import java.io.InputStream
 import java.nio.file.Path
 
 import cats.data.NonEmptyList
@@ -7,7 +8,8 @@ import com.google.cloud.storage.Bucket.BucketSourceOption
 import com.google.cloud.storage.Storage.{BlobGetOption, BlobListOption, BlobWriteOption, BucketTargetOption}
 import com.google.cloud.storage.{Acl, BlobId, Bucket => GoogleBucket}
 import monix.connect.gcs.configuration.BlobInfo
-import monix.connect.gcs.utiltiies.{Paging, StorageDownloader, StorageUploader}
+import monix.connect.gcs.utiltiies.StorageUploader.StorageConsumer
+import monix.connect.gcs.utiltiies.{FileIO, Paging, StorageDownloader, StorageUploader}
 import monix.eval.Task
 import monix.reactive.Observable
 
@@ -21,7 +23,7 @@ import scala.jdk.CollectionConverters._
  * Example:
  * {{{
  *   import monix.reactive.Observable
- *   import io.monix.connect.gcs.{Storage, Bucket}
+ *   import monix.connect.gcs.{Storage, Bucket}
  *
  *   val config = BucketConfig(
  *      name = "mybucket"
@@ -37,7 +39,144 @@ import scala.jdk.CollectionConverters._
  * }}}
  */
 final class Bucket private(underlying: GoogleBucket)
-  extends StorageUploader with StorageDownloader with Paging {
+  extends StorageUploader
+    with StorageDownloader
+    with FileIO
+    with Paging {
+
+  /**
+   * Downloads a Blob from GCS, returning an Observable containing the bytes in chunks of length chunkSize.
+   *
+   * Example:
+   * {{{
+   *   import java.nio.charset.StandardCharsets
+   *
+   *   import monix.reactive.Observable
+   *   import monix.connect.gcs.{Storage, Bucket}
+   *
+   *   val config = BucketConfig(
+   *      name = "mybucket"
+   *   )
+   *
+   *   val storage: Task[Storage] = Storage.create().memoize
+   *   val bucket: Task[Bucket] = storage.flatMap(_.createBucket(config)).memoize
+   *
+   *   // Download the blob contents to a String and print it to the console.
+   *   for {
+   *      bucket <- bucket
+   *      bytes  <- b.download("blob1").foldLeftL(Array.emptyByteArray)(_ ++ _)
+   *   } yield println(new String(bytes, StandardCharsets.UTF_8))
+   * }}}
+   *
+   *
+   */
+  def download(name: String, chunkSize: Int = 4096): Observable[Array[Byte]] = {
+    download(underlying.getStorage, underlying.getName, BlobId.of(underlying.getName, name), chunkSize)
+  }
+
+  /**
+   * Allows downloading a Blob from GCS directly to the specified file.
+   *
+   * Example:
+   * {{{
+   *   import java.nio.file.Paths
+   *
+   *   import monix.reactive.Observable
+   *   import monix.connect.gcs.{Storage, Bucket}
+   *
+   *   val config = BucketConfig(
+   *      name = "mybucket"
+   *   )
+   *
+   *   val storage: Task[Storage] = Storage.create().memoize
+   *   val bucket: Task[Bucket] = storage.flatMap(_.createBucket(config)).memoize
+   *
+   *   for {
+   *      b <- bucket
+   *      _ <- bucket.downloadToFile("blob1", Paths.get("file.txt"))
+   *   } yield println("File downloaded Successfully")
+   * }}}
+   */
+  def downloadToFile(name: String, path: Path, chunkSize: Int = 4096): Task[Unit] = {
+    val blobId = BlobId.of(underlying.getName, name)
+    (for {
+      bos   <- openFileOutputStream(path)
+      bytes <- download(underlying.getStorage, underlying.getName, blobId, chunkSize)
+    } yield bos.write(bytes)).completedL
+  }
+
+
+  /**
+   * Returns a new Consumer that will upload bytes to the specified target Blob.
+   *
+   * Example:
+   * {{{
+   *   import java.nio.charset.StandardCharsets
+   *
+   *   import monix.reactive.Observable
+   *   import monix.connect.gcs.{Storage, Bucket}
+   *
+   *   val config = BucketConfig(
+   *      name = "mybucket"
+   *   )
+   *
+   *   val storage: Task[Storage] = Storage.create().memoize
+   *   val bucket: Task[Bucket] = storage.flatMap(_.createBucket(config)).memoize
+   *
+   *   val data = "mydata".getBytes(StandardCharsets.UTF_8)
+   *
+   *   for {
+   *     b <- bucket
+   *     c <- b.upload("mydata")
+   *     _ <- Observable.fromIterable(data).consumeWith(c)
+   *   } println("Uploaded Data Successfully")
+   * }}}
+   */
+  def upload(name: String,
+             metadata: Option[BlobInfo.Metadata] = None,
+             chunkSize: Int = 4096,
+             options: List[BlobWriteOption] = List.empty[BlobWriteOption]
+  ): Task[StorageConsumer] = {
+    val blobInfo = BlobInfo.toJava(underlying.getName, name, metadata)
+    upload(underlying.getStorage, blobInfo, chunkSize, options: _*)
+  }
+
+  /**
+   * Uploads the provided file to the specified target Blob.
+   *
+   * Example:
+   * {{{
+   *   import java.nio.file.Paths
+   *
+   *   import monix.reactive.Observable
+   *   import monix.connect.gcs.{Storage, Bucket}
+   *
+   *   val config = BucketConfig(
+   *      name = "mybucket"
+   *   )
+   *
+   *   val storage: Task[Storage] = Storage.create().memoize
+   *   val bucket: Task[Bucket] = storage.flatMap(_.createBucket(config)).memoize
+   *
+   *   for {
+   *      b <- bucket
+   *      _ <- bucket.uploadFrom("blob1", Paths.get("file.txt"))
+   *   } yield println("File Uploaded Successfully")
+   * }}}
+   */
+  def uploadFrom(name: String,
+                 path: Path,
+                 metadata: Option[BlobInfo.Metadata] = None,
+                 chunkSize: Int = 4096,
+                 options: List[BlobWriteOption] = List.empty[BlobWriteOption]
+  ): Task[Unit] = {
+    val blobInfo = BlobInfo.toJava(underlying.getName, name, metadata)
+    upload(underlying.getStorage, blobInfo, chunkSize, options: _*).flatMap { consumer =>
+      openFileInputStream(path).flatMap { fis =>
+        Observable.fromInputStreamUnsafe(fis).takeWhile(_.nonEmpty)
+      }.consumeWith(consumer)
+    }
+  }
 
   /**
    * Checks if this bucket exists.
@@ -100,22 +239,6 @@ final class Bucket private(underlying: GoogleBucket)
   }
 
   /**
-   * TODO: Documentation
-   */
-  def upload(name: String, metadata: BlobInfo.Metadata, path: Path, chunkSize: Int, options: BlobWriteOption*): Task[Unit] = {
-    val blobInfo = BlobInfo.toJava(underlying.getName, name, metadata)
-    uploadToBucket(underlying.getStorage, blobInfo, path, chunkSize, options: _*)
-  }
-
-  /**
-   * TODO: Documentation
-   */
-  def download(name: String, path: Path, chunkSize: Int = 4096): Task[Unit] = {
-    val blobId = BlobId.of(underlying.getName, name)
-    downloadFromBucket(underlying.getStorage, underlying.getName, blobId, path, chunkSize)
-  }
-
-  /**
    * Creates a new ACL entry on this bucket.
    */
   def createAcl(acl: Acl): Task[Acl] =
@@ -143,8 +266,9 @@ final class Bucket private(underlying: GoogleBucket)
    * Returns a [[Observable]] of all the ACL Entries for this [[Bucket]].
    */
   def listAcls(): Observable[Acl] = {
-    Observable.fromTask(Task(underlying.listAcls()))
-      .concatMapIterable(_.asScala.toList)
+    Observable.suspend {
+      Observable.fromIterable(underlying.listAcls().asScala)
+    }
   }
 
   /**
@@ -177,9 +301,9 @@ final class Bucket private(underlying: GoogleBucket)
    * Returns a [[Observable]] of all the default Blob ACL Entries for this [[Bucket]].
    */
   def listDefaultAcls(): Observable[Acl] = {
-    Observable
-      .fromTask(Task(underlying.listDefaultAcls()))
-      .concatMapIterable(_.asScala.toList)
+    Observable.suspend {
+      Observable.fromIterable(underlying.listDefaultAcls().asScala)
+    }
   }
 
   /**
