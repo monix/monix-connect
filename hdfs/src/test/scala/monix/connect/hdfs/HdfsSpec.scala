@@ -19,7 +19,6 @@ package monix.connect.hdfs
 
 import java.io.File
 
-import monix.eval.Task
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.scalatest.matchers.should.Matchers
@@ -40,16 +39,18 @@ class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with
   private val conf = new Configuration()
   conf.set("fs.default.name", s"hdfs://localhost:$port")
   conf.setBoolean("dfs.support.append", true)
-  conf.set("dfs.client.block.write.replace-datanode-on-failure.policy", "NEVER") //needed for performing append operation on hadoop-minicluster
+  conf.set(
+    "dfs.client.block.write.replace-datanode-on-failure.policy",
+    "NEVER"
+  ) //needed for performing append operation on hadoop-minicluster
   val fs: FileSystem = FileSystem.get(conf)
 
   s"${Hdfs}" should {
 
-
     "write and read back a single chunk of bytes" in new HdfsFixture {
       //given
       val path: Path = new Path(genFileName.sample.get)
-      val hdfsWriter: Consumer[Array[Byte], Long] = Hdfs.write(fs, path)
+      val hdfsWriter: Consumer[Array[Byte], Long] = Hdfs.write(fs, path, lineSeparator = None)
       val chunk: Array[Byte] = genChunk.sample.get
 
       //when
@@ -67,7 +68,7 @@ class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with
     "write and read back multiple chunks" in new HdfsFixture {
       //given
       val path: Path = new Path(genFileName.sample.get)
-      val hdfsWriter: Consumer[Array[Byte], Long] = Hdfs.write(fs, path)
+      val hdfsWriter: Consumer[Array[Byte], Long] = Hdfs.write(fs, path, lineSeparator = None)
       val chunks: List[Array[Byte]] = genChunks.sample.get
 
       //when
@@ -80,6 +81,28 @@ class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with
       val r: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
       r shouldBe chunks.flatten
       offset shouldBe chunks.flatten.size
+    }
+
+    "write and read back multiple chunks with a line separator" in new HdfsFixture {
+      //given
+      val path: Path = new Path(genFileName.sample.get)
+      val lineSeparator: String = "\n"
+      val hdfsWriter: Consumer[Array[Byte], Long] = Hdfs.write(fs, path, lineSeparator = Some(lineSeparator))
+      val chunks: List[Array[Byte]] = genChunks.sample.get
+      val nChunks = chunks.size
+
+      //when
+      val offset: Long = Observable
+        .from(chunks)
+        .consumeWith(hdfsWriter)
+        .runSyncUnsafe()
+
+      //then
+      val r: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
+      val expectedResult: List[Byte] = chunks.map(_ ++ lineSeparator.getBytes).flatten
+
+      r shouldBe expectedResult
+      offset shouldBe (chunks.flatten.size + (nChunks * lineSeparator.getBytes.size))
     }
 
     "allow to overwrite if enabled" in new HdfsFixture {
@@ -146,11 +169,11 @@ class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with
       }
 
       //and then
-      val resultAA: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
+      val overwritten: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
       failedOverwriteAttemt.isFailure shouldBe true
       fs.exists(path) shouldBe true
-      resultAA shouldBe chunksA.flatten
-      resultAA.size shouldBe chunksA.flatten.size
+      overwritten shouldBe chunksA.flatten
+      overwritten.size shouldBe chunksA.flatten.size
     }
 
     "allow appending to existing files" in new HdfsFixture {
@@ -187,6 +210,24 @@ class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with
       finalOffset shouldBe chunksB.flatten.size
     }
 
+    "files when appending to a non existing file" in new HdfsFixture {
+      //given
+      val path: Path = new Path(genFileName.sample.get)
+      val chunksA: List[Array[Byte]] = genChunks.sample.get
+      val existed: Boolean = fs.exists(path)
+
+      //when
+      val appendingFailure: Try[Long] = Try {
+        Observable
+          .from(chunksA)
+          .consumeWith(Hdfs.append(fs, path))
+          .runSyncUnsafe()
+      }
+
+      //then
+      existed shouldBe false
+      appendingFailure.isFailure shouldBe true
+    }
 
   }
 

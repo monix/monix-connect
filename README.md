@@ -89,31 +89,69 @@ import org.apache.hadoop.fs.FileSystem
 //The abstract representation of a file system which could be a distributed or a local one.
 import org.apache.hadoop.fs.Path
 //Represents a file or directory in a FileSystem
-import org.apache.hadoop.io.compress.CompressionCodec
-//This will be optional, but basically it encapsulates a streaming compression/decompression pair.
+```
+
+Each use case would need different settings to create the hadoop configurations, but 
+ for testing purposes we would just need to set a couple of them. 
+ 
+```scala
+val conf = new Configuration() //Provides access to the hadoop configurable parameters
+conf.set("fs.default.name", s"hdfs://localhost:$port") //especifies the local endpoint of the test hadoop minicluster
+val fs: FileSystem = FileSystem.get(conf)
 ```
 On continuation, an example on how to construct a pipeline that reads from the specified hdfs file.
 
 ```scala
-//First we need to create the hadoop requirements mentioned above.
-val conf = new Configuration() //Provides access to the hadoop configurable parameters
-val fs: FileSystem = FileSystem.get(conf)
+
 val sourcePath: Path = new Path("/source/hdfs/file_source.txt")
 val chunkSize: Int = 8192 //size of the chunks to be pulled
 
 //Once we have the hadoop classes we can create the hdfs monix reader
 val ob: Observable[Array[Byte]] = Hdfs.read(fs, path, chunkSize)
 ```
-Now that we have a stream of bytes coming in, it can be transformed as we want,
- but in this case we will write them back to another location 
-  using the pre-built monix hdfs consumer implemented in this project.
+Now that we have a stream of bytes coming in, so it can be transformed as we want to.
+And later it can be written back to a different hdfs path like:
  ```scala
 val destinationPath: Path = new Path("/destination/hdfs/file_dest.txt")
-val hdfsWriter: Consumer[Array[Byte], Task[Int]] = Hdfs.write(fs, destinationPath) //wip
+val hdfsWriter: Consumer[Array[Byte], Task[Long]] = Hdfs.write(fs, destinationPath) 
 
-//Eventually it will return the size of the written file
-val t: Task[Int] = ob.consumeWith(hdfsWriter) 
+// eventually it will return the size of the written file
+val t: Task[Long] = ob.consumeWith(hdfsWriter) 
  ```
+The returned type would represent the total size in bytes of the written data.
+
+Note that the write hdfs consumer implementation provides different configurations to be passed as parameters such as 
+enable overwrite (true by default), replication factor (3), the bufferSize (4096 bytes), blockSize (134217728 bytes =~ 128 MB) 
+and finally a line separator which is not used by default (None).
+Below example shows how to:
+```scala
+val hdfsWriter: Consumer[Array[Byte], Long] = 
+   Hdfs.write(fs,
+      path = path, 
+      overwrite = false, //will fail if the path already exists
+      replication = 4, 
+      bufferSize = 4096,
+      blockSize =  134217728, 
+      lineSeparator = "\n") //each written element would include the specified line separator 
+```        
+
+Finally, the hdfs connector also exposes an append operation, in which in this case it materializes to a `Long`
+that would represent the only the size of the appended data, but not of the whole file. 
+Note also that this method does not allow to configure the replication factor, block size and so on, this is because
+these configurations are only set whenever a file is created, but an append operation would reuse them from the existing file.
+See below an example:
+
+```scala
+// you would probably need to tweak the hadoop configuration to allow the append operation
+conf.setBoolean("dfs.support.append", true)
+conf.set("dfs.client.block.write.replace-datanode-on-failure.policy", "NEVER") 
+
+// note that we are re-using the `destinationPath` of the last example since should already exist
+val hdfsAppender: Consumer[Array[Byte], Task[Long]] = Hdfs.append(fs, destinationPath) 
+val ob: Observer[Array[Byte]] = ???
+val t: Task[Long] = ob.consumeWith(hdfsAppender) 
+```
+ 
 ---
 ### Parquet
 
@@ -176,8 +214,8 @@ At the same time that it returns the right values from scala lang and not form j
  
   | Signature | Lettuce _Async_ | Lettuce _Reactive_ | _Monix_ |
   | :---: | :---: | :---: | :---: |
-  | __del__ | _RedisFuture<java.lang.Long>_ | _Mono<java.lang.Long>_ | _Task[scala.Long]_  |
-  | __hset__ | _RedisFuture<java.lang.Boolean>_ | _Mono<java.lang.Boolean>_ | _Task[scala.Boolean]_ |
+  | __del__ | _RedisFuture<java.lang.Long>_ | _Mono<java.lang.Long>_ | _Task[Long]_  |
+  | __hset__ | _RedisFuture<java.lang.Boolean>_ | _Mono<java.lang.Boolean>_ | _Task[Boolean]_ |
   | __hvals__ | _RedisFuture<java.utli.List<V>>_ | _Flux<V<V>>_ | _Observable[V]_ |
   | __...__ | ... | ... | ... |
   
