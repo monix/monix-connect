@@ -20,10 +20,10 @@ Monix Connect is an initiative to implement stream integrations for [Monix](http
 ## Connectors
 1. [Akka](#Akka)
 2. [DynamoDB](#DynamoDB)
-3. [Hdfs](#HDFS))
+3. [Hdfs](#HDFS)
 4. [Parquet](#Parquet)
 5. [Redis](#Redis)
-6. [S3](#S3))
+6. [S3](#S3)
 
 ---
 ### Akka

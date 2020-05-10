@@ -18,17 +18,20 @@
 package monix.connect.s3
 
 import monix.eval.Task
+import monix.execution.Ack.Continue
 import monix.execution.cancelables.AssignableCancelable
 import monix.execution.{Ack, Callback, Scheduler}
-import monix.reactive.Consumer
 import monix.reactive.observers.Subscriber
+import monix.reactive.{Consumer, Observer}
 import software.amazon.awssdk.core.async.AsyncRequestBody
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.model._
+
+import scala.concurrent.Future
 import scala.util.control.NonFatal
 
 /**
-  * An Amazon S3 multipart uploads is an write operation made progresively on individual chunks of an object (parts),
+  * An Amazon S3 multipart uploads is an write operation made progressively on individual chunks of an object (parts),
   * that finishes with a message to S3 that multipart upload is completed, in which the concatenation
   * of each of the individual chunks will end up stored into the same object.
   * Implement the functionality to perform an S3 multipart update from received chunks of data.
@@ -52,7 +55,7 @@ private[s3] class MultipartUploadSubscriber(
   requestPayer: Option[String])(
   implicit
   s3Client: S3AsyncClient)
-  extends Consumer.Sync[Array[Byte], CompleteMultipartUploadResponse] {
+  extends Consumer[Array[Byte], CompleteMultipartUploadResponse] {
 
   private val createRequest: CreateMultipartUploadRequest =
     S3RequestBuilder.createMultipartUploadRequest(
@@ -81,14 +84,14 @@ private[s3] class MultipartUploadSubscriber(
 
   private var buffer: Array[Byte] = Array.emptyByteArray
 
-  private var completedParts: List[CompletedPart] = List.empty[CompletedPart]
-
-  private var partN = 1
   def createSubscriber(
     callback: Callback[Throwable, CompleteMultipartUploadResponse],
-    s: Scheduler): (Subscriber.Sync[Array[Byte]], AssignableCancelable) = {
-    val out = new Subscriber.Sync[Array[Byte]] {
+    s: Scheduler): (Subscriber[Array[Byte]], AssignableCancelable) = {
+    val out = new Subscriber[Array[Byte]] {
+
       implicit val scheduler = s
+      private var completedParts: List[CompletedPart] = List.empty[CompletedPart]
+      private var partN = 1
 
       /**
         *
@@ -96,19 +99,29 @@ private[s3] class MultipartUploadSubscriber(
         * which returns a [[CompletedPart]].
         * In the case it is not, the chunk is added to the buffer waiting to be aggregated with the next one.
         */
-      def onNext(chunk: Array[Byte]): Ack = {
+      def onNext(chunk: Array[Byte]): Future[Ack] = {
         if (chunk.length < minChunkSize) {
           buffer = buffer ++ chunk
+          Future(Ack.Continue)
         } else {
-          try {
-            uploadPart(bucket, key, partN, uploadId, buffer)
-          } catch {
-            case ex if NonFatal(ex) => onError(ex)
+        {
+          for {
+            uid <- uploadId
+            completedPart <- uploadPart(bucket, key, partN, uid, buffer)
+            _ <- Task {
+              completedParts = completedPart :: completedParts
+              buffer = Array.emptyByteArray
+              partN += 1
+            }
+            ack <- Task(Ack.Continue)
+          } yield ack
+        }.onErrorRecoverWith {
+          case NonFatal(ex) => {
+            onError(ex)
+            Task.now(Ack.Stop)
           }
-          partN += 1
-          buffer = Array.emptyByteArray
+        }.runToFuture
         }
-        monix.execution.Ack.Continue
       }
 
       /**
@@ -117,22 +130,26 @@ private[s3] class MultipartUploadSubscriber(
         * returning a [[CompleteMultipartUploadResponse]] that is passed to the callback.
         */
       def onComplete(): Unit = {
-        if (!buffer.isEmpty) {
-          try {
-            uploadPart(bucket, key, partN, uploadId, buffer)
-          } catch {
-            case ex if NonFatal(ex) => onError(ex)
-          }
-        }
         val response: Task[CompleteMultipartUploadResponse] = for {
           uid            <- uploadId
-          completedParts <- Task(completedParts)
+          _ <- Task.defer {
+            if(!buffer.isEmpty) { //perform the last update if buffer is not empty
+              for {
+                lastPart <- uploadPart(bucket, key, partN, uid, buffer)
+                _ <- Task {
+                  completedParts = lastPart :: completedParts
+                }
+              } yield ()
+            } else {
+              Task.unit
+            }
+          }
           completeMultipartUpload <- {
             val request = S3RequestBuilder.completeMultipartUploadRquest(bucket, key, uid, completedParts, requestPayer)
             Task.from(s3Client.completeMultipartUpload(request))
           }
         } yield completeMultipartUpload
-        callback.onSuccess(response.runSyncUnsafe())
+        response.runAsync(callback)
       }
 
       def onError(ex: Throwable): Unit =
@@ -146,19 +163,16 @@ private[s3] class MultipartUploadSubscriber(
     * It should only be called when the received for chunks bigger than minimum size,
     * or later when the last chunk arrives representing the completion of the stream.
     */
-  def uploadPart(bucket: String, key: String, partNumber: Int, uploadId: Task[String], chunk: Array[Byte])(
+  def uploadPart(bucket: String, key: String, partNumber: Int, uploadId: String, chunk: Array[Byte])(
     implicit
-    scheduler: Scheduler): Unit = {
-
-    val completedPart = {
+    scheduler: Scheduler): Task[CompletedPart] = {
       for {
-        uid <- uploadId
         request <- Task {
           S3RequestBuilder.uploadPartRequest(
             bucket = bucket,
             key = key,
             partN = partNumber,
-            uploadId = uid,
+            uploadId = uploadId,
             contentLenght = chunk.size.toLong,
             requestPayer = requestPayer,
             sseCustomerAlgorithm = sseCustomerAlgorithm,
@@ -170,9 +184,6 @@ private[s3] class MultipartUploadSubscriber(
           .from(s3Client.uploadPart(request, AsyncRequestBody.fromBytes(chunk)))
           .map(resp => S3RequestBuilder.completedPart(partNumber, resp))
       } yield completedPart
-    }.runSyncUnsafe()
-
-    completedParts = completedPart :: completedParts
   }
 
 }
@@ -183,3 +194,5 @@ object MultipartUploadSubscriber {
   val awsMinChunkSize: Int = 5 * 1024 * 1024 //5242880
 
 }
+
+

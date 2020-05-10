@@ -52,7 +52,7 @@ import scala.jdk.FutureConverters._
   *
   * Each of the methods expects at least the required parameters to build the AWS S3 request plus
   * optionally the most relevant ones that allow advanced settings such as encription and request payer etc.
-  * On the other hand all methods but multipart update, also accepts the native aws requests to be passed.
+  * On the other hand all methods but multipart upload accepts the native aws requests to be passed.
   */
 object S3 {
 
