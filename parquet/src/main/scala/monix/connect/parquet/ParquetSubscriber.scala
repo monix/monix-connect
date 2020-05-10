@@ -17,35 +17,50 @@
 
 package monix.connect.parquet
 
-import monix.eval.Task
 import monix.execution.{Ack, Callback, Scheduler}
 import monix.execution.cancelables.AssignableCancelable
 import monix.reactive.Consumer
 import monix.reactive.observers.Subscriber
-import org.apache.avro.generic.GenericRecord
 import org.apache.parquet.hadoop.ParquetWriter
 
-class ParquetSubscriber[T](parquetWriter: ParquetWriter[T]) extends Consumer.Sync[T, Task[Unit]] {
+import scala.util.control.NonFatal
+
+/**
+  * A parquet writer implemented as a [[Subscriber.Sync]].
+  * @param parquetWriter The apache hadoop generic implementation of a parquet writer.
+  * @tparam T Represents the type of the elements that will be written into the parquet file.
+  */
+class ParquetSubscriber[T](parquetWriter: ParquetWriter[T]) extends Consumer.Sync[T, Long] {
 
   def createSubscriber(
-    callback: Callback[Throwable, Task[Unit]],
+    callback: Callback[Throwable, Long],
     s: Scheduler): (Subscriber.Sync[T], AssignableCancelable) = {
     val out = new Subscriber.Sync[T] {
       override implicit def scheduler: Scheduler = s
 
+      //the number of parquet files that has been written that is returned as materialized value
+      var nElements: Long = 0
+      override def onNext(record: T): Ack = {
+        try {
+          parquetWriter.write(record)
+          nElements = nElements + 1
+          monix.execution.Ack.Continue
+        } catch {
+          case ex if NonFatal(ex) => {
+            onError(ex)
+            Ack.Stop
+          }
+        }
+      }
+
       override def onComplete() = {
         parquetWriter.close()
-        callback.onSuccess(Task())
+        callback.onSuccess(nElements)
       }
 
       override def onError(ex: Throwable): Unit = {
         parquetWriter.close()
         callback.onError(ex)
-      }
-
-      override def onNext(record: T): Ack = {
-        parquetWriter.write(record)
-        monix.execution.Ack.Continue
       }
     }
 

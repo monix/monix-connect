@@ -34,7 +34,7 @@ class AvroParquetSpec extends AnyWordSpecLike with Matchers with AvroParquetFixt
     "write avro records in parquet" in {
       //given
       val n: Int = 2
-      val file: String = genFile()
+      val file: String = genFilePath()
       val records: List[GenericRecord] = genAvroUsers(n).sample.get.map(avroDocToRecord)
       val w: ParquetWriter[GenericRecord] = parquetWriter(file, conf, schema)
 
@@ -42,7 +42,6 @@ class AvroParquetSpec extends AnyWordSpecLike with Matchers with AvroParquetFixt
       Observable
         .fromIterable(records)
         .consumeWith(Parquet.writer(w))
-        .runSyncUnsafe()
         .runSyncUnsafe()
 
       //then
@@ -55,11 +54,10 @@ class AvroParquetSpec extends AnyWordSpecLike with Matchers with AvroParquetFixt
       //given
       val n: Int = 1
       val records: List[GenericRecord] = genAvroUsers(n).sample.get.map(avroDocToRecord)
-      val file = genFile()
+      val file = genFilePath()
       Observable
         .fromIterable(records)
         .consumeWith(Parquet.writer(parquetWriter(file, conf, schema)))
-        .runSyncUnsafe()
         .runSyncUnsafe()
 
       //when

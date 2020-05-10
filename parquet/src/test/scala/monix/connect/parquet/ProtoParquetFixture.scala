@@ -58,6 +58,15 @@ trait ProtoParquetFixture extends ParquetFixture {
     ProtoParquetReader.builder[ProtoDoc.Builder](new Path(file)).withConf(conf).build()
   }
 
+
+  /*
+ * A parquet reader with no reader support passed would create
+ *  a generic non typed parquet reader support instance under the hood
+ */
+  def protoParquetReaderT(file: String, conf: Configuration): ParquetReader[ProtoDoc] = {
+    ProtoParquetReader.builder[ProtoDoc](new Path(file)).withConf(conf).build()
+  }
+
   def fromProtoParquet(file: String, configuration: Configuration): List[ProtoDoc.Builder] = {
     val reader: ParquetReader[ProtoDoc.Builder] = protoParquetReader(file, conf)
     var proto: ProtoDoc.Builder = reader.read()
