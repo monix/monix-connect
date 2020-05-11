@@ -92,16 +92,9 @@ class ProtoParquetSpec
 
   }
 
-  implicit class ExtendedAvroDocList(x: List[AvroDoc]) {
-    def singleEquiv(x: AvroDoc, y: ProtoDoc): Boolean =
-      ((x.id == y.getId) && (x.name == y.getName))
-    def equiv(y: List[ProtoDoc]): Boolean =
-      x.zip(y).map { case (a, p) => singleEquiv(a, p) }.filterNot(b => b).isEmpty
-  }
-
   override def afterAll(): Unit = {
     import scala.reflect.io.Directory
     val directory = new Directory(new File(folder))
-    //directory.deleteRecursively()
+    directory.deleteRecursively()
   }
 }
