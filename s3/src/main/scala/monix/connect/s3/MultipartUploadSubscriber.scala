@@ -104,23 +104,23 @@ private[s3] class MultipartUploadSubscriber(
           buffer = buffer ++ chunk
           Future(Ack.Continue)
         } else {
-        {
-          for {
-            uid <- uploadId
-            completedPart <- uploadPart(bucket, key, partN, uid, buffer)
-            _ <- Task {
-              completedParts = completedPart :: completedParts
-              buffer = Array.emptyByteArray
-              partN += 1
+          {
+            for {
+              uid           <- uploadId
+              completedPart <- uploadPart(bucket, key, partN, uid, buffer)
+              _ <- Task {
+                completedParts = completedPart :: completedParts
+                buffer = Array.emptyByteArray
+                partN += 1
+              }
+              ack <- Task(Ack.Continue)
+            } yield ack
+          }.onErrorRecoverWith {
+            case NonFatal(ex) => {
+              onError(ex)
+              Task.now(Ack.Stop)
             }
-            ack <- Task(Ack.Continue)
-          } yield ack
-        }.onErrorRecoverWith {
-          case NonFatal(ex) => {
-            onError(ex)
-            Task.now(Ack.Stop)
-          }
-        }.runToFuture
+          }.runToFuture
         }
       }
 
@@ -131,9 +131,9 @@ private[s3] class MultipartUploadSubscriber(
         */
       def onComplete(): Unit = {
         val response: Task[CompleteMultipartUploadResponse] = for {
-          uid            <- uploadId
+          uid <- uploadId
           _ <- Task.defer {
-            if(!buffer.isEmpty) { //perform the last update if buffer is not empty
+            if (!buffer.isEmpty) { //perform the last update if buffer is not empty
               for {
                 lastPart <- uploadPart(bucket, key, partN, uid, buffer)
                 _ <- Task {
@@ -166,24 +166,24 @@ private[s3] class MultipartUploadSubscriber(
   def uploadPart(bucket: String, key: String, partNumber: Int, uploadId: String, chunk: Array[Byte])(
     implicit
     scheduler: Scheduler): Task[CompletedPart] = {
-      for {
-        request <- Task {
-          S3RequestBuilder.uploadPartRequest(
-            bucket = bucket,
-            key = key,
-            partN = partNumber,
-            uploadId = uploadId,
-            contentLenght = chunk.size.toLong,
-            requestPayer = requestPayer,
-            sseCustomerAlgorithm = sseCustomerAlgorithm,
-            sseCustomerKey = sseCustomerKey,
-            sseCustomerKeyMD5 = sseCustomerKeyMD5
-          )
-        }
-        completedPart <- Task
-          .from(s3Client.uploadPart(request, AsyncRequestBody.fromBytes(chunk)))
-          .map(resp => S3RequestBuilder.completedPart(partNumber, resp))
-      } yield completedPart
+    for {
+      request <- Task {
+        S3RequestBuilder.uploadPartRequest(
+          bucket = bucket,
+          key = key,
+          partN = partNumber,
+          uploadId = uploadId,
+          contentLenght = chunk.size.toLong,
+          requestPayer = requestPayer,
+          sseCustomerAlgorithm = sseCustomerAlgorithm,
+          sseCustomerKey = sseCustomerKey,
+          sseCustomerKeyMD5 = sseCustomerKeyMD5
+        )
+      }
+      completedPart <- Task
+        .from(s3Client.uploadPart(request, AsyncRequestBody.fromBytes(chunk)))
+        .map(resp => S3RequestBuilder.completedPart(partNumber, resp))
+    } yield completedPart
   }
 
 }
@@ -194,5 +194,3 @@ object MultipartUploadSubscriber {
   val awsMinChunkSize: Int = 5 * 1024 * 1024 //5242880
 
 }
-
-

@@ -24,7 +24,7 @@ import org.scalacheck.Gen
 trait ParquetFixture {
 
   val folder: String = "./" + Gen.alphaLowerStr.sample.get
-  val genFile: () => String = () => folder + "/" + Gen.alphaLowerStr.sample.get + ".parquet"
+  val genFilePath: () => String = () => folder + "/" + Gen.alphaLowerStr.sample.get + ".parquet"
 
   val conf = new Configuration()
 

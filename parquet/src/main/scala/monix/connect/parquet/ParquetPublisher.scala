@@ -21,12 +21,21 @@ import monix.eval.Task
 import monix.reactive.{Observable, OverflowStrategy}
 import monix.reactive.observers.Subscriber
 import org.apache.parquet.hadoop.ParquetReader
-
 import monix.execution.Ack
+
+/**
+  * The implementation of a reactive parquet publisher.
+  * @param reader The apache hadoop generic implementation of a parquet reader.
+  */
 private[parquet] class ParquetPublisher[T](reader: ParquetReader[T]) {
 
+  /**
+    * A tailrec function that reads a record of a parquet file until the last one.
+    * @param sub The subscriber to feed with the parquet records read.
+    */
   private def readRecords(sub: Subscriber[T]): Task[Unit] = {
     val t = Task(reader.read())
+    t.onErrorHandleWith(ex => Task(sub.onError(ex)))
     t.flatMap { r =>
       if (r != null) {
         Task.deferFuture(sub.onNext(r)).flatMap {
@@ -40,10 +49,16 @@ private[parquet] class ParquetPublisher[T](reader: ParquetReader[T]) {
     }
   }
 
+  /**
+    * Parquet reader [[Observable]] builder.
+    */
   val create: Observable[T] =
     Observable.create(OverflowStrategy.Unbounded) { sub => readRecords(sub).runToFuture(sub.scheduler) }
 }
 
+/**
+  * Companion object builder for [[ParquetPublisher]].
+  */
 object ParquetPublisher {
   def apply[T](reader: ParquetReader[T]): ParquetPublisher[T] = new ParquetPublisher(reader)
 }

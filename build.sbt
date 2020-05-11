@@ -189,7 +189,8 @@ val scalaPBSettings = Seq(
   PB.targets in Compile := Seq(
     scalapb.gen(javaConversions = true) -> (sourceManaged in Compile).value,
     PB.gens.java -> (sourceManaged in Compile).value
-  )
+  ),
+  PB.protoSources in Compile := Seq(new File("parquet/src/test/protobuf")),
 )
 lazy val parquet = monixConnector("parquet", Dependencies.Parquet, scalaPBSettings)
 

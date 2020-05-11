@@ -37,7 +37,8 @@ object Hdfs {
     * @return A [[Long]] that represents the number of bytes that has been written.
     */
   def append(fs: FileSystem, path: Path, lineSeparator: Option[String] = None)(
-    implicit scheduler: Scheduler): Consumer[Array[Byte], Long] = {
+    implicit
+    scheduler: Scheduler): Consumer[Array[Byte], Long] = {
     new HdfsSubscriber(fs, path, appendEnabled = true, lineSeparator = lineSeparator)
   }
 

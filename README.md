@@ -196,6 +196,12 @@ val ob: Observable[AvroRecord] = Parquet.reader(r)
 //AvroRecord implements [[org.apache.avro.generic.GenericRecord]]
 ```
 
+Warning: This connector provides with the logic of building a publisher and subscriber from a given apache hadoop `ParquetReader` and `ParquetWriter` respectively,
+but it does not cover any existing issue within the support interoperability of the apache parquet library with external ones.
+Notice that p.e we have found an issue when reading parquet as protobuf messages with `org.apache.parquet.hadoop.ParquetReader` but not when writing.
+Follow the state of this [issue](https://github.com/monix/monix-connect/issues/34).
+On the other hand, it was all fine the integration between `Avro` and `Parquet`. 
+
 ---
 ## Redis
 #### Introduction

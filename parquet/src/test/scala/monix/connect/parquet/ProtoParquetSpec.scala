@@ -35,7 +35,7 @@ class ProtoParquetSpec
 
     "write exactly a single protobuf message in parquet file" in {
       //given
-      val file: String = genFile()
+      val file: String = genFilePath()
       val messages: ProtoDoc = genProtoDoc.sample.get
       val writer: ParquetWriter[ProtoDoc] = protoParquetWriter(file)
 
@@ -43,7 +43,6 @@ class ProtoParquetSpec
       Observable
         .pure(messages)
         .consumeWith(Parquet.writer(writer))
-        .runSyncUnsafe()
         .runSyncUnsafe()
 
       //then
@@ -58,7 +57,7 @@ class ProtoParquetSpec
     "write protobuf records in parquet (read with an avro generic record reader)" in {
       //given
       val n: Int = 4
-      val file: String = genFile()
+      val file: String = genFilePath()
       val messages: List[ProtoDoc] = genProtoDocs(n).sample.get
       val writer: ParquetWriter[ProtoDoc] = protoParquetWriter(file)
 
@@ -66,7 +65,6 @@ class ProtoParquetSpec
       Observable
         .fromIterable(messages)
         .consumeWith(Parquet.writer(writer))
-        .runSyncUnsafe()
         .runSyncUnsafe()
 
       //then
@@ -78,11 +76,10 @@ class ProtoParquetSpec
     "read from parquet file that at most have one record" in {
       //given
       val records: ProtoDoc = genProtoDoc.sample.get
-      val file: String = genFile()
+      val file: String = genFilePath()
       Observable
         .pure(records)
         .consumeWith(Parquet.writer(protoParquetWriter(file)))
-        .runSyncUnsafe()
         .runSyncUnsafe()
 
       //when
@@ -92,13 +89,7 @@ class ProtoParquetSpec
       l.length shouldEqual 1
       l.map(_.build()) should contain theSameElementsAs List(records)
     }
-  }
 
-  implicit class ExtendedAvroDocList(x: List[AvroDoc]) {
-    def singleEquiv(x: AvroDoc, y: ProtoDoc): Boolean =
-      ((x.id == y.getId) && (x.name == y.getName))
-    def equiv(y: List[ProtoDoc]): Boolean =
-      x.zip(y).map { case (a, p) => singleEquiv(a, p) }.filterNot(b => b).isEmpty
   }
 
   override def afterAll(): Unit = {
