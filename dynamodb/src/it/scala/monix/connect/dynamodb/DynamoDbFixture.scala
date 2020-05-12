@@ -1,11 +1,9 @@
 package monix.connect.dynamodb
 
-import java.util.concurrent.CompletableFuture
-
 import monix.eval.Task
 import org.scalacheck.Gen
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
-import software.amazon.awssdk.services.dynamodb.model.{AttributeDefinition, AttributeValue, CreateTableRequest, CreateTableResponse, DeleteTableRequest, DeleteTableResponse, GetItemRequest, KeySchemaElement, KeyType, ProvisionedThroughput, PutItemRequest, ScalarAttributeType}
+import software.amazon.awssdk.services.dynamodb.model.{AttributeDefinition, AttributeValue, CreateTableRequest, DeleteTableRequest, DeleteTableResponse, GetItemRequest, KeySchemaElement, KeyType, ProvisionedThroughput, PutItemRequest, ScalarAttributeType}
 
 import scala.jdk.CollectionConverters._
 import scala.jdk.FutureConverters._
@@ -17,7 +15,7 @@ trait DynamoDbFixture {
   val numAttr: Int => AttributeValue = value => AttributeValue.builder().n(value.toString).build()
   val doubleAttr: Double => AttributeValue = value => AttributeValue.builder().n(value.toString).build()
 
-  val genCitizenId = Gen.oneOf(1 to 100000)
+  val genCitizenId = Gen.choose(1, 100000)
   val keyMap = (city: String, citizens: Int) => Map("city" -> strAttr(city), "citizenId" -> numAttr(citizens))
 
   val item = (city: String, citizens: Int, debt: Double) => keyMap(city, citizens) ++ Map("debt" -> doubleAttr(debt))
@@ -29,10 +27,14 @@ trait DynamoDbFixture {
       .item(item(city, citizenId, debt).asJava)
       .build()
 
-  def genPutItemRequest: Gen[PutItemRequest] =
-    Gen.oneOf(
-      Seq(putItemRequest(tableName, Gen.alphaLowerStr.sample.get, genCitizenId.sample.get, genCitizenId.sample.get)))
-  def genPutItemRequests = Gen.listOfN(10, genPutItemRequest)
+  val genPutItemRequest: Gen[PutItemRequest] =
+    for {
+      city <- Gen.alphaLowerStr
+      citizenId <- genCitizenId
+      debt <- Gen.choose(1, 1000)
+    } yield putItemRequest(tableName, city, citizenId, debt)
+
+  def genPutItemRequests: Gen[List[PutItemRequest]] = Gen.listOfN(3, genPutItemRequest)
 
   def getItemRequest(tableName: String, city: String, citizenId: Int) =
     GetItemRequest.builder().tableName(tableName).key(keyMap(city, citizenId).asJava).attributesToGet("debt").build()
@@ -80,11 +82,11 @@ trait DynamoDbFixture {
       case Success(_) => println(s"Table ${table} was created")
       case Failure(exception) => println("Failed to create table cities with exception: " + exception)
     }
-
   }
 
   def deleteTable(tableName: String)(implicit client: DynamoDbAsyncClient): Task[DeleteTableResponse] = {
     val deleteRequest: DeleteTableRequest = DeleteTableRequest.builder().tableName(tableName).build()
     Task.deferFuture(client.deleteTable(deleteRequest).asScala)
   }
+
 }

@@ -1,6 +1,5 @@
 package monix.connect.dynamodb
 
-import monix.connect.common.Operators.Transformer
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
@@ -11,7 +10,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model._
-import monix.connect.common.Operators.Implicits._
+import DynamoDbOp._
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
@@ -54,7 +53,7 @@ class DynamoDbTransformerSpec
           response.tableDescription().attributeDefinitions() should contain theSameElementsAs tableDefinition
         }
       }
-      /* todo fix in pipeline
+
       s"receives a single`PutItemRequest` and transforms to `PutItemResponse` " in {
         //given
         val transformer: Transformer[PutItemRequest, Task[PutItemResponse]] =
@@ -63,7 +62,7 @@ class DynamoDbTransformerSpec
 
         //when
         val t: Task[PutItemResponse] =
-          Observable.fromIterable(Iterable(request)).transform(transformer).headL.runToFuture.futureValue
+          Observable.fromIterable(Iterable(request)).transform(transformer).headL.runSyncUnsafe()
 
         //then
         whenReady(t.runToFuture) { response =>
@@ -80,7 +79,7 @@ class DynamoDbTransformerSpec
 
         //when
         val responses: List[Task[PutItemResponse]] =
-          Observable.fromIterable(requests).transform(transformer).toListL.runToFuture.futureValue
+          Observable.fromIterable(requests).transform(transformer).toListL.runSyncUnsafe()
 
         //then
         requests.zip(responses).foreach {
@@ -90,7 +89,7 @@ class DynamoDbTransformerSpec
               response.attributes().asScala should contain theSameElementsAs req.item().asScala
             }
         }
-      }*/
+      }
 
       s"consumes a single `GetItemRequest` and transforms to `GetItemResponse` " in {
         //given
@@ -103,7 +102,7 @@ class DynamoDbTransformerSpec
 
         //when
         val t: Task[GetItemResponse] =
-          Observable.fromIterable(Iterable(request)).transform(transformer).headL.runToFuture.futureValue
+          Observable.fromIterable(Iterable(request)).transform(transformer).headL.runSyncUnsafe()
 
         //then
         whenReady(t.runToFuture) { response =>

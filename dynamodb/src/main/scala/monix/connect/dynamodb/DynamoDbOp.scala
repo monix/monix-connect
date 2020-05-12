@@ -23,7 +23,6 @@ import software.amazon.awssdk.services.dynamodb.model.{
   BatchGetItemRequest,
   CreateTableRequest,
   CreateTableResponse,
-  DeleteTableResponse,
   PutItemResponse
 }
 //import com.amazonaws.services.dynamodbv2.model.{BatchGetItemRequest, BatchGetItemResult, BatchWriteItemRequest, BatchWriteItemResult}
@@ -42,6 +41,12 @@ import software.amazon.awssdk.services.dynamodb.model.{
   PutItemRequest
 }
 
+/**
+  * A higher abstraction for the dynamodb client and requests types that defines
+  * a common method which will execute any given [[DynamoDbRequest]] with its correspondent operation.
+  * @tparam In The input request as type parameter with a lower bound for [[DynamoDbRequest]].
+  * @tparam Out The response of the execution as type parameter with a lower bound for [[DynamoDbResponse]].
+  */
 sealed trait DynamoDbOp[In <: DynamoDbRequest, Out <: DynamoDbResponse] {
   def execute(dynamoDbRequest: In)(implicit client: DynamoDbAsyncClient): CompletableFuture[Out]
 }

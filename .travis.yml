@@ -3,15 +3,13 @@ language: scala
 jdk: openjdk8
 
 scala:
-  - 2.13.1
+  - 2.12.8
 
 services:
   - docker
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION test
-  - sbt scalafmtCheckAll
-  - sbt test
   - sh start-dependencies.sh
   - sbt it:test
 
