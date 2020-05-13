@@ -9,7 +9,6 @@ services:
   - docker
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION test
   - sbt scalafmtCheckAll
   - sbt test
   - sh start-dependencies.sh

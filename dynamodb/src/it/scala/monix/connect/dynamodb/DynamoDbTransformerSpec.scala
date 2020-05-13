@@ -1,9 +1,9 @@
 package monix.connect.dynamodb
 
-import monix.connect.common.Operators.Transformer
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
+import monix.connect.dynamodb.Transformer
 import org.scalacheck.Gen
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.BeforeAndAfterAll
@@ -11,7 +11,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model._
-import monix.connect.common.Operators.Implicits._
+import DynamoDbOp._
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
@@ -23,11 +23,11 @@ class DynamoDbTransformerSpec
   implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 100.milliseconds)
   implicit val client: DynamoDbAsyncClient = DynamoDbClient()
 
-  s"${DynamoDb}.transformer() " should {
+  s"${DynamoDb}.transformer() creates a transformer operator" that {
 
-    s"create a reactive `Transformer`" that {
+    s"given an implicit instance of ${DynamoDbOp.createTableOp} in the scope" must {
 
-      s"receives `CreateTableRequests` and transforms to `CreateTableResponses`" in {
+      s"transform `CreateTableRequests` to `CreateTableResponses`" in {
         //given
         val randomTableName = Gen.alphaLowerStr.sample.get
         val transformer: Transformer[CreateTableRequest, Task[CreateTableResponse]] =
@@ -54,45 +54,55 @@ class DynamoDbTransformerSpec
           response.tableDescription().attributeDefinitions() should contain theSameElementsAs tableDefinition
         }
       }
-      /* todo fix in pipeline
-      s"receives a single`PutItemRequest` and transforms to `PutItemResponse` " in {
-        //given
-        val transformer: Transformer[PutItemRequest, Task[PutItemResponse]] =
-          DynamoDb.transformer[PutItemRequest, PutItemResponse]
-        val request: PutItemRequest = genPutItemRequest.sample.get
+    }
+      s"given an implicit instance of ${DynamoDbOp.putItemOp} in the scope" must {
 
-        //when
-        val t: Task[PutItemResponse] =
-          Observable.fromIterable(Iterable(request)).transform(transformer).headL.runToFuture.futureValue
+        s"transform a single`PutItemRequest` to `PutItemResponse` " in {
+          //given
+          val transformer: Transformer[PutItemRequest, Task[PutItemResponse]] =
+            DynamoDb.transformer[PutItemRequest, PutItemResponse]
+          val city = Gen.alphaLowerStr.sample.get
+          val citizenId = genCitizenId.sample.get
+          val debt = Gen.choose(0, 10000).sample.get
+          val request: PutItemRequest = putItemRequest(tableName, city, citizenId, debt)
 
-        //then
-        whenReady(t.runToFuture) { response =>
-          response shouldBe a[PutItemResponse]
-          response.attributes().asScala should contain theSameElementsAs request.item().asScala
+          //when
+          val r: PutItemResponse = Observable.fromIterable(Iterable(request)).transform(transformer).headL.flatten.runSyncUnsafe()
+
+          //then
+          r shouldBe a[PutItemResponse]
+          val getResponse: GetItemResponse = client.getItem(getItemRequest(tableName, city, citizenId)).asScala.futureValue
+          getResponse.item().values().asScala.head.n().toDouble shouldBe debt
+        }
+
+        s"transform `PutItemRequests` to `PutItemResponses` " in {
+          //given
+          val transformer: Transformer[PutItemRequest, Task[PutItemResponse]] =
+            DynamoDb.transformer[PutItemRequest, PutItemResponse]
+          val requestAttr: List[(String, Int, Double)] = Gen.listOfN(10, genRequestAttributes).sample.get
+          val requests: List[PutItemRequest] = requestAttr.map { case (city, citizenId, debt) => putItemRequest(tableName, city, citizenId, debt) }
+
+          //when
+          val r: List[PutItemResponse] = Task.sequence(
+            Observable
+              .fromIterable(requests)
+              .transform(transformer)
+              .toListL
+              .runSyncUnsafe())
+            .runSyncUnsafe()
+
+          //then
+          r shouldBe a[List[PutItemResponse]]
+          requestAttr.map { case (city, citizenId, debt) =>
+            val getResponse: GetItemResponse = client.getItem(getItemRequest(tableName, city, citizenId)).asScala.futureValue
+            getResponse.item().values().asScala.head.n().toDouble shouldBe debt
+          }
         }
       }
 
-      s"receives multiple `PutItemRequests` and transforms to `PutItemResponses` " in {
-        //given
-        val transformer: Transformer[PutItemRequest, Task[PutItemResponse]] =
-          DynamoDb.transformer[PutItemRequest, PutItemResponse]
-        val requests: List[PutItemRequest] = genPutItemRequests.sample.get
+    s"given an implicit instance of ${DynamoDbOp.getItemOp} in the scope" must {
 
-        //when
-        val responses: List[Task[PutItemResponse]] =
-          Observable.fromIterable(requests).transform(transformer).toListL.runToFuture.futureValue
-
-        //then
-        requests.zip(responses).foreach {
-          case (req: PutItemRequest, f: Task[PutItemResponse]) =>
-            whenReady(f.runToFuture) { response =>
-              response shouldBe a[PutItemResponse]
-              response.attributes().asScala should contain theSameElementsAs req.item().asScala
-            }
-        }
-      }*/
-
-      s"consumes a single `GetItemRequest` and transforms to `GetItemResponse` " in {
+      s"transforms a single `GetItemRequest` to `GetItemResponse` " in {
         //given
         val city = "London"
         val citizenId = 613371
@@ -103,7 +113,7 @@ class DynamoDbTransformerSpec
 
         //when
         val t: Task[GetItemResponse] =
-          Observable.fromIterable(Iterable(request)).transform(transformer).headL.runToFuture.futureValue
+          Observable.fromIterable(Iterable(request)).transform(transformer).headL.runSyncUnsafe()
 
         //then
         whenReady(t.runToFuture) { response =>
@@ -118,7 +128,6 @@ class DynamoDbTransformerSpec
 
   override def beforeAll(): Unit = {
     createTable(tableName)
-    Thread.sleep(100)
     super.beforeAll()
   }
 

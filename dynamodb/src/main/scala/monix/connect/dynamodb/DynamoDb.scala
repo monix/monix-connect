@@ -17,9 +17,8 @@
 
 package monix.connect.dynamodb
 
-import monix.connect.common.Operators.Transformer
-import monix.reactive.{Consumer, Observable, Observer}
-import monix.execution.Ack
+import monix.reactive.{Consumer, Observable}
+import monix.execution.Scheduler
 import monix.eval.Task
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.{DynamoDbRequest, DynamoDbResponse}
@@ -28,34 +27,34 @@ import scala.jdk.FutureConverters._
 
 object DynamoDb {
 
+  /**
+    * A monix [[Consumer]] that executes any given [[software.amazon.awssdk.services.dynamodb.model.DynamoDbRequest]].
+    *
+    * @param dynamoDbOp Abstracts the execution of any given [[DynamoDbRequest]] with its correspondent operation that returns [[DynamoDbResponse]].
+    * @param client An asyncronous dynamodb client.
+    * @tparam In Input type parameter that must be a subtype os [[DynamoDbRequest]].
+    * @tparam Out Output type parameter that must be a subtype os [[DynamoDbRequest]].
+    * @return A [[monix.reactive.Consumer]] that expects and executes dynamodb requests.
+    */
   def consumer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
     implicit
     dynamoDbOp: DynamoDbOp[In, Out],
-    client: DynamoDbAsyncClient = DynamoDbClient()): Consumer[In, Task[Out]] = {
-    Consumer.create[In, Task[Out]] { (_, _, callback) =>
-      new Observer.Sync[In] {
-        private var dynamoDbResponse: Task[Out] = _
+    client: DynamoDbAsyncClient,
+    scheduler: Scheduler): Consumer[In, Out] = new DynamoDbSubscriber()
 
-        def onNext(dynamoDbRequest: In): Ack = {
-          dynamoDbResponse = Task.fromFuture(dynamoDbOp.execute(dynamoDbRequest).asScala)
-          monix.execution.Ack.Continue
-        }
-
-        def onComplete(): Unit = {
-          callback.onSuccess(dynamoDbResponse)
-        }
-
-        def onError(ex: Throwable): Unit = {
-          callback.onError(ex)
-        }
-      }
-    }
-  }
-
+  /**
+    * A monix transformer that executes any given [[DynamoDbRequest]] into its subsequent [[DynamoDbResponse]].
+    *
+    * @param dynamoDbOp Abstracts the execution of any given [[DynamoDbRequest]] with its correspondent operation that returns [[DynamoDbResponse]].
+    * @param client An asyncronous dynamodb client.
+    * @tparam In Input type parameter that must be a subtype os [[DynamoDbRequest]].
+    * @tparam Out Output type parameter that must be a subtype os [[DynamoDbRequest]].
+    * @return A dynamodb request transformer: `Observable[DynamoDbRequest] => Observable[DynamoDbRequest]`.
+    */
   def transformer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
     implicit
     dynamoDbOp: DynamoDbOp[In, Out],
-    client: DynamoDbAsyncClient = DynamoDbClient()): Transformer[In, Task[Out]] = { inObservable: Observable[In] =>
+    client: DynamoDbAsyncClient): Observable[In] => Observable[Task[Out]] = { inObservable: Observable[In] =>
     inObservable.map(in => Task.fromFuture(dynamoDbOp.execute(in).asScala))
   }
 }

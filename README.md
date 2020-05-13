@@ -6,14 +6,14 @@
  [travis]:                https://travis-ci.com/github/monix/monix-connect
  [travis-badge]:          https://travis-ci.com/monix/monix-connect.svg?branch=master
  
- ⚠️ This space is under construction 🚧 
+ _Warning:_ This project is in early stages and the API might be likely to be changed in future next releases.
  
 Monix Connect is an initiative to implement stream integrations for [Monix](https://monix.io/).
  A connector describes the connection between the application and a specific data point, which could be a file, a database or any system in which the appication 
  can interact by sending or receiving information. Therefore, the aim of this project is to catch the most common
-  connections that users could need when developing reactive applications with Monix, these would basically reduce boilerplate code and furthermore, will let the users to greatly save time and complexity in their implementing projects.
+ connections that users could need when developing reactive applications with Monix, these would basically reduce boilerplate code and furthermore, will let the users to greatly save time and complexity in their implementing projects.
  
-  See below the list of available [connectors](#Connectors).  
+See below the list of available [connectors](#Connectors).  
 
 ---
 
@@ -50,14 +50,14 @@ from [Alpakka](https://doc.akka.io/docs/alpakka/current/index.html) or any other
 _Amazon DynamoDB_ is a key-value and document database that performs at any scale in a single-digit millisecond.
 In which of the world's fastest growing enterprises depend on it to support their mission-critical workloads.
 
-The DynamoDB operations availavle are: __create table__, __delete table__, __put item__, __get item__, __batch get__ and __batch write__, in which 
-seen under the java api prespective, all of them inherit from `DynamoDbRequest` and `DynamoDbResponse` respectively for requests and responses.
+The __main__ DynamoDB operations availavle are: __create table__, __delete table__, __put item__, __get item__, __batch get__ and __batch write__, but all the defined under 
+`software.amazon.awssdk.services.dynamodb.model` are available as well, more precisely all whose inherit from `DynamoDbRequest` and `DynamoDbResponse` respectively for requests and responses.
 
 Therefore, `monix-dynamodb` makes possible to use a generic implementation of `Observable` __transformer__ and __consumer__ that handles with any DynamoDB request available in the `software.amazon.awssdk`. 
 
 See below an example of transforming and consuming DynamoDb operations with monix.
 
-Required import: `monix.connect.dynamodb.DynamoDb`
+Required import: `monix.connect.dynamodb.DynamoDbOp._`
  
 Transformer:
 ```scala
@@ -75,6 +75,14 @@ Observable
 .consumeWith(DynamoDb.consumer()) //a safe and syncronous consumer that executes dynamodb requests  
 //the materialized value would be of type Task[DynamoDBResponse]
 ```
+
+See an example of a stream that consumes and executes DynamoDb `GetItemRequests`:
+
+```scala
+val ob: Observable[GetItemRequest] = ???
+ob.consumeWith(DynamoDb.consumer())
+```
+
 ---
 ### HDFS
 
