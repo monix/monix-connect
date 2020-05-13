@@ -17,24 +17,24 @@
 
 package monix.connect.dynamodb
 
-import monix.reactive.{Consumer, Observable, Observer}
-import monix.execution.{Ack, Scheduler}
+import monix.reactive.{Consumer, Observable}
+import monix.execution.Scheduler
 import monix.eval.Task
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.{DynamoDbRequest, DynamoDbResponse}
 
-import scala.concurrent.Future
 import scala.jdk.FutureConverters._
 
 object DynamoDb {
 
   /**
     * A monix [[Consumer]] that executes any given [[software.amazon.awssdk.services.dynamodb.model.DynamoDbRequest]].
-    * @param dynamoDbOp
-    * @param client
-    * @tparam In
-    * @tparam Out
-    * @return
+    *
+    * @param dynamoDbOp Abstracts the execution of any given [[DynamoDbRequest]] with its correspondent operation that returns [[DynamoDbResponse]].
+    * @param client An asyncronous dynamodb client.
+    * @tparam In Input type parameter that must be a subtype os [[DynamoDbRequest]].
+    * @tparam Out Output type parameter that must be a subtype os [[DynamoDbRequest]].
+    * @return A [[monix.reactive.Consumer]] that expects and executes dynamodb requests.
     */
   def consumer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
     implicit
@@ -43,12 +43,13 @@ object DynamoDb {
     scheduler: Scheduler): Consumer[In, Out] = new DynamoDbSubscriber()
 
   /**
+    * A monix transformer that executes any given [[DynamoDbRequest]] into its subsequent [[DynamoDbResponse]].
     *
-    * @param dynamoDbOp
-    * @param client
-    * @tparam In
-    * @tparam Out
-    * @return
+    * @param dynamoDbOp Abstracts the execution of any given [[DynamoDbRequest]] with its correspondent operation that returns [[DynamoDbResponse]].
+    * @param client An asyncronous dynamodb client.
+    * @tparam In Input type parameter that must be a subtype os [[DynamoDbRequest]].
+    * @tparam Out Output type parameter that must be a subtype os [[DynamoDbRequest]].
+    * @return A dynamodb request transformer: `Observable[DynamoDbRequest] => Observable[DynamoDbRequest]`.
     */
   def transformer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
     implicit

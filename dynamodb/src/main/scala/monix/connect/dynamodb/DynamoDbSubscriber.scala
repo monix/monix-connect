@@ -21,7 +21,7 @@ import monix.eval.Task
 import monix.execution.cancelables.AssignableCancelable
 import monix.execution.{Ack, Callback, Scheduler}
 import monix.reactive.observers.Subscriber
-import monix.reactive.{Consumer, Observer}
+import monix.reactive.Consumer
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.{DynamoDbRequest, DynamoDbResponse}
 
