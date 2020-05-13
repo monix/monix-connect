@@ -57,39 +57,36 @@ private[s3] class MultipartUploadSubscriber(
   s3Client: S3AsyncClient)
   extends Consumer[Array[Byte], CompleteMultipartUploadResponse] {
 
-  private val createRequest: CreateMultipartUploadRequest =
-    S3RequestBuilder.createMultipartUploadRequest(
-      bucket = bucket,
-      key = key,
-      contentType = contentType,
-      acl = acl,
-      grantFullControl = grantFullControl,
-      grantRead = grantRead,
-      grantReadACP = grantReadACP,
-      grantWriteACP = grantWriteACP,
-      requestPayer = requestPayer,
-      serverSideEncryption = serverSideEncryption,
-      sseCustomerAlgorithm = sseCustomerAlgorithm,
-      sseCustomerKey = sseCustomerKey,
-      sseCustomerKeyMD5 = sseCustomerKeyMD5,
-      ssekmsEncryptionContext = ssekmsEncryptionContext,
-      ssekmsKeyId = ssekmsKeyId
-    )
-
-  private val uploadId: Task[String] =
-    Task
-      .from(s3Client.createMultipartUpload(createRequest))
-      .map(_.uploadId())
-      .memoize
-
-  private var buffer: Array[Byte] = Array.emptyByteArray
-
   def createSubscriber(
     callback: Callback[Throwable, CompleteMultipartUploadResponse],
     s: Scheduler): (Subscriber[Array[Byte]], AssignableCancelable) = {
     val out = new Subscriber[Array[Byte]] {
 
       implicit val scheduler = s
+      private val createRequest: CreateMultipartUploadRequest =
+        S3RequestBuilder.createMultipartUploadRequest(
+          bucket = bucket,
+          key = key,
+          contentType = contentType,
+          acl = acl,
+          grantFullControl = grantFullControl,
+          grantRead = grantRead,
+          grantReadACP = grantReadACP,
+          grantWriteACP = grantWriteACP,
+          requestPayer = requestPayer,
+          serverSideEncryption = serverSideEncryption,
+          sseCustomerAlgorithm = sseCustomerAlgorithm,
+          sseCustomerKey = sseCustomerKey,
+          sseCustomerKeyMD5 = sseCustomerKeyMD5,
+          ssekmsEncryptionContext = ssekmsEncryptionContext,
+          ssekmsKeyId = ssekmsKeyId
+        )
+      private val uploadId: Task[String] =
+        Task
+          .from(s3Client.createMultipartUpload(createRequest))
+          .map(_.uploadId())
+          .memoize
+      private var buffer: Array[Byte] = Array.emptyByteArray
       private var completedParts: List[CompletedPart] = List.empty[CompletedPart]
       private var partN = 1
 

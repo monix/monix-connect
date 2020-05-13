@@ -76,7 +76,7 @@ Observable
 //the materialized value would be of type Task[DynamoDBResponse]
 ```
 
-See an example of a stream that executes DynamoDb `GetItemRequests`, transforming them into `GetItemResponse` :
+See an example of a stream that consumes and executes DynamoDb `GetItemRequests`:
 
 ```scala
 val ob: Observable[GetItemRequest] = ???
