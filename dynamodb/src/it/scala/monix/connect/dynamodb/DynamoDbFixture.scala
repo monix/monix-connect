@@ -39,6 +39,7 @@ trait DynamoDbFixture {
   def getItemRequest(tableName: String, city: String, citizenId: Int) =
     GetItemRequest.builder().tableName(tableName).key(keyMap(city, citizenId).asJava).attributesToGet("debt").build()
 
+
   val getItemMalformedRequest =
     GetItemRequest.builder().tableName(tableName).attributesToGet("not_present").build()
 
@@ -87,6 +88,14 @@ trait DynamoDbFixture {
   def deleteTable(tableName: String)(implicit client: DynamoDbAsyncClient): Task[DeleteTableResponse] = {
     val deleteRequest: DeleteTableRequest = DeleteTableRequest.builder().tableName(tableName).build()
     Task.deferFuture(client.deleteTable(deleteRequest).asScala)
+  }
+
+  def genRequestAttributes: Gen[(String, Int, Double)] = {
+    for {
+      city <- Gen.alphaLowerStr
+      citizenId <- genCitizenId
+      debt <- Gen.choose(0, 10000)
+    } yield (city, citizenId, debt.toDouble)
   }
 
 }

@@ -53,6 +53,25 @@ sealed trait DynamoDbOp[In <: DynamoDbRequest, Out <: DynamoDbResponse] {
 
 object DynamoDbOp {
 
+  implicit val batchGetOp = new DynamoDbOp[BatchGetItemRequest, BatchGetItemResponse] {
+    def execute(request: BatchGetItemRequest)(
+      implicit
+      client: DynamoDbAsyncClient): CompletableFuture[BatchGetItemResponse] = {
+      client.batchGetItem(request)
+    }
+  }
+
+  implicit val batchWriteOp = new DynamoDbOp[BatchWriteItemRequest, BatchWriteItemResponse] {
+    def execute(request: BatchWriteItemRequest)(
+      implicit
+      client: DynamoDbAsyncClient): CompletableFuture[BatchWriteItemResponse] = {
+      client.batchWriteItem(request)
+    }
+  }
+
+  //todo create backup request
+
+  //todo create global table requ
   implicit val createTableOp = new DynamoDbOp[CreateTableRequest, CreateTableResponse] {
     def execute(request: software.amazon.awssdk.services.dynamodb.model.CreateTableRequest)(
       implicit
@@ -60,6 +79,9 @@ object DynamoDbOp {
       client.createTable(request)
     }
   }
+  //todo delete backup request
+
+  //todo delete item request
 
   implicit val deleteTableOp = new DynamoDbOp[DeleteTableRequest, DeleteTableResponse] {
     def execute(request: DeleteTableRequest)(
@@ -81,20 +103,8 @@ object DynamoDbOp {
     }
   }
 
-  implicit val batchGetOp = new DynamoDbOp[BatchGetItemRequest, BatchGetItemResponse] {
-    def execute(request: BatchGetItemRequest)(
-      implicit
-      client: DynamoDbAsyncClient): CompletableFuture[BatchGetItemResponse] = {
-      client.batchGetItem(request)
-    }
-  }
 
-  implicit val batchWriteOp = new DynamoDbOp[BatchWriteItemRequest, BatchWriteItemResponse] {
-    def execute(request: BatchWriteItemRequest)(
-      implicit
-      client: DynamoDbAsyncClient): CompletableFuture[BatchWriteItemResponse] = {
-      client.batchWriteItem(request)
-    }
-  }
+
+
 
 }
