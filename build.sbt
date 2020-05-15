@@ -13,8 +13,8 @@ lazy val sharedSettings = Seq(
   organization       := "io.monix",
   scalaVersion       := "2.13.1",
   version            := Version.version,
-  crossScalaVersions := Seq("2.12.10", "2.13.1"),
-  scalafmtOnCompile  := true,
+  crossScalaVersions := Seq("2.13.1"),
+  scalafmtOnCompile  := false,
   scalacOptions ++= Seq(
     // warnings
     "-unchecked", // able additional warnings where generated code depends on assumptions
