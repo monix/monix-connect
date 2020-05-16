@@ -4,7 +4,8 @@
 [![Gitter](https://badges.gitter.im/monix/monix-connect.svg)](https://gitter.im/monix/monix-connect?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
  [workflow]:                https://github.com/monix/monix-connect/actions?query=branch%3Amaster+workflow%3Abuild
- [workflow-badge]:          https://github.com/monix/monix-connect/workflows/Scala%20CI/badge.svg?branch=master
+ [workflow-badge]:          https://github.com/monix/monix-connect/workflows/Build/badge.svg
+
  
  _Warning:_ This project is in early stages and the API might be likely to be changed in future next releases.
  
