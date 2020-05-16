@@ -24,8 +24,6 @@ import io.lettuce.core.{KeyScanCursor, ScanCursor}
 import monix.eval.Task
 import monix.reactive.Observable
 
-import scala.jdk.FutureConverters._
-
 private[redis] trait RedisKey {
 
   /**
@@ -33,28 +31,28 @@ private[redis] trait RedisKey {
     * @return The number of keys that were removed.
     */
   def del[K, V](keys: K*)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().del(keys: _*).asScala).map(_.longValue)
+    Task.from(connection.reactive().del(keys: _*)).map(_.longValue)
 
   /**
     * Unlink one or more keys (non blocking DEL).
     * @return The number of keys that were removed.
     */
   def unlink[K, V](keys: K*)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().unlink(keys: _*)).map(_.longValue)
+    Task.from(connection.reactive().unlink(keys: _*)).map(_.longValue)
 
   /**
     * Return a serialized version of the value stored at the specified key.
     * @return The serialized value.
     */
   def dump[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Array[Byte]] =
-    Task.from(connection.async().dump(key))
+    Task.from(connection.reactive().dump(key))
 
   /**
     * Determine how many keys exist.
     * @return Number of existing keys
     */
   def exists[K, V](keys: K*)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().exists(keys: _*)).map(_.toLong)
+    Task.from(connection.reactive().exists(keys: _*)).map(_.toLong)
 
   /**
     * Set a key's time to live in seconds.
@@ -62,17 +60,17 @@ private[redis] trait RedisKey {
     *
     */
   def expire[K, V](key: K, seconds: Long)(implicit connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-    Task.from(connection.async().expire(key, seconds)).map(_.booleanValue)
+    Task.from(connection.reactive().expire(key, seconds)).map(_.booleanValue)
 
   /**
     * Set the expiration for a key as a UNIX timestamp.
     * @return True if the timeout was set. False if key does not exist or the timeout could not be set.
     */
   def expireat[K, V](key: K, timestamp: Date)(implicit connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-    Task.from(connection.async().expireat(key, timestamp)).map(_.booleanValue)
+    Task.from(connection.reactive().expireat(key, timestamp)).map(_.booleanValue)
 
   def expireat[K, V](key: K, timestamp: Long)(implicit connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-    Task.from(connection.async().expireat(key, timestamp)).map(_.booleanValue)
+    Task.from(connection.reactive().expireat(key, timestamp)).map(_.booleanValue)
 
   /**
     * Find all keys matching the given pattern.
@@ -88,21 +86,21 @@ private[redis] trait RedisKey {
   def migrate[K, V](host: String, port: Int, key: K, db: Int, timeout: Long)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().migrate(host, port, key, db, timeout))
+    Task.from(connection.reactive().migrate(host, port, key, db, timeout))
 
   /**
     * Move a key to another database.
     * @return True if the move operation succeeded, false if not.
     */
   def move[K, V](key: K, db: Int)(implicit connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-    Task.from(connection.async().move(key, db)).map(_.booleanValue)
+    Task.from(connection.reactive().move(key, db)).map(_.booleanValue)
 
   /**
     * returns the kind of internal representation used in order to store the value associated with a key.
     * @return String
     */
   def objectEncoding[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().objectEncoding(key))
+    Task.from(connection.reactive().objectEncoding(key))
 
   /**
     * Returns the number of seconds since the object stored at the specified key is idle (not requested by read or write
@@ -110,21 +108,21 @@ private[redis] trait RedisKey {
     * @return Number of seconds since the object stored at the specified key is idle.
     */
   def objectIdletime[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().objectIdletime(key)).map(_.longValue)
+    Task.from(connection.reactive().objectIdletime(key)).map(_.longValue)
 
   /**
     * Returns the number of references of the value associated with the specified key.
     * @return Long
     */
   def objectRefcount[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().objectRefcount(key)).map(_.longValue)
+    Task.from(connection.reactive().objectRefcount(key)).map(_.longValue)
 
   /**
     * Remove the expiration from a key.
     * @return True if the timeout was removed. false if key does not exist or does not have an associated timeout.
     */
   def persist[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-    Task.from(connection.async().persist(key)).map(_.booleanValue)
+    Task.from(connection.reactive().persist(key)).map(_.booleanValue)
 
   /**
     * Set a key's time to live in milliseconds.
@@ -132,7 +130,7 @@ private[redis] trait RedisKey {
     *
     */
   def pexpire[K, V](key: K, milliseconds: Long)(implicit connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-    Task.from(connection.async().pexpire(key, milliseconds)).map(_.booleanValue())
+    Task.from(connection.reactive().pexpire(key, milliseconds)).map(_.booleanValue())
 
   /**
     * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
@@ -141,10 +139,10 @@ private[redis] trait RedisKey {
     *                                                                               be set (see: { @code EXPIRE}).
     */
   def pexpireat[K, V](key: K, timestamp: Date)(implicit connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-    Task.from(connection.async().pexpireat(key, timestamp)).map(_.booleanValue())
+    Task.from(connection.reactive().pexpireat(key, timestamp)).map(_.booleanValue())
 
   def pexpireat[K, V](key: K, timestamp: Long)(implicit connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-    Task.from(connection.async().pexpireat(key, timestamp)).map(_.booleanValue())
+    Task.from(connection.reactive().pexpireat(key, timestamp)).map(_.booleanValue())
 
   /**
     * Get the time to live for a key in milliseconds.
@@ -152,21 +150,21 @@ private[redis] trait RedisKey {
     *         above).
     */
   def pttl[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().pttl(key)).map(_.longValue)
+    Task.from(connection.reactive().pttl(key)).map(_.longValue)
 
   /**
     * Return a random key from the keyspace.
     * @return The random key, or null when the database is empty.
     */
   def randomkey[K, V]()(implicit connection: StatefulRedisConnection[K, V]): Task[V] =
-    Task.from(connection.async().randomkey())
+    Task.from(connection.reactive().randomkey())
 
   /**
     * Rename a key.
     * @return String simple-string-reply
     */
   def rename[K, V](key: K, newKey: K)(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().rename(key, newKey))
+    Task.from(connection.reactive().rename(key, newKey))
 
   /**
     * Rename a key, only if the new key does not exist.
@@ -174,7 +172,7 @@ private[redis] trait RedisKey {
     *         False if newkey already exists.
     */
   def renamenx[K, V](key: K, newKey: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-    Task.from(connection.async().renamenx(key, newKey)).map(_.booleanValue)
+    Task.from(connection.reactive().renamenx(key, newKey)).map(_.booleanValue)
 
   /**
     * Create a key using the provided serialized value, previously obtained using DUMP.
@@ -183,7 +181,7 @@ private[redis] trait RedisKey {
   def restore[K, V](key: K, ttl: Long, value: Array[Byte])(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().restore(key, ttl, value))
+    Task.from(connection.reactive().restore(key, ttl, value))
 
   /**
     * Sort the elements in a list, set or sorted set.
@@ -197,31 +195,31 @@ private[redis] trait RedisKey {
     * @return The number of found keys.
     */
   def touch[K, V](keys: K*)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().touch(keys: _*)).map(_.longValue)
+    Task.from(connection.reactive().touch(keys: _*)).map(_.longValue)
 
   /**
     * Get the time to live for a key.
     * @return TTL in seconds, or a negative value in order to signal an error (see the description above).
     */
   def ttl[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().ttl(key)).map(_.longValue)
+    Task.from(connection.reactive().ttl(key)).map(_.longValue)
 
   /**
     * Determine the type stored at key.
     * @return Type of key, or none when key does not exist.
     */
   def `type`[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().`type`(key))
+    Task.from(connection.reactive().`type`(key))
 
   /**
     * Incrementally iterate the keys space.
     * @return Scan cursor.
     */
   def scan[K, V]()(implicit connection: StatefulRedisConnection[K, V]): Task[KeyScanCursor[K]] =
-    Task.from(connection.async().scan())
+    Task.from(connection.reactive().scan())
 
   def scan[K, V](scanCursor: ScanCursor)(implicit connection: StatefulRedisConnection[K, V]): Task[KeyScanCursor[K]] =
-    Task.from(connection.async().scan(scanCursor))
+    Task.from(connection.reactive().scan(scanCursor))
 
 }
 

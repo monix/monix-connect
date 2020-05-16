@@ -17,16 +17,10 @@
 
 package monix.connect.redis
 
-import java.time.Instant
-import java.util.Date
-
 import io.lettuce.core.api.StatefulRedisConnection
-import io.lettuce.core.{KeyScanCursor, ScanCursor}
 import monix.eval.Task
-import monix.reactive.Observable
 import org.mockito.IdiomaticMockito
 import org.mockito.MockitoSugar.{verify, when}
-import org.scalacheck.Gen
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
@@ -38,13 +32,12 @@ class RedisServerSpec
   implicit val connection: StatefulRedisConnection[String, Int] = mock[StatefulRedisConnection[String, Int]]
 
   override def beforeAll(): Unit = {
-    when(connection.async()).thenAnswer(asyncRedisCommands)
     when(connection.reactive()).thenAnswer(reactiveRedisCommands)
     super.beforeAll()
   }
 
   override def beforeEach() = {
-    reset(asyncRedisCommands)
+    reset(reactiveRedisCommands)
     reset(reactiveRedisCommands)
   }
 
@@ -54,26 +47,24 @@ class RedisServerSpec
 
   it should "implement flushall operation" in {
     //given
-    when(asyncRedisCommands.flushallAsync()).thenReturn(MockRedisFuture[String])
+    when(reactiveRedisCommands.flushallAsync()).thenReturn(mockMono[String])
 
     //when
-    val t = RedisServer.flushall()
+    val _: Task[String] = RedisServer.flushall()
 
     //then
-    t shouldBe a[Task[String]]
-    verify(asyncRedisCommands).flushallAsync()
+    verify(reactiveRedisCommands).flushallAsync()
   }
 
   it should "implement flushdb operation" in {
     //given
-    when(asyncRedisCommands.flushdbAsync()).thenReturn(MockRedisFuture[String])
+    when(reactiveRedisCommands.flushdbAsync()).thenReturn(mockMono[String])
 
     //when
-    val t = RedisServer.flushdb()
+    val _: Task[String] = RedisServer.flushdb()
 
     //then
-    t shouldBe a[Task[String]]
-    verify(asyncRedisCommands).flushdbAsync()
+    verify(reactiveRedisCommands).flushdbAsync()
   }
 
 }

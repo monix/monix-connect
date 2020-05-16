@@ -27,8 +27,6 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
-import scala.jdk.CollectionConverters._
-
 class RedisListSpec
   extends AnyFlatSpec with Matchers with IdiomaticMockito with BeforeAndAfterEach with BeforeAndAfterAll
   with RedisFixture {
@@ -36,15 +34,14 @@ class RedisListSpec
   implicit val connection: StatefulRedisConnection[String, Int] = mock[StatefulRedisConnection[String, Int]]
 
   override def beforeAll(): Unit = {
-    when(connection.async()).thenAnswer(asyncRedisCommands)
     when(connection.reactive()).thenAnswer(reactiveRedisCommands)
     super.beforeAll()
   }
 
   override def beforeEach() = {
-    reset(asyncRedisCommands)
     reset(reactiveRedisCommands)
-    when(connection.async()).thenAnswer(asyncRedisCommands)
+    reset(reactiveRedisCommands)
+    when(connection.reactive()).thenAnswer(reactiveRedisCommands)
     when(connection.reactive()).thenAnswer(reactiveRedisCommands)
   }
 
@@ -56,28 +53,26 @@ class RedisListSpec
     //given
     val timeout: Long = genLong.sample.get
     val keys: List[K] = genRedisKeys.sample.get
-    when(asyncRedisCommands.blpop(timeout, keys: _*)).thenReturn(MockRedisFuture[KeyValue[String, Int]])
+    when(reactiveRedisCommands.blpop(timeout, keys: _*)).thenReturn(mockMono[KeyValue[String, Int]])
 
     //when
-    val t = Redis.blpop(timeout, keys: _*)
+    val _: Task[KeyValue[K, V]] = Redis.blpop(timeout, keys: _*)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).blpop(timeout, keys: _*)
+    verify(reactiveRedisCommands).blpop(timeout, keys: _*)
   }
 
   it should "implement brpop" in {
     //given
     val timeout: Long = genLong.sample.get
     val keys: List[K] = genRedisKeys.sample.get
-    when(asyncRedisCommands.brpop(timeout, keys: _*)).thenReturn(MockRedisFuture[KeyValue[String, Int]])
+    when(reactiveRedisCommands.brpop(timeout, keys: _*)).thenReturn(mockMono[KeyValue[String, Int]])
 
     //when
-    val t = Redis.brpop(timeout, keys: _*)
+    val _: Task[KeyValue[K, V]] = Redis.brpop(timeout, keys: _*)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).brpop(timeout, keys: _*)
+    verify(reactiveRedisCommands).brpop(timeout, keys: _*)
   }
 
   it should "implement brpoplpush" in {
@@ -85,96 +80,89 @@ class RedisListSpec
     val timeout: Long = genLong.sample.get
     val source: K = genRedisKey.sample.get
     val dest: K = genRedisKey.sample.get
-    when(asyncRedisCommands.brpoplpush(timeout, source, dest)).thenReturn(MockRedisFuture[Int])
+    when(reactiveRedisCommands.brpoplpush(timeout, source, dest)).thenReturn(mockMono[Int])
 
     //when
-    val t = Redis.brpoplpush(timeout, source, dest)
+    val _: Task[V] = Redis.brpoplpush(timeout, source, dest)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).brpoplpush(timeout, source, dest)
+    verify(reactiveRedisCommands).brpoplpush(timeout, source, dest)
   }
 
   it should "implement lindex" in {
     //given
     val index: Long = genLong.sample.get
     val key: K = genRedisKey.sample.get
-    when(asyncRedisCommands.lindex(key, index)).thenReturn(MockRedisFuture[V])
+    when(reactiveRedisCommands.lindex(key, index)).thenReturn(mockMono[V])
 
     //when
-    val t = Redis.lindex(key, index)
+    val _: Task[V] = Redis.lindex(key, index)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).lindex(key, index)
+    verify(reactiveRedisCommands).lindex(key, index)
   }
 
   it should "implement linsert" in {
     //given
     val index: Long = genLong.sample.get
     val key: K = genRedisKey.sample.get
-    when(asyncRedisCommands.lindex(key, index)).thenReturn(MockRedisFuture[V])
+    when(reactiveRedisCommands.lindex(key, index)).thenReturn(mockMono[V])
 
     //when
-    val t = Redis.lindex(key, index)
+    val _: Task[V] = Redis.lindex(key, index)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).lindex(key, index)
+    verify(reactiveRedisCommands).lindex(key, index)
   }
 
   it should "implement llen" in {
     //given
     val key: String = genRedisKey.sample.get
-    when(asyncRedisCommands.llen(key)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.llen(key)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = Redis.llen(key)
+    val _: Task[Long] = Redis.llen(key)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).llen(key)
+    verify(reactiveRedisCommands).llen(key)
   }
 
   it should "implement lpop" in {
     //given
     val key: K = genRedisKey.sample.get
-    when(asyncRedisCommands.lpop(key)).thenReturn(MockRedisFuture[Int])
+    when(reactiveRedisCommands.lpop(key)).thenReturn(mockMono[Int])
 
     //when
-    val t = Redis.lpop(key)
+    val _: Task[V] = Redis.lpop(key)
 
     //then
-    t shouldBe a[Task[Int]]
-    verify(asyncRedisCommands).lpop(key)
+    verify(reactiveRedisCommands).lpop(key)
   }
 
   it should "implement lpush" in {
     //given
     val key: K = genRedisKey.sample.get
     val values: List[V] = genRedisValues.sample.get
-    when(asyncRedisCommands.lpush(key, values: _*)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.lpush(key, values: _*)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = Redis.lpush(key, values: _*)
+    val _: Task[Long] = Redis.lpush(key, values: _*)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).lpush(key, values: _*)
+    verify(reactiveRedisCommands).lpush(key, values: _*)
   }
 
   it should "implement lpushx" in {
     //given
     val key: K = genRedisKey.sample.get
     val values: List[V] = genRedisValues.sample.get
-    when(asyncRedisCommands.lpushx(key, values: _*)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.lpushx(key, values: _*)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = Redis.lpushx(key, values: _*)
+    val _: Task[Long] = Redis.lpushx(key, values: _*)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).lpushx(key, values: _*)
+    verify(reactiveRedisCommands).lpushx(key, values: _*)
   }
 
   it should "implement lrange" in {
@@ -182,13 +170,12 @@ class RedisListSpec
     val key: K = genRedisKey.sample.get
     val start: Long = genLong.sample.get
     val stop = genLong.sample.get
-    when(reactiveRedisCommands.lrange(key, start, stop)).thenReturn(MockFlux[Int])
+    when(reactiveRedisCommands.lrange(key, start, stop)).thenReturn(mockFlux[Int])
 
     //when
-    val t = Redis.lrange(key, start, stop)
+    val _: Observable[V] = Redis.lrange(key, start, stop)
 
     //then
-    t shouldBe a[Observable[Int]]
     verify(reactiveRedisCommands).lrange(key, start, stop)
   }
 
@@ -197,14 +184,13 @@ class RedisListSpec
     val key: String = genRedisKey.sample.get
     val count: Long = genLong.sample.get
     val value: Int = genRedisValue.sample.get
-    when(asyncRedisCommands.lrem(key, count, value)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.lrem(key, count, value)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = Redis.lrem(key, count, value)
+    val _: Task[Long] = Redis.lrem(key, count, value)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).lrem(key, count, value)
+    verify(reactiveRedisCommands).lrem(key, count, value)
   }
 
   it should "implement lset" in {
@@ -212,14 +198,13 @@ class RedisListSpec
     val key: K = genRedisKey.sample.get
     val index: Long = genLong.sample.get
     val value: V = genRedisValue.sample.get
-    when(asyncRedisCommands.lset(key, index, value)).thenReturn(MockRedisFuture[String])
+    when(reactiveRedisCommands.lset(key, index, value)).thenReturn(mockMono[String])
 
     //when
-    val t = Redis.lset(key, index, value)
+    val _: Task[String] = Redis.lset(key, index, value)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).lset(key, index, value)
+    verify(reactiveRedisCommands).lset(key, index, value)
   }
 
   it should "implement ltrim" in {
@@ -227,70 +212,65 @@ class RedisListSpec
     val key: K = genRedisKey.sample.get
     val start: Long = genLong.sample.get
     val stop: Long = genLong.sample.get
-    when(connection.async()).thenAnswer(asyncRedisCommands)
-    when(asyncRedisCommands.ltrim(key, start, stop)).thenReturn(MockRedisFuture[String])
+    when(connection.reactive()).thenAnswer(reactiveRedisCommands)
+    when(reactiveRedisCommands.ltrim(key, start, stop)).thenReturn(mockMono[String])
 
     //when
-    val t = Redis.ltrim(key, start, stop)
+    val _: Task[String] = Redis.ltrim(key, start, stop)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).ltrim(key, start, stop)
+    verify(reactiveRedisCommands).ltrim(key, start, stop)
   }
 
   it should "implement rpop" in {
     //given
     val key: K = genRedisKey.sample.get
-    when(asyncRedisCommands.rpop(key)).thenReturn(MockRedisFuture[Int])
+    when(reactiveRedisCommands.rpop(key)).thenReturn(mockMono[Int])
 
     //when
-    val t = Redis.rpop(key)
+    val _: Task[V] = Redis.rpop(key)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).rpop(key)
+    verify(reactiveRedisCommands).rpop(key)
   }
 
   it should "implement rpoplpush" in {
     //given
     val source: K = genRedisKey.sample.get
     val dest: K = genRedisKey.sample.get
-    when(asyncRedisCommands.rpoplpush(source, dest)).thenReturn(MockRedisFuture[Int])
+    when(reactiveRedisCommands.rpoplpush(source, dest)).thenReturn(mockMono[Int])
 
     //when
-    val t = Redis.rpoplpush(source, dest)
+    val _: Task[V] = Redis.rpoplpush(source, dest)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).rpoplpush(source, dest)
+    verify(reactiveRedisCommands).rpoplpush(source, dest)
   }
 
   it should "implement rpush" in {
     //given
     val key: String = genRedisKey.sample.get
     val values: List[Int] = genRedisValues.sample.get
-    when(asyncRedisCommands.rpush(key, values: _*)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.rpush(key, values: _*)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = Redis.rpush(key, values: _*)
+    val _: Task[Long] = Redis.rpush(key, values: _*)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).rpush(key, values: _*)
+    verify(reactiveRedisCommands).rpush(key, values: _*)
   }
 
   it should "implement rpushx" in {
     //given
     val key: String = genRedisKey.sample.get
     val values: List[Int] = genRedisValues.sample.get
-    when(asyncRedisCommands.rpushx(key, values: _*)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.rpushx(key, values: _*)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = Redis.rpushx(key, values: _*)
+    val _: Task[Long] = Redis.rpushx(key, values: _*)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).rpushx(key, values: _*)
+    verify(reactiveRedisCommands).rpushx(key, values: _*)
   }
 
 }

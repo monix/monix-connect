@@ -1,6 +1,4 @@
 import sbt.Keys.version
-import scala.xml.Elem
-import scala.xml.transform.{RewriteRule, RuleTransformer}
 
 lazy val doNotPublishArtifact = Seq(
   publishArtifact                          := false,
@@ -12,9 +10,9 @@ lazy val doNotPublishArtifact = Seq(
 lazy val sharedSettings = Seq(
   organization       := "io.monix",
   homepage := Some(url("https://monix.io/monix-connect")),
-  scalaVersion       := "2.13.1",
-  crossScalaVersions := Seq("2.13.1"),
-  scalafmtOnCompile  := false,
+  scalaVersion       := "2.12.8",
+  crossScalaVersions := Seq("2.12.10", "2.13.1"),
+  scalafmtOnCompile  := true,
   scalacOptions ++= Seq(
     // warnings
     "-unchecked", // able additional warnings where generated code depends on assumptions
@@ -33,7 +31,7 @@ lazy val sharedSettings = Seq(
     "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
     "-Ywarn-dead-code", // Warn when dead code is identified.
     // Turns all warnings into errors ;-)
-    //"-Xfatal-warnings", //Turning of fatal warings for the moment
+    //"-Xfatal-warnings", //Turning of fatal warnings for the moment
     // Enables linter options
     "-Xlint:adapted-args", // warn if an argument list is modified to match the receiver
     "-Xlint:nullary-unit", // warn when nullary methods return Unit
@@ -93,7 +91,7 @@ lazy val sharedSettings = Seq(
        |See the License for the specific language governing permissions and
        |limitations under the License."""
       .stripMargin)),
-  //todo add scm
+
   developers := List(
     Developer(
       id = "paualarco",
@@ -107,7 +105,7 @@ lazy val sharedSettings = Seq(
 )
 
 lazy val unidocSettings = Seq(
-  unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(akka, common, dynamodb, hdfs, parquet, s3, redis),
+  //unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(akka, dynamodb, hdfs, s3, redis),
   scalacOptions in (ScalaUnidoc, unidoc) +=
     "-Xfatal-warnings",
   scalacOptions in (ScalaUnidoc, unidoc) --=
@@ -136,17 +134,15 @@ lazy val monix = (project in file("."))
   .configs(IntegrationTest, IT)
   .settings(sharedSettings)
   .settings(name := "monix-connect")
-  .aggregate(akka, common, dynamodb, hdfs, parquet, redis, s3)
-  .dependsOn(akka, common, dynamodb, hdfs, parquet, redis, s3)
+  .aggregate(akka, dynamodb, hdfs, parquet, redis, s3)
+  .dependsOn(akka, dynamodb, hdfs, parquet, redis, s3)
   //.settings(unidocSettings) //todo enable unidoc settings
   //.enablePlugins(ScalaUnidocPlugin)
 
 lazy val akka = monixConnector("akka", Dependencies.Akka)
 
-lazy val common = monixConnector("common", Dependencies.Common)
 
 lazy val dynamodb = monixConnector("dynamodb", Dependencies.DynamoDb)
-  .dependsOn(common % "compile->compile; test->test")
 
 lazy val hdfs = monixConnector("hdfs", Dependencies.Hdfs)
 
@@ -177,5 +173,3 @@ def monixConnector(
     .settings(additionalSettings: _*)
     .configure(profile)
     .configs(IntegrationTest, IT)
-
-//todo add release settings

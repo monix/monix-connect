@@ -23,9 +23,7 @@ import monix.eval.Task
 import monix.reactive.Observable
 
 /**
-  * @see The reference to lettuce api:
-  *      [[io.lettuce.core.api.async.RedisSetAsyncCommands]] and
-  *      [[io.lettuce.core.api.reactive.RedisSetReactiveCommands]]
+  * @see The reference to lettuce api [[io.lettuce.core.api.reactive.RedisSetReactiveCommands]]
   */
 private[redis] trait RedisSet {
 
@@ -35,7 +33,7 @@ private[redis] trait RedisSet {
     *         present into the set.
     */
   def sadd[K, V](key: K, members: V*)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().sadd(key, members: _*)).map(_.longValue)
+    Task.from(connection.reactive().sadd(key, members: _*)).map(_.longValue)
 
   /**
     * Get the number of members in a set.
@@ -43,7 +41,7 @@ private[redis] trait RedisSet {
     *                                                                                                             exist.
     */
   def scard[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().scard(key)).map(_.longValue)
+    Task.from(connection.reactive().scard(key)).map(_.longValue)
 
   /**
     * Subtract multiple sets.
@@ -57,7 +55,7 @@ private[redis] trait RedisSet {
     * @return The number of elements in the resulting set.
     */
   def sdiffstore[K, V](destination: K, keys: K*)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().sdiffstore(destination, keys: _*)).map(_.longValue)
+    Task.from(connection.reactive().sdiffstore(destination, keys: _*)).map(_.longValue)
 
   /**
     * Intersect multiple sets.
@@ -73,7 +71,7 @@ private[redis] trait RedisSet {
   def sinterstore[K, V](destination: K, keys: K*)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[java.lang.Long] =
-    Task.from(connection.async().sinterstore(destination, keys: _*))
+    Task.from(connection.reactive().sinterstore(destination, keys: _*))
 
   /**
     * Determine if a given value is a member of a set.
@@ -81,7 +79,7 @@ private[redis] trait RedisSet {
     *         False if the element is not a member of the set, or if key does not exist.
     */
   def sismember[K, V](key: K, member: V)(implicit connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-    Task.from(connection.async().sismember(key, member)).map(_.booleanValue)
+    Task.from(connection.reactive().sismember(key, member)).map(_.booleanValue)
 
   /**
     * Move a member from one set to another.
@@ -91,7 +89,7 @@ private[redis] trait RedisSet {
   def smove[K, V](source: K, destination: K, member: V)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-    Task.from(connection.async().smove(source, destination, member)).map(_.booleanValue)
+    Task.from(connection.reactive().smove(source, destination, member)).map(_.booleanValue)
 
   /**
     * Get all the members in a set.
@@ -105,7 +103,7 @@ private[redis] trait RedisSet {
     * @return The removed element, or null when key does not exist.
     */
   def spop[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[V] =
-    Task.from(connection.async().spop(key))
+    Task.from(connection.reactive().spop(key))
 
   /**
     * Remove and return one or multiple random members from a set.
@@ -120,7 +118,7 @@ private[redis] trait RedisSet {
     *         randomly selected element, or null when key does not exist.
     */
   def srandmember[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[V] =
-    Task.from(connection.async().srandmember(key))
+    Task.from(connection.reactive().srandmember(key))
 
   /**
     * Get one or multiple random members from a set.
@@ -135,7 +133,7 @@ private[redis] trait RedisSet {
     * @return Long hat represents the number of members that were removed from the set, not including non existing members.
     */
   def srem[K, V](key: K, members: V*)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().srem(key, members: _*)).map(_.longValue)
+    Task.from(connection.reactive().srem(key, members: _*)).map(_.longValue)
 
   /**
     * Add multiple sets.
@@ -149,14 +147,14 @@ private[redis] trait RedisSet {
     * @return Long that represents the number of elements in the resulting set.
     */
   def sunionstore[K, V](destination: K, keys: K*)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().sunionstore(destination, keys: _*)).map(_.longValue)
+    Task.from(connection.reactive().sunionstore(destination, keys: _*)).map(_.longValue)
 
   /**
     * Incrementally iterate Set elements.
     * @return Scan cursor.
     */
   def sscan[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[ValueScanCursor[V]] =
-    Task.from(connection.async().sscan(key))
+    Task.from(connection.reactive().sscan(key))
 
 }
 

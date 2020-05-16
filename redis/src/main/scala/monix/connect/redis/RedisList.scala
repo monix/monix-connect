@@ -31,7 +31,7 @@ private[redis] trait RedisList {
     *         where an element was popped and the second element being the value of the popped element.
     */
   def blpop[K, V](timeout: Long, keys: K*)(implicit connection: StatefulRedisConnection[K, V]): Task[KeyValue[K, V]] =
-    Task.from(connection.async().blpop(timeout, keys: _*))
+    Task.from(connection.reactive().blpop(timeout, keys: _*))
 
   /**
     * Remove and get the last element in a list, or block until one is available.
@@ -40,7 +40,7 @@ private[redis] trait RedisList {
     *          where an element was popped and the second element being the value of the popped element.
     */
   def brpop[K, V](timeout: Long, keys: K*)(implicit connection: StatefulRedisConnection[K, V]): Task[KeyValue[K, V]] =
-    Task.from(connection.async().brpop(timeout, keys: _*))
+    Task.from(connection.reactive().brpop(timeout, keys: _*))
 
   /**
     * Pop a value from a list, push it to another list and return it; or block until one is available.
@@ -49,14 +49,14 @@ private[redis] trait RedisList {
   def brpoplpush[K, V](timeout: Long, source: K, destination: K)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[V] =
-    Task.from(connection.async().brpoplpush(timeout, source, destination))
+    Task.from(connection.reactive().brpoplpush(timeout, source, destination))
 
   /**
     * Get an element from a list by its index.
     * @return The requested element, or null when index is out of range.
     */
   def lindex[K, V](key: K, index: Long)(implicit connection: StatefulRedisConnection[K, V]): Task[V] =
-    Task.from(connection.async().lindex(key, index))
+    Task.from(connection.reactive().lindex(key, index))
 
   /**
     * Insert an element before or after another element in a list.
@@ -65,35 +65,35 @@ private[redis] trait RedisList {
   def linsert[K, V](key: K, before: Boolean, pivot: V, value: V)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().linsert(key, before, pivot, value)).map(_.longValue)
+    Task.from(connection.reactive().linsert(key, before, pivot, value)).map(_.longValue)
 
   /**
     * Get the length of a list.
     * @return Long integer-reply the length of the list at { @code key}.
     */
   def llen[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().llen(key)).map(_.longValue)
+    Task.from(connection.reactive().llen(key)).map(_.longValue)
 
   /**
     * Remove and get the first element in a list.
     * @return The value of the first element, or null when key does not exist.
     */
   def lpop[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[V] =
-    Task.from(connection.async().lpop(key))
+    Task.from(connection.reactive().lpop(key))
 
   /**
     * Prepend one or multiple values to a list.
     * @return The length of the list after the push operations.
     */
   def lpush[K, V](key: K, values: V*)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().lpush(key, values: _*)).map(_.longValue)
+    Task.from(connection.reactive().lpush(key, values: _*)).map(_.longValue)
 
   /**
     * Prepend values to a list, only if the list exists.
     * @return The length of the list after the push operation.
     */
   def lpushx[K, V](key: K, values: V*)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().lpushx(key, values: _*)).map(_.longValue)
+    Task.from(connection.reactive().lpushx(key, values: _*)).map(_.longValue)
 
   /**
     * Get a range of elements from a list.
@@ -107,49 +107,49 @@ private[redis] trait RedisList {
     * @return The number of removed elements.
     */
   def lrem[K, V](key: K, count: Long, value: V)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().lrem(key, count, value)).map(_.longValue)
+    Task.from(connection.reactive().lrem(key, count, value)).map(_.longValue)
 
   /**
     * Set the value of an element in a list by its index.
     * @return The same inserted value
     */
   def lset[K, V](key: K, index: Long, value: V)(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().lset(key, index, value))
+    Task.from(connection.reactive().lset(key, index, value))
 
   /**
     * Trim a list to the specified range.
     * @return Simple string reply
     */
   def ltrim[K, V](key: K, start: Long, stop: Long)(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().ltrim(key, start, stop))
+    Task.from(connection.reactive().ltrim(key, start, stop))
 
   /**
     * Remove and get the last element in a list.
     * @return The value of the last element, or null when key does not exist.
     */
   def rpop[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[V] =
-    Task.from(connection.async().rpop(key))
+    Task.from(connection.reactive().rpop(key))
 
   /**
     * Remove the last element in a list, append it to another list and return it.
     * @return The element being popped and pushed.
     */
   def rpoplpush[K, V](source: K, destination: K)(implicit connection: StatefulRedisConnection[K, V]): Task[V] =
-    Task.from(connection.async().rpoplpush(source, destination))
+    Task.from(connection.reactive().rpoplpush(source, destination))
 
   /**
     * Append one or multiple values to a list.
     * @return The length of the list after the push operation.
     */
   def rpush[K, V](key: K, values: V*)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().rpush(key, values: _*)).map(_.longValue)
+    Task.from(connection.reactive().rpush(key, values: _*)).map(_.longValue)
 
   /**
     * Append values to a list, only if the list exists.
     * @return The length of the list after the push operation.
     */
   def rpushx[K, V](key: K, values: V*)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().rpushx(key, values: _*)).map(_.longValue)
+    Task.from(connection.reactive().rpushx(key, values: _*)).map(_.longValue)
 }
 
 object RedisList extends RedisList

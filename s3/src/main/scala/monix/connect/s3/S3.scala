@@ -42,8 +42,6 @@ import software.amazon.awssdk.services.s3.model.{
   PutObjectResponse
 }
 
-import scala.jdk.FutureConverters._
-
 /**
   * An idiomatic monix service client for Amazon S3.
   *
@@ -507,9 +505,10 @@ object S3 {
         ssekmsEncryptionContext,
         ssekmsKeyId
       )
+
     val requestBody: AsyncRequestBody =
       AsyncRequestBody.fromPublisher(Task(ByteBuffer.wrap(content)).toReactivePublisher)
-    Task.deferFuture(s3Client.putObject(request, requestBody).asScala)
+    Task.from(s3Client.putObject(request, requestBody))
   }
 
   /**
@@ -528,7 +527,7 @@ object S3 {
     scheduler: Scheduler): Task[PutObjectResponse] = {
     val requestBody: AsyncRequestBody =
       AsyncRequestBody.fromPublisher(Task(ByteBuffer.wrap(content)).toReactivePublisher)
-    Task.deferFuture(s3Client.putObject(request, requestBody).asScala)
+    Task.from(s3Client.putObject(request, requestBody))
   }
 
 }

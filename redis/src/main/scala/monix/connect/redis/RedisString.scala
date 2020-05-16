@@ -22,11 +22,11 @@ import io.lettuce.core._
 import monix.eval.Task
 import monix.reactive.Observable
 
-import scala.jdk.CollectionConverters._
+import collection.JavaConverters._
 
 /**
   * @see The reference to lettuce api:
-  *      [[io.lettuce.core.api.async.RedisStringAsyncCommands]] and
+  *      [[io.lettuce.core.api.reactive.RedisStringAsyncCommands]] and
   *      [[io.lettuce.core.api.reactive.RedisStringReactiveCommands]]
   */
 private[redis] trait RedisString {
@@ -36,28 +36,28 @@ private[redis] trait RedisString {
     * @return The length of the string after the append operation.
     */
   def append[K, V](key: K, value: V)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().append(key, value)).map(_.longValue)
+    Task.from(connection.reactive().append(key, value)).map(_.longValue)
 
   /**
     * Count set bits in a string.
     * @return The number of bits set to 1.
     */
   def bitcount[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().bitcount(key)).map(_.longValue)
+    Task.from(connection.reactive().bitcount(key)).map(_.longValue)
 
   /**
     * Count set bits in a string.
     * @return The number of bits set to 1.
     */
   def bitcount[K, V](key: K, start: Long, end: Long)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().bitcount(key, start, end)).map(_.longValue)
+    Task.from(connection.reactive().bitcount(key, start, end)).map(_.longValue)
 
   /**
     * Find first bit set or clear in a string.
     * @return The command returns the position of the first bit set to 1 or 0 according to the request.
     */
   def bitpos[K, V](key: K, state: Boolean)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().bitpos(key, state)).map(_.longValue)
+    Task.from(connection.reactive().bitpos(key, state)).map(_.longValue)
 
   /**
     * Find first bit set or clear in a string.
@@ -66,7 +66,7 @@ private[redis] trait RedisString {
   def bitpos[K, V](key: K, state: Boolean, start: Long)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().bitpos(key, state, start)).map(_.longValue)
+    Task.from(connection.reactive().bitpos(key, state, start)).map(_.longValue)
 
   /**
     * Find first bit set or clear in a string.
@@ -75,7 +75,7 @@ private[redis] trait RedisString {
   def bitpos[K, V](key: K, state: Boolean, start: Long, end: Long)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().bitpos(key, state, start, end)).map(_.longValue)
+    Task.from(connection.reactive().bitpos(key, state, start, end)).map(_.longValue)
 
   /**
     * Perform bitwise AND between strings.
@@ -83,7 +83,7 @@ private[redis] trait RedisString {
     *         input string.
     */
   def bitopAnd[K, V](destination: K, keys: K*)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().bitopAnd(destination, keys: _*)).map(_.longValue)
+    Task.from(connection.reactive().bitopAnd(destination, keys: _*)).map(_.longValue)
 
   /**
     * Perform bitwise NOT between strings.
@@ -91,7 +91,7 @@ private[redis] trait RedisString {
     *         input string.
     */
   def bitopNot[K, V](destination: K, source: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().bitopNot(destination, source)).map(_.longValue)
+    Task.from(connection.reactive().bitopNot(destination, source)).map(_.longValue)
 
   /**
     * Perform bitwise OR between strings.
@@ -99,7 +99,7 @@ private[redis] trait RedisString {
     *         input string.
     */
   def bitopOr[K, V](destination: K, keys: K*)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().bitopOr(destination, keys: _*)).map(_.longValue)
+    Task.from(connection.reactive().bitopOr(destination, keys: _*)).map(_.longValue)
 
   /**
     * Perform bitwise XOR between strings.
@@ -107,70 +107,70 @@ private[redis] trait RedisString {
     *         input string.
     */
   def bitopXor[K, V](destination: K, keys: K*)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().bitopXor(destination, keys: _*)).map(_.longValue)
+    Task.from(connection.reactive().bitopXor(destination, keys: _*)).map(_.longValue)
 
   /**
     * Decrement the integer value of a key by one.
     * @return The value of key after the decrement
     */
   def decr[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().decr(key)).map(_.longValue)
+    Task.from(connection.reactive().decr(key)).map(_.longValue)
 
   /**
     * Decrement the integer value of a key by the given number.
     * @return The value of key after the decrement.
     */
   def decrby[K, V](key: K, amount: Long)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().decrby(key, amount)).map(_.longValue)
+    Task.from(connection.reactive().decrby(key, amount)).map(_.longValue)
 
   /**
     * Get the value of a key.
     * @return The value of key, or null when key does not exist.
     */
   def get[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[V] =
-    Task.from(connection.async().get(key))
+    Task.from(connection.reactive().get(key))
 
   /**
     * Returns the bit value at offset in the string value stored at key.
     * @return The bit value stored at offset.
     */
   def getbit[K, V](key: K, offset: Long)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().getbit(key, offset)).map(_.longValue)
+    Task.from(connection.reactive().getbit(key, offset)).map(_.longValue)
 
   /**
     * Get a substring of the string stored at a key.
     * @return Bulk string reply.
     */
   def getrange[K, V](key: K, start: Long, end: Long)(implicit connection: StatefulRedisConnection[K, V]): Task[V] =
-    Task.from(connection.async().getrange(key, start, end))
+    Task.from(connection.reactive().getrange(key, start, end))
 
   /**
     * Set the string value of a key and return its old value.
     * @return The old value stored at key, or null when key did not exist.
     */
   def getset[K, V](key: K, value: V)(implicit connection: StatefulRedisConnection[K, V]): Task[V] =
-    Task.from(connection.async().getset(key, value))
+    Task.from(connection.reactive().getset(key, value))
 
   /**
     * Increment the integer value of a key by one.
     * @return The value of key after the increment.
     */
   def incr[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().incr(key)).map(_.longValue)
+    Task.from(connection.reactive().incr(key)).map(_.longValue)
 
   /**
     * Increment the integer value of a key by the given amount.
     * @return The value of key after the increment.
     */
   def incrby[K, V](key: K, amount: Long)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().incrby(key, amount)).map(_.longValue)
+    Task.from(connection.reactive().incrby(key, amount)).map(_.longValue)
 
   /**
     * Increment the float value of a key by the given amount.
     * @return Double bulk string reply the value of key after the increment.
     */
   def incrbyfloat[K, V](key: K, amount: Double)(implicit connection: StatefulRedisConnection[K, V]): Task[Double] =
-    Task.from(connection.async().incrbyfloat(key, amount)).map(_.doubleValue)
+    Task.from(connection.reactive().incrbyfloat(key, amount)).map(_.doubleValue)
 
   /**
     * Get the values of all the given keys.
@@ -184,7 +184,7 @@ private[redis] trait RedisString {
     * @return Always OK since MSET can't fail.
     */
   def mset[K, V](map: Map[K, V])(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().mset(map.asJava))
+    Task.from(connection.reactive().mset(map.asJava))
 
   /**
     * Set multiple keys to multiple values, only if none of the keys exist.
@@ -192,28 +192,28 @@ private[redis] trait RedisString {
     *         False if no key was set (at least one key already existed).
     */
   def msetnx[K, V](map: Map[K, V])(implicit connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-    Task.from(connection.async().msetnx(map.asJava)).map(_.booleanValue)
+    Task.from(connection.reactive().msetnx(map.asJava)).map(_.booleanValue)
 
   /**
     * Set the string value of a key.
     * @return OK if SET was executed correctly.
     */
   def set[K, V](key: K, value: V)(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().set(key, value))
+    Task.from(connection.reactive().set(key, value))
 
   /**
     * Sets or clears the bit at offset in the string value stored at key.
     * @return The original bit value stored at offset.
     */
   def setbit[K, V](key: K, offset: Long, value: Int)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().setbit(key, offset, value)).map(_.longValue)
+    Task.from(connection.reactive().setbit(key, offset, value)).map(_.longValue)
 
   /**
     * Set the value and expiration of a key.
     * @return Simple string reply.
     */
   def setex[K, V](key: K, seconds: Long, value: V)(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().setex(key, seconds, value))
+    Task.from(connection.reactive().setex(key, seconds, value))
 
   /**
     * Set the value and expiration in milliseconds of a key.
@@ -222,7 +222,7 @@ private[redis] trait RedisString {
   def psetex[K, V](key: K, milliseconds: Long, value: V)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().psetex(key, milliseconds, value))
+    Task.from(connection.reactive().psetex(key, milliseconds, value))
 
   /**
     * Set the value of a key, only if the key does not exist.
@@ -230,21 +230,21 @@ private[redis] trait RedisString {
     *         False if the key was not set
     */
   def setnx[K, V](key: K, value: V)(implicit connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-    Task.from(connection.async().setnx(key, value)).map(_.booleanValue)
+    Task.from(connection.reactive().setnx(key, value)).map(_.booleanValue)
 
   /**
     * Overwrite part of a string at key starting at the specified offset.
     * @return The length of the string after it was modified by the command.
     */
   def setrange[K, V](key: K, offset: Long, value: V)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().setrange(key, offset, value)).map(_.longValue)
+    Task.from(connection.reactive().setrange(key, offset, value)).map(_.longValue)
 
   /**
     * Get the length of the value stored in a key.
     * @return The length of the string at key, or 0 when key does not exist.
     */
   def strlen[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().strlen(key)).map(_.longValue)
+    Task.from(connection.reactive().strlen(key)).map(_.longValue)
 
 }
 

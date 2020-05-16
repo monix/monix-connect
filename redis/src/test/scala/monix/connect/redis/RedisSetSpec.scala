@@ -17,7 +17,9 @@
 
 package monix.connect.redis
 
-import io.lettuce.core.{KeyValue, ValueScanCursor}
+import java.lang
+
+import io.lettuce.core.ValueScanCursor
 import io.lettuce.core.api.StatefulRedisConnection
 import monix.eval.Task
 import monix.reactive.Observable
@@ -34,13 +36,12 @@ class RedisSetSpec
   implicit val connection: StatefulRedisConnection[String, Int] = mock[StatefulRedisConnection[String, Int]]
 
   override def beforeAll(): Unit = {
-    when(connection.async()).thenAnswer(asyncRedisCommands)
     when(connection.reactive()).thenAnswer(reactiveRedisCommands)
     super.beforeAll()
   }
 
   override def beforeEach() = {
-    reset(asyncRedisCommands)
+    reset(reactiveRedisCommands)
     reset(reactiveRedisCommands)
   }
 
@@ -52,39 +53,36 @@ class RedisSetSpec
     //given
     val key: String = genRedisKey.sample.get
     val members: List[Int] = genRedisValues.sample.get
-    when(asyncRedisCommands.sadd(key, members: _*)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.sadd(key, members: _*)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = RedisSet.sadd(key, members: _*)
+    val _: Task[Long] = RedisSet.sadd(key, members: _*)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).sadd(key, members: _*)
+    verify(reactiveRedisCommands).sadd(key, members: _*)
   }
 
   it should "implement scard" in {
     //given
     val key: String = genRedisKey.sample.get
-    when(asyncRedisCommands.scard(key)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.scard(key)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = RedisSet.scard(key)
+    val _: Task[Long] = RedisSet.scard(key)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).scard(key)
+    verify(reactiveRedisCommands).scard(key)
   }
 
   it should "implement sdiff" in {
     //given
     val keys: List[String] = genRedisKeys.sample.get
-    when(reactiveRedisCommands.sdiff(keys: _*)).thenReturn(MockFlux[Int])
+    when(reactiveRedisCommands.sdiff(keys: _*)).thenReturn(mockFlux[Int])
 
     //when
-    val t = RedisSet.sdiff(keys: _*)
+    val _: Observable[V] = RedisSet.sdiff(keys: _*)
 
     //then
-    t shouldBe a[Observable[Int]]
     verify(reactiveRedisCommands).sdiff(keys: _*)
   }
 
@@ -92,26 +90,24 @@ class RedisSetSpec
     //given
     val dest: String = genRedisKey.sample.get
     val keys: List[String] = genRedisKeys.sample.get
-    when(asyncRedisCommands.sdiffstore(dest, keys: _*)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.sdiffstore(dest, keys: _*)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = RedisSet.sdiffstore(dest, keys: _*)
+    val _: Task[Long] = RedisSet.sdiffstore(dest, keys: _*)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).sdiffstore(dest, keys: _*)
+    verify(reactiveRedisCommands).sdiffstore(dest, keys: _*)
   }
 
   it should "implement sinter" in {
     //given
     val keys: List[K] = genRedisKeys.sample.get
-    when(reactiveRedisCommands.sinter(keys: _*)).thenReturn(MockFlux[Int])
+    when(reactiveRedisCommands.sinter(keys: _*)).thenReturn(mockFlux[Int])
 
     //when
-    val t = Redis.sinter(keys: _*)
+    val _: Observable[V] = Redis.sinter(keys: _*)
 
     //then
-    t shouldBe a[Observable[V]]
     verify(reactiveRedisCommands).sinter(keys: _*)
   }
 
@@ -119,28 +115,26 @@ class RedisSetSpec
     //given
     val dest: K = genRedisKey.sample.get
     val keys: List[K] = genRedisKeys.sample.get
-    when(asyncRedisCommands.sinterstore(dest, keys: _*)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.sinterstore(dest, keys: _*)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = Redis.sinterstore(dest, keys: _*)
+    val _: Task[lang.Long] = Redis.sinterstore(dest, keys: _*)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).sinterstore(dest, keys: _*)
+    verify(reactiveRedisCommands).sinterstore(dest, keys: _*)
   }
 
   it should "implement sismember" in {
     //given
     val key: String = genRedisKey.sample.get
     val member: Int = genRedisValue.sample.get
-    when(asyncRedisCommands.sismember(key, member)).thenReturn(MockRedisFuture[java.lang.Boolean])
+    when(reactiveRedisCommands.sismember(key, member)).thenReturn(mockMono[java.lang.Boolean])
 
     //when
-    val t = Redis.sismember(key, member)
+    val _: Task[Boolean] = Redis.sismember(key, member)
 
     //then
-    t shouldBe a[Task[Boolean]]
-    verify(asyncRedisCommands).sismember(key, member)
+    verify(reactiveRedisCommands).sismember(key, member)
   }
 
   it should "implement smove" in {
@@ -148,26 +142,24 @@ class RedisSetSpec
     val source: String = genRedisKey.sample.get
     val dest: String = genRedisKey.sample.get
     val member: Int = genRedisValue.sample.get
-    when(asyncRedisCommands.smove(source, dest, member)).thenReturn(MockRedisFuture[java.lang.Boolean])
+    when(reactiveRedisCommands.smove(source, dest, member)).thenReturn(mockMono[java.lang.Boolean])
 
     //when
-    val t = Redis.smove(source, dest, member)
+    val _: Task[Boolean] = Redis.smove(source, dest, member)
 
     //then
-    t shouldBe a[Task[Boolean]]
-    verify(asyncRedisCommands).smove(source, dest, member)
+    verify(reactiveRedisCommands).smove(source, dest, member)
   }
 
   it should "implement smembers" in {
     //given
     val key: String = genRedisKey.sample.get
-    when(reactiveRedisCommands.smembers(key)).thenReturn(MockFlux[V])
+    when(reactiveRedisCommands.smembers(key)).thenReturn(mockFlux[V])
 
     //when
-    val t = Redis.smembers(key)
+    val _: Observable[V] = Redis.smembers(key)
 
     //then
-    t shouldBe a[Observable[V]]
     verify(reactiveRedisCommands).smembers(key)
   }
 
@@ -175,17 +167,17 @@ class RedisSetSpec
     //given
     val key: String = genRedisKey.sample.get
     val count: Long = genLong.sample.get
-    when(asyncRedisCommands.spop(key)).thenReturn(MockRedisFuture[V])
-    when(reactiveRedisCommands.spop(key, count)).thenReturn(MockFlux[V])
+    when(reactiveRedisCommands.spop(key)).thenReturn(mockMono[V])
+    when(reactiveRedisCommands.spop(key, count)).thenReturn(mockFlux[V])
 
     //when
-    val r1 = Redis.spop(key)
-    val r2 = RedisSet.spop(key, count)
+    val r1: Task[V] = Redis.spop(key)
+    val r2: Observable[V] = RedisSet.spop(key, count)
 
     //then
-    r1 shouldBe a[Task[V]]
-    r2 shouldBe a[Observable[V]]
-    verify(asyncRedisCommands).spop(key)
+    r1.isInstanceOf[Task[V]] shouldBe true
+    r2.isInstanceOf[Observable[V]] shouldBe true
+    verify(reactiveRedisCommands).spop(key)
     verify(reactiveRedisCommands).spop(key, count)
   }
 
@@ -193,17 +185,17 @@ class RedisSetSpec
     //given
     val key: String = genRedisKey.sample.get
     val count: Long = genLong.sample.get
-    when(asyncRedisCommands.srandmember(key)).thenReturn(MockRedisFuture[V])
-    when(reactiveRedisCommands.srandmember(key, count)).thenReturn(MockFlux[V])
+    when(reactiveRedisCommands.srandmember(key)).thenReturn(mockMono[V])
+    when(reactiveRedisCommands.srandmember(key, count)).thenReturn(mockFlux[V])
 
     //when
-    val r1 = Redis.srandmember(key)
-    val r2 = Redis.srandmember(key, count)
+    val r1: Task[V] = Redis.srandmember(key)
+    val r2: Observable[V] = Redis.srandmember(key, count)
 
     //then
-    r1 shouldBe a[Task[V]]
-    r2 shouldBe a[Observable[V]]
-    verify(asyncRedisCommands).srandmember(key)
+    r1.isInstanceOf[Task[V]] shouldBe true
+    r2.isInstanceOf[Observable[V]] shouldBe true
+    verify(reactiveRedisCommands).srandmember(key)
     verify(reactiveRedisCommands).srandmember(key, count)
   }
 
@@ -211,26 +203,24 @@ class RedisSetSpec
     //given
     val key: String = genRedisKey.sample.get
     val members: List[V] = genRedisValues.sample.get
-    when(asyncRedisCommands.srem(key, members: _*)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.srem(key, members: _*)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val r = RedisSet.srem(key, members: _*)
+    val _: Task[Long] = RedisSet.srem(key, members: _*)
 
     //then
-    r shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).srem(key, members: _*)
+    verify(reactiveRedisCommands).srem(key, members: _*)
   }
 
   it should "implement sunion" in {
     //given
     val keys: List[K] = genRedisKeys.sample.get
-    when(reactiveRedisCommands.sunion(keys: _*)).thenReturn(MockFlux[V])
+    when(reactiveRedisCommands.sunion(keys: _*)).thenReturn(mockFlux[V])
 
     //when
-    val r = RedisSet.sunion(keys: _*)
+    val _: Observable[V] = RedisSet.sunion(keys: _*)
 
     //then
-    r shouldBe a[Observable[V]]
     verify(reactiveRedisCommands).sunion(keys: _*)
   }
 
@@ -238,28 +228,26 @@ class RedisSetSpec
     //given
     val dest: K = genRedisKey.sample.get
     val keys: List[K] = genRedisKeys.sample.get
-    when(asyncRedisCommands.sunionstore(dest, keys: _*)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.sunionstore(dest, keys: _*)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val r = RedisSet.sunionstore(dest, keys: _*)
+    val _: Task[Long] = RedisSet.sunionstore(dest, keys: _*)
 
     //then
-    r shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).sunionstore(dest, keys: _*)
+    verify(reactiveRedisCommands).sunionstore(dest, keys: _*)
   }
 
   it should "implement sscan" in {
     //given
     val key: K = genRedisKey.sample.get
-    when(asyncRedisCommands.sscan(key)).thenReturn(MockRedisFuture[ValueScanCursor[V]])
+    when(reactiveRedisCommands.sscan(key)).thenReturn(mockMono[ValueScanCursor[V]])
     //wiht scanArgs and scanCursor not supported
 
     //when
-    val r = RedisSet.sscan(key)
+    val _: Task[ValueScanCursor[V]] = RedisSet.sscan(key)
 
     //then
-    r shouldBe a[Task[ValueScanCursor[V]]]
-    verify(asyncRedisCommands).sscan(key)
+    verify(reactiveRedisCommands).sscan(key)
   }
 
 }

@@ -26,7 +26,6 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.{DynamoDbRequest, DynamoDbResponse}
 
 import scala.concurrent.Future
-import scala.jdk.FutureConverters._
 
 private[dynamodb] class DynamoDbSubscriber[In <: DynamoDbRequest, Out <: DynamoDbResponse]()(
   implicit
@@ -41,10 +40,7 @@ private[dynamodb] class DynamoDbSubscriber[In <: DynamoDbRequest, Out <: DynamoD
       private var dynamoDbResponse: Task[Out] = _
 
       def onNext(dynamoDbRequest: In): Future[Ack] = {
-        dynamoDbResponse = Task.fromFuture(
-          dynamoDbOp
-            .execute(dynamoDbRequest)
-            .asScala)
+        dynamoDbResponse = Task.from(dynamoDbOp.execute(dynamoDbRequest))
 
         dynamoDbResponse.onErrorRecover { case _ => monix.execution.Ack.Stop }
           .map(_ => monix.execution.Ack.Continue)

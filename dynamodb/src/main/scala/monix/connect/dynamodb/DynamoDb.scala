@@ -18,12 +18,9 @@
 package monix.connect.dynamodb
 
 import monix.reactive.{Consumer, Observable}
-import monix.execution.Scheduler
 import monix.eval.Task
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.{DynamoDbRequest, DynamoDbResponse}
-
-import scala.jdk.FutureConverters._
 
 object DynamoDb {
 
@@ -39,8 +36,7 @@ object DynamoDb {
   def consumer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
     implicit
     dynamoDbOp: DynamoDbOp[In, Out],
-    client: DynamoDbAsyncClient,
-    scheduler: Scheduler): Consumer[In, Out] = new DynamoDbSubscriber()
+    client: DynamoDbAsyncClient): Consumer[In, Out] = new DynamoDbSubscriber()
 
   /**
     * A monix transformer that executes any given [[DynamoDbRequest]] into its subsequent [[DynamoDbResponse]].
@@ -55,6 +51,6 @@ object DynamoDb {
     implicit
     dynamoDbOp: DynamoDbOp[In, Out],
     client: DynamoDbAsyncClient): Observable[In] => Observable[Task[Out]] = { inObservable: Observable[In] =>
-    inObservable.map(in => Task.fromFuture(dynamoDbOp.execute(in).asScala))
+    inObservable.map(in => Task.from(dynamoDbOp.execute(in)))
   }
 }

@@ -21,12 +21,10 @@ import io.lettuce.core.api.StatefulRedisConnection
 import monix.eval.Task
 import monix.reactive.Observable
 
-import scala.jdk.CollectionConverters._
+import collection.JavaConverters._
 
 /**
-  * @see The reference Lettuce Api at:
-  *      [[io.lettuce.core.api.async.BaseRedisAsyncCommands]] and
-  *      [[io.lettuce.core.api.reactive.BaseRedisReactiveCommands]]
+  * @see The reference Lettuce Api at: [[io.lettuce.core.api.reactive.BaseRedisReactiveCommands]]
   */
 trait RedisPubSub {
 
@@ -35,7 +33,7 @@ trait RedisPubSub {
     * @return The number of clients that received the message.
     */
   def publish[K, V](channel: K, message: V)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().publish(channel, message)).map(_.longValue)
+    Task.from(connection.reactive().publish(channel, message)).map(_.longValue)
 
   /**
     * Lists the currently *active channels*.
@@ -60,50 +58,50 @@ trait RedisPubSub {
   def pubsubNumsub[K, V](channels: K*)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[Map[K, java.lang.Long]] =
-    Task.from(connection.async().pubsubNumsub(channels: _*)).map(_.asScala.toMap)
+    Task.from(connection.reactive().pubsubNumsub(channels: _*)).map(_.asScala.toMap)
 
   /**
     * Returns the number of subscriptions to patterns.
     * @return The number of patterns all the clients are subscribed to.
     */
   def pubsubNumpat[K, V]()(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().pubsubNumpat()).map(_.longValue)
+    Task.from(connection.reactive().pubsubNumpat()).map(_.longValue)
 
   /**
     * Echo the given string.
     * @return Bulk string reply.
     */
   def echo[K, V](msg: V)(implicit connection: StatefulRedisConnection[K, V]): Task[V] =
-    Task.from(connection.async().echo(msg))
+    Task.from(connection.reactive().echo(msg))
 
   /**
     * Return the role of the instance in the context of replication.
     * @return Object array-reply where the first element is one of master, slave, sentinel and the additional
     *         elements are role-specific.
     */
-  def role[K, V]()(implicit connection: StatefulRedisConnection[K, V]): Task[Any] =
-    Task.from(connection.async().role())
+  def role[K, V]()(implicit connection: StatefulRedisConnection[K, V]): Observable[Any] =
+    Observable.fromReactivePublisher(connection.reactive().role())
 
   /**
     * Ping the server.
     * @return Simple string reply.
     */
   def ping[K, V]()(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().ping())
+    Task.from(connection.reactive().ping())
 
   /**
     * Switch connection to Read-Only mode when connecting to a cluster.
     * @return Simple string reply.
     */
   def readOnly[K, V]()(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().readOnly())
+    Task.from(connection.reactive().readOnly())
 
   /**
     * Switch connection to Read-Write mode (default) when connecting to a cluster.
     * @return Simple string reply.
     */
   def readWrite[K, V]()(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().readWrite())
+    Task.from(connection.reactive().readWrite())
 
   /**
     * Instructs Redis to disconnect the connection. Note that if auto-reconnect is enabled then Lettuce will auto-reconnect if
@@ -112,7 +110,7 @@ trait RedisPubSub {
     * @return String simple string reply always OK.
     */
   def quit[K, V]()(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().quit())
+    Task.from(connection.reactive().quit())
 
   /**
     * Wait for replication.
@@ -121,7 +119,7 @@ trait RedisPubSub {
   def waitForReplication[K, V](replicas: Int, timeout: Long)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().waitForReplication(replicas, timeout)).map(_.longValue)
+    Task.from(connection.reactive().waitForReplication(replicas, timeout)).map(_.longValue)
 
 }
 

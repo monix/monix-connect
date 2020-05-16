@@ -31,13 +31,12 @@ class RedisSpec
   implicit val connection: StatefulRedisConnection[String, Int] = mock[StatefulRedisConnection[String, Int]]
 
   override def beforeAll(): Unit = {
-    when(connection.async()).thenAnswer(asyncRedisCommands)
     when(connection.reactive()).thenAnswer(reactiveRedisCommands)
     super.beforeAll()
   }
 
   override def beforeEach(): Unit = {
-    reset(asyncRedisCommands)
+    reset(reactiveRedisCommands)
     reset(reactiveRedisCommands)
   }
 

@@ -35,7 +35,7 @@ import software.amazon.awssdk.services.s3.model.{
   UploadPartResponse
 }
 
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
 /**
   * A class that provides converter methods that given the required set of parameters for that
