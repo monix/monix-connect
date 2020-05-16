@@ -11,10 +11,10 @@ lazy val doNotPublishArtifact = Seq(
 
 lazy val sharedSettings = Seq(
   organization       := "io.monix",
+  homepage := Some(url("https://monix.io/monix-connect")),
   scalaVersion       := "2.13.1",
-  version            := Version.version,
-  crossScalaVersions := Seq("2.12.10", "2.13.1"),
-  scalafmtOnCompile  := true,
+  crossScalaVersions := Seq("2.13.1"),
+  scalafmtOnCompile  := false,
   scalacOptions ++= Seq(
     // warnings
     "-unchecked", // able additional warnings where generated code depends on assumptions
@@ -47,7 +47,6 @@ lazy val sharedSettings = Seq(
     "-Xlint:option-implicit", // Option.apply used implicit view
     "-Xlint:delayedinit-select", // Selecting member of DelayedInit
     "-Xlint:package-object-classes" // Class or object defined in package object
-
   ),
 
   // ScalaDoc settings
@@ -73,40 +72,9 @@ lazy val sharedSettings = Seq(
   dependencyClasspath in IntegrationTest := (dependencyClasspath in IntegrationTest).value ++ (exportedProducts in Test).value,
     // https://github.com/sbt/sbt/issues/2654
   incOptions := incOptions.value.withLogRecompileOnMacro(false),
-
-  // todo add sonatype
-  // -- Settings meant for deployment on oss.sonatype.org
-  /*sonatypeProfileName := organization.value,
-  credentials += Credentials(
-    "Sonatype Nexus Repository Manager",
-    "oss.sonatype.org",
-    sys.env.getOrElse("SONATYPE_USER", ""),
-    sys.env.getOrElse("SONATYPE_PASS", "")
-  ),*/
-
-  publishMavenStyle := true,
-  publishTo := Some(
-    if (isSnapshot.value)
-      Opts.resolver.sonatypeSnapshots
-    else
-      Opts.resolver.sonatypeStaging
-  ),
-  isSnapshot              := version.value endsWith "SNAPSHOT",
   publishArtifact in Test := false,
   pomIncludeRepository    := { _ => false }, // removes optional dependencies
-  // For evicting Scoverage out of the generated POM
-  // See: https://github.com/scoverage/sbt-scoverage/issues/153
-  pomPostProcess := { (node: xml.Node) =>
-    new RuleTransformer(new RewriteRule {
-      override def transform(node: xml.Node): Seq[xml.Node] = node match {
-        case e: Elem
-            if e.label == "dependency" && e.child.exists(child =>
-              child.label == "groupId" && child.text == "org.scoverage") =>
-          Nil
-        case _ => Seq(node)
-      }
-    }).transform(node).head
-  },
+
   licenses      := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
   //homepage := Some(url("https://monix.io")), //todo homepage settings
   headerLicense := Some(HeaderLicense.Custom(
