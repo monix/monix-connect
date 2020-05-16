@@ -24,7 +24,7 @@ import io.lettuce.core.{KeyScanCursor, ScanCursor}
 import monix.eval.Task
 import monix.reactive.Observable
 
-import scala.jdk.FutureConverters._
+import collection.JavaConverters._
 
 private[redis] trait RedisKey {
 
@@ -33,7 +33,7 @@ private[redis] trait RedisKey {
     * @return The number of keys that were removed.
     */
   def del[K, V](keys: K*)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().del(keys: _*).asScala).map(_.longValue)
+    Task.from(connection.async().del(keys: _*)).map(_.longValue)
 
   /**
     * Unlink one or more keys (non blocking DEL).

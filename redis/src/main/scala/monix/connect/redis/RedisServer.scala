@@ -21,7 +21,7 @@ import io.lettuce.core.api.StatefulRedisConnection
 import monix.eval.Task
 
 import scala.collection.mutable
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
 /**
   * @see The reference Lettuce Api at:

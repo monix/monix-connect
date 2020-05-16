@@ -12,8 +12,8 @@ import software.amazon.awssdk.services.dynamodb.model._
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 
 import scala.concurrent.duration._
-import scala.jdk.CollectionConverters._
-import scala.jdk.FutureConverters._
+import scala.collection.JavaConverters._
+import scala.compat.java8.FutureConverters._
 
 class DynamoDbConsumerSpec
   extends AnyWordSpecLike with Matchers with ScalaFutures with DynamoDbFixture with BeforeAndAfterAll {
@@ -68,7 +68,7 @@ class DynamoDbConsumerSpec
 
         //then
         r shouldBe a[PutItemResponse]
-        val getResponse: GetItemResponse = client.getItem(getItemRequest(tableName, city, citizenId)).asScala.futureValue
+        val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, city, citizenId))).futureValue
         getResponse.item().values().asScala.head.n().toDouble shouldBe debt
       }
 
@@ -85,7 +85,7 @@ class DynamoDbConsumerSpec
         //then
         r shouldBe a[PutItemResponse]
         requestAttr.map { case (city, citizenId, debt) =>
-          val getResponse: GetItemResponse = client.getItem(getItemRequest(tableName, city, citizenId)).asScala.futureValue
+          val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, city, citizenId))).futureValue
           getResponse.item().values().asScala.head.n().toDouble shouldBe debt
         }
       }
@@ -98,7 +98,7 @@ class DynamoDbConsumerSpec
         val city = "Barcelona"
         val citizenId = 11292
         val debt: Int = 1015
-        client.putItem(putItemRequest(tableName, city, citizenId, debt)).asScala.futureValue
+        toScala(client.putItem(putItemRequest(tableName, city, citizenId, debt))).futureValue
         val request: GetItemRequest = getItemRequest(tableName, city, citizenId)
 
         //when

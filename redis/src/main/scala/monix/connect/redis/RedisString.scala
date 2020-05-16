@@ -22,7 +22,7 @@ import io.lettuce.core._
 import monix.eval.Task
 import monix.reactive.Observable
 
-import scala.jdk.CollectionConverters._
+import collection.JavaConverters._
 
 /**
   * @see The reference to lettuce api:

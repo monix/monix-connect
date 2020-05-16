@@ -56,7 +56,7 @@ import software.amazon.awssdk.services.s3.model.{
   UploadPartResponse
 }
 
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
 class S3RequestBuilderSpec
   extends AnyWordSpecLike with BeforeAndAfterEach with Matchers with BeforeAndAfterAll

@@ -3,7 +3,6 @@ package monix.connect.dynamodb
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
-import monix.connect.dynamodb.Transformer
 import org.scalacheck.Gen
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.BeforeAndAfterAll
@@ -13,9 +12,9 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model._
 import DynamoDbOp._
 
-import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
-import scala.jdk.FutureConverters._
+import scala.collection.JavaConverters._
+import scala.compat.java8.FutureConverters._
 
 class DynamoDbTransformerSpec
   extends AnyWordSpecLike with Matchers with ScalaFutures with DynamoDbFixture with BeforeAndAfterAll {
@@ -71,7 +70,7 @@ class DynamoDbTransformerSpec
 
           //then
           r shouldBe a[PutItemResponse]
-          val getResponse: GetItemResponse = client.getItem(getItemRequest(tableName, city, citizenId)).asScala.futureValue
+          val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, city, citizenId))).futureValue
           getResponse.item().values().asScala.head.n().toDouble shouldBe debt
         }
 
@@ -94,7 +93,7 @@ class DynamoDbTransformerSpec
           //then
           r shouldBe a[List[PutItemResponse]]
           requestAttr.map { case (city, citizenId, debt) =>
-            val getResponse: GetItemResponse = client.getItem(getItemRequest(tableName, city, citizenId)).asScala.futureValue
+            val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, city, citizenId))).futureValue
             getResponse.item().values().asScala.head.n().toDouble shouldBe debt
           }
         }
@@ -107,7 +106,7 @@ class DynamoDbTransformerSpec
         val city = "London"
         val citizenId = 613371
         val debt: Int = 550
-        client.putItem(putItemRequest(tableName, city, citizenId, debt)).asScala.futureValue
+        toScala(client.putItem(putItemRequest(tableName, city, citizenId, debt))).futureValue
         val request: GetItemRequest = getItemRequest(tableName, city, citizenId)
         val transformer: Transformer[GetItemRequest, Task[GetItemResponse]] = DynamoDb.transformer
 

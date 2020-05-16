@@ -1,12 +1,12 @@
 package monix.connect.dynamodb
 
 import monix.eval.Task
+import monix.execution.Scheduler
 import org.scalacheck.Gen
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.{AttributeDefinition, AttributeValue, CreateTableRequest, DeleteTableRequest, DeleteTableResponse, GetItemRequest, KeySchemaElement, KeyType, ProvisionedThroughput, PutItemRequest, ScalarAttributeType}
 
-import scala.jdk.CollectionConverters._
-import scala.jdk.FutureConverters._
+import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
 trait DynamoDbFixture {
@@ -76,18 +76,18 @@ trait DynamoDbFixture {
       .build()
   }
 
-  protected def createTable(table: String)(implicit client: DynamoDbAsyncClient): Unit = {
+  protected def createTable(table: String)(implicit client: DynamoDbAsyncClient, scheduler: Scheduler): Unit = {
     val request: CreateTableRequest =
       createTableRequest(tableName = table, schema = keySchema, attributeDefinition = tableDefinition)
-    Try(Task.fromFuture(client.createTable(request).asScala)) match {
+    Try(Task.from(client.createTable(request))) match {
       case Success(_) => println(s"Table ${table} was created")
       case Failure(exception) => println("Failed to create table cities with exception: " + exception)
     }
   }
 
-  def deleteTable(tableName: String)(implicit client: DynamoDbAsyncClient): Task[DeleteTableResponse] = {
+  def deleteTable(tableName: String)(implicit client: DynamoDbAsyncClient, scheduler: Scheduler): Task[DeleteTableResponse] = {
     val deleteRequest: DeleteTableRequest = DeleteTableRequest.builder().tableName(tableName).build()
-    Task.deferFuture(client.deleteTable(deleteRequest).asScala)
+    Task.from(client.deleteTable(deleteRequest))
   }
 
   def genRequestAttributes: Gen[(String, Int, Double)] = {

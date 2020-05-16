@@ -20,13 +20,13 @@ package monix.connect
 import io.lettuce.core.RedisFuture
 import monix.eval.{Task, TaskLike}
 
-import scala.jdk.FutureConverters._
+import scala.compat.java8.FutureConverters._
 
 package object redis {
 
   private[redis] implicit val fromRedisFutureLike = new TaskLike[RedisFuture] {
     def apply[A](rf: RedisFuture[A]): Task[A] =
-      Task.fromFuture(rf.asScala)
+      Task.deferFuture(toScala(rf))
   }
 
 }

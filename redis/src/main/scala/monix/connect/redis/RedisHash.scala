@@ -22,7 +22,7 @@ import io.lettuce.core.{KeyValue, MapScanCursor, ScanCursor}
 import monix.eval.Task
 import monix.reactive.Observable
 
-import scala.jdk.CollectionConverters._
+import collection.JavaConverters._
 
 private[redis] trait RedisHash {
 

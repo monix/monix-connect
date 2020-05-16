@@ -32,7 +32,9 @@ object Dependencies {
   }
 
   private val CommonProjectDependencies = Seq(
-    "io.monix" %% "monix-reactive" % DependencyVersions.Monix
+    "io.monix" %% "monix-reactive" % DependencyVersions.Monix,
+    "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.6", //todo use as replacement for `collection.JavaConverters`
+    "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0"
    // "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
     //"org.slf4j" % "log4j-over-slf4j" % "1.7.30"
   )
@@ -44,20 +46,12 @@ object Dependencies {
   )
 
   private val AkkaMain = Seq(
-    "io.monix" %% "monix-reactive" % DependencyVersions.Monix,
     "com.typesafe.akka" %% "akka-stream" % DependencyVersions.AkkaStreams
   )
 
-  val Akka = AkkaMain ++ CommonTestDependencies.map(_ % Test)
-
-  private val CommonMain = Seq(
-    "io.monix" %% "monix-reactive" % DependencyVersions.Monix
-  )
-
-  val Common = CommonMain ++ CommonTestDependencies.map(_ % Test)
+  val Akka = AkkaMain ++ CommonProjectDependencies ++ CommonTestDependencies.map(_ % Test)
 
   private val DynamoDbDependencies = Seq(
-    "io.monix" %% "monix-reactive" % DependencyVersions.Monix,
     "com.amazonaws" % "aws-java-sdk-core" % DependencyVersions.AWS,
     // "com.amazonaws"                       % "aws-java-sdk-dynamodb" % DependencyVersions.AWS, //todo compatibility with java sdk aws
     "software.amazon.awssdk" % "dynamodb" % DependencyVersions.DynamoDb,
@@ -65,7 +59,7 @@ object Dependencies {
     "com.github.pureconfig" %% "pureconfig" % DependencyVersions.PureConfig
   )
 
-  val DynamoDb = DynamoDbDependencies ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(
+  val DynamoDb = DynamoDbDependencies ++ CommonProjectDependencies ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(
     _ % IntegrationTest)
 
   private val HdfsDependecies = Seq(
@@ -91,22 +85,20 @@ object Dependencies {
   val Parquet = ParquetDependecies ++ CommonProjectDependencies ++ CommonTestDependencies.map(_ % Test)
 
   private val S3Dependecies = Seq(
-    "io.monix" %% "monix-reactive" % DependencyVersions.Monix,
     "software.amazon.awssdk" % "s3" % DependencyVersions.S3,
     "org.typelevel" %% "cats-core" % DependencyVersions.Cats,
     "com.amazonaws" % "aws-java-sdk-core" % DependencyVersions.AWS % IntegrationTest,
     "com.amazonaws" % "aws-java-sdk-s3" % DependencyVersions.AWS % IntegrationTest,
     "org.scalatestplus" %% "scalacheck-1-14" % "3.1.1.1" % Test
   )
-  val S3 = S3Dependecies ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(_ % IntegrationTest)
+  val S3 = S3Dependecies ++ CommonProjectDependencies ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(_ % IntegrationTest)
 
   private val RedisDependencies = Seq(
-    "io.monix" %% "monix-reactive" % DependencyVersions.Monix,
     "io.lettuce" % "lettuce-core" % "5.1.2.RELEASE",
     "org.typelevel" %% "cats-core" % DependencyVersions.Cats,
     "com.github.pureconfig" %% "pureconfig" % DependencyVersions.PureConfig
   )
 
-  val Redis = RedisDependencies ++ CommonTestDependencies.map(_ % Test)
+  val Redis = RedisDependencies ++ CommonProjectDependencies ++ CommonTestDependencies.map(_ % Test)
 
 }

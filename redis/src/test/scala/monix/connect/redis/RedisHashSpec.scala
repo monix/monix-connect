@@ -27,9 +27,8 @@ import org.mockito.MockitoSugar.verify
 import org.mockito.MockitoSugar.when
 import org.mockito.IdiomaticMockito
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
-import reactor.core.publisher.Flux
 
-import scala.jdk.CollectionConverters._
+import collection.JavaConverters._
 
 class RedisHashSpec
   extends AnyFlatSpec with Matchers with IdiomaticMockito with BeforeAndAfterEach with BeforeAndAfterAll
