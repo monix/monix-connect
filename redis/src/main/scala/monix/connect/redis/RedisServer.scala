@@ -25,7 +25,7 @@ import scala.collection.JavaConverters._
 
 /**
   * @see The reference Lettuce Api at:
-  *      [[io.lettuce.core.api.async.RedisServerAsyncCommands]] and
+  *      [[io.lettuce.core.api.reactive.RedisServerAsyncCommands]] and
   *      [[io.lettuce.core.api.reactive.RedisServerReactiveCommands]]
   */
 private[redis] trait RedisServer {
@@ -35,20 +35,20 @@ private[redis] trait RedisServer {
     * @return Always OK.
     */
   def bgrewriteaof[K, V](implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().bgrewriteaof())
+    Task.from(connection.reactive().bgrewriteaof())
   /**
     * Asynchronously save the dataset to disk.
     * @return Simple string reply
     */
   def bgsave[K, V](implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().bgsave())
+    Task.from(connection.reactive().bgsave())
 
   /**
     * Get the current connection name.
     * @return The connection name, or a null bulk reply if no name is set.
     */
   def clientGetname[K, V](implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().bgsave())
+    Task.from(connection.reactive().bgsave())
 
   /**
     * Set the current connection name.
@@ -56,14 +56,14 @@ private[redis] trait RedisServer {
     * @return OK if the connection name was successfully set.
     */
   def clientSetname[K, V](name: K)(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().bgsave())
+    Task.from(connection.reactive().bgsave())
 
   /**
     * Kill the connection of a client identified by ip:port.
     * @return OK if the connection exists and has been closed.
     */
   def clientKill[K, V](addr: String)(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().clientKill(addr))
+    Task.from(connection.reactive().clientKill(addr))
 
   /**
     * Get the list of client connections.
@@ -72,14 +72,14 @@ private[redis] trait RedisServer {
     *         each line is composed of a succession of property=value fields separated by a space character.
     */
   def clientList[K, V](implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().clientList())
+    Task.from(connection.reactive().clientList())
 
   /**
     * Get total number of Redis commands.
     * @return Number of total commands in this Redis server.
     */
   def commandCount[K, V](implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().commandCount()).map(_.longValue)
+    Task.from(connection.reactive().commandCount()).map(_.longValue)
 
   /**
     * Get the value of a configuration parameter.
@@ -88,28 +88,28 @@ private[redis] trait RedisServer {
   def configGet[K, V](parameter: String)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[mutable.Map[String, String]] =
-    Task.from(connection.async().configGet(parameter)).map(_.asScala)
+    Task.from(connection.reactive().configGet(parameter)).map(_.asScala)
 
   /**
     * Reset the stats returned by INFO.
     * @return Always OK.
     */
   def configResetstat[K, V](implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().configResetstat())
+    Task.from(connection.reactive().configResetstat())
 
   /**
-    * Remove all keys asynchronously from all databases.
+    * Remove all keys reactivehronously from all databases.
     * @return Simple string reply
     */
   def flushall[K, V]()(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().flushallAsync())
+    Task.from(connection.reactive().flushallAsync())
 
   /**
-    * Remove all keys asynchronously from the current database.
+    * Remove all keys reactivehronously from the current database.
     * @return Single string reply
     */
   def flushdb[K, V]()(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().flushdbAsync())
+    Task.from(connection.reactive().flushdbAsync())
 
 }
 

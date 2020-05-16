@@ -17,6 +17,8 @@
 
 package monix.connect.redis
 
+import java.lang
+
 import io.lettuce.core.api.StatefulRedisConnection
 import monix.eval.Task
 import org.mockito.IdiomaticMockito
@@ -32,13 +34,12 @@ class RedisPubSubSpec
   implicit val connection: StatefulRedisConnection[String, Int] = mock[StatefulRedisConnection[String, Int]]
 
   override def beforeAll(): Unit = {
-    when(connection.async()).thenAnswer(asyncRedisCommands)
     when(connection.reactive()).thenAnswer(reactiveRedisCommands)
     super.beforeAll()
   }
 
   override def beforeEach() = {
-    reset(asyncRedisCommands)
+    reset(reactiveRedisCommands)
     reset(reactiveRedisCommands)
   }
 
@@ -50,19 +51,18 @@ class RedisPubSubSpec
     //given
     val channel: K = genRedisKey.sample.get
     val message: V = genRedisValue.sample.get
-    when(asyncRedisCommands.publish(channel, message)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.publish(channel, message)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = RedisPubSub.publish(channel, message)
+    val _: Task[Long] = RedisPubSub.publish(channel, message)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).publish(channel, message)
+    verify(reactiveRedisCommands).publish(channel, message)
   }
 
   it should "implement pubsubChannels" in { //todo
     //given
-    when(reactiveRedisCommands.pubsubChannels()).thenReturn(MockFlux[String])
+    when(reactiveRedisCommands.pubsubChannels()).thenReturn(mockFlux[String])
 
     //when
     //val ob = RedisPubSub.pubsubChannels()(connection)
@@ -75,119 +75,110 @@ class RedisPubSubSpec
   it should "implement pubsubNumsub" in {
     //given
     val channels: List[String] = genRedisKeys.sample.get
-    when(asyncRedisCommands.pubsubNumsub(channels: _*))
-      .thenReturn(MockRedisFuture[java.util.Map[String, java.lang.Long]])
+    when(reactiveRedisCommands.pubsubNumsub(channels: _*))
+      .thenReturn(mockMono[java.util.Map[String, java.lang.Long]])
 
     //when
-    val t = RedisPubSub.pubsubNumsub(channels: _*)
+    val _: Task[Map[String, lang.Long]] = RedisPubSub.pubsubNumsub(channels: _*)
 
     //then
-    t shouldBe a[Task[Map[String, Long]]]
-    verify(asyncRedisCommands).pubsubNumsub(channels: _*)
+    verify(reactiveRedisCommands).pubsubNumsub(channels: _*)
   }
 
   it should "implement pubsubNumpat" in {
     //given
-    when(asyncRedisCommands.pubsubNumpat()).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.pubsubNumpat()).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = RedisPubSub.pubsubNumpat()
+    val _: Task[Long] = RedisPubSub.pubsubNumpat()
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).pubsubNumpat()
+    verify(reactiveRedisCommands).pubsubNumpat()
   }
 
   it should "implement echo" in {
     //given
     val message: V = genRedisValue.sample.get
-    when(asyncRedisCommands.echo(message)).thenReturn(MockRedisFuture[Int])
+    when(reactiveRedisCommands.echo(message)).thenReturn(mockMono[Int])
 
     //when
-    val t = RedisPubSub.echo(message)
+    val _: Task[V] = RedisPubSub.echo(message)
 
     //then
-    t shouldBe a[Task[Int]]
-    verify(asyncRedisCommands).echo(message)
+    verify(reactiveRedisCommands).echo(message)
   }
 
-  it should "implement role" in {
+  //todo
+  /*  it should "implement role" in {
     //given
-    when(asyncRedisCommands.role()).thenReturn(MockRedisFuture[java.util.List[Any]])
+    when(reactiveRedisCommands.role()).thenReturn(MockFlux[_])
 
     //when
-    val t = RedisPubSub.role()
+    val _ = RedisPubSub.role()
 
     //then
-    t shouldBe a[Task[List[Any]]]
-    verify(asyncRedisCommands).role()
-  }
+    verify(reactiveRedisCommands).role()
+  }*/
 
   it should "implement ping" in {
     //given
-    when(asyncRedisCommands.ping()).thenReturn(MockRedisFuture[String])
+    when(reactiveRedisCommands.ping()).thenReturn(mockMono[String])
 
     //when
-    val t = RedisPubSub.ping()
+    val _: Task[String] = RedisPubSub.ping()
 
     //then
-    t shouldBe a[Task[String]]
-    verify(asyncRedisCommands).ping()
+    verify(reactiveRedisCommands).ping()
   }
 
   it should "implement readOnly" in {
     //given
     val channel: String = genRedisKey.sample.get
     val message: Int = genRedisValue.sample.get
-    when(asyncRedisCommands.readOnly()).thenReturn(MockRedisFuture[String])
+    when(reactiveRedisCommands.readOnly()).thenReturn(mockMono[String])
 
     //when
-    val t = RedisPubSub.readOnly()
+    val _: Task[String] = RedisPubSub.readOnly()
 
     //then
-    t shouldBe a[Task[String]]
-    verify(asyncRedisCommands).readOnly()
+    verify(reactiveRedisCommands).readOnly()
   }
 
   it should "implement readWrite" in {
     //given
-    when(asyncRedisCommands.readWrite()).thenReturn(MockRedisFuture[String])
+    when(reactiveRedisCommands.readWrite()).thenReturn(mockMono[String])
 
     //when
-    val t = RedisPubSub.readWrite()
+    val _: Task[String] = RedisPubSub.readWrite()
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).readWrite()
+    verify(reactiveRedisCommands).readWrite()
   }
 
   it should "implement quit" in {
     //given
-    when(connection.async()).thenAnswer(asyncRedisCommands)
-    when(asyncRedisCommands.quit()).thenReturn(MockRedisFuture[String])
+    when(connection.reactive()).thenAnswer(reactiveRedisCommands)
+    when(reactiveRedisCommands.quit()).thenReturn(mockMono[String])
 
     //when
-    val t = RedisPubSub.quit()
+    val _: Task[String] = RedisPubSub.quit()
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).quit()
+    verify(reactiveRedisCommands).quit()
   }
 
   it should "implement waitForReplication" in {
     //given
     val replicas: Int = genLong.sample.get.toInt
     val timeout: Long = genLong.sample.get
-    when(asyncRedisCommands.waitForReplication(replicas, timeout)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.waitForReplication(replicas, timeout)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = RedisPubSub.waitForReplication(replicas, timeout)
+    val _: Task[Long] = RedisPubSub.waitForReplication(replicas, timeout)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).waitForReplication(replicas, timeout)
+    verify(reactiveRedisCommands).waitForReplication(replicas, timeout)
   }
-
   //dispatch not supported
 
 }

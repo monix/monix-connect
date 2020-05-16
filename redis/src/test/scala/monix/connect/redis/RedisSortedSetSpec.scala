@@ -34,13 +34,12 @@ class RedisSortedSetSpec
   implicit val connection: StatefulRedisConnection[String, Int] = mock[StatefulRedisConnection[String, Int]]
 
   override def beforeAll(): Unit = {
-    when(connection.async()).thenAnswer(asyncRedisCommands)
     when(connection.reactive()).thenAnswer(reactiveRedisCommands)
     super.beforeAll()
   }
 
   override def beforeEach() = {
-    reset(asyncRedisCommands)
+    reset(reactiveRedisCommands)
     reset(reactiveRedisCommands)
   }
 
@@ -52,43 +51,40 @@ class RedisSortedSetSpec
     //given
     val timeout: Long = genLong.sample.get
     val keys: List[K] = genRedisKeys.sample.get
-    when(asyncRedisCommands.bzpopmin(timeout, keys: _*)).thenReturn(MockRedisFuture[KeyValue[K, ScoredValue[V]]])
+    when(reactiveRedisCommands.bzpopmin(timeout, keys: _*)).thenReturn(mockMono[KeyValue[K, ScoredValue[V]]])
 
     //when
-    val t = RedisSortedSet.bzpopmin(timeout, keys: _*)
+    val _: Task[KeyValue[K, ScoredValue[V]]] = RedisSortedSet.bzpopmin(timeout, keys: _*)
 
     //then
-    t shouldBe a[Task[KeyValue[K, ScoredValue[V]]]]
-    verify(asyncRedisCommands).bzpopmin(timeout, keys: _*)
+    verify(reactiveRedisCommands).bzpopmin(timeout, keys: _*)
   }
 
   it should "implement bzpopmax" in {
     //given
     val timeout: Long = genLong.sample.get
     val keys: List[K] = genRedisKeys.sample.get
-    when(asyncRedisCommands.bzpopmax(timeout, keys: _*)).thenReturn(MockRedisFuture[KeyValue[K, ScoredValue[V]]])
+    when(reactiveRedisCommands.bzpopmax(timeout, keys: _*)).thenReturn(mockMono[KeyValue[K, ScoredValue[V]]])
 
     //when
-    val t = RedisSortedSet.bzpopmax(timeout, keys: _*)
+    val _: Task[KeyValue[K, ScoredValue[V]]] = RedisSortedSet.bzpopmax(timeout, keys: _*)
 
     //then
-    t shouldBe a[Task[KeyValue[K, ScoredValue[V]]]]
-    verify(asyncRedisCommands).bzpopmax(timeout, keys: _*)
+    verify(reactiveRedisCommands).bzpopmax(timeout, keys: _*)
   }
 
   it should "implement zadd" in {
     //given
     val key: K = genRedisKey.sample.get
     val scoredValues: List[ScoredValue[V]] = genScoredValues.sample.get
-    when(asyncRedisCommands.zadd(key, scoredValues: _*)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.zadd(key, scoredValues: _*)).thenReturn(mockMono[java.lang.Long])
     //with zArgs not supported
 
     //when
-    val t = RedisSortedSet.zadd(key, scoredValues: _*)
+    val _: Task[Long] = RedisSortedSet.zadd(key, scoredValues: _*)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).zadd(key, scoredValues: _*)
+    verify(reactiveRedisCommands).zadd(key, scoredValues: _*)
   }
 
   it should "implement zaddincr" in {
@@ -96,41 +92,38 @@ class RedisSortedSetSpec
     val key: K = genRedisKey.sample.get
     val score = genDouble.sample.get
     val member = genRedisValue.sample.get
-    when(asyncRedisCommands.zaddincr(key, score, member)).thenReturn(MockRedisFuture[java.lang.Double])
+    when(reactiveRedisCommands.zaddincr(key, score, member)).thenReturn(mockMono[java.lang.Double])
     //with zAddArgs not cotemplated
 
     //when
-    val t = RedisSortedSet.zaddincr(key, score, member)
+    val _: Task[Double] = RedisSortedSet.zaddincr(key, score, member)
 
     //then
-    t shouldBe a[Task[Double]]
-    verify(asyncRedisCommands).zaddincr(key, score, member)
+    verify(reactiveRedisCommands).zaddincr(key, score, member)
   }
 
   it should "implement zcard" in {
     //given
     val key: K = genRedisKey.sample.get
-    when(asyncRedisCommands.zcard(key)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.zcard(key)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = RedisSortedSet.zcard(key)
+    val _: Task[Long] = RedisSortedSet.zcard(key)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).zcard(key)
+    verify(reactiveRedisCommands).zcard(key)
   }
 
   it should "implement zcount" in {
     //given
     val key: K = genRedisKey.sample.get
-    when(asyncRedisCommands.zcount(key, unboundedRange)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.zcount(key, unboundedRange)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = RedisSortedSet.zcount(key, unboundedRange)
+    val _: Task[Long] = RedisSortedSet.zcount(key, unboundedRange)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).zcount(key, unboundedRange)
+    verify(reactiveRedisCommands).zcount(key, unboundedRange)
   }
 
   it should "implement zincrby" in {
@@ -138,72 +131,68 @@ class RedisSortedSetSpec
     val key: K = genRedisKey.sample.get
     val amount: Double = genDouble.sample.get
     val member: V = genRedisValue.sample.get
-    when(asyncRedisCommands.zincrby(key, amount, member)).thenReturn(MockRedisFuture[java.lang.Double])
+    when(reactiveRedisCommands.zincrby(key, amount, member)).thenReturn(mockMono[java.lang.Double])
 
     //when
-    val t = RedisSortedSet.zincrby(key, amount, member)
+    val _: Task[Double] = RedisSortedSet.zincrby(key, amount, member)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).zincrby(key, amount, member)
+    verify(reactiveRedisCommands).zincrby(key, amount, member)
   }
 
   it should "implement zinterstore" in {
     //given
     val dest: K = genRedisKey.sample.get
     val keys: List[K] = genRedisKeys.sample.get
-    when(asyncRedisCommands.zinterstore(dest, keys: _*)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.zinterstore(dest, keys: _*)).thenReturn(mockMono[java.lang.Long])
     //with zStoreArgs not supported
 
     //when
-    val t = RedisSortedSet.zinterstore(dest, keys: _*)
+    val _: Task[Long] = RedisSortedSet.zinterstore(dest, keys: _*)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).zinterstore(dest, keys: _*)
+    verify(reactiveRedisCommands).zinterstore(dest, keys: _*)
   }
 
   it should "implement zlexcount" in {
     //given
     val key: K = genRedisKey.sample.get
-    when(asyncRedisCommands.zlexcount(key, unboundedRange)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.zlexcount(key, unboundedRange)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = RedisSortedSet.zlexcount(key, unboundedRange)
+    val _: Task[Long] = RedisSortedSet.zlexcount(key, unboundedRange)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).zlexcount(key, unboundedRange)
+    verify(reactiveRedisCommands).zlexcount(key, unboundedRange)
   }
 
   it should "implement zpopmin" in {
     //given
     val key: K = genRedisKey.sample.get
-    when(asyncRedisCommands.zpopmin(key)).thenReturn(MockRedisFuture[ScoredValue[V]])
+    when(reactiveRedisCommands.zpopmin(key)).thenReturn(mockMono[ScoredValue[V]])
 
     //when
-    val t = RedisSortedSet.zpopmin(key)
+    val _: Task[ScoredValue[V]] = RedisSortedSet.zpopmin(key)
 
     //then
-    t shouldBe a[Task[ScoredValue[V]]]
-    verify(asyncRedisCommands).zpopmin(key)
+    verify(reactiveRedisCommands).zpopmin(key)
   }
 
   it should "implement zpopmax" in {
     //given
     val key: K = genRedisKey.sample.get
     val count: Long = genLong.sample.get
-    when(asyncRedisCommands.zpopmax(key)).thenReturn(MockRedisFuture[ScoredValue[V]])
-    when(reactiveRedisCommands.zpopmax(key, count)).thenReturn(MockFlux[ScoredValue[V]])
+    when(reactiveRedisCommands.zpopmax(key)).thenReturn(mockMono[ScoredValue[V]])
+    when(reactiveRedisCommands.zpopmax(key, count)).thenReturn(mockFlux[ScoredValue[V]])
 
     //when
-    val r1 = RedisSortedSet.zpopmax(key)
-    val r2 = RedisSortedSet.zpopmax(key, count)
+    val r1: Task[ScoredValue[V]] = RedisSortedSet.zpopmax(key)
+    val r2: Observable[ScoredValue[V]] = RedisSortedSet.zpopmax(key, count)
 
     //then
-    r1 shouldBe a[Task[ScoredValue[V]]]
-    r2 shouldBe a[Observable[ScoredValue[V]]]
-    verify(asyncRedisCommands).zpopmax(key)
+    r1.isInstanceOf[Task[ScoredValue[V]]] shouldBe true
+    r2.isInstanceOf[Observable[ScoredValue[V]]] shouldBe true
+    verify(reactiveRedisCommands).zpopmax(key)
     verify(reactiveRedisCommands).zpopmax(key, count)
   }
 
@@ -212,13 +201,12 @@ class RedisSortedSetSpec
     val key: K = genRedisKey.sample.get
     val start: Long = genLong.sample.get
     val stop: Long = genLong.sample.get
-    when(reactiveRedisCommands.zrange(key, start, stop)).thenReturn(MockFlux[V])
+    when(reactiveRedisCommands.zrange(key, start, stop)).thenReturn(mockFlux[V])
 
     //when
-    val t = RedisSortedSet.zrange(key, start, stop)
+    val _: Observable[V] = RedisSortedSet.zrange(key, start, stop)
 
     //then
-    t shouldBe a[Observable[V]]
     verify(reactiveRedisCommands).zrange(key, start, stop)
   }
 
@@ -227,13 +215,12 @@ class RedisSortedSetSpec
     val key: K = genRedisKey.sample.get
     val start: Long = genLong.sample.get
     val stop: Long = genLong.sample.get
-    when(reactiveRedisCommands.zrangeWithScores(key, start, stop)).thenReturn(MockFlux[ScoredValue[V]])
+    when(reactiveRedisCommands.zrangeWithScores(key, start, stop)).thenReturn(mockFlux[ScoredValue[V]])
 
     //when
-    val t = RedisSortedSet.zrangeWithScores(key, start, stop)
+    val _: Observable[ScoredValue[V]] = RedisSortedSet.zrangeWithScores(key, start, stop)
 
     //then
-    t shouldBe a[Observable[ScoredValue[V]]]
     verify(reactiveRedisCommands).zrangeWithScores(key, start, stop)
   }
 
@@ -241,16 +228,16 @@ class RedisSortedSetSpec
     //given
     val key: K = genRedisKey.sample.get
     val limit: Limit = Limit.unlimited()
-    when(reactiveRedisCommands.zrangebylex(key, unboundedRange)).thenReturn(MockFlux[V])
-    when(reactiveRedisCommands.zrangebylex(key, unboundedRange, limit)).thenReturn(MockFlux[V])
+    when(reactiveRedisCommands.zrangebylex(key, unboundedRange)).thenReturn(mockFlux[V])
+    when(reactiveRedisCommands.zrangebylex(key, unboundedRange, limit)).thenReturn(mockFlux[V])
 
     //when
-    val r1 = RedisSortedSet.zrangebylex(key, unboundedRange)
-    val r2 = RedisSortedSet.zrangebylex(key, unboundedRange, limit)
+    val r1: Observable[V] = RedisSortedSet.zrangebylex(key, unboundedRange)
+    val r2: Observable[V] = RedisSortedSet.zrangebylex(key, unboundedRange, limit)
 
     //then
-    r1 shouldBe a[Observable[V]]
-    r2 shouldBe a[Observable[V]]
+    r1.isInstanceOf[Observable[V]] shouldBe true
+    r2.isInstanceOf[Observable[V]] shouldBe true
     verify(reactiveRedisCommands).zrangebylex(key, unboundedRange)
     verify(reactiveRedisCommands).zrangebylex(key, unboundedRange, limit)
   }
@@ -259,16 +246,16 @@ class RedisSortedSetSpec
     //given
     val key: K = genRedisKey.sample.get
     val limit: Limit = Limit.unlimited()
-    when(reactiveRedisCommands.zrangebyscore(key, unboundedRange)).thenReturn(MockFlux[V])
-    when(reactiveRedisCommands.zrangebyscore(key, unboundedRange, limit)).thenReturn(MockFlux[V])
+    when(reactiveRedisCommands.zrangebyscore(key, unboundedRange)).thenReturn(mockFlux[V])
+    when(reactiveRedisCommands.zrangebyscore(key, unboundedRange, limit)).thenReturn(mockFlux[V])
 
     //when
-    val r1 = RedisSortedSet.zrangebyscore(key, unboundedRange)
-    val r2 = RedisSortedSet.zrangebyscore(key, unboundedRange, limit)
+    val r1: Observable[V] = RedisSortedSet.zrangebyscore(key, unboundedRange)
+    val r2: Observable[V] = RedisSortedSet.zrangebyscore(key, unboundedRange, limit)
 
     //then
-    r1 shouldBe a[Observable[V]]
-    r2 shouldBe a[Observable[V]]
+    r1.isInstanceOf[Observable[V]] shouldBe true
+    r2.isInstanceOf[Observable[V]] shouldBe true
     verify(reactiveRedisCommands).zrangebyscore(key, unboundedRange)
     verify(reactiveRedisCommands).zrangebyscore(key, unboundedRange, limit)
   }
@@ -277,16 +264,16 @@ class RedisSortedSetSpec
     //given
     val key: K = genRedisKey.sample.get
     val limit: Limit = Limit.unlimited()
-    when(reactiveRedisCommands.zrangebyscoreWithScores(key, unboundedRange)).thenReturn(MockFlux[ScoredValue[V]])
-    when(reactiveRedisCommands.zrangebyscoreWithScores(key, unboundedRange, limit)).thenReturn(MockFlux[ScoredValue[V]])
+    when(reactiveRedisCommands.zrangebyscoreWithScores(key, unboundedRange)).thenReturn(mockFlux[ScoredValue[V]])
+    when(reactiveRedisCommands.zrangebyscoreWithScores(key, unboundedRange, limit)).thenReturn(mockFlux[ScoredValue[V]])
 
     //when
-    val r1 = RedisSortedSet.zrangebyscoreWithScores(key, unboundedRange)
-    val r2 = RedisSortedSet.zrangebyscoreWithScores(key, unboundedRange, limit)
+    val r1: Observable[ScoredValue[V]] = RedisSortedSet.zrangebyscoreWithScores(key, unboundedRange)
+    val r2: Observable[ScoredValue[V]] = RedisSortedSet.zrangebyscoreWithScores(key, unboundedRange, limit)
 
     //then
-    r1 shouldBe a[Observable[ScoredValue[V]]]
-    r2 shouldBe a[Observable[ScoredValue[V]]]
+    r1.isInstanceOf[Observable[ScoredValue[V]]] shouldBe true
+    r2.isInstanceOf[Observable[ScoredValue[V]]] shouldBe true
     verify(reactiveRedisCommands).zrangebyscoreWithScores(key, unboundedRange)
     verify(reactiveRedisCommands).zrangebyscoreWithScores(key, unboundedRange, limit)
 
@@ -296,41 +283,38 @@ class RedisSortedSetSpec
     //given
     val key: K = genRedisKey.sample.get
     val member: V = genRedisValue.sample.get
-    when(asyncRedisCommands.zrank(key, member)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.zrank(key, member)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = RedisSortedSet.zrank(key, member)
+    val _: Task[Long] = RedisSortedSet.zrank(key, member)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).zrank(key, member)
+    verify(reactiveRedisCommands).zrank(key, member)
   }
 
   it should "implement zrem" in {
     //given
     val key: K = genRedisKey.sample.get
     val members: List[V] = genRedisValues.sample.get
-    when(asyncRedisCommands.zrem(key, members: _*)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.zrem(key, members: _*)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = RedisSortedSet.zrem(key, members: _*)
+    val _: Task[Long] = RedisSortedSet.zrem(key, members: _*)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).zrem(key, members: _*)
+    verify(reactiveRedisCommands).zrem(key, members: _*)
   }
 
   it should "implement zremrangebylex" in {
     //given
     val key: K = genRedisKey.sample.get
-    when(asyncRedisCommands.zremrangebylex(key, unboundedRange)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.zremrangebylex(key, unboundedRange)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val r = RedisSortedSet.zremrangebylex(key, unboundedRange)
+    val _: Task[Long] = RedisSortedSet.zremrangebylex(key, unboundedRange)
 
     //then
-    r shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).zremrangebylex(key, unboundedRange)
+    verify(reactiveRedisCommands).zremrangebylex(key, unboundedRange)
   }
 
   it should "implement zremrangebyrank" in {
@@ -338,27 +322,25 @@ class RedisSortedSetSpec
     val key: K = genRedisKey.sample.get
     val start: Long = genLong.sample.get
     val stop: Long = genLong.sample.get
-    when(asyncRedisCommands.zremrangebyrank(key, start, stop)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.zremrangebyrank(key, start, stop)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = RedisSortedSet.zremrangebyrank(key, start, stop)
+    val _: Task[Long] = RedisSortedSet.zremrangebyrank(key, start, stop)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).zremrangebyrank(key, start, stop)
+    verify(reactiveRedisCommands).zremrangebyrank(key, start, stop)
   }
 
   it should "implement zremrangebyscore" in {
     //given
     val key: K = genRedisKey.sample.get
-    when(asyncRedisCommands.zremrangebyscore(key, unboundedRange)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.zremrangebyscore(key, unboundedRange)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val r = RedisSortedSet.zremrangebyscore(key, unboundedRange)
+    val _: Task[Long] = RedisSortedSet.zremrangebyscore(key, unboundedRange)
 
     //then
-    r shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).zremrangebyscore(key, unboundedRange)
+    verify(reactiveRedisCommands).zremrangebyscore(key, unboundedRange)
   }
 
   it should "implement zrevrange" in {
@@ -366,13 +348,12 @@ class RedisSortedSetSpec
     val key: K = genRedisKey.sample.get
     val start: Long = genLong.sample.get
     val stop: Long = genLong.sample.get
-    when(reactiveRedisCommands.zrevrange(key, start, stop)).thenReturn(MockFlux[V])
+    when(reactiveRedisCommands.zrevrange(key, start, stop)).thenReturn(mockFlux[V])
 
     //when
-    val t = RedisSortedSet.zrevrange(key, start, stop)
+    val _: Observable[V] = RedisSortedSet.zrevrange(key, start, stop)
 
     //then
-    t shouldBe a[Observable[V]]
     verify(reactiveRedisCommands).zrevrange(key, start, stop)
   }
 
@@ -381,13 +362,12 @@ class RedisSortedSetSpec
     val key: K = genRedisKey.sample.get
     val start: Long = genLong.sample.get
     val stop: Long = genLong.sample.get
-    when(reactiveRedisCommands.zrevrangeWithScores(key, start, stop)).thenReturn(MockFlux[ScoredValue[V]])
+    when(reactiveRedisCommands.zrevrangeWithScores(key, start, stop)).thenReturn(mockFlux[ScoredValue[V]])
 
     //when
-    val t = RedisSortedSet.zrevrangeWithScores(key, start, stop)
+    val _: Observable[ScoredValue[V]] = RedisSortedSet.zrevrangeWithScores(key, start, stop)
 
     //then
-    t shouldBe a[Observable[ScoredValue[V]]]
     verify(reactiveRedisCommands).zrevrangeWithScores(key, start, stop)
   }
 
@@ -395,16 +375,16 @@ class RedisSortedSetSpec
     //given
     val key: K = genRedisKey.sample.get
     val limit: Limit = Limit.unlimited()
-    when(reactiveRedisCommands.zrevrangebylex(key, unboundedRange)).thenReturn(MockFlux[V])
-    when(reactiveRedisCommands.zrevrangebylex(key, unboundedRange, limit)).thenReturn(MockFlux[V])
+    when(reactiveRedisCommands.zrevrangebylex(key, unboundedRange)).thenReturn(mockFlux[V])
+    when(reactiveRedisCommands.zrevrangebylex(key, unboundedRange, limit)).thenReturn(mockFlux[V])
 
     //when
-    val r1 = RedisSortedSet.zrevrangebylex(key, unboundedRange)
-    val r2 = RedisSortedSet.zrevrangebylex(key, unboundedRange, limit)
+    val r1: Observable[V] = RedisSortedSet.zrevrangebylex(key, unboundedRange)
+    val r2: Observable[V] = RedisSortedSet.zrevrangebylex(key, unboundedRange, limit)
 
     //then
-    r1 shouldBe a[Observable[V]]
-    r2 shouldBe a[Observable[V]]
+    r1.isInstanceOf[Observable[V]] shouldBe true
+    r2.isInstanceOf[Observable[V]] shouldBe true
     verify(reactiveRedisCommands).zrevrangebylex(key, unboundedRange)
     verify(reactiveRedisCommands).zrevrangebylex(key, unboundedRange, limit)
   }
@@ -413,8 +393,8 @@ class RedisSortedSetSpec
     //given
     val key: K = genRedisKey.sample.get
     val limit: Limit = Limit.unlimited()
-    when(reactiveRedisCommands.zrevrangebyscore(key, unboundedRange)).thenReturn(MockFlux[V])
-    when(reactiveRedisCommands.zrevrangebyscore(key, unboundedRange, limit)).thenReturn(MockFlux[V])
+    when(reactiveRedisCommands.zrevrangebyscore(key, unboundedRange)).thenReturn(mockFlux[V])
+    when(reactiveRedisCommands.zrevrangebyscore(key, unboundedRange, limit)).thenReturn(mockFlux[V])
     //with channel in args not supported
 
     //when
@@ -422,8 +402,8 @@ class RedisSortedSetSpec
     val r2 = RedisSortedSet.zrevrangebyscore(key, unboundedRange, limit)
 
     //then
-    r1 shouldBe a[Observable[V]]
-    r2 shouldBe a[Observable[V]]
+    r1.isInstanceOf[Observable[V]] shouldBe true
+    r2.isInstanceOf[Observable[V]] shouldBe true
     verify(reactiveRedisCommands).zrevrangebyscore(key, unboundedRange)
     verify(reactiveRedisCommands).zrevrangebyscore(key, unboundedRange, limit)
   }
@@ -432,18 +412,18 @@ class RedisSortedSetSpec
     //given
     val key: K = genRedisKey.sample.get
     val limit: Limit = Limit.unlimited()
-    when(reactiveRedisCommands.zrevrangebyscoreWithScores(key, unboundedRange)).thenReturn(MockFlux[ScoredValue[V]])
+    when(reactiveRedisCommands.zrevrangebyscoreWithScores(key, unboundedRange)).thenReturn(mockFlux[ScoredValue[V]])
     when(reactiveRedisCommands.zrevrangebyscoreWithScores(key, unboundedRange, limit))
-      .thenReturn(MockFlux[ScoredValue[V]])
+      .thenReturn(mockFlux[ScoredValue[V]])
     //with channel in args not supported
 
     //when
-    val r1 = RedisSortedSet.zrevrangebyscoreWithScores(key, unboundedRange)
-    val r2 = RedisSortedSet.zrevrangebyscoreWithScores(key, unboundedRange, limit)
+    val r1: Observable[ScoredValue[V]] = RedisSortedSet.zrevrangebyscoreWithScores(key, unboundedRange)
+    val r2: Observable[ScoredValue[V]] = RedisSortedSet.zrevrangebyscoreWithScores(key, unboundedRange, limit)
 
     //then
-    r1 shouldBe a[Observable[ScoredValue[V]]]
-    r2 shouldBe a[Observable[ScoredValue[V]]]
+    r1.isInstanceOf[Observable[ScoredValue[V]]] shouldBe true
+    r2.isInstanceOf[Observable[ScoredValue[V]]] shouldBe true
     verify(reactiveRedisCommands).zrevrangebyscoreWithScores(key, unboundedRange)
     verify(reactiveRedisCommands).zrevrangebyscoreWithScores(key, unboundedRange, limit)
   }
@@ -452,57 +432,53 @@ class RedisSortedSetSpec
     //given
     val key: K = genRedisKey.sample.get
     val member: V = genRedisValue.sample.get
-    when(asyncRedisCommands.zrevrank(key, member)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.zrevrank(key, member)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = RedisSortedSet.zrevrank(key, member)
+    val _: Task[Long] = RedisSortedSet.zrevrank(key, member)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).zrevrank(key, member)
+    verify(reactiveRedisCommands).zrevrank(key, member)
   }
 
   it should "implement zscan" in {
     //given
     val key: K = genRedisKey.sample.get
-    when(asyncRedisCommands.zscan(key)).thenReturn(MockRedisFuture[ScoredValueScanCursor[V]])
+    when(reactiveRedisCommands.zscan(key)).thenReturn(mockMono[ScoredValueScanCursor[V]])
     //with scanArgs and scanCursor not supported
 
     //when
-    val t = RedisSortedSet.zscan(key)
+    val _: Task[ScoredValueScanCursor[V]] = RedisSortedSet.zscan(key)
 
     //then
-    t shouldBe a[Task[ScoredValueScanCursor[V]]]
-    verify(asyncRedisCommands).zscan(key)
+    verify(reactiveRedisCommands).zscan(key)
   }
 
   it should "implement zscore" in {
     //given
     val key: K = genRedisKey.sample.get
     val member: V = genRedisValue.sample.get
-    when(asyncRedisCommands.zscore(key, member)).thenReturn(MockRedisFuture[java.lang.Double])
+    when(reactiveRedisCommands.zscore(key, member)).thenReturn(mockMono[java.lang.Double])
 
     //when
-    val t = RedisSortedSet.zscore(key, member)
+    val _: Task[Double] = RedisSortedSet.zscore(key, member)
 
     //then
-    t shouldBe a[Task[Double]]
-    verify(asyncRedisCommands).zscore(key, member)
+    verify(reactiveRedisCommands).zscore(key, member)
   }
 
   it should "implement zunionstore" in {
     //given
     val dest: K = genRedisKey.sample.get
     val keys: List[K] = genRedisKeys.sample.get
-    when(asyncRedisCommands.zunionstore(dest, keys: _*)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.zunionstore(dest, keys: _*)).thenReturn(mockMono[java.lang.Long])
     //with zStoreArgs not supported
 
     //when
-    val t = RedisSortedSet.zunionstore(dest, keys: _*)
+    val _: Task[Long] = RedisSortedSet.zunionstore(dest, keys: _*)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).zunionstore(dest, keys: _*)
+    verify(reactiveRedisCommands).zunionstore(dest, keys: _*)
   }
 
 }

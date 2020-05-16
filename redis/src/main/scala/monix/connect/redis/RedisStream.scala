@@ -30,9 +30,7 @@ import io.lettuce.core.XReadArgs.StreamOffset
   * an abstract data type represented in memory, they implement more powerful opperations,
   * to overcome the limits of the log file itself.
   * Check the official documentation to see the available operations at: https://redis.io/commands#stream
-  * @see The reference to lettuce api:
-  *      [[io.lettuce.core.api.async.RedisStreamAsyncCommands]] and
-  *      [[io.lettuce.core.api.reactive.RedisStreamReactiveCommands]]
+  * @see The reference to lettuce api: [[io.lettuce.core.api.reactive.RedisStreamReactiveCommands]]
   *
   */
 trait RedisStream {
@@ -44,7 +42,7 @@ trait RedisStream {
   def xack[K, V](key: K, group: K, messageIds: String*)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[Long] = {
-    Task.from(connection.async().xack(key, group, messageIds: _*)).map(_.longValue())
+    Task.from(connection.reactive().xack(key, group, messageIds: _*)).map(_.longValue())
   }
 
   /**
@@ -52,7 +50,7 @@ trait RedisStream {
     * @return simple-reply the message Id.
     */
   def xadd[K, V](key: K, body: Map[K, V])(implicit connection: StatefulRedisConnection[K, V]): Task[String] = {
-    Task.from(connection.async().xadd(key, body))
+    Task.from(connection.reactive().xadd(key, body))
   } //1/4
 
   /**
@@ -71,7 +69,7 @@ trait RedisStream {
     * @return simple-reply number of removed entries.
     */
   def xdel[K, V](key: K, messageIds: String*)(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().xadd(key, messageIds: _*))
+    Task.from(connection.reactive().xadd(key, messageIds: _*))
 
   /**
     * Create a consumer group.
@@ -80,7 +78,7 @@ trait RedisStream {
   def xgroupCreate[K, V](streamOffset: StreamOffset[K], group: K)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().xgroupCreate(streamOffset, group))
+    Task.from(connection.reactive().xgroupCreate(streamOffset, group))
 
   /**
     * Delete a consumer from a consumer group.
@@ -89,14 +87,14 @@ trait RedisStream {
   def xgroupDelconsumer[K, V](key: K, consumer: LConsumer[K])(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-    Task.from(connection.async().xgroupDelconsumer(key, consumer)).map(_.booleanValue())
+    Task.from(connection.reactive().xgroupDelconsumer(key, consumer)).map(_.booleanValue())
 
   /**
     * Destroy a consumer group.
     * @return simple-reply { @literal true} if successful.
     */
   def xgroupDestroy[K, V](key: K, group: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-    Task.from(connection.async().xgroupDestroy(key, group)).map(_.booleanValue())
+    Task.from(connection.reactive().xgroupDestroy(key, group)).map(_.booleanValue())
 
   /**
     * Set the current group id.
@@ -105,13 +103,13 @@ trait RedisStream {
   def xgroupSetid[K, V](streamOffset: StreamOffset[K], group: K)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().xgroupSetid(streamOffset, group))
+    Task.from(connection.reactive().xgroupSetid(streamOffset, group))
   /**
     * Get the length of a steam.
     * @return simple-reply the lenght of the stream.
     */
   def xlen[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().xlen(key)).map(_.longValue())
+    Task.from(connection.reactive().xlen(key)).map(_.longValue())
 
   /**
     * Read pending messages from a stream for a group.
@@ -203,7 +201,7 @@ trait RedisStream {
     * @return Number of removed entries.
     */
   def xtrim[K, V](key: K, count: Long)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().xtrim(key, count)).map(_.longValue())
+    Task.from(connection.reactive().xtrim(key, count)).map(_.longValue())
 
   /**
     * Trims the stream to count elements.
@@ -212,7 +210,7 @@ trait RedisStream {
   def xtrim[K, V](key: K, approximateTrimming: Boolean, count: Long)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().xtrim(key, approximateTrimming, count)).map(_.longValue())
+    Task.from(connection.reactive().xtrim(key, approximateTrimming, count)).map(_.longValue())
 
 }
 

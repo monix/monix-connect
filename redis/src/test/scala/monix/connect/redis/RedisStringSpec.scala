@@ -36,13 +36,12 @@ class RedisStringSpec
   implicit val connection: StatefulRedisConnection[String, Int] = mock[StatefulRedisConnection[String, Int]]
 
   override def beforeAll(): Unit = {
-    when(connection.async()).thenAnswer(asyncRedisCommands)
     when(connection.reactive()).thenAnswer(reactiveRedisCommands)
     super.beforeAll()
   }
 
   override def beforeEach() = {
-    reset(asyncRedisCommands)
+    reset(reactiveRedisCommands)
     reset(reactiveRedisCommands)
   }
 
@@ -54,14 +53,13 @@ class RedisStringSpec
     //given
     val k: K = genRedisKey.sample.get
     val v: V = genRedisValue.sample.get
-    when(asyncRedisCommands.append(k, v)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.append(k, v)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val r = Redis.append(k, v)
+    val _: Task[Long] = Redis.append(k, v)
 
     //then
-    r shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).append(k, v)
+    verify(reactiveRedisCommands).append(k, v)
   }
 
   it should "implement bitcount" in {
@@ -69,18 +67,18 @@ class RedisStringSpec
     val key: K = genRedisKey.sample.get
     val start: Long = genLong.sample.get
     val stop: Long = genLong.sample.get
-    when(asyncRedisCommands.bitcount(key)).thenReturn(MockRedisFuture[java.lang.Long])
-    when(asyncRedisCommands.bitcount(key, start, stop)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.bitcount(key)).thenReturn(mockMono[java.lang.Long])
+    when(reactiveRedisCommands.bitcount(key, start, stop)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val r1 = Redis.bitcount(key)
-    val r2 = Redis.bitcount(key, start, stop)
+    val r1: Task[Long] = Redis.bitcount(key)
+    val r2: Task[Long] = Redis.bitcount(key, start, stop)
 
     //then
-    r1 shouldBe a[Task[Long]]
-    r2 shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).bitcount(key)
-    verify(asyncRedisCommands).bitcount(key, start, stop)
+    r1.isInstanceOf[Task[Long]] shouldBe true
+    r2.isInstanceOf[Task[Long]] shouldBe true
+    verify(reactiveRedisCommands).bitcount(key)
+    verify(reactiveRedisCommands).bitcount(key, start, stop)
   }
 
   it should "implement bitpos" in {
@@ -89,132 +87,124 @@ class RedisStringSpec
     val state: Boolean = genBool.sample.get
     val start: Long = genLong.sample.get
     val end: Long = genLong.sample.get
-    when(asyncRedisCommands.bitpos(key, state)).thenReturn(MockRedisFuture[java.lang.Long])
-    when(asyncRedisCommands.bitpos(key, state, start)).thenReturn(MockRedisFuture[java.lang.Long])
-    when(asyncRedisCommands.bitpos(key, state, start, end)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.bitpos(key, state)).thenReturn(mockMono[java.lang.Long])
+    when(reactiveRedisCommands.bitpos(key, state, start)).thenReturn(mockMono[java.lang.Long])
+    when(reactiveRedisCommands.bitpos(key, state, start, end)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val r1 = Redis.bitpos(key, state)
-    val r2 = Redis.bitpos(key, state, start)
-    val r3 = Redis.bitpos(key, state, start, end)
+    val r1: Task[Long] = Redis.bitpos(key, state)
+    val r2: Task[Long] = Redis.bitpos(key, state, start)
+    val r3: Task[Long] = Redis.bitpos(key, state, start, end)
 
     //then
-    r1 shouldBe a[Task[Long]]
-    r2 shouldBe a[Task[Long]]
-    r3 shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).bitpos(key, state)
-    verify(asyncRedisCommands).bitpos(key, state, start)
-    verify(asyncRedisCommands).bitpos(key, state, start, end)
+    r1.isInstanceOf[Task[Long]] shouldBe true
+    r2.isInstanceOf[Task[Long]] shouldBe true
+    r3.isInstanceOf[Task[Long]] shouldBe true
+    verify(reactiveRedisCommands).bitpos(key, state)
+    verify(reactiveRedisCommands).bitpos(key, state, start)
+    verify(reactiveRedisCommands).bitpos(key, state, start, end)
   }
 
   it should "implement bitopAnd" in {
     //given
     val dest: K = genRedisKey.sample.get
     val keys: List[K] = genRedisKeys.sample.get
-    when(asyncRedisCommands.bitopAnd(dest, keys: _*)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.bitopAnd(dest, keys: _*)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = Redis.bitopAnd(dest, keys: _*)
+    val _: Task[Long] = Redis.bitopAnd(dest, keys: _*)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).bitopAnd(dest, keys: _*)
+    verify(reactiveRedisCommands).bitopAnd(dest, keys: _*)
   }
 
   it should "implement bitopNot" in {
     //given
     val dest: K = genRedisKey.sample.get
     val source: K = genRedisKey.sample.get
-    when(asyncRedisCommands.bitopNot(dest, source)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.bitopNot(dest, source)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = Redis.bitopNot(dest, source)
+    val _: Task[Long] = Redis.bitopNot(dest, source)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).bitopNot(dest, source)
+    verify(reactiveRedisCommands).bitopNot(dest, source)
   }
 
   it should "implement bitopOr" in {
     //given
     val dest: K = genRedisKey.sample.get
     val keys: List[K] = genRedisKeys.sample.get
-    when(asyncRedisCommands.bitopOr(dest, keys: _*)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.bitopOr(dest, keys: _*)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = Redis.bitopOr(dest, keys: _*)
+    val _: Task[Long] = Redis.bitopOr(dest, keys: _*)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).bitopOr(dest, keys: _*)
+    verify(reactiveRedisCommands).bitopOr(dest, keys: _*)
   }
 
   it should "implement bitopXor" in {
     //given
     val dest: K = genRedisKey.sample.get
     val keys: List[K] = genRedisKeys.sample.get
-    when(asyncRedisCommands.bitopXor(dest, keys: _*)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.bitopXor(dest, keys: _*)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = RedisString.bitopXor(dest, keys: _*)
+    val _: Task[Long] = RedisString.bitopXor(dest, keys: _*)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).bitopXor(dest, keys: _*)
+    verify(reactiveRedisCommands).bitopXor(dest, keys: _*)
   }
 
   it should "implement decr" in {
     //given
     val key: K = genRedisKey.sample.get
-    when(asyncRedisCommands.decr(key)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.decr(key)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = RedisString.decr(key)
+    val _: Task[Long] = RedisString.decr(key)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).decr(key)
+    verify(reactiveRedisCommands).decr(key)
   }
 
   it should "implement decrby" in {
     //given
     val key: K = genRedisKey.sample.get
     val amount: Long = genLong.sample.get
-    when(asyncRedisCommands.decrby(key, amount)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.decrby(key, amount)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = RedisString.decrby(key, amount)
+    val _: Task[Long] = RedisString.decrby(key, amount)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).decrby(key, amount)
+    verify(reactiveRedisCommands).decrby(key, amount)
   }
 
   it should "implement get" in {
     //given
     val key: K = genRedisKey.sample.get
-    when(asyncRedisCommands.get(key)).thenReturn(MockRedisFuture[Int])
+    when(reactiveRedisCommands.get(key)).thenReturn(mockMono[Int])
 
     //when
-    val t = RedisString.get(key)
+    val _: Task[V] = RedisString.get(key)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).get(key)
+    verify(reactiveRedisCommands).get(key)
   }
 
   it should "implement getbit" in {
     //given
     val key: K = genRedisKey.sample.get
     val offset: Long = genLong.sample.get
-    when(asyncRedisCommands.getbit(key, offset)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.getbit(key, offset)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = RedisString.getbit(key, offset)
+    val _: Task[Long] = RedisString.getbit(key, offset)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).getbit(key, offset)
+    verify(reactiveRedisCommands).getbit(key, offset)
   }
 
   it should "implement getrange" in {
@@ -222,123 +212,114 @@ class RedisStringSpec
     val key: K = genRedisKey.sample.get
     val start: Long = genLong.sample.get
     val end: Long = genLong.sample.get
-    when(asyncRedisCommands.getrange(key, start, end)).thenReturn(MockRedisFuture[V])
+    when(reactiveRedisCommands.getrange(key, start, end)).thenReturn(mockMono[V])
 
     //when
-    val t = RedisString.getrange(key, start, end)
+    val _: Task[V] = RedisString.getrange(key, start, end)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).getrange(key, start, end)
+    verify(reactiveRedisCommands).getrange(key, start, end)
   }
 
   it should "implement getset" in {
     //given
     val key: K = genRedisKey.sample.get
     val value: V = genRedisValue.sample.get
-    when(asyncRedisCommands.getset(key, value)).thenReturn(MockRedisFuture[V])
+    when(reactiveRedisCommands.getset(key, value)).thenReturn(mockMono[V])
 
     //when
-    val t = RedisString.getset(key, value)
+    val _: Task[V] = RedisString.getset(key, value)
 
     //then
-    t shouldBe a[Task[V]]
-    verify(asyncRedisCommands).getset(key, value)
+    verify(reactiveRedisCommands).getset(key, value)
   }
 
   it should "implement incr" in {
     //given
     val key: K = genRedisKey.sample.get
-    when(asyncRedisCommands.incr(key)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.incr(key)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = RedisString.incr(key)
+    val _: Task[Long] = RedisString.incr(key)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).incr(key)
+    verify(reactiveRedisCommands).incr(key)
   }
 
   it should "implement incrby" in {
     //given
     val key: K = genRedisKey.sample.get
     val amount: Long = genLong.sample.get
-    when(asyncRedisCommands.incrby(key, amount)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.incrby(key, amount)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = RedisString.incrby(key, amount)
+    val _: Task[Long] = RedisString.incrby(key, amount)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).incrby(key, amount)
+    verify(reactiveRedisCommands).incrby(key, amount)
   }
 
   it should "implement incrbyfloat" in {
     //given
     val key: K = genRedisKey.sample.get
     val amount: Double = genLong.sample.get.toDouble
-    when(asyncRedisCommands.incrbyfloat(key, amount)).thenReturn(MockRedisFuture[java.lang.Double])
+    when(reactiveRedisCommands.incrbyfloat(key, amount)).thenReturn(mockMono[java.lang.Double])
 
     //when
-    val t = RedisString.incrbyfloat(key, amount)
+    val _: Task[Double] = RedisString.incrbyfloat(key, amount)
 
     //then
-    t shouldBe a[Task[Double]]
-    verify(asyncRedisCommands).incrbyfloat(key, amount)
+    verify(reactiveRedisCommands).incrbyfloat(key, amount)
   }
 
   it should "implement mget" in {
     //given
     val keys: List[K] = genRedisKeys.sample.get
-    when(reactiveRedisCommands.mget(keys: _*)).thenReturn(MockFlux[KeyValue[K, V]])
+    when(reactiveRedisCommands.mget(keys: _*)).thenReturn(mockFlux[KeyValue[K, V]])
 
     //when
-    val t = RedisString.mget(keys: _*)
+    val _: Observable[KeyValue[K, V]] = RedisString.mget(keys: _*)
 
     //then
-    t shouldBe a[Observable[KeyValue[K, V]]]
     verify(reactiveRedisCommands).mget(keys: _*)
   }
 
   it should "implement mset" in {
     //given
     val map: Map[K, V] = genKvMap.sample.get
-    when(asyncRedisCommands.mset(map.asJava)).thenReturn(MockRedisFuture[String])
+    when(reactiveRedisCommands.mset(map.asJava)).thenReturn(mockMono[String])
 
     //when
-    val t = RedisString.mset(map)
+    val _: Task[String] = RedisString.mset(map)
 
     //then
-    t shouldBe a[Task[String]]
-    verify(asyncRedisCommands).mset(map.asJava)
+    verify(reactiveRedisCommands).mset(map.asJava)
   }
 
   it should "implement msetnx" in {
     //given
     val map: Map[K, V] = genKvMap.sample.get
-    when(asyncRedisCommands.msetnx(map.asJava)).thenReturn(MockRedisFuture[java.lang.Boolean])
+    when(reactiveRedisCommands.msetnx(map.asJava)).thenReturn(mockMono[java.lang.Boolean])
 
     //when
-    val t = RedisString.msetnx(map)
+    val _: Task[Boolean] = RedisString.msetnx(map)
 
     //then
-    t shouldBe a[Task[Boolean]]
-    verify(asyncRedisCommands).msetnx(map.asJava)
+    verify(reactiveRedisCommands).msetnx(map.asJava)
   }
 
   it should "implement set" in {
     //given
     val key: K = genRedisKey.sample.get
     val value: V = genRedisValue.sample.get
-    when(asyncRedisCommands.set(key, value)).thenReturn(MockRedisFuture[String])
+    when(reactiveRedisCommands.set(key, value)).thenReturn(mockMono[String])
     //with setArgs not supported
 
     //when
-    val t = RedisString.set(key, value)
+    val _: Task[String] = RedisString.set(key, value)
 
     //then
-    t shouldBe a[Task[String]]
-    verify(asyncRedisCommands).set(key, value)
+    verify(reactiveRedisCommands).set(key, value)
   }
 
   it should "implement setbit" in {
@@ -346,14 +327,13 @@ class RedisStringSpec
     val key: K = genRedisKey.sample.get
     val offset: Long = genLong.sample.get
     val value: V = genLong.sample.get.toInt
-    when(asyncRedisCommands.setbit(key, offset, value)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.setbit(key, offset, value)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = RedisString.setbit(key, offset, value)
+    val _: Task[Long] = RedisString.setbit(key, offset, value)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).setbit(key, offset, value)
+    verify(reactiveRedisCommands).setbit(key, offset, value)
   }
 
   it should "implement setex" in {
@@ -361,14 +341,13 @@ class RedisStringSpec
     val key: K = genRedisKey.sample.get
     val seconds: Long = genLong.sample.get
     val value: V = genLong.sample.get.toInt
-    when(asyncRedisCommands.setex(key, seconds, value)).thenReturn(MockRedisFuture[String])
+    when(reactiveRedisCommands.setex(key, seconds, value)).thenReturn(mockMono[String])
 
     //when
-    val t = RedisString.setex(key, seconds, value)
+    val _: Task[String] = RedisString.setex(key, seconds, value)
 
     //then
-    t shouldBe a[Task[String]]
-    verify(asyncRedisCommands).setex(key, seconds, value)
+    verify(reactiveRedisCommands).setex(key, seconds, value)
   }
 
   it should "implement psetex" in {
@@ -376,28 +355,26 @@ class RedisStringSpec
     val key: K = genRedisKey.sample.get
     val milliseconds: Long = genLong.sample.get
     val value: V = genLong.sample.get.toInt
-    when(asyncRedisCommands.psetex(key, milliseconds, value)).thenReturn(MockRedisFuture[String])
+    when(reactiveRedisCommands.psetex(key, milliseconds, value)).thenReturn(mockMono[String])
 
     //when
-    val t = RedisString.psetex(key, milliseconds, value)
+    val _: Task[String] = RedisString.psetex(key, milliseconds, value)
 
     //then
-    t shouldBe a[Task[String]]
-    verify(asyncRedisCommands).psetex(key, milliseconds, value)
+    verify(reactiveRedisCommands).psetex(key, milliseconds, value)
   }
 
   it should "implement setnx" in {
     //given
     val key: K = genRedisKey.sample.get
     val value: V = genLong.sample.get.toInt
-    when(asyncRedisCommands.setnx(key, value)).thenReturn(MockRedisFuture[java.lang.Boolean])
+    when(reactiveRedisCommands.setnx(key, value)).thenReturn(mockMono[java.lang.Boolean])
 
     //when
-    val t = RedisString.setnx(key, value)
+    val _: Task[Boolean] = RedisString.setnx(key, value)
 
     //then
-    t shouldBe a[Task[Boolean]]
-    verify(asyncRedisCommands).setnx(key, value)
+    verify(reactiveRedisCommands).setnx(key, value)
   }
 
   it should "implement setrange" in {
@@ -405,27 +382,25 @@ class RedisStringSpec
     val key: K = genRedisKey.sample.get
     val offset: Long = genLong.sample.get
     val value: V = genLong.sample.get.toInt
-    when(asyncRedisCommands.setrange(key, offset, value)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.setrange(key, offset, value)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = RedisString.setrange(key, offset, value)
+    val _: Task[Long] = RedisString.setrange(key, offset, value)
 
     //then
-    t shouldBe a[Task[Boolean]]
-    verify(asyncRedisCommands).setrange(key, offset, value)
+    verify(reactiveRedisCommands).setrange(key, offset, value)
   }
 
   it should "implement strlen" in {
     //given
     val key: K = genRedisKey.sample.get
-    when(asyncRedisCommands.strlen(key)).thenReturn(MockRedisFuture[java.lang.Long])
+    when(reactiveRedisCommands.strlen(key)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val t = RedisString.strlen(key)
+    val _: Task[Long] = RedisString.strlen(key)
 
     //then
-    t shouldBe a[Task[Long]]
-    verify(asyncRedisCommands).strlen(key)
+    verify(reactiveRedisCommands).strlen(key)
   }
 
 }

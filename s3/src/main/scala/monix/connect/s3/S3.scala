@@ -25,7 +25,22 @@ import monix.execution.Scheduler
 import monix.eval.Task
 import software.amazon.awssdk.core.async.AsyncRequestBody
 import software.amazon.awssdk.services.s3.S3AsyncClient
-import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadResponse, CreateBucketRequest, CreateBucketResponse, DeleteBucketRequest, DeleteBucketResponse, DeleteObjectRequest, DeleteObjectResponse, GetObjectRequest, ListObjectsRequest, ListObjectsResponse, ListObjectsV2Request, ListObjectsV2Response, PutObjectRequest, PutObjectResponse}
+import software.amazon.awssdk.services.s3.model.{
+  CompleteMultipartUploadResponse,
+  CreateBucketRequest,
+  CreateBucketResponse,
+  DeleteBucketRequest,
+  DeleteBucketResponse,
+  DeleteObjectRequest,
+  DeleteObjectResponse,
+  GetObjectRequest,
+  ListObjectsRequest,
+  ListObjectsResponse,
+  ListObjectsV2Request,
+  ListObjectsV2Response,
+  PutObjectRequest,
+  PutObjectResponse
+}
 
 /**
   * An idiomatic monix service client for Amazon S3.

@@ -32,7 +32,7 @@ private[redis] trait RedisHash {
     *         fields.
     */
   def hdel[K, V](key: K, fields: K*)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().hdel(key, fields: _*)).map(_.longValue)
+    Task.from(connection.reactive().hdel(key, fields: _*)).map(_.longValue)
 
   /**
     * Determine if a hash field exists.
@@ -40,7 +40,7 @@ private[redis] trait RedisHash {
     *         False if the hash does not contain the field, or key does not exist.                                                                                                                  .
     */
   def hexists[K, V](key: K, field: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-    Task.from(connection.async().hexists(key, field)).map(_.booleanValue)
+    Task.from(connection.reactive().hexists(key, field)).map(_.booleanValue)
 
   //todo considering returning an optional value
   /**
@@ -48,7 +48,7 @@ private[redis] trait RedisHash {
     * @return The value associated with field, or null when field is not present in the hash or key does not exist.
     */
   def hget[K, V](key: K, field: K)(implicit connection: StatefulRedisConnection[K, V]): Task[V] =
-    Task.from(connection.async().hget(key, field))
+    Task.from(connection.reactive().hget(key, field))
 
   /**
     * Increment the integer value of a hash field by the given number.
@@ -57,7 +57,7 @@ private[redis] trait RedisHash {
   def hincrby[K, V](key: K, field: K, amount: Long)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().hincrby(key, field, amount)).map(_.longValue)
+    Task.from(connection.reactive().hincrby(key, field, amount)).map(_.longValue)
 
   /**
     * Increment the float value of a hash field by the given amount.
@@ -66,7 +66,7 @@ private[redis] trait RedisHash {
   def hincrbyfloat[K, V](key: K, field: K, amount: Double)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[Double] =
-    Task.from(connection.async().hincrbyfloat(key, field, amount)).map(_.doubleValue)
+    Task.from(connection.reactive().hincrbyfloat(key, field, amount)).map(_.doubleValue)
 
   /**
     * Get all the fields and values in a hash.
@@ -75,7 +75,7 @@ private[redis] trait RedisHash {
     * @return Map of the fields and their values stored in the hash, or an empty list when key does not exist.
     */
   def hgetall[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Map[K, V]] =
-    Task.from(connection.async().hgetall(key)).map(_.asScala.toMap)
+    Task.from(connection.reactive().hgetall(key)).map(_.asScala.toMap)
 
   /**
     * Get all the fields in a hash.
@@ -89,7 +89,7 @@ private[redis] trait RedisHash {
     * @return Number of fields in the hash, or 0 when key does not exist.
     */
   def hlen[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().hlen(key)).map(_.longValue)
+    Task.from(connection.reactive().hlen(key)).map(_.longValue)
 
   /**
     * Get the values of all the given hash fields.
@@ -103,19 +103,19 @@ private[redis] trait RedisHash {
     * @return Simple string reply.
     */
   def hmset[K, V](key: K, map: Map[K, V])(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.async().hmset(key, map.asJava))
+    Task.from(connection.reactive().hmset(key, map.asJava))
 
   /**
     * Incrementally iterate hash fields and associated values.
     * @return Map scan cursor.
     */
   def hscan[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[MapScanCursor[K, V]] =
-    Task.from(connection.async().hscan(key))
+    Task.from(connection.reactive().hscan(key))
 
   def hscan[K, V](key: K, scanCursor: ScanCursor)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[MapScanCursor[K, V]] =
-    Task.from(connection.async().hscan(key, scanCursor))
+    Task.from(connection.reactive().hscan(key, scanCursor))
 
   /**
     * Set the string value of a hash field.
@@ -123,7 +123,7 @@ private[redis] trait RedisHash {
     *         False if field already exists in the hash and the value was updated.
     */
   def hset[K, V](key: K, field: K, value: V)(implicit connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-    Task.from(connection.async().hset(key, field, value)).map(_.booleanValue)
+    Task.from(connection.reactive().hset(key, field, value)).map(_.booleanValue)
 
   /**
     * Set the value of a hash field, only if the field does not exist.
@@ -132,7 +132,7 @@ private[redis] trait RedisHash {
     *         False if field already exists in the hash and the value was updated.
     */
   def hsetnx[K, V](key: K, field: K, value: V)(implicit connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-    Task.from(connection.async().hsetnx(key, field, value)).map(_.booleanValue)
+    Task.from(connection.reactive().hsetnx(key, field, value)).map(_.booleanValue)
 
   /**
     * Get the string length of the field value in a hash.
@@ -140,7 +140,7 @@ private[redis] trait RedisHash {
     *         or key does not exist at all.
     */
   def hstrlen[K, V](key: K, field: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().hstrlen(key, field)).map(_.longValue)
+    Task.from(connection.reactive().hstrlen(key, field)).map(_.longValue)
 
   /**
     * Get all the values in a hash.

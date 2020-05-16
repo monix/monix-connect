@@ -18,11 +18,10 @@
 package monix.connect.s3
 
 import monix.eval.Task
-import monix.execution.Ack.Continue
 import monix.execution.cancelables.AssignableCancelable
 import monix.execution.{Ack, Callback, Scheduler}
 import monix.reactive.observers.Subscriber
-import monix.reactive.{Consumer, Observer}
+import monix.reactive.Consumer
 import software.amazon.awssdk.core.async.AsyncRequestBody
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.model._

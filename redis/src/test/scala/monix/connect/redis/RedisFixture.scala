@@ -18,11 +18,10 @@
 package monix.connect.redis
 
 import io.lettuce.core.api.StatefulRedisConnection
-import io.lettuce.core.{KeyValue, MapScanCursor, RedisFuture, ScoredValue}
-import io.lettuce.core.api.async.RedisAsyncCommands
+import io.lettuce.core.ScoredValue
 import io.lettuce.core.api.reactive.RedisReactiveCommands
 import org.scalacheck.Gen
-import reactor.core.publisher.Flux
+import reactor.core.publisher.{Flux, Mono}
 import org.mockito.MockitoSugar.mock
 import io.lettuce.core.Range
 
@@ -58,9 +57,8 @@ trait RedisFixture {
   } yield (k, v)
   val genKvMap: Gen[Map[K, V]] = Gen.mapOfN(10, genKV)
   //mocks
-  def MockRedisConnection[K, V]: StatefulRedisConnection[K, V] = mock[StatefulRedisConnection[K, V]]
-  def MockRedisFuture[V]: RedisFuture[V] = mock[RedisFuture[V]]
-  def MockFlux[T]: Flux[T] = mock[Flux[T]]
-  val asyncRedisCommands = mock[RedisAsyncCommands[String, Int]]
-  val reactiveRedisCommands = mock[RedisReactiveCommands[String, Int]]
+  def mockRedisConnection[Key, Value]: StatefulRedisConnection[Key, Value] = mock[StatefulRedisConnection[Key, Value]]
+  def mockMono[Value]: Mono[Value] = mock[Mono[Value]]
+  def mockFlux[T]: Flux[T] = mock[Flux[T]]
+  val reactiveRedisCommands = mock[RedisReactiveCommands[K, V]]
 }

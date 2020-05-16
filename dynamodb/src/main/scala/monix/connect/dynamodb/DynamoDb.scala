@@ -18,7 +18,6 @@
 package monix.connect.dynamodb
 
 import monix.reactive.{Consumer, Observable}
-import monix.execution.Scheduler
 import monix.eval.Task
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.{DynamoDbRequest, DynamoDbResponse}

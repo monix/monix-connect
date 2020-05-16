@@ -23,9 +23,7 @@ import monix.eval.Task
 import monix.reactive.Observable
 
 /**
-  * @see The reference Lettuce Api at:
-  *      [[io.lettuce.core.api.async.RedisSortedSetAsyncCommands]] and
-  *      [[io.lettuce.core.api.reactive.RedisSortedSetReactiveCommands]]
+  * @see The reference Lettuce Api at: [[io.lettuce.core.api.reactive.RedisSortedSetReactiveCommands]]
   */
 private[redis] trait RedisSortedSet {
 
@@ -36,7 +34,7 @@ private[redis] trait RedisSortedSet {
   def bzpopmin[K, V](timeout: Long, keys: K*)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[KeyValue[K, ScoredValue[V]]] =
-    Task.from(connection.async().bzpopmin(timeout, keys: _*))
+    Task.from(connection.reactive().bzpopmin(timeout, keys: _*))
 
   /**
     * Removes and returns a member with the highest scores in the sorted set stored at one of the keys.
@@ -45,7 +43,7 @@ private[redis] trait RedisSortedSet {
   def bzpopmax[K, V](timeout: Long, keys: K*)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[KeyValue[K, ScoredValue[V]]] =
-    Task.from(connection.async().bzpopmax(timeout, keys: _*))
+    Task.from(connection.reactive().bzpopmax(timeout, keys: _*))
 
   /**
     * Add one or more members to a sorted set, or update its score if it already exists.
@@ -54,7 +52,7 @@ private[redis] trait RedisSortedSet {
     *         updated.
     */
   def zadd[K, V](key: K, score: Double, member: V)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().zadd(key, score, member)).map(_.longValue)
+    Task.from(connection.reactive().zadd(key, score, member)).map(_.longValue)
 
   /**
     * Add one or more members to a sorted set, or update its score if it already exists.
@@ -65,7 +63,7 @@ private[redis] trait RedisSortedSet {
   def zadd[K, V](key: K, scoredValues: ScoredValue[V]*)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().zadd(key, scoredValues: _*)).map(_.longValue)
+    Task.from(connection.reactive().zadd(key, scoredValues: _*)).map(_.longValue)
 
   /**
     * Add one or more members to a sorted set, or update its score if it already exists applying the INCR option. ZADD
@@ -75,7 +73,7 @@ private[redis] trait RedisSortedSet {
   def zaddincr[K, V](key: K, score: Double, member: V)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[Double] =
-    Task.from(connection.async().zaddincr(key, score, member)).map(_.doubleValue)
+    Task.from(connection.reactive().zaddincr(key, score, member)).map(_.doubleValue)
 
   /**
     * Get the number of members in a sorted set.
@@ -85,14 +83,14 @@ private[redis] trait RedisSortedSet {
     *         updated.
     */
   def zcard[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().zcard(key)).map(_.longValue)
+    Task.from(connection.reactive().zcard(key)).map(_.longValue)
 
   /**
     * Count the members in a sorted set with scores within the given [[Range]].
     * @return The number of elements of the sorted set, or false if key does not exist.
     */
   def zcount[K, V](key: K, range: Range[_ <: Number])(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().zcount(key, range)).map(_.longValue)
+    Task.from(connection.reactive().zcount(key, range)).map(_.longValue)
 
   /**
     * Increment the score of a member in a sorted set.
@@ -101,28 +99,28 @@ private[redis] trait RedisSortedSet {
   def zincrby[K, V](key: K, amount: Double, member: V)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[Double] =
-    Task.from(connection.async().zincrby(key, amount, member)).map(_.doubleValue)
+    Task.from(connection.reactive().zincrby(key, amount, member)).map(_.doubleValue)
 
   /**
     * Intersect multiple sorted sets and store the resulting sorted set in a new key.
     * @return The number of elements in the resulting sorted set at destination.
     */
   def zinterstore[K, V](destination: K, keys: K*)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().zinterstore(destination, keys: _*)).map(_.longValue)
+    Task.from(connection.reactive().zinterstore(destination, keys: _*)).map(_.longValue)
 
   /**
     * Count the number of members in a sorted set between a given lexicographical range.
     * @return The number of elements in the specified score range.
     */
   def zlexcount[K, V](key: K, range: Range[_ <: V])(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().zlexcount(key, range)).map(_.longValue)
+    Task.from(connection.reactive().zlexcount(key, range)).map(_.longValue)
 
   /**
     * Removes and returns up to count members with the lowest scores in the sorted set stored at key.
     * @return Scored value the removed element.
     */
   def zpopmin[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[ScoredValue[V]] =
-    Task.from(connection.async().zpopmin(key))
+    Task.from(connection.reactive().zpopmin(key))
 
   /**
     * Removes and returns up to count members with the lowest scores in the sorted set stored at key.
@@ -138,7 +136,7 @@ private[redis] trait RedisSortedSet {
     * @return Scored value of the removed element.
     */
   def zpopmax[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[ScoredValue[V]] =
-    Task.from(connection.async().zpopmax(key))
+    Task.from(connection.reactive().zpopmax(key))
 
   /**
     * Removes and returns up to count members with the highest scores in the sorted set stored at key.
@@ -224,14 +222,14 @@ private[redis] trait RedisSortedSet {
     * @return The rank of member. If member does not exist in the sorted set or key does not exist.
     */
   def zrank[K, V](key: K, member: V)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().zrank(key, member)).map(_.longValue)
+    Task.from(connection.reactive().zrank(key, member)).map(_.longValue)
 
   /**
     * Remove one or more members from a sorted set.
     * @return The number of members removed from the sorted set, not including non existing members.
     */
   def zrem[K, V](key: K, members: V*)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().zrem(key, members: _*)).map(_.longValue)
+    Task.from(connection.reactive().zrem(key, members: _*)).map(_.longValue)
 
   /**
     * Remove all members in a sorted set between the given lexicographical range.
@@ -240,7 +238,7 @@ private[redis] trait RedisSortedSet {
   def zremrangebylex[K, V](key: K, range: Range[_ <: V])(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().zremrangebylex(key, range)).map(_.longValue)
+    Task.from(connection.reactive().zremrangebylex(key, range)).map(_.longValue)
 
   /**
     * Remove all members in a sorted set within the given indexes.
@@ -249,7 +247,7 @@ private[redis] trait RedisSortedSet {
   def zremrangebyrank[K, V](key: K, start: Long, stop: Long)(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().zremrangebyrank(key, start, stop)).map(_.longValue)
+    Task.from(connection.reactive().zremrangebyrank(key, start, stop)).map(_.longValue)
 
   /**
     * Remove all members in a sorted set within the given scores.
@@ -258,7 +256,7 @@ private[redis] trait RedisSortedSet {
   def zremrangebyscore[K, V](key: K, range: Range[_ <: Number])(
     implicit
     connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().zremrangebyscore(key, range)).map(_.longValue)
+    Task.from(connection.reactive().zremrangebyscore(key, range)).map(_.longValue)
 
   /**
     * Return a range of members in a sorted set, by index, with scores ordered from high to low.
@@ -338,28 +336,28 @@ private[redis] trait RedisSortedSet {
     *     does not exist.
     */
   def zrevrank[K, V](key: K, member: V)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().zrevrank(key, member)).map(_.longValue)
+    Task.from(connection.reactive().zrevrank(key, member)).map(_.longValue)
 
   /**
     * Incrementally iterate sorted sets elements and associated scores.
     * @return Scan cursor.
     */
   def zscan[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[ScoredValueScanCursor[V]] =
-    Task.from(connection.async().zscan(key))
+    Task.from(connection.reactive().zscan(key))
 
   /**
     * Get the score associated with the given member in a sorted set.
     * @return The score of member represented as string.
     */
   def zscore[K, V](key: K, member: V)(implicit connection: StatefulRedisConnection[K, V]): Task[Double] =
-    Task.from(connection.async().zscore(key, member)).map(_.doubleValue)
+    Task.from(connection.reactive().zscore(key, member)).map(_.doubleValue)
 
   /**
     * Add multiple sorted sets and store the resulting sorted set in a new key.
     * @return The number of elements in the resulting sorted set at destination.
     */
   def zunionstore[K, V](destination: K, keys: K*)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.async().zunionstore(destination, keys: _*)).map(_.longValue)
+    Task.from(connection.reactive().zunionstore(destination, keys: _*)).map(_.longValue)
 
 }
 

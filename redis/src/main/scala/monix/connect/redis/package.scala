@@ -17,16 +17,15 @@
 
 package monix.connect
 
-import io.lettuce.core.RedisFuture
 import monix.eval.{Task, TaskLike}
-
-import scala.compat.java8.FutureConverters._
+import monix.reactive.Observable
+import reactor.core.publisher.Mono
 
 package object redis {
 
-  private[redis] implicit val fromRedisFutureLike = new TaskLike[RedisFuture] {
-    def apply[A](rf: RedisFuture[A]): Task[A] =
-      Task.deferFuture(toScala(rf))
+  private[redis] implicit val fromReactorMono: TaskLike[Mono] = new TaskLike[Mono] {
+    def apply[A](m: Mono[A]): Task[A] =
+      Observable.fromReactivePublisher(m).headL
   }
 
 }
