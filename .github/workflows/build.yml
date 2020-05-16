@@ -19,6 +19,6 @@ jobs:
       run:  sbt test
     - name: Start docker dependencies
       run:  sh start-dependencies.sh
-    - name: Run tests
+    - name: Run integration tests
       run:  sbt it:test
 
