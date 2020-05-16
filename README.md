@@ -5,6 +5,7 @@
 
  [workflow]:                https://github.com/monix/monix-connect/actions?query=branch%3Amaster+workflow%3Abuild
  [workflow-badge]:          https://github.com/monix/monix-connect/workflows/Build/badge.svg
+
  
  _Warning:_ This project is in early stages and the API might be likely to be changed in future next releases.
  
