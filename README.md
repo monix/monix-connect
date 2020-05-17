@@ -30,7 +30,7 @@ See below the list of available [connectors](#Connectors).
 ### Akka
 This module makes interoperability with akka streams easier by simply defining implicit extended classes for reactive stream conversions between akka and monix.
 
-These implicit extended classes needs to be imported from: `monix.connect.akka.Implicits._`.
+These implicit extended classes needs to be imported from: `monix.connect.akka.Converters._`.
 Therefore, under the scope of the import the signatures `.asObservable` and `.asConsumer` would be available from the `Source`, `Flow`, and `Sink`.
 The two methods does not need to be typed as it has been done explicitly in the example table, the compiler will infer it for you.
 
@@ -39,9 +39,74 @@ The below table shows these conversions in more detail:
   | _Akka_ | _Monix_ | _Using_ |
   | :---: | :---: | :---: | 
   | _Source[+In, +Mat]_ | _Observable[+In]_ | `source.asObservable[In]` |
-  | _Flow[+In, -Out,+Mat]_ | _Consumer[+In, Task[-Out]]_ | `flow.asConsumer[Out]` |
-  | _Sink[-In, +Out <: Future[Mat]]_ | _Consumer[In, Task[+Mat]_ | `sink.asConsumer[Mat]` |
+  | _Flow[+In, -Out, +Mat]_ | _Consumer[+In, Task[-Out]]_ | `flow.asConsumer[Out]` |
+  | _Sink[-In, +Out <: Future[Mat]]_ | _Consumer[In, Task[+Mat]]_ | `sink.asConsumer[Mat]` |
 
+In order to perform these conversion it is required to have an implicit instance of `akka.stream.Materializer` and `monix.execution.Scheduler` in the scope.
+
+The following code is an example on how these implicits can be initialized, but would that can be defined differently depending on the use case.
+```scala
+import monix.connect.akka.stream.Converters._
+import monix.execution.Scheduler.Implicits.global
+
+val actorSystem: ActorSystem = ActorSystem("Akka-Streams-InterOp") 
+implicit val materializer = ActorMaterializer() 
+```
+
+Let's see an example for converting an `akka.stream.scaladsl.Source` to `monix.reactive.Observable` and then consuming it with a `monix.reactive.Consumer`.
+
+```scala
+//given
+val elements = 1 until 50
+val source: Source[Int, NotUsed] = Source.fromIterator[Int](() => elements.iterator)
+
+//when
+val ob: Observable[Int] = source.asObservable //`asObservable` converter as extended method of source.
+
+//then
+ob.toListL.runSyncUnsafe() should contain theSameElementsAs elements
+```
+
+In this case we have not needed to consume the `Observable` since we directly used an operator that collects 
+intoto a list `.toList`, but in case you need to consume it, note that an implicit method of `consumeWith` will also be 
+exposed as an extended method as a shortcut for `source.asObservable.consumeWith(consumer)`. See an example below:
+
+```scala
+//given the same `elements` and `source` as above example`
+
+//then
+val t: Task[List[Int]] = source.consumeWith(Consumer.toList) //`consumeWith` as extended method of `Source`
+
+//then
+t.runSyncUnsafe() should contain theSameElementsAs elements
+```
+
+On the other hand, see how to convert an `akka.stream.scaladsl.Sink` into a `monix.reactive.Consumer`.
+
+```scala
+//given
+val foldSumSink: Sink[Int, Future[Int]] = Sink.fold[Int, Int](0)((acc, num) => acc + num)
+
+//when
+val (consumer: Consumer[Int, Task[Int]]) = foldSumSink.asConsumer[Int] //`asConsumer` as an extended method of `Sink`
+val f: Task[Int] = Observable.fromIterable(Seq(1, 2, 3)).consumeWith(consumer).runSyncUnsafe()
+
+//then the future value of `f` should be 6
+```
+
+Finally, you can also convert `akka.stream.scaladsl.Flow` into `monix.reactive.Consumer` in the same way you did
+with in the previous example.
+
+```scala
+//given
+val foldSumFlow: Flow[Int, Int, NotUsed] = Flow[Int].fold[Int](0)((acc, num) => acc + num)
+
+//when
+val (consumer: Consumer[Int, Task[Int]]) = foldSumFlow.asConsumer //`asConsumer` as an extended method of `Flow`
+val f: Task[Int] = Observable.fromIterable(Seq(1, 2, 3)).consumeWith(consumer).runSyncUnsafe()
+
+//then the future value of `f` should be 6
+```
 
 Notice that this interoperability would allow the Monix user to take advantage of the already pre built integrations 
 from [Alpakka](https://doc.akka.io/docs/alpakka/current/index.html) or any other Akka Streams implementation.
@@ -51,38 +116,41 @@ from [Alpakka](https://doc.akka.io/docs/alpakka/current/index.html) or any other
 _Amazon DynamoDB_ is a key-value and document database that performs at any scale in a single-digit millisecond.
 In which of the world's fastest growing enterprises depend on it to support their mission-critical workloads.
 
-The __main__ DynamoDB operations availavle are: __create table__, __delete table__, __put item__, __get item__, __batch get__ and __batch write__, but all the defined under 
+Being the __main__ DynamoDB operations: __create table__, __delete table__, __put item__, __get item__, __batch get__ and __batch write__, but all the defined under 
 `software.amazon.awssdk.services.dynamodb.model` are available as well, more precisely all whose inherit from `DynamoDbRequest` and `DynamoDbResponse` respectively for requests and responses.
 
-Therefore, `monix-dynamodb` makes possible to use a generic implementation of `Observable` __transformer__ and __consumer__ that handles with any DynamoDB request available in the `software.amazon.awssdk`. 
+Therefore, `monix-dynamodb` makes possible to use a generic implementation of `Observable` __transformer__ and __consumer__ that handles with any DynamoDB request from the `software.amazon.awssdk`. 
 
-See below an example of transforming and consuming DynamoDb operations with monix.
+See below an example for transforming and consuming DynamoDb operations with monix.
 
 Required import: `monix.connect.dynamodb.DynamoDbOp._`
  
-Transformer:
+Transformer: 
 ```scala
-Observable
-.fromIterable(dynamoDbRequests) 
-.transform(DynamoDb.transofrmer()) //for each element transforms the request operations into its respective response 
-//the resulted observable would be of type Observable[Task[DynamoDbRequest]]
+//this is an example of a stream that transforms and executes DynamoDb `GetItemRequests`:
+val dynamoDbRequests = List[GetItemRequest] = ???
+
+val ob = Observable[Task[GetItemResponse]] = {
+  Observable
+    .fromIterable(dynamoDbRequests) 
+    .transform(DynamoDb.transofrmer())
+} //for each element transforms the get request operations into its respective get response 
+//the resulted observable would be of type Observable[Task[GetItemResponse]]
 ```
 
 Consumer: 
-
 ```scala
+//this is an example of a stream that consumes and executes DynamoDb `PutItemRequest`:
+val putItemRequests = List[PutItemRequests] = ???
+
 Observable
 .fromIterable(dynamoDbRequests)
 .consumeWith(DynamoDb.consumer()) //a safe and syncronous consumer that executes dynamodb requests  
-//the materialized value would be of type Task[DynamoDBResponse]
+//the materialized value would be of type Task[PutItemResponse]
 ```
 
-See an example of a stream that consumes and executes DynamoDb `GetItemRequests`:
-
-```scala
-val ob: Observable[GetItemRequest] = ???
-ob.consumeWith(DynamoDb.consumer())
-```
+Note that both transformers and consumer builder are generic implementations for any `DynamoDbRequest`, so you don't need
+to explicitly specify its input and output types. 
 
 ---
 ### HDFS

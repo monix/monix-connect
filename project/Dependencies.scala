@@ -8,7 +8,7 @@ object Dependencies {
     val DynamoDb = "2.10.60"
     val PureConfig = "0.12.3"
     val S3 = "2.10.50"
-    val Monix = "3.1.0"
+    val Monix = "3.2.0"
     val Circe = "0.11.1"
 
     val Log4jScala = "11.0"
