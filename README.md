@@ -1,9 +1,6 @@
 # Monix Connect  
 
-[![release-badge][]][release]
-
-[![workflow-badge][]][workflow] 
-
+[![release-badge][]][release] [![workflow-badge][]][workflow] 
 [![Gitter](https://badges.gitter.im/monix/monix-connect.svg)](https://gitter.im/monix/monix-connect?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 
@@ -39,15 +36,17 @@ See below the list of available [connectors](#Connectors).
 
 ---
 ### Akka
+
 This module makes interoperability with akka streams easier by simply defining implicit extended classes for reactive stream conversions between akka and monix.
 
-libraryDependencies += "io.monix" %% "monix-akka" % "0.0.1"
-```
-```scala
 Add the following dependency:
 
-These implicit extended classes needs to be imported from: `monix.connect.akka.Converters._`.
-Therefore, under the scope of the import the signatures `.asObservable` and `.asConsumer` would be available from the `Source`, `Flow`, and `Sink`.
+```scala
+libraryDependencies += "io.monix" %% "monix-akka" % "0.0.1"
+```
+
+The implicit extended classes can imported from: `monix.connect.akka.Converters._`.
+Therefore, under the scope of the import the signatures `.asObservable` and `.asConsumer` would be available from the `Source`, `Flow` and `Sink`.
 The two methods does not need to be typed as it has been done explicitly in the example table, the compiler will infer it for you.
 
 The below table shows these conversions in more detail:  
