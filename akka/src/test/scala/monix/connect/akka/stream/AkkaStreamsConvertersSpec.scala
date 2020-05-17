@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package monix.connect.akka
+package monix.connect.akka.stream
 
 import akka.NotUsed
 import akka.actor.ActorSystem
@@ -31,16 +31,18 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class AkkaStreamsImplicitsSpec extends AnyWordSpecLike with ScalaFutures with Matchers {
+class AkkaStreamsConvertersSpec extends AnyWordSpecLike with ScalaFutures with Matchers {
 
-  implicit val actorSystem = ActorSystem("Akka-Streams-InterOp")
+  implicit val actorSystem: ActorSystem = ActorSystem("Akka-Streams-InterOp")
   override implicit val patienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
+  import monix.connect.akka.stream.Converters._
 
   s"An akka ${Sink} " should {
+
     "be extended with the `asConsumer` signature " when {
+
       "the materialized type is a future integer " in {
         //given
-        import AkkaStreams.Implicits._
         val foldSumSink: Sink[Int, Future[Int]] = Sink.fold[Int, Int](0)((acc, num) => acc + num)
 
         //when
@@ -51,10 +53,9 @@ class AkkaStreamsImplicitsSpec extends AnyWordSpecLike with ScalaFutures with Ma
         f.runSyncUnsafe() shouldBe 6
       }
 
-      "the materialized type is a future double " in {
+      "the materialized type is the list of all the elements collected as a future " in {
         //given
         val foldSumSink: Sink[Double, Future[Seq[Double]]] = Sink.seq[Double]
-        import AkkaStreams.Implicits._
 
         //when
         val consumer: Consumer[Double, Task[Seq[Double]]] = foldSumSink.asConsumer //extended generic sink
@@ -64,11 +65,10 @@ class AkkaStreamsImplicitsSpec extends AnyWordSpecLike with ScalaFutures with Ma
         f.runSyncUnsafe() shouldBe Seq(1.23, 2.34, 4.56)
       }
 
-      "the materialized type is a future string" in {
+      "the materialized type is the first received string" in {
         //given
         val elem: String = Gen.alphaStr.sample.get
         val sink: Sink[String, Future[String]] = Sink.head[String]
-        import AkkaStreams.Implicits._
 
         //when
         val (consumer: Consumer[String, Task[String]]) = sink.asConsumer //extended generic sink
@@ -81,14 +81,26 @@ class AkkaStreamsImplicitsSpec extends AnyWordSpecLike with ScalaFutures with Ma
       "the materialized type is a future optional string" in {
         //given
         val sink: Sink[String, Future[Option[String]]] = Sink.headOption[String]
-        import AkkaStreams.Implicits._
 
         //when
-        val (consumer: Consumer[String, Task[Option[String]]]) = sink.asConsumer //extended generic sink
-        val t: Task[Option[String]] = Observable.fromIterable(Seq("Hello World!")).consumeWith(consumer).runSyncUnsafe()
+        val r1: Task[Option[String]] =
+          Observable.fromIterable(Seq("Hello World!")).consumeWith(sink.asConsumer).runSyncUnsafe()
+        val r2: Task[Option[String]] = Observable.empty[String].consumeWith(sink.asConsumer).runSyncUnsafe()
 
         //then
-        t.runSyncUnsafe() shouldBe Some("Hello World!")
+        r1.runSyncUnsafe() shouldBe Some("Hello World!")
+        r2.runSyncUnsafe() shouldBe None
+      }
+
+      "the input type is different than the materialized one (Int => String)" in {
+        //given
+        val sink: Sink[Int, Future[String]] = Sink.fold[String, Int]("")((s, i) => s + i.toString)
+
+        //when
+        val r1: Task[String] = Observable.fromIterable(1 until 10).consumeWith(sink.asConsumer[String]).runSyncUnsafe()
+
+        //then
+        r1.runSyncUnsafe() shouldBe "123456789"
       }
     }
   }
@@ -97,7 +109,6 @@ class AkkaStreamsImplicitsSpec extends AnyWordSpecLike with ScalaFutures with Ma
     "be extended with the `asConsumer` signature " when {
       "the materialized type is a future integer " in {
         //given
-        import AkkaStreams.Implicits._
         val foldSumSink: Flow[Int, Int, NotUsed] = Flow[Int].fold[Int](0)((acc, num) => acc + num)
 
         //when
@@ -112,7 +123,6 @@ class AkkaStreamsImplicitsSpec extends AnyWordSpecLike with ScalaFutures with Ma
         //given
         val lastElement: Option[String] = Some("Last element")
         val flow: Flow[Option[String], Option[String], NotUsed] = Flow[Option[String]]
-        import AkkaStreams.Implicits._
 
         //when
         val (consumer: Consumer[Option[String], Task[Option[String]]]) = flow.asConsumer //extended generic sink
@@ -133,7 +143,6 @@ class AkkaStreamsImplicitsSpec extends AnyWordSpecLike with ScalaFutures with Ma
         //given
         val elements = 1 until 50
         val source: Source[Int, NotUsed] = Source.fromIterator[Int](() => elements.iterator)
-        import AkkaStreams.Implicits._
 
         //when
         val ob: Observable[Int] = source.asObservable
@@ -147,7 +156,6 @@ class AkkaStreamsImplicitsSpec extends AnyWordSpecLike with ScalaFutures with Ma
         //given
         val elem: String = "Hello world"
         val source: Source[String, NotUsed] = Source.single(elem)
-        import AkkaStreams.Implicits._
 
         //when
         val ob: Observable[String] = source.asObservable.map(_ + "!")
@@ -162,7 +170,6 @@ class AkkaStreamsImplicitsSpec extends AnyWordSpecLike with ScalaFutures with Ma
         case class UserInfo(username: String, password: String)
         val elem: UserInfo = UserInfo("user1", "*****")
         val source: Source[UserInfo, NotUsed] = Source.single(elem)
-        import AkkaStreams.Implicits._
 
         //when
         val ob: Observable[UserInfo] = source.asObservable
@@ -171,6 +178,19 @@ class AkkaStreamsImplicitsSpec extends AnyWordSpecLike with ScalaFutures with Ma
         val t: Task[UserInfo] = ob.headL
         t.runSyncUnsafe() shouldBe elem
       }
+
+    }
+
+    "allow to be consumed directly as shotcut to `asObservable.consumeWith`" in {
+      //given
+      val elements = 1 until 50
+      val source: Source[Int, NotUsed] = Source.fromIterator[Int](() => elements.iterator)
+
+      //when
+      val t: Task[List[Int]] = source.consumeWith(Consumer.toList)
+
+      //then
+      t.runSyncUnsafe() should contain theSameElementsAs elements
     }
   }
 }
