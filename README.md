@@ -1,19 +1,30 @@
 # Monix Connect  
 
+[![release-badge][]][release]
+
 [![workflow-badge][]][workflow] 
+
 [![Gitter](https://badges.gitter.im/monix/monix-connect.svg)](https://gitter.im/monix/monix-connect?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
+
+
 
  [workflow]:                https://github.com/monix/monix-connect/actions?query=branch%3Amaster+workflow%3Abuild
  [workflow-badge]:          https://github.com/monix/monix-connect/workflows/Build/badge.svg
 
+   
+ [release]:                 https://search.maven.org/search?q=a:monix-connect*
+ [release-badge]:           https://img.shields.io/github/v/tag/monix/monix-connect.svg
  
- _Warning:_ This project is in early stages and the API might be likely to be changed in future next releases.
+ _Warning:_ Mind that the project is yet in early stages and its API is likely to be changed.
  
 Monix Connect is an initiative to implement stream integrations for [Monix](https://monix.io/).
  A connector describes the connection between the application and a specific data point, which could be a file, a database or any system in which the appication 
  can interact by sending or receiving information. Therefore, the aim of this project is to catch the most common
  connections that users could need when developing reactive applications with Monix, these would basically reduce boilerplate code and furthermore, will let the users to greatly save time and complexity in their implementing projects.
  
+ The latest stable version is compatible with Monix 3.x, Scala 2.12.x and 2.13.x.
+
 See below the list of available [connectors](#Connectors).  
 
 ---
@@ -29,6 +40,11 @@ See below the list of available [connectors](#Connectors).
 ---
 ### Akka
 This module makes interoperability with akka streams easier by simply defining implicit extended classes for reactive stream conversions between akka and monix.
+
+libraryDependencies += "io.monix" %% "monix-akka" % "0.0.1"
+```
+```scala
+Add the following dependency:
 
 These implicit extended classes needs to be imported from: `monix.connect.akka.Converters._`.
 Therefore, under the scope of the import the signatures `.asObservable` and `.asConsumer` would be available from the `Source`, `Flow`, and `Sink`.
@@ -116,7 +132,7 @@ from [Alpakka](https://doc.akka.io/docs/alpakka/current/index.html) or any other
 _Amazon DynamoDB_ is a key-value and document database that performs at any scale in a single-digit millisecond.
 In which of the world's fastest growing enterprises depend on it to support their mission-critical workloads.
 
-Being the __main__ DynamoDB operations: __create table__, __delete table__, __put item__, __get item__, __batch get__ and __batch write__, but all the defined under 
+The __main__ DynamoDB operations availavle are: __create table__, __delete table__, __put item__, __get item__, __batch get__ and __batch write__, but all the defined under 
 `software.amazon.awssdk.services.dynamodb.model` are available as well, more precisely all whose inherit from `DynamoDbRequest` and `DynamoDbResponse` respectively for requests and responses.
 
 Therefore, `monix-dynamodb` makes possible to use a generic implementation of `Observable` __transformer__ and __consumer__ that handles with any DynamoDB request from the `software.amazon.awssdk`. 
@@ -156,6 +172,12 @@ to explicitly specify its input and output types.
 ### HDFS
 
 A connector that allows to progresively write and read from files of any size stored in [HDFS](https://hadoop.apache.org/docs/r1.2.1/hdfs_design.html).
+
+Add the following dependency:
+
+```scala
+libraryDependencies += "io.monix" %% "monix-hdfs" % "0.0.1"
+```
 
 The methods to perform these operations are exposed under the scala object ```monix.connect.hdfs.Hdfs```, in which
 it has been constructed on top of the the official _apache hadoop_ api.  
@@ -232,9 +254,15 @@ val t: Task[Long] = ob.consumeWith(hdfsAppender)
 ---
 ### Parquet
 
-The is connector provides with stream integrations for reading and writing into and from parquet files in the _local system_, _hdfs_ or _s3_.
+The connector that provides stream integrations for reading and writing into and from parquet files in the _local system_, _hdfs_ or _s3_.
  
- These two signatures depends on a implementation of the _apache parquet_  `ParquetWriter[T]` and `ParquetReader[T]` to be passed.
+Add the following dependency:
+ 
+ ```scala
+ libraryDependencies += "io.monix" %% "monix-parquet" % "0.0.1"
+ ```
+
+These two signatures depends on a implementation of the _apache parquet_  `ParquetWriter[T]` and `ParquetReader[T]` to be passed.
 
 The below example shows how to construct a parquet consumer that expects _Protobuf_ messages and pushes 
 them into the same parquet file of the specified location.
@@ -304,12 +332,18 @@ At the same time that it returns the right values from scala lang and not form j
   
 #### Getting started
 
-The Redis provides a wide range of commands to perform a different range of operations, in which it has been splitted between 15 different groups. 
+Redis provides a wide range of commands to perform a different range of operations, in which it has been splitted between 15 different groups. 
 In which the Monix connector only currenly provides support for the most common used ones. in the following 
 groups/modules:  ([Keys](https://redis.io/commands#generic), [Hashes](https://redis.io/commands#hash), [List](https://redis.io/commands#list), [Pub/Sub](https://redis.io/commands#pubsub), [Server](https://redis.io/commands#server), [Sets](https://redis.io/commands#set), [SortedSets](https://redis.io/commands#sorted_set), [Streams](https://redis.io/commands#stream) and [Strings](https://redis.io/commands#string)).
 Each of these modules has its own object located under `monix.connect.redis`, being `Redis` the one that aggregates all of them. But they can be individually used too.
 
-The only thing you need to do for start using it is to have an implicit `StatefulRedisConnection[K, V]` in the scope. 
+Add the following dependency:
+
+```scala
+libraryDependencies += "io.monix" %% "monix-redis" % "0.0.1"
+```
+
+The only extra thing you need to do for start using it is to have an implicit `StatefulRedisConnection[K, V]` in the scope. 
  
  See below a complete demonstration on how to compose a different set of Redis command from different 
  modules in the same for comprehension:
@@ -350,10 +384,18 @@ l should contain theSameElementsAs value :: values
 keys.size shouldBe 1
 keys.head shouldBe k3
 ```
+
 ---
 ### S3
+
 The object storage service that offers industry leading scalability, availability, security and performance.
 It allows data storage of any amount of data, commonly used as a data lake for big data applications which can now be easily integrated with monix.
+
+Add the following dependency:
+
+```scala
+libraryDependencies += "io.monix" %% "monix-s3" % "0.0.1"
+```
  
  The module has been implemented using the `S3AsyncClient` since it only exposes non blocking methods. 
  Therefore, all of the monix s3 methods defined in the `S3` object would expect an implicit instance of 
