@@ -108,8 +108,8 @@ private[redis] trait RedisServer {
     * Remove all keys reactivehronously from the current database.
     * @return Single string reply
     */
-  def flushdb[K, V]()(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.reactive().ping())
+  def flushdbAsync[K, V]()(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
+    Task.from(connection.reactive().flushdbAsync())
 
 }
 
