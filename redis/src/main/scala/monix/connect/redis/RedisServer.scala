@@ -98,10 +98,10 @@ private[redis] trait RedisServer {
     Task.from(connection.reactive().configResetstat())
 
   /**
-    * Remove all keys reactivehronously from all databases.
+    * Remove all keys from all databases.
     * @return Simple string reply
     */
-  def flushall[K, V]()(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
+  def flushallAsync[K, V]()(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
     Task.from(connection.reactive().flushallAsync())
 
   /**
@@ -109,7 +109,7 @@ private[redis] trait RedisServer {
     * @return Single string reply
     */
   def flushdb[K, V]()(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.reactive().flushdbAsync())
+    Task.from(connection.reactive().ping())
 
 }
 

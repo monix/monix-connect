@@ -232,8 +232,8 @@ class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with
   }
 
   override protected def beforeAll(): Unit = {
-    val baseDir = new File(dir, "test")
-    val miniDfsConf = new HdfsConfiguration
+    val baseDir: File = new File(dir, "test")
+    val miniDfsConf: HdfsConfiguration = new HdfsConfiguration
     miniDfsConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, baseDir.getAbsolutePath)
     miniHdfs = new MiniDFSCluster.Builder(miniDfsConf)
       .nameNodePort(port)

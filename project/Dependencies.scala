@@ -9,20 +9,16 @@ object Dependencies {
     val PureConfig = "0.12.3"
     val S3 = "2.10.50"
     val Monix = "3.2.0"
-    val Circe = "0.11.1"
+    val AkkaStreams = "2.6.4"
+    val Hadoop = "3.1.1"
 
-    val Log4jScala = "11.0"
-    val Log4j = "2.10.0"
-    val ScalaLogging = "3.9.2"
-
+    //test
     val Scalatest = "3.1.1"
     val Scalacheck = "1.14.0"
     val Mockito = "1.13.1"
     val Cats = "2.0.0"
 
-    val AkkaStreams = "2.6.4"
 
-    val Hadoop = "3.1.1"
   }
 
   private def commonDependencies(hasIntegrationTest: Boolean = false): Seq[sbt.ModuleID] = {
@@ -54,10 +50,7 @@ object Dependencies {
   private val DynamoDbDependencies = Seq(
     "com.amazonaws" % "aws-java-sdk-core" % DependencyVersions.AWS,
     // "com.amazonaws"                       % "aws-java-sdk-dynamodb" % DependencyVersions.AWS, //todo compatibility with java sdk aws
-    "software.amazon.awssdk" % "dynamodb" % DependencyVersions.DynamoDb,
-    "org.typelevel" %% "cats-core" % DependencyVersions.Cats,
-    "com.github.pureconfig" %% "pureconfig" % DependencyVersions.PureConfig
-  )
+    "software.amazon.awssdk" % "dynamodb" % DependencyVersions.DynamoDb)
 
   val DynamoDb = DynamoDbDependencies ++ CommonProjectDependencies ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(
     _ % IntegrationTest)
@@ -86,7 +79,6 @@ object Dependencies {
 
   private val S3Dependecies = Seq(
     "software.amazon.awssdk" % "s3" % DependencyVersions.S3,
-    "org.typelevel" %% "cats-core" % DependencyVersions.Cats,
     "com.amazonaws" % "aws-java-sdk-core" % DependencyVersions.AWS % IntegrationTest,
     "com.amazonaws" % "aws-java-sdk-s3" % DependencyVersions.AWS % IntegrationTest,
     "org.scalatestplus" %% "scalacheck-1-14" % "3.1.1.1" % Test
@@ -95,7 +87,6 @@ object Dependencies {
 
   private val RedisDependencies = Seq(
     "io.lettuce" % "lettuce-core" % "5.1.2.RELEASE",
-    "org.typelevel" %% "cats-core" % DependencyVersions.Cats,
     "com.github.pureconfig" %% "pureconfig" % DependencyVersions.PureConfig
   )
 
