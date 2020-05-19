@@ -50,7 +50,7 @@ class RedisServerSpec
     when(reactiveRedisCommands.flushallAsync()).thenReturn(mockMono[String])
 
     //when
-    val _: Task[String] = RedisServer.flushall()
+    val _: Task[String] = RedisServer.flushallAsync()
 
     //then
     verify(reactiveRedisCommands).flushallAsync()
@@ -61,7 +61,7 @@ class RedisServerSpec
     when(reactiveRedisCommands.flushdbAsync()).thenReturn(mockMono[String])
 
     //when
-    val _: Task[String] = RedisServer.flushdb()
+    val _: Task[String] = RedisServer.flushdbAsync()
 
     //then
     verify(reactiveRedisCommands).flushdbAsync()

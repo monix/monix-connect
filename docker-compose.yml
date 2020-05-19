@@ -15,7 +15,6 @@ services:
       interval: 35s
       timeout: 20s
       retries: 3
-
     command: server --compat /data
 
   localstack:

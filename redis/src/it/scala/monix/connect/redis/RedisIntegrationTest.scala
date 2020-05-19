@@ -2,12 +2,15 @@ package monix.connect.redis
 
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatest.matchers.should.Matchers
-import io.lettuce.core.RedisClient
+import io.lettuce.core.{RedisClient, ScoredValue}
 import io.lettuce.core.api.StatefulRedisConnection
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
+import org.scalacheck.Gen
 import org.scalatest.flatspec.AnyFlatSpec
+
+import scala.concurrent.duration._
 
 class RedisIntegrationTest
   extends AnyFlatSpec with Matchers with BeforeAndAfterEach with BeforeAndAfterAll with RedisFixture {
@@ -32,6 +35,24 @@ class RedisIntegrationTest
     lenght shouldBe value.length
   }
 
+  s"${RedisServer} " should "insert a string into key and get its size from redis" in new RedisFixture {
+    //given
+    val key: K = genRedisKey.sample.get
+    val value: String = genRedisValue.sample.get.toString
+
+    //when
+    RedisString.set(key, value).runSyncUnsafe()
+    val beforeFlush: Long = Redis.exists(key).runSyncUnsafe()
+
+    //and
+    RedisServer.flushallAsync().runSyncUnsafe()
+    val afterFlush: Task[Long] = Redis.exists(key)
+
+    //then
+    beforeFlush shouldEqual 1L
+    afterFlush.runSyncUnsafe() shouldEqual 0L
+  }
+
   s"${RedisHash}" should "insert a single element into a hash and read it back" in new RedisFixture {
     //given
     val key: K = genRedisKey.sample.get
@@ -47,6 +68,36 @@ class RedisIntegrationTest
     //then
     val r: String = t.runSyncUnsafe()
     r shouldBe value
+  }
+
+  s"${RedisKey}" should "handles ttl correctly" in new RedisFixture {
+    //given
+    val key1: K = genRedisKey.sample.get
+    val key2: K = genRedisKey.sample.get
+    val value: String = genRedisValue.sample.get.toString
+    RedisString.set(key1, value).runSyncUnsafe()
+
+    //when
+    val (initialTtl, expire, finalTtl, existsWithinTtl, existsRenamed, existsAfterFiveSeconds) = {
+      for {
+        initialTtl             <- RedisKey.ttl(key1)
+        expire                 <- RedisKey.expire(key1, 2)
+        finalTtl               <- RedisKey.ttl(key1)
+        existsWithinTtl        <- RedisKey.exists(key1)
+        _                      <- RedisKey.rename(key1, key2)
+        existsRenamed          <- RedisKey.exists(key2)
+        _                      <- Task.sleep(3.seconds)
+        existsAfterFiveSeconds <- RedisKey.exists(key2)
+      } yield (initialTtl, expire, finalTtl, existsWithinTtl, existsRenamed, existsAfterFiveSeconds)
+    }.runSyncUnsafe()
+
+    //then
+    initialTtl should be < 0L
+    finalTtl should be > 0L
+    expire shouldBe true
+    existsWithinTtl shouldBe 1L
+    existsRenamed shouldBe 1L
+    existsAfterFiveSeconds shouldBe 0L
   }
 
   s"${RedisList}" should "insert elements into a list and reading back the same elements" in new RedisFixture {
@@ -72,7 +123,6 @@ class RedisIntegrationTest
     val k2: K = genRedisKey.sample.get
     val m2: List[String] = genRedisValues.sample.get.map(_.toString)
     val k3: K = genRedisKey.sample.get
-    println("m1: " + m1)
 
     //when
     val (size1, size2, moved) = {
@@ -110,29 +160,59 @@ class RedisIntegrationTest
     //the difference between the k3 and k1 is equal to the element that was moved
   }
 
+  s"${RedisSortedSet}" should "insert elements into a with no order and reading back sorted" in new RedisFixture {
+    //given
+    val k: K = genRedisKey.sample.get
+    val v0: String = Gen.alphaLowerStr.sample.get
+    val v1: String = Gen.alphaLowerStr.sample.get
+    val v2: String = Gen.alphaLowerStr.sample.get
+    val minScore: Double = 1
+    val middleScore: Double = 3
+    val maxScore: Double = 4
+    val incrby: Double = 2
+
+    //when
+    RedisSortedSet.zadd(k, minScore, v0)
+    val t: Task[(ScoredValue[String], ScoredValue[String])] = for {
+      _ <- RedisSortedSet.zadd(k, minScore, v0)
+      _ <- RedisSortedSet.zadd(k, middleScore, v1)
+      _ <- RedisSortedSet.zadd(k, maxScore, v2)
+      _ <- RedisSortedSet.zincrby(k, incrby, v1)
+      min <- RedisSortedSet.zpopmin(k)
+      max <- RedisSortedSet.zpopmax(k)
+    } yield (min, max)
+
+    //then
+    val (min, max) = t.runSyncUnsafe()
+    min.getScore shouldBe minScore
+    min.getValue shouldBe v0
+    max.getScore shouldBe middleScore + incrby
+    max.getValue shouldBe v1
+  }
+
   s"${Redis}" should "allow to composition of different Redis submodules" in new RedisFixture {
     //given
     val k1: K = genRedisKey.sample.get
-    val value: String= genRedisValue.sample.get.toString
+    val value: String = genRedisValue.sample.get.toString
     val k2: K = genRedisKey.sample.get
     val values: List[String] = genRedisValues.sample.get.map(_.toString)
     val k3: K = genRedisKey.sample.get
 
-   val (v: String, len: Long, l: List[String], keys: List[String]) = {
-       for {
-       _ <- Redis.flushall()
-       _ <- RedisKey.touch(k1)
-       _ <- RedisString.set(k1, value)
-       _ <- RedisKey.rename(k1, k2)
-       _ <- RedisList.lpush(k3, values: _*)
-       v <- RedisString.get(k2): Task[String]
-       _ <- RedisList.lpushx(k3, v)
-       _ <- RedisKey.del(k2)
-       len <- RedisList.llen(k3): Task[Long]
-       l <- RedisList.lrange(k3, 0, len).toListL
-       keys <- Redis.keys("*").toListL
-     } yield (v, len, l, keys)
-   }.runSyncUnsafe()
+    val (v: String, len: Long, l: List[String], keys: List[String]) = {
+      for {
+        _    <- Redis.flushallAsync()
+        _    <- RedisKey.touch(k1)
+        _    <- RedisString.set(k1, value)
+        _    <- RedisKey.rename(k1, k2)
+        _    <- RedisList.lpush(k3, values: _*)
+        v    <- RedisString.get(k2): Task[String]
+        _    <- RedisList.lpushx(k3, v)
+        _    <- RedisKey.del(k2)
+        len  <- RedisList.llen(k3): Task[Long]
+        l    <- RedisList.lrange(k3, 0, len).toListL
+        keys <- Redis.keys("*").toListL
+      } yield (v, len, l, keys)
+    }.runSyncUnsafe()
 
     v shouldBe value
     len shouldBe values.size + 1
