@@ -40,9 +40,9 @@ But you can also only include to a specific connector to your library dependenci
 6. [S3](#S3)
 
 ---
-### Akka
+## Akka
 
-#### Introduction
+### Introduction
 
 This module makes interoperability with akka streams easier by simply defining implicit extended classes for reactive stream conversions between akka and monix.
 
@@ -58,25 +58,26 @@ Therefore, under the scope of the import, the signatures `.asObservable` and `.a
 
 The below table shows in more detail the specs for the conversion from akka stremas to monix:  
 
-  | _Akka_ | _Monix_ | _Using_ |
-  | :---: | :---: | :---: | 
-  | _Source[+In, +Mat]_ | _Observable[+In]_ | `source.asObservable[In]` |
-  | _Flow[+In, -Out, +Mat]_ | _Consumer[+In, Task[-Out]]_ | `flow.asConsumer[Out]` |
-  | _Sink[-In, +Out <: Future[Mat]]_ | _Consumer[In, Task[+Mat]]_ | `sink.asConsumer[Mat]` |
+  | _Akka_ | _Monix_ | _Akka -> Monix_ | _Monix -> Akka_ |
+  | :---: | :---: | :---: | :---: | 
+  | _Source[+In, +Mat]_ | _Observable[+In]_ | `source.asObservable[In]` | `observable.asSource[In]` |
+  | _Flow[-In, +Out, +Mat]_ | _Consumer[-In, +Out]_ | `flow.asConsumer[Out]` | - |
+  | _Sink[-In, +Out <: Future[Mat]]_ | _Consumer[-In, +Mat]_ | `sink.asConsumer[Mat]` | `consumer.asSink[In]` |
 
 Note that two methods does not need to be typed as it has been done explicitly in the example table, the compiler will infer it for you.
 
 Also, in order to perform these conversion it is required to have an implicit instance of `akka.stream.Materializer` and `monix.execution.Scheduler` in the scope.
 
-#### Set up
+### Set up
+
 Add the following dependency to get started:
 ```scala 
 libraryDependencies += "io.monix" %% "monix-akka" % "0.0.1"
 ```
 
-#### Getting started
+### Getting started
 
-The following code shows how these implicits can be initialized, but that can be defined differently depending on the use case.
+The following code shows how these implicits can be initialized, but `Scheduler` and `ActorSystem` can be initialized differently and configured differently depending on the use case.
 ```scala
 import monix.connect.akka.stream.Converters._
 import monix.execution.Scheduler.Implicits.global
@@ -85,7 +86,9 @@ val actorSystem: ActorSystem = ActorSystem("Akka-Streams-InterOp")
 implicit val materializer = ActorMaterializer() 
 ```
 
-Let's see an example for converting an `akka.stream.scaladsl.Source` to `monix.reactive.Observable` and then consuming it with a `monix.reactive.Consumer`.
+#### Akka -> Monix
+
+Let's see an example for converting an `Source[+In, +Mat]` to `Observable[+In]`:
 
 ```scala
 //given
@@ -112,20 +115,20 @@ val t: Task[List[Int]] = source.consumeWith(Consumer.toList) //`consumeWith` as 
 t.runSyncUnsafe() should contain theSameElementsAs elements
 ```
 
-On the other hand, see how to convert an `akka.stream.scaladsl.Sink` into a `monix.reactive.Consumer`.
+On the other hand, see how to convert an `Sink[+In, +Mat]` into a `Consumer[+In, +Mat]`.
 
 ```scala
 //given
 val foldSumSink: Sink[Int, Future[Int]] = Sink.fold[Int, Int](0)((acc, num) => acc + num)
 
 //when
-val (consumer: Consumer[Int, Task[Int]]) = foldSumSink.asConsumer[Int] //`asConsumer` as an extended method of `Sink`
-val f: Task[Int] = Observable.fromIterable(Seq(1, 2, 3)).consumeWith(consumer).runSyncUnsafe()
+val (consumer: Consumer[Int, Int]) = foldSumSink.asConsumer[Int] //`asConsumer` as an extended method of `Sink`
+val t: Task[Int] = Observable.fromIterable(Seq(1, 2, 3)).consumeWith(consumer)
 
-//then the future value of `f` should be 6
+//then the future value of `t` should be 6
 ```
 
-Finally, you can also convert `akka.stream.scaladsl.Flow` into `monix.reactive.Consumer` in the same way you did with `Sink`
+Finally, you can also convert `Flow[-In, +Out, +Mat]` into `Consumer[+In, +Mat]` in the same way you did with `Sink`
  in the previous example.
 
 ```scala
@@ -133,19 +136,39 @@ Finally, you can also convert `akka.stream.scaladsl.Flow` into `monix.reactive.C
 val foldSumFlow: Flow[Int, Int, NotUsed] = Flow[Int].fold[Int](0)((acc, num) => acc + num)
 
 //when
-val (consumer: Consumer[Int, Task[Int]]) = foldSumFlow.asConsumer //`asConsumer` as an extended method of `Flow`
-val f: Task[Int] = Observable.fromIterable(Seq(1, 2, 3)).consumeWith(consumer).runSyncUnsafe()
+val (consumer: Consumer[Int, Int]) = foldSumFlow.asConsumer //`asConsumer` as an extended method of `Flow`
+val t: Task[Int] = Observable.fromIterable(Seq(1, 2, 3)).consumeWith(consumer)
 
-//then the future value of `f` should be 6
+//then the future value of `t` should be 6
 ```
 
 Notice that this interoperability would allow the Monix user to take advantage of the already pre built integrations 
 from [Alpakka](https://doc.akka.io/docs/alpakka/current/index.html) or any other Akka Streams implementation.
 
----
-### DynamoDB
+#### Monix -> Akka
 
-#### Introduction
+On the other hand, for converting from Monix `Observable[+In]` to Akka Streams `Source[+In, NotUsed]` we would use the conversion signature `asSource`.
+
+```scala
+import monix.connect.akka.stream.Converters._
+val f: Future[Seq[Long]] = Observable.range(1, 100).asSource.runWith(Sink.seq) 
+//eventualy will return a sequence from 1 to 100
+```
+
+Finally, for converting from `Sink[-In, +Out <: Future[Mat]]` to `Consumer[-In, +Mat]`. 
+
+```scala
+//given
+import monix.connect.akka.stream.Converters._
+val sink: Sink[Int, Future[String]] = Sink.fold[String, Int]("")((s, i) => s + i.toString)
+val t: Task[String] = Observable.fromIterable(1 until 10).consumeWith(sink.asConsumer[String])
+//eventually will return "123456789"
+```
+
+---
+## DynamoDB
+
+### Introduction
 
 _Amazon DynamoDB_ is a key-value and document database that performs at any scale in a single-digit millisecond,
 a key component for many platforms of the world's fastest growing enterprises that depend on it to support their mission-critical workloads.
@@ -158,14 +181,14 @@ The fact that all types implements either Request or Response type makes possibl
 From there one, this connector provides two pre built implementations of a monix __transformer__ and __consumer__ that implements the mentioned pattern and therefore allowing the user to use them for any 
  given dynamodb operation.  
 
-#### Set up
+### Set up
 
 Add the following dependency to get started:
 ```scala 
 libraryDependencies += "io.monix" %% "monix-dynamodb" % "0.0.1"
 ```
 
-#### Getting started
+### Getting started
 
  This connector has been built on top of the [DynamoDbAsyncClient](https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/dynamodb/DynamoDbAsyncClient.html) since it only exposes non blocking operations,
   that will permit the application to be authenticated and create an channel with AWS DynamoDB service.
@@ -207,7 +230,7 @@ Observable
 Note that both transformers and consumer builder are generic implementations for any `DynamoDbRequest`, so you don't need
 to explicitly specify its input and output types. 
 
-#### Local test environment - Set up
+### Local test environment - Set up
 
 [Localstack](https://github.com/localstack/localstack) provides a fully functional local AWS cloud stack that in this case
 the user can use to develop and test locally and offline the integration of the application with DynamoDB.
@@ -248,9 +271,9 @@ You are now ready to run your application!
 _Note that the above example defines the client as `implicit`, since it is how the api will expect it._
 
 ---
-### HDFS
+## HDFS
 
-#### Introduction
+### Introduction
 
 The _Hadoop Distributed File System_ ([HDFS](https://hadoop.apache.org/docs/r1.2.1/hdfs_design.html)) is a distributed file system designed to run on commodity hardware, 
 it is is highly fault-tolerant and it provides high throughput access which makes it suitable for applications that have to handle with large data sets.
@@ -261,7 +284,7 @@ The methods to perform these operations are exposed under the object ```monix.co
 it has been built on top of the the official _apache hadoop_ api.  
 
 
-#### Set up
+### Set up
 
 Add the following dependency to get started:
 ```scala 
@@ -271,7 +294,7 @@ libraryDependencies += "io.monix" %% "monix-hdfs" % "0.0.1"
 By default the connector uses Hadoop version 3.1.1. In case you need a different one you can replace it by excluding `org.apache.hadoop` from `monix-hdfs` and add the new one to your library dependencies.
 
 
-#### Getting started
+### Getting started
 
 The following import is a common requirement for all those methods defined in the `Hdfs` object:
 ```scala
@@ -350,7 +373,7 @@ val ob: Observer[Array[Byte]] = ???
 val t: Task[Long] = ob.consumeWith(hdfsAppender) 
 ```
  
- #### Local environment - Set up
+### Local environment - Set up
  
  Apache Hadoop has a sub project called [Mini Cluster](https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-minicluster) 
  that allows to locally spin up a single-node Hadoop cluster without the need to set any environment variables or manage configuration files.
@@ -396,16 +419,16 @@ override protected def afterAll(): Unit = {
 ```
 
 ---
-### Parquet
+## Parquet
 
-#### Introduction
+### Introduction
 [Apache Parquet](http://parquet.apache.org/) is a columnar storage format that provides the advantages of compressed, efficient data representation available to any project in the Hadoop ecosystem.
 
  It has already been proved by multiple projects that have demonstrated the performance impact of applying the right compression and encoding scheme to the data.
   
 Therefore, the parquet connector basically exposes stream integrations for reading and writing into and from parquet files either in the _local system_, _hdfs_ or _S3_.
  
-#### Set up
+### Set up
 
 Add the following dependency:
  
@@ -413,7 +436,7 @@ Add the following dependency:
  libraryDependencies += "io.monix" %% "monix-parquet" % "0.0.1"
  ```
 
-#### Getting started
+### Getting started
 
 These two signatures `Parquet.write` and `Parquet.read` are built on top of the _apache parquet_  `ParquetWriter[T]` and `ParquetReader[T]`, therefore they need an instance of these types to be passed.
 
@@ -463,7 +486,7 @@ Notice that p.e we have found an issue when reading parquet as protobuf messages
 Follow the state of this [issue](https://github.com/monix/monix-connect/issues/34).
 On the other hand, it was all fine the integration between `Avro` and `Parquet`. 
 
-#### Local test environment - Set up
+### Local test environment - Set up
 
 It will depend on the specific use case, as we mentioned earlier in the introductory section it can operate on the local filesystem on hdfs or even in S3.
 
@@ -482,7 +505,7 @@ Note that you will also require to spin up a docker container for emulating the 
 
 ---
 ## Redis
-#### Introduction
+### Introduction
 _Redis_ is an open source, in-memory data structure store, used as a database, cache and message broker providing high availability, scalability and a outstanding performance. 
 It supports data structures such as string, hashes, lists, sets, sorted sets with range queries, streams and more.
 It has a defined a set of [commands](https://redis.io/commands) to inter-operate with, and most of them are also available from the java api.
@@ -512,7 +535,7 @@ Add the following dependency:
 libraryDependencies += "io.monix" %% "monix-redis" % "0.0.1"
 ```
 
-#### Getting started
+### Getting started
 
 Redis provides a wide range of commands to perform a different range of operations, in which it has been splitted between 15 different groups. 
 Monix Redis connector only currently provides support for the most common used ones:  ([Keys](https://redis.io/commands#generic), [Hashes](https://redis.io/commands#hash), [List](https://redis.io/commands#list), [Pub/Sub](https://redis.io/commands#pubsub), [Server](https://redis.io/commands#server), [Sets](https://redis.io/commands#set), [SortedSets](https://redis.io/commands#sorted_set), [Streams](https://redis.io/commands#stream) and [Strings](https://redis.io/commands#string)).
@@ -746,7 +769,7 @@ keys.size shouldBe 1
 keys.head shouldBe k3
 ```
 
-#### Local test environment - Set up
+### Local test environment - Set up
 
 The local tests will be use the [redis docker image](https://hub.docker.com/_/redis/).
 
@@ -778,9 +801,9 @@ And now you are ready to run your application!
 _Note that the above example defines the client as `implicit`, since it is how the api will expect it._
 
 ---
-### S3
+## S3
 
-#### Introduction
+### Introduction
 
 The object storage service that offers industry leading scalability, availability, security and performance.
 It allows data storage of any amount of data, commonly used as a data lake for big data applications which can now be easily integrated with monix.
@@ -789,7 +812,7 @@ It allows data storage of any amount of data, commonly used as a data lake for b
  Therefore, all of the monix s3 methods defined in the `S3` object would expect an implicit instance of 
  this class to be in the scope of the call.
    
- #### Set up
+### Set up
  
  Add the following dependency:
  
@@ -797,7 +820,7 @@ It allows data storage of any amount of data, commonly used as a data lake for b
  libraryDependencies += "io.monix" %% "monix-s3" % "0.0.1"
  ```
 
-#### Getting started 
+### Getting started 
 
  First thing is to create the s3 client that will allow us to authenticate and create an channel between our 
  application and the AWS S3 service. 
@@ -881,9 +904,9 @@ val multipartUploadConsumer: Consumer[Array[Byte], Task[CompleteMultipartUploadR
 ob.fromIterable(chunks).consumeWith(multipartUploadConsumer)
 ```
 
-#### Local test environment - Set up
+### Local test environment - Set up
 
-The local tests for AWS S3 I won't use localstack, since there was an [issue](https://github.com/localstack/localstack/issues/538) that blocked me to fully write my functional tests, instead we have chosen [minio](https://github.com/minio/minio).
+For AWS S3 local testing we went with [minio](https://github.com/minio/minio) instead of localstack, since we found an [issue](https://github.com/localstack/localstack/issues/538) that can block you on writing your functional tests.
 
 Add the following service description to your `docker-compose.yaml` file:
 
@@ -942,7 +965,7 @@ _Note that the above example defines the client as `implicit`, since it is how t
 
 ---
 
-## Contributing
+### Contributing
 
 
 The Monix Connect project welcomes contributions from anybody wishing to
