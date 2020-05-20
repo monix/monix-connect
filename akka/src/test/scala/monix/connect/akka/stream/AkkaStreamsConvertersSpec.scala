@@ -46,11 +46,11 @@ class AkkaStreamsConvertersSpec extends AnyWordSpecLike with ScalaFutures with M
         val foldSumSink: Sink[Int, Future[Int]] = Sink.fold[Int, Int](0)((acc, num) => acc + num)
 
         //when
-        val (consumer: Consumer[Int, Task[Int]]) = foldSumSink.asConsumer[Int] //extended generic sink
-        val f: Task[Int] = Observable.fromIterable(Seq(1, 2, 3)).consumeWith(consumer).runSyncUnsafe()
+        val (consumer: Consumer[Int, Int]) = foldSumSink.asConsumer[Int] //extended generic sink
+        val t: Task[Int] = Observable.fromIterable(Seq(1, 2, 3)).consumeWith(consumer)
 
         //then
-        f.runSyncUnsafe() shouldBe 6
+        t.runSyncUnsafe() shouldBe 6
       }
 
       "the materialized type is the list of all the elements collected as a future " in {
@@ -58,11 +58,11 @@ class AkkaStreamsConvertersSpec extends AnyWordSpecLike with ScalaFutures with M
         val foldSumSink: Sink[Double, Future[Seq[Double]]] = Sink.seq[Double]
 
         //when
-        val consumer: Consumer[Double, Task[Seq[Double]]] = foldSumSink.asConsumer //extended generic sink
-        val f: Task[Seq[Double]] = Observable.fromIterable(Seq(1.23, 2.34, 4.56)).consumeWith(consumer).runSyncUnsafe()
+        val consumer: Consumer[Double, Seq[Double]] = foldSumSink.asConsumer //extended generic sink
+        val t: Task[Seq[Double]] = Observable.fromIterable(Seq(1.23, 2.34, 4.56)).consumeWith(consumer)
 
         //then
-        f.runSyncUnsafe() shouldBe Seq(1.23, 2.34, 4.56)
+        t.runSyncUnsafe() shouldBe Seq(1.23, 2.34, 4.56)
       }
 
       "the materialized type is the first received string" in {
@@ -71,8 +71,8 @@ class AkkaStreamsConvertersSpec extends AnyWordSpecLike with ScalaFutures with M
         val sink: Sink[String, Future[String]] = Sink.head[String]
 
         //when
-        val (consumer: Consumer[String, Task[String]]) = sink.asConsumer //extended generic sink
-        val t: Task[String] = Observable.fromIterable(Seq(elem)).consumeWith(consumer).runSyncUnsafe()
+        val (consumer: Consumer[String, String]) = sink.asConsumer //extended generic sink
+        val t: Task[String] = Observable.fromIterable(Seq(elem)).consumeWith(consumer)
 
         //then
         t.runSyncUnsafe() shouldBe elem
@@ -84,8 +84,8 @@ class AkkaStreamsConvertersSpec extends AnyWordSpecLike with ScalaFutures with M
 
         //when
         val r1: Task[Option[String]] =
-          Observable.fromIterable(Seq("Hello World!")).consumeWith(sink.asConsumer).runSyncUnsafe()
-        val r2: Task[Option[String]] = Observable.empty[String].consumeWith(sink.asConsumer).runSyncUnsafe()
+          Observable.fromIterable(Seq("Hello World!")).consumeWith(sink.asConsumer)
+        val r2: Task[Option[String]] = Observable.empty[String].consumeWith(sink.asConsumer)
 
         //then
         r1.runSyncUnsafe() shouldBe Some("Hello World!")
@@ -97,26 +97,30 @@ class AkkaStreamsConvertersSpec extends AnyWordSpecLike with ScalaFutures with M
         val sink: Sink[Int, Future[String]] = Sink.fold[String, Int]("")((s, i) => s + i.toString)
 
         //when
-        val r1: Task[String] = Observable.fromIterable(1 until 10).consumeWith(sink.asConsumer[String]).runSyncUnsafe()
+        val t: Task[String] = Observable.fromIterable(1 until 10).consumeWith(sink.asConsumer[String])
 
         //then
-        r1.runSyncUnsafe() shouldBe "123456789"
+        t.runSyncUnsafe() shouldBe "123456789"
       }
+
     }
+
   }
 
   s"An akka ${Flow} " should {
+
     "be extended with the `asConsumer` signature " when {
+
       "the materialized type is a future integer " in {
         //given
         val foldSumSink: Flow[Int, Int, NotUsed] = Flow[Int].fold[Int](0)((acc, num) => acc + num)
 
         //when
-        val (consumer: Consumer[Int, Task[Int]]) = foldSumSink.asConsumer //extended generic sink
-        val f: Task[Int] = Observable.fromIterable(Seq(1, 2, 3)).consumeWith(consumer).runSyncUnsafe()
+        val (consumer: Consumer[Int, Int]) = foldSumSink.asConsumer //extended generic sink
+        val t: Task[Int] = Observable.fromIterable(Seq(1, 2, 3)).consumeWith(consumer)
 
         //then
-        f.runSyncUnsafe() shouldBe 6
+        t.runSyncUnsafe() shouldBe 6
       }
 
       "the materialized type is a future optional string" in {
@@ -125,14 +129,16 @@ class AkkaStreamsConvertersSpec extends AnyWordSpecLike with ScalaFutures with M
         val flow: Flow[Option[String], Option[String], NotUsed] = Flow[Option[String]]
 
         //when
-        val (consumer: Consumer[Option[String], Task[Option[String]]]) = flow.asConsumer //extended generic sink
+        val (consumer: Consumer[Option[String], Option[String]]) = flow.asConsumer //extended generic sink
         val t: Task[Option[String]] =
-          Observable.fromIterable(Seq(None, lastElement)).consumeWith(consumer).runSyncUnsafe()
+          Observable.fromIterable(Seq(None, lastElement)).consumeWith(consumer)
 
         //then
         t.runSyncUnsafe() shouldBe lastElement
       }
+
     }
+
   }
 
   s"An akka ${Source} " should {
@@ -192,5 +198,70 @@ class AkkaStreamsConvertersSpec extends AnyWordSpecLike with ScalaFutures with M
       //then
       t.runSyncUnsafe() should contain theSameElementsAs elements
     }
+
+  }
+
+  s"A monix ${Observable} extended with the `asSource` signature" should {
+
+    s"be converted into a ${Source}" when {
+
+      "the input is of integer type and materializes to a seq that contains all elements" in {
+        //given
+        import monix.connect.akka.stream.Converters._
+        val ob = Observable.range(5, 20)
+
+        val f: Future[Seq[Long]] = ob.asSource.runWith(Sink.seq)
+
+        f.futureValue shouldBe (5 until 20)
+      }
+
+      "the input is of string type and materializes to foldLeft operator that aggregates all" in {
+        //given
+        import monix.connect.akka.stream.Converters._
+        val elements: Seq[String] = Gen.listOfN(6, Gen.alphaLowerStr).sample.get
+        val ob: Observable[String] = Observable.fromIterable(elements)
+
+
+        val f: Future[String] = ob.asSource.runWith(Sink.fold(""){ case (acc, next) => acc ++ next })
+
+        f.futureValue shouldBe elements.mkString
+      }
+
+    }
+
+  }
+
+  s"A monix ${Consumer} extended with the `asSink` signature" should {
+
+    s"be converted into a ${Sink}" when {
+
+      "the consumer is returning the first element" in {
+        //given
+        import monix.connect.akka.stream.Converters._
+        val l: List[Int] = Gen.listOfN(100, Gen.choose(1, 1000)).sample.get
+        val sink: Sink[Int, Future[Int]] = Consumer.head[Int].asSink
+
+        //when
+        val f: Future[Int] = Source(l).runWith(sink)
+
+        //then
+        f.futureValue shouldBe l.head
+      }
+
+      "the consumer is a foldLeft that aggregates all incoming string elements" in {
+        //given
+        import monix.connect.akka.stream.Converters._
+        val l: List[String] = Gen.listOfN(100, Gen.alphaLowerStr).sample.get
+        val sink: Sink[String, Future[String]] = Consumer.foldLeft("")((acc: String, next: String) => acc ++ next).asSink
+
+        //when
+        val f: Future[String] = Source(l).runWith(sink)
+
+        //then
+        f.futureValue shouldBe l.mkString
+      }
+
+    }
+
   }
 }

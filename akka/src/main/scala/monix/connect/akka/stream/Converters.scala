@@ -17,23 +17,24 @@
 
 package monix.connect.akka.stream
 
+import akka.NotUsed
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import monix.eval.Task
-import monix.execution.Scheduler
-import monix.execution.cancelables.SingleAssignCancelable
-import monix.reactive.{Consumer, Observable, Observer}
+import monix.execution.{Callback, Scheduler}
+import monix.execution.cancelables.{AssignableCancelable, SingleAssignCancelable}
+import monix.reactive.{Consumer, Observable, Observer, observers}
 import org.reactivestreams.{Publisher, Subscriber}
 
-import scala.concurrent.Future
+import scala.concurrent.{Future, Promise}
 
 object Converters {
 
   implicit class ExtendedAkkaSink[-In, +R <: Future[_]](sink: Sink[In, R]) {
-    def asConsumer[Out](implicit materializer: Materializer, scheduler: Scheduler): Consumer[In, Task[Out]] = {
+    def asConsumer[Out](implicit materializer: Materializer, scheduler: Scheduler): Consumer[In, Out] = {
       val (sub: Subscriber[In], mat: Future[Out]) = Source.asSubscriber[In].toMat(sink)(Keep.both).run()
-      val observer = Observer.fromReactiveSubscriber[In](sub, SingleAssignCancelable())
-      val consumer = Consumer.fromObserver[In](implicit scheduler => observer).map(_ => Task.fromFuture[Out](mat))
+      val observer: Observer[In] = Observer.fromReactiveSubscriber[In](sub, SingleAssignCancelable())
+      val consumer: Consumer[In, Out] = Consumer.fromObserver[In](implicit scheduler => observer).mapTask(_ => Task.fromFuture[Out](mat))
       consumer
     }
   }
@@ -52,4 +53,20 @@ object Converters {
       asObservable(materializer, scheduler).consumeWith(consumer)
     }
   }
+
+  implicit class ExtendedObservable[+In](observable: Observable[In]) {
+    def asSource(implicit materializer: Materializer, scheduler: Scheduler): Source[In, NotUsed] = {
+      Source.fromPublisher(observable.toReactivePublisher)
+    }
+  }
+
+  implicit class ExtendedMonixConsumer[-In, +R](consumer: Consumer[In, R]) {
+    def asSink[Out](implicit materializer: Materializer, scheduler: Scheduler): Sink[In, Future[R]] = {
+      val promise = Promise[R]()
+      val cb: Callback[Throwable, R] = Callback.fromPromise(promise)
+      val (sub: observers.Subscriber[In], _) = consumer.createSubscriber(cb, scheduler)
+      Sink.fromSubscriber(sub.toReactive).mapMaterializedValue[Future[R]](_ => promise.future)
+    }
+  }
+
 }
