@@ -23,7 +23,7 @@ import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import monix.eval.Task
 import monix.execution.{Callback, Scheduler}
 import monix.execution.cancelables.{AssignableCancelable, SingleAssignCancelable}
-import monix.reactive.{Consumer, Observable, Observer, observers}
+import monix.reactive.{observers, Consumer, Observable, Observer}
 import org.reactivestreams.{Publisher, Subscriber}
 
 import scala.concurrent.{Future, Promise}
@@ -34,7 +34,8 @@ object Converters {
     def asConsumer[Out](implicit materializer: Materializer, scheduler: Scheduler): Consumer[In, Out] = {
       val (sub: Subscriber[In], mat: Future[Out]) = Source.asSubscriber[In].toMat(sink)(Keep.both).run()
       val observer: Observer[In] = Observer.fromReactiveSubscriber[In](sub, SingleAssignCancelable())
-      val consumer: Consumer[In, Out] = Consumer.fromObserver[In](implicit scheduler => observer).mapTask(_ => Task.fromFuture[Out](mat))
+      val consumer: Consumer[In, Out] =
+        Consumer.fromObserver[In](implicit scheduler => observer).mapTask(_ => Task.fromFuture[Out](mat))
       consumer
     }
   }
