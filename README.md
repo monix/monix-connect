@@ -24,7 +24,7 @@ Monix Connect is an initiative to implement stream integrations for [Monix](http
  all of the connectors by adding the following dependency (find and fill your release [version](https://github.com/monix/monix-connect/releases)):
  
  ```scala   
- libraryDependencies += "io.monix" %% "monix-akka" % "VERSION"
+ libraryDependencies += "io.monix" %% "monix-connect" % "VERSION"
 ```
 
 But you can also only include to a specific connector to your library dependencies, see below how to do so and how to get started with each of the available [connectors](#Connectors).  
@@ -93,17 +93,16 @@ Let's see an example for converting an `Source[+In, +Mat]` to `Observable[+In]`:
 ```scala
 //given
 val elements = 1 until 50
-val source: Source[Int, NotUsed] = Source.fromIterator[Int](() => elements.iterator)
 
 //when
-val ob: Observable[Int] = source.asObservable //`asObservable` converter as extended method of source.
+val ob: Observable[Int] = Source.from(elements).asObservable //`asObservable` converter as extended method of source.
 
-//then
+//then 
 ob.toListL.runSyncUnsafe() should contain theSameElementsAs elements
 ```
 
 In this case we have not needed to consume the `Observable` since we directly used an operator that collects 
-to a list `.toList`, but note that in case you need to use an specific consumer, you can also directly calkl `consumeWith`, as a shortcut for `source.asObservable.consumeWith(consumer)`. See an example below:
+to a list `.toList`, but note that in case you need to use an specific consumer, you can also directly call `consumeWith`, as a shortcut for `source.asObservable.consumeWith(consumer)`, see an example below:
 
 ```scala
 //given the same `elements` and `source` as above example`

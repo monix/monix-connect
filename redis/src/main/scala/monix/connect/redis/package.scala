@@ -23,7 +23,7 @@ import reactor.core.publisher.Mono
 
 package object redis {
 
-  private[redis] implicit val fromReactorMono: TaskLike[Mono] = new TaskLike[Mono] {
+  private[redis] implicit val fromMono: TaskLike[Mono] = new TaskLike[Mono] {
     def apply[A](m: Mono[A]): Task[A] =
       Observable.fromReactivePublisher(m).headL
   }

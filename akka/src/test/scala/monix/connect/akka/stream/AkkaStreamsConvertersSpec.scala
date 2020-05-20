@@ -221,8 +221,7 @@ class AkkaStreamsConvertersSpec extends AnyWordSpecLike with ScalaFutures with M
         val elements: Seq[String] = Gen.listOfN(6, Gen.alphaLowerStr).sample.get
         val ob: Observable[String] = Observable.fromIterable(elements)
 
-
-        val f: Future[String] = ob.asSource.runWith(Sink.fold(""){ case (acc, next) => acc ++ next })
+        val f: Future[String] = ob.asSource.runWith(Sink.fold("") { case (acc, next) => acc ++ next })
 
         f.futureValue shouldBe elements.mkString
       }
@@ -252,7 +251,8 @@ class AkkaStreamsConvertersSpec extends AnyWordSpecLike with ScalaFutures with M
         //given
         import monix.connect.akka.stream.Converters._
         val l: List[String] = Gen.listOfN(100, Gen.alphaLowerStr).sample.get
-        val sink: Sink[String, Future[String]] = Consumer.foldLeft("")((acc: String, next: String) => acc ++ next).asSink
+        val sink: Sink[String, Future[String]] =
+          Consumer.foldLeft("")((acc: String, next: String) => acc ++ next).asSink
 
         //when
         val f: Future[String] = Source(l).runWith(sink)
