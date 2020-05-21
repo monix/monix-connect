@@ -114,7 +114,7 @@ val t: Task[List[Int]] = source.consumeWith(Consumer.toList) //`consumeWith` as 
 t.runSyncUnsafe() should contain theSameElementsAs elements
 ```
 
-On the other hand, see how to convert an `Sink[+In, +Mat]` into a `Consumer[+In, +Mat]`.
+On the other hand, see how to convert an `Sink[-In, +Out <: Future[Mat]]` into a `Consumer[+In, +Mat]`.
 
 ```scala
 //given
