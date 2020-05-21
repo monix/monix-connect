@@ -53,7 +53,7 @@ Which at the end it means that they can interoperate with other libraries that a
  So this module aims to provide a nice interoperability between these two reactive streams libraries.
  
  In order to achieve it, this module will provide an extended conversion method for each of the stream abstractions mentioned before. 
-  These implicit extended methods can be imported from: `monix.connect.akka.Converters._`.
+  These implicit extended methods can be imported from: `monix.connect.akka.stream.Converters._`.
 Therefore, under the scope of the import, the signatures `.asObservable` and `.asConsumer` will be available for the `Source`, `Flow`, and `Sink`.
 
 The below table shows in more detail the specs for the conversion from akka stremas to monix:  
@@ -72,7 +72,7 @@ Also, in order to perform these conversion it is required to have an implicit in
 
 Add the following dependency to get started:
 ```scala 
-libraryDependencies += "io.monix" %% "monix-akka" % "0.0.1"
+libraryDependencies += "io.monix" %% "monix-akka" % "0.1.0"
 ```
 
 ### Getting started
@@ -184,7 +184,7 @@ From there one, this connector provides two pre built implementations of a monix
 
 Add the following dependency to get started:
 ```scala 
-libraryDependencies += "io.monix" %% "monix-dynamodb" % "0.0.1"
+libraryDependencies += "io.monix" %% "monix-dynamodb" % "0.1.0"
 ```
 
 ### Getting started
@@ -287,7 +287,7 @@ it has been built on top of the the official _apache hadoop_ api.
 
 Add the following dependency to get started:
 ```scala 
-libraryDependencies += "io.monix" %% "monix-hdfs" % "0.0.1"
+libraryDependencies += "io.monix" %% "monix-hdfs" % "0.1.0"
 ```
 
 By default the connector uses Hadoop version 3.1.1. In case you need a different one you can replace it by excluding `org.apache.hadoop` from `monix-hdfs` and add the new one to your library dependencies.
@@ -432,7 +432,7 @@ Therefore, the parquet connector basically exposes stream integrations for readi
 Add the following dependency:
  
  ```scala
- libraryDependencies += "io.monix" %% "monix-parquet" % "0.0.1"
+ libraryDependencies += "io.monix" %% "monix-parquet" % "0.1.0"
  ```
 
 ### Getting started
@@ -531,7 +531,7 @@ At the same time that it returns the right values from scala lang and not form j
 Add the following dependency:
 
 ```scala
-libraryDependencies += "io.monix" %% "monix-redis" % "0.0.1"
+libraryDependencies += "io.monix" %% "monix-redis" % "0.1.0"
 ```
 
 ### Getting started
@@ -816,7 +816,7 @@ It allows data storage of any amount of data, commonly used as a data lake for b
  Add the following dependency:
  
  ```scala
- libraryDependencies += "io.monix" %% "monix-s3" % "0.0.1"
+ libraryDependencies += "io.monix" %% "monix-s3" % "0.1.0"
  ```
 
 ### Getting started 
