@@ -7,7 +7,7 @@
 
 
  [workflow]:                https://github.com/monix/monix-connect/actions?query=branch%3Amaster+workflow%3Abuild
- [workflow-badge]:          https://github.com/monix/monix-connect/workflows/Build/badge.svg
+ [workflow-badge]:          https://github.com/monix/monix-connect/workflows/build/badge.svg
 
    
  [release]:                 https://search.maven.org/search?q=a:monix-connect*
