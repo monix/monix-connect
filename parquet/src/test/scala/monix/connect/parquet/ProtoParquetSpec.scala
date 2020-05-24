@@ -25,11 +25,16 @@ import monix.reactive.Observable
 import org.apache.avro.generic.GenericRecord
 import org.apache.parquet.hadoop.ParquetWriter
 import org.scalatest.BeforeAndAfterAll
+import org.scalatest.concurrent.Eventually
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
+import scala.concurrent.duration._
 
 class ProtoParquetSpec
-  extends AnyWordSpecLike with Matchers with ProtoParquetFixture with AvroParquetFixture with BeforeAndAfterAll {
+  extends AnyWordSpecLike with Matchers with ProtoParquetFixture with AvroParquetFixture with BeforeAndAfterAll
+  with Eventually {
+
+  implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 100.milliseconds)
 
   s"${Parquet}" should {
 
@@ -56,7 +61,7 @@ class ProtoParquetSpec
 
     "write protobuf records in parquet (read with an avro generic record reader)" in {
       //given
-      val n: Int = 4
+      val n: Int = 2
       val file: String = genFilePath()
       val messages: List[ProtoDoc] = genProtoDocs(n).sample.get
       val writer: ParquetWriter[ProtoDoc] = protoParquetWriter(file)
@@ -68,9 +73,11 @@ class ProtoParquetSpec
         .runSyncUnsafe()
 
       //then
-      val avroDocs: List[AvroDoc] =
-        fromParquet[GenericRecord](file, conf, avroParquetReader(file, conf)).map(recordToAvroDoc)
-      avroDocs.equiv(messages) shouldBe true
+      eventually {
+        val avroDocs: List[AvroDoc] =
+          fromParquet[GenericRecord](file, conf, avroParquetReader(file, conf)).map(recordToAvroDoc)
+        assert(avroDocs.equiv(messages))
+      }
     }
 
     "read from parquet file that at most have one record" in {

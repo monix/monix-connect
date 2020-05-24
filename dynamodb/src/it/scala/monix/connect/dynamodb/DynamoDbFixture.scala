@@ -15,6 +15,8 @@ trait DynamoDbFixture {
   val numAttr: Int => AttributeValue = value => AttributeValue.builder().n(value.toString).build()
   val doubleAttr: Double => AttributeValue = value => AttributeValue.builder().n(value.toString).build()
 
+  val genTableName: Gen[String] =  Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "test-" + chars.mkString.take(200))  //table name max size is 255
+
   val genCitizenId = Gen.choose(1, 100000)
   val keyMap = (city: String, citizens: Int) => Map("city" -> strAttr(city), "citizenId" -> numAttr(citizens))
 
@@ -38,7 +40,6 @@ trait DynamoDbFixture {
 
   def getItemRequest(tableName: String, city: String, citizenId: Int) =
     GetItemRequest.builder().tableName(tableName).key(keyMap(city, citizenId).asJava).attributesToGet("debt").build()
-
 
   val getItemMalformedRequest =
     GetItemRequest.builder().tableName(tableName).attributesToGet("not_present").build()
@@ -90,12 +91,13 @@ trait DynamoDbFixture {
     Task.from(client.deleteTable(deleteRequest))
   }
 
+
   def genRequestAttributes: Gen[(String, Int, Double)] = {
     for {
-      city <- Gen.alphaLowerStr
+      city <- Gen.nonEmptyListOf(Gen.alphaChar)
       citizenId <- genCitizenId
       debt <- Gen.choose(0, 10000)
-    } yield (city, citizenId, debt.toDouble)
+    } yield ("-" + city.mkString, citizenId, debt.toDouble) // '-' was added to avoid empty strings
   }
 
 }

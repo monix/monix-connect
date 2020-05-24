@@ -127,7 +127,7 @@ val t: Task[Int] = Observable.fromIterable(Seq(1, 2, 3)).consumeWith(consumer)
 //then the future value of `t` should be 6
 ```
 
-Finally, you can also convert `Flow[-In, +Out, +Mat]` into `Consumer[+In, +Mat]` in the same way you did with `Sink`
+Finally, you can also convert `Flow[-In, +Out, +Mat]` into `Consumer[+In, +Out]` in the same way you did with `Sink`
  in the previous example.
 
 ```scala
