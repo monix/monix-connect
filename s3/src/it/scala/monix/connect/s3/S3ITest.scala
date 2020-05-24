@@ -35,8 +35,8 @@ class S3ITest
 
         "contentLength and contentType are not defined and therefore infered by the method" in {
           //given
-          val key = Gen.alphaLowerStr.sample.get
-          val content = Gen.alphaUpperStr.sample.get
+          val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+          val content: String = Gen.alphaUpperStr.sample.get
 
           //when
           val t: Task[PutObjectResponse] = S3.putObject(bucketName, key, content.getBytes())
@@ -51,7 +51,7 @@ class S3ITest
 
         "contentLength and contentType are defined respectively as the array lenght and 'application/json'" in {
           //given
-          val key = Gen.alphaLowerStr.sample.get
+          val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
           val content: String = Gen.alphaUpperStr.sample.get
 
           //when
@@ -89,7 +89,7 @@ class S3ITest
         }
         "the chunk is empty" in {
           //given
-          val key: String = Gen.alphaLowerStr.sample.get
+          val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
           val content: Array[Byte] = Array.emptyByteArray
 
           //when
@@ -114,7 +114,7 @@ class S3ITest
 
       "downloads a s3 object as byte array" in {
         //given
-        val key: String = Gen.alphaLowerStr.sample.get
+        val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
         val content: String = Gen.alphaUpperStr.sample.get
         s3SyncClient.putObject(bucketName, key, content)
 
@@ -131,7 +131,7 @@ class S3ITest
 
       "download a s3 object bigger than 1MB as byte array" in {
         //given
-        val key = Gen.alphaLowerStr.sample.get
+        val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
         val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
         val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
         val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
@@ -159,7 +159,7 @@ class S3ITest
 
       "a single chunk is passed to the consumer" in {
         //given
-        val key = Gen.alphaLowerStr.sample.get
+        val key = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
         val content: Array[Byte] = Gen.alphaUpperStr.sample.get.getBytes
         val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
           S3.multipartUpload(bucketName, key)
@@ -179,7 +179,7 @@ class S3ITest
 
       "multiple chunks (of less than minimum size) are passed" in {
         //given
-        val key = Gen.alphaLowerStr.sample.get
+        val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
         val chunks: List[Array[Byte]] = Gen.listOfN(10, Gen.alphaUpperStr).map(_.map(_.getBytes)).sample.get
         val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
           S3.multipartUpload(bucketName, key)
@@ -201,7 +201,7 @@ class S3ITest
 
       "a single chunk of size (1MB)" in {
         //given
-        val key = Gen.alphaLowerStr.sample.get
+        val key = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
         val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
         val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
         val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
@@ -222,7 +222,7 @@ class S3ITest
 
       "multiple chunks bigger than minimum size (5MB)" in {
         //given
-        val key = Gen.alphaLowerStr.sample.get
+        val key =  Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
         val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
         val ob: Observable[Array[Byte]] = Observable
           .fromInputStream(inputStream)

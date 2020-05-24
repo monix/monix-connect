@@ -25,9 +25,9 @@ class DynamoDbConsumerSpec
 
     s"given an implicit instance of ${DynamoDbOp.createTableOp} in the scope" must {
 
-      s"consumes a single `CreateTableRequest` and materializes to `CreateTableResponse`" in {
+      s"consume a single `CreateTableRequest` and materializes to `CreateTableResponse`" in {
         //given
-        val randomTableName = Gen.alphaLowerStr.sample.get
+        val randomTableName: String = genTableName.sample.get
         val consumer: Consumer[CreateTableRequest, CreateTableResponse] =
           DynamoDb.consumer[CreateTableRequest, CreateTableResponse]
         val request =
@@ -53,11 +53,11 @@ class DynamoDbConsumerSpec
 
     s"with an implicit instance of ${DynamoDbOp.putItemOp} in the scope" must {
 
-      s"consumes a single `PutItemRequest` and materializes to `PutItemResponse` " in {
+      s"consume a single `PutItemRequest` and materializes to `PutItemResponse` " in {
         //given
         val consumer: Consumer[PutItemRequest, PutItemResponse] =
           DynamoDb.consumer[PutItemRequest, PutItemResponse]
-        val city = Gen.alphaLowerStr.sample.get
+        val city = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
         val citizenId = genCitizenId.sample.get
         val debt = Gen.choose(0, 10000).sample.get
         val request: PutItemRequest = putItemRequest(tableName, city, citizenId, debt)
@@ -76,7 +76,7 @@ class DynamoDbConsumerSpec
         //given
         val consumer: Consumer[PutItemRequest, PutItemResponse] =
           DynamoDb.consumer[PutItemRequest, PutItemResponse]
-        val requestAttr: List[(String, Int, Double)] = Gen.listOfN(10, genRequestAttributes).sample.get
+        val requestAttr: List[(String, Int, Double)] = Gen.nonEmptyListOf(genRequestAttributes).sample.get
         val requests: List[PutItemRequest] = requestAttr.map { case (city, citizenId, debt) => putItemRequest(tableName, city, citizenId, debt) }
 
         //when
@@ -93,7 +93,7 @@ class DynamoDbConsumerSpec
 
     s"with an implicit instance of ${DynamoDbOp.getItemOp} in the scope" must {
 
-      s"consumes a single `GetItemRequest` and materializes to `GetItemResponse` " in {
+      s"consume a single `GetItemRequest` and materializes to `GetItemResponse` " in {
         //given
         val city = "Barcelona"
         val citizenId = 11292

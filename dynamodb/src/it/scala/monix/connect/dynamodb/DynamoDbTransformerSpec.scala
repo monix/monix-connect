@@ -28,7 +28,7 @@ class DynamoDbTransformerSpec
 
       s"transform `CreateTableRequests` to `CreateTableResponses`" in {
         //given
-        val randomTableName = Gen.alphaLowerStr.sample.get
+        val randomTableName: String = genTableName.sample.get
         val transformer: Transformer[CreateTableRequest, Task[CreateTableResponse]] =
           DynamoDb.transformer[CreateTableRequest, CreateTableResponse]
         val request =
@@ -60,7 +60,7 @@ class DynamoDbTransformerSpec
           //given
           val transformer: Transformer[PutItemRequest, Task[PutItemResponse]] =
             DynamoDb.transformer[PutItemRequest, PutItemResponse]
-          val city = Gen.alphaLowerStr.sample.get
+          val city = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
           val citizenId = genCitizenId.sample.get
           val debt = Gen.choose(0, 10000).sample.get
           val request: PutItemRequest = putItemRequest(tableName, city, citizenId, debt)
@@ -78,7 +78,7 @@ class DynamoDbTransformerSpec
           //given
           val transformer: Transformer[PutItemRequest, Task[PutItemResponse]] =
             DynamoDb.transformer[PutItemRequest, PutItemResponse]
-          val requestAttr: List[(String, Int, Double)] = Gen.listOfN(10, genRequestAttributes).sample.get
+          val requestAttr: List[(String, Int, Double)] = Gen.nonEmptyListOf(genRequestAttributes).sample.get
           val requests: List[PutItemRequest] = requestAttr.map { case (city, citizenId, debt) => putItemRequest(tableName, city, citizenId, debt) }
 
           //when

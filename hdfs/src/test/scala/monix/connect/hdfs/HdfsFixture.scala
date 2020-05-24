@@ -20,7 +20,7 @@ package monix.connect.hdfs
 import org.scalacheck.Gen
 
 trait HdfsFixture {
-  val genFileName: Gen[String] = Gen.alphaLowerStr
+  val genFileName: Gen[String] = Gen.nonEmptyListOf(Gen.alphaChar).map(_.mkString)
   val genChunk: Gen[Array[Byte]] = Gen.alphaLowerStr.map(_.getBytes)
   val genChunks: Gen[List[Array[Byte]]] = Gen.listOfN(10, genChunk)
 }
