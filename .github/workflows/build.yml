@@ -43,5 +43,20 @@ jobs:
         run:  sh start-dependencies.sh
       - name: Run Functional Tests for Java ${{ matrix.java }}, Scala ${{ matrix.scala }}
         run: sbt it:test
-
+        
+  publish:
+    needs: [ tests ]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: olafurpg/setup-scala@v2
+      - uses: olafurpg/setup-gpg@v2
+      - name: Publish ${{ github.ref }}
+        run: sbt ci-release
+        env:
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+          PGP_SECRET: ${{ secrets.PGP_SECRET }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
   
