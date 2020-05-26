@@ -1,6 +1,5 @@
 package monix.connect.gcs
 
-import java.io.InputStream
 import java.nio.file.Path
 
 import cats.data.NonEmptyList
@@ -8,12 +7,12 @@ import com.google.cloud.storage.Bucket.BucketSourceOption
 import com.google.cloud.storage.Storage.{BlobGetOption, BlobListOption, BlobWriteOption, BucketTargetOption}
 import com.google.cloud.storage.{Acl, BlobId, Bucket => GoogleBucket}
 import monix.connect.gcs.configuration.BlobInfo
-import monix.connect.gcs.utiltiies.StorageUploader.StorageConsumer
-import monix.connect.gcs.utiltiies.{FileIO, Paging, StorageDownloader, StorageUploader}
+import monix.connect.gcs.components.{FileIO, Paging, StorageDownloader, StorageUploader}
 import monix.eval.Task
 import monix.reactive.Observable
+import monix.connect.gcs.components.StorageConsumer
 
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
 /**
  * This class wraps the [[com.google.cloud.storage.Bucket]] class, providing an idiomatic scala API

@@ -1,4 +1,4 @@
-package monix.connect.gcs.utiltiies
+package monix.connect.gcs.components
 
 import java.io.{BufferedInputStream, BufferedOutputStream, FileInputStream, FileOutputStream}
 import java.nio.file.Path

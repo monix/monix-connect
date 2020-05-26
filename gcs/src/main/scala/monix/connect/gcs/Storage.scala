@@ -7,7 +7,7 @@ import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.storage.Storage._
 import com.google.cloud.storage.{StorageOptions, Storage => GoogleStorage}
 import monix.connect.gcs.configuration.BucketConfig
-import monix.connect.gcs.utiltiies.Paging
+import monix.connect.gcs.components.Paging
 import monix.eval.Task
 import monix.reactive.Observable
 
@@ -38,18 +38,18 @@ final class Storage(underlying: GoogleStorage) extends Paging {
 
 object Storage {
 
-  def create(): Task[Storage] = {
-    Task(StorageOptions.getDefaultInstance.getService).map(new Storage(_))
+  def create(): Storage= {
+    new Storage(StorageOptions.getDefaultInstance.getService)
   }
 
-  def create(projectId: String, credentials: Path): Task[Storage] = {
-    Task {
-      StorageOptions
-        .newBuilder()
-        .setProjectId(projectId)
-        .setCredentials(GoogleCredentials.fromStream(new FileInputStream(credentials.toFile)))
-        .build()
-        .getService
-    }.map(new Storage(_))
+  def create(projectId: String, credentials: Path): Storage = {
+    new Storage(StorageOptions
+      .newBuilder()
+      .setProjectId(projectId)
+      .setCredentials(GoogleCredentials.fromStream(new FileInputStream(credentials.toFile)))
+      .build()
+      .getService
+    )
   }
+
 }

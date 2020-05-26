@@ -7,23 +7,24 @@ import monix.connect.gcs.configuration.BucketConfig.Location
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 
-final case class BucketConfig(name: String,
-                              location: Option[Location] = None,
-                              labels: Map[String, String] = Map.empty[String, String],
-                              requesterPays: Option[Boolean] = None,
-                              versioningEnabled: Option[Boolean] = None,
-                              storageClass: Option[StorageClass] = None,
-                              retentionPeriod: Option[FiniteDuration] = None,
-                              acl: List[Acl] = List.empty[Acl],
-                              cors: List[Cors] = List.empty[Cors],
-                              defaultAcl: List[Acl] = List.empty[Acl],
-                              lifecycleRules: List[LifecycleRule] = List.empty[LifecycleRule],
-                              logging: Option[BucketInfo.Logging] = None,
-                              indexPage: Option[String] = None,
-                              notFoundPage: Option[String] = None,
-                              defaultKmsKeyName: Option[String] = None,
-                              defaultEventBasedHold: Option[Boolean] = None,
-                              iamConfiguration: Option[IamConfiguration] = None) {
+class BucketConfig(
+  name: String,
+  location: Option[Location] = None,
+  labels: Map[String, String] = Map.empty[String, String],
+  requesterPays: Option[Boolean] = None,
+  versioningEnabled: Option[Boolean] = None,
+  storageClass: Option[StorageClass] = None,
+  retentionPeriod: Option[FiniteDuration] = None,
+  acl: List[Acl] = List.empty[Acl],
+  cors: List[Cors] = List.empty[Cors],
+  defaultAcl: List[Acl] = List.empty[Acl],
+  lifecycleRules: List[LifecycleRule] = List.empty[LifecycleRule],
+  logging: Option[BucketInfo.Logging] = None,
+  indexPage: Option[String] = None,
+  notFoundPage: Option[String] = None,
+  defaultKmsKeyName: Option[String] = None,
+  defaultEventBasedHold: Option[Boolean] = None,
+  iamConfiguration: Option[IamConfiguration] = None) {
 
   private[gcs] def getBucketInfo: BucketInfo = {
     val builder = BucketInfo.newBuilder(name)
@@ -55,6 +56,43 @@ final case class BucketConfig(name: String,
 }
 
 object BucketConfig {
+
+  def apply(
+    name: String,
+    location: Option[Location],
+    labels: Map[String, String],
+    requesterPays: Option[Boolean],
+    versioningEnabled: Option[Boolean],
+    storageClass: Option[StorageClass],
+    retentionPeriod: Option[FiniteDuration],
+    acl: List[Acl],
+    cors: List[Cors],
+    defaultAcl: List[Acl],
+    lifecycleRules: List[LifecycleRule],
+    logging: Option[BucketInfo.Logging],
+    indexPage: Option[String],
+    notFoundPage: Option[String],
+    defaultKmsKeyName: Option[String],
+    defaultEventBasedHold: Option[Boolean],
+    iamConfiguration: Option[IamConfiguration]): BucketConfig =
+    new BucketConfig(
+      name,
+      location,
+      labels,
+      requesterPays,
+      versioningEnabled,
+      storageClass,
+      retentionPeriod,
+      acl,
+      cors,
+      defaultAcl,
+      lifecycleRules,
+      logging,
+      indexPage,
+      notFoundPage,
+      defaultKmsKeyName,
+      defaultEventBasedHold,
+      iamConfiguration)
 
   type Location = String
 

@@ -1,4 +1,4 @@
-package monix.connect.gcs.utiltiies
+package monix.connect.gcs.components
 
 import java.nio.channels.Channels
 

@@ -9,12 +9,12 @@ import com.google.cloud.storage.Storage.{BlobTargetOption, SignUrlOption}
 import com.google.cloud.storage.{Acl, BlobId, Blob => GoogleBlob, Option => _}
 import com.google.cloud.{storage => google}
 import monix.connect.gcs.configuration.BlobInfo
-import monix.connect.gcs.utiltiies.{FileIO, StorageDownloader}
+import monix.connect.gcs.components.{FileIO, StorageDownloader}
 import monix.eval.Task
 import monix.reactive.Observable
 
+import scala.collection.JavaConverters._
 import scala.concurrent.duration.FiniteDuration
-import scala.jdk.CollectionConverters._
 
 /**
  * This class wraps the [[com.google.cloud.storage.Blob]] class, providing an idiomatic scala API
@@ -82,7 +82,7 @@ final class Blob(underlying: GoogleBlob)
    * }}}
    */
   def downloadToFile(name: String, path: Path, chunkSize: Int = 4096): Task[Unit] = {
-    val blobId = BlobId.of(underlying.getName, name)
+    val blobId: BlobId = BlobId.of(underlying.getName, name)
     (for {
       bos   <- openFileOutputStream(path)
       bytes <- download(underlying.getStorage, underlying.getName, blobId, chunkSize)
@@ -98,11 +98,13 @@ final class Blob(underlying: GoogleBlob)
   /**
    * Fetches current blob's latest information. Returns None if the blob does not exist.
    */
-  def reload(options: BlobSourceOption*): Task[Option[Blob]] =
+  def reload(options: BlobSourceOption*): Task[Option[Blob]] = {
+    print("hello")
+    println("Return" + underlying.reload(options: _*))
     Task(underlying.reload(options: _*)).map { optBlob =>
       Option(optBlob).map(Blob.apply)
     }
-
+  }
   /**
    * Updates the blob's information. The Blob's name cannot be changed by this method. If you
    * want to rename the blob or move it to a different bucket use the [[copyTo]] and [[delete]] operations.

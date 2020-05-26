@@ -1,4 +1,4 @@
-package monix.connect.gcs.utiltiies
+package monix.connect.gcs.components
 
 import com.google.api.gax.paging.Page
 import monix.eval.Task
