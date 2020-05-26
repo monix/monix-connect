@@ -2,14 +2,12 @@ package monix.connect.gcs
 
 import com.google.cloud.storage.Blob.BlobSourceOption
 import org.mockito.IdiomaticMockito
-import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 import org.mockito.MockitoSugar.when
 import com.google.cloud.storage.{Blob => GoogleBlob, Option => _}
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import org.scalatest.wordspec.AnyWordSpecLike
-import org.mockito.ArgumentMatchers.any
 
 class BlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
@@ -18,7 +16,7 @@ class BlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
   val blob = Blob(underlying)
 
   s"${Blob}" should {
-    
+
     "implement an async exists operation" in {
       //given
       val blobSourceOption: BlobSourceOption = mock[BlobSourceOption]

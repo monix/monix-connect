@@ -1,7 +1,5 @@
 package monix.connect.gcs.components
 
-import java.nio.ByteBuffer
-
 import cats.effect.Resource
 import com.google.cloud.WriteChannel
 import com.google.cloud.storage.Storage.BlobWriteOption
