@@ -72,7 +72,7 @@ class S3ITest
 
         "the payload is bigger" in {
           //given
-          val key: String = Gen.alphaLowerStr.sample.get
+          val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
           val content: Array[Byte] = downloadFromFile(resourceFile("empty.txt")).get
 
           //when
@@ -87,6 +87,7 @@ class S3ITest
             }
           }
         }
+
         "the chunk is empty" in {
           //given
           val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString

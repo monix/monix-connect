@@ -7,6 +7,8 @@ lazy val doNotPublishArtifact = Seq(
   publishArtifact in (Compile, packageBin) := false
 )
 
+val monixConnectSeries = "0.1.0"
+
 lazy val sharedSettings = Seq(
   organization       := "io.monix",
   homepage := Some(url("https://monix.io/monix-connect")),
@@ -104,6 +106,12 @@ lazy val sharedSettings = Seq(
   doctestOnlyCodeBlocksMode := true
 )
 
+def mimaSettings(projectName: String) = Seq(
+  mimaPreviousArtifacts := Set("io.monix" %% projectName % monixConnectSeries),
+)
+
+mimaFailOnNoPrevious in ThisBuild := false
+
 lazy val unidocSettings = Seq(
   //unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(akka, dynamodb, hdfs, s3, redis),
   scalacOptions in (ScalaUnidoc, unidoc) +=
@@ -173,3 +181,4 @@ def monixConnector(
     .settings(additionalSettings: _*)
     .configure(profile)
     .configs(IntegrationTest, IT)
+    .settings(mimaSettings(s"monix-$connectorName"))
