@@ -43,9 +43,29 @@ jobs:
         run:  sh start-dependencies.sh
       - name: Run Functional Tests for Java ${{ matrix.java }}, Scala ${{ matrix.scala }}
         run: sbt it:test
+ 
+  mima:
+    name: Mima binary compatibility test
+    needs: tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        java: [ 8 ]
+        scala: [ 2.12.11  ]
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: olafurpg/setup-scala@v7
+        with:
+          java-version: "adopt@1.${{ matrix.java }}"
+     
+      - name: Run Mima binary compatibility test for Java ${{ matrix.java }} and Scala ${{ matrix.scala }}
+        run: sbt mimaReportBinaryIssues
         
   publish:
-    needs: [ tests ]
+    name: Publish 
+    needs: [ tests, mima ]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
