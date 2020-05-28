@@ -9,8 +9,8 @@ object Dependencies {
     val PureConfig = "0.12.3"
     val S3 = "2.10.91"
     val Monix = "3.2.0"
-    val AkkaStreams = "2.6.4"
-    val Hadoop = "3.2.1"
+    val AkkaStreams = "2.6.5"
+    val Hadoop = "3.1.3"
 
     //test
     val Scalatest = "3.1.2"
@@ -86,7 +86,7 @@ object Dependencies {
   val S3 = S3Dependecies ++ CommonProjectDependencies ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(_ % IntegrationTest)
 
   private val RedisDependencies = Seq(
-    "io.lettuce" % "lettuce-core" % "5.1.2.RELEASE",
+    "io.lettuce" % "lettuce-core" % "5.1.8.RELEASE",
     "com.github.pureconfig" %% "pureconfig" % DependencyVersions.PureConfig
   )
 
