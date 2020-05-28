@@ -7,7 +7,7 @@ addSbtPlugin("com.github.tkawachi"  % "sbt-doctest"     % "0.9.6")
 addSbtPlugin("com.eed3si9n"         % "sbt-unidoc"      % "0.4.3")
 addSbtPlugin("com.typesafe"         % "sbt-mima-plugin" % "0.7.0")
 addSbtPlugin("de.heikoseeberger"    % "sbt-header"      % "5.4.0")
-addSbtPlugin("com.geirsson" % "sbt-ci-release" % "1.5.2")
+addSbtPlugin("com.geirsson" % "sbt-ci-release" % "1.5.3")
 addSbtPlugin("org.scoverage"        % "sbt-scoverage"   % "1.6.1")
 libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.10.1"
 
