@@ -7,14 +7,14 @@ object Dependencies {
     val AWS = "1.11.749"
     val DynamoDb = "2.10.60"
     val PureConfig = "0.12.3"
-    val S3 = "2.10.50"
+    val S3 = "2.10.91"
     val Monix = "3.2.0"
     val AkkaStreams = "2.6.4"
-    val Hadoop = "3.1.1"
+    val Hadoop = "3.1.3"
 
     //test
-    val Scalatest = "3.1.1"
-    val Scalacheck = "1.14.3"
+    val Scalatest = "3.1.2"
+    val Scalacheck = "1.14.0"
     val Mockito = "1.13.1"
     val Cats = "2.0.0"
 
@@ -30,7 +30,7 @@ object Dependencies {
   private val CommonProjectDependencies = Seq(
     "io.monix" %% "monix-reactive" % DependencyVersions.Monix,
     "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.6", //todo use as replacement for `collection.JavaConverters`
-    "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0"
+    "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1"
    // "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
     //"org.slf4j" % "log4j-over-slf4j" % "1.7.30"
   )
