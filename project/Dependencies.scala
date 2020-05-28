@@ -14,7 +14,7 @@ object Dependencies {
 
     //test
     val Scalatest = "3.1.2"
-    val Scalacheck = "1.14.0"
+    val Scalacheck = "1.14.3"
     val Mockito = "1.13.1"
     val Cats = "2.0.0"
 
