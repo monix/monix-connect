@@ -13,7 +13,7 @@ object Dependencies {
     val Hadoop = "3.1.3"
 
     //test
-    val Scalatest = "3.1.1"
+    val Scalatest = "3.1.2"
     val Scalacheck = "1.14.0"
     val Mockito = "1.13.1"
     val Cats = "2.0.0"
