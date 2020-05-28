@@ -30,7 +30,7 @@ object Dependencies {
   private val CommonProjectDependencies = Seq(
     "io.monix" %% "monix-reactive" % DependencyVersions.Monix,
     "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.6", //todo use as replacement for `collection.JavaConverters`
-    "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0"
+    "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1"
    // "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
     //"org.slf4j" % "log4j-over-slf4j" % "1.7.30"
   )
