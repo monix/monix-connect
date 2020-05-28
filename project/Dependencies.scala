@@ -86,7 +86,7 @@ object Dependencies {
   val S3 = S3Dependecies ++ CommonProjectDependencies ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(_ % IntegrationTest)
 
   private val RedisDependencies = Seq(
-    "io.lettuce" % "lettuce-core" % "5.1.2.RELEASE",
+    "io.lettuce" % "lettuce-core" % "5.1.8.RELEASE",
     "com.github.pureconfig" %% "pureconfig" % DependencyVersions.PureConfig
   )
 
