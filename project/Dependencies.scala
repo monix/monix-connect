@@ -8,7 +8,7 @@ object Dependencies {
     val DynamoDb = "2.10.60"
     val PureConfig = "0.12.3"
     val S3 = "2.10.91"
-    val Monix = "3.2.0"
+    val Monix = "3.2.1"
     val AkkaStreams = "2.6.4"
     val Hadoop = "3.1.3"
 
