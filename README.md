@@ -38,7 +38,7 @@ But you can also only include to a specific connector to your library dependenci
 4. [Parquet](#Parquet)
 5. [Redis](#Redis)
 6. [S3](#S3)
-7. [GCS](#GCS)
+7. [GCS](#GCS - Google Cloud Storage)
 8. [Common](#Common)
 
 ---
@@ -292,7 +292,7 @@ libraryDependencies += "io.monix" %% "monix-gcs" % "0.1.0"
 
 The Monix GCS connector is built on top of the
 [Google Cloud Storage Client for Java](https://github.com/googleapis/java-storage).
-The connector uses the A*pplication Default Credentials* method for
+The connector uses the *Application Default Credentials* method for
 authentication to GCS. This requires that you have the
 `GOOGLE_APPLICATION_CREDENTIALS` environment variable that points to a
 Service Account with the required permissions in order to use the
@@ -319,7 +319,7 @@ val credentials = Paths.get("/path/to/credentials.json")
 val storage = Storage.create(projectId, credentials)
 ```
 Once you have a storage object created you can begin to work with GCS.
-You can create a new Google Cloud Storage Bucket by using the methods on
+You can create a new Storage Bucket by using the methods on
 the Storage object:
 
 ```scala
@@ -341,8 +341,8 @@ val bucket: Task[Bucket] = storage.createBucket("mybucket", Locations.`EUROPE-WE
 ```
 Once you have a bucket instance you will be able to upload and download
 `Blobs` from it using the methods on the Bucket. You can upload a file
-directly from the filesystem or pass any use a Consumer to upload any
-stream of bytes.
+directly from the filesystem or use a Consumer to upload any stream of
+bytes.
 
 ```scala
 import java.nio.charset.StandardCharsets
@@ -373,7 +373,6 @@ val blob1: Task[Blob] = {
 }
 ```
 Downloading from a bucket is just as straight forward:
-```scala
 ```scala
 import java.nio.charset.StandardCharsets
 import java.nio.file.Paths
