@@ -161,8 +161,6 @@ object BucketInfo {
   }
 
   final case class Metadata(
-    name: String,
-    location: Option[Location] = None,
     labels: Map[String, String] = Map.empty[String, String],
     requesterPays: Option[Boolean] = None,
     versioningEnabled: Option[Boolean] = None,
