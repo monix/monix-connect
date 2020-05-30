@@ -38,7 +38,11 @@ final class Storage(underlying: GoogleStorage) extends Paging {
 
 object Storage {
 
-  def create(): Storage= {
+  private[gcs] def apply(underlying: GoogleStorage): Storage = {
+    new Storage(underlying)
+  }
+
+  def create(): Storage = {
     new Storage(StorageOptions.getDefaultInstance.getService)
   }
 
@@ -51,5 +55,4 @@ object Storage {
       .getService
     )
   }
-
 }
