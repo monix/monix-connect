@@ -99,12 +99,11 @@ final class Blob(underlying: GoogleBlob)
    * Fetches current blob's latest information. Returns None if the blob does not exist.
    */
   def reload(options: BlobSourceOption*): Task[Option[Blob]] = {
-    print("hello")
-    println("Return" + underlying.reload(options: _*))
     Task(underlying.reload(options: _*)).map { optBlob =>
       Option(optBlob).map(Blob.apply)
     }
   }
+
   /**
    * Updates the blob's information. The Blob's name cannot be changed by this method. If you
    * want to rename the blob or move it to a different bucket use the [[copyTo]] and [[delete]] operations.
@@ -175,7 +174,7 @@ final class Blob(underlying: GoogleBlob)
    * option.
    */
   def signUrl(duration: FiniteDuration, options: SignUrlOption*): Task[URL] =
-    Task(underlying.signUrl(duration.toMillis, TimeUnit.MILLISECONDS, options: _*))
+    Task(underlying.signUrl(duration.length, duration.unit, options: _*))
 
   /**
    * Creates a new ACL entry on this Blob.
