@@ -17,8 +17,6 @@ object Dependencies {
     val Scalacheck = "1.14.0"
     val Mockito = "1.13.1"
     val Cats = "2.0.0"
-
-
   }
 
   private def commonDependencies(hasIntegrationTest: Boolean = false): Seq[sbt.ModuleID] = {
