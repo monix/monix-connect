@@ -3,7 +3,7 @@ package monix.connect.gcs.configuration
 import java.time.Instant
 
 import com.google.cloud.storage.BlobInfo.CustomerEncryption
-import com.google.cloud.storage.{Acl, BlobId, BlobInfo => GoogleBlobInfo, StorageClass}
+import com.google.cloud.storage.{Acl, BlobId, StorageClass, BlobInfo => GoogleBlobInfo}
 
 import scala.jdk.CollectionConverters._
 
@@ -70,23 +70,7 @@ object BlobInfo {
       temporaryHold,
       retentionExpirationTime)
 
-  final case class Metadata(
-    contentType: Option[String] = None,
-    contentDisposition: Option[String] = None,
-    contentLanguage: Option[String] = None,
-    contentEncoding: Option[String] = None,
-    cacheControl: Option[String] = None,
-    crc32c: Option[String] = None,
-    crc32cFromHexString: Option[String] = None,
-    md5: Option[String] = None,
-    md5FromHexString: Option[String] = None,
-    metadata: Map[String, String] = Map.empty[String, String],
-    storageClass: Option[StorageClass] = None,
-    acl: List[Acl] = List.empty[Acl],
-    eventBasedHold: Option[Boolean] = None,
-    temporaryHold: Option[Boolean] = None)
-
-  private[gcs] def toJava(bucket: String, name: String, metadata: Option[BlobInfo.Metadata]): GoogleBlobInfo = {
+  private[gcs] def toJava(bucket: String, name: String, metadata: Option[Metadata]): GoogleBlobInfo = {
     val builder = GoogleBlobInfo.newBuilder(BlobId.of(bucket, name))
     metadata.foreach { options =>
       options.contentType.foreach(builder.setContentType)
@@ -143,35 +127,53 @@ object BlobInfo {
       retentionExpirationTime = Option(info.getRetentionExpirationTime).map(Instant.ofEpochMilli(_))
     )
   }
+
+
+  final case class Metadata(contentType: Option[String] = None,
+                              contentDisposition: Option[String] = None,
+                              contentLanguage: Option[String] = None,
+                              contentEncoding: Option[String] = None,
+                              cacheControl: Option[String] = None,
+                              crc32c: Option[String] = None,
+                              crc32cFromHexString: Option[String] = None,
+                              md5: Option[String] = None,
+                              md5FromHexString: Option[String] = None,
+                              metadata: Map[String, String] = Map.empty[String, String],
+                              storageClass: Option[StorageClass] = None,
+                              acl: List[Acl] = List.empty[Acl],
+                              eventBasedHold: Option[Boolean] = None,
+                              temporaryHold: Option[Boolean] = None)
+
 }
 
-private[gcs] class BlobInfo(
-                             name: String,
-                             bucket: String,
-                             generatedId: String,
-                             cacheControl: Option[String],
-                             size: Long,
-                             contentType: Option[String],
-                             contentEncoding: Option[String],
-                             contentDisposition: Option[String],
-                             contentLanguage: Option[String],
-                             componentCount: Int,
-                             etag: Option[String],
-                             md5: Option[String],
-                             md5ToHexString: Option[String],
-                             crc32c: Option[String],
-                             crc32cToHexString: Option[String],
-                             mediaLink: Option[String],
-                             metadata: Map[String, String],
-                             generation: Long,
-                             metageneration: Long,
-                             deleteTime: Instant,
-                             updateTime: Instant,
-                             createTime: Instant,
-                             isDirectory: Boolean,
-                             customerEncryption: Option[CustomerEncryption],
-                             storageClass: StorageClass,
-                             kmsKeyName: String,
-                             eventBasedHold: Option[Boolean],
-                             temporaryHold: Option[Boolean],
-                             retentionExpirationTime: Option[Instant])
+private[gcs] final class BlobInfo(
+  name: String,
+  bucket: String,
+  generatedId: String,
+  cacheControl: Option[String],
+  size: Long,
+  contentType: Option[String],
+  contentEncoding: Option[String],
+  contentDisposition: Option[String],
+  contentLanguage: Option[String],
+  componentCount: Int,
+  etag: Option[String],
+  md5: Option[String],
+  md5ToHexString: Option[String],
+  crc32c: Option[String],
+  crc32cToHexString: Option[String],
+  mediaLink: Option[String],
+  metadata: Map[String, String],
+  generation: Long,
+  metageneration: Long,
+  deleteTime: Instant,
+  updateTime: Instant,
+  createTime: Instant,
+  isDirectory: Boolean,
+  customerEncryption: Option[CustomerEncryption],
+  storageClass: StorageClass,
+  kmsKeyName: String,
+  eventBasedHold: Option[Boolean],
+  temporaryHold: Option[Boolean],
+  retentionExpirationTime: Option[Instant]
+)

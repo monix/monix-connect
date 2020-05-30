@@ -6,7 +6,7 @@ import cats.data.NonEmptyList
 import com.google.cloud.storage.Bucket.BucketSourceOption
 import com.google.cloud.storage.Storage.{BlobGetOption, BlobListOption, BlobWriteOption, BucketTargetOption}
 import com.google.cloud.storage.{Acl, BlobId, Bucket => GoogleBucket}
-import monix.connect.gcs.configuration.BlobInfo
+import monix.connect.gcs.configuration.{BlobInfo, BucketInfo}
 import monix.connect.gcs.components.{FileIO, Paging, StorageDownloader, StorageUploader}
 import monix.eval.Task
 import monix.reactive.Observable
@@ -309,6 +309,10 @@ final class Bucket private(underlying: GoogleBucket)
    */
   def lockRetentionPolicy(options: BucketTargetOption*): Task[Bucket] =
     Task(underlying.lockRetentionPolicy(options: _*)).map(Bucket.apply)
+
+  underlying.getMetageneration
+
+  def bucketInfo: BucketInfo = BucketInfo.fromJava(underlying)
 }
 
 object Bucket {

@@ -4,8 +4,9 @@ import java.util
 
 import com.google.api.gax.paging.Page
 import com.google.cloud.storage.Storage.{BucketGetOption, BucketListOption, BucketTargetOption}
-import com.google.cloud.storage.{BucketInfo, Bucket => GoogleBucket, Storage => GoogleStorage, Option => _}
-import monix.connect.gcs.configuration.BucketConfig
+import com.google.cloud.storage.{Bucket => GoogleBucket, BucketInfo => GoogleBucketInfo, Storage => GoogleStorage, Option => _}
+import monix.connect.gcs.configuration.BucketInfo
+import monix.connect.gcs.configuration.BucketInfo.Locations
 import monix.execution.Scheduler.Implicits.global
 import org.mockito.IdiomaticMockito
 import org.mockito.MockitoSugar.when
@@ -22,12 +23,12 @@ class StorageSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
     "implement an async create bucket operation" in {
       //given
       val bucketTargetOption: BucketTargetOption = mock[BucketTargetOption]
-      val bucketInfo: BucketInfo = mock[BucketInfo]
+      val bucketInfo: GoogleBucketInfo = mock[GoogleBucketInfo]
       when(underlying.create(bucketInfo, bucketTargetOption)).thenReturn(bucket)
 
       //when
-      val config = mock[BucketConfig]
-      val maybeBucket: Bucket = storage.createBucket(config, bucketTargetOption).runSyncUnsafe()
+      val config = mock[BucketInfo.Metadata]
+      val maybeBucket: Bucket = storage.createBucket("bucket", Locations.`EUROPE-WEST1`, Some(config), List(bucketTargetOption)).runSyncUnsafe()
 
       //then
       maybeBucket shouldBe a[Bucket]
