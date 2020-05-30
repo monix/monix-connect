@@ -393,10 +393,10 @@ def printBytes(bytes: Array[Byte]): Unit = {
 }
 
 // Get an Observable of Bytes
-val blob1: Task[Blob] = {
+val blob1: Task[Unit] = {
   for {
     bucket <- bucket
-    bytes  <- b.download("my-first-file").map(printBytes).completeL
+    bytes  <- b.download("my-first-file").map(printBytes).completedL
   } yield println("File downloaded Successfully")
 }
 ```
