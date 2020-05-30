@@ -311,6 +311,8 @@ file on disk in the event you don't have the
 ```scala
 import java.nio.file.Paths
 
+import monix.connect.gcs.Storage
+
 val projectId = "monix-connect-gcs"
 val credentials = Paths.get("/path/to/credentials.json")
 
