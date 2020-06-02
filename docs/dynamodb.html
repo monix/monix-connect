@@ -1,0 +1,127 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>AWS DynamoDB · Monix Connect</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="## Introduction"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="AWS DynamoDB · Monix Connect"/><meta property="og:type" content="website"/><meta property="og:url" content="https://monix.github.io/monix-connect/monix-connect/"/><meta property="og:description" content="## Introduction"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/monix-connect/img/monix-logo.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css"/><script src="/monix-connect/js/scrollSpy.js"></script><link rel="stylesheet" href="/monix-connect/css/main.css"/><script src="/monix-connect/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/monix-connect/"><img class="logo" src="/monix-connect/img/monix-logo.svg" alt="Monix Connect"/><h2 class="headerTitleWithLogo">Monix Connect</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="api/monix/connect/index.html" target="_self">API Docs</a></li><li class="siteNavGroupActive"><a href="/monix-connect/docs/overview" target="_self">Documentation</a></li><li class=""><a href="https://github.com/monix/monix-connect" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Documentation</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Documentation</h3><ul class=""><li class="navListItem"><a class="navItem" href="/monix-connect/docs/overview">Overview</a></li><li class="navListItem"><a class="navItem" href="/monix-connect/docs/akka">Akka Streams</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/monix-connect/docs/dynamodb">AWS DynamoDB</a></li><li class="navListItem"><a class="navItem" href="/monix-connect/docs/hdfs">HDFS</a></li><li class="navListItem"><a class="navItem" href="/monix-connect/docs/parquet">Apache Parquet</a></li><li class="navListItem"><a class="navItem" href="/monix-connect/docs/redis">Redis</a></li><li class="navListItem"><a class="navItem" href="/monix-connect/docs/s3">AWS S3</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">AWS DynamoDB</h1></header><article><div><span><h2><a class="anchor" aria-hidden="true" id="introduction"></a><a href="#introduction" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Introduction</h2>
+<p><em>Amazon DynamoDB</em> is a key-value and document database that performs at any scale in a single-digit millisecond,
+a key component for many platforms of the world's fastest growing enterprises that depend on it to support their mission-critical workloads.</p>
+<p>The DynamoDB api provides a large list of operations (create, describe, delete, get, put, batch, scan, list and more...), all them are simply designed in request and response pattern,
+in which from the api prespective, they have to respectively implement <a href="https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/dynamodb/model/DynamoDbRequest.html">DynamoDbRequest</a> and <a href="https://sdk.amazonaws.com/java/api/2.0.0/software/amazon/awssdk/services/dynamodb/model/DynamoDbResponse.html">DynamoDbResponse</a>.</p>
+<p>The fact that all types implements either Request or Response type makes possible to create on top of that an abstraction layer that executes the received requests and retunrn a future value with the respective response.</p>
+<p>From there one, this connector provides two pre built implementations of a monix <strong>transformer</strong> and <strong>consumer</strong> that implements the mentioned pattern and therefore allowing the user to use them for any
+given dynamodb operation.</p>
+<h2><a class="anchor" aria-hidden="true" id="dependency"></a><a href="#dependency" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Dependency</h2>
+<p>Add the following dependency to get started:</p>
+<pre><code class="hljs css language-scala">libraryDependencies += <span class="hljs-string">"io.monix"</span> %% <span class="hljs-string">"monix-dynamodb"</span> % <span class="hljs-string">"0.1.0"</span>
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="getting-started"></a><a href="#getting-started" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Getting started</h2>
+<p>This connector has been built on top of the <a href="https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/dynamodb/DynamoDbAsyncClient.html">DynamoDbAsyncClient</a> since it only exposes non blocking operations,
+that will permit the application to be authenticated and create an channel with AWS DynamoDB service.</p>
+<p>The <code>DynamoDbAsyncClient</code> needs to be defined as <code>implicit</code> as it will be required by the <em>consumer</em> and <em>tranformer</em> implementations.</p>
+<p>It is also required and additional import for bringing the implicit conversions between DynamoDB requests and <code>DynamoDbOp</code>, the upper abstraction layer will allow to exacute them all (no need to worry about that):</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.dynamodb.<span class="hljs-type">DynamoDbOp</span>._
+</code></pre>
+<p>See below an example for transforming and consuming DynamoDb operations with monix.</p>
+<p>###<em>Transformer:</em></p>
+<pre><code class="hljs css language-scala"><span class="hljs-comment">//this is an example of a stream that transforms and executes DynamoDb `GetItemRequests`:</span>
+<span class="hljs-keyword">val</span> dynamoDbRequests = <span class="hljs-type">List</span>[<span class="hljs-type">GetItemRequest</span>] = ???
+
+<span class="hljs-keyword">val</span> ob = <span class="hljs-type">Observable</span>[<span class="hljs-type">Task</span>[<span class="hljs-type">GetItemResponse</span>]] = {
+  <span class="hljs-type">Observable</span>
+    .fromIterable(dynamoDbRequests) 
+    .transform(<span class="hljs-type">DynamoDb</span>.transofrmer())
+} <span class="hljs-comment">//for each element transforms the get request operations into its respective get response </span>
+<span class="hljs-comment">//the resulted observable would be of type Observable[Task[GetItemResponse]]</span>
+</code></pre>
+<p>###<em>Consumer:</em></p>
+<pre><code class="hljs css language-scala"><span class="hljs-comment">//this is an example of a stream that consumes and executes DynamoDb `PutItemRequest`:</span>
+<span class="hljs-keyword">val</span> putItemRequests = <span class="hljs-type">List</span>[<span class="hljs-type">PutItemRequests</span>] = ???
+
+<span class="hljs-type">Observable</span>
+.fromIterable(dynamoDbRequests)
+.consumeWith(<span class="hljs-type">DynamoDb</span>.consumer()) <span class="hljs-comment">//a safe and syncronous consumer that executes dynamodb requests  </span>
+<span class="hljs-comment">//the materialized value would be of type Task[PutItemResponse]</span>
+</code></pre>
+<p>Note that both transformers and consumer builder are generic implementations for any <code>DynamoDbRequest</code>, so you don't need
+to explicitly specify its input and output types.</p>
+<h2><a class="anchor" aria-hidden="true" id="local-testing"></a><a href="#local-testing" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Local testing</h2>
+<p><a href="https://github.com/localstack/localstack">Localstack</a> provides a fully functional local AWS cloud stack that in this case
+the user can use to develop and test locally and offline the integration of the application with DynamoDB.</p>
+<p>Add the following service description to your <code>docker-compose.yaml</code> file:</p>
+<pre><code class="hljs css language-yaml"><span class="hljs-attr">dynamodb:</span>
+  <span class="hljs-attr">image:</span> <span class="hljs-string">localstack/localstack:latest</span>
+  <span class="hljs-attr">ports:</span>
+    <span class="hljs-bullet">-</span> <span class="hljs-string">'4569:4569'</span>
+  <span class="hljs-attr">environment:</span>
+    <span class="hljs-bullet">-</span> <span class="hljs-string">SERVICES=dynamodb</span>
+</code></pre>
+<p>Run the following command to build, and start the dynamodb service:</p>
+<pre><code class="hljs css language-shell script">docker-compose -f docker-compose.yml up -d dynamodb
+</code></pre>
+<p>Check out that the service has started correctly.</p>
+<p>Finally create the client to connect to the local dynamodb via <code>DynamoDbAsyncClient</code>:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> defaultAwsCredProvider = <span class="hljs-type">StaticCredentialsProvider</span>.create(<span class="hljs-type">AwsBasicCredentials</span>.create(<span class="hljs-string">"x"</span>, <span class="hljs-string">"x"</span>))
+<span class="hljs-keyword">implicit</span> <span class="hljs-keyword">val</span> client: <span class="hljs-type">DynamoDbAsyncClient</span> = {
+  <span class="hljs-type">DynamoDbAsyncClient</span>
+    .builder()
+    .credentialsProvider(defaultAwsCredProvider)
+    .endpointOverride(<span class="hljs-keyword">new</span> <span class="hljs-type">URI</span>(<span class="hljs-string">"http://localhost:4569"</span>))
+    .region(<span class="hljs-type">Region</span>.<span class="hljs-type">AWS_GLOBAL</span>)
+    .build()
+  }
+</code></pre>
+<p>You are now ready to run your application!
+<em>Note that the above example defines the client as <code>implicit</code>, since it is how the api will expect it.</em></p>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/monix-connect/docs/akka"><span class="arrow-prev">← </span><span>Akka Streams</span></a><a class="docs-next button" href="/monix-connect/docs/hdfs"><span>HDFS</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#introduction">Introduction</a></li><li><a href="#dependency">Dependency</a></li><li><a href="#getting-started">Getting started</a></li><li><a href="#local-testing">Local testing</a></li></ul></nav></div><footer class="nav-footer" id="footer"><hr class="separator"/><section class="copyright">Copyright © 2020-2020 The Monix Connect Developers.</section></footer></div></body></html>

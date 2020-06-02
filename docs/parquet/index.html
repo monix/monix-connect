@@ -1,0 +1,119 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Apache Parquet · Monix Connect</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="## Introduction"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Apache Parquet · Monix Connect"/><meta property="og:type" content="website"/><meta property="og:url" content="https://monix.github.io/monix-connect/monix-connect/"/><meta property="og:description" content="## Introduction"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/monix-connect/img/monix-logo.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css"/><script src="/monix-connect/js/scrollSpy.js"></script><link rel="stylesheet" href="/monix-connect/css/main.css"/><script src="/monix-connect/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/monix-connect/"><img class="logo" src="/monix-connect/img/monix-logo.svg" alt="Monix Connect"/><h2 class="headerTitleWithLogo">Monix Connect</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="api/monix/connect/index.html" target="_self">API Docs</a></li><li class="siteNavGroupActive"><a href="/monix-connect/docs/overview" target="_self">Documentation</a></li><li class=""><a href="https://github.com/monix/monix-connect" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Documentation</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Documentation</h3><ul class=""><li class="navListItem"><a class="navItem" href="/monix-connect/docs/overview">Overview</a></li><li class="navListItem"><a class="navItem" href="/monix-connect/docs/akka">Akka Streams</a></li><li class="navListItem"><a class="navItem" href="/monix-connect/docs/dynamodb">AWS DynamoDB</a></li><li class="navListItem"><a class="navItem" href="/monix-connect/docs/hdfs">HDFS</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/monix-connect/docs/parquet">Apache Parquet</a></li><li class="navListItem"><a class="navItem" href="/monix-connect/docs/redis">Redis</a></li><li class="navListItem"><a class="navItem" href="/monix-connect/docs/s3">AWS S3</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Apache Parquet</h1></header><article><div><span><h2><a class="anchor" aria-hidden="true" id="introduction"></a><a href="#introduction" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Introduction</h2>
+<p><a href="http://parquet.apache.org/">Apache Parquet</a> is a columnar storage format that provides the advantages of compressed, efficient data representation available to any project in the Hadoop ecosystem.</p>
+<p>It has already been proved by multiple projects that have demonstrated the performance impact of applying the right compression and encoding scheme to the data.</p>
+<p>Therefore, the parquet connector basically exposes stream integrations for reading and writing into and from parquet files either in the <em>local system</em>, <em>hdfs</em> or <em>S3</em>.</p>
+<h2><a class="anchor" aria-hidden="true" id="set-up"></a><a href="#set-up" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Set up</h2>
+<p>Add the following dependency:</p>
+<pre><code class="hljs css language-scala">libraryDependencies += <span class="hljs-string">"io.monix"</span> %% <span class="hljs-string">"monix-parquet"</span> % <span class="hljs-string">"0.1.0"</span>
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="getting-started"></a><a href="#getting-started" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Getting started</h2>
+<p>These two signatures <code>Parquet.write</code> and <code>Parquet.read</code> are built on top of the <em>apache parquet</em>  <code>ParquetWriter[T]</code> and <code>ParquetReader[T]</code>, therefore they need an instance of these types to be passed.</p>
+<p>The below example shows how to construct a parquet consumer that expects <em>Protobuf</em> messages and pushes
+them into the same parquet file of the specified location.</p>
+<h3><a class="anchor" aria-hidden="true" id="writer"></a><a href="#writer" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Writer</h3>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.parquet.<span class="hljs-type">Parquet</span>
+<span class="hljs-keyword">import</span> org.apache.hadoop.fs.<span class="hljs-type">Path</span>
+<span class="hljs-keyword">import</span> org.apache.parquet.avro.<span class="hljs-type">AvroParquetReader</span>
+<span class="hljs-keyword">import</span> org.apache.parquet.hadoop.<span class="hljs-type">ParquetWriter</span>
+<span class="hljs-keyword">import</span> org.apache.hadoop.conf.<span class="hljs-type">Configuration</span>
+
+<span class="hljs-keyword">val</span> file: <span class="hljs-type">String</span> = <span class="hljs-string">"/invented/file/path"</span>
+<span class="hljs-keyword">val</span> conf = <span class="hljs-keyword">new</span> <span class="hljs-type">Configuration</span>()
+<span class="hljs-keyword">val</span> messages: <span class="hljs-type">List</span>[<span class="hljs-type">ProtoMessage</span>] 
+<span class="hljs-keyword">val</span> writeSupport = <span class="hljs-keyword">new</span> <span class="hljs-type">ProtoWriteSupport</span>[<span class="hljs-type">ProtoMessage</span>](classOf[<span class="hljs-type">ProtoMessage</span>])
+<span class="hljs-keyword">val</span> w = <span class="hljs-keyword">new</span> <span class="hljs-type">ParquetWriter</span>[<span class="hljs-type">ProtoMessage</span>](<span class="hljs-keyword">new</span> <span class="hljs-type">Path</span>(file), writeSupport)
+<span class="hljs-type">Observable</span>
+ .fromIterable(messages)
+ .consumeWith(<span class="hljs-type">Parquet</span>.writer(w))
+<span class="hljs-comment">//ProtoMessage implements [[com.google.protobuf.Message]]</span>
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="reader"></a><a href="#reader" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Reader</h3>
+<p>On the other hand, the following code shows how to pull <em>Avro</em> records from a parquet file:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.parquet.<span class="hljs-type">Parquet</span>
+<span class="hljs-keyword">import</span> org.apache.hadoop.fs.<span class="hljs-type">Path</span>
+<span class="hljs-keyword">import</span> org.apache.parquet.avro.<span class="hljs-type">AvroParquetReader</span>
+<span class="hljs-keyword">import</span> org.apache.parquet.hadoop.util.<span class="hljs-type">HadoopInputFile</span>
+
+<span class="hljs-keyword">val</span> r: <span class="hljs-type">ParquetReader</span>[<span class="hljs-type">AvroRecord</span>] = {
+ <span class="hljs-type">AvroParquetReader</span>
+  .builder[<span class="hljs-type">AvroRecord</span>](<span class="hljs-type">HadoopInputFile</span>.fromPath(<span class="hljs-keyword">new</span> <span class="hljs-type">Path</span>(file), conf))
+  .withConf(conf)
+  .build()
+}
+
+<span class="hljs-keyword">val</span> ob: <span class="hljs-type">Observable</span>[<span class="hljs-type">AvroRecord</span>] = <span class="hljs-type">Parquet</span>.reader(r)
+<span class="hljs-comment">//AvroRecord implements [[org.apache.avro.generic.GenericRecord]]</span>
+</code></pre>
+<p>Warning: This connector provides with the logic of building a publisher and subscriber from a given apache hadoop <code>ParquetReader</code> and <code>ParquetWriter</code> respectively,
+but it does not cover any existing issue within the support interoperability of the apache parquet library with external ones.
+Notice that p.e we have found an issue when reading parquet as protobuf messages with <code>org.apache.parquet.hadoop.ParquetReader</code> but not when writing.
+Follow the state of this <a href="https://github.com/monix/monix-connect/issues/34">issue</a>.
+On the other hand, it was all fine the integration between <code>Avro</code> and <code>Parquet</code>.</p>
+<h2><a class="anchor" aria-hidden="true" id="local-testing"></a><a href="#local-testing" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Local testing</h2>
+<p>It will depend on the specific use case, as we mentioned earlier in the introductory section it can operate on the local filesystem on hdfs or even in S3.</p>
+<p>Therefore, depending on the application requirements, the hadoop <code>Configuration</code> class will need to be configured accordingly.</p>
+<p><strong>Local:</strong> So far in the examples has been shown how to use it locally, in which in that case it would just be needed to create a plain instance like: <code>new org.apache.hadoop.conf.Configuration()</code> and the local path will be
+specified like: <code>new org.apache.hadoop.fs.Path(&quot;/this/represents/a/local/path&quot;)</code>.</p>
+<p><strong>Hdfs:</strong> On the other hand, the most common case is to work with parquet files in hdfs, in that case my recommendation is to find specific posts and examples on how to set up your configuration for that.
+But on some extend, for setting up the local test environment you would need to use the hadoop minicluster and set the configuration accordingly.
+You can check the how to do so in the <code>monix-hdfs</code> documentation.</p>
+<p><strong>S3:</strong> Finally, integrating the parequet connector with AWS S3 requires <a href="https://hadoop.apache.org/docs/current/hadoop-aws/tools/hadoop-aws/index.html">specific configuration values</a> to be set. On behalf of configuring it
+to run local tests ...
+Note that you will also require to spin up a docker container for emulating the AWS S3 service, check how to do so in the <code>monix-s3</code> documentation.</p>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/monix-connect/docs/hdfs"><span class="arrow-prev">← </span><span>HDFS</span></a><a class="docs-next button" href="/monix-connect/docs/redis"><span>Redis</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#introduction">Introduction</a></li><li><a href="#set-up">Set up</a></li><li><a href="#getting-started">Getting started</a><ul class="toc-headings"><li><a href="#writer">Writer</a></li><li><a href="#reader">Reader</a></li></ul></li><li><a href="#local-testing">Local testing</a></li></ul></nav></div><footer class="nav-footer" id="footer"><hr class="separator"/><section class="copyright">Copyright © 2020-2020 The Monix Connect Developers.</section></footer></div></body></html>
