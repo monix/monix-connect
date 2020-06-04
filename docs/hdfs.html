@@ -56,15 +56,15 @@
             });
         </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">HDFS</h1></header><article><div><span><h2><a class="anchor" aria-hidden="true" id="introduction"></a><a href="#introduction" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Introduction</h2>
 <p>The <em>Hadoop Distributed File System</em> (<a href="https://hadoop.apache.org/docs/r1.2.1/hdfs_design.html">HDFS</a>) is a distributed file system designed to run on commodity hardware,
-it is is highly fault-tolerant and it provides high throughput access which makes it suitable for applications that have to handle with large data sets.</p>
-<p>This connector then allows to read and write hdfs files of any size in a streaming fashion.</p>
-<p>The methods to perform these operations are exposed under the object <code>monix.connect.hdfs.Hdfs</code>, in which
-it has been built on top of the the official <em>apache hadoop</em> api.</p>
+also being highly fault-tolerant and providing high throughput access makes it very suitable for applications that have to handle with large data sets.</p>
+<p>This connector then allows to <em>read</em> and <em>write</em> hdfs files of any size in a streaming fashion.</p>
+<p>The methods to perform these operations are exposed under the object <code>monix.connect.hdfs.Hdfs</code>,
+and it is built on top of the the official <em>apache hadoop</em> api.</p>
 <h2><a class="anchor" aria-hidden="true" id="dependency"></a><a href="#dependency" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Dependency</h2>
 <p>Add the following dependency to get started:</p>
 <pre><code class="hljs css language-scala">libraryDependencies += <span class="hljs-string">"io.monix"</span> %% <span class="hljs-string">"monix-hdfs"</span> % <span class="hljs-string">"0.1.0"</span>
 </code></pre>
-<p>By default the connector uses Hadoop version 3.1.1. In case you need a different one you can replace it by excluding <code>org.apache.hadoop</code> from <code>monix-hdfs</code> and add the new one to your library dependencies.</p>
+<p>By default the connector uses <em>Hadoop 3.1.1</em>. In case you need a different one you can replace it by excluding <code>org.apache.hadoop</code> from <code>monix-hdfs</code> and add the new one to your library dependencies.</p>
 <h2><a class="anchor" aria-hidden="true" id="getting-started"></a><a href="#getting-started" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Getting started</h2>
 <h3><a class="anchor" aria-hidden="true" id="configuration"></a><a href="#configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Configuration</h3>
 <p>The following import is a common requirement for all those methods defined in the <code>Hdfs</code> object:</p>
@@ -75,34 +75,33 @@ it has been built on top of the the official <em>apache hadoop</em> api.</p>
 </code></pre>
 <p>Each use case would need different settings to create the hadoop configurations, but
 for testing purposes we would just need a plain one:</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> conf = <span class="hljs-keyword">new</span> <span class="hljs-type">Configuration</span>() <span class="hljs-comment">//Provides access to the hadoop configurable parameters</span>
-conf.set(<span class="hljs-string">"fs.default.name"</span>, <span class="hljs-string">s"hdfs://localhost:<span class="hljs-subst">$port</span>"</span>) <span class="hljs-comment">//especifies the local endpoint of the test hadoop minicluster</span>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> hadoopConf = <span class="hljs-keyword">new</span> <span class="hljs-type">Configuration</span>() <span class="hljs-comment">//Provides access to the hadoop configurable parameters</span>
+hadoopConf.set(<span class="hljs-string">"fs.default.name"</span>, <span class="hljs-string">s"hdfs://localhost:<span class="hljs-subst">$port</span>"</span>) <span class="hljs-comment">//especifies the local endpoint of the test hadoop minicluster</span>
 <span class="hljs-keyword">val</span> fs: <span class="hljs-type">FileSystem</span> = <span class="hljs-type">FileSystem</span>.get(conf)
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="reader"></a><a href="#reader" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Reader</h3>
-<p>Then we can start interacting with hdfs, the following example shows how to construct a pipeline that reads from the specified hdfs file.</p>
-<pre><code class="hljs css language-scala">
-<span class="hljs-keyword">val</span> sourcePath: <span class="hljs-type">Path</span> = <span class="hljs-keyword">new</span> <span class="hljs-type">Path</span>(<span class="hljs-string">"/source/hdfs/file_source.txt"</span>)
+<p>Let's start interacting with hdfs, the following example shows how to construct a pipeline that reads from the specified hdfs file.</p>
+<p>Normally working with hdfs means that you will be dealing with big data, it makes it difficult or very expensive (if not impossible) to read the whole file at once from a single machine,
+therefore the application will read the file in small parts configured by the user that eventually will end with the whole file being processed.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> sourcePath: <span class="hljs-type">Path</span> = <span class="hljs-keyword">new</span> <span class="hljs-type">Path</span>(<span class="hljs-string">"/source/hdfs/file_source.txt"</span>)
 <span class="hljs-keyword">val</span> chunkSize: <span class="hljs-type">Int</span> = <span class="hljs-number">8192</span> <span class="hljs-comment">//size of the chunks to be pulled</span>
 
 <span class="hljs-comment">//Once we have the hadoop classes we can create the hdfs monix reader</span>
 <span class="hljs-keyword">val</span> ob: <span class="hljs-type">Observable</span>[<span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>]] = <span class="hljs-type">Hdfs</span>.read(fs, path, chunkSize)
 </code></pre>
-<p>Since using hdfs means we are dealing with big data, it makes it difficult or very expensive to read the whole file at once,
-therefore with the above example we will read the file in small parts configured by <code>chunkSize</code> that eventually will end with the whole file being processed.</p>
 <h3><a class="anchor" aria-hidden="true" id="writer"></a><a href="#writer" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Writer</h3>
-<p>Using the stream generated when reading form hdfs in the previous we could write them back into a path like:</p>
+<p>The following example shows how consume a stream of bytes create a file and writes chunks into it:</p>
 <pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> destinationPath: <span class="hljs-type">Path</span> = <span class="hljs-keyword">new</span> <span class="hljs-type">Path</span>(<span class="hljs-string">"/destination/hdfs/file_dest.txt"</span>)
 <span class="hljs-keyword">val</span> hdfsWriter: <span class="hljs-type">Consumer</span>[<span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>], <span class="hljs-type">Task</span>[<span class="hljs-type">Long</span>]] = <span class="hljs-type">Hdfs</span>.write(fs, destinationPath) 
 
 <span class="hljs-comment">// eventually it will return the size of the written file</span>
 <span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">Long</span>] = ob.consumeWith(hdfsWriter) 
 </code></pre>
-<p>The returned type would represent the total size in bytes of the written data.</p>
-<p>Note that the write hdfs consumer implementation provides different configurations to be passed as parameters such as
-enable overwrite (true by default), replication factor (3), the bufferSize (4096 bytes), blockSize (134217728 bytes =~ 128 MB)
-and finally a line separator which is not used by default (None).</p>
-<p>Below example shows an example on how can them be tweaked:</p>
+<p>It materializes to a <code>Long</code> value that represents the file size.</p>
+<p>Note that the hdfs <code>write</code> signature allows different configurations to be passed as parameters such as to
+<em>enable overwrite</em> (<code>true</code> by default), <em>replication factor</em> <code>3</code>, the <em>bufferSize</em>  of <code>4096 bytes</code>, <em>blockSize</em> <code>134217728 bytes =~ 128 MB</code>_
+and finally a <em>line separator</em> which is not used by default <em>None</em>.</p>
+<p>Below example shows an example on how easily can them be tweaked:</p>
 <pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> hdfsWriter: <span class="hljs-type">Consumer</span>[<span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>], <span class="hljs-type">Long</span>] = 
    <span class="hljs-type">Hdfs</span>.write(fs,
       path = path, 
@@ -113,14 +112,18 @@ and finally a line separator which is not used by default (None).</p>
       lineSeparator = <span class="hljs-string">"\n"</span>) <span class="hljs-comment">//each written element would include the specified line separator </span>
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="appender"></a><a href="#appender" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Appender</h3>
-<p>Finally, the hdfs connector also exposes an append operation, in which in this case it materializes to a <code>Long</code>
-that would represent the only the size of the appended data, but not of the whole file.</p>
-<p>Note also that this method does not allow to configure neither the replication factor nor block size and so on, this is because
-these configurations are only set whenever a file is created, but an append operation would reuse them from the existing file.</p>
+<p>Finally, the hdfs connector also exposes an <em>append</em> operation which is very similar to <em>writer</em> implementation,
+but in this case the materialized <code>Long</code> value only represents the size of the appended data, but not of the whole file.</p>
+<p>On the other hand, this method does not allow to configure neither the <em>replication factor</em> nor <em>block size</em> and so on, this is because
+these configurations are only set whenever a file is created but an append operation would reuse them from the existing file.</p>
 <p>See below an example:</p>
-<pre><code class="hljs css language-scala"><span class="hljs-comment">// you would probably need to tweak the hadoop configuration to allow the append operation</span>
-conf.setBoolean(<span class="hljs-string">"dfs.support.append"</span>, <span class="hljs-literal">true</span>)
-conf.set(<span class="hljs-string">"dfs.client.block.write.replace-datanode-on-failure.policy"</span>, <span class="hljs-string">"NEVER"</span>) 
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> hadoopConf = <span class="hljs-keyword">new</span> <span class="hljs-type">Configuration</span>() 
+<span class="hljs-comment">// enables the append operation</span>
+hadoopConf.setBoolean(<span class="hljs-string">"dfs.support.append"</span>, <span class="hljs-literal">true</span>)
+<span class="hljs-comment">// found it necessary when running tests on hadoop mini-cluster, but you should tweak the hadoopConf accordingly to your use case</span>
+hadoopConf.set(<span class="hljs-string">"dfs.client.block.write.replace-datanode-on-failure.policy"</span>, <span class="hljs-string">"NEVER"</span>) 
+hadoopConf.set(<span class="hljs-string">"fs.default.name"</span>, <span class="hljs-string">s"hdfs://localhost:<span class="hljs-subst">$port</span>"</span>) <span class="hljs-comment">//especifies the local endpoint of the test hadoop minicluster</span>
+<span class="hljs-keyword">val</span> fs: <span class="hljs-type">FileSystem</span> = <span class="hljs-type">FileSystem</span>.get(conf)
 
 <span class="hljs-comment">// note that we are re-using the `destinationPath` of the last example since should already exist</span>
 <span class="hljs-keyword">val</span> hdfsAppender: <span class="hljs-type">Consumer</span>[<span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>], <span class="hljs-type">Task</span>[<span class="hljs-type">Long</span>]] = <span class="hljs-type">Hdfs</span>.append(fs, destinationPath) 
@@ -128,13 +131,13 @@ conf.set(<span class="hljs-string">"dfs.client.block.write.replace-datanode-on-f
 <span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">Long</span>] = ob.consumeWith(hdfsAppender) 
 </code></pre>
 <h2><a class="anchor" aria-hidden="true" id="local-testing"></a><a href="#local-testing" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Local testing</h2>
-<p>Apache Hadoop has a sub project called <a href="https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-minicluster">Mini Cluster</a>
-that allows to locally spin up a single-node Hadoop cluster without the need to set any environment variables or manage configuration files.</p>
+<p><em>Apache Hadoop</em> has a sub project called <a href="https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-minicluster">Mini Cluster</a>
+that allows to locally spin up a single-node Hadoop cluster without the need to set any environment variables or manage hadoop configuration files.</p>
 <p>Add to your library dependencies with the desired version:</p>
 <pre><code class="hljs css language-scala"><span class="hljs-string">"org.apache.hadoop"</span> % <span class="hljs-string">"hadoop-minicluster"</span> % <span class="hljs-string">"VERSION"</span> % <span class="hljs-type">Test</span>
 </code></pre>
-<p>From there on, since in this case the tests won't depend on a docker container but as per using a library dependency they will run against the JVM, so you will have to specify where to start and stop the
-hadoop mini cluster on the same test, it is a good practice do that on <code>BeforeAndAfterAll</code>:</p>
+<p>From there on, as in this case the tests won't depend on a docker container but will depend the emulation running in the JVM,
+you will have to start and stop the hadoop mini cluster from the same test, as a good practice using <code>BeforeAndAfterAll</code>:</p>
 <pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> java.io.<span class="hljs-type">File</span>
 
 <span class="hljs-keyword">import</span> org.apache.hadoop.conf.<span class="hljs-type">Configuration</span>

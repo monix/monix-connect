@@ -56,15 +56,16 @@
             });
         </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Akka Streams</h1></header><article><div><span><h2><a class="anchor" aria-hidden="true" id="introduction"></a><a href="#introduction" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Introduction</h2>
 <p>This module makes interoperability with akka streams easier by simply defining implicit extended classes for reactive stream conversions between akka and monix.</p>
-<p>The three main core abstractions defined in akka streams are <em>Source</em>, <em>Flow</em> and <em>Sink</em>,
-they were designed following the JVM <a href="https://github.com/reactive-streams/reactive-streams-jvm/blob/v1.0.3/README.md">reactive streams</a> standards,
-meaning that under it's design they implement the <code>Publisher</code> and <code>Subscriber</code> contract.
-Which at the end it means that they can interoperate with other libraries that also implements the reactive stream specification, such as <a href="https://monix.io/api/3.2/monix/reactive/index.html">Monix Reactive</a>.
-So this module aims to provide a nice interoperability between these two reactive streams libraries.</p>
-<p>In order to achieve it, this module will provide an extended conversion method for each of the stream abstractions mentioned before.
+<p>The <a href="https://github.com/reactive-streams/reactive-streams-jvm/blob/v1.0.3/README.md">reactive streams</a> specification is an standard to follow for those
+JVM libraries that aims to provide asynchronous stream processing with non-blocking back pressure.
+As you might probably know, both <em>Akka Streams</em> and <em><a href="https://monix.io/api/3.2/monix/reactive/index.html">Monix Reactive</a></em> follows the same standard, meaning that it is possible to convert between
+their own different stream data types (since both implement the <code>Publisher</code> and <code>Subscriber</code> contract).</p>
+<p>So this module aims to provide a nice and easy inter-operability between the two mentioned libraries, and to
+achieve that it provides extended conversion methods.
 These implicit extended methods can be imported from: <code>monix.connect.akka.stream.Converters._</code>.
-Therefore, under the scope of the import, the signatures <code>.asObservable</code> and <code>.asConsumer</code> will be available for the <code>Source</code>, <code>Flow</code>, and <code>Sink</code>.</p>
-<p>The below table shows in more detail the specs for the conversion from akka stremas to monix:</p>
+Therefore, under the scope of the import, the signatures <code>.asObservable</code> and <code>.asConsumer</code> will be available from <code>Source</code>, <code>Flow</code>, and <code>Sink</code> instances,
+whereas <code>asSource</code> and <code>asSink</code> would be for the monix <code>Observable</code> and <code>Consumer</code></p>
+<p>The below table shows that in more detail:</p>
 <table>
 <thead>
 <tr><th style="text-align:center"><em>Akka</em></th><th style="text-align:center"><em>Monix</em></th><th style="text-align:center"><em>Akka → Monix</em></th><th style="text-align:center"><em>Akka ← Monix</em></th></tr>
@@ -75,37 +76,37 @@ Therefore, under the scope of the import, the signatures <code>.asObservable</co
 <tr><td style="text-align:center"><em>Sink[-In, +Out &lt;: Future[Mat]]</em></td><td style="text-align:center"><em>Consumer[-In, +Mat]</em></td><td style="text-align:center"><code>sink.asConsumer[Mat]</code></td><td style="text-align:center"><code>consumer.asSink[In]</code></td></tr>
 </tbody>
 </table>
-<p>Note that two methods does not need to be typed as it has been done explicitly in the example table, the compiler will infer it for you.</p>
+<p>Note that when calling the methods it is not needed to pass the <em>type parameter</em> (as it has been explicitly indicated in the example table), the compiler will infer it for you.</p>
 <p>Also, in order to perform these conversion it is required to have an implicit instance of <code>akka.stream.Materializer</code> and <code>monix.execution.Scheduler</code> in the scope.</p>
 <h2><a class="anchor" aria-hidden="true" id="dependency"></a><a href="#dependency" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Dependency</h2>
 <p>Add the following dependency to get started:</p>
 <pre><code class="hljs css language-scala">libraryDependencies += <span class="hljs-string">"io.monix"</span> %% <span class="hljs-string">"monix-akka"</span> % <span class="hljs-string">"0.1.0"</span>
 </code></pre>
 <h2><a class="anchor" aria-hidden="true" id="getting-started"></a><a href="#getting-started" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Getting started</h2>
-<p>The following code shows how these implicits can be initialized, but <code>Scheduler</code> and <code>ActorSystem</code> can be initialized differently and configured differently depending on the use case.</p>
+<p>The only three things we will need to perform these conversions would be the implicit conversion, and an instance of the monix <code>Scheduler</code> and the akka <code>ActorMaterializer</code>.</p>
 <pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.akka.stream.<span class="hljs-type">Converters</span>._
 <span class="hljs-keyword">import</span> monix.execution.<span class="hljs-type">Scheduler</span>.<span class="hljs-type">Implicits</span>.global
 
-<span class="hljs-keyword">val</span> actorSystem: <span class="hljs-type">ActorSystem</span> = <span class="hljs-type">ActorSystem</span>(<span class="hljs-string">"Akka-Streams-InterOp"</span>) 
-<span class="hljs-keyword">implicit</span> <span class="hljs-keyword">val</span> materializer = <span class="hljs-type">ActorMaterializer</span>() 
+<span class="hljs-keyword">val</span> actorSystem: <span class="hljs-type">ActorSystem</span> = <span class="hljs-type">ActorSystem</span>(<span class="hljs-string">"Akka-Streams-InterOp"</span>)  
+<span class="hljs-keyword">implicit</span> <span class="hljs-keyword">val</span> materializer = <span class="hljs-type">ActorMaterializer</span>() <span class="hljs-comment">//setting actorSystem as implicit variable might have ben enough</span>
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="akka-rarr-monix"></a><a href="#akka-rarr-monix" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Akka → Monix</h3>
 <h4><a class="anchor" aria-hidden="true" id="asobservable"></a><a href="#asobservable" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>asObservable</h4>
-<p>Let's see an example for converting an <code>Source[+In, +Mat]</code> to <code>Observable[+In]</code>:</p>
+<p>Let's see how easy can be converting an <code>Source[+In, +Mat]</code> to <code>Observable[+In]</code>:</p>
 <pre><code class="hljs css language-scala"><span class="hljs-comment">//given</span>
-<span class="hljs-keyword">val</span> elements = <span class="hljs-number">1</span> until <span class="hljs-number">50</span>
+<span class="hljs-keyword">val</span> source: <span class="hljs-type">Source</span>[<span class="hljs-type">Int</span>] = <span class="hljs-type">Source</span>.from(<span class="hljs-number">1</span> until <span class="hljs-number">50</span>)
 
 <span class="hljs-comment">//when</span>
-<span class="hljs-keyword">val</span> ob: <span class="hljs-type">Observable</span>[<span class="hljs-type">Int</span>] = <span class="hljs-type">Source</span>.from(elements).asObservable <span class="hljs-comment">//`asObservable` converter as extended method of source.</span>
+<span class="hljs-keyword">val</span> ob: <span class="hljs-type">Observable</span>[<span class="hljs-type">Int</span>] = source.asObservable <span class="hljs-comment">//`asObservable` converter as extended method of source.</span>
 
-<span class="hljs-comment">//then </span>
+<span class="hljs-comment">//then</span>
 ob.toListL.runSyncUnsafe() should contain theSameElementsAs elements
 </code></pre>
 <p>In this case we have not needed to consume the <code>Observable</code> since we directly used an operator that collects
 to a list <code>.toList</code>, but note that in case you need to use an specific consumer, you can also directly call <code>consumeWith</code>, as a shortcut for <code>source.asObservable.consumeWith(consumer)</code>, see an example below:</p>
-<pre><code class="hljs css language-scala"><span class="hljs-comment">//given the same `elements` and `source` as above example`</span>
+<pre><code class="hljs css language-scala"><span class="hljs-comment">//given the same `source` as the above example`</span>
 
-<span class="hljs-comment">//then</span>
+<span class="hljs-comment">//when</span>
 <span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">List</span>[<span class="hljs-type">Int</span>]] = source.consumeWith(<span class="hljs-type">Consumer</span>.toList) <span class="hljs-comment">//`consumeWith` as extended method of `Source`</span>
 
 <span class="hljs-comment">//then</span>
@@ -117,10 +118,11 @@ t.runSyncUnsafe() should contain theSameElementsAs elements
 <span class="hljs-keyword">val</span> foldSumSink: <span class="hljs-type">Sink</span>[<span class="hljs-type">Int</span>, <span class="hljs-type">Future</span>[<span class="hljs-type">Int</span>]] = <span class="hljs-type">Sink</span>.fold[<span class="hljs-type">Int</span>, <span class="hljs-type">Int</span>](<span class="hljs-number">0</span>)((acc, num) =&gt; acc + num)
 
 <span class="hljs-comment">//when</span>
-<span class="hljs-keyword">val</span> (consumer: <span class="hljs-type">Consumer</span>[<span class="hljs-type">Int</span>, <span class="hljs-type">Int</span>]) = foldSumSink.asConsumer[<span class="hljs-type">Int</span>] <span class="hljs-comment">//`asConsumer` as an extended method of `Sink`</span>
-<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">Int</span>] = <span class="hljs-type">Observable</span>.fromIterable(<span class="hljs-type">Seq</span>(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>)).consumeWith(consumer)
+<span class="hljs-keyword">val</span> consumer: <span class="hljs-type">Consumer</span>[<span class="hljs-type">Int</span>, <span class="hljs-type">Int</span>] = foldSumSink.asConsumer[<span class="hljs-type">Int</span>] <span class="hljs-comment">//`asConsumer` as an extended method of `Sink`</span>
 
-<span class="hljs-comment">//then the future value of `t` should be 6</span>
+<span class="hljs-comment">//then</span>
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">Int</span>] = <span class="hljs-type">Observable</span>.fromIterable(<span class="hljs-type">Seq</span>(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>)).consumeWith(consumer)
+t.runSyncUnsafe() should be <span class="hljs-number">6</span>
 </code></pre>
 <p>Finally, you can also convert <code>Flow[-In, +Out, +Mat]</code> into <code>Consumer[+In, +Out]</code> in the same way you did with <code>Sink</code>
 in the previous example.</p>
@@ -131,23 +133,32 @@ in the previous example.</p>
 <span class="hljs-keyword">val</span> (consumer: <span class="hljs-type">Consumer</span>[<span class="hljs-type">Int</span>, <span class="hljs-type">Int</span>]) = foldSumFlow.asConsumer <span class="hljs-comment">//`asConsumer` as an extended method of `Flow`</span>
 <span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">Int</span>] = <span class="hljs-type">Observable</span>.fromIterable(<span class="hljs-type">Seq</span>(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>)).consumeWith(consumer)
 
-<span class="hljs-comment">//then the future value of `t` should be 6</span>
+t.runSyncUnsafe() should be <span class="hljs-number">6</span>
 </code></pre>
 <p>Notice that this interoperability would allow the Monix user to take advantage of the already pre built integrations
 from <a href="https://doc.akka.io/docs/alpakka/current/index.html">Alpakka</a> or any other Akka Streams implementation.</p>
 <h3><a class="anchor" aria-hidden="true" id="akka-larr-monix"></a><a href="#akka-larr-monix" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Akka ← Monix</h3>
 <h4><a class="anchor" aria-hidden="true" id="assource"></a><a href="#assource" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>asSource</h4>
 <p>On the other hand, for converting from Monix <code>Observable[+In]</code> to Akka Streams <code>Source[+In, NotUsed]</code> we would use the conversion signature <code>asSource</code>.</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.akka.stream.<span class="hljs-type">Converters</span>._
-<span class="hljs-keyword">val</span> f: <span class="hljs-type">Future</span>[<span class="hljs-type">Seq</span>[<span class="hljs-type">Long</span>]] = <span class="hljs-type">Observable</span>.range(<span class="hljs-number">1</span>, <span class="hljs-number">100</span>).asSource.runWith(<span class="hljs-type">Sink</span>.seq) 
-<span class="hljs-comment">//eventualy will return a sequence from 1 to 100</span>
+<pre><code class="hljs css language-scala"><span class="hljs-comment">//given</span>
+<span class="hljs-keyword">val</span> ob: <span class="hljs-type">Observable</span>[<span class="hljs-type">Int</span>] = <span class="hljs-type">Observable</span>.range(<span class="hljs-number">1</span>, <span class="hljs-number">100</span>)
+
+<span class="hljs-comment">//when</span>
+<span class="hljs-keyword">val</span> f: <span class="hljs-type">Future</span>[<span class="hljs-type">Seq</span>[<span class="hljs-type">Long</span>]] = ob.asSource.runWith(<span class="hljs-type">Sink</span>.seq) 
+
+<span class="hljs-comment">//then eventualy will return a sequence from 1 to 100</span>
 </code></pre>
 <h4><a class="anchor" aria-hidden="true" id="asconsumer-1"></a><a href="#asconsumer-1" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>asConsumer</h4>
-<p>Finally, for converting from <code>Sink[-In, +Out &lt;: Future[Mat]]</code> to <code>Consumer[-In, +Mat]</code>.</p>
+<p>Finally, use <code>asConsumer</code> for converting from <code>Sink[-In, +Out &lt;: Future[Mat]]</code> to <code>Consumer[-In, +Mat]</code>.</p>
 <pre><code class="hljs css language-scala"><span class="hljs-comment">//given</span>
-<span class="hljs-keyword">import</span> monix.connect.akka.stream.<span class="hljs-type">Converters</span>._
 <span class="hljs-keyword">val</span> sink: <span class="hljs-type">Sink</span>[<span class="hljs-type">Int</span>, <span class="hljs-type">Future</span>[<span class="hljs-type">String</span>]] = <span class="hljs-type">Sink</span>.fold[<span class="hljs-type">String</span>, <span class="hljs-type">Int</span>](<span class="hljs-string">""</span>)((s, i) =&gt; s + i.toString)
-<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">String</span>] = <span class="hljs-type">Observable</span>.fromIterable(<span class="hljs-number">1</span> until <span class="hljs-number">10</span>).consumeWith(sink.asConsumer[<span class="hljs-type">String</span>])
-<span class="hljs-comment">//eventually will return "123456789"</span>
+
+<span class="hljs-comment">//and </span>
+<span class="hljs-keyword">val</span> ob: <span class="hljs-type">Observable</span>[<span class="hljs-type">Int</span>] = <span class="hljs-type">Observable</span>.fromIterable(<span class="hljs-number">1</span> until <span class="hljs-number">10</span>)
+
+<span class="hljs-comment">//when</span>
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">String</span>] = ob.consumeWith(sink.asConsumer[<span class="hljs-type">String</span>])
+
+<span class="hljs-comment">//then eventually will return "123456789"</span>
 </code></pre>
 </span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/monix-connect/docs/overview"><span class="arrow-prev">← </span><span>Overview</span></a><a class="docs-next button" href="/monix-connect/docs/dynamodb"><span class="function-name-prevnext">AWS DynamoDB</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#introduction">Introduction</a></li><li><a href="#dependency">Dependency</a></li><li><a href="#getting-started">Getting started</a><ul class="toc-headings"><li><a href="#akka-rarr-monix">Akka → Monix</a></li><li><a href="#akka-larr-monix">Akka ← Monix</a></li></ul></li></ul></nav></div><footer class="nav-footer" id="footer"><hr class="separator"/><section class="copyright">Copyright © 2020-2020 The Monix Connect Developers.</section></footer></div></body></html>
