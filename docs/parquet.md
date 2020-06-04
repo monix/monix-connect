@@ -4,11 +4,11 @@ title: Apache Parquet
 ---
 
 ## Introduction
-[Apache Parquet](http://parquet.apache.org/) is a columnar storage format that provides the advantages of compressed, efficient data representation available to any project in the Hadoop ecosystem.
+[Apache Parquet](http://parquet.apache.org/) is a columnar storage format that provides the advantages of compressed, efficient data representation available to any project in the _Hadoop_ ecosystem.
 
  It has already been proved by multiple projects that have demonstrated the performance impact of applying the right compression and encoding scheme to the data.
   
-Therefore, the parquet connector basically exposes stream integrations for reading and writing into and from parquet files either in the _local system_, _hdfs_ or _S3_.
+Therefore, the `monix-parquet` _connector_ basically exposes stream integrations for _reading_ and _writing_ into and from parquet files either in the _local system_, _hdfs_ or _S3_ (this is at least for `avro` and `protobuf` parquet sub-modules).
  
 ## Set up
 
@@ -20,12 +20,19 @@ Add the following dependency:
 
 ## Getting started
 
-These two signatures `Parquet.write` and `Parquet.read` are built on top of the _apache parquet_  `ParquetWriter[T]` and `ParquetReader[T]`, therefore they need an instance of these types to be passed.
+These two signatures `write` and `read` are built on top of the _apache parquet_  `ParquetWriter[T]` and `ParquetReader[T]` respectively, therefore they need an instance of these types to be passed.
+
+The _type parameter_ `T` represents the data type that is expected to be read or written in the parquet file.
+In which it can depend on the parquet implementation chosen, since `ParqueReader` and `ParquetWriter` are just the 
+ generic classes, but you would need to use the implementation that fits to your use case.
+
+  
+### Writer
 
 The below example shows how to construct a parquet consumer that expects _Protobuf_ messages and pushes 
 them into the same parquet file of the specified location.
-
-### Writer
+In this case, the type parameter `T` would need to implement `com.google.protobuf.Message`, 
+and these were generated using [ScalaPB](https://scalapb.github.io/).
 
 ```scala
 import monix.connect.parquet.Parquet
@@ -42,12 +49,15 @@ val w = new ParquetWriter[ProtoMessage](new Path(file), writeSupport)
 Observable
  .fromIterable(messages)
  .consumeWith(Parquet.writer(w))
-//ProtoMessage implements [[com.google.protobuf.Message]]
+]
 ```
 
 ### Reader
 
-On the other hand, the following code shows how to pull _Avro_ records from a parquet file:
+On the other hand, the following code shows how to pull _Avro_ records from a parquet file.
+In contrast, this time the type parameter `T` would need to be a subtype of `org.apache.avro.generic.GenericRecord`, 
+In this case we used  is `com.sksamuel.avro4s.Record` generated using [Avro4s](https://github.com/sksamuel/avro4s),
+ but there are other libraries there such as [Avrohugger](https://github.com/julianpeeters/avrohugger) to generate these classes.
 
 ```scala
 import monix.connect.parquet.Parquet
@@ -63,23 +73,21 @@ val r: ParquetReader[AvroRecord] = {
 }
 
 val ob: Observable[AvroRecord] = Parquet.reader(r)
-//AvroRecord implements [[org.apache.avro.generic.GenericRecord]]
+
 ```
 
-Warning: This connector provides with the logic of building a publisher and subscriber from a given apache hadoop `ParquetReader` and `ParquetWriter` respectively,
-but it does not cover any existing issue within the support interoperability of the apache parquet library with external ones.
-Notice that p.e we have found an issue when reading parquet as protobuf messages with `org.apache.parquet.hadoop.ParquetReader` but not when writing.
-Follow the state of this [issue](https://github.com/monix/monix-connect/issues/34).
-On the other hand, it was all fine the integration between `Avro` and `Parquet`. 
+_Warning_: This connector provides with the logic of building a publisher and subscriber from a given apache hadoop `ParquetReader` and `ParquetWriter` respectively,
+but it does not cover any existing issue on the support of the apache parquet library with external ones.
+Notice that p.e we have found an issue when reading parquet as protobuf messages generated with `SacalaPB` but not when writing. 
 
 ## Local testing
 
-It will depend on the specific use case, as we mentioned earlier in the introductory section it can operate on the local filesystem on hdfs or even in S3.
+It will depend on the specific use case, as we mentioned earlier in the introductory section it can operate on the _local filesystem_ on _hdfs_ or even in _S3_ (for _avro_ and _protobuf_ parquet sub-modules)
 
 Therefore, depending on the application requirements, the hadoop `Configuration` class will need to be configured accordingly.
  
-__Local:__ So far in the examples has been shown how to use it locally, in which in that case it would just be needed to create a plain instance like: ```new org.apache.hadoop.conf.Configuration()``` and the local path will be 
-specified like: `new org.apache.hadoop.fs.Path("/this/represents/a/local/path")`.
+__Local:__ So far in the examples has been shown how to use it locally, in which in that case it would just be needed to create a plain instance of hadoop configuration, and the `Path` that would 
+ represent the file in the local system. 
 
 __Hdfs:__ On the other hand, the most common case is to work with parquet files in hdfs, in that case my recommendation is to find specific posts and examples on how to set up your configuration for that.
 But on some extend, for setting up the local test environment you would need to use the hadoop minicluster and set the configuration accordingly. 

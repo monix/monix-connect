@@ -1,5 +1,5 @@
 {
   "docs": {
-    "Documentation": ["overview", "akka", "dynamodb", "hdfs", "parquet", "redis", "s3"]
+    "Documentation": ["overview", "akka", "dynamodb", "s3", "hdfs", "parquet", "redis"]
   }
 }

@@ -61,24 +61,7 @@ jobs:
      
       - name: Run Mima binary compatibility test for Java ${{ matrix.java }} and Scala ${{ matrix.scala }}
         run: sbt mimaReportBinaryIssues
-        
-  publish-page:
-    name: Publish documentation page
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        java: [ 8 ]
-        scala: [ 2.12.11 ]
-
-    steps:
-      - uses: actions/checkout@v2
-      - uses: olafurpg/setup-scala@v7
-        with:
-          java-version: "adopt@1.${{ matrix.java }}"
-     
-      - name: Publishes documentation page
-        run: sbt docs/docusaurusPublishGhpages
-        
+                   
   publish:
     name: Publish 
     needs: [ tests, mima ]
@@ -88,11 +71,16 @@ jobs:
       - uses: actions/checkout@v1
       - uses: olafurpg/setup-scala@v2
       - uses: olafurpg/setup-gpg@v2
-      - name: Publish ${{ github.ref }}
+      - name: Publish release ${{ github.ref }}
         run: sbt ci-release
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+      - name: Publis documentation web page
+        run: |
+          ./.github/scripts/create-web-site.sh
+        env:
+          GIT_DEPLOY_KEY: ${{ secrets.GIT_DEPLOY_KEY }}
   

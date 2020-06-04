@@ -30,35 +30,46 @@ libraryDependencies += "io.monix" %% "monix-dynamodb" % "0.1.0"
 
 The `DynamoDbAsyncClient` needs to be defined as `implicit` as it will be required by the _consumer_ and _tranformer_ implementations. 
 
-It is also required and additional import for bringing the implicit conversions between DynamoDB requests and `DynamoDbOp`, the upper abstraction layer will allow to exacute them all (no need to worry about that):
- 
-  ```scala
-import monix.connect.dynamodb.DynamoDbOp._
-```
+It is also required and additional import `monix.connect.dynamodb.DynamoDbOp._` for bringing the implicit conversions between the specific `DynamoDBRequest` to `DynamoDbOp`, you don't have to worry about the second data type 
+, it is an abstraction that provides with the functionality to execute each request with its onw operation:
  
 See below an example for transforming and consuming DynamoDb operations with monix.
 
-###_Transformer:_
-```scala
+### Transformer
+
 //this is an example of a stream that transforms and executes DynamoDb `GetItemRequests`:
+
+
+```scala
+import monix.connect.dynamodb.DynamoDbOp._
+import software.amazon.awssdk.services.dynamodb.model.{GetItemRequest, GetItemResponse}
+
+//presumably you will have a stream of dynamo db `GetItemRequest`  requests coming inin this case of type 
 val dynamoDbRequests = List[GetItemRequest] = ???
 
 val ob = Observable[Task[GetItemResponse]] = {
   Observable
     .fromIterable(dynamoDbRequests) 
-    .transform(DynamoDb.transofrmer())
-} //for each element transforms the get request operations into its respective get response 
+    .transform(DynamoDb.transofrmer()) // transforms each get request operation into its respective get response 
+} 
 //the resulted observable would be of type Observable[Task[GetItemResponse]]
 ```
 
-###_Consumer:_ 
-```scala
-//this is an example of a stream that consumes and executes DynamoDb `PutItemRequest`:
-val putItemRequests = List[PutItemRequests] = ???
+### Consumer 
 
-Observable
-.fromIterable(dynamoDbRequests)
-.consumeWith(DynamoDb.consumer()) //a safe and syncronous consumer that executes dynamodb requests  
+An example of a stream that consumes and executes DynamoDb `PutItemRequest`s:
+```scala
+import monix.connect.dynamodb.DynamoDbOp._
+import software.amazon.awssdk.services.dynamodb.model.{PutItemRequest, PutItemResponse}
+
+//presumably you will have a stream of dynamo db `PutItemrequest` coming in.  
+val putItemRequests = List[PutItemRequest] = ???
+
+val ob = Task[PutItemResponse] = {
+  Observable
+    .fromIterable(dynamoDbRequests)
+    .consumeWith(DynamoDb.consumer()) // asynchronous consumer that executes put item requests
+} 
 //the materialized value would be of type Task[PutItemResponse]
 ```
 

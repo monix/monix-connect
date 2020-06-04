@@ -107,7 +107,7 @@ const index = `
           <Block layout="fourColumn">
             {[
               {
-                image: `${baseUrl}img/redis-1.png`,
+                image: `${baseUrl}img/redis.png`,
                 imageAlign: 'right',
               }
              ,

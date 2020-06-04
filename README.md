@@ -1,49 +1,36 @@
 # Monix Connect  
 
-
-
  [![release-badge][]][release] [![workflow-badge][]][workflow] 
  [![Gitter](https://badges.gitter.im/monix/monix-connect.svg)](https://gitter.im/monix/monix-connect?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+  [![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=flat&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=)](https://scala-steward.org)
 
  [workflow]:                https://github.com/monix/monix-connect/actions?query=branch%3Amaster+workflow%3Abuild
  [workflow-badge]:          https://github.com/monix/monix-connect/workflows/build/badge.svg
 
-   
  [release]:                 https://search.maven.org/search?q=a:monix-connect*
  [release-badge]:           https://img.shields.io/github/v/tag/monix/monix-connect.svg
  
- _Warning:_ Mind that the project is yet in early stages and its API is likely to be changed.
+ ⚠️   _Mind that the project isn't yet stable, so binary compatibility is not guaranteed._
   
-[Monix Connect]() is an initiative to implement stream integrations for [Monix](https://monix.io/).
+Monix Connect is an initiative to implement stream integrations for [Monix](https://monix.io/).
 
- The `connector` describes a connection between the application and a specific data point, which could be a file, a database or any system in which the appication 
- can interact by sending or receiving information. 
- Therefore, the aim of this project is to implement the most common
- connections that users could need when developing reactive applications with Monix, these would basically reduce boilerplate code and furthermore will let users to greatly save time and complexity in their implementing projects.
-
- The latest stable version of `monix-connect` is compatible with Monix 3.x, Scala 2.12.x and 2.13.x, you can import 
- all of the connectors by adding the following dependency (find and fill your release [version](https://github.com/monix/monix-connect/releases)):
- 
- ```scala   
- libraryDependencies += "io.monix" %% "monix-connect" % "VERSION"
-```
-
-But you can also only include to a specific connector to your library dependencies, see below how to do so and how to get started with each of the available [connectors](#Connectors).  
+Learn more on how to get started in the [documentation page](https://monix.github.io/monix-connect/).
 
 ### Connectors
-1. [Akka](#Akka)
-2. [DynamoDB](#DynamoDB)
-3. [Hdfs](#HDFS)
-4. [Parquet](#Parquet)
-5. [Redis](#Redis)
-6. [S3](#S3)
+The below list comprehends the current set of connectors that are available to use.
+1. [Akka](https://monix.github.io/monix-connect/docs/akka)
+2. [DynamoDB](https://monix.github.io/monix-connect/docs/dynamodb)
+3. [Hdfs](https://monix.github.io/monix-connect/docs/hdfs)
+4. [Parquet](https://monix.github.io/monix-connect/docs/parquet)
+5. [Redis](https://monix.github.io/monix-connect/docs/redis)
+6. [S3](https://monix.github.io/monix-connect/docs/s3)
 
 ### Contributing
 
 The Monix Connect project welcomes contributions from anybody wishing to
 participate.  All code or documentation that is provided must be
 licensed with the same license that Monix Connect is licensed with (Apache
-2.0, see LICENSE.txt).
+2.0, see [LICENCE](./LICENSE)).
 
 People are expected to follow the
 [Scala Code of Conduct](./CODE_OF_CONDUCT.md) when
@@ -57,5 +44,5 @@ gladly accepted. For more information, check out the
 ## License
 
 All code in this repository is licensed under the Apache License,
-Version 2.0. See [LICENCE.txt](./LICENSE.txt).
+Version 2.0. See [LICENCE](./LICENSE).
 

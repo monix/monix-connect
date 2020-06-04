@@ -75,6 +75,27 @@ lazy val sharedSettings = Seq(
   publishArtifact in Test := false,
   pomIncludeRepository    := { _ => false }, // removes optional dependencies
 
+  // ScalaDoc settings
+  autoAPIMappings := true,
+  apiURL := Some(url("https://monix.github.io/monix-connect/api/")),
+  apiMappings ++= {
+    val cp: Seq[Attributed[File]] = (fullClasspath in Compile).value
+    def findManagedDependency(organization: String, name: String): File = {
+      ( for {
+        entry <- cp
+        module <- entry.get(moduleID.key)
+        if module.organization == organization
+        if module.name.startsWith(name)
+      } yield entry.data
+        ).head
+    }
+    Map(
+      findManagedDependency("io.monix","monix-execution") -> url("https://monix.io/api/3.1/"),
+      findManagedDependency("io.monix","monix-catnap") -> url("https://monix.io/api/3.1/"),
+      findManagedDependency("org.typelevel","cats-effect") -> url("https://typelevel.org/cats-effect/api/")
+    )
+  },
+
   licenses      := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
   //homepage := Some(url("https://monix.io")), //todo homepage settings
   headerLicense := Some(HeaderLicense.Custom(
@@ -104,6 +125,8 @@ lazy val sharedSettings = Seq(
   doctestTestFramework      := DoctestTestFramework.ScalaTest,
   doctestTestFramework      := DoctestTestFramework.ScalaCheck,
   doctestOnlyCodeBlocksMode := true
+
+
 )
 
 def mimaSettings(projectName: String) = Seq(
@@ -144,11 +167,8 @@ lazy val monix = (project in file("."))
   .settings(name := "monix-connect")
   .aggregate(akka, dynamodb, hdfs, parquet, redis, s3)
   .dependsOn(akka, dynamodb, hdfs, parquet, redis, s3)
-  //.settings(unidocSettings) //todo enable unidoc settings
-  //.enablePlugins(ScalaUnidocPlugin)
 
 lazy val akka = monixConnector("akka", Dependencies.Akka)
-
 
 lazy val dynamodb = monixConnector("dynamodb", Dependencies.DynamoDb)
 
@@ -230,7 +250,7 @@ lazy val mdocSettings = Seq(
   scalacOptions in (ScalaUnidoc, unidoc) ++= Seq(
     "-doc-source-url", s"https://github.com/monix/monix-connect/tree/v${version.value}€{FILE_PATH}.scala",
     "-sourcepath", baseDirectory.in(LocalRootProject).value.getAbsolutePath,
-    "-doc-title", "Monix BIO",
+    "-doc-title", "Monix Connect",
     "-doc-version", s"v${version.value}",
     "-groups"
   ),

@@ -5,6 +5,9 @@
     "previous": "Previous",
     "tagline": "A set of connectors and stream integrations for Monix.",
     "docs": {
+      "overview": {
+        "title": "Overview"
+      },
       "akka": {
         "title": "Akka Streams"
       },
@@ -17,11 +20,8 @@
       "hdfs": {
         "title": "HDFS"
       },
-      "overview": {
-        "title": "Overview"
-      },
       "parquet": {
-        "title": "Apache Parquet"
+        "title": "Parquet"
       },
       "redis": {
         "title": "Redis"
