@@ -55,22 +55,21 @@
               }
             });
         </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">AWS S3</h1></header><article><div><span><h2><a class="anchor" aria-hidden="true" id="introduction"></a><a href="#introduction" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Introduction</h2>
-<p>The object storage service that offers industry leading scalability, availability, security and performance.
+<p><em>AWS Simple Storage Service</em> (<a href="https://aws.amazon.com/s3/?nc=sn&amp;loc=0">S3</a>) is an object storage service that offers industry leading scalability, availability, security and performance.
 It allows data storage of any amount of data, commonly used as a data lake for big data applications which can now be easily integrated with monix.</p>
-<p>The module has been implemented using the <code>S3AsyncClient</code> since it only exposes non blocking methods.
-Therefore, all of the monix s3 methods defined in the <code>S3</code> object would expect an implicit instance of
-this class to be in the scope of the call.</p>
 <h2><a class="anchor" aria-hidden="true" id="dependency"></a><a href="#dependency" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Dependency</h2>
 <p>Add the following dependency:</p>
 <pre><code class="hljs css language-scala">libraryDependencies += <span class="hljs-string">"io.monix"</span> %% <span class="hljs-string">"monix-s3"</span> % <span class="hljs-string">"0.1.0"</span>
 </code></pre>
 <h2><a class="anchor" aria-hidden="true" id="getting-started"></a><a href="#getting-started" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Getting started</h2>
-<p>First thing is to create the s3 client that will allow us to authenticate and create an channel between our
+<p>First of all, we need to create the s3 client that will allow us to authenticate and create an channel between our
 application and the AWS S3 service.</p>
-<h3><a class="anchor" aria-hidden="true" id="connection"></a><a href="#connection" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Connection</h3>
-<p>So the below code shows an example on how to set up this connection. Note that in this case
-the authentication is done thorugh AWS S3 using access and secret keys,
-but you might use another method such as IAM roles.</p>
+<h3><a class="anchor" aria-hidden="true" id="asyncclient"></a><a href="#asyncclient" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>asyncClient</h3>
+<p>This module has been implemented using the <code>S3AsyncClient</code> from the <a href="https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/package-summary.html">aws sdk</a>, since it only exposes non blocking methods.
+So, all of the methods exposed under <code>monix.connect.s3.S3</code> object would expect an implicit instance of
+this async client class to be in the scope of the call.</p>
+<p>Below code shows an example on how to set up this connection.
+Note that in this case the authentication is using AWS access and secret keys, but you might use another method such an <em>IAM</em> role.</p>
 <pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> java.net.<span class="hljs-type">URI</span>
 <span class="hljs-keyword">import</span> software.amazon.awssdk.auth.credentials.{<span class="hljs-type">AwsBasicCredentials</span>, <span class="hljs-type">StaticCredentialsProvider</span>}
 <span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.<span class="hljs-type">S3AsyncClient</span>
@@ -88,51 +87,58 @@ but you might use another method such as IAM roles.</p>
    .endpointOverride(<span class="hljs-type">URI</span>.create(endPoint))<span class="hljs-comment">//this one is used to point to the localhost s3 service, not used in prod </span>
    .build
 </code></pre>
-<h3><a class="anchor" aria-hidden="true" id="create-and-delete"></a><a href="#create-and-delete" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Create and delete</h3>
-<p>Once we have configured the s3 client, let's start with the basic operations to <em>create</em> and <em>delete</em> buckets:</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.model.{<span class="hljs-type">CreateBucketResponse</span>, <span class="hljs-type">DeleteBucketResponse</span>}
+<h3><a class="anchor" aria-hidden="true" id="createbucket"></a><a href="#createbucket" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>createBucket</h3>
+<p>Once you have configured the client, you would probably need to create a bucket:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.model.<span class="hljs-type">CreateBucketResponse</span>
 
 <span class="hljs-keyword">val</span> bucketName: <span class="hljs-type">String</span> = <span class="hljs-string">"myBucket"</span> 
-<span class="hljs-keyword">val</span> _: <span class="hljs-type">Task</span>[<span class="hljs-type">CreateBucketResponse</span>] = <span class="hljs-type">S3</span>.createBucket(bucketName)
-<span class="hljs-keyword">val</span> _: <span class="hljs-type">Task</span>[<span class="hljs-type">DeleteBucketResponse</span>] = <span class="hljs-type">S3</span>.deleteBucket(bucketName)
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">CreateBucketResponse</span>] = <span class="hljs-type">S3</span>.createBucket(bucketName)
 </code></pre>
-<h3><a class="anchor" aria-hidden="true" id="delete-object"></a><a href="#delete-object" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Delete object</h3>
-<p>You can also operate at object level within a bucket with:</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.model.{<span class="hljs-type">DeleteObjectResponse</span>, <span class="hljs-type">ListObjectsResponse</span>}
+<h3><a class="anchor" aria-hidden="true" id="deletebucket"></a><a href="#deletebucket" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>deleteBucket</h3>
+<p>On the other hand if you want to remove the bucket:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.model.<span class="hljs-type">DeleteBucketResponse</span>
 
 <span class="hljs-keyword">val</span> bucketName: <span class="hljs-type">String</span> = <span class="hljs-string">"myBucket"</span> 
-<span class="hljs-keyword">val</span> _: <span class="hljs-type">Task</span>[<span class="hljs-type">DeleteObjectResponse</span>] = <span class="hljs-type">S3</span>.deleteObject(bucketName)
-<span class="hljs-keyword">val</span> _: <span class="hljs-type">Task</span>[<span class="hljs-type">ListObjectsResponse</span>] = <span class="hljs-type">S3</span>.listObjects(bucketName)
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">DeleteBucketResponse</span>] = <span class="hljs-type">S3</span>.deleteBucket(bucketName)
 </code></pre>
-<h3><a class="anchor" aria-hidden="true" id="list-objects"></a><a href="#list-objects" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>List objects</h3>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.model.{<span class="hljs-type">DeleteObjectResponse</span>, <span class="hljs-type">ListObjectsResponse</span>}
-
-<span class="hljs-keyword">val</span> bucketName: <span class="hljs-type">String</span> = <span class="hljs-string">"myBucket"</span> 
-<span class="hljs-keyword">val</span> _: <span class="hljs-type">Task</span>[<span class="hljs-type">DeleteObjectResponse</span>] = <span class="hljs-type">S3</span>.deleteObject(bucketName)
-<span class="hljs-keyword">val</span> _: <span class="hljs-type">Task</span>[<span class="hljs-type">ListObjectsResponse</span>] = <span class="hljs-type">S3</span>.listObjects(bucketName)
-</code></pre>
-<h3><a class="anchor" aria-hidden="true" id="get-object"></a><a href="#get-object" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Get object</h3>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> objectKey: <span class="hljs-type">String</span> = <span class="hljs-string">"/object/file.txt"</span>
-<span class="hljs-keyword">val</span> _: <span class="hljs-type">Task</span>[<span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>]] = <span class="hljs-type">S3</span>.getObject(bucketName, objectKey)
-}
-</code></pre>
-<h3><a class="anchor" aria-hidden="true" id="put-object"></a><a href="#put-object" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Put object</h3>
-<p>On the other hand, to put objects:</p>
+<h3><a class="anchor" aria-hidden="true" id="putobject"></a><a href="#putobject" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>putObject</h3>
+<p>You can also easily create and write into an S3 object with put object operation.
+Note that if you need to update large amount of data you should not be using this method, see instead <a href="###m">multipartUpload</a>`.</p>
 <pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.model.<span class="hljs-type">PutObjectResponse</span>
 
 <span class="hljs-keyword">val</span> content: <span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>] = <span class="hljs-string">"file content"</span>.getBytes()
-<span class="hljs-keyword">val</span> _: <span class="hljs-type">Task</span>[<span class="hljs-type">PutObjectResponse</span>] = <span class="hljs-type">S3</span>.putObject(bucketName, objectKey, content)
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">PutObjectResponse</span>] = <span class="hljs-type">S3</span>.putObject(bucketName, objectKey, content)
 }
 </code></pre>
-<h3><a class="anchor" aria-hidden="true" id="multipart-update"></a><a href="#multipart-update" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Multipart update</h3>
-<p>Finally, for dealing with large files of data you might want to use the <code>multipartUpload</code> consumer.
-This one consumes an observable and synchronously makes partial uploads of the incoming chunks.</p>
-<p>Thus, it reduces substantially the risk on having jvm overhead errors or getting http requests failures,
-since the whole file does not need to be allocated in the memory and the http request body won't be that big.</p>
-<p>The partial uploads can be fine tuned by the minimum chunksize that will be sent, being 5MB the default minimum size (equally as an integer value of 5242880).</p>
+<h3><a class="anchor" aria-hidden="true" id="deleteobject"></a><a href="#deleteobject" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>deleteObject</h3>
+<p>You can also operate at object level within a bucket with:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.model.{<span class="hljs-type">DeleteObjectResponse</span>, <span class="hljs-type">ListObjectsResponse</span>}
+
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">DeleteObjectResponse</span>] = <span class="hljs-type">S3</span>.deleteObject(bucketName)
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="listobject"></a><a href="#listobject" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>listObject</h3>
+<p>Lists all the objects within a bucket:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.model.{<span class="hljs-type">DeleteObjectResponse</span>, <span class="hljs-type">ListObjectsResponse</span>}
+
+<span class="hljs-keyword">val</span> _: <span class="hljs-type">Task</span>[<span class="hljs-type">ListObjectsResponse</span>] = <span class="hljs-type">S3</span>.listObjects(bucketName)
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="getobject"></a><a href="#getobject" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>getObject</h3>
+<p>Download the given S3 object as a single byte array.
+Note that this operation is dangerous to perform on large objects, <code>multipartDownload</code> would be supported in future releases to
+support those use cases.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> objectKey: <span class="hljs-type">String</span> = <span class="hljs-string">"/object/file.txt"</span>
+<span class="hljs-keyword">val</span> _: <span class="hljs-type">Task</span>[<span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>]] = <span class="hljs-type">S3</span>.getObject(bucketName, objectKey)
+
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="multipartupload"></a><a href="#multipartupload" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>multipartUpload</h3>
+<p>Finally, for dealing with large files of data you might want to use the <code>multipartUpload</code> implementation.
+This one can be used to consume an observable of bytes that would send a partial upload request for each received element if it was bigger than the minimum size, otherwise the chunk will be concatenated on the next request.</p>
+<p>Thus, it reduces substantially the risk on having <em>OOM</em> errors or getting http requests failures,
+since the whole file does not need to be allocated in the memory and the http request body won't be that big because it would have been done by parts.</p>
+<p>Note that the method can be tuned with specific aws configurations such as <code>acl's</code>, <code>requestPayer</code>, etc. But a very important one to have present is by the minimum <code>chunksize</code> that will be sent, being 5MB the default and minimum size (lower values would result in failure).</p>
 <pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.model.<span class="hljs-type">CompleteMultipartUploadResponse</span>
 
-<span class="hljs-comment">// given an strem of chunks (Array[Byte]) </span>
+<span class="hljs-comment">// given an stream of array bytes </span>
 <span class="hljs-keyword">val</span> ob: <span class="hljs-type">Observable</span>[<span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>]] = <span class="hljs-type">Observable</span>.fromIterable(chunks)
 
 <span class="hljs-comment">// and a multipart upload consumer</span>
@@ -143,7 +149,7 @@ since the whole file does not need to be allocated in the memory and the http re
 ob.fromIterable(chunks).consumeWith(multipartUploadConsumer)
 </code></pre>
 <h2><a class="anchor" aria-hidden="true" id="local-testing"></a><a href="#local-testing" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Local testing</h2>
-<p>For AWS S3 local testing we went with <a href="https://github.com/minio/minio">minio</a> instead of localstack, since we found an <a href="https://github.com/localstack/localstack/issues/538">issue</a> that can block you on writing your functional tests.</p>
+<p>In order test <code>AWS S3</code> localy, we used a docker image provided by <a href="https://github.com/minio/minio">minio</a>.</p>
 <p>Add the following service description to your <code>docker-compose.yaml</code> file:</p>
 <pre><code class="hljs css language-yaml"><span class="hljs-attr">minio:</span>
   <span class="hljs-attr">image:</span> <span class="hljs-string">minio/minio</span>
@@ -161,11 +167,11 @@ ob.fromIterable(chunks).consumeWith(multipartUploadConsumer)
     <span class="hljs-attr">retries:</span> <span class="hljs-number">3</span>
   <span class="hljs-attr">command:</span> <span class="hljs-string">server</span> <span class="hljs-string">--compat</span> <span class="hljs-string">/data</span>
 </code></pre>
-<p>Run the following command to build, and start the redis server:</p>
+<p>Then, run the following command to build and start the S3 service:</p>
 <pre><code class="hljs css language-shell script">docker-compose -f docker-compose.yml up -d minio
 </code></pre>
 <p>Check out that the service has started correctly, notice that a healthcheck has been defined on the description of the minio service,
-that's because minio s3 is a very heavy image and sometimes it takes too long to be set up or sometime it even fails, so that would prevent those cases.</p>
+that's because it is a heavy image and sometimes it takes bit long to start or sometimes it even fails, so that would prevent that.</p>
 <p>Finally, create the connection with AWS S3, note that minio does not has support for <code>AnonymousCredentialsProvider</code>,
 therefore you'll have to use <code>AwsBasicCredentials</code>, in which the <em>key</em> and <em>secret</em> will correspond respectively to the
 defined environment variables from docker compose definition <code>MINIO_ACCESS_KEY</code> and <code>MINIO_SECRET_KEY</code>.</p>
@@ -188,4 +194,4 @@ defined environment variables from docker compose definition <code>MINIO_ACCESS_
 </code></pre>
 <p>Now you are ready to run your application!</p>
 <p><em>Note that the above example defines the client as <code>implicit</code>, since it is how the api will expect this one.</em></p>
-</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/monix-connect/docs/redis"><span class="arrow-prev">← </span><span>Redis</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#introduction">Introduction</a></li><li><a href="#dependency">Dependency</a></li><li><a href="#getting-started">Getting started</a><ul class="toc-headings"><li><a href="#connection">Connection</a></li><li><a href="#create-and-delete">Create and delete</a></li><li><a href="#delete-object">Delete object</a></li><li><a href="#list-objects">List objects</a></li><li><a href="#get-object">Get object</a></li><li><a href="#put-object">Put object</a></li><li><a href="#multipart-update">Multipart update</a></li></ul></li><li><a href="#local-testing">Local testing</a></li></ul></nav></div><footer class="nav-footer" id="footer"><hr class="separator"/><section class="copyright">Copyright © 2020-2020 The Monix Connect Developers.</section></footer></div></body></html>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/monix-connect/docs/redis"><span class="arrow-prev">← </span><span>Redis</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#introduction">Introduction</a></li><li><a href="#dependency">Dependency</a></li><li><a href="#getting-started">Getting started</a><ul class="toc-headings"><li><a href="#asyncclient">asyncClient</a></li><li><a href="#createbucket">createBucket</a></li><li><a href="#deletebucket">deleteBucket</a></li><li><a href="#putobject">putObject</a></li><li><a href="#deleteobject">deleteObject</a></li><li><a href="#listobject">listObject</a></li><li><a href="#getobject">getObject</a></li><li><a href="#multipartupload">multipartUpload</a></li></ul></li><li><a href="#local-testing">Local testing</a></li></ul></nav></div><footer class="nav-footer" id="footer"><hr class="separator"/><section class="copyright">Copyright © 2020-2020 The Monix Connect Developers.</section></footer></div></body></html>
