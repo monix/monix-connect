@@ -96,12 +96,12 @@ Each of these modules has its own object located under <code>monix.connect.redis
 <span class="hljs-comment">//when</span>
 <span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">Long</span>, <span class="hljs-type">Boolean</span>, <span class="hljs-type">Long</span>, <span class="hljs-type">Long</span>, <span class="hljs-type">Long</span>, <span class="hljs-type">Long</span>] = {
   <span class="hljs-keyword">for</span> {
-    initialTtl &lt;- <span class="hljs-type">RedisKey</span>.ttl(key1)          <span class="hljs-comment">// checks the ttl when it hasn't been set yet</span>
-    expire &lt;-  <span class="hljs-type">RedisKey</span>.expire(key1, <span class="hljs-number">5</span>)       <span class="hljs-comment">// sets the ttl to 5 seconds</span>
-    finalTtl &lt;- <span class="hljs-type">RedisKey</span>.ttl(key1)            <span class="hljs-comment">// checks the ttl again</span>
-    existsWithinTtl &lt;- <span class="hljs-type">RedisKey</span>.exists(key1)  <span class="hljs-comment">// checks whether k1 exists or not</span>
-    _ &lt;- <span class="hljs-type">RedisKey</span>.rename(key1, key2)          <span class="hljs-comment">// renames k1 to k2</span>
-    existsRenamed &lt;- <span class="hljs-type">RedisKey</span>.exists(key2)    <span class="hljs-comment">// checks that it exists after being renamed</span>
+    initialTtl &lt;- <span class="hljs-type">RedisKey</span>.ttl(key1)          <span class="hljs-comment">//checks the ttl when it hasn't been set yet</span>
+    expire &lt;-  <span class="hljs-type">RedisKey</span>.expire(key1, <span class="hljs-number">5</span>)       <span class="hljs-comment">//sets the ttl to 5 seconds</span>
+    finalTtl &lt;- <span class="hljs-type">RedisKey</span>.ttl(key1)            <span class="hljs-comment">//checks the ttl again</span>
+    existsWithinTtl &lt;- <span class="hljs-type">RedisKey</span>.exists(key1)  <span class="hljs-comment">//checks whether k1 exists or not</span>
+    _ &lt;- <span class="hljs-type">RedisKey</span>.rename(key1, key2)          <span class="hljs-comment">//renames k1 to k2</span>
+    existsRenamed &lt;- <span class="hljs-type">RedisKey</span>.exists(key2)    <span class="hljs-comment">//checks that it exists after being renamed</span>
     _ &lt;- <span class="hljs-type">Task</span>.sleep(<span class="hljs-number">6.</span>seconds)
     existsAfterFiveSeconds &lt;- <span class="hljs-type">RedisKey</span>.exists(key2) <span class="hljs-comment">//after 6 seconds checks ttl again</span>
   } <span class="hljs-keyword">yield</span> (initialTtl, expire, finalTtl, existsWithinTtl, existsRenamed, existsAfterFiveSeconds)
