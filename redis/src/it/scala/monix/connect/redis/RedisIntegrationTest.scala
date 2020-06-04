@@ -13,13 +13,21 @@ import org.scalatest.flatspec.AnyFlatSpec
 import scala.concurrent.duration._
 
 class RedisIntegrationTest
-  extends AnyFlatSpec with Matchers with BeforeAndAfterEach with BeforeAndAfterAll with RedisFixture {
+  extends AnyFlatSpec with Matchers with BeforeAndAfterEach with BeforeAndAfterAll {
 
   val redisUrl = "redis://localhost:6379"
+  type K = String
+  type V = Int
+  val genRedisKey: Gen[K] = Gen.alphaStr
+  val genRedisValue: Gen[V] = Gen.choose(0, 10000)
+  val genRedisValues: Gen[List[V]] = for {
+    n      <- Gen.chooseNum(2, 10)
+    values <- Gen.listOfN(n, Gen.choose(0, 10000))
+  } yield values
 
   implicit val connection: StatefulRedisConnection[String, String] = RedisClient.create(redisUrl).connect()
 
-  s"${RedisString} " should "insert a string into the given key and get its size from redis" in new RedisFixture {
+  s"${RedisString} " should "insert a string into the given key and get its size from redis" in  {
     //given
     val key: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get.toString
@@ -35,7 +43,7 @@ class RedisIntegrationTest
     lenght shouldBe value.length
   }
 
-  s"${RedisServer} " should "insert a string into key and get its size from redis" in new RedisFixture {
+  s"${RedisServer} " should "insert a string into key and get its size from redis" in {
     //given
     val key: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get.toString
@@ -53,7 +61,7 @@ class RedisIntegrationTest
     afterFlush.runSyncUnsafe() shouldEqual 0L
   }
 
-  s"${RedisHash}" should "insert a single element into a hash and read it back" in new RedisFixture {
+  s"${RedisHash}" should "insert a single element into a hash and read it back" in {
     //given
     val key: K = genRedisKey.sample.get
     val field: K = genRedisKey.sample.get
@@ -70,7 +78,7 @@ class RedisIntegrationTest
     r shouldBe value
   }
 
-  s"${RedisKey}" should "handles ttl correctly" in new RedisFixture {
+  s"${RedisKey}" should "handles ttl correctly" in {
     //given
     val key1: K = genRedisKey.sample.get
     val key2: K = genRedisKey.sample.get
@@ -100,7 +108,7 @@ class RedisIntegrationTest
     existsAfterFiveSeconds shouldBe 0L
   }
 
-  s"${RedisList}" should "insert elements into a list and reading back the same elements" in new RedisFixture {
+  s"${RedisList}" should "insert elements into a list and reading back the same elements" in {
     //given
     val key: K = genRedisKey.sample.get
     val values: List[String] = genRedisValues.sample.get.map(_.toString)
@@ -116,7 +124,7 @@ class RedisIntegrationTest
     result should contain theSameElementsAs values
   }
 
-  s"${RedisSet}" should "allow to compose nice for comprehensions" in new RedisFixture {
+  s"${RedisSet}" should "allow to compose nice for comprehensions" in {
     //given
     val k1: K = genRedisKey.sample.get
     val m1: List[String] = genRedisValues.sample.get.map(_.toString)
@@ -160,7 +168,7 @@ class RedisIntegrationTest
     //the difference between the k3 and k1 is equal to the element that was moved
   }
 
-  s"${RedisSortedSet}" should "insert elements into a with no order and reading back sorted" in new RedisFixture {
+  s"${RedisSortedSet}" should "insert elements into a with no order and reading back sorted" in {
     //given
     val k: K = genRedisKey.sample.get
     val v0: String = Gen.alphaLowerStr.sample.get
@@ -190,7 +198,7 @@ class RedisIntegrationTest
     max.getValue shouldBe v1
   }
 
-  s"${Redis}" should "allow to composition of different Redis submodules" in new RedisFixture {
+  s"${Redis}" should "allow to composition of different Redis submodules" in {
     //given
     val k1: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get.toString
