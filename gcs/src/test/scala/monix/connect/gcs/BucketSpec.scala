@@ -8,6 +8,7 @@ import com.google.cloud.storage.{Acl, Bucket => GoogleBucket, Option => _}
 import monix.execution.Scheduler.Implicits.global
 import org.mockito.IdiomaticMockito
 import org.mockito.MockitoSugar.when
+import org.mockito.Mockito.{times, verify}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
@@ -27,6 +28,7 @@ class BucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
       //then
       result shouldBe true
+      verify(underlying, times(1)).exists(bucketSourceOption)
     }
 
     "implement reload method" that {
@@ -43,6 +45,7 @@ class BucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
         //then
         maybeBucket.isDefined shouldBe true
         maybeBucket.get shouldBe a[Bucket]
+        verify(underlying, times(1)).reload(bucketSourceOption)
       }
 
       "safely returns none whenever the underlying response was null" in {
@@ -55,6 +58,7 @@ class BucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
         //then
         maybeBucket.isDefined shouldBe false
+        verify(underlying, times(1)).reload(bucketSourceOption)
       }
     }
 
@@ -69,6 +73,7 @@ class BucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
       //then
       maybeBucket shouldBe a[Bucket]
+      verify(underlying, times(1)).update(bucketTargetOption)
     }
 
     "implement an async delete operation" in {
@@ -81,6 +86,7 @@ class BucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
       //then
       maybeBucket shouldBe true
+      verify(underlying, times(1)).delete(bucketSourceOption)
     }
 
     "implement async acl operations" that {
@@ -95,6 +101,7 @@ class BucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
         //then
         maybeAcl shouldBe a[Acl]
+        verify(underlying, times(1)).createAcl(acl)
       }
 
       "implements a get operation" that {
@@ -109,6 +116,7 @@ class BucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
           //then
           maybeAcl.isDefined shouldBe false
+          verify(underlying, times(1)).getAcl(acl)
         }
 
         "that correctly returns some acl" in {
@@ -123,6 +131,7 @@ class BucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
           //then
           maybeAcl.isDefined shouldBe true
           maybeAcl.get shouldBe a[Acl]
+          verify(underlying, times(1)).getAcl(aclEntity)
         }
       }
 
@@ -136,6 +145,7 @@ class BucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
         //then
         maybeAcl shouldBe a[Acl]
+        verify(underlying, times(1)).updateAcl(acl)
       }
 
       "implements a delete operation that deletes the specified acl" in {
@@ -148,6 +158,7 @@ class BucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
         //then
         result shouldBe true
+        verify(underlying, times(1)).deleteAcl(acl)
       }
 
       "implement an async list acl operation that correctly returns zero or more acls" in {
@@ -161,6 +172,7 @@ class BucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
         //then
         result shouldBe List(acl, acl, acl)
+        verify(underlying, times(1)).listAcls()
       }
 
       "implement an async create defaultAcl operation that correctly returns some defaultAcl" in {
@@ -173,6 +185,7 @@ class BucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
         //then
         maybeAcl shouldBe a[Acl]
+        verify(underlying, times(1)).createDefaultAcl(acl)
       }
     }
 
@@ -182,14 +195,15 @@ class BucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
         "that safely returns none whenever the underlying response was null" in {
           // given
-          val acl = mock[Acl.Entity]
-          when(underlying.getDefaultAcl(acl)).thenReturn(null)
+          val aclEntity = mock[Acl.Entity]
+          when(underlying.getDefaultAcl(aclEntity)).thenReturn(null)
 
           //when
-          val maybeAcl: Option[Acl] = bucket.getDefaultAcl(acl).runSyncUnsafe()
+          val maybeAcl: Option[Acl] = bucket.getDefaultAcl(aclEntity).runSyncUnsafe()
 
           //then
           maybeAcl.isDefined shouldBe false
+          verify(underlying, times(1)).getDefaultAcl(aclEntity)
         }
 
         "that correctly returns some defaultAcl" in {
@@ -204,6 +218,7 @@ class BucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
           //then
           maybeAcl.isDefined shouldBe true
           maybeAcl.get shouldBe a[Acl]
+          verify(underlying, times(1)).getDefaultAcl(aclEntity)
         }
       }
 
@@ -217,6 +232,7 @@ class BucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
         //then
         maybeAcl shouldBe a[Acl]
+        verify(underlying, times(1)).updateDefaultAcl(acl)
       }
 
       "implement a delete operation that deletes the specified defaultAcl" in {
@@ -229,6 +245,7 @@ class BucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
         //then
         result shouldBe true
+        verify(underlying, times(1)).deleteDefaultAcl(acl)
       }
 
       "implement a list defaultAcl operation that correctly returns zero or more defaultAcl's" in {
@@ -242,6 +259,7 @@ class BucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
         //then
         result shouldBe List(acl, acl, acl)
+        verify(underlying, times(1)).listDefaultAcls()
       }
     }
 
@@ -255,7 +273,7 @@ class BucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
       //then
       maybeBucket shouldBe a[Bucket]
-
+      verify(underlying, times(1)).lockRetentionPolicy(bucketTargetOption)
     }
   }
 }

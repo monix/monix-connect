@@ -310,8 +310,6 @@ final class Bucket private(underlying: GoogleBucket)
   def lockRetentionPolicy(options: BucketTargetOption*): Task[Bucket] =
     Task(underlying.lockRetentionPolicy(options: _*)).map(Bucket.apply)
 
-  underlying.getMetageneration
-
   def bucketInfo: BucketInfo = BucketInfo.fromJava(underlying)
 }
 

@@ -19,8 +19,8 @@ final class Storage(underlying: GoogleStorage) extends Paging {
    */
   def createBucket(name: String,
                    location: Location,
-                   metadata: Option[Metadata] = None,
-                   options: List[BucketTargetOption] = List.empty[BucketTargetOption])
+                   metadata: Option[Metadata],
+                   options: BucketTargetOption*)
   : Task[Bucket] = {
     Task(underlying.create(BucketInfo.toJava(name, location, metadata), options: _*))
       .map(Bucket.apply)

@@ -11,14 +11,13 @@ object Dependencies {
     val Monix = "3.2.0"
     val AkkaStreams = "2.6.4"
     val Hadoop = "3.1.1"
+    val GCS = "1.107.0"
 
     //test
     val Scalatest = "3.1.1"
     val Scalacheck = "1.14.0"
     val Mockito = "1.14.3"
     val Cats = "2.0.0"
-
-    val GCS = "1.107.0"
   }
 
   private def commonDependencies(hasIntegrationTest: Boolean = false): Seq[sbt.ModuleID] = {
@@ -31,8 +30,6 @@ object Dependencies {
     "io.monix" %% "monix-reactive" % DependencyVersions.Monix,
     "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.6", //todo use as replacement for `collection.JavaConverters`
     "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0"
-   // "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
-    //"org.slf4j" % "log4j-over-slf4j" % "1.7.30"
   )
 
   private val CommonTestDependencies = Seq(

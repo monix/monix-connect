@@ -11,6 +11,7 @@ import monix.execution.Scheduler.Implicits.global
 import org.mockito.IdiomaticMockito
 import org.mockito.MockitoSugar.when
 import org.scalatest.matchers.should.Matchers
+import org.mockito.Mockito.{times, verify}
 import org.scalatest.wordspec.AnyWordSpecLike
 
 import scala.concurrent.duration._
@@ -32,6 +33,7 @@ class BlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
       //then
       result shouldBe true
+      verify(underlying, times(1)).exists(blobSourceOption)
     }
 
     "implement reload method" that {
@@ -48,6 +50,7 @@ class BlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
         //then
         maybeBlob.isDefined shouldBe true
         maybeBlob.get shouldBe a[Blob]
+        verify(underlying, times(1)).reload(blobSourceOption)
       }
 
       "safely returns none whenever the underlying response was null" in {
@@ -60,6 +63,7 @@ class BlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
         //then
         maybeBlob.isDefined shouldBe false
+        verify(underlying, times(1)).reload(blobSourceOption)
       }
     }
 
@@ -74,6 +78,7 @@ class BlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
       //then
       maybeBlob shouldBe a[Blob]
+      verify(underlying, times(1)).update(blobTargetOption)
     }
 
     "implement an async delete operation" in {
@@ -86,6 +91,7 @@ class BlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
       //then
       maybeBlob shouldBe true
+      verify(underlying, times(1)).delete(blobSourceOption)
     }
 
     "implement an async copy operation" that {
@@ -102,6 +108,7 @@ class BlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
         //then
         maybeBlob shouldBe a[Blob]
+        verify(underlying, times(1)).copyTo(blobId, blobSourceOption)
       }
 
       "copies this blob to the target bucket" in {
@@ -115,6 +122,7 @@ class BlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
         //then
         maybeBlob shouldBe a[Blob]
+        verify(underlying, times(1)).copyTo("bucket2", blobSourceOption)
       }
 
       "copies this blob to the target blob in the target bucket" in {
@@ -128,6 +136,7 @@ class BlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
         //then
         maybeBlob shouldBe a[Blob]
+        verify(underlying, times(1)).copyTo("bucket2", "blob2", blobSourceOption)
       }
     }
 
@@ -141,6 +150,7 @@ class BlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
       val maybeUrl: URL = blob.signUrl(2.minutes, signUrlOption).runSyncUnsafe()
 
       maybeUrl shouldBe a[URL]
+      verify(underlying, times(1)).signUrl(2, TimeUnit.MINUTES, signUrlOption)
     }
 
     "implement an async create acl operation that correctly returns some acl" in {
@@ -153,6 +163,7 @@ class BlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
       //then
       maybeAcl shouldBe a[Acl]
+      verify(underlying, times(1)).createAcl(acl)
     }
 
     "implement an async get acl operation" that {
@@ -167,6 +178,7 @@ class BlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
         //then
         maybeAcl.isDefined shouldBe false
+        verify(underlying, times(1)).getAcl(acl)
       }
 
       "that correctly returns some acl" in {
@@ -181,6 +193,7 @@ class BlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
         //then
         maybeAcl.isDefined shouldBe true
         maybeAcl.get shouldBe a[Acl]
+        verify(underlying, times(1)).getAcl(aclEntity)
       }
     }
 
@@ -194,6 +207,7 @@ class BlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
       //then
       maybeAcl shouldBe a[Acl]
+      verify(underlying, times(1)).updateAcl(acl)
     }
 
     "implement an async delete operation that deletes the specified acl" in {
@@ -206,6 +220,7 @@ class BlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
       //then
       result shouldBe true
+      verify(underlying, times(1)).deleteAcl(acl)
     }
 
     "implement an async list acl operation that correctly returns zero or more acls" in {
@@ -219,6 +234,7 @@ class BlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
       //then
       result shouldBe List(acl, acl, acl)
+      verify(underlying, times(1)).listAcls()
     }
   }
 }

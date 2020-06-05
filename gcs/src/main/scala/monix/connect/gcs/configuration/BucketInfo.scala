@@ -62,7 +62,7 @@ object BucketInfo {
       logging,
       generatedId)
 
-  private[gcs] def fromJava(info: GoogleBucketInfo): BucketInfo = {
+  def fromJava(info: GoogleBucketInfo): BucketInfo = {
     BucketInfo(
       generatedId = info.getGeneratedId,
       name = info.getName,
@@ -93,7 +93,7 @@ object BucketInfo {
     )
   }
 
-  private[gcs] def toJava(name: String, location: Location, metadata: Option[Metadata]): GoogleBucketInfo = {
+  def toJava(name: String, location: Location, metadata: Option[Metadata]): GoogleBucketInfo = {
     val builder = GoogleBucketInfo.newBuilder(name).setLocation(location)
     metadata.foreach(_.storageClass.foreach(builder.setStorageClass))
     metadata.foreach(_.logging.foreach(builder.setLogging))
