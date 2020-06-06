@@ -175,7 +175,8 @@ object BucketInfo {
     notFoundPage: Option[String] = None,
     defaultKmsKeyName: Option[String] = None,
     defaultEventBasedHold: Option[Boolean] = None,
-    iamConfiguration: Option[IamConfiguration] = None)
+    iamConfiguration: Option[IamConfiguration] = None
+  )
 }
 
 private[gcs] final class BucketInfo(

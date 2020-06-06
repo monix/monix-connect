@@ -4,20 +4,21 @@ import java.util
 
 import com.google.cloud.storage.Bucket.BucketSourceOption
 import com.google.cloud.storage.Storage.BucketTargetOption
-import com.google.cloud.storage.{Acl, Bucket => GoogleBucket, Option => _}
+import com.google.cloud.storage.{Acl, Bucket => GoogleBucket, Storage => GoogleStorage, Option => _}
 import monix.execution.Scheduler.Implicits.global
-import org.mockito.IdiomaticMockito
-import org.mockito.MockitoSugar.when
 import org.mockito.Mockito.{times, verify}
+import org.mockito.MockitoSugar.when
+import org.mockito.{ArgumentMatchersSugar, IdiomaticMockito}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
-class BucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
-
+class BucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers with ArgumentMatchersSugar {
   val underlying: GoogleBucket = mock[GoogleBucket]
+  val storage: GoogleStorage = mock[GoogleStorage]
   val bucket: Bucket = Bucket(underlying)
 
   s"$Bucket" should {
+
     "implement an async exists operation" in {
       //given
       val bucketSourceOption: BucketSourceOption = mock[BucketSourceOption]
@@ -32,7 +33,6 @@ class BucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
     }
 
     "implement reload method" that {
-
       "correctly returns some bucket" in {
         //given
         val bucketSourceOption: BucketSourceOption = mock[BucketSourceOption]

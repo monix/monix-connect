@@ -20,7 +20,7 @@ trait StorageUploader {
     }
   }
 
-  def upload(storage: GoogleStorage, blobInfo: BlobInfo, chunkSize: Int, options: BlobWriteOption*): Task[StorageConsumer] = {
+  protected def upload(storage: GoogleStorage, blobInfo: BlobInfo, chunkSize: Int, options: BlobWriteOption*): Task[StorageConsumer] = {
     openWriteChannel(storage, blobInfo, chunkSize, options: _*).use { channel =>
       Task(StorageConsumer(channel))
     }
