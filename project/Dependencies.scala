@@ -1,4 +1,3 @@
-import sbt.Keys.sourceManaged
 import sbt._
 
 object Dependencies {
@@ -9,6 +8,7 @@ object Dependencies {
     val PureConfig = "0.12.3"
     val S3 = "2.10.91"
     val Monix = "3.2.2"
+    val S3 = "2.13.32"
     val AkkaStreams = "2.6.5"
     val Hadoop = "3.1.3"
 
@@ -17,8 +17,6 @@ object Dependencies {
     val Scalacheck = "1.14.0"
     val Mockito = "1.13.1"
     val Cats = "2.0.0"
-
-
   }
 
   private def commonDependencies(hasIntegrationTest: Boolean = false): Seq[sbt.ModuleID] = {
@@ -31,8 +29,6 @@ object Dependencies {
     "io.monix" %% "monix-reactive" % DependencyVersions.Monix,
     "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.6", //todo use as replacement for `collection.JavaConverters`
     "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1"
-   // "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
-    //"org.slf4j" % "log4j-over-slf4j" % "1.7.30"
   )
 
   private val CommonTestDependencies = Seq(

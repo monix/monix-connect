@@ -16,7 +16,7 @@ import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 
-trait S3Fixture extends S3RequestGenerators {
+trait S3Fixture {
   this: TestSuite =>
 
   val resourceFile = (fileName: String) => s"s3/src/it/resources/${fileName}"
