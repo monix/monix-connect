@@ -5,7 +5,7 @@ object Dependencies {
   object DependencyVersions {
     val AWS = "1.11.749"
     val DynamoDb = "2.10.60"
-    val PureConfig = "0.12.3"
+    val PureConfig = "0.13.0"
     val S3 = "2.13.32"
     val Monix = "3.2.0"
     val AkkaStreams = "2.6.5"
