@@ -12,8 +12,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.concurrent.duration._
 
-class RedisIntegrationTest
-  extends AnyFlatSpec with Matchers with BeforeAndAfterEach with BeforeAndAfterAll {
+class RedisIntegrationTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach with BeforeAndAfterAll {
 
   val redisUrl = "redis://localhost:6379"
   type K = String
@@ -27,7 +26,20 @@ class RedisIntegrationTest
 
   implicit val connection: StatefulRedisConnection[String, String] = RedisClient.create(redisUrl).connect()
 
-  s"${RedisString} " should "insert a string into the given key and get its size from redis" in  {
+  s"${RedisHash}" should "access non existing key in redis and get None" in {
+    //given
+    val key: K = genRedisKey.sample.get
+    val field: K = genRedisKey.sample.get
+
+    //when
+    val t: Task[Option[String]] = RedisHash.hget(key, field)
+
+    //then
+    val r = t.runSyncUnsafe()
+    r shouldBe None
+  }
+
+  s"${RedisString} " should "insert a string into the given key and get its size from redis" in {
     //given
     val key: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get.toString
@@ -71,11 +83,11 @@ class RedisIntegrationTest
     RedisHash.hset(key, field, value).runSyncUnsafe()
 
     //and
-    val t: Task[String] = RedisHash.hget(key, field)
+    val t: Task[Option[String]] = RedisHash.hget(key, field)
 
     //then
-    val r: String = t.runSyncUnsafe()
-    r shouldBe value
+    val r = t.runSyncUnsafe()
+    r shouldBe Some(value)
   }
 
   s"${RedisKey}" should "handles ttl correctly" in {
@@ -182,10 +194,10 @@ class RedisIntegrationTest
     //when
     RedisSortedSet.zadd(k, minScore, v0)
     val t: Task[(ScoredValue[String], ScoredValue[String])] = for {
-      _ <- RedisSortedSet.zadd(k, minScore, v0)
-      _ <- RedisSortedSet.zadd(k, middleScore, v1)
-      _ <- RedisSortedSet.zadd(k, maxScore, v2)
-      _ <- RedisSortedSet.zincrby(k, incrby, v1)
+      _   <- RedisSortedSet.zadd(k, minScore, v0)
+      _   <- RedisSortedSet.zadd(k, middleScore, v1)
+      _   <- RedisSortedSet.zadd(k, maxScore, v2)
+      _   <- RedisSortedSet.zincrby(k, incrby, v1)
       min <- RedisSortedSet.zpopmin(k)
       max <- RedisSortedSet.zpopmax(k)
     } yield (min, max)
