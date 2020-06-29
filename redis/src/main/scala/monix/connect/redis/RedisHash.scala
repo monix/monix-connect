@@ -48,7 +48,7 @@ private[redis] trait RedisHash {
     * @return The value associated with field, or null when field is not present in the hash or key does not exist.
     */
   def hget[K, V](key: K, field: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Option[V]] =
-    Task.fromReactivePublisher(connection.reactive().hget(key, field)).map(x => x)
+    Task.fromReactivePublisher(connection.reactive().hget(key, field))
 
   /**
     * Increment the integer value of a hash field by the given number.

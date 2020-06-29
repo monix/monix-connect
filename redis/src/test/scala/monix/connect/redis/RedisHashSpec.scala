@@ -76,19 +76,6 @@ class RedisHashSpec
     verify(reactiveRedisCommands).hget(k, field)
   }
 
-  it should "get hget operation" in {
-    //given
-    val k: String = genRedisKey.sample.get
-    val field: String = genRedisKey.sample.get
-    when(reactiveRedisCommands.hget(k, field)).thenReturn(mockMono[V])
-
-    //when
-    val _: Task[Option[V]] = RedisHash.hget(k, field)
-
-    //then
-    verify(reactiveRedisCommands).hget(k, field)
-  }
-
   it should "implement hincrby operation" in {
     //given
     val k: String = genRedisKey.sample.get
