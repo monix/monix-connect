@@ -35,7 +35,7 @@ class RedisIntegrationTest extends AnyFlatSpec with Matchers with BeforeAndAfter
     val t: Task[Option[String]] = RedisHash.hget(key, field)
 
     //then
-    val r = t.runSyncUnsafe()
+    val r: Option[String] = t.runSyncUnsafe()
     r shouldBe None
   }
 
@@ -86,7 +86,7 @@ class RedisIntegrationTest extends AnyFlatSpec with Matchers with BeforeAndAfter
     val t: Task[Option[String]] = RedisHash.hget(key, field)
 
     //then
-    val r = t.runSyncUnsafe()
+    val r: Option[String] = t.runSyncUnsafe()
     r shouldBe Some(value)
   }
 

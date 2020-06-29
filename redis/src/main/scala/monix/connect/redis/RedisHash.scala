@@ -21,7 +21,6 @@ import io.lettuce.core.api.StatefulRedisConnection
 import io.lettuce.core.{KeyValue, MapScanCursor, ScanCursor}
 import monix.eval.Task
 import monix.reactive.Observable
-import reactor.core.publisher.Mono
 
 import collection.JavaConverters._
 
