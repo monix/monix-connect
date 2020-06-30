@@ -19,7 +19,7 @@ import scala.compat.java8.FutureConverters._
 class DynamoDbTransformerSpec
   extends AnyWordSpecLike with Matchers with ScalaFutures with DynamoDbFixture with BeforeAndAfterAll {
 
-  implicit val defaultConfig: PatienceConfig = PatienceConfig(300.seconds, 100.milliseconds)
+  implicit val defaultConfig: PatienceConfig = PatienceConfig(30000.seconds, 100.milliseconds)
   implicit val client: DynamoDbAsyncClient = DynamoDbClient()
 
   s"${DynamoDb}.transformer() creates a transformer operator" that {
