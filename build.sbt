@@ -125,8 +125,6 @@ lazy val sharedSettings = Seq(
   doctestTestFramework      := DoctestTestFramework.ScalaTest,
   doctestTestFramework      := DoctestTestFramework.ScalaCheck,
   doctestOnlyCodeBlocksMode := true
-
-
 )
 
 def mimaSettings(projectName: String) = Seq(

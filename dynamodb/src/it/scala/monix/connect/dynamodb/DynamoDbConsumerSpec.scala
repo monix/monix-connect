@@ -18,7 +18,7 @@ import scala.compat.java8.FutureConverters._
 class DynamoDbConsumerSpec
   extends AnyWordSpecLike with Matchers with ScalaFutures with DynamoDbFixture with BeforeAndAfterAll {
 
-  implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 100.milliseconds)
+  implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 300.milliseconds)
   implicit val client: DynamoDbAsyncClient = DynamoDbClient()
 
   s"${DynamoDb}.consumer() creates a Monix ${Consumer}" that {
@@ -63,16 +63,17 @@ class DynamoDbConsumerSpec
         val request: PutItemRequest = putItemRequest(tableName, city, citizenId, debt)
 
         //when
-        val r: PutItemResponse =
-          Observable.pure(request).consumeWith(consumer).runSyncUnsafe()
+        val t: Task[PutItemResponse] = Observable.pure(request).consumeWith(consumer)
 
         //then
-        r shouldBe a[PutItemResponse]
-        val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, city, citizenId))).futureValue
-        getResponse.item().values().asScala.head.n().toDouble shouldBe debt
+        whenReady(t.runToFuture) { r =>
+          r shouldBe a[PutItemResponse]
+          val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, city, citizenId))).futureValue
+          getResponse.item().values().asScala.head.n().toDouble shouldBe debt
+        }
       }
 
-      s"consumes multiples `PutItemRequests` and materializes to `PutItemResponse` " in {
+      s"consume multiple `PutItemRequests` and materializes to the last `PutItemResponse` " in {
         //given
         val consumer: Consumer[PutItemRequest, PutItemResponse] =
           DynamoDb.consumer[PutItemRequest, PutItemResponse]
@@ -80,20 +81,22 @@ class DynamoDbConsumerSpec
         val requests: List[PutItemRequest] = requestAttr.map { case (city, citizenId, debt) => putItemRequest(tableName, city, citizenId, debt) }
 
         //when
-        val r: PutItemResponse = Observable.fromIterable(requests).consumeWith(consumer).runSyncUnsafe()
+        val t: Task[PutItemResponse] = Observable.fromIterable(requests).consumeWith(consumer)
 
         //then
-        r shouldBe a[PutItemResponse]
-        requestAttr.map { case (city, citizenId, debt) =>
-          val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, city, citizenId))).futureValue
-          getResponse.item().values().asScala.head.n().toDouble shouldBe debt
+        whenReady(t.runToFuture) { r =>
+          r shouldBe a[PutItemResponse]
+          requestAttr.map { case (city, citizenId, debt) =>
+            val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, city, citizenId))).futureValue
+            getResponse.item().values().asScala.head.n().toDouble shouldBe debt
+          }
         }
       }
     }
 
     s"with an implicit instance of ${DynamoDbOp.getItemOp} in the scope" must {
 
-      s"consume a single `GetItemRequest` and materializes to `GetItemResponse` " in {
+      s"consume a single `GetItemRequest` and materialize it to `GetItemResponse` " in {
         //given
         val city = "Barcelona"
         val citizenId = 11292
