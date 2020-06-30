@@ -19,7 +19,7 @@ import scala.compat.java8.FutureConverters._
 class DynamoDbTransformerSpec
   extends AnyWordSpecLike with Matchers with ScalaFutures with DynamoDbFixture with BeforeAndAfterAll {
 
-  implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 100.milliseconds)
+  implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 300.milliseconds)
   implicit val client: DynamoDbAsyncClient = DynamoDbClient()
 
   s"${DynamoDb}.transformer() creates a transformer operator" that {
@@ -66,12 +66,14 @@ class DynamoDbTransformerSpec
           val request: PutItemRequest = putItemRequest(tableName, city, citizenId, debt)
 
           //when
-          val r: PutItemResponse = Observable.fromIterable(Iterable(request)).transform(transformer).headL.flatten.runSyncUnsafe()
+          val t: Task[PutItemResponse] = Observable.fromIterable(Iterable(request)).transform(transformer).headL.flatten
 
           //then
-          r shouldBe a[PutItemResponse]
-          val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, city, citizenId))).futureValue
-          getResponse.item().values().asScala.head.n().toDouble shouldBe debt
+          whenReady(t.runToFuture) { r =>
+            r shouldBe a[PutItemResponse]
+            val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, city, citizenId))).futureValue
+            getResponse.item().values().asScala.head.n().toDouble shouldBe debt
+          }
         }
 
         s"transform `PutItemRequests` to `PutItemResponses` " in {
@@ -82,19 +84,21 @@ class DynamoDbTransformerSpec
           val requests: List[PutItemRequest] = requestAttr.map { case (city, citizenId, debt) => putItemRequest(tableName, city, citizenId, debt) }
 
           //when
-          val r: List[PutItemResponse] = Task.sequence(
+          val t: Task[List[PutItemResponse]] =
             Observable
               .fromIterable(requests)
               .transform(transformer)
               .toListL
-              .runSyncUnsafe())
-            .runSyncUnsafe()
+              .map(Task.sequence(_))
+              .flatten
 
           //then
-          r shouldBe a[List[PutItemResponse]]
-          requestAttr.map { case (city, citizenId, debt) =>
-            val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, city, citizenId))).futureValue
-            getResponse.item().values().asScala.head.n().toDouble shouldBe debt
+          whenReady(t.runToFuture) { r =>
+            r shouldBe a[List[PutItemResponse]]
+            requestAttr.map { case (city, citizenId, debt) =>
+              val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, city, citizenId))).futureValue
+              getResponse.item().values().asScala.head.n().toDouble shouldBe debt
+            }
           }
         }
       }
