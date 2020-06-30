@@ -19,7 +19,7 @@ services:
     command: server --compat /data
 
   localstack:
-    image: localstack/localstack:latest
+    image: localstack/localstack:0.11.1
     ports:
       - '4569:4569'
     environment:
