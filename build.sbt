@@ -134,7 +134,7 @@ def mimaSettings(projectName: String) = Seq(
 mimaFailOnNoPrevious in ThisBuild := false
 
 lazy val unidocSettings = Seq(
-  //unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(akka, dynamodb, hdfs, s3, redis),
+  //unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(akka, dynamodb, hdfs, s3, redis, sqs),
   scalacOptions in (ScalaUnidoc, unidoc) +=
     "-Xfatal-warnings",
   scalacOptions in (ScalaUnidoc, unidoc) --=
@@ -163,8 +163,8 @@ lazy val monix = (project in file("."))
   .configs(IntegrationTest, IT)
   .settings(sharedSettings)
   .settings(name := "monix-connect")
-  .aggregate(akka, dynamodb, hdfs, parquet, redis, s3)
-  .dependsOn(akka, dynamodb, hdfs, parquet, redis, s3)
+  .aggregate(akka, dynamodb, hdfs, parquet, redis, s3, sqs)
+  .dependsOn(akka, dynamodb, hdfs, parquet, redis, s3, sqs)
 
 lazy val akka = monixConnector("akka", Dependencies.Akka)
 
@@ -187,6 +187,8 @@ lazy val parquet = monixConnector("parquet", Dependencies.Parquet, scalaPBSettin
 lazy val redis = monixConnector("redis", Dependencies.Redis)
 
 lazy val s3 = monixConnector("s3", Dependencies.S3)
+
+lazy val sqs = monixConnector("sqs", Dependencies.Sqs)
 
 def monixConnector(
   connectorName: String,
