@@ -49,8 +49,10 @@ val w = new ParquetWriter[ProtoMessage](new Path(file), writeSupport)
 Observable
  .fromIterable(messages)
  .consumeWith(Parquet.writer(w))
-]
+
 ```
+
+In case you are seeking an example of avro parquet writer, you can refer to the [avro parquet tests](/parquet/src/test/scala/monix/connect/parquet/AvroParquetSpec.scala). 
 
 ### Reader
 
@@ -78,7 +80,7 @@ val ob: Observable[AvroRecord] = Parquet.reader(r)
 
 _Warning_: This connector provides with the logic of building a publisher and subscriber from a given apache hadoop `ParquetReader` and `ParquetWriter` respectively,
 but it does not cover any existing issue on the support of the apache parquet library with external ones.
-Notice that p.e we have found an issue when reading parquet as protobuf messages generated with `SacalaPB` but not when writing. 
+Notice for example, that an [issue](https://github.com/scalapb/ScalaPB/issues/844) was found while writing tests for _reading_ parquet as protobuf messages generated with `SacalaPB`, on the other hand for _writing_ it was all fine. 
 
 ## Local testing
 
