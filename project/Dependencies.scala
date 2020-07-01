@@ -10,6 +10,7 @@ object Dependencies {
     val AkkaStreams = "2.6.9"
     val AWS = "1.11.749"
     val DynamoDb = "2.10.60"
+    val SQS = "2.13.33"
     val GCS = "1.107.0"
     val Hadoop = "3.1.4"
     val MongoScala = "4.1.1"
@@ -96,6 +97,13 @@ object Dependencies {
     "com.google.cloud"               % "google-cloud-nio" % Versions.GCNio % IntegrationTest,
     "commons-io"                     % "commons-io" % "2.6" % Test
   ) ++ commonDependencies(hasIt = true)
+  private val SqsDependecies = Seq(
+    "software.amazon.awssdk" % "sqs" % DependencyVersions.SQS
+  )
+
+  val Sqs =
+    SqsDependecies ++ CommonProjectDependencies ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(
+      _                                                                         % IntegrationTest)
 
   val Elasticsearch = Seq(
     "com.sksamuel.elastic4s" %% "elastic4s-client-esjava" % Versions.Elastic4s

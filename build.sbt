@@ -154,6 +154,8 @@ lazy val elasticsearch =  monixConnector("elasticsearch", Dependencies.Elasticse
 
 lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth, isMimaEnabled = false)
 
+lazy val sqs = monixConnector("sqs", Dependencies.Sqs)
+
 def monixConnector(
   connectorName: String,
   projectDependencies: Seq[ModuleID],

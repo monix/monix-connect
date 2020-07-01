@@ -32,8 +32,9 @@ services:
     image: localstack/localstack:0.11.1
     ports:
       - '4569:4569'
+      - '4576:4576'
     environment:
-      - SERVICES=dynamodb
+      - SERVICES=dynamodb,sqs
 
   redis:
     image: redis
