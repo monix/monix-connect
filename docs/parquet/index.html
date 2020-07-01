@@ -86,8 +86,9 @@ and these were generated using <a href="https://scalapb.github.io/">ScalaPB</a>.
 <span class="hljs-type">Observable</span>
  .fromIterable(messages)
  .consumeWith(<span class="hljs-type">Parquet</span>.writer(w))
-]
+
 </code></pre>
+<p>In case you are seeking an example of avro parquet writer, you can refer to the <a href="/parquet/src/test/scala/monix/connect/parquet/AvroParquetSpec.scala">avro parquet tests</a>.</p>
 <h3><a class="anchor" aria-hidden="true" id="reader"></a><a href="#reader" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Reader</h3>
 <p>On the other hand, the following code shows how to pull <em>Avro</em> records from a parquet file.
 In contrast, this time the type parameter <code>T</code> would need to be a subtype of <code>org.apache.avro.generic.GenericRecord</code>,
@@ -110,7 +111,7 @@ but there are other libraries there such as <a href="https://github.com/julianpe
 </code></pre>
 <p><em>Warning</em>: This connector provides with the logic of building a publisher and subscriber from a given apache hadoop <code>ParquetReader</code> and <code>ParquetWriter</code> respectively,
 but it does not cover any existing issue on the support of the apache parquet library with external ones.
-Notice that p.e we have found an issue when reading parquet as protobuf messages generated with <code>SacalaPB</code> but not when writing.</p>
+Notice for example, that an <a href="https://github.com/scalapb/ScalaPB/issues/844">issue</a> was found while writing tests for <em>reading</em> parquet as protobuf messages generated with <code>SacalaPB</code>, on the other hand for <em>writing</em> it was all fine.</p>
 <h2><a class="anchor" aria-hidden="true" id="local-testing"></a><a href="#local-testing" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Local testing</h2>
 <p>It will depend on the specific use case, as we mentioned earlier in the introductory section it can operate on the <em>local filesystem</em> on <em>hdfs</em> or even in <em>S3</em> (for <em>avro</em> and <em>protobuf</em> parquet sub-modules)</p>
 <p>Therefore, depending on the application requirements, the hadoop <code>Configuration</code> class will need to be configured accordingly.</p>
