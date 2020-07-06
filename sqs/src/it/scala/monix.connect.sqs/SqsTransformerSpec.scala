@@ -1,25 +1,22 @@
 package monix.connect.sqs
 
+import monix.connect.sqs.SqsOp._
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
-import org.scalacheck.Gen
-import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.BeforeAndAfterAll
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model._
-import SqsOp._
 
 import scala.concurrent.duration._
-import scala.collection.JavaConverters._
-import scala.compat.java8.FutureConverters._
 
 class SqsTransformerSpec
   extends AnyWordSpecLike with Matchers with ScalaFutures with SqsFixture with BeforeAndAfterAll {
 
-  implicit val defaultConfig: PatienceConfig = PatienceConfig(20.seconds, 500.milliseconds)
+  implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 300.milliseconds)
   implicit val client: SqsAsyncClient = SqsClient()
   val randomQueueName: String = genQueueName.sample.get
   val randomMessageBody: String = genMessageBody.sample.get
