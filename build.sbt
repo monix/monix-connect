@@ -22,6 +22,7 @@ lazy val sharedSettings = Seq(
   scalaVersion       := "2.13.5",
   crossScalaVersions := Seq("2.12.10", "2.13.5"),
   scalafmtOnCompile  := true,
+  addCompilerPlugin(scalafixSemanticdb),
   scalacOptions ++= Seq(
     // warnings
     "-unchecked", // able additional warnings where generated code depends on assumptions
