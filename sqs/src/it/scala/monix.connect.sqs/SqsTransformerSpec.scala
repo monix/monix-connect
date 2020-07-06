@@ -93,25 +93,16 @@ class SqsTransformerSpec
         }
       }
 
-      s"transform `DeleteQueueRequest` to `DeleteQueueResponse`" in {
-        // given
-        val transformer: Transformer[DeleteQueueRequest, Task[DeleteQueueResponse]] =
-          Sqs.transformer[DeleteQueueRequest, DeleteQueueResponse]
-        val request =
-          deleteQueueRequest("http://localhost:4576/queue/" + randomQueueName)
-
-        //when
-        val ob: Observable[Task[DeleteQueueResponse]] =
-          Observable
-            .pure(request)
-            .transform(transformer)
-        val t: Task[DeleteQueueResponse] = ob.headL.runToFuture.futureValue
-
-        //then
-        whenReady(t.runToFuture) { response => response shouldBe a[DeleteQueueResponse] }
-      }
-
     }
 
+  }
+
+  override def beforeAll(): Unit = {
+    super.beforeAll()
+  }
+
+  override def afterAll(): Unit = {
+    Task.from(client.deleteQueue(deleteQueueRequest("http://localhost:4576/queue/" + randomQueueName)))
+    super.afterAll()
   }
 }
