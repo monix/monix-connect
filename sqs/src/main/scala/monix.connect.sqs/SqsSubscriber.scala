@@ -26,6 +26,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.{SqsRequest, SqsResponse}
 
 import scala.concurrent.Future
+import scala.util.control.NonFatal
 
 private[sqs] class SqsSubscriber[In <: SqsRequest, Out <: SqsResponse]()(
   implicit
@@ -42,9 +43,13 @@ private[sqs] class SqsSubscriber[In <: SqsRequest, Out <: SqsResponse]()(
       def onNext(sqsRequest: In): Future[Ack] = {
         sqsResponse = Task.from(sqsOp.execute(sqsRequest))
 
-        sqsResponse.onErrorRecover { case _ => monix.execution.Ack.Stop }
-          .map(_ => monix.execution.Ack.Continue)
-          .runToFuture
+        sqsResponse.onErrorRecover {
+          case _: Throwable =>
+          case NonFatal(e) => {
+            onError(e)
+            monix.execution.Ack.Stop
+          }
+        }.map(_ => monix.execution.Ack.Continue).runToFuture
       }
 
       def onComplete(): Unit = {

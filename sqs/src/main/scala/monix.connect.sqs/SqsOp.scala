@@ -23,6 +23,8 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.{
   AddPermissionRequest,
   AddPermissionResponse,
+  ChangeMessageVisibilityRequest,
+  ChangeMessageVisibilityResponse,
   CreateQueueRequest,
   CreateQueueResponse,
   DeleteMessageRequest,
@@ -35,6 +37,8 @@ import software.amazon.awssdk.services.sqs.model.{
   ListQueuesResponse,
   ReceiveMessageRequest,
   ReceiveMessageResponse,
+  SendMessageBatchRequest,
+  SendMessageBatchResponse,
   SendMessageRequest,
   SendMessageResponse,
   SqsRequest,
@@ -55,6 +59,10 @@ object SqsOp {
   implicit val listQueues = SqsOpFactory.build[ListQueuesRequest, ListQueuesResponse](_.listQueues(_))
   implicit val receiveMessage = SqsOpFactory.build[ReceiveMessageRequest, ReceiveMessageResponse](_.receiveMessage(_))
   implicit val sendMessage = SqsOpFactory.build[SendMessageRequest, SendMessageResponse](_.sendMessage(_))
+  implicit val sendMessageBatch =
+    SqsOpFactory.build[SendMessageBatchRequest, SendMessageBatchResponse](_.sendMessageBatch(_))
+  implicit val changeMessageVisibility =
+    SqsOpFactory.build[ChangeMessageVisibilityRequest, ChangeMessageVisibilityResponse](_.changeMessageVisibility(_))
 
   private[this] object SqsOpFactory {
     def build[Req <: SqsRequest, Resp <: SqsResponse](
