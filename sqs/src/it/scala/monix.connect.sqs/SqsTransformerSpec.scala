@@ -21,15 +21,15 @@ class SqsTransformerSpec
 
   implicit val defaultConfig: PatienceConfig = PatienceConfig(20.seconds, 500.milliseconds)
   implicit val client: SqsAsyncClient = SqsClient()
-  var queueToDelete = ""
+  val randomQueueName: String = genQueueName.sample.get
+  val randomMessageBody: String = genMessageBody.sample.get
 
   s"${Sqs}.transformer() creates a transformer operator" that {
 
-    s"given an implicit instance of ${client} in the scope" must {
-      s"transform `CreateQeueuequests` to `CreateQueueResponses`" in {
+    s"given an implicit instance of ${randomQueueName} and ${randomMessageBody} in the scope" must {
+
+      s"transform `CreateQueueRequest` to `CreateQueueResponse`" in {
         // given
-        val randomQueueName: String = genQueueName.sample.get
-        queueToDelete = "http://localhost:4576/queue/" + randomQueueName
         val transformer: Transformer[CreateQueueRequest, Task[CreateQueueResponse]] =
           Sqs.transformer[CreateQueueRequest, CreateQueueResponse]
         val request =
@@ -48,20 +48,11 @@ class SqsTransformerSpec
           response.queueUrl() shouldBe "http://localhost:4576/queue/" + randomQueueName
         }
       }
-      /**s"transform `SendMessageRequest` to `SendMessageResponse`" in {
+
+      s"transform `SendMessageRequest` to `SendMessageResponse`" in {
         // given
-        val listTransformer: Transformer[ListQueuesRequest, Task[ListQueuesResponse]] =
-          Sqs.transformer[ListQueuesRequest, ListQueuesResponse]
+        val randomQueueUrl = "http://localhost:4576/queue/" + randomQueueName
 
-        val queueName = Observable
-          .pure(listQueuesRequest(""))
-          .transform(listTransformer)
-          .headL
-          .runSyncUnsafe()
-
-        val randomQueueUrl: String = queueName.runSyncUnsafe().queueUrls().get(0)
-        queueToDelete = randomQueueUrl
-        val randomMessageBody: String = genMessageBody.sample.get
         val sendTransformer: Transformer[SendMessageRequest, Task[SendMessageResponse]] =
           Sqs.transformer[SendMessageRequest, SendMessageResponse]
         val request =
@@ -75,43 +66,52 @@ class SqsTransformerSpec
         val t: Task[SendMessageResponse] = ob.headL.runToFuture.futureValue
 
         //then
-        whenReady(t.runToFuture) { response => response shouldBe a[SendMessageResponse] }
+        whenReady(t.runToFuture) { response =>
+          response shouldBe a[SendMessageResponse]
+          response.md5OfMessageBody() shouldNot be(null)
+        }
+      }
+
+      s"transform `ReceiveMessageRequest` to `ReceiveMessageResponse`" in {
+        //given
+        val randomQueueUrl = "http://localhost:4576/queue/" + randomQueueName
 
         //when
         val receiveTransformer: Transformer[ReceiveMessageRequest, Task[ReceiveMessageResponse]] =
           Sqs.transformer[ReceiveMessageRequest, ReceiveMessageResponse]
-        val request2 =
+        val request =
           receiveMessageRequest(queueUrl = randomQueueUrl)
         val ob2: Observable[Task[ReceiveMessageResponse]] =
           Observable
-            .pure(request2)
+            .pure(request)
             .transform(receiveTransformer)
-        val tt: Task[ReceiveMessageResponse] = ob2.headL.runToFuture.futureValue
+        val t: Task[ReceiveMessageResponse] = ob2.headL.runToFuture.futureValue
         //then
-        whenReady(tt.runToFuture) { response =>
+        whenReady(t.runToFuture) { response =>
           response shouldBe a[ReceiveMessageResponse]
           response.messages().get(0).body() shouldBe randomMessageBody
         }
-      }*/
+      }
+
+      s"transform `DeleteQueueRequest` to `DeleteQueueResponse`" in {
+        // given
+        val transformer: Transformer[DeleteQueueRequest, Task[DeleteQueueResponse]] =
+          Sqs.transformer[DeleteQueueRequest, DeleteQueueResponse]
+        val request =
+          deleteQueueRequest("http://localhost:4576/queue/" + randomQueueName)
+
+        //when
+        val ob: Observable[Task[DeleteQueueResponse]] =
+          Observable
+            .pure(request)
+            .transform(transformer)
+        val t: Task[DeleteQueueResponse] = ob.headL.runToFuture.futureValue
+
+        //then
+        whenReady(t.runToFuture) { response => response shouldBe a[DeleteQueueResponse] }
+      }
+
     }
-
-  }
-
-  override def beforeAll(): Unit = {
-    super.beforeAll()
-  }
-
-  override def afterAll(): Unit = {
-    val transformer: Transformer[DeleteQueueRequest, Task[DeleteQueueResponse]] =
-      Sqs.transformer[DeleteQueueRequest, DeleteQueueResponse]
-    val t = Observable
-      .pure(deleteQueueRequest(queueToDelete))
-      .transform(transformer)
-      .headL
-      .runToFuture
-      .futureValue
-      .delayExecution(2.seconds)
-    whenReady(t.runToFuture) { res => super.afterAll() }
 
   }
 }

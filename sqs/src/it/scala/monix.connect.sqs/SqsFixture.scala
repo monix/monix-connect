@@ -51,7 +51,7 @@ trait SqsFixture {
       .builder()
       .queueUrl(queueUrl)
       .messageBody(messageBody)
-      .delaySeconds(5)
+      .delaySeconds(0)
       .build()
 
   def receiveMessageRequest(queueUrl: String): ReceiveMessageRequest =
