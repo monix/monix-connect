@@ -22,35 +22,53 @@ import monix.eval.Task
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.{DynamoDbRequest, DynamoDbResponse}
 
+import scala.concurrent.duration.FiniteDuration
+
+/**
+  * An idiomatic DynamoDb client integrated with Monix ecosystem.
+  *
+  * It is built on top of the [[DynamoDbAsyncClient]], reason why all the exposed methods
+  * expect an implicit instance of the client to be in the scope of the call.
+  */
 object DynamoDb {
 
   /**
-    * A monix [[Consumer]] that executes any given [[software.amazon.awssdk.services.dynamodb.model.DynamoDbRequest]].
+    * Pre-built [[Consumer]] implementation that expects and executes [[DynamoDbRequest]]s.
+    * It provides with the flexibility of retrying a failed execution with delay to recover from it.
     *
-    * @param dynamoDbOp Abstracts the execution of any given [[DynamoDbRequest]] with its correspondent operation that returns [[DynamoDbResponse]].
-    * @param client An asyncronous dynamodb client.
-    * @tparam In Input type parameter that must be a subtype os [[DynamoDbRequest]].
-    * @tparam Out Output type parameter that must be a subtype os [[DynamoDbRequest]].
+    * @param dynamoDbOp abstracts the execution of any given [[DynamoDbRequest]] with its correspondent operation that returns [[DynamoDbResponse]].
+    * @param client an asyncronous dynamodb client.
+    * @tparam In the input request as type parameter lower bounded by [[DynamoDbRequest]].
+    * @tparam Out output type parameter that must be a subtype os [[DynamoDbRequest]].
     * @return A [[monix.reactive.Consumer]] that expects and executes dynamodb requests.
     */
   def consumer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
+    retries: Int = 0,
+    delayAfterFailure: Option[FiniteDuration] = None)(
     implicit
     dynamoDbOp: DynamoDbOp[In, Out],
-    client: DynamoDbAsyncClient): Consumer[In, Out] = new DynamoDbSubscriber()
+    client: DynamoDbAsyncClient): Consumer[In, Unit] = DynamoDbSubscriber(retries, delayAfterFailure)
 
   /**
-    * A monix transformer that executes any given [[DynamoDbRequest]] into its subsequent [[DynamoDbResponse]].
+    * Transformer that executes any given [[DynamoDbRequest]] and transforms them to its subsequent [[DynamoDbResponse]] within [[Task]].
+    * It also provides with the flexibility of retrying a failed execution with delay to recover from it.
     *
-    * @param dynamoDbOp Abstracts the execution of any given [[DynamoDbRequest]] with its correspondent operation that returns [[DynamoDbResponse]].
-    * @param client An asyncronous dynamodb client.
-    * @tparam In Input type parameter that must be a subtype os [[DynamoDbRequest]].
-    * @tparam Out Output type parameter that must be a subtype os [[DynamoDbRequest]].
-    * @return A dynamodb request transformer: `Observable[DynamoDbRequest] => Observable[DynamoDbRequest]`.
+    * @param retries the number of times that an operation can be retried before actually returning a failed [[Task]].
+    *        it must be higher or equal than 0.
+    * @param delayAfterFailure delay after failure for the execution of a single [[DynamoDbOp]].
+    * @param dynamoDbOp implicit [[DynamoDbOp]] that abstracts the execution of the specific operation.
+    * @param client asynchronous DynamoDb client.
+    * @tparam In input type parameter that must be a subtype os [[DynamoDbRequest]].
+    * @tparam Out output type parameter that must be a subtype os [[DynamoDbRequest]].
+    * @return DynamoDb operation transformer: `Observable[DynamoDbRequest] => Observable[DynamoDbRequest]`.
     */
   def transformer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
+    retries: Int = 0,
+    delayAfterFailure: Option[FiniteDuration] = None)(
     implicit
     dynamoDbOp: DynamoDbOp[In, Out],
     client: DynamoDbAsyncClient): Observable[In] => Observable[Task[Out]] = { inObservable: Observable[In] =>
-    inObservable.map(in => Task.from(dynamoDbOp.execute(in)))
+    inObservable.map(request => DynamoDbOp.create(request, retries, delayAfterFailure))
   }
+
 }

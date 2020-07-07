@@ -9,9 +9,6 @@ import software.amazon.awssdk.services.dynamodb.model.{AttributeDefinition, Attr
 
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
-import scala.compat.java8.FutureConverters._
-import scala.concurrent.Await
-import scala.concurrent.duration._
 
 trait DynamoDbFixture {
   this: TestSuite =>

@@ -3,6 +3,7 @@ package monix.connect.dynamodb
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.{Consumer, Observable}
+import monix.connect.dynamodb.DynamoDbOp.Implicits._
 import org.scalacheck.Gen
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.BeforeAndAfterAll
@@ -15,77 +16,72 @@ import scala.concurrent.duration._
 import scala.collection.JavaConverters._
 import scala.compat.java8.FutureConverters._
 
-class DynamoDbConsumerSpec
+class DynamoDbConsumerSuite
   extends AnyWordSpecLike with Matchers with ScalaFutures with DynamoDbFixture with BeforeAndAfterAll {
 
   implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 300.milliseconds)
   implicit val client: DynamoDbAsyncClient = DynamoDbClient()
 
-  s"${DynamoDb}.consumer() creates a Monix ${Consumer}" that {
+  s"${DynamoDb}.consumer() creates a ${Consumer}" that {
 
-    s"given an implicit instance of ${DynamoDbOp.createTableOp} in the scope" must {
+    s"given an implicit instance of ${DynamoDbOp.Implicits.createTableOp} in the scope" must {
 
       s"consume a single `CreateTableRequest` and materializes to `CreateTableResponse`" in {
         //given
         val randomTableName: String = genTableName.sample.get
-        val consumer: Consumer[CreateTableRequest, CreateTableResponse] =
-          DynamoDb.consumer[CreateTableRequest, CreateTableResponse]
+        val consumer: Consumer[CreateTableRequest, Unit] =
+          DynamoDb.consumer[CreateTableRequest, CreateTableResponse]()
         val request =
           createTableRequest(tableName = randomTableName, schema = keySchema, attributeDefinition = tableDefinition)
 
         //when
-        val t: Task[CreateTableResponse] =
+        val t: Task[Unit] =
           Observable.pure(request).consumeWith(consumer)
 
         //then
-        whenReady(t.runToFuture) { response: CreateTableResponse =>
-          response shouldBe a[CreateTableResponse]
-          response.tableDescription().hasKeySchema shouldBe true
-          response.tableDescription().hasAttributeDefinitions shouldBe true
-          response.tableDescription().hasGlobalSecondaryIndexes shouldBe false
-          response.tableDescription().hasReplicas shouldBe false
-          response.tableDescription().tableName() shouldEqual randomTableName
-          response.tableDescription().keySchema() should contain theSameElementsAs keySchema
-          response.tableDescription().attributeDefinitions() should contain theSameElementsAs tableDefinition
+        whenReady(t.runToFuture) { response: Unit =>
+          response shouldBe a[Unit]
+          response shouldBe ()
+          Task.from(client.listTables()).runSyncUnsafe().tableNames().contains(randomTableName)
         }
       }
     }
 
-    s"with an implicit instance of ${DynamoDbOp.putItemOp} in the scope" must {
+    s"with an implicit instance of ${DynamoDbOp.Implicits.putItemOp} in the scope" must {
 
-      s"consume a single `PutItemRequest` and materializes to `PutItemResponse` " in {
+      s"consume a single `PutItemRequest`" in {
         //given
-        val consumer: Consumer[PutItemRequest, PutItemResponse] =
-          DynamoDb.consumer[PutItemRequest, PutItemResponse]
+        val consumer: Consumer[PutItemRequest, Unit] =
+          DynamoDb.consumer[PutItemRequest, PutItemResponse]()
         val city = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
         val citizenId = genCitizenId.sample.get
         val debt = Gen.choose(0, 10000).sample.get
         val request: PutItemRequest = putItemRequest(tableName, city, citizenId, debt)
 
         //when
-        val t: Task[PutItemResponse] = Observable.pure(request).consumeWith(consumer)
+        val t: Task[Unit] = Observable.pure(request).consumeWith(consumer)
 
         //then
         whenReady(t.runToFuture) { r =>
-          r shouldBe a[PutItemResponse]
+          r shouldBe a[Unit]
           val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, city, citizenId))).futureValue
           getResponse.item().values().asScala.head.n().toDouble shouldBe debt
         }
       }
 
-      s"consume multiple `PutItemRequests` and materializes to the last `PutItemResponse` " in {
+      s"consume multiple `PutItemRequests`" in {
         //given
-        val consumer: Consumer[PutItemRequest, PutItemResponse] =
-          DynamoDb.consumer[PutItemRequest, PutItemResponse]
+        val consumer: Consumer[PutItemRequest, Unit] =
+          DynamoDb.consumer[PutItemRequest, PutItemResponse]()
         val requestAttr: List[(String, Int, Double)] = Gen.nonEmptyListOf(genRequestAttributes).sample.get
         val requests: List[PutItemRequest] = requestAttr.map { case (city, citizenId, debt) => putItemRequest(tableName, city, citizenId, debt) }
 
         //when
-        val t: Task[PutItemResponse] = Observable.fromIterable(requests).consumeWith(consumer)
+        val t: Task[Unit] = Observable.fromIterable(requests).consumeWith(consumer)
 
         //then
         whenReady(t.runToFuture) { r =>
-          r shouldBe a[PutItemResponse]
+          r shouldBe a[Unit]
           requestAttr.map { case (city, citizenId, debt) =>
             val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, city, citizenId))).futureValue
             getResponse.item().values().asScala.head.n().toDouble shouldBe debt
@@ -94,8 +90,9 @@ class DynamoDbConsumerSpec
       }
     }
 
-    s"with an implicit instance of ${DynamoDbOp.getItemOp} in the scope" must {
+    s"with an implicit instance of ${DynamoDbOp.Implicits.getItemOp} in the scope" must {
 
+      //WARNING: Consuming an Observable of GetItemRequests it is not useful at all, but anyways it is something that can be done.
       s"consume a single `GetItemRequest` and materialize it to `GetItemResponse` " in {
         //given
         val city = "Barcelona"
@@ -105,18 +102,16 @@ class DynamoDbConsumerSpec
         val request: GetItemRequest = getItemRequest(tableName, city, citizenId)
 
         //when
-        val t: Task[GetItemResponse] =
-          Observable.pure(request).consumeWith(DynamoDb.consumer)
+        val t: Task[Unit] =
+          Observable.pure(request).consumeWith(DynamoDb.consumer())
 
         //then
         whenReady(t.runToFuture) { response =>
-          response shouldBe a[GetItemResponse]
-          response.hasItem shouldBe true
-          response.item() should contain key "debt"
-          response.item().values().asScala.head.n().toDouble shouldBe debt
+          response shouldBe a[Unit]
         }
       }
     }
+
   }
 
   override def beforeAll(): Unit = {
