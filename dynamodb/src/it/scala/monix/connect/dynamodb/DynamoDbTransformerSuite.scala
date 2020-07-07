@@ -10,13 +10,13 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model._
-import DynamoDbOp._
+import DynamoDbOp.Implicits._
 
 import scala.concurrent.duration._
 import scala.collection.JavaConverters._
 import scala.compat.java8.FutureConverters._
 
-class DynamoDbTransformerSpec
+class DynamoDbTransformerSuite
   extends AnyWordSpecLike with Matchers with ScalaFutures with DynamoDbFixture with BeforeAndAfterAll {
 
   implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 300.milliseconds)
@@ -24,13 +24,13 @@ class DynamoDbTransformerSpec
 
   s"${DynamoDb}.transformer() creates a transformer operator" that {
 
-    s"given an implicit instance of ${DynamoDbOp.createTableOp} in the scope" must {
+    s"given an implicit instance of ${DynamoDbOp.Implicits.createTableOp} in the scope" must {
 
       s"transform `CreateTableRequests` to `CreateTableResponses`" in {
         //given
         val randomTableName: String = genTableName.sample.get
         val transformer: Transformer[CreateTableRequest, Task[CreateTableResponse]] =
-          DynamoDb.transformer[CreateTableRequest, CreateTableResponse]
+          DynamoDb.transformer[CreateTableRequest, CreateTableResponse]()
         val request =
           createTableRequest(tableName = randomTableName, schema = keySchema, attributeDefinition = tableDefinition)
 
@@ -54,12 +54,12 @@ class DynamoDbTransformerSpec
         }
       }
     }
-      s"given an implicit instance of ${DynamoDbOp.putItemOp} in the scope" must {
+      s"given an implicit instance of ${DynamoDbOp.Implicits.putItemOp} in the scope" must {
 
         s"transform a single`PutItemRequest` to `PutItemResponse` " in {
           //given
           val transformer: Transformer[PutItemRequest, Task[PutItemResponse]] =
-            DynamoDb.transformer[PutItemRequest, PutItemResponse]
+            DynamoDb.transformer[PutItemRequest, PutItemResponse]()
           val city = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
           val citizenId = genCitizenId.sample.get
           val debt = Gen.choose(0, 10000).sample.get
@@ -79,7 +79,7 @@ class DynamoDbTransformerSpec
         s"transform `PutItemRequests` to `PutItemResponses` " in {
           //given
           val transformer: Transformer[PutItemRequest, Task[PutItemResponse]] =
-            DynamoDb.transformer[PutItemRequest, PutItemResponse]
+            DynamoDb.transformer[PutItemRequest, PutItemResponse]()
           val requestAttr: List[(String, Int, Double)] = Gen.nonEmptyListOf(genRequestAttributes).sample.get
           val requests: List[PutItemRequest] = requestAttr.map { case (city, citizenId, debt) => putItemRequest(tableName, city, citizenId, debt) }
 
@@ -103,7 +103,7 @@ class DynamoDbTransformerSpec
         }
       }
 
-    s"given an implicit instance of ${DynamoDbOp.getItemOp} in the scope" must {
+    s"given an implicit instance of ${DynamoDbOp.Implicits.getItemOp} in the scope" must {
 
       s"transforms a single `GetItemRequest` to `GetItemResponse` " in {
         //given
@@ -112,7 +112,7 @@ class DynamoDbTransformerSpec
         val debt: Int = 550
         toScala(client.putItem(putItemRequest(tableName, city, citizenId, debt))).futureValue
         val request: GetItemRequest = getItemRequest(tableName, city, citizenId)
-        val transformer: Transformer[GetItemRequest, Task[GetItemResponse]] = DynamoDb.transformer
+        val transformer: Transformer[GetItemRequest, Task[GetItemResponse]] = DynamoDb.transformer()
 
         //when
         val t: Task[GetItemResponse] =
