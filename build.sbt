@@ -7,7 +7,7 @@ lazy val doNotPublishArtifact = Seq(
   publishArtifact in (Compile, packageBin) := false
 )
 
-val monixConnectSeries = "0.1.0"
+val monixConnectSeries = "0.1.1"
 
 lazy val sharedSettings = Seq(
   organization       := "io.monix",
@@ -199,7 +199,7 @@ def monixConnector(
     .settings(additionalSettings: _*)
     .configure(profile)
     .configs(IntegrationTest, IT)
-    .settings(mimaSettings(s"monix-$connectorName"))
+    //.settings(mimaSettings(s"monix-$connectorName")) //todo uncoment when releasing 0.2.0
 
 lazy val docs = project
   .in(file("monix-connect-docs"))
