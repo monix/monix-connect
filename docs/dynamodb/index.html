@@ -55,11 +55,11 @@
               }
             });
         </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">AWS DynamoDB</h1></header><article><div><span><h2><a class="anchor" aria-hidden="true" id="introduction"></a><a href="#introduction" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Introduction</h2>
-<p><em>Amazon DynamoDB</em> is a key-value and document database that performs at any scale in a single-digit millisecond,
+<p><em>Amazon DynamoDB</em> is a <em>key-value</em> and document database that performs at any scale in a single-digit millisecond,
 a key component for many platforms of the world's fastest growing enterprises that depend on it to support their mission-critical workloads.</p>
-<p>The DynamoDB api provides a large list of operations (create, describe, delete, get, put, batch, scan, list and more...), all them are simply designed in request and response pattern,
+<p>The <em>DynamoDB</em> api provides a large list of operations (create, describe, delete, get, put, batch, scan, list and more...), all them are simply designed in request and response pattern,
 in which from the api prespective, they have to respectively implement <a href="https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/dynamodb/model/DynamoDbRequest.html">DynamoDbRequest</a> and <a href="https://sdk.amazonaws.com/java/api/2.0.0/software/amazon/awssdk/services/dynamodb/model/DynamoDbResponse.html">DynamoDbResponse</a>.</p>
-<p>The fact that all types implements either Request or Response type makes possible to create on top of that an abstraction layer that executes the received requests and retunrn a future value with the respective response.</p>
+<p>The fact that all types implements either <em>Request</em> or <em>Response</em> type makes possible to create an abstraction layer on top of it for executing the received requests and retunrn a future value with the respective response.</p>
 <p>From there one, this connector provides two pre built implementations of a monix <strong>transformer</strong> and <strong>consumer</strong> that implements the mentioned pattern and therefore allowing the user to use them for any
 given dynamodb operation.</p>
 <h2><a class="anchor" aria-hidden="true" id="dependency"></a><a href="#dependency" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Dependency</h2>
@@ -67,47 +67,87 @@ given dynamodb operation.</p>
 <pre><code class="hljs css language-scala">libraryDependencies += <span class="hljs-string">"io.monix"</span> %% <span class="hljs-string">"monix-dynamodb"</span> % <span class="hljs-string">"0.1.0"</span>
 </code></pre>
 <h2><a class="anchor" aria-hidden="true" id="getting-started"></a><a href="#getting-started" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Getting started</h2>
-<p>This connector has been built on top of the <a href="https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/dynamodb/DynamoDbAsyncClient.html">DynamoDbAsyncClient</a> since it only exposes non blocking operations,
-that will permit the application to be authenticated and create an channel with AWS DynamoDB service.</p>
-<p>The <code>DynamoDbAsyncClient</code> needs to be defined as <code>implicit</code> as it will be required by the <em>consumer</em> and <em>tranformer</em> implementations.</p>
-<p>It is also required and additional import <code>monix.connect.dynamodb.DynamoDbOp._</code> for bringing the implicit conversions between the specific <code>DynamoDBRequest</code> to <code>DynamoDbOp</code>, you don't have to worry about the second data type
-, it is an abstraction that provides with the functionality to execute each request with its onw operation:</p>
-<p>See below an example for transforming and consuming DynamoDb operations with monix.</p>
-<h3><a class="anchor" aria-hidden="true" id="transformer"></a><a href="#transformer" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Transformer</h3>
-<p>//this is an example of a stream that transforms and executes DynamoDb <code>GetItemRequests</code>:</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.dynamodb.<span class="hljs-type">DynamoDbOp</span>._
+<p>This connector has been built on top of the <a href="https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/dynamodb/DynamoDbAsyncClient.html">DynamoDbAsyncClient</a>, a client that only exposes non blocking operations,
+and that will permit the application to be authenticated and create a channel with the <em>AWS DynamoDB</em> service.
+Therefore, all api operations that this connector exposes does expect and <code>implicit</code> instance of the async client.</p>
+<p>It is also required and additional import <code>monix.connect.dynamodb.DynamoDbOp.Implicits._</code> for bringing the <em>implicit</em> conversions between the specific <code>DynamoDBRequest</code> to <code>DynamoDbOp</code>, but you don't have to worry about the second data type
+since it is an abstraction from the internal api that provides a generic extension to the execution's description of any request given:</p>
+<p>The next sections will not just show an example for creating a <em>single request</em> but also for transforming and consuming an <code>Observable[DynamoDbRequest]</code>.</p>
+<h3><a class="anchor" aria-hidden="true" id="single-execution"></a><a href="#single-execution" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Single Execution</h3>
+<p>There are cases where we do only want to execute a single request, it is the simplest scenario:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.dynamodb.<span class="hljs-type">DynamoDbOp</span>
+<span class="hljs-keyword">import</span> monix.connect.dynamodb.<span class="hljs-type">DynamoDbOp</span>.<span class="hljs-type">Implicits</span>._
+<span class="hljs-keyword">import</span> software.amazon.awssdk.services.dynamodb.model.{<span class="hljs-type">PutItemRequest</span>, <span class="hljs-type">PutItemResponse</span>}
+<span class="hljs-keyword">import</span> software.amazon.awssdk.services.dynamodb.<span class="hljs-type">DynamoDbAsyncClient</span>
+
+
+<span class="hljs-comment">//presumably you'll have your specific request and an implicit async client</span>
+<span class="hljs-keyword">val</span> request: <span class="hljs-type">PutItemRequest</span> = ???
+<span class="hljs-keyword">implicit</span> <span class="hljs-keyword">val</span> client : <span class="hljs-type">DynamoDbAsyncClient</span> = ???
+
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">PutItemResponse</span>] = <span class="hljs-type">DynamoDbOp</span>.create(request)
+</code></pre>
+<p>This method defers the execution of the operation to be run later on, also accepts as an argument the number of <code>retries</code> and a <code>delay</code> after failure that would give some time to recover before the next retry (by default is set to not retry).</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.dynamodb.<span class="hljs-type">DynamoDbOp</span>
+<span class="hljs-keyword">import</span> monix.connect.dynamodb.<span class="hljs-type">DynamoDbOp</span>.<span class="hljs-type">Implicits</span>._
+<span class="hljs-keyword">import</span> software.amazon.awssdk.services.dynamodb.<span class="hljs-type">DynamoDbAsyncClient</span>
 <span class="hljs-keyword">import</span> software.amazon.awssdk.services.dynamodb.model.{<span class="hljs-type">GetItemRequest</span>, <span class="hljs-type">GetItemResponse</span>}
 
-<span class="hljs-comment">//presumably you will have a stream of dynamo db `GetItemRequest`  requests coming inin this case of type </span>
+<span class="hljs-keyword">import</span> scala.concurrent.duration._
+
+<span class="hljs-keyword">val</span> request: <span class="hljs-type">GetItemRequest</span> = ???
+<span class="hljs-keyword">implicit</span> <span class="hljs-keyword">val</span> client : <span class="hljs-type">DynamoDbAsyncClient</span> = ???
+
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">GetItemResponse</span>] = <span class="hljs-type">DynamoDbOp</span>.create(request, retries = <span class="hljs-number">5</span>, delayAfterFailure = <span class="hljs-number">500.</span>milliseconds)
+</code></pre>
+<p><em>Notice</em> that the avobe code shows an example with <code>GetItemRequest</code> and <code>PutItemRequest</code>, but the method <code>.create</code> does accept any subtype of <code>DynamoDbRequest</code>, meaning that you could for example use operations such like: <em>create</em>, <em>describe</em>, <em>list</em> or <em>restore</em> a tables as well as _delete, <em>update</em>, <em>put</em> or <em>get</em> items individually or as batches.<br>
+In case you want to know more about what operations are available, you should refer to the <a href="https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/dynamodb/model/package-summary.html">AWS SDK javadoc</a>.</p>
+<h3><a class="anchor" aria-hidden="true" id="consumer"></a><a href="#consumer" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Consumer</h3>
+<p>A pre-built <em>Monix</em> <code>Consumer[DynamoDbRequest, DynamoDbResponse]</code> that provides a safe implementation
+for executing any subtype of <code>DynamoDbRequest</code> and materializes to its respective response.
+It does also provide with the flexibility to specifying the number of times to retrying failed operations and the delay between them, which by default is no retry.</p>
+<p>An example of a stream that consumes and executes DynamoDb <code>PutItemRequest</code>s:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.dynamodb.<span class="hljs-type">DynamoDbOp</span>.<span class="hljs-type">Implicits</span>._
+<span class="hljs-keyword">import</span> monix.connect.dynamodb.<span class="hljs-type">DynamoDb</span>
+<span class="hljs-keyword">import</span> software.amazon.awssdk.services.dynamodb.<span class="hljs-type">DynamoDbAsyncClient</span>
+<span class="hljs-keyword">import</span> software.amazon.awssdk.services.dynamodb.model.<span class="hljs-type">PutItemRequest</span>
+
+<span class="hljs-comment">//presumably you will have a stream of DynamoDb requests coming in. </span>
+<span class="hljs-keyword">val</span> putItemRequests = <span class="hljs-type">List</span>[<span class="hljs-type">PutItemRequest</span>] = ???
+<span class="hljs-keyword">implicit</span> <span class="hljs-keyword">val</span> client : <span class="hljs-type">DynamoDbAsyncClient</span> = ???
+
+<span class="hljs-keyword">val</span> ob = <span class="hljs-type">Task</span>[<span class="hljs-type">Unit</span>] = {
+  <span class="hljs-type">Observable</span>
+    .fromIterable(putItemRequests)
+    .consumeWith(<span class="hljs-type">DynamoDb</span>.consumer()) <span class="hljs-comment">//asynchronous consumer that executes incoming put item requests</span>
+} 
+<span class="hljs-comment">//it materialises to Unit</span>
+</code></pre>
+<p><em>Notice</em> that as same as the <code>DynamoDbOp.create()</code> method used for <em>single requests</em> shown the previous section, the <code>DynamoDb.consumer()</code> also accepts a number of <em>retries</em> and <em>delay after a failure</em> to be passed.</p>
+<h3><a class="anchor" aria-hidden="true" id="transformer"></a><a href="#transformer" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Transformer</h3>
+<p>Finally, the connector also provides a <em>transformer</em> for <code>Observable</code>  that describes the execution of
+any type of <em>DynamoDb</em> request, returning its respective response: <code>Observable[DynamoDbRequest] =&gt; Observable[Task[DynamoDbResponse]]</code>.</p>
+<p>The below code shows an example of a stream that transforms incoming get requests into its subsequent responses:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.dynamodb.<span class="hljs-type">DynamoDbOp</span>.<span class="hljs-type">Implicits</span>._
+<span class="hljs-keyword">import</span> monix.connect.dynamodb.<span class="hljs-type">DynamoDb</span>
+<span class="hljs-keyword">import</span> software.amazon.awssdk.services.dynamodb.<span class="hljs-type">DynamoDbAsyncClient</span>
+<span class="hljs-keyword">import</span> software.amazon.awssdk.services.dynamodb.model.{<span class="hljs-type">GetItemRequest</span>, <span class="hljs-type">GetItemResponse</span>}
+
+<span class="hljs-comment">//presumably you will have a stream of dynamo db `GetItemRequest`, this is just an example on how to use it</span>
 <span class="hljs-keyword">val</span> dynamoDbRequests = <span class="hljs-type">List</span>[<span class="hljs-type">GetItemRequest</span>] = ???
+<span class="hljs-keyword">implicit</span> <span class="hljs-keyword">val</span> client : <span class="hljs-type">DynamoDbAsyncClient</span> = ???
 
 <span class="hljs-keyword">val</span> ob = <span class="hljs-type">Observable</span>[<span class="hljs-type">Task</span>[<span class="hljs-type">GetItemResponse</span>]] = {
   <span class="hljs-type">Observable</span>
     .fromIterable(dynamoDbRequests) 
-    .transform(<span class="hljs-type">DynamoDb</span>.transofrmer()) <span class="hljs-comment">// transforms each get request operation into its respective get response </span>
+    .transform(<span class="hljs-type">DynamoDb</span>.transofrmer()) <span class="hljs-comment">//transforms each get request operation into its respective get response </span>
 } 
-<span class="hljs-comment">//the resulted observable would be of type Observable[Task[GetItemResponse]]</span>
-</code></pre>
-<h3><a class="anchor" aria-hidden="true" id="consumer"></a><a href="#consumer" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Consumer</h3>
-<p>An example of a stream that consumes and executes DynamoDb <code>PutItemRequest</code>s:</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.dynamodb.<span class="hljs-type">DynamoDbOp</span>._
-<span class="hljs-keyword">import</span> software.amazon.awssdk.services.dynamodb.model.{<span class="hljs-type">PutItemRequest</span>, <span class="hljs-type">PutItemResponse</span>}
 
-<span class="hljs-comment">//presumably you will have a stream of dynamo db `PutItemrequest` coming in.  </span>
-<span class="hljs-keyword">val</span> putItemRequests = <span class="hljs-type">List</span>[<span class="hljs-type">PutItemRequest</span>] = ???
-
-<span class="hljs-keyword">val</span> ob = <span class="hljs-type">Task</span>[<span class="hljs-type">PutItemResponse</span>] = {
-  <span class="hljs-type">Observable</span>
-    .fromIterable(dynamoDbRequests)
-    .consumeWith(<span class="hljs-type">DynamoDb</span>.consumer()) <span class="hljs-comment">// asynchronous consumer that executes put item requests</span>
-} 
-<span class="hljs-comment">//the materialized value would be of type Task[PutItemResponse]</span>
 </code></pre>
-<p>Note that both transformers and consumer builder are generic implementations for any <code>DynamoDbRequest</code>, so you don't need
-to explicitly specify its input and output types.</p>
+<p>The <em>transformer</em> accepts also a number of <em>retries</em> and <em>delay after a failure</em> to be passed.</p>
 <h2><a class="anchor" aria-hidden="true" id="local-testing"></a><a href="#local-testing" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Local testing</h2>
-<p><a href="https://github.com/localstack/localstack">Localstack</a> provides a fully functional local AWS cloud stack that in this case
-the user can use to develop and test locally and offline the integration of the application with DynamoDB.</p>
+<p><a href="https://github.com/localstack/localstack">Localstack</a> provides a fully functional local <em>AWS</em> cloud stack that in this case
+the user can use to develop and test locally application's integration with <em>DynamoDB</em>.</p>
 <p>Add the following service description to your <code>docker-compose.yaml</code> file:</p>
 <pre><code class="hljs css language-yaml"><span class="hljs-attr">dynamodb:</span>
   <span class="hljs-attr">image:</span> <span class="hljs-string">localstack/localstack:latest</span>
@@ -116,12 +156,18 @@ the user can use to develop and test locally and offline the integration of the 
   <span class="hljs-attr">environment:</span>
     <span class="hljs-bullet">-</span> <span class="hljs-string">SERVICES=dynamodb</span>
 </code></pre>
-<p>Run the following command to build, and start the dynamodb service:</p>
+<p>Run the following command to build, and start the <em>DynamoDb</em> service:</p>
 <pre><code class="hljs css language-shell script">docker-compose -f docker-compose.yml up -d dynamodb
 </code></pre>
 <p>Check out that the service has started correctly.</p>
 <p>Finally create the client to connect to the local dynamodb via <code>DynamoDbAsyncClient</code>:</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> defaultAwsCredProvider = <span class="hljs-type">StaticCredentialsProvider</span>.create(<span class="hljs-type">AwsBasicCredentials</span>.create(<span class="hljs-string">"x"</span>, <span class="hljs-string">"x"</span>))
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> java.net.<span class="hljs-type">URI</span>
+
+<span class="hljs-keyword">import</span> software.amazon.awssdk.auth.credentials.{<span class="hljs-type">AwsBasicCredentials</span>, <span class="hljs-type">StaticCredentialsProvider</span>}
+<span class="hljs-keyword">import</span> software.amazon.awssdk.regions.<span class="hljs-type">Region</span>
+<span class="hljs-keyword">import</span> software.amazon.awssdk.services.dynamodb.<span class="hljs-type">DynamoDbAsyncClient</span>
+
+<span class="hljs-keyword">val</span> defaultAwsCredProvider = <span class="hljs-type">StaticCredentialsProvider</span>.create(<span class="hljs-type">AwsBasicCredentials</span>.create(<span class="hljs-string">"x"</span>, <span class="hljs-string">"x"</span>))
 <span class="hljs-keyword">implicit</span> <span class="hljs-keyword">val</span> client: <span class="hljs-type">DynamoDbAsyncClient</span> = {
   <span class="hljs-type">DynamoDbAsyncClient</span>
     .builder()
@@ -132,5 +178,5 @@ the user can use to develop and test locally and offline the integration of the 
   }
 </code></pre>
 <p>You are now ready to run your application!
-<em>Note that the above example defines the client as <code>implicit</code>, since it is how the api will expect it.</em></p>
-</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/monix-connect/docs/akka"><span class="arrow-prev">← </span><span>Akka Streams</span></a><a class="docs-next button" href="/monix-connect/docs/s3"><span>AWS S3</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#introduction">Introduction</a></li><li><a href="#dependency">Dependency</a></li><li><a href="#getting-started">Getting started</a><ul class="toc-headings"><li><a href="#transformer">Transformer</a></li><li><a href="#consumer">Consumer</a></li></ul></li><li><a href="#local-testing">Local testing</a></li></ul></nav></div><footer class="nav-footer" id="footer"><hr class="separator"/><section class="copyright">Copyright © 2020-2020 The Monix Connect Developers.</section></footer></div></body></html>
+<em>Notice</em> that the above example defines the <code>client</code> as <code>implicit</code>, since it is how the api will expect it.</p>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/monix-connect/docs/akka"><span class="arrow-prev">← </span><span>Akka Streams</span></a><a class="docs-next button" href="/monix-connect/docs/s3"><span>AWS S3</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#introduction">Introduction</a></li><li><a href="#dependency">Dependency</a></li><li><a href="#getting-started">Getting started</a><ul class="toc-headings"><li><a href="#single-execution">Single Execution</a></li><li><a href="#consumer">Consumer</a></li><li><a href="#transformer">Transformer</a></li></ul></li><li><a href="#local-testing">Local testing</a></li></ul></nav></div><footer class="nav-footer" id="footer"><hr class="separator"/><section class="copyright">Copyright © 2020-2020 The Monix Connect Developers.</section></footer></div></body></html>
