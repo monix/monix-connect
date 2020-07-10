@@ -8,7 +8,7 @@ object Dependencies {
     val PureConfig = "0.12.3"
     val S3 = "2.10.91"
     val Monix = "3.2.0"
-    val AkkaStreams = "2.6.5"
+    val AkkaStreams = "2.6.7"
     val Hadoop = "3.1.3"
 
     //test
