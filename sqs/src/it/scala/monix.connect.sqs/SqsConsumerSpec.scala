@@ -22,7 +22,7 @@ class SqsConsumerSpec extends AnyWordSpecLike with Matchers with ScalaFutures wi
 
     s"given an implicit queue name of ${randomQueueName} in the scope" must {
 
-      s"consume a single `CreateQueueRequest` and materializes to `CreateQueueResponse`" in {
+      /**s"consume a single `CreateQueueRequest` and materializes to `CreateQueueResponse`" in {
         // given
         val consumer: Consumer[CreateQueueRequest, CreateQueueResponse] =
           Sqs.consumer[CreateQueueRequest, CreateQueueResponse]
@@ -37,7 +37,7 @@ class SqsConsumerSpec extends AnyWordSpecLike with Matchers with ScalaFutures wi
           response shouldBe a[CreateQueueResponse]
           response.queueUrl() shouldBe "http://localhost:4576/queue/" + randomQueueName
         }
-      }
+      }*/
 
       s"consume a single `ListQueuesRequest` and materializes to `ListQueuesResponse`" in {
         // given
@@ -60,6 +60,8 @@ class SqsConsumerSpec extends AnyWordSpecLike with Matchers with ScalaFutures wi
   }
 
   override def beforeAll(): Unit = {
+    Task.from(client.createQueue(createQueueRequest(randomQueueName)))
+    Thread.sleep(3000)
     super.beforeAll()
   }
 

@@ -25,7 +25,7 @@ class SqsTransformerSpec
 
     s"given an implicit instance of ${randomQueueName} and ${randomMessageBody} in the scope" must {
 
-      s"transform `CreateQueueRequest` to `CreateQueueResponse`" in {
+      /**s"transform `CreateQueueRequest` to `CreateQueueResponse`" in {
         // given
         val transformer: Transformer[CreateQueueRequest, Task[CreateQueueResponse]] =
           Sqs.transformer[CreateQueueRequest, CreateQueueResponse]
@@ -44,7 +44,7 @@ class SqsTransformerSpec
           response shouldBe a[CreateQueueResponse]
           response.queueUrl() shouldBe "http://localhost:4576/queue/" + randomQueueName
         }
-      }
+      }*/
 
       s"transform `SendMessageRequest` to `SendMessageResponse`" in {
         // given
@@ -86,7 +86,10 @@ class SqsTransformerSpec
         //then
         whenReady(t.runToFuture) { response =>
           response shouldBe a[ReceiveMessageResponse]
+          println("reachedddddd")
+          SqsStream(client, randomQueueUrl)
           response.messages().get(0).body() shouldBe randomMessageBody
+        //println(response.messages().get(0).body())
         }
       }
 
@@ -95,6 +98,8 @@ class SqsTransformerSpec
   }
 
   override def beforeAll(): Unit = {
+    Task.from(client.createQueue(createQueueRequest(randomQueueName)))
+    Thread.sleep(3000)
     super.beforeAll()
   }
 
