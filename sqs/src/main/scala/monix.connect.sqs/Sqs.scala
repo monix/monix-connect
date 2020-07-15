@@ -20,14 +20,30 @@ package monix.connect.sqs
 import monix.eval.Task
 import monix.reactive.{Consumer, Observable}
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
-import software.amazon.awssdk.services.sqs.model.{SqsRequest, SqsResponse}
+import software.amazon.awssdk.services.sqs.model.{Message, ReceiveMessageRequest, SqsRequest, SqsResponse}
+
+import scala.jdk.CollectionConverters._
 
 object Sqs {
 
-  def consumer[In <: SqsRequest, Out <: SqsResponse](
+  //todo add settings for batch size, timeout, attributeNames and messageAttributes
+  def source(queueUrl: String)
+            (implicit client: SqsAsyncClient): Observable[Message] = {
+    for {
+      r <- Observable.repeat[ReceiveMessageRequest] {
+        ReceiveMessageRequest.builder.queueUrl(queueUrl).build()
+      }
+      l <- Observable.fromTask {
+        Task.from(client.receiveMessage(r)).map(_.messages().asScala.toList)
+      }
+      m <- Observable.suspend(Observable.fromIterable(l))
+    } yield m
+  }
+
+  def sink[In <: SqsRequest, Out <: SqsResponse](
     implicit
     sqsOp: SqsOp[In, Out],
-    client: SqsAsyncClient): Consumer[In, Out] = new SqsSubscriber
+    client: SqsAsyncClient): Consumer[In, Out] = new SqsSink
 
   def transformer[In <: SqsRequest, Out <: SqsResponse](
     implicit
@@ -35,4 +51,6 @@ object Sqs {
     client: SqsAsyncClient): Observable[In] => Observable[Task[Out]] = { inObservable: Observable[In] =>
     inObservable.map(in => Task.from(sqsOp.execute(in)))
   }
+
+
 }

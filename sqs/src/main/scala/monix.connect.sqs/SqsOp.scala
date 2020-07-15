@@ -59,8 +59,7 @@ object SqsOp {
   implicit val listQueues = SqsOpFactory.build[ListQueuesRequest, ListQueuesResponse](_.listQueues(_))
   implicit val receiveMessage = SqsOpFactory.build[ReceiveMessageRequest, ReceiveMessageResponse](_.receiveMessage(_))
   implicit val sendMessage = SqsOpFactory.build[SendMessageRequest, SendMessageResponse](_.sendMessage(_))
-  implicit val sendMessageBatch =
-    SqsOpFactory.build[SendMessageBatchRequest, SendMessageBatchResponse](_.sendMessageBatch(_))
+  implicit val sendMessageBatch = SqsOpFactory.build[SendMessageBatchRequest, SendMessageBatchResponse](_.sendMessageBatch(_))
   implicit val changeMessageVisibility =
     SqsOpFactory.build[ChangeMessageVisibilityRequest, ChangeMessageVisibilityResponse](_.changeMessageVisibility(_))
 

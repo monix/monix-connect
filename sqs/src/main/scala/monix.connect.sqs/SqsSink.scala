@@ -28,7 +28,7 @@ import software.amazon.awssdk.services.sqs.model.{SqsRequest, SqsResponse}
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-private[sqs] class SqsSubscriber[In <: SqsRequest, Out <: SqsResponse]()(
+private[sqs] class SqsSink[In <: SqsRequest, Out <: SqsResponse]()(
   implicit
   sqsOp: SqsOp[In, Out],
   client: SqsAsyncClient)
