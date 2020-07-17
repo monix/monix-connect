@@ -26,7 +26,8 @@ import scala.jdk.CollectionConverters._
 
 object Sqs {
   def source(queueUrl: String)(
-    implicit client: SqsAsyncClient,
+    implicit
+    client: SqsAsyncClient,
     settings: SqsSourceSettings = SqsSourceSettings()): Observable[Message] = {
     for {
       r <- Observable.repeat[ReceiveMessageRequest] {
@@ -68,5 +69,4 @@ case class SqsSourceSettings(
   visibilityTimeout: Option[Int] = Some(30),
   waitTimeSeconds: Option[Int] = Some(20),
   autoDelete: Boolean = true,
-  stopWhenQueueEmpty: Boolean = false
-)
+  stopWhenQueueEmpty: Boolean = false)
