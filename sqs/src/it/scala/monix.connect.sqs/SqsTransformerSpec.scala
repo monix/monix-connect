@@ -42,12 +42,12 @@ class SqsTransformerSpec
         val t: Task[SendMessageResponse] = ob.headL.runToFuture.futureValue
 
         //then
-        whenReady(Sqs.source(randomQueueUrl).headL.runToFuture) { res => res.body() shouldBe randomMessageBody }
-
         whenReady(t.runToFuture) { response =>
           response shouldBe a[SendMessageResponse]
           response.md5OfMessageBody() shouldNot be(null)
         }
+
+        whenReady(Sqs.source(randomQueueUrl).headL.runToFuture) { res => res.body() shouldBe randomMessageBody }
       }
     }
 
