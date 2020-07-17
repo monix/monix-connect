@@ -55,11 +55,12 @@ class SqsTransformerSpec
 
   override def beforeAll(): Unit = {
     Task.from(client.createQueue(createQueueRequest(randomQueueName)))
-    Thread.sleep(3000)
+    Thread.sleep(1000)
     super.beforeAll()
   }
 
   override def afterAll(): Unit = {
+    Thread.sleep(1000)
     Task.from(client.deleteQueue(deleteQueueRequest("http://localhost:4576/queue/" + randomQueueName)))
     super.afterAll()
   }
