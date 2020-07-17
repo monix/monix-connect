@@ -25,13 +25,20 @@ import software.amazon.awssdk.services.sqs.model.{Message, ReceiveMessageRequest
 import scala.jdk.CollectionConverters._
 
 object Sqs {
-
-  //todo add settings for batch size, timeout, attributeNames and messageAttributes
-  def source(queueUrl: String)
-            (implicit client: SqsAsyncClient): Observable[Message] = {
+  def source(queueUrl: String)(
+    implicit client: SqsAsyncClient,
+    settings: SqsSourceSettings = SqsSourceSettings()): Observable[Message] = {
     for {
       r <- Observable.repeat[ReceiveMessageRequest] {
-        ReceiveMessageRequest.builder.queueUrl(queueUrl).build()
+        val builder = ReceiveMessageRequest.builder
+          .queueUrl(queueUrl)
+          .attributeNamesWithStrings(settings.attributeNames.asJava)
+          .messageAttributeNames(settings.messageAttributeNames.asJava)
+          .maxNumberOfMessages(settings.maxNumberOfMessages)
+
+        settings.visibilityTimeout.foreach(builder.visibilityTimeout(_))
+        settings.waitTimeSeconds.foreach(builder.waitTimeSeconds(_))
+        builder.build()
       }
       l <- Observable.fromTask {
         Task.from(client.receiveMessage(r)).map(_.messages().asScala.toList)
@@ -52,5 +59,14 @@ object Sqs {
     inObservable.map(in => Task.from(sqsOp.execute(in)))
   }
 
-
 }
+
+case class SqsSourceSettings(
+  attributeNames: List[String] = Nil,
+  maxNumberOfMessages: Int = 5,
+  messageAttributeNames: List[String] = Nil,
+  visibilityTimeout: Option[Int] = Some(30),
+  waitTimeSeconds: Option[Int] = Some(20),
+  autoDelete: Boolean = true,
+  stopWhenQueueEmpty: Boolean = false
+)

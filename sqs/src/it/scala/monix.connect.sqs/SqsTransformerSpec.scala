@@ -25,27 +25,6 @@ class SqsTransformerSpec
 
     s"given an implicit instance of ${randomQueueName} and ${randomMessageBody} in the scope" must {
 
-      /**s"transform `CreateQueueRequest` to `CreateQueueResponse`" in {
-        // given
-        val transformer: Transformer[CreateQueueRequest, Task[CreateQueueResponse]] =
-          Sqs.transformer[CreateQueueRequest, CreateQueueResponse]
-        val request =
-          createQueueRequest(queueName = randomQueueName)
-
-        //when
-        val ob: Observable[Task[CreateQueueResponse]] =
-          Observable
-            .pure(request)
-            .transform(transformer)
-        val t: Task[CreateQueueResponse] = ob.headL.runToFuture.futureValue
-
-        //then
-        whenReady(t.runToFuture) { response =>
-          response shouldBe a[CreateQueueResponse]
-          response.queueUrl() shouldBe "http://localhost:4576/queue/" + randomQueueName
-        }
-      }*/
-
       s"transform `SendMessageRequest` to `SendMessageResponse`" in {
         // given
         val randomQueueUrl = "http://localhost:4576/queue/" + randomQueueName
@@ -63,36 +42,13 @@ class SqsTransformerSpec
         val t: Task[SendMessageResponse] = ob.headL.runToFuture.futureValue
 
         //then
+        whenReady(Sqs.source(randomQueueUrl).headL.runToFuture) { res => res.body() shouldBe randomMessageBody }
+
         whenReady(t.runToFuture) { response =>
           response shouldBe a[SendMessageResponse]
           response.md5OfMessageBody() shouldNot be(null)
         }
       }
-
-      s"transform `ReceiveMessageRequest` to `ReceiveMessageResponse`" in {
-        //given
-        val randomQueueUrl = "http://localhost:4576/queue/" + randomQueueName
-
-        //when
-        val receiveTransformer: Transformer[ReceiveMessageRequest, Task[ReceiveMessageResponse]] =
-          Sqs.transformer[ReceiveMessageRequest, ReceiveMessageResponse]
-        val request =
-          receiveMessageRequest(queueUrl = randomQueueUrl)
-        val ob2: Observable[Task[ReceiveMessageResponse]] =
-          Observable
-            .pure(request)
-            .transform(receiveTransformer)
-        val t: Task[ReceiveMessageResponse] = ob2.headL.runToFuture.futureValue
-        //then
-        whenReady(t.runToFuture) { response =>
-          response shouldBe a[ReceiveMessageResponse]
-          println("reachedddddd")
-          SqsStream(client, randomQueueUrl)
-          response.messages().get(0).body() shouldBe randomMessageBody
-        //println(response.messages().get(0).body())
-        }
-      }
-
     }
 
   }

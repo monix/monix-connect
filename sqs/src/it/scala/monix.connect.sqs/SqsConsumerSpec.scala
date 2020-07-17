@@ -22,27 +22,10 @@ class SqsConsumerSpec extends AnyWordSpecLike with Matchers with ScalaFutures wi
 
     s"given an implicit queue name of ${randomQueueName} in the scope" must {
 
-      /**s"consume a single `CreateQueueRequest` and materializes to `CreateQueueResponse`" in {
-        // given
-        val consumer: Consumer[CreateQueueRequest, CreateQueueResponse] =
-          Sqs.consumer[CreateQueueRequest, CreateQueueResponse]
-        val request =
-          createQueueRequest(queueName = randomQueueName)
-
-        //when
-        val t: Task[CreateQueueResponse] = Observable.pure(request).consumeWith(consumer)
-
-        //then
-        whenReady(t.runToFuture) { response =>
-          response shouldBe a[CreateQueueResponse]
-          response.queueUrl() shouldBe "http://localhost:4576/queue/" + randomQueueName
-        }
-      }*/
-
       s"consume a single `ListQueuesRequest` and materializes to `ListQueuesResponse`" in {
         // given
         val consumer: Consumer[ListQueuesRequest, ListQueuesResponse] =
-          Sqs.consumer[ListQueuesRequest, ListQueuesResponse]
+          Sqs.sink[ListQueuesRequest, ListQueuesResponse]
         val request =
           listQueuesRequest("")
 
