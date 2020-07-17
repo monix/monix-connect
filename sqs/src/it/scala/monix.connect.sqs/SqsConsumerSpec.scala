@@ -44,7 +44,7 @@ class SqsConsumerSpec extends AnyWordSpecLike with Matchers with ScalaFutures wi
 
   override def beforeAll(): Unit = {
     Task.from(client.createQueue(createQueueRequest(randomQueueName)))
-    Thread.sleep(1000)
+    Thread.sleep(3000)
     super.beforeAll()
   }
 

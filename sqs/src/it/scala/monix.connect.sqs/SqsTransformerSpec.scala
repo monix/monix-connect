@@ -55,7 +55,7 @@ class SqsTransformerSpec
 
   override def beforeAll(): Unit = {
     Task.from(client.createQueue(createQueueRequest(randomQueueName)))
-    Thread.sleep(1000)
+    Thread.sleep(3000)
     super.beforeAll()
   }
 
