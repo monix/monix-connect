@@ -3,7 +3,7 @@ import sbt._
 object Dependencies {
 
   object DependencyVersions {
-    val AWS = "1.11.749"
+    val AWS = "1.11.822"
     val DynamoDb = "2.10.60"
     val PureConfig = "0.12.3"
     val S3 = "2.10.91"
