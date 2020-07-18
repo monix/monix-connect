@@ -1,7 +1,6 @@
 package monix.connect.sqs
 
 import monix.eval.Task
-import monix.execution.Scheduler.Implicits.global
 import monix.reactive.{Consumer, Observable}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
@@ -24,22 +23,18 @@ class SqsConsumerSpec extends AnyWordSpecLike with Matchers with ScalaFutures wi
 
       s"consume a single `ListQueuesRequest` and materializes to `ListQueuesResponse`" in {
         // given
-        Task.from(client.createQueue(createQueueRequest(randomQueueName)))
-        val consumer: Consumer[ListQueuesRequest, ListQueuesResponse] =
-          Sqs.sink[ListQueuesRequest, ListQueuesResponse]
-        val request =
-          listQueuesRequest("")
 
-        //when
-        val t: Task[ListQueuesResponse] = Observable.pure(request).consumeWith(consumer)
-
-        //then
-        whenReady(t.runToFuture) { response =>
-          response shouldBe a[ListQueuesResponse]
-          response.queueUrls().size() shouldBe 1
-          response.queueUrls().get(0) shouldBe "http://localhost:4576/queue/" + randomQueueName
+        for {
+          _ <- Task.from(client.createQueue(createQueueRequest(randomQueueName)))
+          consumer = Sqs.sink[ListQueuesRequest, ListQueuesResponse]
+          request = listQueuesRequest("")
+          res <- Observable.pure(request).consumeWith(consumer)
+        } yield {
+          res shouldBe a[ListQueuesResponse]
+          res.queueUrls().size() shouldBe 1
+          res.queueUrls().get(0) shouldBe "http://localhost:4576/queue/" + randomQueueName
+          Task.from(client.deleteQueue(deleteQueueRequest("http://localhost:4576/queue/" + randomQueueName)))
         }
-        Task.from(client.deleteQueue(deleteQueueRequest("http://localhost:4576/queue/" + randomQueueName)))
       }
     }
   }
