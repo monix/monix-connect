@@ -24,6 +24,7 @@ class SqsConsumerSpec extends AnyWordSpecLike with Matchers with ScalaFutures wi
 
       s"consume a single `ListQueuesRequest` and materializes to `ListQueuesResponse`" in {
         // given
+        Task.from(client.createQueue(createQueueRequest(randomQueueName)))
         val consumer: Consumer[ListQueuesRequest, ListQueuesResponse] =
           Sqs.sink[ListQueuesRequest, ListQueuesResponse]
         val request =
@@ -38,19 +39,8 @@ class SqsConsumerSpec extends AnyWordSpecLike with Matchers with ScalaFutures wi
           response.queueUrls().size() shouldBe 1
           response.queueUrls().get(0) shouldBe "http://localhost:4576/queue/" + randomQueueName
         }
+        Task.from(client.deleteQueue(deleteQueueRequest("http://localhost:4576/queue/" + randomQueueName)))
       }
     }
-  }
-
-  override def beforeAll(): Unit = {
-    Task.from(client.createQueue(createQueueRequest(randomQueueName)))
-    Thread.sleep(3000)
-    super.beforeAll()
-  }
-
-  override def afterAll(): Unit = {
-    Thread.sleep(1000)
-    Task.from(client.deleteQueue(deleteQueueRequest("http://localhost:4576/queue/" + randomQueueName)))
-    super.afterAll()
   }
 }

@@ -60,7 +60,6 @@ class SqsTransformerSpec
   }
 
   override def afterAll(): Unit = {
-    Thread.sleep(1000)
     Task.from(client.deleteQueue(deleteQueueRequest("http://localhost:4576/queue/" + randomQueueName)))
     super.afterAll()
   }
