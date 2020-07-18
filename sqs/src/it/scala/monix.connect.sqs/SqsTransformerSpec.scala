@@ -20,47 +20,34 @@ class SqsTransformerSpec
   implicit val client: SqsAsyncClient = SqsClient()
   val randomQueueName: String = genQueueName.sample.get
   val randomMessageBody: String = genMessageBody.sample.get
-
+  val randomQueueUrl = "http://localhost:4576/queue/" + randomQueueName
   s"${Sqs}.transformer() creates a transformer operator" that {
 
     s"given an implicit instance of ${randomQueueName} and ${randomMessageBody} in the scope" must {
 
       s"transform `SendMessageRequest` to `SendMessageResponse`" in {
         // given
-        val randomQueueUrl = "http://localhost:4576/queue/" + randomQueueName
 
-        val sendTransformer: Transformer[SendMessageRequest, Task[SendMessageResponse]] =
-          Sqs.transformer[SendMessageRequest, SendMessageResponse]
-        val request =
-          sendMessageRequest(queueUrl = randomQueueUrl, messageBody = randomMessageBody)
-
-        //when
-        val ob: Observable[Task[SendMessageResponse]] =
-          Observable
+        for {
+          _ <- Task.from(client.createQueue(createQueueRequest(randomQueueName)))
+          sendTransformer: Transformer[SendMessageRequest, Task[SendMessageResponse]] = Sqs
+            .transformer[SendMessageRequest, SendMessageResponse]
+          request = sendMessageRequest(queueUrl = randomQueueUrl, messageBody = randomMessageBody)
+          response <- Observable
             .pure(request)
             .transform(sendTransformer)
-        val t: Task[SendMessageResponse] = ob.headL.runToFuture.futureValue
-
-        //then
-        whenReady(t.runToFuture) { response =>
+            .headL
+            .runToFuture
+            .futureValue
+          res <- Sqs.source(randomQueueUrl).headL
+        } yield {
           response shouldBe a[SendMessageResponse]
           response.md5OfMessageBody() shouldNot be(null)
+          res.body() shouldBe randomMessageBody
+          Task.from(client.deleteQueue(deleteQueueRequest("http://localhost:4576/queue/" + randomQueueName)))
         }
-
-        whenReady(Sqs.source(randomQueueUrl).headL.runToFuture) { res => res.body() shouldBe randomMessageBody }
       }
     }
 
-  }
-
-  override def beforeAll(): Unit = {
-    Task.from(client.createQueue(createQueueRequest(randomQueueName)))
-    Thread.sleep(3000)
-    super.beforeAll()
-  }
-
-  override def afterAll(): Unit = {
-    Task.from(client.deleteQueue(deleteQueueRequest("http://localhost:4576/queue/" + randomQueueName)))
-    super.afterAll()
   }
 }
