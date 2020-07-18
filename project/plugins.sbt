@@ -11,4 +11,3 @@ addSbtPlugin("com.geirsson" % "sbt-ci-release" % "1.5.2")
 addSbtPlugin("org.scoverage"        % "sbt-scoverage"   % "1.6.1")
 libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.10.1"
 addSbtPlugin("org.scalameta"       % "sbt-mdoc"        % "2.2.1")
-addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.9.18")
