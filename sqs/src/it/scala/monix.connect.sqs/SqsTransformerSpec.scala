@@ -1,6 +1,5 @@
 package monix.connect.sqs
 
-import monix.connect.sqs.SqsOp._
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
@@ -10,6 +9,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model._
+import monix.connect.sqs.SqsOp.Implicits._
 
 import scala.concurrent.duration._
 
@@ -29,7 +29,7 @@ class SqsTransformerSpec
         // given
 
         for {
-          _ <- Task.from(client.createQueue(createQueueRequest(randomQueueName)))
+          _ <- SqsOp.create(createQueueRequest(randomQueueName))
           sendTransformer: Transformer[SendMessageRequest, Task[SendMessageResponse]] = Sqs
             .transformer[SendMessageRequest, SendMessageResponse]
           request = sendMessageRequest(queueUrl = randomQueueUrl, messageBody = randomMessageBody)
@@ -44,7 +44,7 @@ class SqsTransformerSpec
           response shouldBe a[SendMessageResponse]
           response.md5OfMessageBody() shouldNot be(null)
           res.body() shouldBe randomMessageBody
-          Task.from(client.deleteQueue(deleteQueueRequest("http://localhost:4576/queue/" + randomQueueName)))
+          SqsOp.create(deleteQueueRequest("http://localhost:4576/queue/" + randomQueueName))
         }
       }
     }

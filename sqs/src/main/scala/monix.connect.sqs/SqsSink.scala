@@ -19,7 +19,7 @@ package monix.connect.sqs
 
 import monix.eval.Task
 import monix.execution.cancelables.AssignableCancelable
-import monix.execution.{Ack, Callback, Scheduler}
+import monix.execution.{Ack, Callback, CancelableFuture, Scheduler}
 import monix.reactive.observers.Subscriber
 import monix.reactive.Consumer
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
@@ -41,15 +41,15 @@ private[sqs] class SqsSink[In <: SqsRequest, Out <: SqsResponse]()(
       private var sqsResponse: Task[Out] = _
 
       def onNext(sqsRequest: In): Future[Ack] = {
-        sqsResponse = Task.from(sqsOp.execute(sqsRequest))
-
-        sqsResponse.onErrorRecover {
-          case _: Throwable =>
-          case NonFatal(e) => {
-            onError(e)
-            monix.execution.Ack.Stop
-          }
-        }.map(_ => monix.execution.Ack.Continue).runToFuture
+        Task
+          .from(sqsOp.execute(sqsRequest))
+          .redeem(ex => {
+            onError(ex)
+            Ack.Stop
+          }, _ => {
+            Ack.Continue
+          })
+          .runToFuture
       }
 
       def onComplete(): Unit = {

@@ -8,6 +8,8 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model._
+import monix.connect.sqs.SqsOp.Implicits._
+import monix.connect.sqs.SqsOp
 
 import scala.concurrent.duration._
 
@@ -25,7 +27,7 @@ class SqsConsumerSpec extends AnyWordSpecLike with Matchers with ScalaFutures wi
         // given
 
         for {
-          _ <- Task.from(client.createQueue(createQueueRequest(randomQueueName)))
+          _ <- SqsOp.create(createQueueRequest(randomQueueName))
           consumer = Sqs.sink[ListQueuesRequest, ListQueuesResponse]
           request = listQueuesRequest("")
           res <- Observable.pure(request).consumeWith(consumer)
@@ -33,7 +35,7 @@ class SqsConsumerSpec extends AnyWordSpecLike with Matchers with ScalaFutures wi
           res shouldBe a[ListQueuesResponse]
           res.queueUrls().size() shouldBe 1
           res.queueUrls().get(0) shouldBe "http://localhost:4576/queue/" + randomQueueName
-          Task.from(client.deleteQueue(deleteQueueRequest("http://localhost:4576/queue/" + randomQueueName)))
+          SqsOp.create(deleteQueueRequest("http://localhost:4576/queue/" + randomQueueName))
         }
       }
     }
