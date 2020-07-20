@@ -32,13 +32,12 @@ private[sqs] class SqsSink[In <: SqsRequest, Out <: SqsResponse]()(
   implicit
   sqsOp: SqsOp[In, Out],
   client: SqsAsyncClient)
-  extends Consumer[In, Out] {
+  extends Consumer[In, Unit] {
 
-  override def createSubscriber(cb: Callback[Throwable, Out], s: Scheduler): (Subscriber[In], AssignableCancelable) = {
+  override def createSubscriber(cb: Callback[Throwable, Unit], s: Scheduler): (Subscriber[In], AssignableCancelable) = {
     val sub = new Subscriber[In] {
 
       implicit val scheduler = s
-      private var sqsResponse: Task[Out] = _
 
       def onNext(sqsRequest: In): Future[Ack] = {
         Task
@@ -53,7 +52,7 @@ private[sqs] class SqsSink[In <: SqsRequest, Out <: SqsResponse]()(
       }
 
       def onComplete(): Unit = {
-        sqsResponse.runAsync(cb)
+        cb.onSuccess()
       }
 
       def onError(ex: Throwable): Unit = {
@@ -62,5 +61,11 @@ private[sqs] class SqsSink[In <: SqsRequest, Out <: SqsResponse]()(
     }
     (sub, AssignableCancelable.single())
   }
+
+}
+
+object SqsSink {
+
+  def apply[In <: SqsRequest, Out <: SqsResponse]()(implicit sqsOp: SqsOp[In, Out], client: SqsAsyncClient): SqsSink[In, Out] = new SqsSink()(sqsOp, client)
 
 }

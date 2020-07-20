@@ -25,6 +25,7 @@ import software.amazon.awssdk.services.sqs.model.{Message, ReceiveMessageRequest
 import scala.jdk.CollectionConverters._
 
 object Sqs {
+
   def source(queueUrl: String)(
     implicit
     client: SqsAsyncClient,
@@ -51,7 +52,7 @@ object Sqs {
   def sink[In <: SqsRequest, Out <: SqsResponse](
     implicit
     sqsOp: SqsOp[In, Out],
-    client: SqsAsyncClient): Consumer[In, Out] = new SqsSink
+    client: SqsAsyncClient): Consumer[In, Unit] = SqsSink()(sqsOp, client)
 
   def transformer[In <: SqsRequest, Out <: SqsResponse](
     implicit
