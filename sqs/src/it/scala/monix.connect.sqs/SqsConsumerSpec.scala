@@ -29,11 +29,12 @@ class SqsConsumerSpec extends AnyWordSpecLike with Matchers with ScalaFutures wi
 
         val t: Task[Task[ListQueuesResponse]] = for {
           _ <- SqsOp.create(createQueueRequest(randomQueueName))
+          _ <- Task(Task.from(client.listQueues(listQueuesRequest("test"))).foreach(println))
           sink: Consumer[ListQueuesRequest, ListQueuesResponse] = Sqs.sink[ListQueuesRequest, ListQueuesResponse]
-          res <- Observable.fromIterable(List(listQueuesRequest(""))).consumeWith(sink)
+          res <- Observable.fromIterable(List(listQueuesRequest("test"))).consumeWith(sink)
         } yield Task(res)
 
-        whenReady(t.runSyncUnsafe(Duration(3000, MILLISECONDS)).runToFuture) { res =>
+        whenReady(t.runSyncUnsafe(Duration(10000, MILLISECONDS)).runToFuture) { res =>
           res shouldBe a[ListQueuesResponse]
           res.queueUrls().size() shouldBe 1
           res.queueUrls().get(0) shouldBe "http://localhost:4576/queue/" + randomQueueName
