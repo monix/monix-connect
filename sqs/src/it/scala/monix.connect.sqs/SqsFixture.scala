@@ -34,7 +34,7 @@ trait SqsFixture {
       .builder()
       .queueName(queueName)
       .attributes(
-        Map(QueueAttributeName.DELAY_SECONDS -> "60", QueueAttributeName.MESSAGE_RETENTION_PERIOD -> "86400").asJava)
+        Map(QueueAttributeName.DELAY_SECONDS -> "0", QueueAttributeName.MESSAGE_RETENTION_PERIOD -> "86400").asJava)
       .build()
 
   def listQueuesRequest(name_prefix: String): ListQueuesRequest =

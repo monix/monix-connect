@@ -1,7 +1,6 @@
 package monix.connect.sqs
 
 import monix.eval.Task
-import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
@@ -10,6 +9,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model._
 import monix.connect.sqs.SqsOp.Implicits._
+import monix.execution.Scheduler.Implicits.global
 
 import scala.concurrent.duration._
 
@@ -28,7 +28,7 @@ class SqsTransformerSpec
       s"transform `SendMessageRequest` to `SendMessageResponse`" in {
         // given
 
-        for {
+        val t: Task[Task[SendMessageResponse]] = for {
           _ <- SqsOp.create(createQueueRequest(randomQueueName))
           sendTransformer: Transformer[SendMessageRequest, Task[SendMessageResponse]] = Sqs
             .transformer[SendMessageRequest, SendMessageResponse]
@@ -37,13 +37,11 @@ class SqsTransformerSpec
             .pure(request)
             .transform(sendTransformer)
             .headL
-            .runToFuture
-            .futureValue
-          res <- Sqs.source(randomQueueUrl).headL
-        } yield {
+        } yield { response }
+
+        whenReady(t.runSyncUnsafe().runToFuture) { response =>
           response shouldBe a[SendMessageResponse]
           response.md5OfMessageBody() shouldNot be(null)
-          res.body() shouldBe randomMessageBody
           SqsOp.create(deleteQueueRequest("http://localhost:4576/queue/" + randomQueueName))
         }
       }

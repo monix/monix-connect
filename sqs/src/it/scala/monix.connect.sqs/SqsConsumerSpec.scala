@@ -1,7 +1,7 @@
 package monix.connect.sqs
 
 import monix.eval.Task
-import monix.reactive.{Consumer, Observable}
+import monix.reactive.{Consumer, Observable, OverflowStrategy}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
@@ -10,6 +10,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model._
 import monix.connect.sqs.SqsOp.Implicits._
 import monix.connect.sqs.SqsOp
+import monix.execution.Scheduler.Implicits.global
 
 import scala.concurrent.duration._
 
@@ -26,12 +27,13 @@ class SqsConsumerSpec extends AnyWordSpecLike with Matchers with ScalaFutures wi
       s"consume a single `ListQueuesRequest` and materializes to `ListQueuesResponse`" in {
         // given
 
-        for {
+        val t: Task[Task[ListQueuesResponse]] = for {
           _ <- SqsOp.create(createQueueRequest(randomQueueName))
-          consumer = Sqs.sink[ListQueuesRequest, ListQueuesResponse]
-          request = listQueuesRequest("")
-          res <- Observable.pure(request).consumeWith(consumer)
-        } yield {
+          sink: Consumer[ListQueuesRequest, ListQueuesResponse] = Sqs.sink[ListQueuesRequest, ListQueuesResponse]
+          res <- Observable.fromIterable(List(listQueuesRequest(""))).consumeWith(sink)
+        } yield Task(res)
+
+        whenReady(t.runSyncUnsafe(Duration(3000, MILLISECONDS)).runToFuture) { res =>
           res shouldBe a[ListQueuesResponse]
           res.queueUrls().size() shouldBe 1
           res.queueUrls().get(0) shouldBe "http://localhost:4576/queue/" + randomQueueName
