@@ -5,9 +5,9 @@ const apiUrl = "api/monix/connect/index.html"
 const siteConfig = {
   title: "Monix Connect",
   tagline: "A set of connectors and stream integrations for Monix.",
-  url: "https://monix.github.io/monix-connect",
-  baseUrl: "/monix-connect/",
-  cname: "monix.github.io/monix-connect",
+  url: "https://connect.monix.io",
+  baseUrl: "/",
+  cname: "connect.monix.io",
 
   customDocsPath: "monix-connect-docs/target/mdoc",
 
