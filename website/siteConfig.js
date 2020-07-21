@@ -10,7 +10,7 @@ const siteConfig = {
   cname: "connect.monix.io",
 
   customDocsPath: "monix-connect-docs/target/mdoc",
-
+  twitterImage: "img/monix-logo.png",
   projectName: "monix-connect",
   organizationName: "monix",
 
