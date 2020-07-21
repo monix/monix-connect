@@ -172,16 +172,6 @@ lazy val dynamodb = monixConnector("dynamodb", Dependencies.DynamoDb)
 
 lazy val hdfs = monixConnector("hdfs", Dependencies.Hdfs)
 
-lazy val gcs = (project in file("gcs"))
-  .settings(Defaults.itSettings)
-  .settings(
-    scalafmtOnCompile := true,
-    name := "monix-gcs",
-    libraryDependencies ++= Dependencies.GCS,
-    version := Version.version
-  )
-  .enablePlugins(JavaAppPackaging, DockerPlugin)
-
 val scalaPBSettings = Seq(
   PB.targets in Compile := Seq(
     scalapb.gen() -> (sourceManaged in Compile).value
