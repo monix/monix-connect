@@ -17,11 +17,14 @@
 
 package monix.connect.sqs
 
+import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
+
 case class SqsSourceSettings(
-  attributeNames: List[String] = Nil,
-  maxNumberOfMessages: Int = 5,
-  messageAttributeNames: List[String] = Nil,
-  visibilityTimeout: Option[Int] = Some(30),
-  waitTimeSeconds: Option[Int] = Some(20),
-  autoDelete: Boolean = true,
-  stopWhenQueueEmpty: Boolean = false)
+                              attributeNames: List[String] = Nil,
+                              maxNumberOfMessages: Int = 5,
+                              messageAttributeNames: List[String] = Nil,
+                              visibilityTimeout: Option[Int] = Some(30),
+                              waitTimeSeconds: FiniteDuration = 1.second,
+                              autoDelete: Boolean = true,
+                              stopWhenQueueEmpty: Boolean = false)

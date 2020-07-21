@@ -21,7 +21,7 @@ class SqsTransformerSpec
 
   val queuePrefix = "transformer-"
   val randomQueueName: String = queuePrefix + genQueueName.sample.get
-  val randomQueueUrl = queueUrl(randomQueueName)
+  val randomQueueUrl = getQueueUrl(randomQueueName)
 
   override def beforeAll() = {
     super.beforeAll()

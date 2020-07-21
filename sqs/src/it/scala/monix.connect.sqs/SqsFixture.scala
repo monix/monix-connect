@@ -61,5 +61,5 @@ trait SqsFixture {
   def deleteMessageRequest(queueUrl: String, message: Message): DeleteMessageRequest =
     DeleteMessageRequest.builder().queueUrl(queueUrl).receiptHandle(message.receiptHandle()).build()
 
-  protected def queueUrl(queueName: String) = "http://localhost:4576/queue/" + queueName
+  protected def getQueueUrl(queueName: String) = "http://localhost:4576/queue/" + queueName
 }

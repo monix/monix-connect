@@ -20,27 +20,26 @@ package monix.connect.sqs
 import monix.eval.Task
 import monix.reactive.{Consumer, Observable}
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
-import software.amazon.awssdk.services.sqs.model.{Message, ReceiveMessageRequest, SqsRequest, SqsResponse}
+import software.amazon.awssdk.services.sqs.model.{Message, ReceiveMessageRequest, SendMessageBatchRequest, SendMessageRequest, SqsRequest, SqsResponse}
 
 import scala.jdk.CollectionConverters._
 
 object Sqs {
 
-  def source(queueUrl: String)(
+  def source(queueUrl: String, settings: SqsSourceSettings = SqsSourceSettings())(
     implicit
-    client: SqsAsyncClient,
-    settings: SqsSourceSettings = SqsSourceSettings()): Observable[Message] = {
+    client: SqsAsyncClient): Observable[Message] = {
     for {
-      r <- Observable.repeat[ReceiveMessageRequest] {
-        val builder = ReceiveMessageRequest.builder
+      r <- {
+        val recieveRequest =
+          ReceiveMessageRequest.builder
           .queueUrl(queueUrl)
           .attributeNamesWithStrings(settings.attributeNames.asJava)
           .messageAttributeNames(settings.messageAttributeNames.asJava)
           .maxNumberOfMessages(settings.maxNumberOfMessages)
-
-        settings.visibilityTimeout.foreach(builder.visibilityTimeout(_))
-        settings.waitTimeSeconds.foreach(builder.waitTimeSeconds(_))
-        builder.build()
+          .waitTimeSeconds(settings.waitTimeSeconds.toSeconds.toInt)
+          .visibilityTimeout(settings.waitTimeSeconds.toSeconds.toInt).build()
+        Observable.repeat[ReceiveMessageRequest](recieveRequest)
       }
       l <- Observable.fromTask {
         Task.from(client.receiveMessage(r)).map(_.messages().asScala.toList)
@@ -49,10 +48,9 @@ object Sqs {
     } yield m
   }
 
-  def sink[In <: SqsRequest, Out <: SqsResponse](
+  def sink(
     implicit
-    sqsOp: SqsOp[In, Out],
-    client: SqsAsyncClient): Consumer[In, Unit] = SqsSink()(sqsOp, client)
+    client: SqsAsyncClient): Consumer[SendMessageRequest, Unit] = SqsSink()(SqsOp.Implicits.sendMessage, client)
 
   def transformer[In <: SqsRequest, Out <: SqsResponse](
     implicit
