@@ -35,18 +35,20 @@ private[parquet] class ParquetPublisher[T](reader: ParquetReader[T]) {
     */
   private def readRecords(sub: Subscriber[T]): Task[Unit] = {
     val t = Task(reader.read())
-    t.onErrorHandleWith { case ex: Throwable => Task(sub.onError(ex)) }
-    t.flatMap { r =>
-      if (r != null) {
-        Task.deferFuture(sub.onNext(r)).flatMap {
-          case Ack.Continue => readRecords(sub)
-          case Ack.Stop => Task.unit
+    t.redeemWith(
+      ex => Task(sub.onError(ex)),
+      r => {
+        if (r != null) {
+          Task.deferFuture(sub.onNext(r)).flatMap {
+            case Ack.Continue => readRecords(sub)
+            case Ack.Stop => Task.unit
+          }
+        } else {
+          sub.onComplete()
+          Task.unit
         }
-      } else {
-        sub.onComplete()
-        Task.unit
       }
-    }
+    )
   }
 
   /**
