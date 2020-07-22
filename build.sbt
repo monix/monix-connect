@@ -233,7 +233,7 @@ lazy val skipOnPublishSettings = Seq(
 lazy val mdocSettings = Seq(
   scalacOptions --= Seq("-Xfatal-warnings", "-Ywarn-unused"),
   crossScalaVersions := Seq(scalaVersion.value),
-  unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(akka, dynamodb, hdfs, redis, s3),
+  unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(akka, dynamodb, hdfs, redis, s3, parquet),
   target in (ScalaUnidoc, unidoc) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",
   cleanFiles += (target in (ScalaUnidoc, unidoc)).value,
   docusaurusCreateSite := docusaurusCreateSite
@@ -254,8 +254,8 @@ lazy val mdocSettings = Seq(
   ),
   // Exclude monix.*.internal from ScalaDoc
   sources in (ScalaUnidoc, unidoc) ~= (_ filterNot { file =>
-    // Exclude all internal Java files from documentation
-    file.getCanonicalPath matches "^.*monix.+?internal.*?\\.java$"
+    // Exclude protobuf generated files
+    file.getCanonicalPath.contains("/src_managed/main/monix/connect/")
   }),
 )
 
