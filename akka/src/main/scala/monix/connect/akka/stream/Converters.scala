@@ -22,7 +22,7 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import monix.eval.Task
 import monix.execution.{Callback, Scheduler}
-import monix.execution.cancelables.{AssignableCancelable, SingleAssignCancelable}
+import monix.execution.cancelables.SingleAssignCancelable
 import monix.reactive.{observers, Consumer, Observable, Observer}
 import org.reactivestreams.{Publisher, Subscriber}
 

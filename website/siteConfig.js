@@ -1,6 +1,6 @@
 const repoUrl = "https://github.com/monix/monix-connect";
 
-const apiUrl = "api/monix/connect/index.html"
+const apiUrl = "/api/monix/connect/index.html"
 
 const siteConfig = {
   title: "Monix Connect",
