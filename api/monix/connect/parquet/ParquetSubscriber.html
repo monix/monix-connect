@@ -3,9 +3,9 @@
         <head>
           <meta http-equiv="X-UA-Compatible" content="IE=edge" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-          <title>Monix Connect v0.1.0+48-a329dffc-SNAPSHOT - monix.connect.dynamodb.DynamoDbOp</title>
-          <meta name="description" content="Monix Connect v0.1.0 48 - a329dffc - SNAPSHOT - monix.connect.dynamodb.DynamoDbOp" />
-          <meta name="keywords" content="Monix Connect v0.1.0 48 a329dffc SNAPSHOT monix.connect.dynamodb.DynamoDbOp" />
+          <title>Monix Connect v0.1.0+48-a329dffc-SNAPSHOT - monix.connect.parquet.ParquetSubscriber</title>
+          <meta name="description" content="Monix Connect v0.1.0 48 - a329dffc - SNAPSHOT - monix.connect.parquet.ParquetSubscriber" />
+          <meta name="keywords" content="Monix Connect v0.1.0 48 a329dffc SNAPSHOT monix.connect.parquet.ParquetSubscriber" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../lib/index.css" media="screen" type="text/css" rel="stylesheet" />
@@ -101,10 +101,10 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../index.html" class="extype" name="monix">monix</a></dd></dl></div>
-    </li><li name="monix.connect.dynamodb" visbl="pub" class="indented3 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="dynamodb"></a><a id="dynamodb:dynamodb"></a>
+    </li><li name="monix.connect.parquet" visbl="pub" class="indented3 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="parquet"></a><a id="parquet:parquet"></a>
       <span class="permalink">
-      <a href="../../monix/connect/index.html#dynamodb" title="Permalink">
+      <a href="../../monix/connect/index.html#parquet" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -113,54 +113,55 @@
         <span class="kind">package</span>
       </span>
       <span class="symbol">
-        <a title="" href="index.html"><span class="name">dynamodb</span></a>
+        <a title="" href="index.html"><span class="name">parquet</span></a>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="monix.connect">connect</a></dd></dl></div>
     </li><li class="current-entities indented3">
                         <span class="separator"></span>
-                        <a class="object" href="DynamoDb$.html" title="An idiomatic DynamoDb client integrated with Monix ecosystem."></a>
-                        <a href="DynamoDb$.html" title="An idiomatic DynamoDb client integrated with Monix ecosystem.">DynamoDb</a>
+                        <a class="object" href="Parquet$.html" title=""></a>
+                        <a href="Parquet$.html" title="">Parquet</a>
                       </li><li class="current-entities indented3">
-                        <a class="object" href="" title="Defines all the available dynamodb operations available from DynamoDbAsyncClient as a DynamoDbOp."></a>
-                        <a class="trait" href="DynamoDbOp.html" title="Abstracts the execution of any given DynamoDbRequest with its correspondent operation that returns DynamoDbResponse."></a>
-                        <a href="DynamoDbOp.html" title="Abstracts the execution of any given DynamoDbRequest with its correspondent operation that returns DynamoDbResponse.">DynamoDbOp</a>
+                        <span class="separator"></span>
+                        <a class="object" href="ParquetPublisher$.html" title="Companion object builder for ParquetPublisher."></a>
+                        <a href="ParquetPublisher$.html" title="Companion object builder for ParquetPublisher.">ParquetPublisher</a>
+                      </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="class" href="" title="A parquet writer implemented as a Subscriber.Sync."></a>
+                        <a href="" title="A parquet writer implemented as a Subscriber.Sync.">ParquetSubscriber</a>
                       </li>
               </ul>
             </div>
           </div>
           <div id="content">
-            <body class="object value">
+            <body class="class type">
       <div id="definition">
-        <a href="DynamoDbOp.html" title="See companion trait"><div class="big-circle object-companion-trait">o</div></a>
-        <p id="owner"><a href="../../index.html" class="extype" name="monix">monix</a>.<a href="../index.html" class="extype" name="monix.connect">connect</a>.<a href="index.html" class="extype" name="monix.connect.dynamodb">dynamodb</a></p>
-        <h1><a href="DynamoDbOp.html" title="See companion trait">DynamoDbOp</a><span class="permalink">
-      <a href="../../../monix/connect/dynamodb/DynamoDbOp$.html" title="Permalink">
+        <div class="big-circle class">c</div>
+        <p id="owner"><a href="../../index.html" class="extype" name="monix">monix</a>.<a href="../index.html" class="extype" name="monix.connect">connect</a>.<a href="index.html" class="extype" name="monix.connect.parquet">parquet</a></p>
+        <h1>ParquetSubscriber<span class="permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span></h1>
-        <h3><span class="morelinks"><div>
-            Companion <a href="DynamoDbOp.html" title="See companion trait">trait DynamoDbOp</a>
-          </div></span></h3>
+        <h3><span class="morelinks"></span></h3>
       </div>
 
       <h4 id="signature" class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
-        <span class="kind">object</span>
+        <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <span class="name">DynamoDbOp</span>
+        <span class="name">ParquetSubscriber</span><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="monix.reactive.Consumer">Consumer</span>[<span class="extype" name="monix.connect.parquet.ParquetSubscriber.T">T</span>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>] with <span class="extype" name="monix.reactive.Consumer.Sync">Sync</span>[<span class="extype" name="monix.connect.parquet.ParquetSubscriber.T">T</span>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]</span>
       </span>
       </h4>
 
       
-          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Defines all the available dynamodb operations available from <span class="extype" name="DynamoDbAsyncClient">DynamoDbAsyncClient</span> as a <a href="DynamoDbOp.html" class="extype" name="monix.connect.dynamodb.DynamoDbOp">DynamoDbOp</a>.</p></div><dl class="attributes block"> <dt>Source</dt><dd><a href="https://github.com/monix/monix-connect/tree/v0.1.0+48-a329dffc-SNAPSHOT/dynamodb/src/main/scala/monix/connect/dynamodb/DynamoDbOp.scala" target="_blank">DynamoDbOp.scala</a></dd><dt>Note</dt><dd><span class="cmt"><p>All of them are defined implicitly, and can be imported from the object <a href="DynamoDbOp$$Implicits$.html" class="extype" name="monix.connect.dynamodb.DynamoDbOp.Implicits">DynamoDbOp.Implicits</a>
-      which will automatically infer and extend the <span class="extype" name="DynamoDbRequest">DynamoDbRequest</span> as <a href="DynamoDbOp.html" class="extype" name="monix.connect.dynamodb.DynamoDbOp">DynamoDbOp</a>.</p></span></dd></dl><div class="toggleContainer block">
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>A parquet writer implemented as a <span class="extype" name="Subscriber.Sync">Subscriber.Sync</span>.</p></div><dl class="paramcmts block"><dt class="tparam">T</dt><dd class="cmt"><p>Represents the type of the elements that will be written into the parquet file.</p></dd></dl><dl class="attributes block"> <dt>Source</dt><dd><a href="https://github.com/monix/monix-connect/tree/v0.1.0+48-a329dffc-SNAPSHOT/parquet/src/main/scala/monix/connect/parquet/ParquetSubscriber.scala" target="_blank">ParquetSubscriber.scala</a></dd></dl><div class="toggleContainer block">
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><span class="extype" name="monix.reactive.Consumer.Sync">Sync</span>[<span class="extype" name="monix.connect.parquet.ParquetSubscriber.T">T</span>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>], <span class="extype" name="monix.reactive.Consumer">Consumer</span>[<span class="extype" name="monix.connect.parquet.ParquetSubscriber.T">T</span>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>], <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a>, <span class="extype" name="java.io.Serializable">Serializable</span>, (<span class="extype" name="monix.reactive.Observable">Observable</span>[<span class="extype" name="monix.connect.parquet.ParquetSubscriber.T">T</span>]) ⇒ <span class="extype" name="monix.eval.Task">Task</span>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>], <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -186,7 +187,7 @@
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="monix.connect.dynamodb.DynamoDbOp"><span>DynamoDbOp</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="monix.connect.parquet.ParquetSubscriber"><span>ParquetSubscriber</span></li><li class="in" name="monix.reactive.Consumer.Sync"><span>Sync</span></li><li class="in" name="monix.reactive.Consumer"><span>Consumer</span></li><li class="in" name="scala.Serializable"><span>Serializable</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="scala.Function1"><span>Function1</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -204,7 +205,26 @@
 
       <div id="template">
         <div id="allMembers">
-        
+        <div id="constructors" class="members">
+              <h3>Instance Constructors</h3>
+              <ol><li name="monix.connect.parquet.ParquetSubscriber#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="&lt;init&gt;(parquetWriter:org.apache.parquet.hadoop.ParquetWriter[T]):monix.connect.parquet.ParquetSubscriber[T]"></a><a id="&lt;init&gt;:ParquetSubscriber[T]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#&lt;init&gt;(parquetWriter:org.apache.parquet.hadoop.ParquetWriter[T]):monix.connect.parquet.ParquetSubscriber[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">new</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ParquetSubscriber</span><span class="params">(<span name="parquetWriter">parquetWriter: <span class="extype" name="org.apache.parquet.hadoop.ParquetWriter">ParquetWriter</span>[<span class="extype" name="monix.connect.parquet.ParquetSubscriber.T">T</span>]</span>)</span>
+      </span>
+      
+      <p class="shortcomment cmt"></p><div class="fullcomment"><div class="comment cmt"></div><dl class="paramcmts block"><dt class="param">parquetWriter</dt><dd class="cmt"><p>The apache hadoop generic implementation of a parquet writer.</p></dd></dl></div>
+    </li></ol>
+            </div>
 
         
 
@@ -216,7 +236,7 @@
                 <li name="scala.AnyRef#!=" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="!=(x$1:Any):Boolean"></a><a id="!=(Any):Boolean"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/dynamodb/DynamoDbOp$.html#!=(x$1:Any):Boolean" title="Permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#!=(x$1:Any):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -232,7 +252,7 @@
     </li><li name="scala.AnyRef###" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="##():Int"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/dynamodb/DynamoDbOp$.html###():Int" title="Permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html###():Int" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -248,7 +268,7 @@
     </li><li name="scala.AnyRef#==" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="==(x$1:Any):Boolean"></a><a id="==(Any):Boolean"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/dynamodb/DynamoDbOp$.html#==(x$1:Any):Boolean" title="Permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#==(x$1:Any):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -261,10 +281,45 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.Function1#andThen" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="andThen[A](g:R=&gt;A):T1=&gt;A"></a><a id="andThen[A]((Task[Long])⇒A):(Observable[T])⇒A"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#andThen[A](g:R=&gt;A):T1=&gt;A" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">andThen</span><span class="tparams">[<span name="A">A</span>]</span><span class="params">(<span name="g">g: (<span class="extype" name="monix.eval.Task">Task</span>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]) ⇒ <span class="extype" name="scala.Function1.andThen.A">A</span></span>)</span><span class="result">: (<span class="extype" name="monix.reactive.Observable">Observable</span>[<span class="extype" name="monix.connect.parquet.ParquetSubscriber.T">T</span>]) ⇒ <span class="extype" name="scala.Function1.andThen.A">A</span></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Function1</dd><dt>Annotations</dt><dd>
+                <span class="name">@unspecialized</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="monix.reactive.Consumer#apply" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="apply(source:monix.reactive.Observable[In]):monix.eval.Task[R]"></a><a id="apply(Observable[T]):Task[Long]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#apply(source:monix.reactive.Observable[In]):monix.eval.Task[R]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">apply</span><span class="params">(<span name="source">source: <span class="extype" name="monix.reactive.Observable">Observable</span>[<span class="extype" name="monix.connect.parquet.ParquetSubscriber.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Consumer → Function1</dd></dl></div>
     </li><li name="scala.Any#asInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/dynamodb/DynamoDbOp$.html#asInstanceOf[T0]:T0" title="Permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#asInstanceOf[T0]:T0" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -280,7 +335,7 @@
     </li><li name="scala.AnyRef#clone" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clone():Object"></a><a id="clone():AnyRef"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/dynamodb/DynamoDbOp$.html#clone():Object" title="Permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#clone():Object" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -301,10 +356,29 @@
     </span>)</span>
               
         </dd></dl></div>
-    </li><li name="monix.connect.dynamodb.DynamoDbOp#create" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="create[In&lt;:software.amazon.awssdk.services.dynamodb.model.DynamoDbRequest,Out&lt;:software.amazon.awssdk.services.dynamodb.model.DynamoDbResponse](request:In,retries:Int,delayAfterFailure:Option[scala.concurrent.duration.FiniteDuration])(implicitdynamoDbOp:monix.connect.dynamodb.DynamoDbOp[In,Out],implicitclient:software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient):monix.eval.Task[Out]"></a><a id="create[In&lt;:DynamoDbRequest,Out&lt;:DynamoDbResponse](In,Int,Option[FiniteDuration])(DynamoDbOp[In,Out],DynamoDbAsyncClient):Task[Out]"></a>
+    </li><li name="scala.Function1#compose" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="compose[A](g:A=&gt;T1):A=&gt;R"></a><a id="compose[A]((A)⇒Observable[T]):(A)⇒Task[Long]"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/dynamodb/DynamoDbOp$.html#create[In&lt;:software.amazon.awssdk.services.dynamodb.model.DynamoDbRequest,Out&lt;:software.amazon.awssdk.services.dynamodb.model.DynamoDbResponse](request:In,retries:Int,delayAfterFailure:Option[scala.concurrent.duration.FiniteDuration])(implicitdynamoDbOp:monix.connect.dynamodb.DynamoDbOp[In,Out],implicitclient:software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient):monix.eval.Task[Out]" title="Permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#compose[A](g:A=&gt;T1):A=&gt;R" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">compose</span><span class="tparams">[<span name="A">A</span>]</span><span class="params">(<span name="g">g: (<span class="extype" name="scala.Function1.compose.A">A</span>) ⇒ <span class="extype" name="monix.reactive.Observable">Observable</span>[<span class="extype" name="monix.connect.parquet.ParquetSubscriber.T">T</span>]</span>)</span><span class="result">: (<span class="extype" name="scala.Function1.compose.A">A</span>) ⇒ <span class="extype" name="monix.eval.Task">Task</span>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Function1</dd><dt>Annotations</dt><dd>
+                <span class="name">@unspecialized</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="monix.reactive.Consumer#contramap" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="contramap[In2](f:In2=&gt;In):monix.reactive.Consumer[In2,R]"></a><a id="contramap[In2]((In2)⇒T):Consumer[In2,Long]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#contramap[In2](f:In2=&gt;In):monix.reactive.Consumer[In2,R]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -313,18 +387,30 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">create</span><span class="tparams">[<span name="In">In &lt;: <span class="extype" name="software.amazon.awssdk.services.dynamodb.model.DynamoDbRequest">DynamoDbRequest</span></span>, <span name="Out">Out &lt;: <span class="extype" name="software.amazon.awssdk.services.dynamodb.model.DynamoDbResponse">DynamoDbResponse</span></span>]</span><span class="params">(<span name="request">request: <span class="extype" name="monix.connect.dynamodb.DynamoDbOp.create.In">In</span></span>, <span name="retries">retries: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="symbol">0</span></span>, <span name="delayAfterFailure">delayAfterFailure: <a href="http://www.scala-lang.org/api/2.12.8/scala/Option.html#scala.Option" class="extype" name="scala.Option">Option</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a>] = <span class="symbol">None</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="dynamoDbOp">dynamoDbOp: <a href="DynamoDbOp.html" class="extype" name="monix.connect.dynamodb.DynamoDbOp">DynamoDbOp</a>[<span class="extype" name="monix.connect.dynamodb.DynamoDbOp.create.In">In</span>, <span class="extype" name="monix.connect.dynamodb.DynamoDbOp.create.Out">Out</span>]</span>, <span name="client">client: <span class="extype" name="software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient">DynamoDbAsyncClient</span></span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<span class="extype" name="monix.connect.dynamodb.DynamoDbOp.create.Out">Out</span>]</span>
+        <span class="name">contramap</span><span class="tparams">[<span name="In2">In2</span>]</span><span class="params">(<span name="f">f: (<span class="extype" name="monix.reactive.Consumer.contramap.In2">In2</span>) ⇒ <span class="extype" name="monix.connect.parquet.ParquetSubscriber.T">T</span></span>)</span><span class="result">: <span class="extype" name="monix.reactive.Consumer">Consumer</span>[<span class="extype" name="monix.reactive.Consumer.contramap.In2">In2</span>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]</span>
       </span>
       
-      <p class="shortcomment cmt">Creates the description of the execution of a single request that
-under failure it will be retried as many times as set in <span class="extype" name="retries">retries</span>.</p><div class="fullcomment"><div class="comment cmt"><p>Creates the description of the execution of a single request that
-under failure it will be retried as many times as set in <span class="extype" name="retries">retries</span>.
-</p></div><dl class="paramcmts block"><dt class="param">request</dt><dd class="cmt"><p>the <span class="extype" name="DynamoDbRequest">DynamoDbRequest</span> that will be executed.</p></dd><dt class="param">retries</dt><dd class="cmt"><p>the number of times that an operation can be retried before actually returning a failed <span class="extype" name="Task">Task</span>.
-       it must be higher or equal than 0.</p></dd><dt class="param">delayAfterFailure</dt><dd class="cmt"><p>delay after failure for the execution of a single <a href="DynamoDbOp.html" class="extype" name="monix.connect.dynamodb.DynamoDbOp">DynamoDbOp</a>.</p></dd><dt class="param">dynamoDbOp</dt><dd class="cmt"><p>an implicit <a href="DynamoDbOp.html" class="extype" name="monix.connect.dynamodb.DynamoDbOp">DynamoDbOp</a> that abstracts the execution of the specific operation.</p></dd><dt>returns</dt><dd class="cmt"><p>A <span class="extype" name="Task">Task</span> that ends successfully with the response as <span class="extype" name="DynamoDbResponse">DynamoDbResponse</span>, or a failed one.</p></dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Consumer</dd></dl></div>
+    </li><li name="monix.connect.parquet.ParquetSubscriber#createSubscriber" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="createSubscriber(callback:monix.execution.Callback[Throwable,Long],s:monix.execution.Scheduler):(monix.reactive.observers.Subscriber.Sync[T],monix.execution.cancelables.AssignableCancelable)"></a><a id="createSubscriber(Callback[Throwable,Long],Scheduler):(Sync[T],AssignableCancelable)"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#createSubscriber(callback:monix.execution.Callback[Throwable,Long],s:monix.execution.Scheduler):(monix.reactive.observers.Subscriber.Sync[T],monix.execution.cancelables.AssignableCancelable)" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">createSubscriber</span><span class="params">(<span name="callback">callback: <a href="https://monix.io/api/3.1/monix/execution/Callback.html#monix.execution.Callback" class="extype" name="monix.execution.Callback">Callback</a>[<span class="extype" name="scala.Throwable">Throwable</span>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]</span>, <span name="s">s: <a href="https://monix.io/api/3.1/monix/execution/Scheduler.html#monix.execution.Scheduler" class="extype" name="monix.execution.Scheduler">Scheduler</a></span>)</span><span class="result">: (<span class="extype" name="monix.reactive.observers.Subscriber.Sync">Sync</span>[<span class="extype" name="monix.connect.parquet.ParquetSubscriber.T">T</span>], <span class="extype" name="monix.execution.cancelables.AssignableCancelable">AssignableCancelable</span>)</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="monix.connect.parquet.ParquetSubscriber">ParquetSubscriber</a> → Sync → Consumer</dd></dl></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a><a id="eq(AnyRef):Boolean"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/dynamodb/DynamoDbOp$.html#eq(x$1:AnyRef):Boolean" title="Permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#eq(x$1:AnyRef):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -340,7 +426,7 @@ under failure it will be retried as many times as set in <span class="extype" na
     </li><li name="scala.AnyRef#equals" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="equals(x$1:Any):Boolean"></a><a id="equals(Any):Boolean"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/dynamodb/DynamoDbOp$.html#equals(x$1:Any):Boolean" title="Permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#equals(x$1:Any):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -356,7 +442,7 @@ under failure it will be retried as many times as set in <span class="extype" na
     </li><li name="scala.AnyRef#finalize" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="finalize():Unit"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/dynamodb/DynamoDbOp$.html#finalize():Unit" title="Permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#finalize():Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -378,7 +464,7 @@ under failure it will be retried as many times as set in <span class="extype" na
     </li><li name="scala.AnyRef#getClass" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getClass():Class[_]"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/dynamodb/DynamoDbOp$.html#getClass():Class[_]" title="Permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#getClass():Class[_]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -397,7 +483,7 @@ under failure it will be retried as many times as set in <span class="extype" na
     </li><li name="scala.AnyRef#hashCode" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="hashCode():Int"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/dynamodb/DynamoDbOp$.html#hashCode():Int" title="Permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#hashCode():Int" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -416,7 +502,7 @@ under failure it will be retried as many times as set in <span class="extype" na
     </li><li name="scala.Any#isInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/dynamodb/DynamoDbOp$.html#isInstanceOf[T0]:Boolean" title="Permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#isInstanceOf[T0]:Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -429,10 +515,58 @@ under failure it will be retried as many times as set in <span class="extype" na
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="monix.reactive.Consumer#map" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="map[R2](f:R=&gt;R2):monix.reactive.Consumer[In,R2]"></a><a id="map[R2]((Long)⇒R2):Consumer[T,R2]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#map[R2](f:R=&gt;R2):monix.reactive.Consumer[In,R2]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">map</span><span class="tparams">[<span name="R2">R2</span>]</span><span class="params">(<span name="f">f: (<a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>) ⇒ <span class="extype" name="monix.reactive.Consumer.map.R2">R2</span></span>)</span><span class="result">: <span class="extype" name="monix.reactive.Consumer">Consumer</span>[<span class="extype" name="monix.connect.parquet.ParquetSubscriber.T">T</span>, <span class="extype" name="monix.reactive.Consumer.map.R2">R2</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Consumer</dd></dl></div>
+    </li><li name="monix.reactive.Consumer#mapEval" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="mapEval[F[_],R2](f:R=&gt;F[R2])(implicitF:monix.eval.TaskLike[F]):monix.reactive.Consumer[In,R2]"></a><a id="mapEval[F[_],R2]((Long)⇒F[R2])(TaskLike[F]):Consumer[T,R2]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#mapEval[F[_],R2](f:R=&gt;F[R2])(implicitF:monix.eval.TaskLike[F]):monix.reactive.Consumer[In,R2]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">mapEval</span><span class="tparams">[<span name="F">F<span class="tparams">[<span name="_">_</span>]</span></span>, <span name="R2">R2</span>]</span><span class="params">(<span name="f">f: (<a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>) ⇒ <span class="extype" name="monix.reactive.Consumer.mapEval.F">F</span>[<span class="extype" name="monix.reactive.Consumer.mapEval.R2">R2</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="F">F: <span class="extype" name="monix.eval.TaskLike">TaskLike</span>[<span class="extype" name="monix.reactive.Consumer.mapEval.F">F</span>]</span>)</span><span class="result">: <span class="extype" name="monix.reactive.Consumer">Consumer</span>[<span class="extype" name="monix.connect.parquet.ParquetSubscriber.T">T</span>, <span class="extype" name="monix.reactive.Consumer.mapEval.R2">R2</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Consumer</dd></dl></div>
+    </li><li name="monix.reactive.Consumer#mapTask" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="mapTask[R2](f:R=&gt;monix.eval.Task[R2]):monix.reactive.Consumer[In,R2]"></a><a id="mapTask[R2]((Long)⇒Task[R2]):Consumer[T,R2]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#mapTask[R2](f:R=&gt;monix.eval.Task[R2]):monix.reactive.Consumer[In,R2]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">mapTask</span><span class="tparams">[<span name="R2">R2</span>]</span><span class="params">(<span name="f">f: (<a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>) ⇒ <span class="extype" name="monix.eval.Task">Task</span>[<span class="extype" name="monix.reactive.Consumer.mapTask.R2">R2</span>]</span>)</span><span class="result">: <span class="extype" name="monix.reactive.Consumer">Consumer</span>[<span class="extype" name="monix.connect.parquet.ParquetSubscriber.T">T</span>, <span class="extype" name="monix.reactive.Consumer.mapTask.R2">R2</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Consumer</dd></dl></div>
     </li><li name="scala.AnyRef#ne" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a><a id="ne(AnyRef):Boolean"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/dynamodb/DynamoDbOp$.html#ne(x$1:AnyRef):Boolean" title="Permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#ne(x$1:AnyRef):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -448,7 +582,7 @@ under failure it will be retried as many times as set in <span class="extype" na
     </li><li name="scala.AnyRef#notify" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="notify():Unit"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/dynamodb/DynamoDbOp$.html#notify():Unit" title="Permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#notify():Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -467,7 +601,7 @@ under failure it will be retried as many times as set in <span class="extype" na
     </li><li name="scala.AnyRef#notifyAll" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="notifyAll():Unit"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/dynamodb/DynamoDbOp$.html#notifyAll():Unit" title="Permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#notifyAll():Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -486,7 +620,7 @@ under failure it will be retried as many times as set in <span class="extype" na
     </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/dynamodb/DynamoDbOp$.html#synchronized[T0](x$1:=&gt;T0):T0" title="Permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#synchronized[T0](x$1:=&gt;T0):T0" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -499,10 +633,10 @@ under failure it will be retried as many times as set in <span class="extype" na
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="scala.AnyRef#toString" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+    </li><li name="scala.Function1#toString" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="toString():String"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/dynamodb/DynamoDbOp$.html#toString():String" title="Permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#toString():String" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -514,11 +648,27 @@ under failure it will be retried as many times as set in <span class="extype" na
         <span class="name">toString</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.String">String</span></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Function1 → AnyRef → Any</dd></dl></div>
+    </li><li name="monix.reactive.Consumer#transformInput" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="transformInput[In2](f:monix.reactive.Observable[In2]=&gt;monix.reactive.Observable[In]):monix.reactive.Consumer[In2,R]"></a><a id="transformInput[In2]((Observable[In2])⇒Observable[T]):Consumer[In2,Long]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#transformInput[In2](f:monix.reactive.Observable[In2]=&gt;monix.reactive.Observable[In]):monix.reactive.Consumer[In2,R]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">transformInput</span><span class="tparams">[<span name="In2">In2</span>]</span><span class="params">(<span name="f">f: (<span class="extype" name="monix.reactive.Observable">Observable</span>[<span class="extype" name="monix.reactive.Consumer.transformInput.In2">In2</span>]) ⇒ <span class="extype" name="monix.reactive.Observable">Observable</span>[<span class="extype" name="monix.connect.parquet.ParquetSubscriber.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="monix.reactive.Consumer">Consumer</span>[<span class="extype" name="monix.reactive.Consumer.transformInput.In2">In2</span>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Consumer</dd></dl></div>
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait():Unit"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/dynamodb/DynamoDbOp$.html#wait():Unit" title="Permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#wait():Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -540,7 +690,7 @@ under failure it will be retried as many times as set in <span class="extype" na
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait(x$1:Long,x$2:Int):Unit"></a><a id="wait(Long,Int):Unit"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/dynamodb/DynamoDbOp$.html#wait(x$1:Long,x$2:Int):Unit" title="Permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#wait(x$1:Long,x$2:Int):Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -562,7 +712,7 @@ under failure it will be retried as many times as set in <span class="extype" na
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait(x$1:Long):Unit"></a><a id="wait(Long):Unit"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/dynamodb/DynamoDbOp$.html#wait(x$1:Long):Unit" title="Permalink">
+      <a href="../../../monix/connect/parquet/ParquetSubscriber.html#wait(x$1:Long):Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -583,22 +733,6 @@ under failure it will be retried as many times as set in <span class="extype" na
     </span>)</span>
               
         </dd></dl></div>
-    </li><li name="monix.connect.dynamodb.DynamoDbOp.Implicits" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="Implicits"></a><a id="Implicits:Implicits"></a>
-      <span class="permalink">
-      <a href="../../../monix/connect/dynamodb/DynamoDbOp$.html#Implicits" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">object</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="DynamoDbOp$$Implicits$.html"><span class="name">Implicits</span></a>
-      </span>
-      
-      
     </li>
               </ol>
             </div>
@@ -609,7 +743,17 @@ under failure it will be retried as many times as set in <span class="extype" na
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="scala.AnyRef">
+        <div class="parent" name="monix.reactive.Consumer.Sync">
+              <h3>Inherited from <span class="extype" name="monix.reactive.Consumer.Sync">Sync</span>[<span class="extype" name="monix.connect.parquet.ParquetSubscriber.T">T</span>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]</h3>
+            </div><div class="parent" name="monix.reactive.Consumer">
+              <h3>Inherited from <span class="extype" name="monix.reactive.Consumer">Consumer</span>[<span class="extype" name="monix.connect.parquet.ParquetSubscriber.T">T</span>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]</h3>
+            </div><div class="parent" name="scala.Serializable">
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></h3>
+            </div><div class="parent" name="java.io.Serializable">
+              <h3>Inherited from <span class="extype" name="java.io.Serializable">Serializable</span></h3>
+            </div><div class="parent" name="scala.Function1">
+              <h3>Inherited from (<span class="extype" name="monix.reactive.Observable">Observable</span>[<span class="extype" name="monix.connect.parquet.ParquetSubscriber.T">T</span>]) ⇒ <span class="extype" name="monix.eval.Task">Task</span>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]</h3>
+            </div><div class="parent" name="scala.AnyRef">
               <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
               <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>

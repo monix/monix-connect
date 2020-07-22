@@ -3,9 +3,9 @@
         <head>
           <meta http-equiv="X-UA-Compatible" content="IE=edge" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-          <title>Monix Connect v0.1.0+48-a329dffc-SNAPSHOT - monix.connect.hdfs</title>
-          <meta name="description" content="Monix Connect v0.1.0 48 - a329dffc - SNAPSHOT - monix.connect.hdfs" />
-          <meta name="keywords" content="Monix Connect v0.1.0 48 a329dffc SNAPSHOT monix.connect.hdfs" />
+          <title>Monix Connect v0.1.0+48-a329dffc-SNAPSHOT - monix.connect.parquet</title>
+          <meta name="description" content="Monix Connect v0.1.0 48 - a329dffc - SNAPSHOT - monix.connect.parquet" />
+          <meta name="keywords" content="Monix Connect v0.1.0 48 a329dffc SNAPSHOT monix.connect.parquet" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../lib/index.css" media="screen" type="text/css" rel="stylesheet" />
@@ -133,7 +133,7 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="monix.connect">connect</a></dd></dl></div>
-    </li><li name="monix.connect.hdfs" visbl="pub" class="indented3 current" data-isabs="false" fullComment="yes" group="Ungrouped">
+    </li><li name="monix.connect.hdfs" visbl="pub" class="indented3 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="hdfs"></a><a id="hdfs:hdfs"></a>
       <span class="permalink">
       <a href="../../monix/connect/index.html#hdfs" title="Permalink">
@@ -145,15 +145,11 @@
         <span class="kind">package</span>
       </span>
       <span class="symbol">
-        <span class="name">hdfs</span>
+        <a title="" href="../hdfs/index.html"><span class="name">hdfs</span></a>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="monix.connect">connect</a></dd></dl></div>
-    </li><li class="current-entities indented3">
-                        <span class="separator"></span>
-                        <a class="object" href="Hdfs$.html" title=""></a>
-                        <a href="Hdfs$.html" title="">Hdfs</a>
-                      </li><li name="monix.connect.parquet" visbl="pub" class="indented3 " data-isabs="false" fullComment="yes" group="Ungrouped">
+    </li><li name="monix.connect.parquet" visbl="pub" class="indented3 current" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="parquet"></a><a id="parquet:parquet"></a>
       <span class="permalink">
       <a href="../../monix/connect/index.html#parquet" title="Permalink">
@@ -165,11 +161,23 @@
         <span class="kind">package</span>
       </span>
       <span class="symbol">
-        <a title="" href="../parquet/index.html"><span class="name">parquet</span></a>
+        <span class="name">parquet</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="monix.connect">connect</a></dd></dl></div>
-    </li><li name="monix.connect.redis" visbl="pub" class="indented3 " data-isabs="false" fullComment="yes" group="Ungrouped">
+    </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="object" href="Parquet$.html" title=""></a>
+                        <a href="Parquet$.html" title="">Parquet</a>
+                      </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="object" href="ParquetPublisher$.html" title="Companion object builder for ParquetPublisher."></a>
+                        <a href="ParquetPublisher$.html" title="Companion object builder for ParquetPublisher.">ParquetPublisher</a>
+                      </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="class" href="ParquetSubscriber.html" title="A parquet writer implemented as a Subscriber.Sync."></a>
+                        <a href="ParquetSubscriber.html" title="A parquet writer implemented as a Subscriber.Sync.">ParquetSubscriber</a>
+                      </li><li name="monix.connect.redis" visbl="pub" class="indented3 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="redis"></a><a id="redis:redis"></a>
       <span class="permalink">
       <a href="../../monix/connect/index.html#redis" title="Permalink">
@@ -210,8 +218,8 @@
       <div id="definition">
         <div class="big-circle package">p</div>
         <p id="owner"><a href="../../index.html" class="extype" name="monix">monix</a>.<a href="../index.html" class="extype" name="monix.connect">connect</a></p>
-        <h1>hdfs<span class="permalink">
-      <a href="../../../monix/connect/hdfs/index.html" title="Permalink">
+        <h1>parquet<span class="permalink">
+      <a href="../../../monix/connect/parquet/index.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span></h1>
@@ -224,7 +232,7 @@
         <span class="kind">package</span>
       </span>
       <span class="symbol">
-        <span class="name">hdfs</span>
+        <span class="name">parquet</span>
       </span>
       </h4>
 
@@ -262,17 +270,36 @@
         <div id="allMembers">
         
 
-        
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="monix.connect.parquet.ParquetSubscriber" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ParquetSubscriber[T]extendsConsumer[T,Long]withConsumer.Sync[T,Long]"></a><a id="ParquetSubscriber[T]:ParquetSubscriber[T]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/parquet/index.html#ParquetSubscriber[T]extendsConsumer[T,Long]withConsumer.Sync[T,Long]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="A parquet writer implemented as a Subscriber.Sync." href="ParquetSubscriber.html"><span class="name">ParquetSubscriber</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <span class="extype" name="monix.reactive.Consumer">Consumer</span>[<span class="extype" name="monix.connect.parquet.ParquetSubscriber.T">T</span>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>] with <span class="extype" name="monix.reactive.Consumer.Sync">Sync</span>[<span class="extype" name="monix.connect.parquet.ParquetSubscriber.T">T</span>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">A parquet writer implemented as a <span class="extype" name="Subscriber.Sync">Subscriber.Sync</span>.</p><div class="fullcomment"><div class="comment cmt"><p>A parquet writer implemented as a <span class="extype" name="Subscriber.Sync">Subscriber.Sync</span>.</p></div><dl class="paramcmts block"><dt class="tparam">T</dt><dd class="cmt"><p>Represents the type of the elements that will be written into the parquet file.</p></dd></dl></div>
+    </li></ol>
+            </div>
 
         
 
         <div class="values members">
               <h3>Value Members</h3>
               <ol>
-                <li name="monix.connect.hdfs.Hdfs" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="Hdfs"></a><a id="Hdfs:Hdfs"></a>
+                <li name="monix.connect.parquet.Parquet" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Parquet"></a><a id="Parquet:Parquet"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/hdfs/index.html#Hdfs" title="Permalink">
+      <a href="../../../monix/connect/parquet/index.html#Parquet" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -281,10 +308,26 @@
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="Hdfs$.html"><span class="name">Hdfs</span></a>
+        <a title="" href="Parquet$.html"><span class="name">Parquet</span></a>
       </span>
       
       
+    </li><li name="monix.connect.parquet.ParquetPublisher" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ParquetPublisher"></a><a id="ParquetPublisher:ParquetPublisher"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/parquet/index.html#ParquetPublisher" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="Companion object builder for ParquetPublisher." href="ParquetPublisher$.html"><span class="name">ParquetPublisher</span></a>
+      </span>
+      
+      <p class="shortcomment cmt">Companion object builder for <span class="extype" name="ParquetPublisher">ParquetPublisher</span>.</p>
     </li>
               </ol>
             </div>
