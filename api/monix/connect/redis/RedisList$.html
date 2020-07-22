@@ -1,0 +1,908 @@
+<!DOCTYPE html >
+<html>
+        <head>
+          <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+          <title>Monix Connect v0.1.0+46-97b7c619-SNAPSHOT - monix.connect.redis.RedisList</title>
+          <meta name="description" content="Monix Connect v0.1.0 46 - 97b7c619 - SNAPSHOT - monix.connect.redis.RedisList" />
+          <meta name="keywords" content="Monix Connect v0.1.0 46 97b7c619 SNAPSHOT monix.connect.redis.RedisList" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../../lib/index.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript" src="../../../lib/jquery.js"></script>
+      <script type="text/javascript" src="../../../lib/jquery.panzoom.min.js"></script>
+      <script type="text/javascript" src="../../../lib/jquery.mousewheel.min.js"></script>
+      <script type="text/javascript" src="../../../lib/index.js"></script>
+      <script type="text/javascript" src="../../../index.js"></script>
+      <script type="text/javascript" src="../../../lib/scheduler.js"></script>
+      <script type="text/javascript" src="../../../lib/template.js"></script>
+      <script type="text/javascript" src="../../../lib/tools.tooltip.js"></script>
+      
+      <script type="text/javascript">
+        /* this variable can be used by the JS to determine the path to the root document */
+        var toRoot = '../../../';
+      </script>
+    
+        </head>
+        <body>
+      <div id="search">
+        <span id="doc-title">Monix Connect<span id="doc-version">v0.1.0+46-97b7c619-SNAPSHOT</span></span>
+        <span class="close-results"><span class="left">&lt;</span> Back</span>
+        <div id="textfilter">
+          <span class="input">
+            <input autocapitalize="none" placeholder="Search" id="index-input" type="text" accesskey="/" />
+            <i class="clear material-icons"></i>
+            <i id="search-icon" class="material-icons"></i>
+          </span>
+        </div>
+    </div>
+      <div id="search-results">
+        <div id="search-progress">
+          <div id="progress-fill"></div>
+        </div>
+        <div id="results-content">
+          <div id="entity-results"></div>
+          <div id="member-results"></div>
+        </div>
+      </div>
+      <div id="content-scroll-container" style="-webkit-overflow-scrolling: touch;">
+        <div id="content-container" style="-webkit-overflow-scrolling: touch;">
+          <div id="subpackage-spacer">
+            <div id="packages">
+              <h1>Packages</h1>
+              <ul>
+                <li name="_root_.root" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="_root_"></a><a id="root:_root_"></a>
+      <span class="permalink">
+      <a href="index.html#_root_" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="../../../index.html"><span class="name">root</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../../index.html" class="extype" name="_root_">root</a></dd></dl></div>
+    </li><li name="_root_.monix" visbl="pub" class="indented1 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="monix"></a><a id="monix:monix"></a>
+      <span class="permalink">
+      <a href="index.html#monix" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="../../index.html"><span class="name">monix</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../../index.html" class="extype" name="_root_">root</a></dd></dl></div>
+    </li><li name="monix.connect" visbl="pub" class="indented2 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="connect"></a><a id="connect:connect"></a>
+      <span class="permalink">
+      <a href="../monix/index.html#connect" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="../index.html"><span class="name">connect</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../index.html" class="extype" name="monix">monix</a></dd></dl></div>
+    </li><li name="monix.connect.redis" visbl="pub" class="indented3 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="redis"></a><a id="redis:redis"></a>
+      <span class="permalink">
+      <a href="../../monix/connect/index.html#redis" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="index.html"><span class="name">redis</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="monix.connect">connect</a></dd></dl></div>
+    </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="object" href="Redis$.html" title="An object that provides an aggregation of all the different Redis Apis."></a>
+                        <a href="Redis$.html" title="An object that provides an aggregation of all the different Redis Apis.">Redis</a>
+                      </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="object" href="RedisHash$.html" title=""></a>
+                        <a href="RedisHash$.html" title="">RedisHash</a>
+                      </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="object" href="RedisKey$.html" title=""></a>
+                        <a href="RedisKey$.html" title="">RedisKey</a>
+                      </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="object" href="" title=""></a>
+                        <a href="" title="">RedisList</a>
+                      </li><li class="current-entities indented3">
+                        <a class="object" href="RedisPubSub$.html" title=""></a>
+                        <a class="trait" href="RedisPubSub.html" title=""></a>
+                        <a href="RedisPubSub.html" title="">RedisPubSub</a>
+                      </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="object" href="RedisServer$.html" title=""></a>
+                        <a href="RedisServer$.html" title="">RedisServer</a>
+                      </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="object" href="RedisSet$.html" title=""></a>
+                        <a href="RedisSet$.html" title="">RedisSet</a>
+                      </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="object" href="RedisSortedSet$.html" title=""></a>
+                        <a href="RedisSortedSet$.html" title="">RedisSortedSet</a>
+                      </li><li class="current-entities indented3">
+                        <a class="object" href="RedisStream$.html" title="Exposes only methods from the RedisStream api"></a>
+                        <a class="trait" href="RedisStream.html" title="The Stream is a new data type introduced recently, wwhich models a log data structure in a more abstract way, like a log file often implemented as a file open in apend only mode, Redis streams are primarily an append only data structure."></a>
+                        <a href="RedisStream.html" title="The Stream is a new data type introduced recently, wwhich models a log data structure in a more abstract way, like a log file often implemented as a file open in apend only mode, Redis streams are primarily an append only data structure.">RedisStream</a>
+                      </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="object" href="RedisString$.html" title=""></a>
+                        <a href="RedisString$.html" title="">RedisString</a>
+                      </li>
+              </ul>
+            </div>
+          </div>
+          <div id="content">
+            <body class="object value">
+      <div id="definition">
+        <div class="big-circle object">o</div>
+        <p id="owner"><a href="../../index.html" class="extype" name="monix">monix</a>.<a href="../index.html" class="extype" name="monix.connect">connect</a>.<a href="index.html" class="extype" name="monix.connect.redis">redis</a></p>
+        <h1>RedisList<span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span></h1>
+        <h3><span class="morelinks"></span></h3>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <span class="name">RedisList</span><span class="result"> extends <span class="extype" name="monix.connect.redis.RedisList">RedisList</span></span>
+      </span>
+      </h4>
+
+      
+          <div id="comment" class="fullcommenttop"><dl class="attributes block"> <dt>Source</dt><dd><a href="https://github.com/monix/monix-connect/tree/v0.1.0+46-97b7c619-SNAPSHOT/redis/src/main/scala/monix/connect/redis/RedisList.scala" target="_blank">RedisList.scala</a></dd></dl><div class="toggleContainer block">
+          <span class="toggle">
+            Linear Supertypes
+          </span>
+          <div class="superTypes hiddenContent"><span class="extype" name="monix.connect.redis.RedisList">RedisList</span>, <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+        </div></div>
+        
+
+      <div id="mbrsel">
+        <div class="toggle"></div>
+        <div id="memberfilter">
+          <i class="material-icons arrow"></i>
+          <span class="input">
+            <input id="mbrsel-input" placeholder="Filter all members" type="text" accesskey="/" />
+          </span>
+          <i class="clear material-icons"></i>
+        </div>
+        <div id="filterby">
+          <div id="order">
+            <span class="filtertype">Ordering</span>
+            <ol>
+              
+              <li class="alpha in"><span>Alphabetic</span></li>
+              <li class="inherit out"><span>By Inheritance</span></li>
+            </ol>
+          </div>
+          <div class="ancestors">
+                  <span class="filtertype">Inherited<br />
+                  </span>
+                  <ol id="linearization">
+                    <li class="in" name="monix.connect.redis.RedisList"><span>RedisList</span></li><li class="in" name="monix.connect.redis.RedisList"><span>RedisList</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                  </ol>
+                </div><div class="ancestors">
+              <span class="filtertype"></span>
+              <ol>
+                <li class="hideall out"><span>Hide All</span></li>
+                <li class="showall in"><span>Show All</span></li>
+              </ol>
+            </div>
+          <div id="visbl">
+              <span class="filtertype">Visibility</span>
+              <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+            </div>
+        </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        
+
+        
+
+        <div class="values members">
+              <h3>Value Members</h3>
+              <ol>
+                <li name="scala.AnyRef#!=" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="!=(x$1:Any):Boolean"></a><a id="!=(Any):Boolean"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#!=(x$1:Any):Boolean" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef###" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="##():Int"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html###():Int" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef#==" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="==(x$1:Any):Boolean"></a><a id="==(Any):Boolean"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#==(x$1:Any):Boolean" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.Any#asInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="asInstanceOf[T0]:T0"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#asInstanceOf[T0]:T0" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">asInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <span class="extype" name="scala.Any.asInstanceOf.T0">T0</span></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="monix.connect.redis.RedisList#blpop" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="blpop[K,V](timeout:Long,keys:K*)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[io.lettuce.core.KeyValue[K,V]]"></a><a id="blpop[K,V](Long,K*)(StatefulRedisConnection[K,V]):Task[KeyValue[K,V]]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#blpop[K,V](timeout:Long,keys:K*)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[io.lettuce.core.KeyValue[K,V]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">blpop</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="timeout">timeout: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="keys">keys: <span class="extype" name="monix.connect.redis.RedisList.blpop.K">K</span>*</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="connection">connection: <span class="extype" name="io.lettuce.core.api.StatefulRedisConnection">StatefulRedisConnection</span>[<span class="extype" name="monix.connect.redis.RedisList.blpop.K">K</span>, <span class="extype" name="monix.connect.redis.RedisList.blpop.V">V</span>]</span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<span class="extype" name="io.lettuce.core.KeyValue">KeyValue</span>[<span class="extype" name="monix.connect.redis.RedisList.blpop.K">K</span>, <span class="extype" name="monix.connect.redis.RedisList.blpop.V">V</span>]]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Remove and get the first element in a list, or block until one is available.</p><div class="fullcomment"><div class="comment cmt"><p>Remove and get the first element in a list, or block until one is available.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>A null multi-bulk when no element could be popped and the timeout expired.
+        A two-element multi-bulk with the first element being the name of the key
+        where an element was popped and the second element being the value of the popped element.</p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd>RedisList</dd></dl></div>
+    </li><li name="monix.connect.redis.RedisList#brpop" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="brpop[K,V](timeout:Long,keys:K*)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[io.lettuce.core.KeyValue[K,V]]"></a><a id="brpop[K,V](Long,K*)(StatefulRedisConnection[K,V]):Task[KeyValue[K,V]]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#brpop[K,V](timeout:Long,keys:K*)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[io.lettuce.core.KeyValue[K,V]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">brpop</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="timeout">timeout: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="keys">keys: <span class="extype" name="monix.connect.redis.RedisList.brpop.K">K</span>*</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="connection">connection: <span class="extype" name="io.lettuce.core.api.StatefulRedisConnection">StatefulRedisConnection</span>[<span class="extype" name="monix.connect.redis.RedisList.brpop.K">K</span>, <span class="extype" name="monix.connect.redis.RedisList.brpop.V">V</span>]</span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<span class="extype" name="io.lettuce.core.KeyValue">KeyValue</span>[<span class="extype" name="monix.connect.redis.RedisList.brpop.K">K</span>, <span class="extype" name="monix.connect.redis.RedisList.brpop.V">V</span>]]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Remove and get the last element in a list, or block until one is available.</p><div class="fullcomment"><div class="comment cmt"><p>Remove and get the last element in a list, or block until one is available.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>A null multi-bulk when no element could be popped and the timeout expired.
+         A two-element multi-bulk with the first element being the name of the key
+         where an element was popped and the second element being the value of the popped element.</p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd>RedisList</dd></dl></div>
+    </li><li name="monix.connect.redis.RedisList#brpoplpush" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="brpoplpush[K,V](timeout:Long,source:K,destination:K)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[V]"></a><a id="brpoplpush[K,V](Long,K,K)(StatefulRedisConnection[K,V]):Task[V]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#brpoplpush[K,V](timeout:Long,source:K,destination:K)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[V]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">brpoplpush</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="timeout">timeout: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="source">source: <span class="extype" name="monix.connect.redis.RedisList.brpoplpush.K">K</span></span>, <span name="destination">destination: <span class="extype" name="monix.connect.redis.RedisList.brpoplpush.K">K</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="connection">connection: <span class="extype" name="io.lettuce.core.api.StatefulRedisConnection">StatefulRedisConnection</span>[<span class="extype" name="monix.connect.redis.RedisList.brpoplpush.K">K</span>, <span class="extype" name="monix.connect.redis.RedisList.brpoplpush.V">V</span>]</span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<span class="extype" name="monix.connect.redis.RedisList.brpoplpush.V">V</span>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Pop a value from a list, push it to another list and return it; or block until one is available.</p><div class="fullcomment"><div class="comment cmt"><p>Pop a value from a list, push it to another list and return it; or block until one is available.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The element being popped from source and pushed to destination.</p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd>RedisList</dd></dl></div>
+    </li><li name="scala.AnyRef#clone" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="clone():Object"></a><a id="clone():AnyRef"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#clone():Object" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@native</span><span class="args">()</span>
+              
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.CloneNotSupportedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="eq(x$1:AnyRef):Boolean"></a><a id="eq(AnyRef):Boolean"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#eq(x$1:AnyRef):Boolean" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.AnyRef#equals" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="equals(x$1:Any):Boolean"></a><a id="equals(Any):Boolean"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#equals(x$1:Any):Boolean" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef#finalize" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="finalize():Unit"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#finalize():Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="symbol">classOf[java.lang.Throwable]</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#getClass" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="getClass():Class[_]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#getClass():Class[_]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getClass</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.Class">Class</span>[_]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
+                <span class="name">@native</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#hashCode" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="hashCode():Int"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#hashCode():Int" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
+                <span class="name">@native</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.Any#isInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="isInstanceOf[T0]:Boolean"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#isInstanceOf[T0]:Boolean" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="monix.connect.redis.RedisList#lindex" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="lindex[K,V](key:K,index:Long)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[V]"></a><a id="lindex[K,V](K,Long)(StatefulRedisConnection[K,V]):Task[V]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#lindex[K,V](key:K,index:Long)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[V]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">lindex</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="key">key: <span class="extype" name="monix.connect.redis.RedisList.lindex.K">K</span></span>, <span name="index">index: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="connection">connection: <span class="extype" name="io.lettuce.core.api.StatefulRedisConnection">StatefulRedisConnection</span>[<span class="extype" name="monix.connect.redis.RedisList.lindex.K">K</span>, <span class="extype" name="monix.connect.redis.RedisList.lindex.V">V</span>]</span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<span class="extype" name="monix.connect.redis.RedisList.lindex.V">V</span>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Get an element from a list by its index.</p><div class="fullcomment"><div class="comment cmt"><p>Get an element from a list by its index.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The requested element, or null when index is out of range.</p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd>RedisList</dd></dl></div>
+    </li><li name="monix.connect.redis.RedisList#linsert" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="linsert[K,V](key:K,before:Boolean,pivot:V,value:V)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[Long]"></a><a id="linsert[K,V](K,Boolean,V,V)(StatefulRedisConnection[K,V]):Task[Long]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#linsert[K,V](key:K,before:Boolean,pivot:V,value:V)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[Long]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">linsert</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="key">key: <span class="extype" name="monix.connect.redis.RedisList.linsert.K">K</span></span>, <span name="before">before: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>, <span name="pivot">pivot: <span class="extype" name="monix.connect.redis.RedisList.linsert.V">V</span></span>, <span name="value">value: <span class="extype" name="monix.connect.redis.RedisList.linsert.V">V</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="connection">connection: <span class="extype" name="io.lettuce.core.api.StatefulRedisConnection">StatefulRedisConnection</span>[<span class="extype" name="monix.connect.redis.RedisList.linsert.K">K</span>, <span class="extype" name="monix.connect.redis.RedisList.linsert.V">V</span>]</span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Insert an element before or after another element in a list.</p><div class="fullcomment"><div class="comment cmt"><p>Insert an element before or after another element in a list.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The length of the list after the insert operation, or -1 when the value pivot was not found.</p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd>RedisList</dd></dl></div>
+    </li><li name="monix.connect.redis.RedisList#llen" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="llen[K,V](key:K)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[Long]"></a><a id="llen[K,V](K)(StatefulRedisConnection[K,V]):Task[Long]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#llen[K,V](key:K)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[Long]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">llen</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="key">key: <span class="extype" name="monix.connect.redis.RedisList.llen.K">K</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="connection">connection: <span class="extype" name="io.lettuce.core.api.StatefulRedisConnection">StatefulRedisConnection</span>[<span class="extype" name="monix.connect.redis.RedisList.llen.K">K</span>, <span class="extype" name="monix.connect.redis.RedisList.llen.V">V</span>]</span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Get the length of a list.</p><div class="fullcomment"><div class="comment cmt"><p>Get the length of a list.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>Long integer-reply the length of the list at { @code key}.</p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd>RedisList</dd></dl></div>
+    </li><li name="monix.connect.redis.RedisList#lpop" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="lpop[K,V](key:K)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[V]"></a><a id="lpop[K,V](K)(StatefulRedisConnection[K,V]):Task[V]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#lpop[K,V](key:K)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[V]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">lpop</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="key">key: <span class="extype" name="monix.connect.redis.RedisList.lpop.K">K</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="connection">connection: <span class="extype" name="io.lettuce.core.api.StatefulRedisConnection">StatefulRedisConnection</span>[<span class="extype" name="monix.connect.redis.RedisList.lpop.K">K</span>, <span class="extype" name="monix.connect.redis.RedisList.lpop.V">V</span>]</span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<span class="extype" name="monix.connect.redis.RedisList.lpop.V">V</span>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Remove and get the first element in a list.</p><div class="fullcomment"><div class="comment cmt"><p>Remove and get the first element in a list.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The value of the first element, or null when key does not exist.</p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd>RedisList</dd></dl></div>
+    </li><li name="monix.connect.redis.RedisList#lpush" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="lpush[K,V](key:K,values:V*)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[Long]"></a><a id="lpush[K,V](K,V*)(StatefulRedisConnection[K,V]):Task[Long]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#lpush[K,V](key:K,values:V*)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[Long]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">lpush</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="key">key: <span class="extype" name="monix.connect.redis.RedisList.lpush.K">K</span></span>, <span name="values">values: <span class="extype" name="monix.connect.redis.RedisList.lpush.V">V</span>*</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="connection">connection: <span class="extype" name="io.lettuce.core.api.StatefulRedisConnection">StatefulRedisConnection</span>[<span class="extype" name="monix.connect.redis.RedisList.lpush.K">K</span>, <span class="extype" name="monix.connect.redis.RedisList.lpush.V">V</span>]</span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Prepend one or multiple values to a list.</p><div class="fullcomment"><div class="comment cmt"><p>Prepend one or multiple values to a list.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The length of the list after the push operations.</p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd>RedisList</dd></dl></div>
+    </li><li name="monix.connect.redis.RedisList#lpushx" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="lpushx[K,V](key:K,values:V*)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[Long]"></a><a id="lpushx[K,V](K,V*)(StatefulRedisConnection[K,V]):Task[Long]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#lpushx[K,V](key:K,values:V*)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[Long]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">lpushx</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="key">key: <span class="extype" name="monix.connect.redis.RedisList.lpushx.K">K</span></span>, <span name="values">values: <span class="extype" name="monix.connect.redis.RedisList.lpushx.V">V</span>*</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="connection">connection: <span class="extype" name="io.lettuce.core.api.StatefulRedisConnection">StatefulRedisConnection</span>[<span class="extype" name="monix.connect.redis.RedisList.lpushx.K">K</span>, <span class="extype" name="monix.connect.redis.RedisList.lpushx.V">V</span>]</span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Prepend values to a list, only if the list exists.</p><div class="fullcomment"><div class="comment cmt"><p>Prepend values to a list, only if the list exists.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The length of the list after the push operation.</p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd>RedisList</dd></dl></div>
+    </li><li name="monix.connect.redis.RedisList#lrange" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="lrange[K,V](key:K,start:Long,stop:Long)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.reactive.Observable[V]"></a><a id="lrange[K,V](K,Long,Long)(StatefulRedisConnection[K,V]):Observable[V]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#lrange[K,V](key:K,start:Long,stop:Long)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.reactive.Observable[V]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">lrange</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="key">key: <span class="extype" name="monix.connect.redis.RedisList.lrange.K">K</span></span>, <span name="start">start: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="stop">stop: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="connection">connection: <span class="extype" name="io.lettuce.core.api.StatefulRedisConnection">StatefulRedisConnection</span>[<span class="extype" name="monix.connect.redis.RedisList.lrange.K">K</span>, <span class="extype" name="monix.connect.redis.RedisList.lrange.V">V</span>]</span>)</span><span class="result">: <span class="extype" name="monix.reactive.Observable">Observable</span>[<span class="extype" name="monix.connect.redis.RedisList.lrange.V">V</span>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Get a range of elements from a list.</p><div class="fullcomment"><div class="comment cmt"><p>Get a range of elements from a list.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>List of elements in the specified range.</p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd>RedisList</dd></dl></div>
+    </li><li name="monix.connect.redis.RedisList#lrem" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="lrem[K,V](key:K,count:Long,value:V)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[Long]"></a><a id="lrem[K,V](K,Long,V)(StatefulRedisConnection[K,V]):Task[Long]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#lrem[K,V](key:K,count:Long,value:V)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[Long]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">lrem</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="key">key: <span class="extype" name="monix.connect.redis.RedisList.lrem.K">K</span></span>, <span name="count">count: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="value">value: <span class="extype" name="monix.connect.redis.RedisList.lrem.V">V</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="connection">connection: <span class="extype" name="io.lettuce.core.api.StatefulRedisConnection">StatefulRedisConnection</span>[<span class="extype" name="monix.connect.redis.RedisList.lrem.K">K</span>, <span class="extype" name="monix.connect.redis.RedisList.lrem.V">V</span>]</span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Remove elements from a list.</p><div class="fullcomment"><div class="comment cmt"><p>Remove elements from a list.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The number of removed elements.</p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd>RedisList</dd></dl></div>
+    </li><li name="monix.connect.redis.RedisList#lset" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="lset[K,V](key:K,index:Long,value:V)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[String]"></a><a id="lset[K,V](K,Long,V)(StatefulRedisConnection[K,V]):Task[String]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#lset[K,V](key:K,index:Long,value:V)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[String]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">lset</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="key">key: <span class="extype" name="monix.connect.redis.RedisList.lset.K">K</span></span>, <span name="index">index: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="value">value: <span class="extype" name="monix.connect.redis.RedisList.lset.V">V</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="connection">connection: <span class="extype" name="io.lettuce.core.api.StatefulRedisConnection">StatefulRedisConnection</span>[<span class="extype" name="monix.connect.redis.RedisList.lset.K">K</span>, <span class="extype" name="monix.connect.redis.RedisList.lset.V">V</span>]</span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Set the value of an element in a list by its index.</p><div class="fullcomment"><div class="comment cmt"><p>Set the value of an element in a list by its index.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The same inserted value</p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd>RedisList</dd></dl></div>
+    </li><li name="monix.connect.redis.RedisList#ltrim" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ltrim[K,V](key:K,start:Long,stop:Long)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[String]"></a><a id="ltrim[K,V](K,Long,Long)(StatefulRedisConnection[K,V]):Task[String]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#ltrim[K,V](key:K,start:Long,stop:Long)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[String]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ltrim</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="key">key: <span class="extype" name="monix.connect.redis.RedisList.ltrim.K">K</span></span>, <span name="start">start: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="stop">stop: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="connection">connection: <span class="extype" name="io.lettuce.core.api.StatefulRedisConnection">StatefulRedisConnection</span>[<span class="extype" name="monix.connect.redis.RedisList.ltrim.K">K</span>, <span class="extype" name="monix.connect.redis.RedisList.ltrim.V">V</span>]</span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Trim a list to the specified range.</p><div class="fullcomment"><div class="comment cmt"><p>Trim a list to the specified range.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>Simple string reply</p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd>RedisList</dd></dl></div>
+    </li><li name="scala.AnyRef#ne" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ne(x$1:AnyRef):Boolean"></a><a id="ne(AnyRef):Boolean"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#ne(x$1:AnyRef):Boolean" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.AnyRef#notify" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="notify():Unit"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#notify():Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@native</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#notifyAll" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="notifyAll():Unit"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#notifyAll():Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@native</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="monix.connect.redis.RedisList#rpop" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="rpop[K,V](key:K)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[V]"></a><a id="rpop[K,V](K)(StatefulRedisConnection[K,V]):Task[V]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#rpop[K,V](key:K)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[V]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">rpop</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="key">key: <span class="extype" name="monix.connect.redis.RedisList.rpop.K">K</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="connection">connection: <span class="extype" name="io.lettuce.core.api.StatefulRedisConnection">StatefulRedisConnection</span>[<span class="extype" name="monix.connect.redis.RedisList.rpop.K">K</span>, <span class="extype" name="monix.connect.redis.RedisList.rpop.V">V</span>]</span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<span class="extype" name="monix.connect.redis.RedisList.rpop.V">V</span>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Remove and get the last element in a list.</p><div class="fullcomment"><div class="comment cmt"><p>Remove and get the last element in a list.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The value of the last element, or null when key does not exist.</p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd>RedisList</dd></dl></div>
+    </li><li name="monix.connect.redis.RedisList#rpoplpush" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="rpoplpush[K,V](source:K,destination:K)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[V]"></a><a id="rpoplpush[K,V](K,K)(StatefulRedisConnection[K,V]):Task[V]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#rpoplpush[K,V](source:K,destination:K)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[V]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">rpoplpush</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="source">source: <span class="extype" name="monix.connect.redis.RedisList.rpoplpush.K">K</span></span>, <span name="destination">destination: <span class="extype" name="monix.connect.redis.RedisList.rpoplpush.K">K</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="connection">connection: <span class="extype" name="io.lettuce.core.api.StatefulRedisConnection">StatefulRedisConnection</span>[<span class="extype" name="monix.connect.redis.RedisList.rpoplpush.K">K</span>, <span class="extype" name="monix.connect.redis.RedisList.rpoplpush.V">V</span>]</span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<span class="extype" name="monix.connect.redis.RedisList.rpoplpush.V">V</span>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Remove the last element in a list, append it to another list and return it.</p><div class="fullcomment"><div class="comment cmt"><p>Remove the last element in a list, append it to another list and return it.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The element being popped and pushed.</p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd>RedisList</dd></dl></div>
+    </li><li name="monix.connect.redis.RedisList#rpush" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="rpush[K,V](key:K,values:V*)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[Long]"></a><a id="rpush[K,V](K,V*)(StatefulRedisConnection[K,V]):Task[Long]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#rpush[K,V](key:K,values:V*)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[Long]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">rpush</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="key">key: <span class="extype" name="monix.connect.redis.RedisList.rpush.K">K</span></span>, <span name="values">values: <span class="extype" name="monix.connect.redis.RedisList.rpush.V">V</span>*</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="connection">connection: <span class="extype" name="io.lettuce.core.api.StatefulRedisConnection">StatefulRedisConnection</span>[<span class="extype" name="monix.connect.redis.RedisList.rpush.K">K</span>, <span class="extype" name="monix.connect.redis.RedisList.rpush.V">V</span>]</span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Append one or multiple values to a list.</p><div class="fullcomment"><div class="comment cmt"><p>Append one or multiple values to a list.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The length of the list after the push operation.</p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd>RedisList</dd></dl></div>
+    </li><li name="monix.connect.redis.RedisList#rpushx" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="rpushx[K,V](key:K,values:V*)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[Long]"></a><a id="rpushx[K,V](K,V*)(StatefulRedisConnection[K,V]):Task[Long]"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#rpushx[K,V](key:K,values:V*)(implicitconnection:io.lettuce.core.api.StatefulRedisConnection[K,V]):monix.eval.Task[Long]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">rpushx</span><span class="tparams">[<span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span name="key">key: <span class="extype" name="monix.connect.redis.RedisList.rpushx.K">K</span></span>, <span name="values">values: <span class="extype" name="monix.connect.redis.RedisList.rpushx.V">V</span>*</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="connection">connection: <span class="extype" name="io.lettuce.core.api.StatefulRedisConnection">StatefulRedisConnection</span>[<span class="extype" name="monix.connect.redis.RedisList.rpushx.K">K</span>, <span class="extype" name="monix.connect.redis.RedisList.rpushx.V">V</span>]</span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Append values to a list, only if the list exists.</p><div class="fullcomment"><div class="comment cmt"><p>Append values to a list, only if the list exists.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>The length of the list after the push operation.</p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd>RedisList</dd></dl></div>
+    </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#synchronized[T0](x$1:=&gt;T0):T0" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">synchronized</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="params">(<span name="arg0">arg0: ⇒ <span class="extype" name="java.lang.AnyRef.synchronized.T0">T0</span></span>)</span><span class="result">: <span class="extype" name="java.lang.AnyRef.synchronized.T0">T0</span></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.AnyRef#toString" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="toString():String"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#toString():String" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">toString</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.String">String</span></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait():Unit"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#wait():Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait(x$1:Long,x$2:Int):Unit"></a><a id="wait(Long,Int):Unit"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#wait(x$1:Long,x$2:Int):Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait(x$1:Long):Unit"></a><a id="wait(Long):Unit"></a>
+      <span class="permalink">
+      <a href="../../../monix/connect/redis/RedisList$.html#wait(x$1:Long):Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@native</span><span class="args">()</span>
+              
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li>
+              </ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        <div class="parent" name="monix.connect.redis.RedisList">
+              <h3>Inherited from <span class="extype" name="monix.connect.redis.RedisList">RedisList</span></h3>
+            </div><div class="parent" name="scala.AnyRef">
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+            </div><div class="parent" name="scala.Any">
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+            </div>
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+    </body>
+          </div>
+        </div>
+      </div>
+    </body>
+      </html>
