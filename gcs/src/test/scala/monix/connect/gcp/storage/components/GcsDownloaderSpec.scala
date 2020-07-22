@@ -4,7 +4,7 @@ import com.google.cloud.ReadChannel
 import com.google.cloud.storage.{ BlobId, Storage, Blob => GoogleBlob, Option => _}
 import monix.execution.Scheduler.Implicits.global
 import org.mockito.IdiomaticMockito
-import org.mockito.MockitoSugar.when
+import org.mockito.MockitoSugar.{doNothing, when}
 import org.scalatest.matchers.should.Matchers
 import org.mockito.Mockito.{times, verify}
 import org.mockito.ArgumentMatchers.any
@@ -17,24 +17,24 @@ class GcsDownloaderSpec extends AnyWordSpecLike with IdiomaticMockito with Match
   val mockStorage: Storage = mock[Storage]
   val readChannel: ReadChannel = mock[ReadChannel]
 
-  s"StorageDownloader" should {
+  s"GcsDownloader" should {
 
-  "download a blob" in new GcsDownloader {
-    //given
-    val bucket = "sampleBucket"
-    val blobName = "sampleBlob"
-    val chunkSize = 100
-    val buff = new Array[Byte](chunkSize)
-    when(mockStorage.reader(bucket, blobName)).thenReturn(readChannel)
+    "download a blob" in new GcsDownloader {
+      //given
+      val bucket = "sampleBucket"
+      val blobName = "sampleBlob"
+      val chunkSize = 100
+      when(mockStorage.reader(bucket, blobName)).thenReturn(readChannel)
+      doNothing.when(readChannel).setChunkSize(chunkSize)
 
-    //when
-    download(mockStorage, BlobId.of(blobName, blobName), chunkSize).toListL.runSyncUnsafe().flatten
+      //when
+      download(mockStorage, BlobId.of(bucket, blobName), chunkSize).toListL.runSyncUnsafe().flatten
 
-    //then
-    verify(mockStorage, times(1)).reader(bucket, blobName)
-    verify(readChannel, times(1)).read(any())
-    verify(readChannel, times(1)).close()
+      //then
+      verify(mockStorage, times(1)).reader(bucket, blobName)
+      verify(readChannel, times(1)).read(any())
+      verify(readChannel, times(1)).close()
+    }
+
   }
-}
-
 }

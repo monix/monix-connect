@@ -12,13 +12,14 @@ import org.mockito.{ArgumentMatchersSugar, IdiomaticMockito}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
-class GcsBucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers with ArgumentMatchersSugar {
+class GcsBucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers with ArgumentMatchersSugar with GscFixture {
+
   val underlying: Bucket = mock[Bucket]
   val bucket: GcsBucket = GcsBucket(underlying)
 
   s"$GcsBucket" should {
 
-    "implement an async exists operation" in {
+    "implement a exists operation" in {
       //given
       val bucketSourceOption: BucketSourceOption = mock[BucketSourceOption]
       when(underlying.exists(bucketSourceOption)).thenAnswer(true)
@@ -61,7 +62,7 @@ class GcsBucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers 
       }
     }
 
-    "implement an async update operation that correctly returns some bucket" in {
+    "implement a update operation that correctly returns some bucket" in {
       // given
       val bucketTargetOption: BucketTargetOption = mock[BucketTargetOption]
       val googleBucket = mock[Bucket]
@@ -92,7 +93,7 @@ class GcsBucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers 
 
       "implements a create operation that correctly returns some acl" in {
         // given
-        val acl = mock[Acl]
+        val acl = genAcl.sample.get
         when(underlying.createAcl(acl)).thenReturn(acl)
 
         //when
@@ -120,23 +121,22 @@ class GcsBucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers 
 
         "that correctly returns some acl" in {
           // given
-          val aclEntity = mock[Acl.Entity]
-          val acl = mock[Acl]
-          when(underlying.getAcl(aclEntity)).thenReturn(acl)
+          val acl = genAcl.sample.get
+          when(underlying.getAcl(acl.getEntity)).thenReturn(acl)
 
           //when
-          val maybeAcl: Option[Acl] = bucket.getAcl(aclEntity).runSyncUnsafe()
+          val maybeAcl: Option[Acl] = bucket.getAcl(acl.getEntity).runSyncUnsafe()
 
           //then
           maybeAcl.isDefined shouldBe true
           maybeAcl.get shouldBe a[Acl]
-          verify(underlying, times(1)).getAcl(aclEntity)
+          verify(underlying, times(1)).getAcl(acl.getEntity)
         }
       }
 
       "implements an update operation that correctly returns some acl" in {
         // given
-        val acl = mock[Acl]
+        val acl = genAcl.sample.get
         when(underlying.updateAcl(acl)).thenReturn(acl)
 
         //when
@@ -149,20 +149,20 @@ class GcsBucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers 
 
       "implements a delete operation that deletes the specified acl" in {
         // given
-        val acl = mock[Acl.Entity]
-        when(underlying.deleteAcl(acl)).thenReturn(true)
+        val aclEntity = genAcl.sample.get.getEntity
+        when(underlying.deleteAcl(aclEntity)).thenReturn(true)
 
         //when
-        val result: Boolean = bucket.deleteAcl(acl).runSyncUnsafe()
+        val result: Boolean = bucket.deleteAcl(aclEntity).runSyncUnsafe()
 
         //then
         result shouldBe true
-        verify(underlying, times(1)).deleteAcl(acl)
+        verify(underlying, times(1)).deleteAcl(aclEntity)
       }
 
-      "implement an async list acl operation that correctly returns zero or more acls" in {
+      "implement a list acl operation that correctly returns zero or more acls" in {
         // given
-        val acl = mock[Acl]
+        val acl = genAcl.sample.get
         val acls = util.Arrays.asList(acl, acl, acl)
         when(underlying.listAcls()).thenReturn(acls)
 
@@ -174,9 +174,9 @@ class GcsBucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers 
         verify(underlying, times(1)).listAcls()
       }
 
-      "implement an async create defaultAcl operation that correctly returns some defaultAcl" in {
+      "implement a create defaultAcl operation that correctly returns some defaultAcl" in {
         // given
-        val acl = mock[Acl]
+        val acl = genAcl.sample.get
         when(underlying.createDefaultAcl(acl)).thenReturn(acl)
 
         //when
@@ -192,9 +192,9 @@ class GcsBucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers 
 
       "implement a get operation" that {
 
-        "that safely returns none whenever the underlying response was null" in {
+        "safely returns none whenever the underlying response was null" in {
           // given
-          val aclEntity = mock[Acl.Entity]
+          val aclEntity = genAcl.sample.get.getEntity
           when(underlying.getDefaultAcl(aclEntity)).thenReturn(null)
 
           //when
@@ -205,25 +205,24 @@ class GcsBucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers 
           verify(underlying, times(1)).getDefaultAcl(aclEntity)
         }
 
-        "that correctly returns some defaultAcl" in {
+        "correctly returns some defaultAcl" in {
           // given
-          val aclEntity = mock[Acl.Entity]
-          val acl = mock[Acl]
-          when(underlying.getDefaultAcl(aclEntity)).thenReturn(acl)
+          val acl = genAcl.sample.get
+          when(underlying.getDefaultAcl(acl.getEntity)).thenReturn(acl)
 
           //when
-          val maybeAcl: Option[Acl] = bucket.getDefaultAcl(aclEntity).runSyncUnsafe()
+          val maybeAcl: Option[Acl] = bucket.getDefaultAcl(acl.getEntity).runSyncUnsafe()
 
           //then
           maybeAcl.isDefined shouldBe true
           maybeAcl.get shouldBe a[Acl]
-          verify(underlying, times(1)).getDefaultAcl(aclEntity)
+          verify(underlying, times(1)).getDefaultAcl(acl.getEntity)
         }
       }
 
       "implement an update operation that correctly returns some defaultAcl" in {
         // given
-        val acl = mock[Acl]
+        val acl = genAcl.sample.get
         when(underlying.updateDefaultAcl(acl)).thenReturn(acl)
 
         //when
@@ -236,20 +235,20 @@ class GcsBucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers 
 
       "implement a delete operation that deletes the specified defaultAcl" in {
         // given
-        val acl = mock[Acl.Entity]
-        when(underlying.deleteDefaultAcl(acl)).thenReturn(true)
+        val aclEntity = genAcl.sample.get.getEntity
+        when(underlying.deleteDefaultAcl(aclEntity)).thenReturn(true)
 
         //when
-        val result: Boolean = bucket.deleteDefaultAcl(acl).runSyncUnsafe()
+        val result: Boolean = bucket.deleteDefaultAcl(aclEntity).runSyncUnsafe()
 
         //then
         result shouldBe true
-        verify(underlying, times(1)).deleteDefaultAcl(acl)
+        verify(underlying, times(1)).deleteDefaultAcl(aclEntity)
       }
 
-      "implement a list defaultAcl operation that correctly returns zero or more defaultAcl's" in {
+      "implement a list defaultAcl operation that correctly returns zero or more acl" in {
         // given
-        val acl = mock[Acl]
+        val acl = genAcl.sample.get
         val acls = util.Arrays.asList(acl, acl, acl)
         when(underlying.listDefaultAcls()).thenReturn(acls)
 
@@ -262,7 +261,7 @@ class GcsBucketSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers 
       }
     }
 
-    "implement an async lock retention policy operation" in {
+    "implement a lock retention policy operation" in {
       // given
       val bucketTargetOption = mock[BucketTargetOption]
       when(underlying.lockRetentionPolicy(bucketTargetOption)).thenReturn(underlying)

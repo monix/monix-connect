@@ -12,18 +12,19 @@ import org.mockito.IdiomaticMockito
 import org.mockito.MockitoSugar.when
 import org.scalatest.matchers.should.Matchers
 import org.mockito.Mockito.{times, verify}
+import org.scalacheck.Gen
 import org.scalatest.wordspec.AnyWordSpecLike
 
-import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
 
-class GcsBlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
+class GcsBlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers with GscFixture {
 
   val underlying: GoogleBlob = mock[GoogleBlob]
   val blob: GcsBlob = GcsBlob(underlying)
 
   s"$GcsBlob" should {
 
-    "implement an async exists operation" in {
+    "implement an exists operation" in {
       //given
       val blobSourceOption: BlobSourceOption = mock[BlobSourceOption]
       when(underlying.exists(blobSourceOption)).thenAnswer(true)
@@ -67,7 +68,7 @@ class GcsBlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
       }
     }
 
-    "implement an async update operation that correctly returns some blob" in {
+    "implement an update operation that correctly returns some blob" in {
       // given
       val blobTargetOption: BlobTargetOption = mock[BlobTargetOption]
       val googleBlob = mock[GoogleBlob]
@@ -81,7 +82,7 @@ class GcsBlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
       verify(underlying, times(1)).update(blobTargetOption)
     }
 
-    "implement an async delete operation" in {
+    "implement an delete operation" in {
       // given
       val blobSourceOption: BlobSourceOption = mock[BlobSourceOption]
       when(underlying.delete(blobSourceOption)).thenReturn(true)
@@ -94,12 +95,12 @@ class GcsBlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
       verify(underlying, times(1)).delete(blobSourceOption)
     }
 
-    "implement an async copy operation" that {
+    "implement an copy operation" that {
 
-      "copies this blob to the target blob" in {
+      "copies this blob to the target blob id" in {
         // given
         val blobSourceOption: BlobSourceOption = mock[BlobSourceOption]
-        val blobId = mock[BlobId]
+        val blobId = genBlobId.sample.get
         val copywriter = mock[CopyWriter]
         when(underlying.copyTo(blobId, blobSourceOption)).thenReturn(copywriter)
 
@@ -115,47 +116,51 @@ class GcsBlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
         // given
         val blobSourceOption: BlobSourceOption = mock[BlobSourceOption]
         val copywriter = mock[CopyWriter]
-        when(underlying.copyTo("bucket2", blobSourceOption)).thenReturn(copywriter)
+        val bucketName = genNonEmtyStr.sample.get
+        val blobName = genNonEmtyStr.sample.get
+        when(underlying.copyTo(bucketName, blobSourceOption)).thenReturn(copywriter)
 
         //when
-        val maybeBlob: GcsBlob = blob.copyTo("bucket2", blobSourceOption).runSyncUnsafe()
+        val maybeBlob: GcsBlob = blob.copyTo(bucketName, blobSourceOption).runSyncUnsafe()
 
         //then
         maybeBlob shouldBe a[GcsBlob]
-        verify(underlying, times(1)).copyTo("bucket2", blobSourceOption)
+        verify(underlying, times(1)).copyTo(bucketName, blobSourceOption)
       }
 
       "copies this blob to the target blob in the target bucket" in {
         // given
         val blobSourceOption: BlobSourceOption = mock[BlobSourceOption]
         val copywriter = mock[CopyWriter]
-        when(underlying.copyTo("bucket2", "blob2", blobSourceOption)).thenReturn(copywriter)
+        val bucketName = genNonEmtyStr.sample.get
+        val blobName = genNonEmtyStr.sample.get
+        when(underlying.copyTo(bucketName, blobName, blobSourceOption)).thenReturn(copywriter)
 
         //when
-        val maybeBlob: GcsBlob = blob.copyTo("bucket2", "blob2", blobSourceOption).runSyncUnsafe()
+        val maybeBlob: GcsBlob = blob.copyTo(bucketName, blobName, blobSourceOption).runSyncUnsafe()
 
         //then
         maybeBlob shouldBe a[GcsBlob]
-        verify(underlying, times(1)).copyTo("bucket2", "blob2", blobSourceOption)
+        verify(underlying, times(1)).copyTo(bucketName, blobName, blobSourceOption)
       }
     }
 
-    "implement an async sign url operation that correctly returns some url" in {
+   // "implement an async sign url operation that correctly returns some url" in {
+   //   // given
+   //   val signUrlOption: SignUrlOption = mock[SignUrlOption]
+   //   val url = new URL("TCP")
+   //   when(underlying.signUrl(2, TimeUnit.MINUTES, signUrlOption)).thenReturn(url)
+//
+   //   //when
+   //   val maybeUrl: URL = blob.signUrl(2.minutes, signUrlOption).runSyncUnsafe()
+//
+   //   maybeUrl shouldBe a[URL]
+   //   verify(underlying, times(1)).signUrl(2, TimeUnit.MINUTES, signUrlOption)
+   // }
+
+    "implement a create acl operation that correctly returns some acl" in {
       // given
-      val signUrlOption: SignUrlOption = mock[SignUrlOption]
-      val url = mock[URL]
-      when(underlying.signUrl(2, TimeUnit.MINUTES, signUrlOption)).thenReturn(url)
-
-      //when
-      val maybeUrl: URL = blob.signUrl(2.minutes, signUrlOption).runSyncUnsafe()
-
-      maybeUrl shouldBe a[URL]
-      verify(underlying, times(1)).signUrl(2, TimeUnit.MINUTES, signUrlOption)
-    }
-
-    "implement an async create acl operation that correctly returns some acl" in {
-      // given
-      val acl = mock[Acl]
+      val acl = genAcl.sample.get
       when(underlying.createAcl(acl)).thenReturn(acl)
 
       //when
@@ -166,7 +171,7 @@ class GcsBlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
       verify(underlying, times(1)).createAcl(acl)
     }
 
-    "implement an async get acl operation" that {
+    "implement a get acl operation" that {
 
       "that safely returns none whenever the underlying response was null" in {
         // given
@@ -183,23 +188,22 @@ class GcsBlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
 
       "that correctly returns some acl" in {
         // given
-        val aclEntity = mock[Acl.Entity]
-        val acl = mock[Acl]
-        when(underlying.getAcl(aclEntity)).thenReturn(acl)
+        val acl = genAcl.sample.get
+        when(underlying.getAcl(acl.getEntity)).thenReturn(acl)
 
         //when
-        val maybeAcl: Option[Acl] = blob.getAcl(aclEntity).runSyncUnsafe()
+        val maybeAcl: Option[Acl] = blob.getAcl(acl.getEntity).runSyncUnsafe()
 
         //then
         maybeAcl.isDefined shouldBe true
         maybeAcl.get shouldBe a[Acl]
-        verify(underlying, times(1)).getAcl(aclEntity)
+        verify(underlying, times(1)).getAcl(acl.getEntity)
       }
     }
 
-    "implement an async update operation that correctly returns some acl" in {
+    "implement a update operation that correctly returns some acl" in {
       // given
-      val acl = mock[Acl]
+      val acl = genAcl.sample.get
       when(underlying.updateAcl(acl)).thenReturn(acl)
 
       //when
@@ -210,7 +214,7 @@ class GcsBlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
       verify(underlying, times(1)).updateAcl(acl)
     }
 
-    "implement an async delete operation that deletes the specified acl" in {
+    "implement a delete operation that deletes the specified acl" in {
       // given
       val acl = mock[Acl.Entity]
       when(underlying.deleteAcl(acl)).thenReturn(true)
@@ -223,17 +227,16 @@ class GcsBlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers {
       verify(underlying, times(1)).deleteAcl(acl)
     }
 
-    "implement an async list acl operation that correctly returns zero or more acls" in {
+    "implement a list acl operation that correctly returns zero or more acls" in {
       // given
-      val acl = mock[Acl]
-      val acls = util.Arrays.asList(acl, acl, acl)
-      when(underlying.listAcls()).thenReturn(acls)
+      val acls = Gen.nonEmptyListOf(genAcl).sample.get
+      when(underlying.listAcls()).thenReturn(acls.asJava)
 
       //when
       val result: List[Acl] = blob.listAcls().toListL.runSyncUnsafe()
 
       //then
-      result shouldBe List(acl, acl, acl)
+      result shouldBe acls
       verify(underlying, times(1)).listAcls()
     }
   }

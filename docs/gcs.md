@@ -8,7 +8,7 @@ title: Google Cloud Storage
 _Google Cloud Storage_ is a durable and highly available object storage
 service, almost infinitely scalable and 
 guarantees consistency: when a write succeeds, the latest copy of the
-object will be returned to any GET, globally.
+object will be returned to any _get request_, globally.
 
 ### Dependency
 
@@ -185,14 +185,14 @@ import java.io.File
 import monix.connect.gcp.storage.{GcsStorage, GcsBucket}
 import monix.eval.Task
 
-val getBucketT: Task[Option[GcsBucket]] = ???
-val file = new File("path/to/your/path.txt")
+val getBucketT: Task[Option[GcsBucket]] = storage.getBucket("myBucket")
+val targetFile = new File("example/target/file.txt")
 
 val t: Task[Unit] = {
   for {
     maybeBucket <- getBucketT
     _ <- maybeBucket match {
-      case Some(bucket) => bucket.downloadToFile("myBlob", file.toPath)
+      case Some(bucket) => bucket.downloadToFile("myBlob", targetFile.toPath)
       case None => Task.unit
     }
   } yield ()
@@ -230,7 +230,7 @@ import monix.connect.gcp.storage.{GcsStorage, GcsBucket}
 import monix.eval.Task
 
 val bucketT: Task[GcsBucket] = ???
-val sourceFile = new File("path/to/your/path.txt")
+val sourceFile = new File("example/source/file.txt")
 
 val t: Task[Unit] = for {
   b <- bucketT
@@ -264,15 +264,16 @@ val targetBlob: Task[GcsBlob] =  sourceBlob.flatMap(_.copyTo("targetBucket", "ta
 
 ### Local testing
 
-Testing _Google Cloud Storage_ locally and offline is challenging since there is yet _'not good support'_ on that front.
+Testing _Google Cloud Storage_ locally and offline is challenging since there is yet _'not too good support'_ on that front.
 
 There is a google library called [java-storage-nio](https://github.com/googleapis/java-storage-nio) that emulates this service,
  however, it has some limitations since it does [not provide support](https://github.com/vam-google/google-cloud-java/blob/b095221d438f3b1c3b0929d9ab064be6051c2ba2/google-cloud-contrib/google-cloud-nio/src/main/java/com/google/cloud/storage/contrib/nio/testing/LocalStorageHelper.java#L27)
   for some the operations (mostly for the _Bucket_ api) and it is not _thread-safe_.
   That's why it is highly recommended to run the _functional tests_ directly using the _Google Cloud Storage_ service.
   
-Add the library to your test dependencies:
-
+However, in case you can not access to the real google cloud service, this library will be suitable for you:
+ 
+ Add it to the _sbt library dependencies_:
  ```scala
  libraryDependencies ++= "com.google.cloud" % "google-cloud-nio" % "0.121.2" % Test
  ```
@@ -290,6 +291,8 @@ val blob: Blob = storage.create(blobInfo)
 val gcsBlob: GcsBlob = new GcsBlob(blob)
 ```
 
+Some advantages against using the real service would be that it does not require to deal with any type of _google access credentials_, 
+which may be good in some cases and it can save crucial time spent on setting the right credentials.
 
 
 

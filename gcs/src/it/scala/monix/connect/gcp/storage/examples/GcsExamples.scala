@@ -18,7 +18,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfterAll, Ignore}
 
-@Ignore
+@Ignore //this class aggregates some of the examples used for the documentation to easily track and modify them accordingly,
 class GcsExamples extends AnyWordSpecLike with IdiomaticMockito with Matchers with ArgumentMatchersSugar with BeforeAndAfterAll {
 
   val underlying = LocalStorageHelper.getOptions.getService
@@ -74,17 +74,18 @@ class GcsExamples extends AnyWordSpecLike with IdiomaticMockito with Matchers wi
 
       val storage = GcsStorage.create()
       val getBucketT: Task[Option[GcsBucket]] = storage.getBucket("myBucket")
-      val file = new File("path/to/your/path.txt")
+      val targetFile = new File("example/target/file.txt")
 
       val t: Task[Unit] = {
         for {
           maybeBucket <- getBucketT
           _ <- maybeBucket match {
-            case Some(bucket) => bucket.downloadToFile("myBlob", file.toPath)
+            case Some(bucket) => bucket.downloadToFile("myBlob", targetFile.toPath)
             case None => Task.unit
           }
         } yield ()
       }
+
     }
 
     "blob donwload to file" in {
@@ -94,7 +95,7 @@ class GcsExamples extends AnyWordSpecLike with IdiomaticMockito with Matchers wi
 
       val storage = GcsStorage.create()
       val getBlobT: Task[Option[GcsBlob]] = storage.getBlob("myBucket", "myBlob")
-      val targetFile = new File("path/to/your/path.txt")
+      val targetFile = new File("example/target/file.txt")
       val t: Task[Unit] = {
         for {
           maybeBucket <- getBlobT

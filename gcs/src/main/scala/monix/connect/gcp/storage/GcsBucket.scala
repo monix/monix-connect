@@ -37,7 +37,7 @@ class GcsBucket private (underlying: Bucket)
     *   import monix.connect.google.cloud.storage.{GcsBucket, GcsStorage}
     *
     *   val storage = GcsStorage(underlying)
-    *   val bucket: Task[GcsBucket] = storage.createBucket("myBucket", Locations.`EUROPE-WEST3`)
+    *   val bucket: Task[GcsBucket] = storage.createBucket("myBucket", Locations.`EUROPE-WEST3`).memoize
     *
     *   val ob: Observable[Array[Byte]] = for {
     *     bucket <- Observable.fromTask(bucket)
@@ -63,8 +63,8 @@ class GcsBucket private (underlying: Bucket)
     *   import monix.eval.Task
     *
     *   val storage = GcsStorage.create()
-    *   val getBucketT: Task[Option[GcsBlob]] = storage.getBlob("myBucket", "myBlob")
-    *   val targetFile = new File("path/to/your/path.txt")
+    *   val getBucketT: Task[Option[GcsBucket]] = storage.getBucket("myBucket")
+    *   val targetFile = new File("example/target/file.txt")
     *   val t: Task[Unit] = {
     *     for {
     *       maybeBucket <- getBucketT
@@ -88,7 +88,8 @@ class GcsBucket private (underlying: Bucket)
     * Provides a pre-built [[monix.reactive.Consumer]] implementation from [[GcsUploader]]
     * for uploading data to [[self]] Blob.
     *
-    * Example:
+    * ==Example==
+   *
     * {{{
     *   import monix.connect.google.cloud.storage.{GcsStorage, GcsBucket}
     *   import monix.eval.Task
@@ -116,7 +117,8 @@ class GcsBucket private (underlying: Bucket)
   /**
     * Uploads the provided file to the specified target Blob.
     *
-    * Example:
+    * ==Example==
+    *
     * {{{
     *   import java.io.File
     *
@@ -126,7 +128,7 @@ class GcsBucket private (underlying: Bucket)
     *
     *   val storage = GcsStorage.create()
     *   val createBucketT: Task[GcsBucket] = storage.createBucket("myBucket", GcsBucketInfo.Locations.`US-WEST1`)
-    *   val sourceFile = new File("path/to/your/path.txt")
+    *   val sourceFile = new File("example/source/file.txt")
     *
     *   val t: Task[Unit] = for {
     *     bucket <- createBucketT

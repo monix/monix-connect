@@ -8,7 +8,7 @@ import monix.eval.Task
 import monix.reactive.Observable
 
 /** An internal class that provides the necessary implementations for downloading
-  * blobs from any GCS bucket in form of byte array [[Observable]].
+  * blobs from any GCS bucket in form of a byte array [[Observable]].
   */
 private[storage] trait GcsDownloader {
 

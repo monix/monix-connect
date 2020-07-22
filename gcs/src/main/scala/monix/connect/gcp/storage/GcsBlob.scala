@@ -135,7 +135,7 @@ private[storage] final class GcsBlob(val underlying: Blob)
     * A pre-built [[monix.reactive.Consumer]] implementation from [[GcsUploader]]
     * for uploading data to [[self]] Blob.
     *
-    *  == Example ==
+    * == Example ==
     *
     * {{{
     *   import monix.connect.google.cloud.storage.{GcsStorage, GcsBlob}

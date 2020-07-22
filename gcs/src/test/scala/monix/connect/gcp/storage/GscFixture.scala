@@ -13,13 +13,18 @@ import scala.concurrent.duration._
 trait GscFixture {
 
   val genBool: Gen[Boolean] = Gen.oneOf(true, false)
-
+  val genNonEmtyStr: Gen[String] = Gen.nonEmptyListOf(Gen.alphaChar).map(_.mkString)
   val genAcl: Gen[Acl] = for {
     entity <- Gen.oneOf[Entity](User.ofAllUsers(), new Group("sample@email.com"), new Project(Project.ProjectRole.OWNERS, "id"))
     role <- Gen.oneOf(Role.OWNER, Role.READER, Role.WRITER)
   } yield {
     Acl.of(entity , role)
   }
+
+  val genBlobId: Gen[BlobId] = for {
+   bucket <- genNonEmtyStr
+   name <- genNonEmtyStr
+  } yield BlobId.of(bucket, name)
 
   val genStorageClass: Gen[StorageClass] = Gen.oneOf(
     StorageClass.ARCHIVE,

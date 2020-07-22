@@ -62,8 +62,8 @@ private[storage] final class GcsUploader(storage: Storage, blobInfo: BlobInfo, c
 }
 
 /** Companion object of [[GcsStorage]]. */
-object GcsUploader {
-  def apply(storage: GcsStorage, blobInfo: BlobInfo, chunkSize: Int = 4096, options: List[BlobWriteOption] = List.empty): GcsUploader =
+private[storage] object GcsUploader {
+   def apply(storage: GcsStorage, blobInfo: BlobInfo, chunkSize: Int = 4096, options: List[BlobWriteOption] = List.empty): GcsUploader =
     new GcsUploader(storage.underlying, blobInfo, chunkSize, options: _ *)
 }
 
