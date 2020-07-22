@@ -79,6 +79,26 @@ class GcsStorageSuite extends AnyWordSpecLike with IdiomaticMockito with Matcher
       gcsBlob.size shouldBe 2
     }
 
+    "list all the blobs under the given bucketName" in {
+      //given
+      val bucketName = nonEmptyString.sample.get
+      val blob1 = BlobInfo.newBuilder(BlobId.of(bucketName, nonEmptyString.sample.get)).build
+      val blob2 = BlobInfo.newBuilder(BlobId.of(bucketName, nonEmptyString.sample.get)).build
+      val content: Array[Byte] = nonEmptyString.sample.get.getBytes()
+      val storage = LocalStorageHelper.getOptions.getService //todo check [[LocalStorageHelper]] since removing storage should work equally, but it does not
+      storage.create(blob1, content)
+      storage.create(blob2, content)
+      val gcsStorage = GcsStorage(storage)
+
+      //when
+      val ob = gcsStorage.listBlobs(bucketName)
+      val gcsBlob: List[GcsBlob] = ob.toListL.runSyncUnsafe()
+
+      println("Blobs: " + gcsBlob.map(_.underlying.getName).mkString)
+      //then
+      gcsBlob.size shouldBe 2
+    }
+
   }
 
 }

@@ -57,7 +57,7 @@ val credentials = Paths.get("/path/to/credentials.json")
 val storage = GcsStorage.create(projectId, credentials)
 ```
 Once you have a _GcsStorage_ object created you can begin to work with
-_GCS_, the first think is to create a new _GcsBucket_ from the same instance:
+_GCS_, the first thing is to create a new _GcsBucket_ from the same instance:
 
 ##### Create resources
 
@@ -88,7 +88,7 @@ val storage: GcsStorage = GcsStorage.create()
 val blob: Task[GcsBlob] = storage.createBlob("mybucket", "myBlob").memoizeOnSuccess
 ```
 
-This operation would to get _buckets_ and _blobs_ in a _side-effectful_ way, it returns an _Option_
+It also exposes a get operation for _buckets_ and _blobs_ that gets executed `asyncronously` and it is `type-safe`, returning an _Option_
 with the resource we asked for, being _None_ if it did not existed:
 
 ```scala
@@ -120,14 +120,14 @@ val t: Task[Unit] = {
 }
 ```
 
-You could also find a list of _buckets_ or _keys_ by using respectively the signatures `listBuckets` and `getBuckets`. 
+You could also find a list of _buckets_ or _blobs_ by using respectively the signatures `getBuckets` and `getBlobs`, and also list all of them with `listBuckets` and `listBlobs`.
 
 #### Buckets
 
-A [Bucket](https://cloud.google.com/storage/docs/key-terms#buckets) is basically a container that holds your data. 
-You can use buckets to organize your data and control access to your data, but unlike directories and folders, you cannot nest buckets. 
+A [Bucket](https://cloud.google.com/storage/docs/key-terms#buckets) is basically a container that holds your data in _GCS_. 
+You can use _buckets_ to organize your data and control its access but unlike directories and folders, you cannot nest them. 
 
-The _Monix Google Cloud Storage_ connector relies in the underlying `Bucket` Api, but it provides some improvements and it only exposes type-safe non blocking methods. 
+The _Monix GCS_ connector relies in the underlying `com.google.cloud.storage.Bucket`, but with some additions and and integrations with `Monix` data types that makes it possible expose an idiomatic and `type-safe` non blocking api. 
 
 This implementation is named `GcsBucket`, and you can start using it different ways listed in the following example:
 
@@ -136,7 +136,7 @@ import java.io.File
 
 import monix.connect.gcp.storage.{GcsStorage, GcsBucket}
 
-val storage = GcsStorage.create()
+val storage: GcsStorage = GcsStorage.create()
 
 /** 1- When creating a bucket you will make sure that the bucket you want to use exists,
   * since it returns the new bucket on completion. */
@@ -146,16 +146,16 @@ val bucket1: Task[GcsBucket] = storage.createBucket("mybucket1", Locations.`EURO
   * it will return an empty Option. */
 val bucket2: Task[Option[GcsBucket]] = storage.getBucket("myBucket2")
 
-/** 3- Finally, you can convert from the underlying Bucket 
-  * to the Monix GcsBucket by using its compainon object*/
+/** 3- Finally, if you do already have an instance of [[com.google.cloud.storage.Bucket]],
+  * you can convert it to a GcsBucket by using its compainon object*/
 val underlying: com.google.cloud.storage.Bucket = ???
-val bucket: GcsBucket = GcsBucket(underlying)
+val bucket3: GcsBucket = GcsBucket(underlying)
 ```
 
-Once we have an instance of `GcsBucket`, we will be able to use its very simple methods that it exposes to manage our _Bucket_, such like _get blob/s_ stored in it, _update_ and _reload_ its metadata, various one to manage its _Access Control List_ (_ACL_), etc.
+Once we have an instance of `GcsBucket`, we will be able to use its very simple methods that it exposes to manage our _Bucket_, such like _get blob/s_ stored in it, _update_, _reload_ its metadata, various ones to manage its _Access Control List_ (_ACL_), etc.
 
-There are no code examples on the documentation to show these operations since they are basic and easy to use. 
- On the other hand, there are also available methods for _uploading_ and _downloading_ from _Blobs_ of this same _Bucket_, they are very interesting and unique from this connector, so you can see they can be used in the below code examples.
+There are no code examples on the documentation to show these operations since they are very basic and easy to use. 
+ On the other hand, there are also available methods for _uploading_ and _downloading_ from _Blobs_ of this same _Bucket_, they are very interesting and unique from this connector, see how can they be used in below code examples.
 
 ##### download
 

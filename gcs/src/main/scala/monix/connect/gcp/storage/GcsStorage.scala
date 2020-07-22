@@ -43,7 +43,6 @@ final class GcsStorage(val underlying: Storage) extends Paging {
     }.map(GcsBlob(_))
   }
 
-
   /** Returns the specified bucket as [[GcsStorage]] or [[None]] if it doesn't exist. */
   def getBucket(bucketName: String, options: BucketGetOption*): Task[Option[GcsBucket]] = {
     Task(underlying.get(bucketName, options: _*)).map { bucket =>
@@ -71,8 +70,9 @@ final class GcsStorage(val underlying: Storage) extends Paging {
   def listBuckets(options: BucketListOption *): Observable[GcsBucket] =
     walk(Task(underlying.list(options: _*))).map(GcsBucket.apply)
 
-  /** Internal API method to return [[WriteChannel]] from the underlying [[Storage]] */
-  private[storage] def writer(blobInfo: BlobInfo, options: Storage.BlobWriteOption*): WriteChannel = underlying.writer(blobInfo, options: _*)
+  /** Returns an [[Observable]] of all blobs attached to this storage instance. */
+  def listBlobs(bucketName: String, options: BlobListOption *): Observable[GcsBlob] =
+    walk(Task(underlying.list(bucketName, options: _*))).map(GcsBlob.apply)
 
 }
 

@@ -3,8 +3,8 @@ package monix.connect.gcp.storage
 import java.util
 
 import com.google.api.gax.paging.Page
-import com.google.cloud.storage.Storage.{BucketGetOption, BucketListOption}
-import com.google.cloud.storage.{Bucket => GoogleBucket, BucketInfo => GoogleBucketInfo, Storage => GoogleStorage, Option => _}
+import com.google.cloud.storage.Storage.{BlobListOption, BucketGetOption, BucketListOption}
+import com.google.cloud.storage.{Blob, Bucket => GoogleBucket, BucketInfo => GoogleBucketInfo, Storage => GoogleStorage, Option => _}
 import monix.connect.gcp.storage.configuration.GcsBucketInfo.Locations
 import monix.execution.Scheduler.Implicits.global
 import org.mockito.Mockito.{times, verify}
@@ -13,7 +13,7 @@ import org.mockito.{ArgumentMatchersSugar, IdiomaticMockito}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
-class GcsStorageSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers with ArgumentMatchersSugar {
+class GcsStorageSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers with ArgumentMatchersSugar with GscFixture {
   val underlying: GoogleStorage = mock[GoogleStorage]
   val bucket: GoogleBucket = mock[GoogleBucket]
   val storage: GcsStorage = GcsStorage(underlying)
@@ -61,7 +61,7 @@ class GcsStorageSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers
       }
     }
 
-    "implement an async list buckets operation" in {
+    "implement a list buckets operation" in {
         // given
         val page = mock[Page[GoogleBucket]]
         val bucketListOption: BucketListOption = mock[BucketListOption]
@@ -76,5 +76,24 @@ class GcsStorageSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers
         maybeBuckets.length shouldBe 3
         verify(underlying, times(1)).list(bucketListOption)
     }
+
+    "implement a list blobs operation" in {
+      // given
+      val page = mock[Page[Blob]]
+      val blob = mock[Blob]
+      val bucketName = genNonEmtyStr.sample.get
+      val blobListOption: BlobListOption = mock[BlobListOption]
+      when(page.iterateAll()).thenReturn(util.Arrays.asList(blob, blob, blob))
+      when(underlying.list(bucketName, blobListOption)).thenReturn(page)
+
+      //when
+      val maybeBuckets: List[GcsBlob] = storage.listBlobs(bucketName, blobListOption).toListL.runSyncUnsafe()
+
+      //then
+      maybeBuckets shouldBe a[List[GcsBucket]]
+      maybeBuckets.length shouldBe 3
+      verify(underlying, times(1)).list(bucketName, blobListOption)
+    }
+
   }
 }

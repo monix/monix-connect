@@ -15,7 +15,8 @@ import monix.reactive.observers.Subscriber
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-
+/** Monix [[Consumer]] implementation for uploading an
+  * unbounded number of byte arrays to a single Blob. */
 private[storage] final class GcsUploader(storage: Storage, blobInfo: BlobInfo, chunkSize: Int, options: BlobWriteOption*)
   extends Consumer[Array[Byte], Unit] {
 
@@ -61,7 +62,7 @@ private[storage] final class GcsUploader(storage: Storage, blobInfo: BlobInfo, c
   }
 }
 
-/** Companion object of [[GcsStorage]]. */
+/** Companion object of [[GcsUploader]]. */
 private[storage] object GcsUploader {
    def apply(storage: GcsStorage, blobInfo: BlobInfo, chunkSize: Int = 4096, options: List[BlobWriteOption] = List.empty): GcsUploader =
     new GcsUploader(storage.underlying, blobInfo, chunkSize, options: _ *)
