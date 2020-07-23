@@ -20,7 +20,7 @@ From there one, this connector provides two pre built implementations of a monix
 
 Add the following dependency to get started:
 ```scala 
-libraryDependencies += "io.monix" %% "monix-dynamodb" % "0.1.0"
+libraryDependencies += "io.monix" %% "monix-dynamodb" % "0.2.0"
 ```
 
 ## Getting started
