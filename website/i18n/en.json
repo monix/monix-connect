@@ -11,6 +11,9 @@
       "dynamodb": {
         "title": "AWS DynamoDB"
       },
+      "gcs": {
+        "title": "Google Cloud Storage"
+      },
       "hdfs": {
         "title": "HDFS"
       },

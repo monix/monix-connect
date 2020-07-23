@@ -16,6 +16,7 @@ and it is built on top of the the official _apache hadoop_ api.
 ## Dependency
 
 Add the following dependency to get started:
+
 ```scala 
 libraryDependencies += "io.monix" %% "monix-hdfs" % "0.1.0"
 ```
