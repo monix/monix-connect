@@ -29,7 +29,7 @@ At the same time that it returns the right values from scala lang and not form j
 Add the following dependency:
 
 ```scala
-libraryDependencies += "io.monix" %% "monix-redis" % "0.1.0"
+libraryDependencies += "io.monix" %% "monix-redis" % "0.2.0"
 ```
 
 ## Getting started

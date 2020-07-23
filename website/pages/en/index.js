@@ -124,28 +124,41 @@ const index = `
           </Block>
         );
 
-const Layer1 = () => (
+    const Layer1 = () => (
+                    <Block layout="fourColumn">
+                      {[
+
+                       ,
+                       {
+                        image: `${baseUrl}img/amazon-dynamo-db.png`,
+                        imageAlign: 'left'
+                       },
+                        {
+                        image: `${baseUrl}img/gcs.png`,
+                        imageAlign: 'right'
+                        },
+                        {
+                        image: `${baseUrl}img/parquet.png`,
+                        imageAlign: 'right'
+                        }
+
+                      ]}
+                    </Block>
+                  );
+
+
+    const Layer2 = () => (
           <Block layout="fourColumn">
             {[
 
-             ,
-             {
-              image: `${baseUrl}img/parquet.jpg`,
-              imageAlign: 'left'
-             },
-              {
-              image: `${baseUrl}img/amazon-dynamo-db.png`,
-              imageAlign: 'right'
-              },
               {
               image: `${baseUrl}img/akka.png`,
-              imageAlign: 'right'
+              imageAlign: 'left'
               }
 
             ]}
           </Block>
         );
-
 
 
 
@@ -159,6 +172,7 @@ const Layer1 = () => (
           </div>
          <Layer0 />
          <Layer1 />
+         <Layer2 />
         </div>
       </div>
     );

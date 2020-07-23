@@ -16,8 +16,9 @@ and it is built on top of the the official _apache hadoop_ api.
 ## Dependency
 
 Add the following dependency to get started:
+
 ```scala 
-libraryDependencies += "io.monix" %% "monix-hdfs" % "0.1.0"
+libraryDependencies += "io.monix" %% "monix-hdfs" % "0.2.0"
 ```
 
 By default the connector uses _Hadoop 3.1.1_. In case you need a different one you can replace it by excluding `org.apache.hadoop` from `monix-hdfs` and add the new one to your library dependencies.
