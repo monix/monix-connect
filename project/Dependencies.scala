@@ -9,7 +9,7 @@ object Dependencies {
     val S3 = "2.10.91"
     val Monix = "3.2.0"
     val AkkaStreams = "2.6.4"
-    val Hadoop = "3.1.3"
+    val Hadoop = "3.3.0"
     val GCS = "1.107.0"
     val Cats_Effect = "2.1.3"
     //test
