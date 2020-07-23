@@ -1,8 +1,9 @@
 # Monix Connect  
 
- [![release-badge][]][release] [![workflow-badge][]][workflow] 
+ [![release-badge][]][release] 
+ [![workflow-badge][]][workflow] 
  [![Gitter](https://badges.gitter.im/monix/monix-connect.svg)](https://gitter.im/monix/monix-connect?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-  [![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=flat&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=)](https://scala-steward.org)
+ [![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=flat&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=)](https://scala-steward.org)
 
  [workflow]:                https://github.com/monix/monix-connect/actions?query=branch%3Amaster+workflow%3Abuild
  [workflow-badge]:          https://github.com/monix/monix-connect/workflows/build/badge.svg
@@ -17,13 +18,15 @@ Monix Connect is an initiative to implement stream integrations for [Monix](http
 Learn more on how to get started in the [documentation page](https://monix.github.io/monix-connect/).
 
 ### Connectors
-The below list comprehends the current set of connectors that are available to use.
-1. [Akka](https://monix.github.io/monix-connect/docs/akka)
-2. [DynamoDB](https://monix.github.io/monix-connect/docs/dynamodb)
-3. [Hdfs](https://monix.github.io/monix-connect/docs/hdfs)
-4. [Parquet](https://monix.github.io/monix-connect/docs/parquet)
-5. [Redis](https://monix.github.io/monix-connect/docs/redis)
-6. [S3](https://monix.github.io/monix-connect/docs/s3)
+
+The below list comprehends the current set of available connectors:
+1. [Akka](https://connect.monix.io/docs/akka)
+2. [DynamoDB](https://connect.monix.io/docs/dynamodb)
+3. [Hdfs](https://connect.monix.io/docs/hdfs)
+4. [Parquet](https://connect.monix.io/docs/parquet)
+5. [Redis](https://connect.monix.io/docs/redis)
+6. [S3](https://connect.monix.io/docs/s3)
+7. [GCS](https://connect.monix.io/docs/gcs)
 
 ### Contributing
 

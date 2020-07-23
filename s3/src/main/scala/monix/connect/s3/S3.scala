@@ -267,17 +267,18 @@ object S3 {
     *       Alternatively, use the AmazonS3Client.listNextBatchOfObjects(ObjectListing) method as an easy way to get the next page of object listings.
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/ListObjectsRequest.html
     * @param bucket       S3 bucket whose objects are to be listed.
-    * @param maxKeys      Maximum number of keys to include in the response.
     * @param prefix       Restricts the response to keys that begin with the specified prefix.
+    * @param marker       Specifies the key to start with when listing objects in a bucket.
+    * @param maxKeys      Maximum number of keys to include in the response.
     * @param requestPayer Returns the value of the RequestPayer property for this object.
     * @param s3Client     An implicit instance of a [[S3AsyncClient]].
     * @return A [[Task]] with the resulted list of objects as [[ListObjectsV2Response]].
     */
   def listObjects(
     bucket: String,
+    prefix: Option[String] = None,
     marker: Option[String] = None,
     maxKeys: Option[Int] = None,
-    prefix: Option[String] = None,
     requestPayer: Option[String] = None)(implicit s3Client: S3AsyncClient): Task[ListObjectsResponse] = {
     val request: ListObjectsRequest =
       S3RequestBuilder.listObjects(bucket, marker, maxKeys, prefix, requestPayer)
@@ -301,12 +302,12 @@ object S3 {
     *
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/ListObjectsV2Request.Builder.html
     * @param bucket            S3 bucket whose objects are to be listed.
+    * @param prefix            Restricts the response to keys that begin with the specified prefix.
     * @param continuationToken Continuation token allows a list to be continued from a specific point.
     *                          ContinuationToken is provided in truncated list results.
     * @param fetchOwner        The owner field is not present in listV2 by default, if you want to return owner
     *                          field with each key in the result then set the fetch owner field to true.
     * @param maxKeys           Maximum number of keys to include in the response.
-    * @param prefix            Restricts the response to keys that begin with the specified prefix.
     * @param startAfter        StartAfter is where you want Amazon S3 to start listing from.
     *                          Amazon S3 starts listing after this specified key. StartAfter can be any key in the bucket.
     * @param requestPayer      Returns the value of the RequestPayer property for this object.
@@ -315,11 +316,11 @@ object S3 {
     */
   def listObjectsV2(
     bucket: String,
-    continuationToken: Option[String] = None,
-    fetchOwner: Option[Boolean],
-    maxKeys: Option[Int] = None,
     prefix: Option[String] = None,
-    startAfter: Option[String],
+    continuationToken: Option[String] = None,
+    fetchOwner: Option[Boolean] = None,
+    maxKeys: Option[Int] = None,
+    startAfter: Option[String] = None,
     requestPayer: Option[String])(implicit s3Client: S3AsyncClient): Task[ListObjectsV2Response] = {
     val request: ListObjectsV2Request =
       S3RequestBuilder.listObjectsV2(bucket, continuationToken, fetchOwner, maxKeys, prefix, startAfter, requestPayer)
@@ -357,9 +358,7 @@ object S3 {
     *
     *   val multipartUploadConsumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] = S3.multipartUpload(bucketName, key)(s3Client)
     *
-    *  val t: Task[CompleteMultipartUploadResponse] =
-    *     Observable.pure(content)
-    *     .consumeWith(multipartUploadConsumer)
+    *   val t: Task[CompleteMultipartUploadResponse] = Observable.pure(content).consumeWith(multipartUploadConsumer)
     * }
     *
     * @param bucket                  The bucket name where the object will be stored
@@ -424,7 +423,7 @@ object S3 {
     * Example:
     * {
     *    import monix.eval.Task
-    *     import software.amazon.awssdk.services.s3.S3AsyncClient
+    *    import software.amazon.awssdk.services.s3.S3AsyncClient
     *    import software.amazon.awssdk.services.s3.model.PutObjectResponse
     *    import monix.execution.Scheduler
     *
