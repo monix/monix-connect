@@ -7,7 +7,7 @@ lazy val doNotPublishArtifact = Seq(
   publishArtifact in (Compile, packageBin) := false
 )
 
-val monixConnectSeries = "0.1.1"
+val monixConnectSeries = "0.2.0"
 
 lazy val sharedSettings = Seq(
   organization       := "io.monix",
