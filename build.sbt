@@ -7,7 +7,7 @@ lazy val doNotPublishArtifact = Seq(
   publishArtifact in (Compile, packageBin) := false
 )
 
-val monixConnectSeries = "0.1.1"
+val monixConnectSeries = "0.2.0"
 
 lazy val sharedSettings = Seq(
   organization       := "io.monix",
@@ -188,6 +188,8 @@ lazy val redis = monixConnector("redis", Dependencies.Redis)
 
 lazy val s3 = monixConnector("s3", Dependencies.S3)
 
+lazy val gcs = monixConnector("gcs", Dependencies.GCS)
+
 def monixConnector(
   connectorName: String,
   projectDependencies: Seq[ModuleID],
@@ -233,7 +235,7 @@ lazy val skipOnPublishSettings = Seq(
 lazy val mdocSettings = Seq(
   scalacOptions --= Seq("-Xfatal-warnings", "-Ywarn-unused"),
   crossScalaVersions := Seq(scalaVersion.value),
-  unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(monix),
+  unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(akka, dynamodb, hdfs, redis, s3, parquet),
   target in (ScalaUnidoc, unidoc) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",
   cleanFiles += (target in (ScalaUnidoc, unidoc)).value,
   docusaurusCreateSite := docusaurusCreateSite
@@ -254,8 +256,8 @@ lazy val mdocSettings = Seq(
   ),
   // Exclude monix.*.internal from ScalaDoc
   sources in (ScalaUnidoc, unidoc) ~= (_ filterNot { file =>
-    // Exclude all internal Java files from documentation
-    file.getCanonicalPath matches "^.*monix.+?internal.*?\\.java$"
+    // Exclude protobuf generated files
+    file.getCanonicalPath.contains("/src_managed/main/monix/connect/")
   }),
 )
 
