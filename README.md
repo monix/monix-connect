@@ -18,15 +18,16 @@ Monix Connect is an initiative to implement stream integrations for [Monix](http
 Learn more on how to get started in the [documentation page](https://monix.github.io/monix-connect/).
 
 ### Connectors
-The below list comprehends the current set of connectors that are available to use.
-1. [Akka](https://monix.github.io/monix-connect/docs/akka)
-2. [DynamoDB](https://monix.github.io/monix-connect/docs/dynamodb)
-3. [Hdfs](https://monix.github.io/monix-connect/docs/hdfs)
-4. [Parquet](https://monix.github.io/monix-connect/docs/parquet)
-5. [Redis](https://monix.github.io/monix-connect/docs/redis)
-6. [S3](https://monix.github.io/monix-connect/docs/s3)
 
-7. [GCS](#GCS)
+The below list comprehends the current set of available connectors:
+1. [Akka](https://connect.monix.io/docs/akka)
+2. [DynamoDB](https://connect.monix.io/docs/dynamodb)
+3. [Hdfs](https://connect.monix.io/docs/hdfs)
+4. [Parquet](https://connect.monix.io/docs/parquet)
+5. [Redis](https://connect.monix.io/docs/redis)
+6. [S3](https://connect.monix.io/docs/s3)
+7. [GCS](https://connect.monix.io/docs/gcs)
+
 ### Contributing
 
 The Monix Connect project welcomes contributions from anybody wishing to
