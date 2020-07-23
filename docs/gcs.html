@@ -1,0 +1,277 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Google Cloud Storage · Monix Connect</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="### Introduction"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Google Cloud Storage · Monix Connect"/><meta property="og:type" content="website"/><meta property="og:url" content="https://connect.monix.io/"/><meta property="og:description" content="### Introduction"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://connect.monix.io/img/monix-logo.png"/><link rel="shortcut icon" href="/img/monix-logo.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css"/><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/monix-logo.svg" alt="Monix Connect"/><h2 class="headerTitleWithLogo">Monix Connect</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/api/monix/connect/index.html" target="_self">API Docs</a></li><li class="siteNavGroupActive"><a href="/docs/overview" target="_self">Documentation</a></li><li class=""><a href="https://github.com/monix/monix-connect" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Documentation</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Documentation</h3><ul class=""><li class="navListItem"><a class="navItem" href="/docs/overview">Overview</a></li><li class="navListItem"><a class="navItem" href="/docs/akka">Akka Streams</a></li><li class="navListItem"><a class="navItem" href="/docs/dynamodb">AWS DynamoDB</a></li><li class="navListItem"><a class="navItem" href="/docs/s3">AWS S3</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/docs/gcs">Google Cloud Storage</a></li><li class="navListItem"><a class="navItem" href="/docs/hdfs">HDFS</a></li><li class="navListItem"><a class="navItem" href="/docs/parquet">Apache Parquet</a></li><li class="navListItem"><a class="navItem" href="/docs/redis">Redis</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Google Cloud Storage</h1></header><article><div><span><h3><a class="anchor" aria-hidden="true" id="introduction"></a><a href="#introduction" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Introduction</h3>
+<p><em>Google Cloud Storage</em> is a durable and highly available object storage
+service, almost infinitely scalable and
+guarantees consistency: when a write succeeds, the latest copy of the
+object will be returned to any <em>get request</em>, globally.</p>
+<h3><a class="anchor" aria-hidden="true" id="dependency"></a><a href="#dependency" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Dependency</h3>
+<p>Add the following dependency to get started:</p>
+<pre><code class="hljs css language-scala">libraryDependencies += <span class="hljs-string">"io.monix"</span> %% <span class="hljs-string">"monix-gcs"</span> % <span class="hljs-string">"0.2.0"</span>
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="getting-started"></a><a href="#getting-started" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Getting Started</h3>
+<p>The <em>Monix Google Cloud Storage</em> connector is built on top of the
+<a href="https://github.com/googleapis/java-storage">Google Cloud Storage Client for Java</a> and is divided into three main abstractions: <a href="https://googleapis.dev/java/google-cloud-storage/latest/index.html">Storage</a>, <a href="https://googleapis.dev/java/google-cloud-storage/latest/index.html">Bucket</a> and <a href="https://googleapis.dev/java/google-cloud-storage/latest/index.html">Blob</a>,
+which will be described and explained in detail on the next sections:</p>
+<h4><a class="anchor" aria-hidden="true" id="storage"></a><a href="#storage" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Storage</h4>
+<p>The ´Storage´ acts as an interface for <em>Google Cloud Storage</em>, it provides very basic functionality limited to authentication for creating a connection with the service,
+and to creating and accessing the <em>Buckets</em> and <em>Blobs</em>.</p>
+<h5><a class="anchor" aria-hidden="true" id="connection"></a><a href="#connection" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Connection</h5>
+<p>The connector uses the <em>Application Default Credentials</em> method for
+authenticating to <em>GCS</em>. This requires the user to have the
+<code>GOOGLE_APPLICATION_CREDENTIALS</code> environment variable pointing to a
+Service Account with the required permissions in order to use the
+connector.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.gcp.storage.<span class="hljs-type">GcsStorage</span>
+
+<span class="hljs-keyword">val</span> storage = <span class="hljs-type">GcsStorage</span>.create()
+</code></pre>
+<p>Alternatively you will be able to point a credentials
+file on disk in the event you don't have the
+<code>GOOGLE_APPLICATION_CREDENTIALS</code> environment variable set.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> java.nio.file.<span class="hljs-type">Paths</span>
+
+<span class="hljs-keyword">import</span> monix.connect.gcp.storage.<span class="hljs-type">GcsStorage</span>
+
+<span class="hljs-keyword">val</span> projectId = <span class="hljs-string">"monix-connect-gcs"</span>
+<span class="hljs-keyword">val</span> credentials = <span class="hljs-type">Paths</span>.get(<span class="hljs-string">"/path/to/credentials.json"</span>)
+
+<span class="hljs-keyword">val</span> storage = <span class="hljs-type">GcsStorage</span>.create(projectId, credentials)
+</code></pre>
+<p>Once you have a <em>GcsStorage</em> object created you can begin to work with
+<em>GCS</em>, the first thing is to create a new <em>GcsBucket</em> from the same instance:</p>
+<h5><a class="anchor" aria-hidden="true" id="create-resources"></a><a href="#create-resources" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Create resources</h5>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> java.io.<span class="hljs-type">File</span>
+
+<span class="hljs-keyword">import</span> monix.connect.gcp.storage.{<span class="hljs-type">GcsStorage</span>, <span class="hljs-type">GcsBucket</span>}
+<span class="hljs-keyword">import</span> monix.connect.gcp.storage.configuration.<span class="hljs-type">GcsBucketInfo</span>
+<span class="hljs-keyword">import</span> monix.connect.gcp.storage.configuration.<span class="hljs-type">GcsBucketInfo</span>.<span class="hljs-type">Locations</span>
+
+<span class="hljs-keyword">val</span> storage = <span class="hljs-type">GcsStorage</span>.create()
+
+<span class="hljs-keyword">val</span> metadata = <span class="hljs-type">GcsBucketInfo</span>.<span class="hljs-type">Metadata</span>(
+  labels = <span class="hljs-type">Map</span>(
+    <span class="hljs-string">"project"</span> -&gt; <span class="hljs-string">"my-first-gcs-bucket"</span>
+  ),
+  storageClass = <span class="hljs-type">Some</span>(<span class="hljs-type">StorageClass</span>.<span class="hljs-type">REGIONAL</span>)
+)
+<span class="hljs-keyword">val</span> bucket: <span class="hljs-type">Task</span>[<span class="hljs-type">GcsBucket</span>] = storage.createBucket(<span class="hljs-string">"mybucket"</span>, <span class="hljs-type">Locations</span>.`<span class="hljs-type">EUROPE</span>-<span class="hljs-type">WEST1</span>`, <span class="hljs-type">Some</span>(metadata)).memoizeOnSuccess
+</code></pre>
+<p>On the other hand, you can create <em>Blobs</em> in the same way as with <em>Bucket</em>.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.gcp.storage.{<span class="hljs-type">GcsStorage</span>, <span class="hljs-type">GcsBlob</span>}
+
+<span class="hljs-keyword">val</span> storage: <span class="hljs-type">GcsStorage</span> = <span class="hljs-type">GcsStorage</span>.create()
+<span class="hljs-keyword">val</span> blob: <span class="hljs-type">Task</span>[<span class="hljs-type">GcsBlob</span>] = storage.createBlob(<span class="hljs-string">"mybucket"</span>, <span class="hljs-string">"myBlob"</span>).memoizeOnSuccess
+</code></pre>
+<p>It also exposes a get operation for <em>buckets</em> and <em>blobs</em> that gets executed <code>asyncronously</code> and it is <code>type-safe</code>, returning an <em>Option</em>
+with the resource we asked for, being <em>None</em> if it did not existed:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> getBucketT: <span class="hljs-type">Task</span>[<span class="hljs-type">Option</span>[<span class="hljs-type">GcsBucket</span>]] = storage.getBucket(<span class="hljs-string">"myBucket"</span>)
+
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">Unit</span>] = {
+  <span class="hljs-keyword">for</span> {
+    maybeBucket &lt;- getBucketT
+    _ &lt;- maybeBucket <span class="hljs-keyword">match</span> {
+      <span class="hljs-keyword">case</span> <span class="hljs-type">Some</span>(bucket) =&gt; <span class="hljs-type">Task</span>.now(println(<span class="hljs-string">"My bucket exists!"</span>))
+      <span class="hljs-keyword">case</span> <span class="hljs-type">None</span> =&gt; <span class="hljs-type">Task</span>.unit
+    }
+  } <span class="hljs-keyword">yield</span> ()
+}
+</code></pre>
+<p>The same would apply for <em>Blob</em>.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> getBlobT: <span class="hljs-type">Task</span>[<span class="hljs-type">Option</span>[<span class="hljs-type">GcsBlob</span>]] = storage.getBlob(<span class="hljs-string">"myBucket"</span>, <span class="hljs-string">"myBlob"</span>)
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">Unit</span>] = {
+  <span class="hljs-keyword">for</span> {
+    maybeBlob &lt;- getBlobT
+    _ &lt;- maybeBlob <span class="hljs-keyword">match</span> {
+      <span class="hljs-keyword">case</span> <span class="hljs-type">Some</span>(blob) =&gt; <span class="hljs-type">Task</span>.now(println(<span class="hljs-string">"My blob exists!"</span>))
+      <span class="hljs-keyword">case</span> <span class="hljs-type">None</span> =&gt; <span class="hljs-type">Task</span>.unit
+    }
+  } <span class="hljs-keyword">yield</span> ()
+}
+</code></pre>
+<p>You could also find a list of <em>buckets</em> or <em>blobs</em> by using respectively the signatures <code>getBuckets</code> and <code>getBlobs</code>, and also list all of them with <code>listBuckets</code> and <code>listBlobs</code>.</p>
+<h4><a class="anchor" aria-hidden="true" id="buckets"></a><a href="#buckets" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Buckets</h4>
+<p>A <a href="https://cloud.google.com/storage/docs/key-terms#buckets">Bucket</a> is basically a container that holds your data in <em>GCS</em>.
+You can use <em>buckets</em> to organize your data and control its access but unlike directories and folders, you cannot nest them.</p>
+<p>The <em>Monix GCS</em> connector relies in the underlying <code>com.google.cloud.storage.Bucket</code>, but with some additions and and integrations with <code>Monix</code> data types that makes it possible expose an idiomatic and <code>type-safe</code> non blocking api.</p>
+<p>This implementation is named <code>GcsBucket</code>, and you can start using it different ways listed in the following example:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> java.io.<span class="hljs-type">File</span>
+
+<span class="hljs-keyword">import</span> monix.connect.gcp.storage.{<span class="hljs-type">GcsStorage</span>, <span class="hljs-type">GcsBucket</span>}
+
+<span class="hljs-keyword">val</span> storage: <span class="hljs-type">GcsStorage</span> = <span class="hljs-type">GcsStorage</span>.create()
+
+<span class="hljs-comment">/** 1- When creating a bucket you will make sure that the bucket you want to use exists,
+  * since it returns the new bucket on completion. */</span>
+<span class="hljs-keyword">val</span> bucket1: <span class="hljs-type">Task</span>[<span class="hljs-type">GcsBucket</span>] = storage.createBucket(<span class="hljs-string">"mybucket1"</span>, <span class="hljs-type">Locations</span>.`<span class="hljs-type">EUROPE</span>-<span class="hljs-type">WEST1</span>`).memoizeOnSuccess
+
+<span class="hljs-comment">/** 2- You can also get / find the bucket by its name, in this case if it does not exist
+  * it will return an empty Option. */</span>
+<span class="hljs-keyword">val</span> bucket2: <span class="hljs-type">Task</span>[<span class="hljs-type">Option</span>[<span class="hljs-type">GcsBucket</span>]] = storage.getBucket(<span class="hljs-string">"myBucket2"</span>)
+
+<span class="hljs-comment">/** 3- Finally, if you do already have an instance of [[com.google.cloud.storage.Bucket]],
+  * you can convert it to a GcsBucket by using its compainon object*/</span>
+<span class="hljs-keyword">val</span> underlying: com.google.cloud.storage.<span class="hljs-type">Bucket</span> = ???
+<span class="hljs-keyword">val</span> bucket3: <span class="hljs-type">GcsBucket</span> = <span class="hljs-type">GcsBucket</span>(underlying)
+</code></pre>
+<p>Once we have an instance of <code>GcsBucket</code>, we will be able to use its very simple methods that it exposes to manage our <em>Bucket</em>, such like <em>get blob/s</em> stored in it, <em>update</em>, <em>reload</em> its metadata, various ones to manage its <em>Access Control List</em> (<em>ACL</em>), etc.</p>
+<p>There are no code examples on the documentation to show these operations since they are very basic and easy to use.
+On the other hand, there are also available methods for <em>uploading</em> and <em>downloading</em> from <em>Blobs</em> of this same <em>Bucket</em>, they are very interesting and unique from this connector, see how can they be used in below code examples.</p>
+<h5><a class="anchor" aria-hidden="true" id="download"></a><a href="#download" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>download</h5>
+<p>In order to download a blob using the <code>GcsBucket</code> you would just need to specify the <em>Blob</em> name that should be allocated in the same <em>Bucket</em>:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> storage = <span class="hljs-type">GcsStorage</span>(underlying)
+<span class="hljs-keyword">val</span> bucket: <span class="hljs-type">Task</span>[<span class="hljs-type">Option</span>[<span class="hljs-type">GcsBucket</span>]] = storage.getBucket(<span class="hljs-string">"myBucket"</span>)
+<span class="hljs-keyword">val</span> ob: <span class="hljs-type">Observable</span>[<span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>]] = {
+  <span class="hljs-type">Observable</span>.fromTask(bucket)
+    .flatMap {
+      <span class="hljs-keyword">case</span> <span class="hljs-type">Some</span>(blob) =&gt; blob.download(<span class="hljs-string">"myBlob"</span>)
+      <span class="hljs-keyword">case</span> <span class="hljs-type">None</span> =&gt; <span class="hljs-type">Observable</span>.empty
+    }
+}
+</code></pre>
+<h5><a class="anchor" aria-hidden="true" id="downloadtofile"></a><a href="#downloadtofile" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>downloadToFile</h5>
+<p>There is also a handy operation for downloading directly into a file,
+beware that <em>GCS</em> is designed to allocate files of any size,
+therefore it should only be used with relative small files that we know for a fact that our local system have enough capacity.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> java.io.<span class="hljs-type">File</span>
+
+<span class="hljs-keyword">import</span> monix.connect.gcp.storage.{<span class="hljs-type">GcsStorage</span>, <span class="hljs-type">GcsBucket</span>}
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+
+<span class="hljs-keyword">val</span> getBucketT: <span class="hljs-type">Task</span>[<span class="hljs-type">Option</span>[<span class="hljs-type">GcsBucket</span>]] = storage.getBucket(<span class="hljs-string">"myBucket"</span>)
+<span class="hljs-keyword">val</span> targetFile = <span class="hljs-keyword">new</span> <span class="hljs-type">File</span>(<span class="hljs-string">"example/target/file.txt"</span>)
+
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">Unit</span>] = {
+  <span class="hljs-keyword">for</span> {
+    maybeBucket &lt;- getBucketT
+    _ &lt;- maybeBucket <span class="hljs-keyword">match</span> {
+      <span class="hljs-keyword">case</span> <span class="hljs-type">Some</span>(bucket) =&gt; bucket.downloadToFile(<span class="hljs-string">"myBlob"</span>, targetFile.toPath)
+      <span class="hljs-keyword">case</span> <span class="hljs-type">None</span> =&gt; <span class="hljs-type">Task</span>.unit
+    }
+  } <span class="hljs-keyword">yield</span> ()
+}
+</code></pre>
+<h5><a class="anchor" aria-hidden="true" id="upload"></a><a href="#upload" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>upload</h5>
+<p>On the other hand you can upload data into a <em>Blob</em> by using the pre-built <code>Consumer</code> implementation that expects and pushes <em>byte arrays</em>
+into the specified <code>Blob</code> and materializes to <code>Unit</code> when it completes.</p>
+<pre><code class="hljs css language-scala">
+<span class="hljs-keyword">import</span> monix.connect.gcp.storage.{<span class="hljs-type">GcsStorage</span>, <span class="hljs-type">GcsBucket</span>}
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+
+<span class="hljs-keyword">val</span> storage = <span class="hljs-type">GcsStorage</span>.create()
+<span class="hljs-keyword">val</span> bucketT: <span class="hljs-type">Task</span>[<span class="hljs-type">GcsBucket</span>] = ???
+
+<span class="hljs-keyword">val</span> ob: <span class="hljs-type">Observable</span>[<span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>]] = ???
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">Unit</span>] = <span class="hljs-keyword">for</span> {
+  b &lt;- bucketT
+  _ &lt;- ob.consumeWith(b.upload(<span class="hljs-string">"myBlob"</span>))
+} <span class="hljs-keyword">yield</span> ()
+</code></pre>
+<h5><a class="anchor" aria-hidden="true" id="uploadfromfile"></a><a href="#uploadfromfile" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>uploadFromFile</h5>
+<p>Alternatively, you can upload data from a local file into the specified <em>Blob</em>.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> java.io.<span class="hljs-type">File</span>
+
+<span class="hljs-keyword">import</span> monix.connect.gcp.storage.{<span class="hljs-type">GcsStorage</span>, <span class="hljs-type">GcsBucket</span>}
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+
+<span class="hljs-keyword">val</span> bucketT: <span class="hljs-type">Task</span>[<span class="hljs-type">GcsBucket</span>] = ???
+<span class="hljs-keyword">val</span> sourceFile = <span class="hljs-keyword">new</span> <span class="hljs-type">File</span>(<span class="hljs-string">"example/source/file.txt"</span>)
+
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">Unit</span>] = <span class="hljs-keyword">for</span> {
+  b &lt;- bucketT
+  unit &lt;- b.uploadFromFile(<span class="hljs-string">"myBlob"</span>, sourceFile.toPath)
+} <span class="hljs-keyword">yield</span> ()
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="blobs"></a><a href="#blobs" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Blobs</h4>
+<p>A <em>Blob</em> is nothing else than an <em>Object</em>, pieces of data that you have uploaded to Cloud Storage that have to reside in a <em>Bucket</em>.</p>
+<p>The representation of an object in this connector is called <code>GcsBlob</code>, it provides also various simple methods for managing
+things like <em>update</em> metadata, manage its <em>acl</em> and <em>delete</em> permanently.</p>
+<p><code>GcsBlob</code> also exposes the methods <em>download</em>, <em>downloadToFile</em>, <em>upload</em> and <em>uploadFromFile</em> that allow to manage the <em>Blob's</em> data in a reactive way.
+The only difference from using <code>GcsBucket</code> is that but in this case there is no need of specifying the <em>Bucket</em>,
+since it will use the one which the <em>Blob</em> is stored in.</p>
+<h5><a class="anchor" aria-hidden="true" id="copyto"></a><a href="#copyto" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>copyTo</h5>
+<p>This thod has different signatures, and it allows you to copy a <em>Blob</em> into the specified target <em>Bucket</em> and <em>Blob</em>.
+The target <em>Bucket</em> can be the same or a different as the source.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.gcp.storage.{<span class="hljs-type">GcsStorage</span>, <span class="hljs-type">GcsBlob</span>}
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+<span class="hljs-keyword">val</span> storage = <span class="hljs-type">GcsStorage</span>.create()
+<span class="hljs-keyword">val</span> sourceBlob: <span class="hljs-type">Task</span>[<span class="hljs-type">GcsBlob</span>] = storage.createBlob(<span class="hljs-string">"myBucket"</span>, <span class="hljs-string">"sourceBlob"</span>)
+<span class="hljs-keyword">val</span> targetBlob: <span class="hljs-type">Task</span>[<span class="hljs-type">GcsBlob</span>] =  sourceBlob.flatMap(_.copyTo(<span class="hljs-string">"targetBucket"</span>, <span class="hljs-string">"targetBlob"</span>))
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="local-testing"></a><a href="#local-testing" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Local testing</h3>
+<p>Testing <em>Google Cloud Storage</em> locally and offline is challenging since there is yet <em>'not too good support'</em> on that front.</p>
+<p>There is a google library called <a href="https://github.com/googleapis/java-storage-nio">java-storage-nio</a> that emulates this service,
+however, it has some limitations since it does <a href="https://github.com/vam-google/google-cloud-java/blob/b095221d438f3b1c3b0929d9ab064be6051c2ba2/google-cloud-contrib/google-cloud-nio/src/main/java/com/google/cloud/storage/contrib/nio/testing/LocalStorageHelper.java#L27">not provide support</a>
+for some the operations (mostly for the <em>Bucket</em> api) and it is not <em>thread-safe</em>.
+That's why it is highly recommended to run the <em>functional tests</em> directly using the <em>Google Cloud Storage</em> service.</p>
+<p>However, in case you can not access to the real google cloud service, this library will be suitable for you:</p>
+<p>Add it to the <em>sbt library dependencies</em>:</p>
+<pre><code class="hljs css language-scala">libraryDependencies ++= <span class="hljs-string">"com.google.cloud"</span> % <span class="hljs-string">"google-cloud-nio"</span> % <span class="hljs-string">"0.121.2"</span> % <span class="hljs-type">Test</span>
+</code></pre>
+<p>Then you should be able to create a <em>fake</em> <code>Storage</code> instance and use it to build <code>GcsStorage</code> from the companion object
+<em>apply</em> method.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> com.google.cloud.storage.contrib.nio.testing.<span class="hljs-type">LocalStorageHelper</span>
+<span class="hljs-keyword">import</span> com.google.cloud.storage.{<span class="hljs-type">Blob</span>, <span class="hljs-type">BlobId</span>, <span class="hljs-type">BlobInfo</span>, <span class="hljs-type">Storage</span>, <span class="hljs-type">Option</span> =&gt; _}
+
+<span class="hljs-keyword">val</span> storage: <span class="hljs-type">Storage</span> = <span class="hljs-type">LocalStorageHelper</span>.getOptions.getService
+<span class="hljs-keyword">val</span> blobInfo: <span class="hljs-type">BlobInfo</span> = <span class="hljs-type">BlobInfo</span>.newBuilder(<span class="hljs-type">BlobId</span>.of(<span class="hljs-string">"myBucket"</span>, <span class="hljs-string">"myBlob"</span>)).build
+<span class="hljs-keyword">val</span> blob: <span class="hljs-type">Blob</span> = storage.create(blobInfo)
+<span class="hljs-keyword">val</span> gcsBlob: <span class="hljs-type">GcsBlob</span> = <span class="hljs-keyword">new</span> <span class="hljs-type">GcsBlob</span>(blob)
+</code></pre>
+<p>Some advantages against using the real service would be that it does not require to deal with any type of <em>google access credentials</em>,
+which may be good in some cases and it can save crucial time spent on setting the right credentials.</p>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/docs/s3"><span class="arrow-prev">← </span><span>AWS S3</span></a><a class="docs-next button" href="/docs/hdfs"><span>HDFS</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><hr class="separator"/><section class="copyright">Copyright © 2020-2020 The Monix Connect Developers.</section></footer></div></body></html>
