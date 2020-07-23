@@ -25,7 +25,6 @@ import scala.collection.JavaConverters._
 
 /**
   * @see The reference Lettuce Api at:
-  *      [[io.lettuce.core.api.reactive.RedisServerAsyncCommands]] and
   *      [[io.lettuce.core.api.reactive.RedisServerReactiveCommands]]
   */
 private[redis] trait RedisServer {

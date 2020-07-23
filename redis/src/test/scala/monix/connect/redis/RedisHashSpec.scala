@@ -70,7 +70,7 @@ class RedisHashSpec
     when(reactiveRedisCommands.hget(k, field)).thenReturn(mockMono[V])
 
     //when
-    val _: Task[V] = RedisHash.hget(k, field)
+    val _: Task[Option[V]] = RedisHash.hget(k, field)
 
     //then
     verify(reactiveRedisCommands).hget(k, field)

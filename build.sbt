@@ -7,7 +7,7 @@ lazy val doNotPublishArtifact = Seq(
   publishArtifact in (Compile, packageBin) := false
 )
 
-val monixConnectSeries = "0.1.0"
+val monixConnectSeries = "0.2.0"
 
 lazy val sharedSettings = Seq(
   organization       := "io.monix",
@@ -69,11 +69,32 @@ lazy val sharedSettings = Seq(
   concurrentRestrictions in Global += Tags.limit(Tags.Test, 1),
   logBuffered in Test            := false,
   logBuffered in IntegrationTest := false,
-  dependencyClasspath in IntegrationTest := (dependencyClasspath in IntegrationTest).value ++ (exportedProducts in Test).value,
-    // https://github.com/sbt/sbt/issues/2654
+  //dependencyClasspath in IntegrationTest := (dependencyClasspath in IntegrationTest).value ++ (exportedProducts in Test).value,
+  // https://github.com/sbt/sbt/issues/2654
   incOptions := incOptions.value.withLogRecompileOnMacro(false),
   publishArtifact in Test := false,
   pomIncludeRepository    := { _ => false }, // removes optional dependencies
+
+  // ScalaDoc settings
+  autoAPIMappings := true,
+  apiURL := Some(url("https://monix.github.io/monix-connect/api/")),
+  apiMappings ++= {
+    val cp: Seq[Attributed[File]] = (fullClasspath in Compile).value
+    def findManagedDependency(organization: String, name: String): File = {
+      ( for {
+        entry <- cp
+        module <- entry.get(moduleID.key)
+        if module.organization == organization
+        if module.name.startsWith(name)
+      } yield entry.data
+        ).head
+    }
+    Map(
+      findManagedDependency("io.monix","monix-execution") -> url("https://monix.io/api/3.1/"),
+      findManagedDependency("io.monix","monix-catnap") -> url("https://monix.io/api/3.1/"),
+      findManagedDependency("org.typelevel","cats-effect") -> url("https://typelevel.org/cats-effect/api/")
+    )
+  },
 
   licenses      := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
   //homepage := Some(url("https://monix.io")), //todo homepage settings
@@ -144,11 +165,8 @@ lazy val monix = (project in file("."))
   .settings(name := "monix-connect")
   .aggregate(akka, dynamodb, hdfs, parquet, redis, s3)
   .dependsOn(akka, dynamodb, hdfs, parquet, redis, s3)
-  //.settings(unidocSettings) //todo enable unidoc settings
-  //.enablePlugins(ScalaUnidocPlugin)
 
 lazy val akka = monixConnector("akka", Dependencies.Akka)
-
 
 lazy val dynamodb = monixConnector("dynamodb", Dependencies.DynamoDb)
 
@@ -170,6 +188,8 @@ lazy val redis = monixConnector("redis", Dependencies.Redis)
 
 lazy val s3 = monixConnector("s3", Dependencies.S3)
 
+lazy val gcs = monixConnector("gcs", Dependencies.GCS)
+
 def monixConnector(
   connectorName: String,
   projectDependencies: Seq[ModuleID],
@@ -181,4 +201,97 @@ def monixConnector(
     .settings(additionalSettings: _*)
     .configure(profile)
     .configs(IntegrationTest, IT)
-    .settings(mimaSettings(s"monix-$connectorName"))
+    //.settings(mimaSettings(s"monix-$connectorName")) //todo uncoment when releasing 0.2.0
+
+lazy val docs = project
+  .in(file("monix-connect-docs"))
+  .settings(
+    moduleName := "monix-connect-docs",
+    name := moduleName.value,
+    sharedSettings,
+    skipOnPublishSettings,
+    mdocSettings
+  )
+  .dependsOn()
+  .enablePlugins(DocusaurusPlugin, MdocPlugin, ScalaUnidocPlugin)
+
+lazy val docsMappingsAPIDir =
+  settingKey[String]("Name of subdirectory in site target directory for api docs")
+
+lazy val doctestTestSettings = Seq(
+  doctestTestFramework := DoctestTestFramework.Minitest,
+  doctestIgnoreRegex := Some(s".*BIOApp.scala"),
+  doctestOnlyCodeBlocksMode := true
+)
+
+lazy val skipOnPublishSettings = Seq(
+  skip in publish := true,
+  publish := (()),
+  publishLocal := (()),
+  publishArtifact := false,
+  publishTo := None
+)
+
+lazy val mdocSettings = Seq(
+  scalacOptions --= Seq("-Xfatal-warnings", "-Ywarn-unused"),
+  crossScalaVersions := Seq(scalaVersion.value),
+  unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(akka, dynamodb, hdfs, redis, s3, parquet),
+  target in (ScalaUnidoc, unidoc) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",
+  cleanFiles += (target in (ScalaUnidoc, unidoc)).value,
+  docusaurusCreateSite := docusaurusCreateSite
+    .dependsOn(unidoc in Compile)
+    .dependsOn(updateSiteVariables in ThisBuild)
+    .value,
+  docusaurusPublishGhpages :=
+    docusaurusPublishGhpages
+      .dependsOn(unidoc in Compile)
+      .dependsOn(updateSiteVariables in ThisBuild)
+      .value,
+  scalacOptions in (ScalaUnidoc, unidoc) ++= Seq(
+    "-doc-source-url", s"https://github.com/monix/monix-connect/tree/v${version.value}€{FILE_PATH}.scala",
+    "-sourcepath", baseDirectory.in(LocalRootProject).value.getAbsolutePath,
+    "-doc-title", "Monix Connect",
+    "-doc-version", s"v${version.value}",
+    "-groups"
+  ),
+  // Exclude monix.*.internal from ScalaDoc
+  sources in (ScalaUnidoc, unidoc) ~= (_ filterNot { file =>
+    // Exclude protobuf generated files
+    file.getCanonicalPath.contains("/src_managed/main/monix/connect/")
+  }),
+)
+
+def minorVersion(version: String): String = {
+  val (major, minor) =
+    CrossVersion.partialVersion(version).get
+  s"$major.$minor"
+}
+
+val updateSiteVariables = taskKey[Unit]("Update site variables")
+updateSiteVariables in ThisBuild := {
+  val file =
+    (baseDirectory in LocalRootProject).value / "website" / "variables.js"
+
+  val variables =
+    Map[String, String](
+      "organization" -> (organization in LocalRootProject).value,
+      "coreModuleName" -> (moduleName in monix).value,
+      "latestVersion" -> version.value,
+      "scalaPublishVersions" -> {
+        val minorVersions = (crossScalaVersions in monix).value.map(minorVersion)
+        if (minorVersions.size <= 2) minorVersions.mkString(" and ")
+        else minorVersions.init.mkString(", ") ++ " and " ++ minorVersions.last
+      }
+    )
+
+  val fileHeader =
+    "// Generated by sbt. Do not edit directly."
+
+  val fileContents =
+    variables.toList
+      .sortBy { case (key, _) => key }
+      .map { case (key, value) => s"  $key: '$value'" }
+      .mkString(s"$fileHeader\nmodule.exports = {\n", ",\n", "\n};\n")
+
+  IO.write(file, fileContents)
+}

@@ -1,4 +1,3 @@
-import sbt.Keys.sourceManaged
 import sbt._
 
 object Dependencies {
@@ -11,14 +10,14 @@ object Dependencies {
     val Monix = "3.2.0"
     val AkkaStreams = "2.6.4"
     val Hadoop = "3.1.3"
-
+    val GCS = "1.107.0"
+    val Cats_Effect = "2.1.3"
     //test
     val Scalatest = "3.1.2"
-    val Scalacheck = "1.14.3"
-    val Mockito = "1.13.1"
+    val Scalacheck = "1.14.0"
+    val Mockito = "1.14.3"
     val Cats = "2.0.0"
-
-
+    val GCNio = "0.121.2"
   }
 
   private def commonDependencies(hasIntegrationTest: Boolean = false): Seq[sbt.ModuleID] = {
@@ -30,7 +29,7 @@ object Dependencies {
   private val CommonProjectDependencies = Seq(
     "io.monix" %% "monix-reactive" % DependencyVersions.Monix,
     "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.6", //todo use as replacement for `collection.JavaConverters`
-    "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1"
+    "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0"
    // "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
     //"org.slf4j" % "log4j-over-slf4j" % "1.7.30"
   )
@@ -86,10 +85,19 @@ object Dependencies {
   val S3 = S3Dependecies ++ CommonProjectDependencies ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(_ % IntegrationTest)
 
   private val RedisDependencies = Seq(
-    "io.lettuce" % "lettuce-core" % "5.1.2.RELEASE",
+    "io.lettuce" % "lettuce-core" % "5.1.8.RELEASE",
     "com.github.pureconfig" %% "pureconfig" % DependencyVersions.PureConfig
   )
 
   val Redis = RedisDependencies ++ CommonProjectDependencies ++ CommonTestDependencies.map(_ % Test)
 
+  private val GcsDependencies = Seq(
+    "org.typelevel"     %% "cats-core"            % DependencyVersions.Cats,
+    "com.google.cloud"   % "google-cloud-storage" % DependencyVersions.GCS,
+    "org.typelevel" %% "cats-effect" % DependencyVersions.Cats_Effect,
+    "com.google.cloud" % "google-cloud-nio" % DependencyVersions.GCNio % IntegrationTest,
+    "commons-io" % "commons-io" % "2.6" % Test
+  )
+
+  val GCS = GcsDependencies  ++ CommonProjectDependencies ++ CommonTestDependencies
 }

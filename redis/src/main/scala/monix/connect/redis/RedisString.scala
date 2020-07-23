@@ -25,9 +25,7 @@ import monix.reactive.Observable
 import collection.JavaConverters._
 
 /**
-  * @see The reference to lettuce api:
-  *      [[io.lettuce.core.api.reactive.RedisStringAsyncCommands]] and
-  *      [[io.lettuce.core.api.reactive.RedisStringReactiveCommands]]
+  * @see The reference to lettuce api [[io.lettuce.core.api.reactive.RedisStringReactiveCommands]]
   */
 private[redis] trait RedisString {
 

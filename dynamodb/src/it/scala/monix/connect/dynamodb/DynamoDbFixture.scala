@@ -3,6 +3,7 @@ package monix.connect.dynamodb
 import monix.eval.Task
 import monix.execution.Scheduler
 import org.scalacheck.Gen
+import org.scalatest.TestSuite
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.{AttributeDefinition, AttributeValue, CreateTableRequest, DeleteTableRequest, DeleteTableResponse, GetItemRequest, KeySchemaElement, KeyType, ProvisionedThroughput, PutItemRequest, ScalarAttributeType}
 
@@ -10,7 +11,7 @@ import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
 trait DynamoDbFixture {
-
+  this: TestSuite =>
   val strAttr: String => AttributeValue = value => AttributeValue.builder().s(value).build()
   val numAttr: Int => AttributeValue = value => AttributeValue.builder().n(value.toString).build()
   val doubleAttr: Double => AttributeValue = value => AttributeValue.builder().n(value.toString).build()
@@ -90,7 +91,6 @@ trait DynamoDbFixture {
     val deleteRequest: DeleteTableRequest = DeleteTableRequest.builder().tableName(tableName).build()
     Task.from(client.deleteTable(deleteRequest))
   }
-
 
   def genRequestAttributes: Gen[(String, Int, Double)] = {
     for {
