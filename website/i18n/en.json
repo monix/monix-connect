@@ -14,9 +14,6 @@
       "gcs": {
         "title": "Google Cloud Storage"
       },
-      "getting-started": {
-        "title": "Getting Started"
-      },
       "hdfs": {
         "title": "HDFS"
       },

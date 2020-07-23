@@ -67,7 +67,7 @@ private[dynamodb] class DynamoDbSubscriber[In <: DynamoDbRequest, Out <: DynamoD
       }
 
       def onComplete(): Unit = {
-        cb.onSuccess()
+        cb.onSuccess(())
       }
 
       def onError(ex: Throwable): Unit = {
