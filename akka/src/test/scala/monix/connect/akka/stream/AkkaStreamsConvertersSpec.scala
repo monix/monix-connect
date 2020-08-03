@@ -238,10 +238,10 @@ class AkkaStreamsConvertersSpec extends AnyWordSpecLike with ScalaFutures with M
         //given
         import monix.connect.akka.stream.Converters._
         val l: List[Int] = Gen.listOfN(100, Gen.choose(1, 1000)).sample.get
-        val sink: Sink[Int, Future[Int]] = Consumer.head[Int].asSink
+        val headConsumer: Consumer.Sync[Int, Int] = Consumer.head[Int]
 
         //when
-        val f: Future[Int] = Source(l).runWith(sink)
+        val f: Future[Int] = Source(l).runWith(headConsumer.asSink)
 
         //then
         f.futureValue shouldBe l.head

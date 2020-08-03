@@ -127,17 +127,15 @@ val f: Future[Seq[Long]] = ob.asSource.runWith(Sink.seq)
 
 #### asConsumer
 
-Finally, use `asConsumer` for converting from `Sink[-In, +Out <: Future[Mat]]` to `Consumer[-In, +Mat]`. 
+Finally, the converter `asSink` is available for converting from `Consumer[-In, +Mat]` to `Sink[-In, +Out <: Future[Mat]]`. 
 
 ```scala
 //given
-val sink: Sink[Int, Future[String]] = Sink.fold[String, Int]("")((s, i) => s + i.toString)
-
-//and 
-val ob: Observable[Int] = Observable.fromIterable(1 until 10)
+val l: List[Int] = List(1, 2, 3)
+val headConsumer: Consumer.Sync[Int, Int] = Consumer.head[Int]
 
 //when
-val t: Task[String] = ob.consumeWith(sink.asConsumer[String])
+val f: Future[Int] = Source(l).runWith(headConsumer.asSink)
 
-//then eventually will return "123456789"
+//then eventually will materialize to 1 (the head)
 ```

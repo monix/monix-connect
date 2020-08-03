@@ -21,12 +21,12 @@ Learn more on how to get started in the [documentation page](https://monix.githu
 
 The below list comprehends the current set of available connectors:
 1. [Akka](https://connect.monix.io/docs/akka)
-2. [DynamoDB](https://connect.monix.io/docs/dynamodb)
-3. [Hdfs](https://connect.monix.io/docs/hdfs)
-4. [Parquet](https://connect.monix.io/docs/parquet)
-5. [Redis](https://connect.monix.io/docs/redis)
-6. [S3](https://connect.monix.io/docs/s3)
-7. [GCS](https://connect.monix.io/docs/gcs)
+2. [Apache Parquet](https://connect.monix.io/docs/parquet)
+3. [AWS DynamoDB](https://connect.monix.io/docs/dynamodb)
+4. [AWS S3](https://connect.monix.io/docs/s3)
+5. [Hdfs](https://connect.monix.io/docs/hdfs)
+6. [Google Cloud Storage](https://connect.monix.io/docs/gcs)
+7. [Redis](https://connect.monix.io/docs/redis)
 
 ### Contributing
 
