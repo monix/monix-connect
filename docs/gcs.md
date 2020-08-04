@@ -3,32 +3,32 @@ id: gcs
 title: Google Cloud Storage
 ---
 
-### Introduction
+## Introduction
 
 _Google Cloud Storage_ is a durable and highly available object storage
 service, almost infinitely scalable and 
 guarantees consistency: when a write succeeds, the latest copy of the
 object will be returned to any _get request_, globally.
 
-### Dependency
+## Dependency
 
 Add the following dependency to get started:
 ```scala
 libraryDependencies += "io.monix" %% "monix-gcs" % "0.2.0"
 ```
 
-### Getting Started
+## Getting Started
 
 The _Monix Google Cloud Storage_ connector is built on top of the
 [Google Cloud Storage Client for Java](https://github.com/googleapis/java-storage) and is divided into three main abstractions: [Storage](https://googleapis.dev/java/google-cloud-storage/latest/index.html), [Bucket](https://googleapis.dev/java/google-cloud-storage/latest/index.html) and [Blob](https://googleapis.dev/java/google-cloud-storage/latest/index.html),
  which will be described and explained in detail on the next sections:
  
-#### Storage
+### Storage
  
  The ´Storage´ acts as an interface for _Google Cloud Storage_, it provides very basic functionality limited to authentication for creating a connection with the service, 
  and to creating and accessing the _Buckets_ and _Blobs_.
 
-##### Connection
+#### Connection
 
 The connector uses the *Application Default Credentials* method for
 authenticating to _GCS_. This requires the user to have the
@@ -59,7 +59,7 @@ val storage = GcsStorage.create(projectId, credentials)
 Once you have a _GcsStorage_ object created you can begin to work with
 _GCS_, the first thing is to create a new _GcsBucket_ from the same instance:
 
-##### Create resources
+#### Create resources
 
 ```scala
 import java.io.File
@@ -122,7 +122,7 @@ val t: Task[Unit] = {
 
 You could also find a list of _buckets_ or _blobs_ by using respectively the signatures `getBuckets` and `getBlobs`, and also list all of them with `listBuckets` and `listBlobs`.
 
-#### Buckets
+### Buckets
 
 A [Bucket](https://cloud.google.com/storage/docs/key-terms#buckets) is basically a container that holds your data in _GCS_. 
 You can use _buckets_ to organize your data and control its access but unlike directories and folders, you cannot nest them. 
@@ -157,7 +157,7 @@ Once we have an instance of `GcsBucket`, we will be able to use its very simple 
 There are no code examples on the documentation to show these operations since they are very basic and easy to use. 
  On the other hand, there are also available methods for _uploading_ and _downloading_ from _Blobs_ of this same _Bucket_, they are very interesting and unique from this connector, see how can they be used in below code examples.
 
-##### download
+#### download
 
 In order to download a blob using the `GcsBucket` you would just need to specify the _Blob_ name that should be allocated in the same _Bucket_:
 
@@ -238,7 +238,7 @@ val t: Task[Unit] = for {
 } yield ()
 ```
 
-#### Blobs
+### Blobs
 
 A _Blob_ is nothing else than an _Object_, pieces of data that you have uploaded to Cloud Storage that have to reside in a _Bucket_.
 
@@ -262,7 +262,7 @@ val sourceBlob: Task[GcsBlob] = storage.createBlob("myBucket", "sourceBlob")
 val targetBlob: Task[GcsBlob] =  sourceBlob.flatMap(_.copyTo("targetBucket", "targetBlob"))
 ```
 
-### Local testing
+## Local testing
 
 Testing _Google Cloud Storage_ locally and offline is challenging since there is yet _'not too good support'_ on that front.
 
