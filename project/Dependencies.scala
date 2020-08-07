@@ -13,7 +13,7 @@ object Dependencies {
     val GCS = "1.107.0"
     val Cats_Effect = "2.1.3"
     //test
-    val Scalatest = "3.1.2"
+    val Scalatest = "3.2.1"
     val Scalacheck = "1.14.0"
     val Mockito = "1.14.8"
     val Cats = "2.0.0"
