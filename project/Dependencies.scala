@@ -80,7 +80,7 @@ object Dependencies {
     "software.amazon.awssdk" % "s3" % DependencyVersions.S3,
     "com.amazonaws" % "aws-java-sdk-core" % DependencyVersions.AWS % IntegrationTest,
     "com.amazonaws" % "aws-java-sdk-s3" % DependencyVersions.AWS % IntegrationTest,
-    "org.scalatestplus" %% "scalacheck-1-14" % "3.1.1.1" % Test
+    "org.scalatestplus" %% "scalacheck-1-14" % "3.1.3.0" % Test
   )
   val S3 = S3Dependecies ++ CommonProjectDependencies ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(_ % IntegrationTest)
 
