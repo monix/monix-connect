@@ -65,9 +65,9 @@ object Dependencies {
 
   private val ParquetDependecies = Seq(
     "io.monix" %% "monix-reactive" % DependencyVersions.Monix,
-    "org.apache.parquet" % "parquet-avro" % "1.11.0",
-    "org.apache.parquet" % "parquet-hadoop" % "1.11.0",
-    "org.apache.parquet" % "parquet-protobuf" % "1.11.0",
+    "org.apache.parquet" % "parquet-avro" % "1.11.1",
+    "org.apache.parquet" % "parquet-hadoop" % "1.11.1",
+    "org.apache.parquet" % "parquet-protobuf" % "1.11.1",
     "com.twitter.elephantbird" % "elephant-bird" % "4.17",
     "org.apache.hadoop" % "hadoop-client" % "3.2.1",
     "org.apache.hadoop" % "hadoop-common" % "3.2.1",
