@@ -136,7 +136,7 @@ Now that we have the instance of `MongoCollection` we're ready to start operatin
 Notice that in the below examples we are going to use the _employees collection_ that just was created,
  meaning that our input and output documents will be of type `Employee`.
 
-## Operation & Sink
+## Operations & Sinks
 As it was mentioned at the beginning, the documentation of _Operation_ (`MongoOp`) and _Sink_ (`MongoSink`) is explained in the same section
 since these expose exactly the same set of operations _insert_, _delete_, _replace_ and _update_, although they approach differs on single (`Task`) vs multiple elements (`Observable`).
 
@@ -149,7 +149,7 @@ if you want to import them they are located in the package: `monix.connect.mongo
 
 Inserts the provided document to the specified collection.
 
-_Single Op_:
+_Operation_:
 ```scala
 val employee: Employee = Employee("Luke", "London", 29)
 
@@ -167,7 +167,7 @@ Observable.from(employees) // Observable[Employee]
 
 Inserts the provided list of documents to the specified collection.
 
-_Single Op_:
+_Operation_:
 ```scala
 val employees: List[Employee] = List(Employee("John", "Vienna", 33), Employee("Albert", "Vienna", 45))
 
@@ -189,7 +189,7 @@ Observable.from(List(l1, l2)) // Observable[List[Employee]]
 #### deleteOne 
 Removes at most one _document_ from the _collection_ that matches the given _filter_. If no documents match, the _collection_ is not modified.
 
-_Single Op_:
+_Operation_:
 ```scala
 import com.mongodb.client.model.Filters
 import com.mongodb.client.result.DeleteResult
@@ -214,7 +214,7 @@ Observable.from(employees) // Observable[String]
 #### deleteMany
 Removes all documents from the _collection_ that match the given query filter. Again if no _documents_ match, the _collection_ is not modified.
 
-_Single Op_:
+_Operation_:
 ```scala
 import com.mongodb.client.model.Filters
 import monix.connect.mongodb.MongoSink
@@ -239,7 +239,7 @@ Observable.from(List("Germany", "Italy", "Turkey")) // Observable[List[String]]
 #### replaceOne
 Replace a _document_ in the _collection_ according to the specified arguments.
 
-_Single Op_:
+_Operation_:
 ```scala
 import com.mongodb.client.model.Filters
 import com.mongodb.client.result.UpdateResult
@@ -274,7 +274,7 @@ Observable.from(replacements) // Observable[(Bson, Employee)]
 
 Update a single document in the collection according to the specified arguments. 
 
-_Single Op_:
+_Operation_:
 ```scala
 import com.mongodb.client.model.{Filters, Updates}
 import com.mongodb.client.result.UpdateResult
@@ -307,7 +307,7 @@ Observable.from(l) // Observable[(Bson, Bson)]
 
 Update all documents in the collection according to the specified arguments.
 
-_Single Op_:
+_Operation_:
 ```scala
 import com.mongodb.client.model.{Filters, Updates}
 import com.mongodb.client.result.UpdateResult
@@ -332,7 +332,7 @@ Observable.from(cities) // Observable[String]
   .consumeWith(MongoSink.updateMany(col))
 ```
 
-## Source
+## Sources
 
 The `MongoSource` object abstracts the mongodb _read-like_ operations (_aggregate_, _count_, _distinct_ and _find_) 
 with some exceptions that also will modify the collection (_findOneAnd* Delete_, _Replace_ or _Update_),
