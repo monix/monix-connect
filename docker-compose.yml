@@ -18,6 +18,16 @@ services:
       retries: 3
     command: server --compat /data
 
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+
+  mongoclient:
+    image: mongoclient/mongoclient
+    ports:
+      - "3000:3000"
+
   localstack:
     image: localstack/localstack:0.11.1
     ports:
