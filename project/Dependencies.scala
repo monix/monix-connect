@@ -56,7 +56,7 @@ object Dependencies {
 
   val MongoDb = Seq(
     "org.mongodb" % "mongodb-driver-reactivestreams" % "1.12.0",
-    "org.mongodb.scala" %% "mongo-scala-bson" % "2.9.0"
+    "org.mongodb.scala" %% "mongo-scala-bson" % "4.1.0"
   ) ++ commonDependencies(hasIntegrationTest = true)
 
   val Parquet = Seq(
