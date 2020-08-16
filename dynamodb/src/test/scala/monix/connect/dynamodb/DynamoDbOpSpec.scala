@@ -80,7 +80,7 @@ class DynamoDbOpSpec extends AnyWordSpecLike with Matchers with IdiomaticMockito
         f.value shouldBe Some(Failure(lastEx))
       }
 
-      "delays each failed execution by the configured finite duration" in {
+      "delays a single failed execution by the configured finite duration" in {
         //given
         val delay = 2.seconds
         val op = mock[DynamoDbOp[DynamoDbRequest, DynamoDbResponse]]
@@ -89,14 +89,44 @@ class DynamoDbOpSpec extends AnyWordSpecLike with Matchers with IdiomaticMockito
           .thenReturn(Task.raiseError(ex), Task(resp))
 
         //when
-        val f = DynamoDbOp.create(req, retries, Some(delay))(op, client).runToFuture
+        val f = DynamoDbOp.create(req, retries, Some(delay))(op, client).runToFuture(s)
 
         //then
+        s.tick(1.second)
         verify(op, times(1)).apply(req)
 
         //and
         s.tick(delay * 2)
         verify(op, times(2)).apply(req)
+        f.value shouldBe Some(Success(resp))
+      }
+
+      "delays each failed execution by the configured finite duration" in {
+        //given
+        val delay = 2.seconds
+        val op = mock[DynamoDbOp[DynamoDbRequest, DynamoDbResponse]]
+        val ex = DummyException("DynamoDB is busy.")
+        when(op.apply(req)(client))
+          .thenReturn(Task.raiseError(ex), Task.raiseError(ex), Task.raiseError(ex), Task(resp))
+
+        //when
+        val f = DynamoDbOp.create(req, retries, Some(delay))(op, client).runToFuture(s)
+
+        //then
+        s.tick(1.second)
+        verify(op, times(1)).apply(req)
+
+        //then
+        s.tick(2.seconds)
+        verify(op, times(2)).apply(req)
+
+        //then
+        s.tick(2.seconds)
+        verify(op, times(3)).apply(req)
+
+        //and
+        s.tick(delay * 2)
+        verify(op, times(4)).apply(req)
         f.value shouldBe Some(Success(resp))
       }
 

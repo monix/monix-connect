@@ -163,8 +163,8 @@ lazy val monix = (project in file("."))
   .configs(IntegrationTest, IT)
   .settings(sharedSettings)
   .settings(name := "monix-connect")
-  .aggregate(akka, dynamodb, hdfs, parquet, redis, s3)
-  .dependsOn(akka, dynamodb, hdfs, parquet, redis, s3)
+  .aggregate(akka, dynamodb, hdfs, mongodb, parquet, redis, s3)
+  .dependsOn(akka, dynamodb, hdfs, mongodb, parquet, redis, s3)
 
 lazy val akka = monixConnector("akka", Dependencies.Akka)
 
@@ -182,6 +182,9 @@ val scalaPBSettings = Seq(
   ),
   PB.protoSources in Compile := Seq(new File("parquet/src/test/protobuf")),
 )
+
+lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb)
+
 lazy val parquet = monixConnector("parquet", Dependencies.Parquet, scalaPBSettings)
 
 lazy val redis = monixConnector("redis", Dependencies.Redis)
@@ -215,15 +218,6 @@ lazy val docs = project
   .dependsOn()
   .enablePlugins(DocusaurusPlugin, MdocPlugin, ScalaUnidocPlugin)
 
-lazy val docsMappingsAPIDir =
-  settingKey[String]("Name of subdirectory in site target directory for api docs")
-
-lazy val doctestTestSettings = Seq(
-  doctestTestFramework := DoctestTestFramework.Minitest,
-  doctestIgnoreRegex := Some(s".*BIOApp.scala"),
-  doctestOnlyCodeBlocksMode := true
-)
-
 lazy val skipOnPublishSettings = Seq(
   skip in publish := true,
   publish := (()),
@@ -235,7 +229,7 @@ lazy val skipOnPublishSettings = Seq(
 lazy val mdocSettings = Seq(
   scalacOptions --= Seq("-Xfatal-warnings", "-Ywarn-unused"),
   crossScalaVersions := Seq(scalaVersion.value),
-  unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(akka, dynamodb, hdfs, redis, s3, parquet),
+  unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(akka, parquet, dynamodb, s3, gcs, hdfs, mongodb, redis),
   target in (ScalaUnidoc, unidoc) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",
   cleanFiles += (target in (ScalaUnidoc, unidoc)).value,
   docusaurusCreateSite := docusaurusCreateSite
