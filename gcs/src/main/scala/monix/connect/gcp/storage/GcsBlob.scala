@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * See the project homepage at: https://monix.io
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package monix.connect.gcp.storage
 
 import java.net.URL
@@ -16,72 +33,71 @@ import scala.collection.JavaConverters._
 import scala.concurrent.duration.FiniteDuration
 
 /**
- * This class wraps the [[com.google.cloud.storage.Blob]] class, providing an idiomatic scala API
- * handling null values with [[Option]] where applicable, as well as wrapping all side-effectful calls
- * in [[monix.eval.Task]] or [[monix.reactive.Observable]].
- *
- * @define copyToNote Forcing an Async Boundary, this function potentially spins until the copy is done. If the src and
- *                    dst are in the same location and share the same storage class the request is done in one RPC call,
- *                    otherwise multiple calls are issued.
- */
-private[storage] final class GcsBlob(val underlying: Blob)
-  extends GcsDownloader with FileIO {
+  * This class wraps the [[com.google.cloud.storage.Blob]] class, providing an idiomatic scala API
+  * handling null values with [[Option]] where applicable, as well as wrapping all side-effectful calls
+  * in [[monix.eval.Task]] or [[monix.reactive.Observable]].
+  *
+  * @define copyToNote Forcing an Async Boundary, this function potentially spins until the copy is done. If the src and
+  *                    dst are in the same location and share the same storage class the request is done in one RPC call,
+  *                    otherwise multiple calls are issued.
+  */
+private[storage] final class GcsBlob(val underlying: Blob) extends GcsDownloader with FileIO {
   self =>
 
   /**
-   * Downloads a Blob from GCS, returning an Observable containing the bytes in chunks of length chunkSize.
-   *
-   * == Example ==
-   *
-   * {{{
-   *   import monix.connect.google.cloud.storage.{GcsStorage, GcsBlob}
-   *   import monix.eval.Task
-   *   import monix.reactive.Observable
-   *
-   *   val storage = GcsStorage.create()
-   *   val blob: Task[Option[GcsBlob]] = storage.getBlob("myBucket", "myBlob")
-   *
-   *   val ob: Observable[Array[Byte]] = Observable.fromTask(blob)
-   *      .flatMap {
-   *        case Some(blob) => blob.download()
-   *        case None => Observable.empty
-   *      }
-   * }}}
-   *
-   */
+    * Downloads a Blob from GCS, returning an Observable containing the bytes in chunks of length chunkSize.
+    *
+    * == Example ==
+    *
+    * {
+    *   import monix.connect.gcp.storage.{GcsStorage, GcsBlob}
+    *   import monix.eval.Task
+    *   import monix.reactive.Observable
+    *
+    *   val storage = GcsStorage.create()
+    *   val blob: Task[Option[GcsBlob]] = storage.getBlob("myBucket", "myBlob")
+    *
+    *   val ob: Observable[Array[Byte]] = Observable.fromTask(blob)
+    *      .flatMap {
+    *        case Some(blob) => blob.download()
+    *        case None => Observable.empty
+    *      }
+    * }
+    *
+    */
   def download(chunkSize: Int = 4096): Observable[Array[Byte]] = {
     val blobId: BlobId = BlobId.of(underlying.getBucket, underlying.getName)
     download(underlying.getStorage, blobId, chunkSize)
   }
 
   /**
-   * Allows downloading a Blob from GCS directly to the specified file.
-   *
-   * == Example ==
-   *
-   * {{{
-   *   import java.io.File
-   *
-   *   import monix.execution.Scheduler.Implicits.global
-   *   import monix.connect.google.cloud.storage.{GcsStorage, GcsBlob}
-   *   import monix.eval.Task
-   *
-   *   val storage = GcsStorage.create()
-   *   val getBlobT: Task[Option[GcsBlob]] = storage.getBlob("myBucket", "myBlob")
-   *   val file = new File("path/to/your/path.txt")
-   *
-   *   val t: Task[Unit] = {
-   *     for {
-   *       maybeBlob <- getBlobT
-   *       _ <- maybeBlob match {
-   *         case Some(blob) => blob.downloadToFile(file.toPath)
-   *         case None => Task.unit
-   *       }
-   *     } yield ()
-   *   }
-   *
-   * }}}
-   */
+    * Allows downloading a Blob from GCS directly to the specified file.
+    *
+    * == Example ==
+    *
+    * {
+    *   import java.io.File
+    *
+    *   import monix.execution.Scheduler.Implicits.global
+    *   import monix.connect.gcp.storage.{GcsStorage, GcsBlob}
+    *   import monix.eval.Task
+    *
+    *   val storage: GcsStorage = ???
+    *   val getBlobT: Task[Option[GcsBlob]] = storage.getBlob("myBucket", "myBlob")
+    *   val file = new File("path/to/your/path.txt")
+    *
+    *   val t: Task[Unit] = {
+    *     for {
+    *       maybeBlob <- getBlobT
+    *       _ <- maybeBlob match {
+    *         case Some(blob) => blob.downloadToFile(file.toPath)
+    *         case None => Task.unit
+    *       }
+    *     } yield ()
+    *   }
+    *
+    * }
+    */
   def downloadToFile(path: Path, chunkSize: Int = 4096): Task[Unit] = {
     val blobId: BlobId = BlobId.of(underlying.getBucket, underlying.getName)
     (for {
@@ -96,37 +112,39 @@ private[storage] final class GcsBlob(val underlying: Blob)
 
   /** Fetches current blob's latest information. Returns None if the blob does not exist. */
   def reload(options: BlobSourceOption*): Task[Option[GcsBlob]] = {
-    Task(underlying.reload(options: _*)).map { optBlob =>
-      Option(optBlob).map(GcsBlob.apply)
-    }
+    Task(underlying.reload(options: _*)).map { optBlob => Option(optBlob).map(GcsBlob.apply) }
   }
 
   /**
-   * Uploads the provided file to the specified target Blob.
-   *
-   * == Example ==
-   *
-   * {{{
-   *   import monix.connect.google.cloud.storage.{GcsStorage, GcsBlob}
-   *   import monix.eval.Task
-   *
-   *   val storage = GcsStorage.create()
-   *   val createBlobT: Task[GcsBlob] = storage.createBlob("myBucket", "myBlob")
-   *   val sourceFile = new File("path/to/your/path.txt")
-   *
-   *   val t: Task[Unit] = for {
-   *     blob <- createBlobT
-   *     _ <- blob.uploadFromFile(sourceFile.toPath)
-   *   } yield ()
-   * }}}
-   */
-  def uploadFromFile(path: Path,
+    * Uploads the provided file to the specified target Blob.
+    *
+    * == Example ==
+    *
+    * {
+    *   import monix.connect.gcp.storage.{GcsStorage, GcsBlob}
+    *   import monix.eval.Task
+    *
+    *   import java.io.File
+    *
+    *   val storage: GcsStorage = ???
+    *   val createBlobT: Task[GcsBlob] = storage.createBlob("myBucket", "myBlob")
+    *   val sourceFile = new File("path/to/your/path.txt")
+    *
+    *   val t: Task[Unit] = for {
+    *     blob <- createBlobT
+    *     _ <- blob.uploadFromFile(sourceFile.toPath)
+    *   } yield ()
+    * }
+    */
+  def uploadFromFile(
+    path: Path,
     metadata: Option[GcsBlobInfo.Metadata] = None,
     chunkSize: Int = 4096,
     options: List[BlobWriteOption] = List.empty[BlobWriteOption]): Task[Unit] = {
     val blobInfo = GcsBlobInfo.withMetadata(underlying.getBucket, underlying.getName, metadata)
     openFileInputStream(path).use { bis =>
-      Observable.fromInputStreamUnsafe(bis)
+      Observable
+        .fromInputStreamUnsafe(bis)
         .consumeWith(GcsUploader(self.getStorage, blobInfo, chunkSize, options))
     }
   }
@@ -137,11 +155,12 @@ private[storage] final class GcsBlob(val underlying: Blob)
     *
     * == Example ==
     *
-    * {{{
-    *   import monix.connect.google.cloud.storage.{GcsStorage, GcsBlob}
+    * {
+    *   import monix.connect.gcp.storage.{GcsStorage, GcsBlob}
     *   import monix.eval.Task
+    *   import monix.reactive.Observable
     *
-    *   val storage = GcsStorage.create()
+    *   val storage: GcsStorage = ???
     *   val createBlobT: Task[GcsBlob] = storage.createBlob("myBucket", "myBlob").memoize
     *
     *   val ob: Observable[Array[Byte]] = ???
@@ -149,16 +168,18 @@ private[storage] final class GcsBlob(val underlying: Blob)
     *     blob <- createBlobT
     *     _ <- ob.consumeWith(blob.upload())
     *   } yield ()
-    * }}}
+    * }
     */
-  def upload(metadata: Option[GcsBlobInfo.Metadata] = None,
-             chunkSize: Int = 4096,
-             options: List[BlobWriteOption] = List.empty[BlobWriteOption]): GcsUploader = {
+  def upload(
+    metadata: Option[GcsBlobInfo.Metadata] = None,
+    chunkSize: Int = 4096,
+    options: List[BlobWriteOption] = List.empty[BlobWriteOption]): GcsUploader = {
     val blobInfo = GcsBlobInfo.withMetadata(underlying.getBucket, underlying.getName, metadata)
     GcsUploader(self.getStorage, blobInfo, chunkSize, options)
   }
 
-  /** Updates the blob's information. The Blob's name cannot be changed by this method. If you
+  /**
+    * Updates the blob's information. The Blob's name cannot be changed by this method. If you
     * want to rename the blob or move it to a different bucket use the [[copyTo]] and [[delete]] operations.
     */
   def update(options: BlobTargetOption*): Task[GcsBlob] = {
@@ -166,7 +187,8 @@ private[storage] final class GcsBlob(val underlying: Blob)
       .map(GcsBlob.apply)
   }
 
-  /** Updates the blob's information. Bucket or blob's name cannot be changed by this method. If you
+  /**
+    * Updates the blob's information. Bucket or blob's name cannot be changed by this method. If you
     * want to rename the blob or move it to a different bucket use the [[copyTo]] and [[delete]] operations.
     */
   def updateMetadata(metadata: GcsBlobInfo.Metadata, options: BlobTargetOption*): Task[GcsBlob] = {
@@ -181,27 +203,31 @@ private[storage] final class GcsBlob(val underlying: Blob)
 
   /** Copies this blob to the target Blob. */
   def copyTo(targetBlob: BlobId, options: BlobSourceOption*): Task[GcsBlob] =
-    Task.evalAsync(underlying.copyTo(targetBlob, options: _*))
+    Task
+      .evalAsync(underlying.copyTo(targetBlob, options: _*))
       .map(_.getResult)
       .map(GcsBlob.apply)
 
   /**
-   * Copies this blob to the target Bucket.
-   */
+    * Copies this blob to the target Bucket.
+    */
   def copyTo(targetBucket: String, options: BlobSourceOption*): Task[GcsBlob] =
-    Task.evalAsync(underlying.copyTo(targetBucket, options: _*))
+    Task
+      .evalAsync(underlying.copyTo(targetBucket, options: _*))
       .map(_.getResult)
       .map(GcsBlob.apply)
 
   /**
-   * Copies this blob to the target Blob in the target Bucket.
-   */
+    * Copies this blob to the target Blob in the target Bucket.
+    */
   def copyTo(targetBucket: String, targetBlob: String, options: BlobSourceOption*): Task[GcsBlob] =
-    Task.evalAsync(underlying.copyTo(targetBucket, targetBlob, options: _*))
+    Task
+      .evalAsync(underlying.copyTo(targetBucket, targetBlob, options: _*))
       .map(_.getResult)
       .map(GcsBlob.apply)
 
-  /** Generates a signed URL for this blob. If you want to allow access for a fixed amount of time to
+  /**
+    * Generates a signed URL for this blob. If you want to allow access for a fixed amount of time to
     * this blob, you can use this method to generate a URL that is only valid within a certain time
     * period. This is particularly useful if you don't want publicly accessible blobs, but also don't
     * want to require users to explicitly log in. Signing a URL requires a service account signer.

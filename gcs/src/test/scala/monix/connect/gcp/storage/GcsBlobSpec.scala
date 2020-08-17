@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * See the project homepage at: https://monix.io
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package monix.connect.gcp.storage
 
 import java.net.URL
@@ -13,14 +30,20 @@ import org.mockito.MockitoSugar.when
 import org.scalatest.matchers.should.Matchers
 import org.mockito.Mockito.{times, verify}
 import org.scalacheck.Gen
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.wordspec.AnyWordSpecLike
 
 import scala.jdk.CollectionConverters._
 
-class GcsBlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers with GscFixture {
+class GcsBlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers with GscFixture with BeforeAndAfterEach {
 
   val underlying: GoogleBlob = mock[GoogleBlob]
   val blob: GcsBlob = GcsBlob(underlying)
+
+  override def beforeEach: Unit = {
+    super.beforeEach()
+    reset(underlying)
+  }
 
   s"$GcsBlob" should {
 
@@ -145,18 +168,18 @@ class GcsBlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers wi
       }
     }
 
-   // "implement an async sign url operation that correctly returns some url" in {
-   //   // given
-   //   val signUrlOption: SignUrlOption = mock[SignUrlOption]
-   //   val url = new URL("TCP")
-   //   when(underlying.signUrl(2, TimeUnit.MINUTES, signUrlOption)).thenReturn(url)
-//
-   //   //when
-   //   val maybeUrl: URL = blob.signUrl(2.minutes, signUrlOption).runSyncUnsafe()
-//
-   //   maybeUrl shouldBe a[URL]
-   //   verify(underlying, times(1)).signUrl(2, TimeUnit.MINUTES, signUrlOption)
-   // }
+    // "implement an async sign url operation that correctly returns some url" in {
+    //   // given
+    //   val signUrlOption: SignUrlOption = mock[SignUrlOption]
+    //   val url = new URL("TCP")
+    //   when(underlying.signUrl(2, TimeUnit.MINUTES, signUrlOption)).thenReturn(url)
+    //
+    //   //when
+    //   val maybeUrl: URL = blob.signUrl(2.minutes, signUrlOption).runSyncUnsafe()
+    //
+    //   maybeUrl shouldBe a[URL]
+    //   verify(underlying, times(1)).signUrl(2, TimeUnit.MINUTES, signUrlOption)
+    // }
 
     "implement a create acl operation that correctly returns some acl" in {
       // given
