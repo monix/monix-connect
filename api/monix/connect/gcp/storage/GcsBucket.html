@@ -3,9 +3,9 @@
         <head>
           <meta http-equiv="X-UA-Compatible" content="IE=edge" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-          <title>Monix Connect v0.3.0+8-e043d12b+20200817-2213-SNAPSHOT - monix.connect.gcp.storage.GcsBucket</title>
-          <meta name="description" content="Monix Connect v0.3.0 8 - e043d12b 20200817 - 2213 - SNAPSHOT - monix.connect.gcp.storage.GcsBucket" />
-          <meta name="keywords" content="Monix Connect v0.3.0 8 e043d12b 20200817 2213 SNAPSHOT monix.connect.gcp.storage.GcsBucket" />
+          <title>Monix Connect v0.3.0+11-ffe82917-SNAPSHOT - monix.connect.gcp.storage.GcsBucket</title>
+          <meta name="description" content="Monix Connect v0.3.0 11 - ffe82917 - SNAPSHOT - monix.connect.gcp.storage.GcsBucket" />
+          <meta name="keywords" content="Monix Connect v0.3.0 11 ffe82917 SNAPSHOT monix.connect.gcp.storage.GcsBucket" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../../lib/index.css" media="screen" type="text/css" rel="stylesheet" />
@@ -28,7 +28,7 @@
         </head>
         <body>
       <div id="search">
-        <span id="doc-title">Monix Connect<span id="doc-version">v0.3.0+8-e043d12b+20200817-2213-SNAPSHOT</span></span>
+        <span id="doc-title">Monix Connect<span id="doc-version">v0.3.0+11-ffe82917-SNAPSHOT</span></span>
         <span class="close-results"><span class="left">&lt;</span> Back</span>
         <div id="textfilter">
           <span class="input">
@@ -194,7 +194,7 @@
           <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>This class wraps the <span class="extype" name="com.google.cloud.storage.Bucket">com.google.cloud.storage.Bucket</span> class, providing an idiomatic scala API
 handling null values with <span class="extype" name="Option">Option</span> where applicable, as well as wrapping all side-effectful calls
 in <span class="extype" name="monix.eval.Task">monix.eval.Task</span> or <span class="extype" name="monix.reactive.Observable">monix.reactive.Observable</span>.
-</p></div><dl class="attributes block"> <dt>Self Type</dt><dd><a href="" class="extype" name="monix.connect.gcp.storage.GcsBucket">GcsBucket</a></dd><dt>Source</dt><dd><a href="https://github.com/monix/monix-connect/tree/v0.3.0+8-e043d12b+20200817-2213-SNAPSHOT/gcs/src/main/scala/monix/connect/gcp/storage/GcsBucket.scala" target="_blank">GcsBucket.scala</a></dd></dl><div class="toggleContainer block">
+</p></div><dl class="attributes block"> <dt>Self Type</dt><dd><a href="" class="extype" name="monix.connect.gcp.storage.GcsBucket">GcsBucket</a></dd><dt>Source</dt><dd><a href="https://github.com/monix/monix-connect/tree/v0.3.0+11-ffe82917-SNAPSHOT/gcs/src/main/scala/monix/connect/gcp/storage/GcsBucket.scala" target="_blank">GcsBucket.scala</a></dd></dl><div class="toggleContainer block">
           <span class="toggle">
             Linear Supertypes
           </span>
@@ -452,16 +452,16 @@ Default ACLs are applied to a new blob within the bucket when no ACL was provide
         <span class="name">download</span><span class="params">(<span name="blobName">blobName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="chunkSize">chunkSize: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="symbol">4096</span></span>)</span><span class="result">: <span class="extype" name="monix.reactive.Observable">Observable</span>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Byte.html#scala.Byte" class="extype" name="scala.Byte">Byte</a>]]</span>
       </span>
       
-      <p class="shortcomment cmt">Downloads a Blob from GCS, returning an <span class="extype" name="Observable">Observable</span> containing the bytes in chunks of length chunkSize.</p><div class="fullcomment"><div class="comment cmt"><p>Downloads a Blob from GCS, returning an <span class="extype" name="Observable">Observable</span> containing the bytes in chunks of length chunkSize.</p><h4> Example </h4><pre><span class="kw">import</span> monix.connect.google.cloud.storage.configuration.GcsBucketInfo.Locations
-<span class="kw">import</span> monix.connect.google.cloud.storage.{GcsBucket, GcsStorage}
-
-<span class="kw">val</span> storage = GcsStorage(underlying)
-<span class="kw">val</span> bucket: Task[GcsBucket] = storage.createBucket(<span class="lit">"myBucket"</span>, Locations.`EUROPE-WEST3`).memoize
-
-<span class="kw">val</span> ob: Observable[<span class="std">Array</span>[<span class="std">Byte</span>]] = <span class="kw">for</span> {
-  bucket <span class="kw">&lt;-</span> Observable.fromTask(bucket)
-  content <span class="kw">&lt;-</span> bucket.download(<span class="lit">"myBlob"</span>)
-} <span class="kw">yield</span> content</pre></div></div>
+      <p class="shortcomment cmt">Downloads a Blob from GCS, returning an <span class="extype" name="Observable">Observable</span> containing the bytes in chunks of length chunkSize.</p><div class="fullcomment"><div class="comment cmt"><p>Downloads a Blob from GCS, returning an <span class="extype" name="Observable">Observable</span> containing the bytes in chunks of length chunkSize.</p><h4> Example </h4><p>{
+  import monix.connect.gcp.storage.configuration.GcsBucketInfo.Locations
+  import monix.connect.gcp.storage.{GcsBucket, GcsStorage}
+  import monix.eval.Task
+  import monix.reactive.Observable</p><p>  val storage = GcsStorage.create()
+  val bucket: Task[GcsBucket] = storage.createBucket(&quot;myBucket&quot;, Locations.<code>EUROPE-WEST3</code>).memoize</p><p>  val ob: Observable[Array[Byte]] = for {
+    bucket &lt;- Observable.fromTask(bucket)
+    content &lt;- bucket.download(&quot;myBlob&quot;)
+  } yield content
+}</p></div></div>
     </li><li name="monix.connect.gcp.storage.components.GcsDownloader#download" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="download(storage:com.google.cloud.storage.Storage,blobId:com.google.cloud.storage.BlobId,chunkSize:Int):monix.reactive.Observable[Array[Byte]]"></a><a id="download(Storage,BlobId,Int):Observable[Array[Byte]]"></a>
       <span class="permalink">
@@ -493,23 +493,22 @@ Default ACLs are applied to a new blob within the bucket when no ACL was provide
         <span class="name">downloadToFile</span><span class="params">(<span name="blobName">blobName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="path">path: <span class="extype" name="java.nio.file.Path">Path</span></span>, <span name="chunkSize">chunkSize: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="symbol">4096</span></span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a>]</span>
       </span>
       
-      <p class="shortcomment cmt">Allows downloading a Blob from GCS directly to the specified file.</p><div class="fullcomment"><div class="comment cmt"><p>Allows downloading a Blob from GCS directly to the specified file.</p><h4> Example </h4><pre><span class="kw">import</span> java.io.File
-
-<span class="kw">import</span> monix.connect.google.cloud.storage.{GcsStorage, GcsBucket}
-<span class="kw">import</span> monix.eval.Task
-
-<span class="kw">val</span> storage = GcsStorage.create()
-<span class="kw">val</span> getBucketT: Task[<span class="std">Option</span>[GcsBucket]] = storage.getBucket(<span class="lit">"myBucket"</span>)
-<span class="kw">val</span> targetFile = <span class="kw">new</span> File(<span class="lit">"example/target/file.txt"</span>)
-<span class="kw">val</span> t: Task[<span class="std">Unit</span>] = {
-  <span class="kw">for</span> {
-    maybeBucket <span class="kw">&lt;-</span> getBucketT
-    _ <span class="kw">&lt;-</span> maybeBucket <span class="kw">match</span> {
-      <span class="kw">case</span> <span class="std">Some</span>(bucket) <span class="kw">=&gt;</span> bucket.downloadToFile(targetFile.toPath)
-      <span class="kw">case</span> <span class="std">None</span> <span class="kw">=&gt;</span> Task.unit
-    }
-  } <span class="kw">yield</span> ()
- }</pre></div></div>
+      <p class="shortcomment cmt">Allows downloading a Blob from GCS directly to the specified file.</p><div class="fullcomment"><div class="comment cmt"><p>Allows downloading a Blob from GCS directly to the specified file.</p><h4> Example </h4><p>{
+  import java.io.File</p><p>  import monix.connect.gcp.storage.{GcsStorage, GcsBucket}
+  import monix.eval.Task</p><p>  val storage: GcsStorage = ???
+  val getBucketT: Task[Option[GcsBucket]] = storage.getBucket(&quot;myBucket&quot;)
+  val targetFile = new File(&quot;example/target/file.txt&quot;)
+  val t: Task[Unit] = {
+    for {
+      maybeBucket &lt;- getBucketT
+      _ &lt;- maybeBucket match {
+        case Some(bucket) =&gt; bucket.downloadToFile(&quot;myBlob&quot;, targetFile.toPath)
+        case None =&gt; Task.unit
+      }
+    } yield ()
+   }
+}
+</p></div></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a><a id="eq(AnyRef):Boolean"></a>
       <span class="permalink">
@@ -985,19 +984,19 @@ version use the <span class="extype" name="BucketTargetOption.metagenerationMatc
       
       <p class="shortcomment cmt">Provides a pre-built <span class="extype" name="monix.reactive.Consumer">monix.reactive.Consumer</span> implementation from <span class="extype" name="GcsUploader">GcsUploader</span>
 for uploading data to <span class="extype" name="self">self</span> Blob.</p><div class="fullcomment"><div class="comment cmt"><p>Provides a pre-built <span class="extype" name="monix.reactive.Consumer">monix.reactive.Consumer</span> implementation from <span class="extype" name="GcsUploader">GcsUploader</span>
-for uploading data to <span class="extype" name="self">self</span> Blob.</p><h4>Example</h4><pre><span class="kw">import</span> monix.connect.google.cloud.storage.{GcsStorage, GcsBucket}
-<span class="kw">import</span> monix.eval.Task
-
-<span class="kw">val</span> storage = GcsStorage.create()
-<span class="kw">val</span> createBucketT: Task[GcsBucket] = storage.createBucket(<span class="lit">"myBucket"</span>, GcsBucketInfo.Locations.`EUROPE-WEST1`).memoize
-
-<span class="kw">val</span> ob: Observable[<span class="std">Array</span>[<span class="std">Byte</span>]] = ???
-<span class="kw">val</span> t: Task[<span class="std">Unit</span>] = <span class="kw">for</span> {
-  bucket <span class="kw">&lt;-</span> createBucketT
-  _ <span class="kw">&lt;-</span> ob.consumeWith(bucket.upload(<span class="lit">"myBlob"</span>))
-} <span class="kw">yield</span> ()
-
-t.runToFuture()</pre></div></div>
+for uploading data to <span class="extype" name="self">self</span> Blob.</p><h4>Example</h4><p>{
+  import monix.execution.Scheduler.Implicits.global
+  import monix.connect.gcp.storage.{GcsStorage, GcsBucket}
+  import monix.connect.gcp.storage.configuration.GcsBucketInfo
+  import monix.eval.Task
+  import monix.reactive.Observable</p><p>  val storage: GcsStorage = ???
+  val createBucketT: Task[GcsBucket] = storage.createBucket(&quot;myBucket&quot;, GcsBucketInfo.Locations.<code>EUROPE-WEST1</code>).memoize</p><p>  val ob: Observable[Array[Byte]] = ???
+  val t: Task[Unit] = for {
+    bucket &lt;- createBucketT
+    _ &lt;- ob.consumeWith(bucket.upload(&quot;myBlob&quot;))
+  } yield ()</p><p>  t.runToFuture(global)
+}
+</p></div></div>
     </li><li name="monix.connect.gcp.storage.GcsBucket#uploadFromFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="uploadFromFile(blobName:String,path:java.nio.file.Path,metadata:Option[monix.connect.gcp.storage.configuration.GcsBlobInfo.Metadata],chunkSize:Int,options:List[com.google.cloud.storage.Storage.BlobWriteOption]):monix.eval.Task[Unit]"></a><a id="uploadFromFile(String,Path,Option[Metadata],Int,List[BlobWriteOption]):Task[Unit]"></a>
       <span class="permalink">
@@ -1013,22 +1012,18 @@ t.runToFuture()</pre></div></div>
         <span class="name">uploadFromFile</span><span class="params">(<span name="blobName">blobName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="path">path: <span class="extype" name="java.nio.file.Path">Path</span></span>, <span name="metadata">metadata: <a href="http://www.scala-lang.org/api/2.12.8/scala/Option.html#scala.Option" class="extype" name="scala.Option">Option</a>[<a href="configuration/GcsBlobInfo$$Metadata.html" class="extype" name="monix.connect.gcp.storage.configuration.GcsBlobInfo.Metadata">Metadata</a>] = <span class="symbol">None</span></span>, <span name="chunkSize">chunkSize: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="symbol">4096</span></span>, <span name="options">options: <span class="extype" name="scala.List">List</span>[<span class="extype" name="com.google.cloud.storage.Storage.BlobWriteOption">BlobWriteOption</span>] = <span class="symbol">List.empty[BlobWriteOption]</span></span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a>]</span>
       </span>
       
-      <p class="shortcomment cmt">Uploads the provided file to the specified target Blob.</p><div class="fullcomment"><div class="comment cmt"><p>Uploads the provided file to the specified target Blob.</p><h4>Example</h4><pre> <span class="kw">import</span> java.io.File
-
- <span class="kw">import</span> monix.execution.Scheduler.Implicits.global
- <span class="kw">import</span> monix.connect.google.cloud.storage.{GcsStorage, GcsBucket}
- <span class="kw">import</span> monix.eval.Task
-
- <span class="kw">val</span> storage = GcsStorage.create()
- <span class="kw">val</span> createBucketT: Task[GcsBucket] = storage.createBucket(<span class="lit">"myBucket"</span>, GcsBucketInfo.Locations.`US-WEST1`)
- <span class="kw">val</span> sourceFile = <span class="kw">new</span> File(<span class="lit">"example/source/file.txt"</span>)
-
- <span class="kw">val</span> t: Task[<span class="std">Unit</span>] = <span class="kw">for</span> {
-   bucket <span class="kw">&lt;-</span> createBucketT
-   unit <span class="kw">&lt;-</span> bucket.uploadFromFile(<span class="lit">"myBlob"</span>, sourceFile.toPath)
- } <span class="kw">yield</span> ()
-
-t.runToFuture()</pre></div></div>
+      <p class="shortcomment cmt">Uploads the provided file to the specified target Blob.</p><div class="fullcomment"><div class="comment cmt"><p>Uploads the provided file to the specified target Blob.</p><h4>Example</h4><p>{
+  import java.io.File</p><p>  import monix.execution.Scheduler.Implicits.global
+  import monix.connect.gcp.storage.{GcsStorage, GcsBucket}
+  import monix.connect.gcp.storage.configuration.GcsBucketInfo
+  import monix.eval.Task</p><p>  val storage: GcsStorage = ???
+  val createBucketT: Task[GcsBucket] = storage.createBucket(&quot;myBucket&quot;, GcsBucketInfo.Locations.<code>US-WEST1</code>)
+  val sourceFile = new File(&quot;example/source/file.txt&quot;)</p><p>  val t: Task[Unit] = for {
+    bucket &lt;- createBucketT
+    unit &lt;- bucket.uploadFromFile(&quot;myBlob&quot;, sourceFile.toPath)
+  } yield ()</p><p> t.runToFuture(global)
+}
+</p></div></div>
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait():Unit"></a>
       <span class="permalink">
