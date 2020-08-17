@@ -77,9 +77,10 @@ private[storage] final class GcsUploader(
         cb.onError(ex)
       }
 
-      override def onComplete(): Unit =
+      override def onComplete(): Unit = {
         writer.close()
-      cb.onSuccess(())
+        cb.onSuccess(())
+      }
     }
 
     (sub, AssignableCancelable.dummy)
