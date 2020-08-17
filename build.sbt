@@ -7,7 +7,7 @@ lazy val doNotPublishArtifact = Seq(
   publishArtifact in (Compile, packageBin) := false
 )
 
-val monixConnectSeries = "0.2.0"
+val monixConnectSeries = "0.3.0"
 
 lazy val sharedSettings = Seq(
   organization       := "io.monix",
@@ -163,8 +163,8 @@ lazy val monix = (project in file("."))
   .configs(IntegrationTest, IT)
   .settings(sharedSettings)
   .settings(name := "monix-connect")
-  .aggregate(akka, dynamodb, hdfs, mongodb, parquet, redis, s3)
-  .dependsOn(akka, dynamodb, hdfs, mongodb, parquet, redis, s3)
+  .aggregate(akka, dynamodb, gcs, hdfs, mongodb, parquet, redis, s3)
+  .dependsOn(akka, dynamodb, gcs, hdfs, mongodb, parquet, redis, s3)
 
 lazy val akka = monixConnector("akka", Dependencies.Akka)
 

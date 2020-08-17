@@ -194,22 +194,23 @@ class GcsBlobSuite extends AnyWordSpecLike with IdiomaticMockito with Matchers w
       val blob: Blob = storage.create(blobInfo)
       val gcsBlob = new GcsBlob(blob)
       val sourcePath = new File(genLocalPath.sample.get).toPath
+      val targetPath = new File(genLocalPath.sample.get).toPath
       val content: Array[Byte] = nonEmptyString.sample.get.getBytes()
       Files.write(sourcePath, content)
 
       //when
-      val dowloader: Observable[Array[Byte]] = gcsBlob.download()
-      val contentBefore: Option[Array[Byte]] = dowloader.headOptionL.runSyncUnsafe()
-      val f = gcsBlob.uploadFromFile(sourcePath).runToFuture(global)
+      val downloader: Observable[Array[Byte]] = gcsBlob.download()
+      val contentBefore: Option[Array[Byte]] = downloader.headOptionL.runSyncUnsafe()
+      val t = gcsBlob.uploadFromFile(sourcePath)
 
       //then
+      t.runSyncUnsafe() shouldBe a[Unit]
       val exists = gcsBlob.exists().runSyncUnsafe()
-      val r = gcsBlob.download().headOptionL.runSyncUnsafe()
-      f.value.get.isSuccess shouldBe true
       exists shouldBe true
       contentBefore.isDefined shouldBe false
-      r.isDefined shouldBe true
-      r.get shouldBe content
+      gcsBlob.underlying.downloadTo(targetPath)
+      val r = Files.readAllBytes(targetPath)
+      r shouldBe content
     }
 
     "return a failed task when uploading from a non existent file" in {

@@ -90,7 +90,8 @@ object MongoSource {
     * @return an [[Observable]] that emits the distinct the distinct values of type [[Doc]]
     */
   def distinct[Doc](collection: MongoCollection[Doc], fieldName: String, filter: Bson)(
-    implicit m: Manifest[Doc]): Observable[Doc] =
+    implicit
+    m: Manifest[Doc]): Observable[Doc] =
     Observable.fromReactivePublisher(collection.distinct(fieldName, filter, m.runtimeClass.asInstanceOf[Class[Doc]]))
 
   /**

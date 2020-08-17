@@ -1,22 +1,53 @@
+/*
+ * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * See the project homepage at: https://monix.io
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package monix.connect.gcp.storage
 
 import java.util
 
 import com.google.api.gax.paging.Page
 import com.google.cloud.storage.Storage.{BlobListOption, BucketGetOption, BucketListOption}
-import com.google.cloud.storage.{Blob, Bucket => GoogleBucket, BucketInfo => GoogleBucketInfo, Storage => GoogleStorage, Option => _}
+import com.google.cloud.storage.{
+  Blob,
+  Bucket => GoogleBucket,
+  BucketInfo => GoogleBucketInfo,
+  Storage => GoogleStorage,
+  Option => _
+}
 import monix.connect.gcp.storage.configuration.GcsBucketInfo.Locations
 import monix.execution.Scheduler.Implicits.global
 import org.mockito.Mockito.{times, verify}
 import org.mockito.MockitoSugar.when
 import org.mockito.{ArgumentMatchersSugar, IdiomaticMockito}
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
-class GcsStorageSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers with ArgumentMatchersSugar with GscFixture {
+class GcsStorageSpec
+  extends AnyWordSpecLike with IdiomaticMockito with Matchers with ArgumentMatchersSugar with GscFixture
+  with BeforeAndAfterEach {
   val underlying: GoogleStorage = mock[GoogleStorage]
   val bucket: GoogleBucket = mock[GoogleBucket]
   val storage: GcsStorage = GcsStorage(underlying)
+
+  override def beforeEach: Unit = {
+    super.beforeEach()
+    reset(underlying)
+  }
 
   s"$GcsStorage" should {
 
@@ -62,19 +93,19 @@ class GcsStorageSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers
     }
 
     "implement a list buckets operation" in {
-        // given
-        val page = mock[Page[GoogleBucket]]
-        val bucketListOption: BucketListOption = mock[BucketListOption]
-        when(page.iterateAll()).thenReturn(util.Arrays.asList(bucket, bucket, bucket))
-        when(underlying.list(bucketListOption)).thenReturn(page)
+      // given
+      val page = mock[Page[GoogleBucket]]
+      val bucketListOption: BucketListOption = mock[BucketListOption]
+      when(page.iterateAll()).thenReturn(util.Arrays.asList(bucket, bucket, bucket))
+      when(underlying.list(bucketListOption)).thenReturn(page)
 
-        //when
-        val maybeBuckets: List[GcsBucket] = storage.listBuckets(bucketListOption).toListL.runSyncUnsafe()
+      //when
+      val maybeBuckets: List[GcsBucket] = storage.listBuckets(bucketListOption).toListL.runSyncUnsafe()
 
-        //then
-        maybeBuckets shouldBe a[List[GcsBucket]]
-        maybeBuckets.length shouldBe 3
-        verify(underlying, times(1)).list(bucketListOption)
+      //then
+      maybeBuckets shouldBe a[List[GcsBucket]]
+      maybeBuckets.length shouldBe 3
+      verify(underlying, times(1)).list(bucketListOption)
     }
 
     "implement a list blobs operation" in {
