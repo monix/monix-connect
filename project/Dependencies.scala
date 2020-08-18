@@ -13,7 +13,7 @@ object Dependencies {
     val Hadoop = "3.1.3"
     val GCS = "1.107.0"
     val Cats_Effect = "2.1.3"
-    val Cats = "2.0.0"
+    val Cats = "2.1.1"
 
     //test
     val Scalatest = "3.1.3"
