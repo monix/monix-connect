@@ -21,7 +21,7 @@ _MongoDB_ is a _document database_ which means that stores data in _JSON-like do
 
 Add the following dependency to get started:
 ```scala
-libraryDependencies += "io.monix" %% "monix-mongodb" % "0.3.0"
+libraryDependencies += "io.monix" %% "monix-mongodb" % "0.3.3"
 ```
 
 ## Database
