@@ -39,7 +39,7 @@ import scala.util.Failure
 import monix.execution.schedulers.TestScheduler
 import org.bson.BsonValue
 import org.mockito.IdiomaticMockito
-import org.mongodb.scala.bson.{BsonObjectId, BsonString}
+import org.mongodb.scala.bson.BsonObjectId
 import org.scalacheck.Gen
 import org.scalatest.concurrent.ScalaFutures
 
@@ -219,8 +219,8 @@ class MongoOpSpec
     val s = TestScheduler()
     val e = genEmployee.sample.get
     val objectId = BsonObjectId.apply()
-    val bsonValue = MongoInsertOneResult.acknowledged(objectId)
-    val delayedPub = Task(bsonValue).delayResult(500.millis).toReactivePublisher(s)
+    val insertOneResult = MongoInsertOneResult.acknowledged(objectId)
+    val delayedPub = Task(insertOneResult).delayResult(500.millis).toReactivePublisher(s)
     val emptyPub = Observable.empty[MongoInsertOneResult].toReactivePublisher(s)
     val failedPub = Task.raiseError[MongoInsertOneResult](DummyException("Insert one failed")).toReactivePublisher(s)
     val publisher: Publisher[MongoInsertOneResult] =

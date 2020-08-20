@@ -54,7 +54,7 @@ private[parquet] class ParquetPublisher[T](reader: ParquetReader[T]) {
   /**
     * Parquet reader [[Observable]] builder.
     */
-  val create: Observable[T] =
+  private[mongodb] val create: Observable[T] =
     Observable.create(OverflowStrategy.Unbounded) { sub => readRecords(sub).runToFuture(sub.scheduler) }
 }
 

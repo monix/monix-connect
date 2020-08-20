@@ -17,16 +17,11 @@
 
 package monix.connect.mongodb
 
-import org.bson.BsonValue
 import org.scalacheck.Gen
-import org.mockito.MockitoSugar.mock
-import org.mongodb.scala.bson.BsonString
 
 trait TestFixture {
 
   case class Employee(name: String, age: Int, city: String, activities: List[String] = List.empty)
-
-  val bsonValue = mock[BsonValue]
 
   val genEmployee = for {
     name        <- Gen.nonEmptyListOf(Gen.alphaChar)
