@@ -33,6 +33,7 @@ trait Fixture {
   val codecRegistry = fromRegistries(fromProviders(classOf[Employee], classOf[UnwoundEmployee]), DEFAULT_CODEC_REGISTRY)
 
   protected val client: MongoClient = MongoClients.create(s"mongodb://localhost:27017")
+
   val db: MongoDatabase = client.getDatabase("mydb")
   val collectionName = "myCollection"
   val col: MongoCollection[Employee] = db.getCollection("myCollection", classOf[Employee])

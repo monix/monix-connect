@@ -19,7 +19,7 @@ package monix.connect.mongodb
 
 import com.mongodb.client.model.{Filters, Updates}
 import com.mongodb.client.result.{DeleteResult, UpdateResult}
-import com.mongodb.reactivestreams.client.{MongoCollection, Success}
+import com.mongodb.reactivestreams.client.MongoCollection
 import monix.eval.{Coeval, Task}
 import monix.execution.Scheduler.Implicits.global
 import monix.execution.exceptions.DummyException
