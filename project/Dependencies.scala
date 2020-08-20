@@ -3,6 +3,7 @@ import sbt._
 object Dependencies {
 
   object Versions {
+    
     //main
     val AkkaStreams = "2.6.4"
     val AWS = "1.11.749"
