@@ -14,7 +14,7 @@ object Dependencies {
     val Monix = "3.2.0"
     val MongoScala = "2.9.0"
     val MongoReactiveStreams = "4.1.0"
-    val Parquet = "1.11.0"
+    val Parquet = "1.11.1"
     val S3 = "2.10.91"
 
     //test
