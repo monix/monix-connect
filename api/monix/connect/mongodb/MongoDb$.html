@@ -3,9 +3,9 @@
         <head>
           <meta http-equiv="X-UA-Compatible" content="IE=edge" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-          <title>Monix Connect v0.3.3+9-3a730269-SNAPSHOT - monix.connect.mongodb.MongoDb</title>
-          <meta name="description" content="Monix Connect v0.3.3 9 - 3a730269 - SNAPSHOT - monix.connect.mongodb.MongoDb" />
-          <meta name="keywords" content="Monix Connect v0.3.3 9 3a730269 SNAPSHOT monix.connect.mongodb.MongoDb" />
+          <title>Monix Connect v0.0.0+251-d8239988-SNAPSHOT - monix.connect.mongodb.MongoDb</title>
+          <meta name="description" content="Monix Connect v0.0.0 251 - d8239988 - SNAPSHOT - monix.connect.mongodb.MongoDb" />
+          <meta name="keywords" content="Monix Connect v0.0.0 251 d8239988 SNAPSHOT monix.connect.mongodb.MongoDb" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../lib/index.css" media="screen" type="text/css" rel="stylesheet" />
@@ -28,7 +28,7 @@
         </head>
         <body>
       <div id="search">
-        <span id="doc-title">Monix Connect<span id="doc-version">v0.3.3+9-3a730269-SNAPSHOT</span></span>
+        <span id="doc-title">Monix Connect<span id="doc-version">v0.0.0+251-d8239988-SNAPSHOT</span></span>
         <span class="close-results"><span class="left">&lt;</span> Back</span>
         <div id="textfilter">
           <span class="input">
@@ -161,7 +161,7 @@
       </h4>
 
       
-          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Object for managing the mongo databases and collections</p></div><dl class="attributes block"> <dt>Source</dt><dd><a href="https://github.com/monix/monix-connect/tree/v0.3.3+9-3a730269-SNAPSHOT/mongodb/src/main/scala/monix.connect.mongodb/MongoDb.scala" target="_blank">MongoDb.scala</a></dd></dl><div class="toggleContainer block">
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Object for managing the mongo databases and collections</p></div><dl class="attributes block"> <dt>Source</dt><dd><a href="https://github.com/monix/monix-connect/tree/v0.0.0+251-d8239988-SNAPSHOT/mongodb/src/main/scala/monix.connect.mongodb/MongoDb.scala" target="_blank">MongoDb.scala</a></dd></dl><div class="toggleContainer block">
           <span class="toggle">
             Linear Supertypes
           </span>
@@ -307,9 +307,9 @@
               
         </dd></dl></div>
     </li><li name="monix.connect.mongodb.MongoDb#createCollection" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="createCollection(db:com.mongodb.reactivestreams.client.MongoDatabase,collectionName:String):monix.eval.Task[Boolean]"></a><a id="createCollection(MongoDatabase,String):Task[Boolean]"></a>
+      <a id="createCollection(db:com.mongodb.reactivestreams.client.MongoDatabase,collectionName:String):monix.eval.Task[Unit]"></a><a id="createCollection(MongoDatabase,String):Task[Unit]"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/mongodb/MongoDb$.html#createCollection(db:com.mongodb.reactivestreams.client.MongoDatabase,collectionName:String):monix.eval.Task[Boolean]" title="Permalink">
+      <a href="../../../monix/connect/mongodb/MongoDb$.html#createCollection(db:com.mongodb.reactivestreams.client.MongoDatabase,collectionName:String):monix.eval.Task[Unit]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -318,15 +318,15 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">createCollection</span><span class="params">(<span name="db">db: <span class="extype" name="com.mongodb.reactivestreams.client.MongoDatabase">MongoDatabase</span></span>, <span name="collectionName">collectionName: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a>]</span>
+        <span class="name">createCollection</span><span class="params">(<span name="db">db: <span class="extype" name="com.mongodb.reactivestreams.client.MongoDatabase">MongoDatabase</span></span>, <span name="collectionName">collectionName: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a>]</span>
       </span>
       
       <p class="shortcomment cmt">Create a new collection with the given name.</p><div class="fullcomment"><div class="comment cmt"><p>Create a new collection with the given name.
-</p></div><dl class="paramcmts block"><dt class="param">db</dt><dd class="cmt"><p>the database</p></dd><dt class="param">collectionName</dt><dd class="cmt"><p>the name for the new collection to create</p></dd><dt>returns</dt><dd class="cmt"><p>a boolean <span class="extype" name="Task">Task</span> indicating whether the collection successfully created or not,</p></dd></dl></div>
+</p></div><dl class="paramcmts block"><dt class="param">db</dt><dd class="cmt"><p>the database</p></dd><dt class="param">collectionName</dt><dd class="cmt"><p>the name for the new collection to create</p></dd><dt>returns</dt><dd class="cmt"><p>a unit that signals on completion.</p></dd></dl></div>
     </li><li name="monix.connect.mongodb.MongoDb#dropCollection" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="dropCollection(db:com.mongodb.reactivestreams.client.MongoDatabase,collectionName:String):monix.eval.Task[Boolean]"></a><a id="dropCollection(MongoDatabase,String):Task[Boolean]"></a>
+      <a id="dropCollection(db:com.mongodb.reactivestreams.client.MongoDatabase,collectionName:String):monix.eval.Task[Unit]"></a><a id="dropCollection(MongoDatabase,String):Task[Unit]"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/mongodb/MongoDb$.html#dropCollection(db:com.mongodb.reactivestreams.client.MongoDatabase,collectionName:String):monix.eval.Task[Boolean]" title="Permalink">
+      <a href="../../../monix/connect/mongodb/MongoDb$.html#dropCollection(db:com.mongodb.reactivestreams.client.MongoDatabase,collectionName:String):monix.eval.Task[Unit]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -335,15 +335,15 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">dropCollection</span><span class="params">(<span name="db">db: <span class="extype" name="com.mongodb.reactivestreams.client.MongoDatabase">MongoDatabase</span></span>, <span name="collectionName">collectionName: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a>]</span>
+        <span class="name">dropCollection</span><span class="params">(<span name="db">db: <span class="extype" name="com.mongodb.reactivestreams.client.MongoDatabase">MongoDatabase</span></span>, <span name="collectionName">collectionName: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a>]</span>
       </span>
       
       <p class="shortcomment cmt">Drops a collection from the database.</p><div class="fullcomment"><div class="comment cmt"><p>Drops a collection from the database.
-</p></div><dl class="paramcmts block"><dt class="param">db</dt><dd class="cmt"><p>the database</p></dd><dt class="param">collectionName</dt><dd class="cmt"><p>the name of the collection to drop</p></dd><dt>returns</dt><dd class="cmt"><p>a boolean <span class="extype" name="Task">Task</span> indicating whether the collection was successfully dropped or not</p></dd></dl></div>
+</p></div><dl class="paramcmts block"><dt class="param">db</dt><dd class="cmt"><p>the database</p></dd><dt class="param">collectionName</dt><dd class="cmt"><p>the name of the collection to drop</p></dd><dt>returns</dt><dd class="cmt"><p>a unit that signals on completion</p></dd></dl></div>
     </li><li name="monix.connect.mongodb.MongoDb#dropDatabase" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="dropDatabase(db:com.mongodb.reactivestreams.client.MongoDatabase):monix.eval.Task[Boolean]"></a><a id="dropDatabase(MongoDatabase):Task[Boolean]"></a>
+      <a id="dropDatabase(db:com.mongodb.reactivestreams.client.MongoDatabase):monix.eval.Task[Unit]"></a><a id="dropDatabase(MongoDatabase):Task[Unit]"></a>
       <span class="permalink">
-      <a href="../../../monix/connect/mongodb/MongoDb$.html#dropDatabase(db:com.mongodb.reactivestreams.client.MongoDatabase):monix.eval.Task[Boolean]" title="Permalink">
+      <a href="../../../monix/connect/mongodb/MongoDb$.html#dropDatabase(db:com.mongodb.reactivestreams.client.MongoDatabase):monix.eval.Task[Unit]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -352,11 +352,11 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">dropDatabase</span><span class="params">(<span name="db">db: <span class="extype" name="com.mongodb.reactivestreams.client.MongoDatabase">MongoDatabase</span></span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a>]</span>
+        <span class="name">dropDatabase</span><span class="params">(<span name="db">db: <span class="extype" name="com.mongodb.reactivestreams.client.MongoDatabase">MongoDatabase</span></span>)</span><span class="result">: <span class="extype" name="monix.eval.Task">Task</span>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a>]</span>
       </span>
       
       <p class="shortcomment cmt">Drops a database.</p><div class="fullcomment"><div class="comment cmt"><p>Drops a database.
-</p></div><dl class="paramcmts block"><dt class="param">db</dt><dd class="cmt"><p>the database to be dropped</p></dd><dt>returns</dt><dd class="cmt"><p>a boolean <span class="extype" name="Task">Task</span> indicating whether the database was successfully dropped or not</p></dd></dl></div>
+</p></div><dl class="paramcmts block"><dt class="param">db</dt><dd class="cmt"><p>the database to be dropped</p></dd><dt>returns</dt><dd class="cmt"><p>a unit that signals on completion.</p></dd></dl></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a><a id="eq(AnyRef):Boolean"></a>
       <span class="permalink">
@@ -405,7 +405,7 @@
       </span>
       
       <p class="shortcomment cmt">Check whether a collection exists or not.</p><div class="fullcomment"><div class="comment cmt"><p>Check whether a collection exists or not.
-</p></div><dl class="paramcmts block"><dt class="param">db</dt><dd class="cmt"><p>the database</p></dd><dt class="param">collectionName</dt><dd class="cmt"><p>the name of the collection</p></dd><dt>returns</dt><dd class="cmt"><p>a boolean <span class="extype" name="Task">Task</span> indicating whether the collection exists or not,</p></dd></dl></div>
+</p></div><dl class="paramcmts block"><dt class="param">db</dt><dd class="cmt"><p>the database</p></dd><dt class="param">collectionName</dt><dd class="cmt"><p>the name of the collection</p></dd><dt>returns</dt><dd class="cmt"><p>a boolean <span class="extype" name="Task">Task</span> indicating whether the collection exists or not.</p></dd></dl></div>
     </li><li name="monix.connect.mongodb.MongoDb#existsDatabase" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="existsDatabase(client:com.mongodb.reactivestreams.client.MongoClient,dbName:String):monix.eval.Task[Boolean]"></a><a id="existsDatabase(MongoClient,String):Task[Boolean]"></a>
       <span class="permalink">
@@ -422,7 +422,7 @@
       </span>
       
       <p class="shortcomment cmt">Checks whether a database exists or not.</p><div class="fullcomment"><div class="comment cmt"><p>Checks whether a database exists or not.
-</p></div><dl class="paramcmts block"><dt class="param">client</dt><dd class="cmt"><p>the client-side representation of a MongoDB cluster.</p></dd><dt class="param">dbName</dt><dd class="cmt"><p>the name of the database</p></dd><dt>returns</dt><dd class="cmt"><p>a boolean <span class="extype" name="Task">Task</span> indicating whether the database exists or not</p></dd></dl></div>
+</p></div><dl class="paramcmts block"><dt class="param">client</dt><dd class="cmt"><p>the client-side representation of a MongoDB cluster.</p></dd><dt class="param">dbName</dt><dd class="cmt"><p>the name of the database</p></dd><dt>returns</dt><dd class="cmt"><p>a boolean <span class="extype" name="Task">Task</span> indicating whether the database exists or not.</p></dd></dl></div>
     </li><li name="scala.AnyRef#finalize" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="finalize():Unit"></a>
       <span class="permalink">
@@ -515,7 +515,7 @@
       </span>
       
       <p class="shortcomment cmt">Lists all the collections in the given database.</p><div class="fullcomment"><div class="comment cmt"><p>Lists all the collections in the given database.
-</p></div><dl class="paramcmts block"><dt class="param">db</dt><dd class="cmt"><p>the database</p></dd><dt>returns</dt><dd class="cmt"><p>an <span class="extype" name="Observable">Observable</span> that emits the names of all the existing collections</p></dd></dl></div>
+</p></div><dl class="paramcmts block"><dt class="param">db</dt><dd class="cmt"><p>the database</p></dd><dt>returns</dt><dd class="cmt"><p>an <span class="extype" name="Observable">Observable</span> that emits the names of all the existing collections.</p></dd></dl></div>
     </li><li name="monix.connect.mongodb.MongoDb#listDatabases" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="listDatabases(client:com.mongodb.reactivestreams.client.MongoClient):monix.reactive.Observable[String]"></a><a id="listDatabases(MongoClient):Observable[String]"></a>
       <span class="permalink">
@@ -533,7 +533,7 @@
       
       <p class="shortcomment cmt">Get a list of the database names
 </p><div class="fullcomment"><div class="comment cmt"><p>Get a list of the database names
-</p></div><dl class="paramcmts block"><dt class="param">client</dt><dd class="cmt"><p>the client-side representation of a MongoDB cluster.</p></dd><dt>returns</dt><dd class="cmt"><p>an <span class="extype" name="Observable">Observable</span> that emits the names of all the existing databases</p></dd></dl></div>
+</p></div><dl class="paramcmts block"><dt class="param">client</dt><dd class="cmt"><p>the client-side representation of a MongoDB cluster.</p></dd><dt>returns</dt><dd class="cmt"><p>an <span class="extype" name="Observable">Observable</span> that emits the names of all the existing databases.</p></dd></dl></div>
     </li><li name="scala.AnyRef#ne" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a><a id="ne(AnyRef):Boolean"></a>
       <span class="permalink">
@@ -604,7 +604,7 @@
       </span>
       
       <p class="shortcomment cmt">Rename the collection with oldCollectionName to the newCollectionName.</p><div class="fullcomment"><div class="comment cmt"><p>Rename the collection with oldCollectionName to the newCollectionName.
-</p></div><dl class="paramcmts block"><dt class="param">db</dt><dd class="cmt"><p>the database</p></dd><dt class="param">oldCollectionName</dt><dd class="cmt"><p>the current (old) name of the collection</p></dd><dt class="param">newCollectionName</dt><dd class="cmt"><p>the name (new) which the collection will be renamed to</p></dd><dt>returns</dt><dd class="cmt"><p>a boolean <span class="extype" name="Task">Task</span> indicating whether the collection was successfully renamed or not</p></dd></dl></div>
+</p></div><dl class="paramcmts block"><dt class="param">db</dt><dd class="cmt"><p>the database</p></dd><dt class="param">oldCollectionName</dt><dd class="cmt"><p>the current (old) name of the collection</p></dd><dt class="param">newCollectionName</dt><dd class="cmt"><p>the name (new) which the collection will be renamed to</p></dd><dt>returns</dt><dd class="cmt"><p>a boolean <span class="extype" name="Task">Task</span> indicating whether the collection was successfully renamed or not.</p></dd></dl></div>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
       <span class="permalink">
