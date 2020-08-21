@@ -7,11 +7,11 @@ lazy val doNotPublishArtifact = Seq(
   publishArtifact in (Compile, packageBin) := false
 )
 
-val monixConnectSeries = "0.2.0"
+val monixConnectSeries = "0.3.0"
 
 lazy val sharedSettings = Seq(
   organization       := "io.monix",
-  homepage := Some(url("https://monix.io/monix-connect")),
+  homepage := Some(url("https://connect.monix.io")),
   scalaVersion       := "2.12.8",
   crossScalaVersions := Seq("2.12.10", "2.13.1"),
   scalafmtOnCompile  := true,
@@ -78,26 +78,8 @@ lazy val sharedSettings = Seq(
   // ScalaDoc settings
   autoAPIMappings := true,
   apiURL := Some(url("https://monix.github.io/monix-connect/api/")),
-  apiMappings ++= {
-    val cp: Seq[Attributed[File]] = (fullClasspath in Compile).value
-    def findManagedDependency(organization: String, name: String): File = {
-      ( for {
-        entry <- cp
-        module <- entry.get(moduleID.key)
-        if module.organization == organization
-        if module.name.startsWith(name)
-      } yield entry.data
-        ).head
-    }
-    Map(
-      findManagedDependency("io.monix","monix-execution") -> url("https://monix.io/api/3.1/"),
-      findManagedDependency("io.monix","monix-catnap") -> url("https://monix.io/api/3.1/"),
-      findManagedDependency("org.typelevel","cats-effect") -> url("https://typelevel.org/cats-effect/api/")
-    )
-  },
 
   licenses      := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
-  //homepage := Some(url("https://monix.io")), //todo homepage settings
   headerLicense := Some(HeaderLicense.Custom(
     """|Copyright (c) 2020-2020 by The Monix Connect Project Developers.
        |See the project homepage at: https://monix.io
@@ -163,8 +145,8 @@ lazy val monix = (project in file("."))
   .configs(IntegrationTest, IT)
   .settings(sharedSettings)
   .settings(name := "monix-connect")
-  .aggregate(akka, dynamodb, hdfs, mongodb, parquet, redis, s3)
-  .dependsOn(akka, dynamodb, hdfs, mongodb, parquet, redis, s3)
+  .aggregate(akka, dynamodb, gcs, hdfs, mongodb, parquet, redis, s3)
+  .dependsOn(akka, dynamodb, gcs, hdfs, mongodb, parquet, redis, s3)
 
 lazy val akka = monixConnector("akka", Dependencies.Akka)
 
@@ -204,7 +186,7 @@ def monixConnector(
     .settings(additionalSettings: _*)
     .configure(profile)
     .configs(IntegrationTest, IT)
-    //.settings(mimaSettings(s"monix-$connectorName")) //todo uncoment when releasing 0.2.0
+    //.settings(mimaSettings(s"monix-$connectorName"))
 
 lazy val docs = project
   .in(file("monix-connect-docs"))

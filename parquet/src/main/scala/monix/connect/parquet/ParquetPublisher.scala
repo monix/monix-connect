@@ -62,5 +62,5 @@ private[parquet] class ParquetPublisher[T](reader: ParquetReader[T]) {
   * Companion object builder for [[ParquetPublisher]].
   */
 object ParquetPublisher {
-  def apply[T](reader: ParquetReader[T]): ParquetPublisher[T] = new ParquetPublisher(reader)
+  private[parquet] def apply[T](reader: ParquetReader[T]): ParquetPublisher[T] = new ParquetPublisher(reader)
 }

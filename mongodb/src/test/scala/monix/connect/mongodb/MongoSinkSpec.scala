@@ -17,7 +17,7 @@
 
 package monix.connect.mongodb
 
-import com.mongodb.reactivestreams.client.{MongoCollection, Success}
+import com.mongodb.reactivestreams.client.MongoCollection
 import monix.eval.Task
 import monix.execution.exceptions.DummyException
 import monix.execution.schedulers.TestScheduler
@@ -28,6 +28,8 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
+import com.mongodb.client.result.{InsertOneResult => MongoInsertOneResult}
+import org.mongodb.scala.bson.BsonObjectId
 
 import scala.concurrent.duration._
 
@@ -48,10 +50,12 @@ class MongoSinkSpec
     val s = TestScheduler()
     val e1 = genEmployee.sample.get
     val e2 = genEmployee.sample.get
-    val delayedPub = Task(Success.SUCCESS).delayResult(500.millis).toReactivePublisher(s)
-    val emptyPub = Observable.empty[Success].toReactivePublisher(s)
-    val failedPub = Task.raiseError[Success](DummyException("Insert one failed")).toReactivePublisher(s)
-    val successPub = Task(Success.SUCCESS).toReactivePublisher(s)
+    val objectId = BsonObjectId.apply()
+    val insertOneResult = MongoInsertOneResult.acknowledged(objectId)
+    val delayedPub = Task(insertOneResult).delayResult(500.millis).toReactivePublisher(s)
+    val emptyPub = Observable.empty[MongoInsertOneResult].toReactivePublisher(s)
+    val failedPub = Task.raiseError[MongoInsertOneResult](DummyException("Insert one failed")).toReactivePublisher(s)
+    val successPub = Task(MongoInsertOneResult.unacknowledged()).toReactivePublisher(s)
     when(col.insertOne(e1, DefaultInsertOneOptions)).thenReturn(delayedPub, emptyPub, failedPub, successPub)
     when(col.insertOne(e2, DefaultInsertOneOptions)).thenReturn(failedPub, successPub)
 
@@ -71,9 +75,9 @@ class MongoSinkSpec
     val s = TestScheduler()
     val e1 = genEmployee.sample.get
     val ex = DummyException("Insert one failed")
-    val delayedPub = Task(Success.SUCCESS).delayResult(500.millis).toReactivePublisher(s)
-    val emptyPub = Observable.empty[Success].toReactivePublisher(s)
-    val failedPub = Task.raiseError[Success](DummyException("Insert one failed")).toReactivePublisher(s)
+    val delayedPub = Task(MongoInsertOneResult.unacknowledged()).delayResult(500.millis).toReactivePublisher(s)
+    val emptyPub = Observable.empty[MongoInsertOneResult].toReactivePublisher(s)
+    val failedPub = Task.raiseError[MongoInsertOneResult](DummyException("Insert one failed")).toReactivePublisher(s)
     when(col.insertOne(e1, DefaultInsertOneOptions)).thenReturn(delayedPub, emptyPub, failedPub)
 
     //when
