@@ -20,6 +20,7 @@ package monix.connect.mongodb
 import org.scalatest.flatspec.AnyFlatSpecLike
 import monix.execution.Scheduler.Implicits.global
 import com.mongodb.client.model.{Collation, CollationCaseFirst, DeleteOptions, Filters, Updates}
+import monix.eval.Task
 import org.bson.conversions.Bson
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
@@ -43,9 +44,8 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
 
     //then
     val finalElements = MongoSource.count(col, docNameFilter(exampleName)).runSyncUnsafe()
-    r.isDefined shouldBe true
-    r.get.getDeletedCount shouldBe 1L
-    r.get.wasAcknowledged() shouldBe true
+    r.deleteCount shouldBe 1L
+    r.wasAcknowledged shouldBe true
     finalElements shouldBe employees.size - 1
   }
 
@@ -58,9 +58,8 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
 
     //then
     val finalElements = MongoSource.countAll(col).runSyncUnsafe()
-    r.isDefined shouldBe true
-    r.get.getDeletedCount shouldBe 0L
-    r.get.wasAcknowledged() shouldBe true
+    r.deleteCount shouldBe 0L
+    r.wasAcknowledged shouldBe true
     finalElements shouldBe 0
   }
 
@@ -80,9 +79,8 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
 
     //then
     val nUppercaseNat = MongoSource.count(col, Filters.eq("city", uppercaseNat)).runSyncUnsafe()
-    r.isDefined shouldBe true
-    r.get.getDeletedCount shouldBe 1L
-    r.get.wasAcknowledged() shouldBe true
+    r.deleteCount shouldBe 1L
+    r.wasAcknowledged shouldBe true
     nUppercaseNat shouldBe 0L
   }
 
@@ -97,8 +95,8 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
 
     //then
     val finalElements = MongoSource.count(col, docNameFilter(exampleName)).runSyncUnsafe()
-    r.get.getDeletedCount shouldBe employees.length
-    r.get.wasAcknowledged() shouldBe true
+    r.deleteCount shouldBe employees.length
+    r.wasAcknowledged shouldBe true
     finalElements shouldBe 0L
   }
 
@@ -107,10 +105,15 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     val e = genEmployee.sample.get
 
     //when
-    val t = MongoOp.insertOne(col, e)
+    val r: InsertOneResult = MongoOp.insertOne(col, e).runSyncUnsafe()
 
-    t.runSyncUnsafe() shouldBe true
-    MongoSource.findAll(col)
+    //then
+    val result = Task.fromReactivePublisher(col.insertOne(e)).runSyncUnsafe()
+    r.insertedId.isDefined shouldBe true
+    r.wasAcknowledged shouldBe true
+
+    //and
+    MongoSource.findAll(col).headL.runSyncUnsafe() shouldBe e
   }
 
   it should "insert many elements" in {
@@ -122,12 +125,15 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     val r = MongoOp.insertMany(col, employees).runSyncUnsafe()
 
     //then
-    val nElements = MongoSource.count(col, nationalityDocument(nationality)).runSyncUnsafe()
-    r shouldBe true
-    nElements shouldBe employees.size
+    r.insertedIds.size shouldBe employees.size
+    r.wasAcknowledged shouldBe true
+
+    //and
+    val elements = MongoSource.findAll(col).toListL.runSyncUnsafe()
+    elements shouldBe employees
   }
 
-  it should  "replace one single element" in {
+  it should "replace one single element" in {
     //given
     val employeeName = "Humberto"
     val e = genEmployeeWith(name = Option(employeeName)).sample.get
@@ -140,15 +146,14 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     val r = MongoOp.replaceOne(col, filter, e.copy(age = e.age + 1)).runSyncUnsafe()
 
     //then
-    r.isDefined shouldBe true
-    r.get.getModifiedCount shouldBe 1L
+    r.modifiedCount shouldBe 1L
 
     //and
     val updated = MongoSource.find(col, filter).headL.runSyncUnsafe()
     updated.age shouldBe e.age + 1
   }
 
-  it should  "update one single element" in {
+  it should "update one single element" in {
     //given
     val cambridge = "Cambridge"
     val oxford = "Oxford"
@@ -163,11 +168,9 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     val oxfordEmployeesCount = MongoSource.count(col, nationalityDocument(oxford)).runSyncUnsafe()
     cambridgeEmployeesCount shouldBe employees.size - 1
     oxfordEmployeesCount shouldBe 1
-    updateResult.isDefined shouldBe true
-    updateResult.get.getMatchedCount shouldBe 1
-    updateResult.get.getModifiedCount() shouldBe 1
-    //updateResult.getUpsertedId() shouldBe true todo returns null
-    updateResult.get.wasAcknowledged() shouldBe true
+    updateResult.matchedCount shouldBe 1
+    updateResult.modifiedCount shouldBe 1
+    updateResult.wasAcknowledged shouldBe true
   }
 
   it should  "update one single element list" in {
@@ -183,11 +186,9 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     //then
     val r = MongoSource.find(col, filter).headL.runSyncUnsafe()
     r.activities.contains("Ping Pong") shouldBe true
-    updateResult.isDefined shouldBe true
-    updateResult.get.getMatchedCount shouldBe 1
-    updateResult.get.getModifiedCount() shouldBe 1
-    //updateResult.get.getUpsertedId() shouldBe true //todo returns null
-    updateResult.get.wasAcknowledged() shouldBe true
+    updateResult.matchedCount shouldBe 1
+    updateResult.modifiedCount shouldBe 1
+    updateResult.wasAcknowledged shouldBe true
   }
 
   it should "update many elements" in {
@@ -201,15 +202,15 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     val updateResult = MongoOp.updateMany(col, nationalityDocument(bogota), Updates.set("city", rio)).runSyncUnsafe()
 
     //then
+    updateResult.matchedCount shouldBe employees.size
+    updateResult.modifiedCount shouldBe employees.size
+    updateResult.wasAcknowledged shouldBe true
+
+    //and
     val colombians = MongoSource.count(col, nationalityDocument(bogota)).runSyncUnsafe()
     val brazilians = MongoSource.count(col, nationalityDocument(rio)).runSyncUnsafe()
     colombians shouldBe 0
     brazilians shouldBe employees.size
-    updateResult.isDefined shouldBe true
-    updateResult.get.getMatchedCount shouldBe employees.size
-    updateResult.get.getModifiedCount() shouldBe employees.size
-    //updateResult.getUpsertedId() shouldBe true todo why it does return null
-    updateResult.get.wasAcknowledged() shouldBe true
   }
 
 }

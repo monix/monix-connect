@@ -12,6 +12,7 @@ import scala.util.{Failure, Success, Try}
 
 trait DynamoDbFixture {
   this: TestSuite =>
+
   val strAttr: String => AttributeValue = value => AttributeValue.builder().s(value).build()
   val numAttr: Int => AttributeValue = value => AttributeValue.builder().n(value.toString).build()
   val doubleAttr: Double => AttributeValue = value => AttributeValue.builder().n(value.toString).build()
