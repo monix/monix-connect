@@ -20,9 +20,9 @@ package monix.connect.mongodb
 import com.mongodb.reactivestreams.client.{MongoClient, MongoClients, MongoCollection, MongoDatabase}
 import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
-import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
 import org.scalacheck.Gen
 import org.mongodb.scala.bson.codecs.Macros._
+import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
 
 trait Fixture {
 
@@ -33,6 +33,7 @@ trait Fixture {
   val codecRegistry = fromRegistries(fromProviders(classOf[Employee], classOf[UnwoundEmployee]), DEFAULT_CODEC_REGISTRY)
 
   protected val client: MongoClient = MongoClients.create(s"mongodb://localhost:27017")
+
   val db: MongoDatabase = client.getDatabase("mydb")
   val collectionName = "myCollection"
   val col: MongoCollection[Employee] = db.getCollection("myCollection", classOf[Employee])
