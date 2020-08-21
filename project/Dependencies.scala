@@ -12,7 +12,7 @@ object Dependencies {
     val GCS = "1.107.0"
     val Hadoop = "3.1.3"
     val Monix = "3.2.0"
-    val MongoScala = "2.9.0"
+    val MongoScala = "4.1.0"
     val MongoReactiveStreams = "4.1.0"
     val Parquet = "1.11.0"
     val S3 = "2.10.91"
