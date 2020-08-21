@@ -36,16 +36,30 @@ class MongoDbSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     //given
     val dbNames = Gen.listOfN(5, genNonEmptyStr).sample.get
     val existedBefore = MongoDb.listDatabases(client).filter(dbNames.contains(_)).toListL.runSyncUnsafe().nonEmpty
-    val created = Task.sequence(dbNames.map(name => MongoDb.createCollection(client.getDatabase(name), name))).runSyncUnsafe()
+    Task.sequence(dbNames.map(name => MongoDb.createCollection(client.getDatabase(name), name))).runSyncUnsafe()
 
     //when
     val dbs = MongoDb.listDatabases(client).toListL.runSyncUnsafe()
 
     //then
-    created.filter(a => a).size shouldBe dbNames.size
     existedBefore shouldBe false
     dbs should not be empty
     dbs.filter(dbNames.contains(_)).size shouldBe dbNames.size
+  }
+
+  it should "create a collection" in {
+    //given
+    val collectionName = genNonEmptyStr.sample.get
+    val existedBefore = MongoDb.existsCollection(db, collectionName).runSyncUnsafe()
+
+    //when
+    val r = MongoDb.createCollection(db, collectionName).runSyncUnsafe()
+
+    //then
+    val exists = MongoDb.existsCollection(db, collectionName).runSyncUnsafe()
+    r shouldBe a[Unit]
+    existedBefore shouldBe false
+    exists shouldBe true
   }
 
   it should "drop a db" in {
@@ -60,24 +74,27 @@ class MongoDbSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
 
     //then
     val exists = MongoDb.existsCollection(db, collectionName).runSyncUnsafe()
-    r shouldBe true
+    r shouldBe a[Unit]
     existedBefore shouldBe true
     exists shouldBe false
   }
 
-  it should "create a collection" in {
+  it should "drop a collection" in {
     //given
-    val collectionName = genNonEmptyStr.sample.get
-    val existedBefore = MongoDb.existsCollection(db, collectionName).runSyncUnsafe()
+    val dbName = genNonEmptyStr.sample.get
+    val database = client.getDatabase(dbName)
+    val collection = genNonEmptyStr.sample.get
+    MongoDb.createCollection(database, collection).runSyncUnsafe()
+    val existedBefore = MongoDb.existsCollection(database, collection).runSyncUnsafe()
 
     //when
-    val r = MongoDb.createCollection(db, collectionName).runSyncUnsafe()
+    val r = MongoDb.dropCollection(db, collection).runSyncUnsafe()
 
     //then
     val exists = MongoDb.existsCollection(db, collectionName).runSyncUnsafe()
-    r shouldBe true
-    existedBefore shouldBe false
-    exists shouldBe true
+    r shouldBe a[Unit]
+    existedBefore shouldBe true
+    exists shouldBe false
   }
 
   it should "check if a collection exists" in {
@@ -94,7 +111,7 @@ class MongoDbSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     val existedAfter = MongoDb.existsCollection(db, collectionName).runSyncUnsafe()
 
     //then
-    r shouldBe true
+    r shouldBe a[Unit]
     existedBefore shouldBe false
     existedAfter shouldBe true
   }
@@ -108,13 +125,13 @@ class MongoDbSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     val existedBefore = MongoDb.existsDatabase(client, dbName).runSyncUnsafe()
 
     //and
-    val r = MongoDb.createCollection(database, "myCollection").runSyncUnsafe()
+    val r = MongoDb.createCollection(database, "myCollection2").runSyncUnsafe()
 
     //and
     val existedAfter = MongoDb.existsDatabase(client, dbName).runSyncUnsafe()
 
     //then
-    r shouldBe true
+    r shouldBe a[Unit]
     existedBefore shouldBe false
     existedAfter shouldBe true
   }

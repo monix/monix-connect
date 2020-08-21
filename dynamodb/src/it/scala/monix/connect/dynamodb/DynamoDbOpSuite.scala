@@ -47,7 +47,6 @@ class DynamoDbOpSuite
   }
 
   override def afterAll(): Unit = {
-    deleteTable(tableName)
     super.afterAll()
   }
 }

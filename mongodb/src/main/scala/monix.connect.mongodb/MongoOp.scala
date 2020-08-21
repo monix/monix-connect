@@ -18,7 +18,6 @@
 package monix.connect.mongodb
 
 import com.mongodb.client.model.{DeleteOptions, InsertManyOptions, InsertOneOptions, ReplaceOptions, UpdateOptions}
-import com.mongodb.client.result.{DeleteResult, UpdateResult}
 import com.mongodb.reactivestreams.client.MongoCollection
 import monix.eval.{Coeval, Task}
 import org.bson.conversions.Bson
@@ -40,10 +39,13 @@ object MongoOp {
     * @param filter the query filter to apply the delete operation.
     *               @see [[com.mongodb.client.model.Filters]]
     * @tparam Doc the type of the collection.
-    * @return a [[Task]] with an optional [[DeleteResult]] or a failed one with an [[com.mongodb.MongoException]].
+    * @return a [[Task]] with a [[DeleteResult]], being by default [[DefaultDeleteResult]],
+    *         or a failed one with [[com.mongodb.MongoException]].
     */
-  def deleteOne[Doc](collection: MongoCollection[Doc], filter: Bson): Task[Option[DeleteResult]] =
-    Task.fromReactivePublisher(collection.deleteOne(filter))
+  def deleteOne[Doc](collection: MongoCollection[Doc], filter: Bson): Task[DeleteResult] =
+    Task
+      .fromReactivePublisher(collection.deleteOne(filter))
+      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultDeleteResult))
 
   /**
     * Removes at most one document from the collection that matches the given filter with some delete options.
@@ -60,7 +62,8 @@ object MongoOp {
     * @param delayAfterFailure the delay set after the execution of a single operation failed,
     *                          by default no delay is applied.
     * @tparam Doc the type of the collection
-    * @return a [[Task]] with an optional [[DeleteResult]] or a failed one.
+    * @return a [[Task]] with an optional [[DeleteResult]], being by default [[DefaultDeleteResult]],
+    *         or a failed one with [[com.mongodb.MongoException]].
     */
   def deleteOne[Doc](
     collection: MongoCollection[Doc],
@@ -68,8 +71,9 @@ object MongoOp {
     deleteOptions: DeleteOptions = DefaultDeleteOptions,
     retries: Int = 0,
     timeout: Option[FiniteDuration] = Option.empty,
-    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[Option[DeleteResult]] =
+    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[DeleteResult] =
     retryOnFailure(Coeval(collection.deleteOne(filter, deleteOptions)), retries, timeout, delayAfterFailure)
+      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultDeleteResult))
 
   /**
     * Removes all documents from the collection that match the given query filter.
@@ -78,10 +82,13 @@ object MongoOp {
     * @param collection the abstraction to work with a determined MongoDB Collection
     * @param filter the query filter to apply the the delete operation
     * @tparam Doc the type of the collection
-    * @return a [[Task]] with an optional [[DeleteResult]] or a failed one.
+    * @return a [[Task]] with an optional [[DeleteResult]], being by default [[DefaultDeleteResult]],
+    *         or a failed one with [[com.mongodb.MongoException]].
     */
-  def deleteMany[Doc](collection: MongoCollection[Doc], filter: Bson): Task[Option[DeleteResult]] =
-    Task.fromReactivePublisher(collection.deleteMany(filter))
+  def deleteMany[Doc](collection: MongoCollection[Doc], filter: Bson): Task[DeleteResult] =
+    Task
+      .fromReactivePublisher(collection.deleteMany(filter))
+      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultDeleteResult))
 
   /**
     * Removes all documents from the collection that match the given query filter.
@@ -98,7 +105,8 @@ object MongoOp {
     * @param delayAfterFailure the delay set after the execution of a single operation failed,
     *                          by default no delay is applied.
     * @tparam Doc the type of the collection
-    * @return a [[Task]] with an optional of [[DeleteResult]] or a failed one.
+    * @return a [[Task]] with an optional of [[DeleteResult]], being by default [[DefaultDeleteResult]],
+    *         or a failed one with [[com.mongodb.MongoException]].
     */
   def deleteMany[Doc](
     collection: MongoCollection[Doc],
@@ -106,8 +114,9 @@ object MongoOp {
     deleteOptions: DeleteOptions = DefaultDeleteOptions,
     retries: Int = 0,
     timeout: Option[FiniteDuration] = Option.empty,
-    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[Option[DeleteResult]] =
+    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[DeleteResult] =
     retryOnFailure(Coeval(collection.deleteMany(filter, deleteOptions)), retries, timeout, delayAfterFailure)
+      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultDeleteResult))
 
   /**
     * Inserts the provided document.
@@ -116,11 +125,14 @@ object MongoOp {
     * @param collection the abstraction to work with the determined mongodb collection
     * @param document the document to be inserted
     * @tparam Doc the type of the collection
-    * @return a boolean task that indicates whether the operation completed successfully or
-    *         it failed with or with [[com.mongodb.DuplicateKeyException]] or [[com.mongodb.MongoException]]
+    * @return a [[Task]] with the [[InsertOneResult]] that will contain the inserted id in case
+    *         the operation finished successfully, being by default [[DefaultInsertOneResult]],
+    *         or a failed one with [[com.mongodb.DuplicateKeyException]] or [[com.mongodb.MongoException]].
     */
-  def insertOne[Doc](collection: MongoCollection[Doc], document: Doc): Task[Boolean] =
-    Task.fromReactivePublisher(collection.insertOne(document)).map(_.isDefined)
+  def insertOne[Doc](collection: MongoCollection[Doc], document: Doc): Task[InsertOneResult] =
+    Task
+      .fromReactivePublisher(collection.insertOne(document))
+      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultInsertOneResult))
 
   /**
     * Inserts the provided document.
@@ -135,8 +147,9 @@ object MongoOp {
     * @param delayAfterFailure the delay set after the execution of a single operation failed,
     *                          by default no delay is applied.
     * @tparam Doc the type of the collection
-    * @return a boolean task that indicates whether the operation completed successfully or
-    *         it failed with or with [[com.mongodb.DuplicateKeyException]] or [[com.mongodb.MongoException]]
+    * @return a [[Task]] with the [[InsertOneResult]] that will contain the inserted id in case
+    *         the operation finished successfully, being by default [[DefaultInsertOneResult]],
+    *         or a failed one with [[com.mongodb.DuplicateKeyException]] or [[com.mongodb.MongoException]].
     */
   def insertOne[Doc](
     collection: MongoCollection[Doc],
@@ -144,9 +157,9 @@ object MongoOp {
     insertOneOptions: InsertOneOptions = DefaultInsertOneOptions,
     retries: Int = 0,
     timeout: Option[FiniteDuration] = Option.empty,
-    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[Boolean] =
+    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[InsertOneResult] =
     retryOnFailure(Coeval(collection.insertOne(document, insertOneOptions)), retries, timeout, delayAfterFailure)
-      .map(_.isDefined)
+      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultInsertOneResult))
 
   /**
     * Inserts a batch of documents.
@@ -154,11 +167,14 @@ object MongoOp {
     *
     * @param collection the abstraction to work with the determined mongodb collection
     * @tparam Doc the type of the collection
-    * @return a boolean task that indicates whether the operation completed successfully or
-    *         it failed with or with [[com.mongodb.DuplicateKeyException]] or [[com.mongodb.MongoException]]
+    * @return a [[Task]] with the [[InsertManyResult]] that will contain the successful inserted ids,
+    *         being by default [[DefaultInsertManyResult]].
+    *         or a failed one with [[com.mongodb.DuplicateKeyException]] or [[com.mongodb.MongoException]].
     */
-  def insertMany[Doc](collection: MongoCollection[Doc], docs: Seq[Doc]): Task[Boolean] =
-    Task.fromReactivePublisher(collection.insertMany(docs.asJava)).map(_.isDefined)
+  def insertMany[Doc](collection: MongoCollection[Doc], docs: Seq[Doc]): Task[InsertManyResult] =
+    Task
+      .fromReactivePublisher(collection.insertMany(docs.asJava))
+      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultInsertManyResult))
 
   /**
     * Inserts a batch of documents.
@@ -173,8 +189,9 @@ object MongoOp {
     * @param delayAfterFailure the delay set after the execution of a single operation failed,
     *                          by default no delay is applied.
     * @tparam Doc the type of the collection
-    * @return a boolean [[Task]] that indicates whether the operation completed successfully or
-    *         it failed with or with [[com.mongodb.DuplicateKeyException]] or [[com.mongodb.MongoException]]
+    * @return a [[Task]] with the [[InsertManyResult]] that will contain the successful inserted ids,
+    *         being by default [[DefaultInsertManyResult]],
+    *         or a failed one with [[com.mongodb.DuplicateKeyException]] or [[com.mongodb.MongoException]].
     */
   def insertMany[Doc](
     collection: MongoCollection[Doc],
@@ -182,9 +199,9 @@ object MongoOp {
     insertManyOptions: InsertManyOptions = DefaultInsertManyOptions,
     retries: Int = 0,
     timeout: Option[FiniteDuration] = Option.empty,
-    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[Boolean] =
+    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[InsertManyResult] =
     retryOnFailure(Coeval(collection.insertMany(docs.asJava, insertManyOptions)), retries, timeout, delayAfterFailure)
-      .map(_.isDefined)
+      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultInsertManyResult))
 
   /**
     * Replace a document in the collection according to the specified arguments.
@@ -194,10 +211,13 @@ object MongoOp {
     *               @see [[com.mongodb.client.model.Filters]]
     * @param replacement the replacement document
     * @tparam Doc the type of the collection
-    * @return a [[Task]] with an optional single [[UpdateResult]], or a failed one.
+    * @return a [[Task]] with an [[UpdateResult]], being by default [[DefaultUpdateResult]],
+    *         or a failed one.
     */
-  def replaceOne[Doc](collection: MongoCollection[Doc], filter: Bson, replacement: Doc): Task[Option[UpdateResult]] =
-    Task.fromReactivePublisher(collection.replaceOne(filter, replacement))
+  def replaceOne[Doc](collection: MongoCollection[Doc], filter: Bson, replacement: Doc): Task[UpdateResult] =
+    Task
+      .fromReactivePublisher(collection.replaceOne(filter, replacement))
+      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultUpdateResult))
 
   /**
     * Replace a document in the collection according to the specified arguments.
@@ -213,7 +233,8 @@ object MongoOp {
     * @param delayAfterFailure the delay set after the execution of a single operation failed,
     *                          by default no delay is applied.
     * @tparam Doc the type of the collection
-    * @return a [[Task]] with a single [[UpdateResult]], or a failed one.
+    * @return a [[Task]] with a single [[UpdateResult]], being by default [[DefaultUpdateResult]],
+    *         or a failed one.
     */
   def replaceOne[Doc](
     collection: MongoCollection[Doc],
@@ -222,12 +243,13 @@ object MongoOp {
     replaceOptions: ReplaceOptions = DefaultReplaceOptions,
     retries: Int = 0,
     timeout: Option[FiniteDuration] = Option.empty,
-    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[Option[UpdateResult]] =
+    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[UpdateResult] =
     retryOnFailure(
       Coeval(collection.replaceOne(filter, replacement, replaceOptions)),
       retries,
       timeout,
       delayAfterFailure)
+      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultUpdateResult))
 
   /**
     * Update a single document in the collection according to the specified arguments.
@@ -239,10 +261,13 @@ object MongoOp {
     *               the update to apply must include only update operators
     *               @see [[com.mongodb.client.model.Updates]]
     * @tparam Doc the type of the collection
-    * @return a [[Task]] with an optional [[UpdateResult]] or a failed one.
+    * @return a [[Task]] with a [[UpdateResult]], being by default [[DefaultUpdateResult]]
+    *         or a failed one.
     */
-  def updateOne[Doc](collection: MongoCollection[Doc], filter: Bson, update: Bson): Task[Option[UpdateResult]] =
-    Task.fromReactivePublisher(collection.updateOne(filter, update))
+  def updateOne[Doc](collection: MongoCollection[Doc], filter: Bson, update: Bson): Task[UpdateResult] =
+    Task
+      .fromReactivePublisher(collection.updateOne(filter, update))
+      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultUpdateResult))
 
   /**
     * Update a single document in the collection according to the specified arguments.
@@ -260,7 +285,8 @@ object MongoOp {
     * @param delayAfterFailure the delay set after the execution of a single operation failed,
     *                          by default no delay is applied.
     * @tparam Doc the type of the collection
-    * @return a [[Task]] with an optional [[UpdateResult]] or a failed one.
+    * @return a [[Task]] with an optional [[UpdateResult]], being by default [[DefaultUpdateResult]],
+    *         or a failed one.
     */
   def updateOne[Doc](
     collection: MongoCollection[Doc],
@@ -269,8 +295,9 @@ object MongoOp {
     updateOptions: UpdateOptions = DefaultUpdateOptions,
     retries: Int = 0,
     timeout: Option[FiniteDuration] = Option.empty,
-    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[Option[UpdateResult]] =
+    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[UpdateResult] =
     retryOnFailure(Coeval(collection.updateOne(filter, update, updateOptions)), retries, timeout, delayAfterFailure)
+      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultUpdateResult))
 
   /**
     * Update all documents in the collection according to the specified arguments.
@@ -280,10 +307,13 @@ object MongoOp {
     *               @see [[com.mongodb.client.model.Filters]]
     * @param update
     * @tparam Doc the type of the collection
-    * @return a [[Task]] with an optional [[UpdateResult]] or a failed one.
+    * @return a [[Task]] with an optional [[UpdateResult]], being by default [[DefaultUpdateResult]],
+    *         or a failed one.
     */
-  def updateMany[Doc](collection: MongoCollection[Doc], filter: Bson, update: Bson): Task[Option[UpdateResult]] =
-    Task.fromReactivePublisher(collection.updateMany(filter, update))
+  def updateMany[Doc](collection: MongoCollection[Doc], filter: Bson, update: Bson): Task[UpdateResult] =
+    Task
+      .fromReactivePublisher(collection.updateMany(filter, update))
+      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultUpdateResult))
 
   /**
     * Update all documents in the collection according to the specified arguments.
@@ -300,7 +330,8 @@ object MongoOp {
     * @param timeout expected timeout that the operation is expected to be executed or else return a failure.
     * @param delayAfterFailure the delay set after the execution of a single operation failed.
     * @tparam Doc the type of the collection
-    * @return a [[Task]] with an optional [[UpdateResult]] or a failed one.
+    * @return a [[Task]] with an optional [[UpdateResult]] being by default [[DefaultUpdateResult]],
+    *         or a failed one.
     */
   def updateMany[Doc](
     collection: MongoCollection[Doc],
@@ -309,8 +340,9 @@ object MongoOp {
     updateOptions: UpdateOptions = DefaultUpdateOptions,
     retries: Int = 0,
     timeout: Option[FiniteDuration] = Option.empty,
-    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[Option[UpdateResult]] = {
+    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[UpdateResult] = {
     retryOnFailure(Coeval(collection.updateMany(filter, update, updateOptions)), retries, timeout, delayAfterFailure)
+      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultUpdateResult))
   }
 
 }
