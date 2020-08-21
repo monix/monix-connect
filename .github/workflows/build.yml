@@ -65,7 +65,7 @@ jobs:
   publish:
     name: Publish 
     needs: [ tests, mima ]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1

@@ -34,7 +34,7 @@ Also, in order to perform these conversion it is required to have an implicit in
 
 Add the following dependency to get started:
 ```scala 
-libraryDependencies += "io.monix" %% "monix-akka" % "0.2.0"
+libraryDependencies += "io.monix" %% "monix-akka" % "0.3.3"
 ```
 
 ## Getting started

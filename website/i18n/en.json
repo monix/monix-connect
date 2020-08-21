@@ -17,6 +17,9 @@
       "hdfs": {
         "title": "HDFS"
       },
+      "mongodb": {
+        "title": "MongoDB"
+      },
       "overview": {
         "title": "Overview"
       },
