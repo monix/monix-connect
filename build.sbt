@@ -186,7 +186,7 @@ def monixConnector(
     .settings(additionalSettings: _*)
     .configure(profile)
     .configs(IntegrationTest, IT)
-    .settings(mimaSettings(s"monix-$connectorName"))
+    //.settings(mimaSettings(s"monix-$connectorName"))
 
 lazy val docs = project
   .in(file("monix-connect-docs"))
