@@ -10,7 +10,7 @@ object Dependencies {
     val Cats_Effect = "2.1.3"
     val DynamoDb = "2.10.60"
     val GCS = "1.107.0"
-    val Hadoop = "3.1.3"
+    val Hadoop = "3.1.4"
     val Monix = "3.2.0"
     val MongoScala = "2.9.0"
     val MongoReactiveStreams = "4.1.0"
