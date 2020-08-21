@@ -2,18 +2,20 @@ import sbt._
 
 object Dependencies {
 
-  object DependencyVersions {
+  object Versions {
+    
     //main
-    val AWS = "1.11.847"
-    val DynamoDb = "2.10.60"
-    val PureConfig = "0.12.3"
-    val S3 = "2.14.0"
-    val Monix = "3.2.0"
     val AkkaStreams = "2.6.4"
-    val Hadoop = "3.1.3"
-    val GCS = "1.107.0"
+    val AWS = "1.11.749"
     val Cats_Effect = "2.1.3"
-    val Cats = "2.1.1"
+    val DynamoDb = "2.10.60"
+    val GCS = "1.107.0"
+    val Hadoop = "3.1.3"
+    val Monix = "3.2.0"
+    val MongoScala = "2.9.0"
+    val MongoReactiveStreams = "4.1.0"
+    val Parquet = "1.11.0"
+    val S3 = "2.10.91"
 
     //test
     val Scalatest = "3.1.3"
@@ -29,51 +31,53 @@ object Dependencies {
   }
 
   private val CommonProjectDependencies = Seq(
-    "io.monix" %% "monix-reactive" % DependencyVersions.Monix,
-    "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.6", //todo use as replacement for `collection.JavaConverters`
+    "io.monix" %% "monix-reactive" % Versions.Monix,
+    "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.6", //todo used as replacement for `collection.JavaConverters`
     "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0"
   )
 
   private val CommonTestDependencies = Seq(
-    "org.scalatest" %% "scalatest" % DependencyVersions.Scalatest,
-    "org.scalacheck" %% "scalacheck" % DependencyVersions.Scalacheck,
-    "org.mockito" %% "mockito-scala" % DependencyVersions.Mockito
+    "org.scalatest" %% "scalatest" % Versions.Scalatest,
+    "org.scalacheck" %% "scalacheck" % Versions.Scalacheck,
+    "org.mockito" %% "mockito-scala" % Versions.Mockito
   )
 
-  val Akka = Seq("com.typesafe.akka" %% "akka-stream" % DependencyVersions.AkkaStreams) ++ CommonProjectDependencies ++ CommonTestDependencies.map(_ % Test)
+  val Akka = Seq("com.typesafe.akka" %% "akka-stream" % Versions.AkkaStreams
+  ) ++ commonDependencies(hasIntegrationTest = false)
 
   val DynamoDb = Seq(
-    "com.amazonaws" % "aws-java-sdk-core" % DependencyVersions.AWS,
+    "com.amazonaws" % "aws-java-sdk-core" % Versions.AWS,
     // "com.amazonaws"  % "aws-java-sdk-dynamodb" % DependencyVersions.AWS, //todo compatibility with java sdk aws
-    "software.amazon.awssdk" % "dynamodb" % DependencyVersions.DynamoDb) ++ commonDependencies(hasIntegrationTest = true)
+    "software.amazon.awssdk" % "dynamodb" % Versions.DynamoDb
+  ) ++ commonDependencies(hasIntegrationTest = true)
 
   val Hdfs = Seq(
-    "org.apache.hadoop" % "hadoop-client" % DependencyVersions.Hadoop,
-    "org.apache.hadoop" % "hadoop-common" % DependencyVersions.Hadoop % Test classifier "tests",
-    "org.apache.hadoop" % "hadoop-hdfs" % DependencyVersions.Hadoop % Test classifier "tests",
-    "org.apache.hadoop" % "hadoop-minicluster" % DependencyVersions.Hadoop
+    "org.apache.hadoop" % "hadoop-client" % Versions.Hadoop,
+    "org.apache.hadoop" % "hadoop-common" % Versions.Hadoop,
+    "org.apache.hadoop" % "hadoop-hdfs" % Versions.Hadoop,
+    "org.apache.hadoop" % "hadoop-minicluster" % Versions.Hadoop % Test
   ) ++ commonDependencies(hasIntegrationTest = false)
 
   val MongoDb = Seq(
-    "org.mongodb" % "mongodb-driver-reactivestreams" % "1.13.1",
-    "org.mongodb.scala" %% "mongo-scala-bson" % "2.9.0"
+    "org.mongodb" % "mongodb-driver-reactivestreams" % Versions.MongoReactiveStreams,
+    "org.mongodb.scala" %% "mongo-scala-bson" % Versions.MongoScala,
+    "org.mongodb.scala" %% "mongo-scala-driver" % Versions.MongoScala
   ) ++ commonDependencies(hasIntegrationTest = true)
 
   val Parquet = Seq(
-    "io.monix" %% "monix-reactive" % DependencyVersions.Monix,
-    "org.apache.parquet" % "parquet-avro" % "1.11.0",
-    "org.apache.parquet" % "parquet-hadoop" % "1.11.0",
-    "org.apache.parquet" % "parquet-protobuf" % "1.11.0",
-    "com.twitter.elephantbird" % "elephant-bird" % "4.17",
-    "org.apache.hadoop" % "hadoop-client" % "3.2.1",
-    "org.apache.hadoop" % "hadoop-common" % "3.2.1",
+    "org.apache.parquet" % "parquet-avro" % Versions.Parquet,
+    "org.apache.parquet" % "parquet-hadoop" % Versions.Parquet,
+    "org.apache.parquet" % "parquet-protobuf" % Versions.Parquet,
+    //"com.twitter.elephantbird" % "elephant-bird" % "4.17",
+    "org.apache.hadoop" % "hadoop-client" % Versions.Hadoop % Test,
+    "org.apache.hadoop" % "hadoop-common" % Versions.Hadoop % Test,
     "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"
   ) ++ commonDependencies(hasIntegrationTest = false)
 
   val S3 = Seq(
-    "software.amazon.awssdk" % "s3" % DependencyVersions.S3,
-    "com.amazonaws" % "aws-java-sdk-core" % DependencyVersions.AWS % IntegrationTest,
-    "com.amazonaws" % "aws-java-sdk-s3" % DependencyVersions.AWS % IntegrationTest,
+    "software.amazon.awssdk" % "s3" % Versions.S3,
+    "com.amazonaws" % "aws-java-sdk-core" % Versions.AWS % IntegrationTest,
+    "com.amazonaws" % "aws-java-sdk-s3" % Versions.AWS % IntegrationTest,
     "org.scalatestplus" %% "scalacheck-1-14" % "3.1.1.1" % Test
   ) ++ commonDependencies(hasIntegrationTest = true)
 
@@ -82,10 +86,9 @@ object Dependencies {
   ) ++ commonDependencies(hasIntegrationTest = true)
 
   val GCS = Seq(
-    "org.typelevel"     %% "cats-core"            % DependencyVersions.Cats,
-    "com.google.cloud"   % "google-cloud-storage" % DependencyVersions.GCS,
-    "org.typelevel" %% "cats-effect" % DependencyVersions.Cats_Effect,
-    "com.google.cloud" % "google-cloud-nio" % DependencyVersions.GCNio % IntegrationTest,
-    "commons-io" % "commons-io" % "2.7" % Test
+    "com.google.cloud"   % "google-cloud-storage" % Versions.GCS,
+    "org.typelevel" %% "cats-effect" % Versions.Cats_Effect,
+    "com.google.cloud" % "google-cloud-nio" % Versions.GCNio % IntegrationTest,
+    "commons-io" % "commons-io" % "2.6" % Test
   ) ++ commonDependencies(hasIntegrationTest = true)
 }

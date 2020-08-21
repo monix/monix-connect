@@ -63,7 +63,7 @@ object MongoSource {
     * @return
     */
   def aggregate[Doc](collection: MongoCollection[Doc], pipeline: Seq[Bson]): Observable[Document] =
-    Observable.fromReactivePublisher(collection.aggregate(pipeline.asJava))
+    Observable.fromReactivePublisher(collection.aggregate(pipeline.asJava, classOf[Document]))
 
   /**
     * Gets the distinct values of the specified field name.
