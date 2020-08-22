@@ -210,7 +210,7 @@ class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with
       finalOffset shouldBe chunksB.flatten.size
     }
 
-    "files when appending to a non existing file" in new HdfsFixture {
+    "fail when appending to a non existing file" in new HdfsFixture {
       //given
       val path: Path = new Path(genFileName.sample.get)
       val chunksA: List[Array[Byte]] = genChunks.sample.get
