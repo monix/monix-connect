@@ -18,7 +18,7 @@ object Dependencies {
     val S3 = "2.10.91"
 
     //test
-    val Scalatest = "3.1.3"
+    val Scalatest = "3.2.2"
     val Scalacheck = "1.14.0"
     val Mockito = "1.14.8"
     val GCNio = "0.121.2"
