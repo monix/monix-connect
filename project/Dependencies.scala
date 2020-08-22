@@ -10,15 +10,15 @@ object Dependencies {
     val Cats_Effect = "2.1.3"
     val DynamoDb = "2.10.60"
     val GCS = "1.107.0"
-    val Hadoop = "3.1.3"
+    val Hadoop = "3.1.4"
     val Monix = "3.2.0"
     val MongoScala = "2.9.0"
     val MongoReactiveStreams = "4.1.0"
-    val Parquet = "1.11.0"
     val S3 = "2.14.3"
+    val Parquet = "1.11.1"
 
     //test
-    val Scalatest = "3.1.3"
+    val Scalatest = "3.2.2"
     val Scalacheck = "1.14.0"
     val Mockito = "1.14.8"
     val GCNio = "0.121.2"
