@@ -303,33 +303,6 @@ class S3RequestBuilderSpec
       }
     }
 
-    s"correctly build `ListObjectsV2`" in {
-      //given
-      forAll(genListObjectsV2Params) {
-        case (
-            bucket: String,
-            continuationToken: Option[String],
-            fetchOwner: Option[Boolean],
-            maxKeys: Option[Int],
-            prefix: Option[String],
-            startAfter: Option[String],
-            requestPayer: Option[String]) =>
-          //when
-          val request: ListObjectsV2Request =
-            S3RequestBuilder
-              .listObjectsV2(bucket, continuationToken, fetchOwner, maxKeys, prefix, startAfter, requestPayer)
-
-          //then
-          request.bucket shouldBe bucket
-          request.continuationToken shouldBe continuationToken.orNull
-          request.fetchOwner shouldBe fetchOwner.getOrElse(null)
-          request.maxKeys shouldBe maxKeys.getOrElse(null)
-          request.prefix shouldBe prefix.orNull
-          request.startAfter shouldBe startAfter.orNull
-          request.requestPayerAsString shouldBe requestPayer.orNull
-      }
-    }
-
     s"correctly build `UploadPartRequest`" in {
       //given
       forAll(genUploadPartParams) {

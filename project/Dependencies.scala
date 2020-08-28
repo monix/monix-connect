@@ -75,8 +75,7 @@ object Dependencies {
   ) ++ commonDependencies(hasIntegrationTest = false)
 
   val S3 = Seq(
-    "software.amazon.awssdk" % "s3" % Versions.S3,
-    "com.amazonaws" % "aws-java-sdk-core" % Versions.AWS % IntegrationTest,
+    "software.amazon.awssdk" % "s3" % "2.11.8",
     "com.amazonaws" % "aws-java-sdk-s3" % Versions.AWS % IntegrationTest,
     "org.scalatestplus" %% "scalacheck-1-14" % "3.1.1.1" % Test
   ) ++ commonDependencies(hasIntegrationTest = true)

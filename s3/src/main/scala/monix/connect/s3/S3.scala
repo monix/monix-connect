@@ -19,28 +19,18 @@ package monix.connect.s3
 
 import java.nio.ByteBuffer
 import java.time.Instant
+import java.util.concurrent.CompletableFuture
 
-import monix.reactive.Consumer
-import monix.execution.Scheduler
+import monix.reactive.{Consumer, Observable, OverflowStrategy}
+import monix.execution.{Ack, Scheduler}
 import monix.eval.Task
+import monix.execution.internal.InternalApi
+import monix.reactive.observers.Subscriber
 import software.amazon.awssdk.core.async.AsyncRequestBody
 import software.amazon.awssdk.services.s3.S3AsyncClient
-import software.amazon.awssdk.services.s3.model.{
-  CompleteMultipartUploadResponse,
-  CreateBucketRequest,
-  CreateBucketResponse,
-  DeleteBucketRequest,
-  DeleteBucketResponse,
-  DeleteObjectRequest,
-  DeleteObjectResponse,
-  GetObjectRequest,
-  ListObjectsRequest,
-  ListObjectsResponse,
-  ListObjectsV2Request,
-  ListObjectsV2Response,
-  PutObjectRequest,
-  PutObjectResponse
-}
+import software.amazon.awssdk.services.s3.model.{Bucket, CompleteMultipartUploadResponse, CreateBucketRequest, CreateBucketResponse, DeleteBucketRequest, DeleteBucketResponse, DeleteObjectRequest, DeleteObjectResponse, GetObjectRequest, ListBucketsRequest, ListObjectsRequest, ListObjectsResponse, ListObjectsV2Request, ListObjectsV2Response, PutObjectRequest, PutObjectResponse, S3Object}
+
+import scala.jdk.CollectionConverters._
 
 /**
   * An idiomatic monix service client for Amazon S3.
@@ -168,6 +158,14 @@ object S3 {
     Task.from(s3Client.deleteObject(request))
   }
 
+  //def existsObject(bucketName: String,
+  //                 key: String)(implicit s3Client: S3AsyncClient): Task[Boolean] = {
+  //  S3.listObjects(bucketName, Some(key), maxKeys = Some(1)).map(_.contents().asScala.toList.exists(_.key()==key))
+  //}
+
+  def existsBucket(bucketName: String)(implicit s3Client: S3AsyncClient): Task[Boolean] =
+    S3.listBuckets().existsL(_.name==bucketName)
+
   /**
     * Downloads an Amazon S3 object as byte array.
     * All [[GetObjectRequest]] requires to be specified with [[bucketName]] and [[key]].
@@ -227,6 +225,7 @@ object S3 {
     sseCustomerKey: Option[String] = None,
     sseCustomerKeyMD5: Option[String] = None,
     versionId: Option[String] = None)(implicit s3Client: S3AsyncClient): Task[Array[Byte]] = {
+
     val request: GetObjectRequest = S3RequestBuilder.getObjectRequest(
       bucket,
       key,
@@ -258,85 +257,178 @@ object S3 {
   }
 
   /**
-    * Get the a lists in lexicographic (alphabetical) with the summary information about the objects in the specified bucket.
-    * Buckets can contain a virtually unlimited number of keys, and the complete results of a list query can be extremely large.
-    *
-    * @note To manage large result sets, Amazon S3 uses pagination to split them into multiple responses.
-    *       Always check the ObjectListing.isTruncated() method to see if the returned listing is complete,
-    *       or if callers need to make additional calls to get more results.
-    *       Alternatively, use the AmazonS3Client.listNextBatchOfObjects(ObjectListing) method as an easy way to get the next page of object listings.
-    * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/ListObjectsRequest.html
-    * @param bucket       S3 bucket whose objects are to be listed.
-    * @param prefix       Restricts the response to keys that begin with the specified prefix.
-    * @param marker       Specifies the key to start with when listing objects in a bucket.
-    * @param maxKeys      Maximum number of keys to include in the response.
-    * @param requestPayer Returns the value of the RequestPayer property for this object.
-    * @param s3Client     An implicit instance of a [[S3AsyncClient]].
-    * @return A [[Task]] with the resulted list of objects as [[ListObjectsV2Response]].
+    * @param s3Client
+    * @return
     */
-  def listObjects(
-    bucket: String,
-    prefix: Option[String] = None,
-    marker: Option[String] = None,
-    maxKeys: Option[Int] = None,
-    requestPayer: Option[String] = None)(implicit s3Client: S3AsyncClient): Task[ListObjectsResponse] = {
-    val request: ListObjectsRequest =
-      S3RequestBuilder.listObjects(bucket, marker, maxKeys, prefix, requestPayer)
-    Task.from(s3Client.listObjects(request))
+  def listBuckets()(implicit s3Client: S3AsyncClient): Observable[Bucket] = {
+    for {
+      response <-  Observable.fromTaskLike(s3Client.listBuckets())
+      bucket <- Observable.from(response.buckets().asScala.toList)
+    } yield bucket
   }
 
   /**
-    * Request to retrieve a listing of objects in an S3 bucket.
+    * Get the list of objects under the specified [[bucket]] and [[prefix]].
     *
-    * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/ListObjectsRequest.Builder.html
-    * @param request  An instance of [[ListObjectsRequest]]
-    * @param s3Client An implicit instance of a [[S3AsyncClient]].
-    * @return A [[Task]] with the resulted list of objects as [[ListObjectsResponse]].
+    * @param bucket     S3 bucket whose objects are to be listed.
+    * @param prefix     restricts the response to keys that begin with the specified prefix.
+    * @param requestPayer the value of the RequestPayer property for this object.
+    * @param delimiter  character you use to group keys.
+    * @param s3Client   implicit instance of a [[S3AsyncClient]].
+    * @return A [[Observable]] that contains all the objects within the specified [[bucket]] and [[prefix]].
     */
-  def listObjects(request: ListObjectsRequest)(implicit s3Client: S3AsyncClient): Task[ListObjectsResponse] = {
-    Task.from(s3Client.listObjects(request))
+  def listObjects(bucket: String,
+                  maxKeys: Option[Int] = None,
+                  prefix: Option[String] = None,
+                  delimiter: Option[String] = None,
+                  requestPayer: Option[String] = None
+                  )(implicit s3Client: S3AsyncClient): Observable[S3Object] = {
+    val request: ListObjectsRequest = S3RequestBuilder.listObjects(bucket, marker = None, maxKeys = Some(200), prefix, requestPayer, delimiter)
+    S3.listAllObjects(request, maxKeys)
   }
 
-  /**
-    * Request to retrieve a listing of objects in an S3 bucket.
-    *
-    * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/ListObjectsV2Request.Builder.html
-    * @param bucket            S3 bucket whose objects are to be listed.
-    * @param prefix            Restricts the response to keys that begin with the specified prefix.
-    * @param continuationToken Continuation token allows a list to be continued from a specific point.
-    *                          ContinuationToken is provided in truncated list results.
-    * @param fetchOwner        The owner field is not present in listV2 by default, if you want to return owner
-    *                          field with each key in the result then set the fetch owner field to true.
-    * @param maxKeys           Maximum number of keys to include in the response.
-    * @param startAfter        StartAfter is where you want Amazon S3 to start listing from.
-    *                          Amazon S3 starts listing after this specified key. StartAfter can be any key in the bucket.
-    * @param requestPayer      Returns the value of the RequestPayer property for this object.
-    * @param s3Client          An implicit instance of a [[S3AsyncClient]].
-    * @return A [[Task]] with the resulted list of objects as [[ListObjectsV2Response]].
-    */
-  def listObjectsV2(
-    bucket: String,
-    prefix: Option[String] = None,
-    continuationToken: Option[String] = None,
-    fetchOwner: Option[Boolean] = None,
-    maxKeys: Option[Int] = None,
-    startAfter: Option[String] = None,
-    requestPayer: Option[String])(implicit s3Client: S3AsyncClient): Task[ListObjectsV2Response] = {
-    val request: ListObjectsV2Request =
-      S3RequestBuilder.listObjectsV2(bucket, continuationToken, fetchOwner, maxKeys, prefix, startAfter, requestPayer)
-    Task.from(s3Client.listObjectsV2(request))
+  /** Iterates through the next list objects marker in order to list all objects */
+  @InternalApi
+  private[s3] def listAllObjects(request: ListObjectsRequest, maxKeys: Option[Int])(implicit s3Client: S3AsyncClient): Observable[S3Object] = {
+
+    import scala.concurrent.duration._
+    def run(request: ListObjectsRequest, retries: Int): Task[ListObjectsResponse] = {
+      Task.from(s3Client.listObjects(request))
+        .onErrorHandleWith { ex =>
+          if(retries > 0) run(request, retries - 1)//.delayExecution(3.seconds)
+          else Task.raiseError(ex)
+        }
+    }
+
+    def nextListRequest(sub: Subscriber[ListObjectsResponse], request: ListObjectsRequest, keysCount: Option[Int]): Task[Unit] = {
+      for {
+      r <- run(request, 5)
+      ack <- Task.deferFuture(sub.onNext(r))
+      next <- {
+        val updatedPendingKeys = keysCount.map(_ - r.contents.size)
+        println("COntnents size: " + r.contents().size())
+        ack match {
+          case Ack.Continue => {
+            if (r.isTruncated && (r.nextMarker() != null)) {
+              updatedPendingKeys match {
+                case Some(pendingKeys) => {
+                  if (pendingKeys <= 0) {
+                    sub.onComplete()
+                    Task.unit
+                  }
+                  else {
+                    val nextNKeys = if (pendingKeys < 100) pendingKeys else 100
+                    val next = request.toBuilder.marker(r.nextMarker).maxKeys(nextNKeys).build()
+                    nextListRequest(sub, next, updatedPendingKeys)
+                  }
+                }
+                case None => {
+                  val next = request.toBuilder.marker(r.nextMarker).build()
+                  nextListRequest(sub, next, updatedPendingKeys)
+                }
+              }
+            } else {
+              println("NOt a next marker!")
+              sub.onComplete()
+              Task.unit
+            }
+
+          }
+          case Ack.Stop => Task.unit
+        }
+      }
+      } yield next
+    }
+
+    for {
+      listResponse <- {
+        Observable.create[ListObjectsResponse](OverflowStrategy.Unbounded) {
+          sub => nextListRequest(sub, request, maxKeys).runToFuture(sub.scheduler)
+        }
+      }
+      s3Object <-{
+        println("OBservable from MATCH POINT")
+        Observable.from(listResponse.contents.asScala.toList)
+      }
+    } yield s3Object
+
   }
 
-  /**
-    * Request to retrieve a listing of objects in an S3 bucket.
-    *
-    * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/ListObjectsV2Request.Builder.html
-    * @param request  An instance of [[ListObjectsV2Request]]
-    * @param s3Client An implicit instance of a [[S3AsyncClient]].
-    * @return A [[Task]] with the resulted list of objects as [[ListObjectsV2Response]].
-    */
-  def listObjectsV2(request: ListObjectsV2Request)(implicit s3Client: S3AsyncClient): Task[ListObjectsV2Response] = {
-    Task.from(s3Client.listObjectsV2(request))
+  def listObjectsV2(bucket: String,
+                  maxKeys: Option[Int] = None,
+                  prefix: Option[String] = None,
+                  delimiter: Option[String] = None,
+                  requestPayer: Option[String] = None
+                 )(implicit s3Client: S3AsyncClient): Observable[S3Object] = {
+
+    val request: ListObjectsV2Request = S3RequestBuilder.listObjectsV2(bucket, prefix = prefix)
+    S3.listAllObjectsV2(request, maxKeys)
+  }
+
+  @InternalApi
+  private[s3] def listAllObjectsV2(request: ListObjectsV2Request, maxKeys: Option[Int])(implicit s3Client: S3AsyncClient): Observable[S3Object] = {
+
+    val isKeysMaxDefined = maxKeys.isDefined
+
+    def run(request: ListObjectsV2Request, retries: Int): Task[ListObjectsV2Response] = {
+      Task.from(s3Client.listObjectsV2(request))
+        .onErrorHandleWith { ex =>
+          if(retries > 0) run(request, retries - 1)
+          else Task.raiseError(ex)
+        }
+    }
+
+    def nextListRequest(sub: Subscriber[ListObjectsV2Response], request: ListObjectsV2Request, keysCount: Option[Int]): Task[Unit] = {
+      for {
+        r <- run(request, 5)
+        ack <- Task.deferFuture(sub.onNext(r))
+        next <- {
+          val updatedPendingKeys = keysCount.map(_ - r.contents.size)
+          println("COntnents size: " + r.contents().size())
+          ack match {
+            case Ack.Continue => {
+              if (r.isTruncated && (r.continuationToken() != null)) {
+                updatedPendingKeys match {
+                  case Some(pendingKeys) => {
+                    if (pendingKeys <= 0) {
+                      sub.onComplete()
+                      Task.unit
+                    }
+                    else {
+                      val nextNKeys = if (pendingKeys < 1000) pendingKeys else 1000
+                      val next = request.toBuilder.continuationToken(r.continuationToken()).maxKeys(nextNKeys).build()
+                      nextListRequest(sub, next, updatedPendingKeys)
+                    }
+                  }
+                  case None => {
+                    val next = request.toBuilder.continuationToken(r.continuationToken()).build()
+                    nextListRequest(sub, next, updatedPendingKeys)
+                  }
+                }
+              } else {
+                sub.onComplete()
+                Task.unit
+              }
+
+            }
+            case Ack.Stop => Task.unit
+          }
+        }
+      } yield next
+    }
+
+    for {
+      listResponse <- {
+        Observable.create[ListObjectsV2Response](OverflowStrategy.Unbounded) {
+          sub => nextListRequest(sub, request, maxKeys).runToFuture(sub.scheduler)
+        }
+      }
+      s3Object <-{
+        println("OBservable from MATCH POINT")
+        Observable.from(listResponse.contents.asScala.toList)
+      }
+    } yield s3Object
+
   }
 
   /**

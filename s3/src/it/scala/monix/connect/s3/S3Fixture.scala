@@ -7,21 +7,25 @@ import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.regions.Regions.US_EAST_1
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
-import monix.eval.Task
+import monix.eval.{Coeval, Task}
 import monix.execution.Scheduler
 import monix.reactive.Observable
+import org.scalacheck.Gen
 import org.scalatest.TestSuite
+
 import software.amazon.awssdk.regions.Region.AWS_GLOBAL
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
-import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+import software.amazon.awssdk.auth.credentials.{AnonymousCredentialsProvider, AwsBasicCredentials, StaticCredentialsProvider}
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration
+import software.amazon.awssdk.http.async.{AsyncExecuteRequest, SdkAsyncHttpClient, SdkAsyncHttpResponseHandler, SdkHttpContentPublisher}
 
 trait S3Fixture {
   this: TestSuite =>
 
   val resourceFile = (fileName: String) => s"s3/src/it/resources/${fileName}"
 
-  val minioEndPoint: String = "http://localhost:9000"
+  val minioEndPoint: String = "http://localhost:4566"
 
   val s3AccessKey: String = "TESTKEY"
   val s3SecretKey: String = "TESTSECRET"
@@ -34,9 +38,9 @@ trait S3Fixture {
     .build
 
   val basicAWSCredentials = AwsBasicCredentials.create(s3AccessKey, s3SecretKey)
-  val s3AsyncClient: S3AsyncClient = S3AsyncClient
+  implicit val s3AsyncClient: S3AsyncClient = S3AsyncClient
     .builder()
-    .credentialsProvider(StaticCredentialsProvider.create(basicAWSCredentials))
+    .credentialsProvider(AnonymousCredentialsProvider.create())
     .region(AWS_GLOBAL)
     .endpointOverride(URI.create(minioEndPoint))
     .build
@@ -61,5 +65,7 @@ trait S3Fixture {
       None
     }
   }
+
+  val nonEmptyString = Coeval(Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString)
 
 }

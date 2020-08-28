@@ -29,11 +29,13 @@ services:
       - "3000:3000"
 
   localstack:
-    image: localstack/localstack:0.11.1
+    image: localstack/localstack:latest
+    hostname: localstack
+    container_name: localstack
     ports:
-      - '4569:4569'
+      - '4566:4566'
     environment:
-      - SERVICES=dynamodb
+      - SERVICES=s3
 
   redis:
     image: redis

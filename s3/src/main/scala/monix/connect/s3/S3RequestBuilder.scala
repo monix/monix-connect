@@ -19,21 +19,8 @@ package monix.connect.s3
 
 import java.time.Instant
 
-import software.amazon.awssdk.services.s3.model.{
-  CompleteMultipartUploadRequest,
-  CompletedMultipartUpload,
-  CompletedPart,
-  CreateBucketRequest,
-  CreateMultipartUploadRequest,
-  DeleteBucketRequest,
-  DeleteObjectRequest,
-  GetObjectRequest,
-  ListObjectsRequest,
-  ListObjectsV2Request,
-  PutObjectRequest,
-  UploadPartRequest,
-  UploadPartResponse
-}
+import software.amazon.awssdk.awscore.AwsRequestOverrideConfiguration
+import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadRequest, CompletedMultipartUpload, CompletedPart, CreateBucketRequest, CreateMultipartUploadRequest, DeleteBucketRequest, DeleteObjectRequest, GetObjectRequest, ListBucketsRequest, ListObjectsRequest, ListObjectsV2Request, PutObjectRequest, UploadPartRequest, UploadPartResponse}
 
 import scala.collection.JavaConverters._
 
@@ -212,7 +199,8 @@ private[s3] object S3RequestBuilder {
     marker: Option[String] = None,
     maxKeys: Option[Int] = None,
     prefix: Option[String] = None,
-    requestPayer: Option[String] = None): ListObjectsRequest = {
+    requestPayer: Option[String] = None,
+    delimiter: Option[String] = None): ListObjectsRequest = {
     val request = ListObjectsRequest
       .builder()
       .bucket(bucket)
@@ -220,20 +208,17 @@ private[s3] object S3RequestBuilder {
     marker.map(request.marker(_))
     maxKeys.map(request.maxKeys(_))
     requestPayer.map(request.requestPayer(_))
+    delimiter.map(request.delimiter(_))
     request.build()
   }
-
-  /**
-    * A builder for [[ListObjectsV2Request]]
-    */
   def listObjectsV2(
-    bucket: String,
-    continuationToken: Option[String] = None,
-    fetchOwner: Option[Boolean] = None,
-    maxKeys: Option[Int] = None,
-    prefix: Option[String] = None,
-    startAfter: Option[String] = None,
-    requestPayer: Option[String] = None): ListObjectsV2Request = {
+                     bucket: String,
+                     continuationToken: Option[String] = None,
+                     fetchOwner: Option[Boolean] = None,
+                     maxKeys: Option[Int] = None,
+                     prefix: Option[String] = None,
+                     startAfter: Option[String] = None,
+                     requestPayer: Option[String] = None): ListObjectsV2Request = {
     val request = ListObjectsV2Request.builder().bucket(bucket)
     fetchOwner.map(request.fetchOwner(_))
     startAfter.map(request.startAfter(_))
