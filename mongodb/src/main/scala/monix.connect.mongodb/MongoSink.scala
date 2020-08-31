@@ -25,6 +25,13 @@ import monix.reactive.observers.Subscriber
 import com.mongodb.reactivestreams.client.MongoCollection
 import monix.eval.Coeval
 import monix.execution.internal.InternalApi
+import monix.connect.mongodb.domain.{
+  DefaultDeleteOptions,
+  DefaultInsertManyOptions,
+  DefaultInsertOneOptions,
+  DefaultReplaceOptions,
+  DefaultUpdateOptions
+}
 import org.bson.conversions.Bson
 import org.reactivestreams.Publisher
 

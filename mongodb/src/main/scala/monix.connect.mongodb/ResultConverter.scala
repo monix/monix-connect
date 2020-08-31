@@ -17,6 +17,7 @@
 
 package monix.connect.mongodb
 
+import monix.connect.mongodb.domain.{DeleteResult, InsertManyResult, InsertOneResult, UpdateResult}
 import monix.execution.internal.InternalApi
 
 import scala.util.Try

@@ -26,6 +26,21 @@ import com.mongodb.client.result.{
   InsertOneResult => MongoInsertOneResult,
   UpdateResult => MongoUpdateResult
 }
+import monix.connect.mongodb.domain.{
+  DefaultDeleteOptions,
+  DefaultDeleteResult,
+  DefaultInsertManyOptions,
+  DefaultInsertManyResult,
+  DefaultInsertOneOptions,
+  DefaultInsertOneResult,
+  DefaultReplaceOptions,
+  DefaultUpdateOptions,
+  DefaultUpdateResult,
+  DeleteResult,
+  InsertManyResult,
+  InsertOneResult,
+  UpdateResult
+}
 import monix.eval.Task
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
