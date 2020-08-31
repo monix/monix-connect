@@ -78,7 +78,7 @@ object Dependencies {
     "software.amazon.awssdk" % "s3" % Versions.S3,
     "com.amazonaws" % "aws-java-sdk-core" % Versions.AWS % IntegrationTest,
     "com.amazonaws" % "aws-java-sdk-s3" % Versions.AWS % IntegrationTest,
-    "org.scalatestplus" %% "scalacheck-1-14" % "3.1.1.1" % Test
+    "org.scalatestplus" %% "scalacheck-1-14" % "3.1.4.0" % Test
   ) ++ commonDependencies(hasIntegrationTest = true)
 
   val Redis = Seq(
