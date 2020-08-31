@@ -159,7 +159,7 @@ ob.fromIterable(chunks).consumeWith(multipartUploadConsumer)
    <span class="hljs-attr">hostname:</span> <span class="hljs-string">localstack</span>
    <span class="hljs-attr">container_name:</span> <span class="hljs-string">localstack</span>
    <span class="hljs-attr">ports:</span>
-     <span class="hljs-bullet">-</span> <span class="hljs-string">'4566 :4566'</span>
+     <span class="hljs-bullet">-</span> <span class="hljs-string">'4566:4566'</span>
    <span class="hljs-attr">environment:</span>
      <span class="hljs-bullet">-</span> <span class="hljs-string">SERVICES=s3</span>
 <span class="hljs-comment"># very important to specify `s3` on `SERVICES` env var, it would prevent to spin up the rest of the AWS services.</span>
