@@ -28,15 +28,6 @@ services:
     ports:
       - "3000:3000"
 
-  localstack:
-    image: localstack/localstack:latest
-    hostname: localstack
-    container_name: localstack
-    ports:
-      - '4566:4566'
-    environment:
-      - SERVICES=s3
-
   redis:
     image: redis
     ports:

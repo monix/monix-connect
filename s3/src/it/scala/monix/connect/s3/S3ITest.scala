@@ -2,11 +2,14 @@ package monix.connect.s3
 
 import java.io.FileInputStream
 
-import com.amazonaws.services.s3.model.ListObjectsRequest
 import monix.eval.Task
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
-import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadResponse, CreateBucketRequest, ListObjectsResponse, PutObjectResponse, S3Object}
+import software.amazon.awssdk.services.s3.model.{
+  CompleteMultipartUploadResponse,
+  CreateBucketRequest,
+  PutObjectResponse
+}
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.matchers.should.Matchers
 
@@ -16,16 +19,14 @@ import monix.reactive.{Consumer, Observable}
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 
 import scala.util.{Failure, Success, Try}
-import scala.jdk.CollectionConverters._
 
 class S3ITest
   extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with ScalaFutures with S3Fixture with Eventually {
 
   private val bucketName = "sample-bucket"
-  implicit val s3Client = s3AsyncClient
 
   override implicit val patienceConfig = PatienceConfig(10.seconds, 100.milliseconds)
-/*
+
   s"${S3}" should {
 
     "implement putObject method" that {
@@ -119,11 +120,11 @@ class S3ITest
         S3.putObject(bucketName, key, content.getBytes).runSyncUnsafe()
 
         //when
-        val t: Task[Array[Byte]] = S3.getObject(bucketName, key)
+        val t: Task[Array[Byte]] = S3.download(bucketName, key)
 
         //then
         whenReady(t.runToFuture) { actualContent: Array[Byte] =>
-          s3SyncClient.doesObjectExist(bucketName, key) shouldBe true
+          S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe true
           actualContent shouldBe a[Array[Byte]]
           actualContent shouldBe content.getBytes()
         }
@@ -139,18 +140,79 @@ class S3ITest
         val _: CompleteMultipartUploadResponse = ob.consumeWith(consumer).runSyncUnsafe()
 
         //when
-        val t = S3.getObject(bucketName, key)
+        val t = S3.download(bucketName, key)
 
         //then
         whenReady(t.runToFuture) { actualContent: Array[Byte] =>
           val expectedArrayByte = ob.foldLeftL(Array.emptyByteArray)((acc, bytes) => acc ++ bytes).runSyncUnsafe()
-          s3SyncClient.doesObjectExist(bucketName, key) shouldBe true
+          S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe true
           actualContent shouldBe a[Array[Byte]]
           actualContent.size shouldBe expectedArrayByte.size
           actualContent shouldBe expectedArrayByte
         }
       }
     }
+
+    "download multipart of small chunk size" in {
+      //given
+      val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+      val content: String = nonEmptyString.value()
+      S3.putObject(bucketName, key, content.getBytes).runSyncUnsafe()
+
+      //when
+      val actualContent: Array[Byte] = S3.downloadMultipart(bucketName, key, 2).toListL.map(_.flatten.toArray).runSyncUnsafe()
+
+      //then
+      S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe true
+      actualContent shouldBe a[Array[Byte]]
+      actualContent shouldBe content.getBytes()
+    }
+
+    "download multipart in one part" in {
+      //given
+      val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+      val content: String = nonEmptyString.value()
+      S3.putObject(bucketName, key, content.getBytes).runSyncUnsafe()
+
+      //when
+      val actualContent: Array[Byte] = S3.downloadMultipart(bucketName, key, 52428).toListL.map(_.flatten.toArray).runSyncUnsafe()
+
+      //then
+      S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe true
+      actualContent shouldBe a[Array[Byte]]
+      actualContent shouldBe content.getBytes()
+    }
+
+    "download multipart big object" in {
+      //given
+      val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+      val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
+      val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
+      val _ = ob.consumeWith(S3.multipartUpload(bucketName, key)).runSyncUnsafe()
+
+      //when
+      val actualContent: Array[Byte] = S3.downloadMultipart(bucketName, key, 52428).toListL.map(_.flatten.toArray).runSyncUnsafe()
+
+      //then
+      val expectedArrayByte: Array[Byte] = ob.foldLeftL(Array.emptyByteArray)((acc, bytes) => acc ++ bytes).runSyncUnsafe()
+      S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe true
+      actualContent shouldBe a[Array[Byte]]
+      actualContent shouldBe expectedArrayByte
+    }
+
+    "download multipart when object does not exist" in {
+      //given
+      val key: String = "non/existing/key"
+
+      //when
+      val result: Array[Byte] = S3.downloadMultipart(bucketName, key, 1).toListL.map(_.flatten.toArray).runSyncUnsafe()
+
+      //then
+      result shouldBe Array.emptyByteArray
+      S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe false
+      result shouldBe a[Array[Byte]]
+    }
+
   }
 
   it should {
@@ -171,7 +233,7 @@ class S3ITest
         //then
         whenReady(t.runToFuture) { completeMultipartUpload =>
           val s3Object: Array[Byte] = download(bucketName, key).get
-          s3SyncClient.doesObjectExist(bucketName, key) shouldBe true
+          S3.existsObject(bucketName, key).runSyncUnsafe()  shouldBe true
           completeMultipartUpload shouldBe a[CompleteMultipartUploadResponse]
           s3Object shouldBe content
         }
@@ -192,7 +254,7 @@ class S3ITest
         whenReady(t.runToFuture) { completeMultipartUpload =>
           eventually {
             val s3Object: Array[Byte] = download(bucketName, key).get
-            s3SyncClient.doesObjectExist(bucketName, key) shouldBe true
+            S3.existsObject(bucketName, key).runSyncUnsafe()  shouldBe true
             completeMultipartUpload shouldBe a[CompleteMultipartUploadResponse]
             s3Object shouldBe chunks.flatten
           }
@@ -214,7 +276,7 @@ class S3ITest
         val expectedArrayByte = ob.foldLeft(Array.emptyByteArray)((acc, bytes) => acc ++ bytes).headL.runSyncUnsafe()
         whenReady(t.runToFuture) { completeMultipartUpload =>
           val s3Object: Array[Byte] = download(bucketName, key).get
-          s3SyncClient.doesObjectExist(bucketName, key) shouldBe true
+          S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe true
           completeMultipartUpload shouldBe a[CompleteMultipartUploadResponse]
           s3Object shouldBe expectedArrayByte
         }
@@ -238,144 +300,89 @@ class S3ITest
         val completeMultipartUpload = t.runSyncUnsafe()
         eventually {
             val s3Object: Array[Byte] = download(bucketName, key).get
-            s3SyncClient.doesObjectExist(bucketName, key) shouldBe true
+            S3.existsObject(bucketName, key).runSyncUnsafe()  shouldBe true
             completeMultipartUpload shouldBe a[CompleteMultipartUploadResponse]
             s3Object shouldBe expectedArrayByte
 
         }
       }
     }
-
   }
 
   it should {
 
-    "list a single object" in {
+    "exists object" in {
       //given
-      val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-      val content: String = Gen.alphaUpperStr.sample.get
-      S3.putObject(bucketName, key, content.getBytes()).runSyncUnsafe()
+      val prefix = s"test-exists-object/${nonEmptyString.value()}/"
+      val key: String = prefix + nonEmptyString.value()
+
+      //and
+      S3.putObject(bucketName, key, "dummy content".getBytes()).runSyncUnsafe()
 
       //when
-      val objects = S3.listObjects(bucketName, prefix = Some(key)).toListL.runSyncUnsafe()
+      val isPresent1 = S3.existsObject(bucketName, key = key).runSyncUnsafe()
+      val isPresent2 = S3.existsObject(bucketName, key = "non existing key").runSyncUnsafe()
 
       //then
-      objects.size shouldBe 1
-      objects.head.key() shouldBe key
+      isPresent1 shouldBe true
+      isPresent2 shouldBe false
     }
 
-    "list multiple objects" in {
-      //given
-      val n = 5
-      val prefix = s"test-list-v1/${nonEmptyString.value()}/"
+   "limit the list to the maximum number of objects" in {
+     //given
+     val n = 10
+     val prefix = s"test-list-all-truncated/${nonEmptyString.value()}/"
+     val keys: List[String] =
+       Gen.listOfN(n, Gen.nonEmptyListOf(Gen.alphaChar).map(l => prefix + l.mkString)).sample.get
+     val contents: List[String] = Gen.listOfN(n, Gen.alphaUpperStr).sample.get
+     Task
+       .sequence(keys.zip(contents).map { case (key, content) => S3.putObject(bucketName, key, content.getBytes()) })
+       .runSyncUnsafe()
 
-      val keys: List[String] = Gen.listOfN(n, Gen.nonEmptyListOf(Gen.alphaChar).map(l => prefix + l.mkString)).sample.get
-      val contents: List[String] = Gen.listOfN(n, Gen.alphaUpperStr).sample.get
-      Task.sequence(
-        keys.zip(contents)
-          .map{ case (key, content) => S3.putObject(bucketName, key, content.getBytes())
-          }).runSyncUnsafe()
+     //when
+     val s3Objects = S3.listObjects(bucketName, maxTotalKeys = Some(1), prefix = Some(prefix)).toListL.runSyncUnsafe()
 
-      //when
-      val s3Objects = S3.listObjects(bucketName, prefix = Some(prefix)).toListL.runSyncUnsafe()
+     //then
+     s3Objects.size shouldBe 1
+     keys.contains(s3Objects.head.key) shouldBe true
 
-      //then
-      s3Objects.size shouldBe n
-      s3Objects.map(_.key()) should contain theSameElementsAs keys
-    }
+     //and it should be truncated
+     val request = S3RequestBuilder.listObjects(bucketName, maxKeys = Some(1))
+     Task.from(s3AsyncClient.listObjects(request)).runSyncUnsafe().isTruncated shouldBe true
+   }
 
-    "list all objects " in {
-      //given
-      val n = 5
-      val prefix = s"test-list-all/${nonEmptyString.value()}/"
-      val keys: List[String] = Gen.listOfN(n, Gen.nonEmptyListOf(Gen.alphaChar).map(l => prefix + l.mkString)).sample.get
-      val contents: List[String] = Gen.listOfN(n, Gen.alphaUpperStr).sample.get
-      Task.sequence(
-        keys.zip(contents)
-          .map{ case (key, content) => S3.putObject(bucketName, key, content.getBytes())
-          }).runSyncUnsafe()
+   "list all objects using the continuation token" in {
+     //given
+     val n = 2000
+     val prefix = s"test-list-all-truncated/${nonEmptyString.value()}/"
+     val keys: List[String] =
+       Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + nonEmptyString.value() + str)).sample.get
+     val contents: List[String] = List.fill(n)(nonEmptyString.value())
+     Task
+       .sequence(keys.zip(contents).map { case (key, content) => S3.putObject(bucketName, key, content.getBytes()) })
+       .runSyncUnsafe()
 
-      //when
-      val s3Objects: List[S3Object] = S3.listObjects(bucketName, prefix = Some(prefix)).toListL.runSyncUnsafe()
+     //when
+     val s3Objects = S3.listObjects(bucketName, prefix = Some(prefix)).toListL.runSyncUnsafe()
 
-      //then
-      s3Objects.size shouldBe n
-      s3Objects.map(_.key()) should contain theSameElementsAs keys
-    }
+     //then
+     s3Objects.size shouldBe n
+     s3Objects.map(_.key) should contain theSameElementsAs keys
+   }
 
-    "list all objects when they were truncated" in {
-      //given
-      val n = 100
-      val prefix = s"test-list-all-truncated/${nonEmptyString.value()}/"
-      val keys: List[String] = Gen.listOfN(n, Gen.nonEmptyListOf(Gen.alphaChar).map(l => prefix + l.mkString)).sample.get
-      val contents: List[String] = Gen.listOfN(n, Gen.alphaUpperStr).sample.get
-      Task.sequence(
-        keys.zip(contents)
-          .map{ case (key, content) => S3.putObject(bucketName, key, content.getBytes())
-          }).runSyncUnsafe()
+   "list objects using the continuation token" in {
+     //given/when
+     val tryNegativeListObjects = Try(S3.listObjects(bucketName, prefix = Some("prefix"), maxTotalKeys = Some(-1)))
+     val tryZeroListObjects = Try(S3.listObjects(bucketName, prefix = Some("prefix"), maxTotalKeys = Some(0)))
+     val tryPositiveListObjects = Try(S3.listObjects(bucketName, prefix = Some("prefix"), maxTotalKeys = Some(1)))
 
-      //when
-      val s3Objects = S3.listObjects(bucketName, maxKeys = Some(1), prefix = Some(prefix)).toListL.runSyncUnsafe()
-      Task.from(s3AsyncClient.listObjects(S3RequestBuilder.listObjects(bucketName, maxKeys = Some(1)))).runSyncUnsafe().contents().size() shouldBe 1
-
-     // //then
-     // s3Objects.size shouldBe n
-     // s3Objects.map(_.key()) should contain theSameElementsAs keys
-//
-     // //and
-     // val request = S3RequestBuilder.listObjects(bucketName, maxKeys = Some(1))
-     // Task.from(s3AsyncClient.listObjects(request)).runSyncUnsafe().isTruncated shouldBe true
-    }
-
-  }*/
-
-  "it" should {
-    "be success" in {
-        //given
-        val n = 1000
-        val prefix = s"test-list-all-truncated/${nonEmptyString.value()}/"
-        val keys: List[String] = Gen.listOfN(n, Gen.nonEmptyListOf(Gen.alphaChar).map(l => prefix + l.mkString)).sample.get
-        val contents: List[String] = Gen.listOfN(n, Gen.alphaUpperStr).sample.get
-        Task.sequence(
-          keys.zip(contents)
-            .map{ case (key, content) => S3.putObject(bucketName, key, content.getBytes())
-            }).runSyncUnsafe()
-
-        //when
-        //val s3Objects = S3.listObjectsV2(bucketName, maxKeys = Some(1), prefix = Some(prefix)).toListL.runSyncUnsafe()
-        Task.from(s3AsyncClient.listObjectsV2(S3RequestBuilder.listObjectsV2(bucketName))).runSyncUnsafe().contents().size() shouldBe 1
-
-        //then
-        //s3Objects.size shouldBe 1
-        //keys.contains(s3Objects.head.key) shouldBe true
-
-        //and it should be truncated
-        val request = S3RequestBuilder.listObjects(bucketName, maxKeys = Some(1))
-        Task.from(s3AsyncClient.listObjects(request)).runSyncUnsafe().isTruncated shouldBe true
-    }
-
-    "list iterate over next marker to list all objects" in {
-      //given
-      val n = 1900
-      val prefix = s"test-list-all-truncated/${nonEmptyString.value()}/"
-      val keys: List[String] = Gen.listOfN(n, Gen.nonEmptyListOf(Gen.alphaChar).map(l => prefix + l.mkString)).sample.get
-      val contents: List[String] = Gen.listOfN(n, Gen.alphaUpperStr).sample.get
-      Task.sequence(
-        keys.zip(contents)
-          .map{ case (key, content) => S3.putObject(bucketName, key, content.getBytes())
-          }).runSyncUnsafe()
-
-      //when
-      val s3Objects = S3.listObjectsV2(bucketName, prefix = Some(prefix)).toListL.runSyncUnsafe()
-
-      //then
-      s3Objects.size shouldBe n
-      s3Objects.map(_.key) should contain theSameElementsAs keys
-    }
+     //then
+     tryNegativeListObjects.isSuccess shouldBe false
+     tryZeroListObjects.isSuccess shouldBe false
+     tryPositiveListObjects.isSuccess shouldBe true
+   }
 
   }
-
-  def genPart(): Gen[String] = Gen.oneOf(Seq(List.fill(1000)(Gen.alphaStr.sample.get).mkString("_")))
 
   override def beforeAll(): Unit = {
     super.beforeAll()

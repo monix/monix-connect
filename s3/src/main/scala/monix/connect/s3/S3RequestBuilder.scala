@@ -20,7 +20,7 @@ package monix.connect.s3
 import java.time.Instant
 
 import software.amazon.awssdk.awscore.AwsRequestOverrideConfiguration
-import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadRequest, CompletedMultipartUpload, CompletedPart, CreateBucketRequest, CreateMultipartUploadRequest, DeleteBucketRequest, DeleteObjectRequest, GetObjectRequest, ListBucketsRequest, ListObjectsRequest, ListObjectsV2Request, PutObjectRequest, UploadPartRequest, UploadPartResponse}
+import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadRequest, CompletedMultipartUpload, CompletedPart, CopyObjectRequest, CreateBucketRequest, CreateMultipartUploadRequest, DeleteBucketRequest, DeleteObjectRequest, GetObjectRequest, HeadObjectRequest, ListBucketsRequest, ListObjectsRequest, ListObjectsV2Request, PutObjectRequest, RequestPayer, ServerSideEncryption, UploadPartRequest, UploadPartResponse}
 
 import scala.collection.JavaConverters._
 
@@ -155,6 +155,35 @@ private[s3] object S3RequestBuilder {
     request.build()
   }
 
+  def copyObjectRequest(sourceBucket: String, sourceKey: String, destinationBucket: String,
+                        destinationKey: String, copyIfModifiedSince: Option[Instant],
+                        copyIfUnmodifiedSince: Option[Instant], expires: Option[Instant],
+                        acl: Option[String], grantFullControl: Option[String],
+                        grantRead: Option[String], grantReadACP: Option[String],
+                        grantWriteACP: Option[String],
+                        serverSideEncryption: Option[ServerSideEncryption],
+                        sseCustomerKey: Option[String],
+                        sseCustomerKeyMD5: Option[String],
+                        ssekmsKeyId: Option[String],
+                        requestPayer: Option[RequestPayer]
+
+                       ) = {
+    val request = CopyObjectRequest.builder()
+      .copySource(sourceBucket + sourceKey)
+      .destinationBucket(destinationBucket)
+      .destinationKey(destinationBucket)
+    copyIfModifiedSince.map(request.copySourceIfModifiedSince)
+    copyIfUnmodifiedSince.map(request.copySourceIfUnmodifiedSince)
+    copyIfUnmodifiedSince.map(request.copySourceIfUnmodifiedSince)
+    //request.metadata()
+    requestPayer.map(request.requestPayer)
+    serverSideEncryption.map(request.serverSideEncryption)
+    sseCustomerKey.map(request.sseCustomerKey)
+    sseCustomerKeyMD5.map(request.sseCustomerKeyMD5)
+    ssekmsKeyId.map(request.ssekmsKeyId)
+    request.build()
+  }
+
   /**
     * A builder that only accepts the minimum required fields to build a [[GetObjectRequest]].
     *
@@ -171,7 +200,7 @@ private[s3] object S3RequestBuilder {
     ifUnmodifiedSince: Option[Instant] = None,
     partNumber: Option[Int] = None,
     range: Option[String] = None,
-    requestPayer: Option[String] = None,
+    requestPayer: Option[RequestPayer] = None,
     sseCustomerAlgorithm: Option[String] = None,
     sseCustomerKey: Option[String] = None,
     sseCustomerKeyMD5: Option[String] = None,
@@ -188,6 +217,21 @@ private[s3] object S3RequestBuilder {
     sseCustomerKeyMD5.map(request.sseCustomerKeyMD5(_))
     requestPayer.map(request.requestPayer(_))
     partNumber.map(request.partNumber(_))
+    request.build()
+  }
+
+  //todo
+  def headObjectRequest(bucket: String,
+                        key: Option[String],
+                        ifMatch: Option[String] = None,
+                        ifModifiedSince: Option[Instant] = None,
+                        ifEtagMatch: Option[String] = None) = {
+    val request = HeadObjectRequest.builder()
+    request.bucket(bucket)
+    key.map(request.key(_))
+    ifMatch.map(request.ifMatch(_))
+    ifModifiedSince.map(request.ifModifiedSince(_))
+    ifEtagMatch.map(request.ifNoneMatch(_))
     request.build()
   }
 
@@ -211,6 +255,8 @@ private[s3] object S3RequestBuilder {
     delimiter.map(request.delimiter(_))
     request.build()
   }
+
+
   def listObjectsV2(
                      bucket: String,
                      continuationToken: Option[String] = None,
@@ -228,6 +274,7 @@ private[s3] object S3RequestBuilder {
     requestPayer.map(request.requestPayer(_))
     request.build()
   }
+
 
   /**
     * A builder for [[UploadPartRequest]]

@@ -41,20 +41,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
-import software.amazon.awssdk.services.s3.model.{
-  CompleteMultipartUploadRequest,
-  CompletedPart,
-  CreateBucketRequest,
-  CreateMultipartUploadRequest,
-  DeleteBucketRequest,
-  DeleteObjectRequest,
-  GetObjectRequest,
-  ListObjectsRequest,
-  ListObjectsV2Request,
-  PutObjectRequest,
-  UploadPartRequest,
-  UploadPartResponse
-}
+import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadRequest, CompletedPart, CreateBucketRequest, CreateMultipartUploadRequest, DeleteBucketRequest, DeleteObjectRequest, GetObjectRequest, ListObjectsRequest, ListObjectsV2Request, PutObjectRequest, RequestPayer, UploadPartRequest, UploadPartResponse}
 
 import scala.collection.JavaConverters._
 
@@ -240,7 +227,7 @@ class S3RequestBuilderSpec
             ifUnmodifiedSince: Option[Instant],
             partNumber: Option[Int],
             range: Option[String],
-            requestPayer: Option[String],
+            requestPayer: Option[RequestPayer],
             sseCustomerAlgorithm: Option[String],
             sseCustomerKey: Option[String],
             sseCustomerKeyMD5: Option[String],

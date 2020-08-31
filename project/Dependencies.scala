@@ -47,7 +47,6 @@ object Dependencies {
 
   val DynamoDb = Seq(
     "com.amazonaws" % "aws-java-sdk-core" % Versions.AWS,
-    // "com.amazonaws"  % "aws-java-sdk-dynamodb" % DependencyVersions.AWS, //todo compatibility with java sdk aws
     "software.amazon.awssdk" % "dynamodb" % Versions.DynamoDb
   ) ++ commonDependencies(hasIntegrationTest = true)
 
@@ -75,8 +74,7 @@ object Dependencies {
   ) ++ commonDependencies(hasIntegrationTest = false)
 
   val S3 = Seq(
-    "software.amazon.awssdk" % "s3" % "2.11.8",
-    "com.amazonaws" % "aws-java-sdk-s3" % Versions.AWS % IntegrationTest,
+    "software.amazon.awssdk" % "s3" % "2.14.6",
     "org.scalatestplus" %% "scalacheck-1-14" % "3.1.1.1" % Test
   ) ++ commonDependencies(hasIntegrationTest = true)
 

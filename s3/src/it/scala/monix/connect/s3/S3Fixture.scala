@@ -2,45 +2,43 @@ package monix.connect.s3
 
 import java.io.{File, FileInputStream}
 import java.net.URI
+import java.time.Duration
 
-import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
-import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
-import com.amazonaws.regions.Regions.US_EAST_1
-import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import monix.eval.{Coeval, Task}
 import monix.execution.Scheduler
 import monix.reactive.Observable
 import org.scalacheck.Gen
 import org.scalatest.TestSuite
-
 import software.amazon.awssdk.regions.Region.AWS_GLOBAL
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
-import software.amazon.awssdk.auth.credentials.{AnonymousCredentialsProvider, AwsBasicCredentials, StaticCredentialsProvider}
-import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration
-import software.amazon.awssdk.http.async.{AsyncExecuteRequest, SdkAsyncHttpClient, SdkAsyncHttpResponseHandler, SdkHttpContentPublisher}
+import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
 
 trait S3Fixture {
   this: TestSuite =>
 
+  val nonEmptyString = Coeval(Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString)
+
   val resourceFile = (fileName: String) => s"s3/src/it/resources/${fileName}"
 
-  val minioEndPoint: String = "http://localhost:4566"
+  val minioEndPoint: String = "http://localhost:9000"
 
   val s3AccessKey: String = "TESTKEY"
   val s3SecretKey: String = "TESTSECRET"
 
-  val s3SyncClient = AmazonS3ClientBuilder
-    .standard()
-    .withPathStyleAccessEnabled(true)
-    .withEndpointConfiguration(new EndpointConfiguration(minioEndPoint, US_EAST_1.getName))
-    .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(s3AccessKey, s3SecretKey)))
-    .build
+  val httpClient = NettyNioAsyncHttpClient.builder()
+    .maxConcurrency(500)
+    .maxPendingConnectionAcquires(50000)
+    .connectionAcquisitionTimeout(Duration.ofSeconds(60))
+    .readTimeout(Duration.ofSeconds(60))
+    .build();
 
   val basicAWSCredentials = AwsBasicCredentials.create(s3AccessKey, s3SecretKey)
   implicit val s3AsyncClient: S3AsyncClient = S3AsyncClient
     .builder()
-    .credentialsProvider(AnonymousCredentialsProvider.create())
+    .httpClient(httpClient)
+    .credentialsProvider(StaticCredentialsProvider.create(basicAWSCredentials))
     .region(AWS_GLOBAL)
     .endpointOverride(URI.create(minioEndPoint))
     .build
@@ -65,7 +63,5 @@ trait S3Fixture {
       None
     }
   }
-
-  val nonEmptyString = Coeval(Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString)
 
 }

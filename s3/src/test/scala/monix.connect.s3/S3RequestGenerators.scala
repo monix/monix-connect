@@ -20,7 +20,7 @@ package monix.connect.s3
 import java.time.Instant
 
 import org.scalacheck.Gen
-import software.amazon.awssdk.services.s3.model.CompletedPart
+import software.amazon.awssdk.services.s3.model.{CompletedPart, RequestPayer}
 
 trait S3RequestGenerators {
 
@@ -106,7 +106,7 @@ trait S3RequestGenerators {
     ifUnmodifiedSince    <- Gen.option(Gen.oneOf(Seq(Instant.now())))
     partNumber           <- Gen.option(Gen.chooseNum[Int](1, 200))
     range                <- genOptionStr
-    requestPayer         <- genOptionStr
+    requestPayer         <- Gen.option(RequestPayer.fromValue("unknown"))
     sseCustomerAlgorithm <- genOptionStr
     sseCustomerKey       <- genOptionStr
     sseCustomerKeyMD5    <- genOptionStr
