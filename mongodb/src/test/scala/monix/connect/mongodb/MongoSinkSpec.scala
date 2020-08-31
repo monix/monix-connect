@@ -22,6 +22,7 @@ import monix.eval.Task
 import monix.execution.exceptions.DummyException
 import monix.execution.schedulers.TestScheduler
 import monix.reactive.Observable
+import monix.connect.mongodb.domain.DefaultInsertOneOptions
 import org.mockito.IdiomaticMockito
 import org.mockito.MockitoSugar.{times, verify, when}
 import org.scalatest.BeforeAndAfterEach

@@ -23,6 +23,12 @@ import com.mongodb.client.model.{
   FindOneAndReplaceOptions,
   FindOneAndUpdateOptions
 }
+import monix.connect.mongodb.domain.{
+  DefaultCountOptions,
+  DefaultFindOneAndDeleteOptions,
+  DefaultFindOneAndReplaceOptions,
+  DefaultFindOneAndUpdateOptions
+}
 import com.mongodb.reactivestreams.client.MongoCollection
 import monix.eval.{Coeval, Task}
 import monix.reactive.Observable

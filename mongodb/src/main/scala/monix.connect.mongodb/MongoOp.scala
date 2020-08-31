@@ -18,6 +18,21 @@
 package monix.connect.mongodb
 
 import com.mongodb.client.model.{DeleteOptions, InsertManyOptions, InsertOneOptions, ReplaceOptions, UpdateOptions}
+import monix.connect.mongodb.domain.{
+  DefaultDeleteOptions,
+  DefaultDeleteResult,
+  DefaultInsertManyOptions,
+  DefaultInsertManyResult,
+  DefaultInsertOneOptions,
+  DefaultInsertOneResult,
+  DefaultReplaceOptions,
+  DefaultUpdateOptions,
+  DefaultUpdateResult,
+  DeleteResult,
+  InsertManyResult,
+  InsertOneResult,
+  UpdateResult
+}
 import com.mongodb.reactivestreams.client.MongoCollection
 import monix.eval.{Coeval, Task}
 import org.bson.conversions.Bson
