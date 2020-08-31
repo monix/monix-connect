@@ -9,9 +9,21 @@ lazy val doNotPublishArtifact = Seq(
 
 val monixConnectSeries = "0.3.0"
 
-lazy val sharedSettings = Seq(
-  organization       := "io.monix",
+inThisBuild(List(
+  organization := "io.monix",
   homepage := Some(url("https://connect.monix.io")),
+  licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
+  developers := List(
+    Developer(
+      "paualarco",
+      "Pau Alarcón Cerdan",
+      "pau.alarcon.b@gmail.com",
+      url("https://geirsson.com")
+    )
+  )
+))
+
+lazy val sharedSettings = Seq(
   scalaVersion       := "2.12.8",
   crossScalaVersions := Seq("2.12.10", "2.13.1"),
   scalafmtOnCompile  := true,
@@ -79,10 +91,9 @@ lazy val sharedSettings = Seq(
   autoAPIMappings := true,
   apiURL := Some(url("https://monix.github.io/monix-connect/api/")),
 
-  licenses      := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
   headerLicense := Some(HeaderLicense.Custom(
     """|Copyright (c) 2020-2020 by The Monix Connect Project Developers.
-       |See the project homepage at: https://monix.io
+       |See the project homepage at: https://connect.monix.io
        |
        |Licensed under the Apache License, Version 2.0 (the "License");
        |you may not use this file except in compliance with the License.
@@ -97,13 +108,6 @@ lazy val sharedSettings = Seq(
        |limitations under the License."""
       .stripMargin)),
 
-  developers := List(
-    Developer(
-      id = "paualarco",
-      name = "Pau Alarcon",
-      email = "pau.alarcon.b@gmail.com",
-      url = url("https://github.com/paualarco")
-    )),
   doctestTestFramework      := DoctestTestFramework.ScalaTest,
   doctestTestFramework      := DoctestTestFramework.ScalaCheck,
   doctestOnlyCodeBlocksMode := true
