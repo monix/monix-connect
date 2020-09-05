@@ -21,12 +21,13 @@ Learn more on how to get started in the [documentation page](https://monix.githu
 
 The below list comprehends the current set of available connectors:
 1. [Akka](https://connect.monix.io/docs/akka)
-2. [DynamoDB](https://connect.monix.io/docs/dynamodb)
-3. [Hdfs](https://connect.monix.io/docs/hdfs)
-4. [Parquet](https://connect.monix.io/docs/parquet)
-5. [Redis](https://connect.monix.io/docs/redis)
-6. [S3](https://connect.monix.io/docs/s3)
-7. [GCS](https://connect.monix.io/docs/gcs)
+2. [Apache Parquet](https://connect.monix.io/docs/parquet)
+3. [AWS DynamoDB](https://connect.monix.io/docs/dynamodb)
+4. [AWS S3](https://connect.monix.io/docs/s3)
+5. [Google Cloud Storage](https://connect.monix.io/docs/gcs)
+6. [Hdfs](https://connect.monix.io/docs/hdfs)
+7. [MongoDB](https://connect.monix.io/docs/mongodb)
+8. [Redis](https://connect.monix.io/docs/redis)
 
 ### Contributing
 
@@ -44,8 +45,13 @@ Feel free to open an issue if you notice a bug, you have a question about the co
 gladly accepted. For more information, check out the
 [contributor guide](CONTRIBUTING.md).
 
+### Credits 
+
+The foundation of _Monix Connect_ was inspired on essence to the Akka's [Alpakka](https://doc.akka.io/docs/alpakka/current/index.html) project, and its name from the also popular [Kafka Connect](https://docs.confluent.io/current/connect/index.html).
+
 ## License
 
 All code in this repository is licensed under the Apache License,
 Version 2.0. See [LICENCE](./LICENSE).
+
 

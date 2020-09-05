@@ -1,5 +1,7 @@
 package monix.connect.dynamodb
 
+import java.lang.Thread.sleep
+
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
@@ -131,11 +133,11 @@ class DynamoDbTransformerSuite
 
   override def beforeAll(): Unit = {
     createTable(tableName)
+    sleep(2000)
     super.beforeAll()
   }
 
   override def afterAll(): Unit = {
-    deleteTable(tableName)
     super.afterAll()
   }
 }

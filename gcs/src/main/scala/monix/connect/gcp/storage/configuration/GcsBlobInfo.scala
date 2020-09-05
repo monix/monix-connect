@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * See the project homepage at: https://connect.monix.io
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package monix.connect.gcp.storage.configuration
 
 import java.time.Instant
@@ -34,7 +51,8 @@ object GcsBlobInfo {
 
   /** Converter from the google's java [[BlobInfo]] to monix-conect's scala [[GcsBlobInfo]]  */
   def fromJava(blobInfo: BlobInfo): GcsBlobInfo = {
-    /** These fields can't be initialized directly below when creating other fields since
+    /**
+      * These fields can't be initialized directly below when creating other fields since
       * the default value of the option type would be applied, thus the option would not be `None`.
       */
     val cacheControl = Option(blobInfo.getCacheControl)
@@ -61,9 +79,9 @@ object GcsBlobInfo {
       componentCount = componentCount,
       etag = Option(blobInfo.getEtag),
       md5 = Option(blobInfo.getMd5),
-      md5ToHexString = Option(blobInfo.getMd5ToHexString),
+      //md5ToHexString = Option(blobInfo.getMd5ToHexString), todo
       crc32c = Option(blobInfo.getCrc32c),
-      crc32cToHexString = Option(blobInfo.getCrc32cToHexString),
+      //crc32cToHexString = Option(blobInfo.getCrc32cToHexString), todo
       mediaLink = Option(blobInfo.getMediaLink),
       metadata = Option(blobInfo.getMetadata).map(_.asScala.toMap).getOrElse {
         Map.empty[String, String]
@@ -100,7 +118,8 @@ object GcsBlobInfo {
     temporaryHold: Option[Boolean] = None)
 }
 
-/** A safe and scala idiomatic way of accessing to the blob information, since it provides
+/**
+  * A safe and scala idiomatic way of accessing to the blob information, since it provides
   * conversions from the java language to scala and returning empty options instead of null values.
   */
 private[storage] case class GcsBlobInfo(
@@ -126,9 +145,9 @@ private[storage] case class GcsBlobInfo(
   metadata: Map[String, String] = Map.empty,
   generation: Option[Long] = None,
   metageneration: Option[Long] = None,
-  deleteTime: Option[Instant]= None,
-  updateTime: Option[Instant]= None,
-  createTime: Option[Instant]= None,
+  deleteTime: Option[Instant] = None,
+  updateTime: Option[Instant] = None,
+  createTime: Option[Instant] = None,
   isDirectory: Option[Boolean] = None,
   customerEncryption: Option[CustomerEncryption] = None,
   storageClass: Option[StorageClass] = None,

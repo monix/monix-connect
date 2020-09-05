@@ -107,7 +107,7 @@ const index = `
           <Block layout="fourColumn">
             {[
               {
-                image: `${baseUrl}img/redis.png`,
+                image: `${baseUrl}img/mongodb.jpg`,
                 imageAlign: 'right',
               }
              ,
@@ -130,7 +130,7 @@ const index = `
 
                        ,
                        {
-                        image: `${baseUrl}img/amazon-dynamo-db.png`,
+                        image: `${baseUrl}img/redis.png`,
                         imageAlign: 'left'
                        },
                         {
@@ -154,7 +154,11 @@ const index = `
               {
               image: `${baseUrl}img/akka.png`,
               imageAlign: 'left'
-              }
+              },
+               {
+               image: `${baseUrl}img/amazon-dynamo-db.png`,
+               imageAlign: 'left'
+               }
 
             ]}
           </Block>
