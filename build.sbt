@@ -127,8 +127,6 @@ def profile: Project => Project = pr => {
   withCoverage.enablePlugins(AutomateHeaderPlugin)
 }
 
-skip in publish := true
-
 val IT = config("it") extend Test
 
 lazy val monixConnect = (project in file("."))
