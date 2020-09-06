@@ -19,6 +19,7 @@ package monix.connect.s3
 
 import java.time.Instant
 
+import monix.connect.s3.domain.{DownloadSettings, UploadSettings}
 import org.scalacheck.Gen
 import software.amazon.awssdk.services.s3.model.{CompletedPart, RequestPayer}
 
@@ -26,6 +27,8 @@ trait S3RequestGenerators {
 
   val genOptionStr = Gen.option(Gen.alphaLowerStr)
   val genOptionBool = Gen.option(Gen.oneOf(true, false))
+  val genRequestPayer: Gen[Option[RequestPayer]] =
+    Gen.option(Gen.oneOf(RequestPayer.REQUESTER, RequestPayer.UNKNOWN_TO_SDK_VERSION))
 
   val genCreateBucketParams = for {
     bucket           <- Gen.alphaLowerStr
@@ -52,41 +55,44 @@ trait S3RequestGenerators {
     key            <- Gen.alphaLowerStr
     uploadId       <- Gen.alphaLowerStr
     completedParts <- Gen.listOfN(1, genCompletedPart)
-    requestPayer   <- genOptionStr
+    requestPayer   <- genRequestPayer
   } yield (bucket, key, uploadId, completedParts, requestPayer)
 
-  val genCreateMultipartUploadParams = for {
-    bucket                  <- Gen.alphaLowerStr
-    key                     <- Gen.alphaLowerStr
-    contentType             <- genOptionStr
+  val genUploadSettings = for {
     acl                     <- genOptionStr
     grantFullControl        <- genOptionStr
     grantRead               <- genOptionStr
     grantReadACP            <- genOptionStr
     grantWriteACP           <- genOptionStr
-    requestPayer            <- genOptionStr
+    requestPayer            <- genRequestPayer
     serverSideEncryption    <- genOptionStr
     sseCustomerAlgorithm    <- genOptionStr
     sseCustomerKey          <- genOptionStr
     sseCustomerKeyMD5       <- genOptionStr
     ssekmsEncryptionContext <- genOptionStr
     ssekmsKeyId             <- genOptionStr
-  } yield (
-    bucket,
-    key,
-    contentType,
-    acl,
-    grantFullControl,
-    grantRead,
-    grantReadACP,
-    grantWriteACP,
-    requestPayer,
-    serverSideEncryption,
-    sseCustomerAlgorithm,
-    sseCustomerKey,
-    sseCustomerKeyMD5,
-    ssekmsEncryptionContext,
-    ssekmsKeyId)
+  } yield {
+    UploadSettings(
+      acl,
+      grantFullControl,
+      grantRead,
+      grantReadACP,
+      grantWriteACP,
+      serverSideEncryption,
+      sseCustomerAlgorithm,
+      sseCustomerKey,
+      sseCustomerKeyMD5,
+      ssekmsEncryptionContext,
+      ssekmsKeyId,
+      requestPayer
+    )
+  }
+
+  val genCreateMultipartUploadParams = for {
+    bucket         <- Gen.alphaLowerStr
+    key            <- Gen.alphaLowerStr
+    uploadSettings <- genUploadSettings
+  } yield (bucket, key, uploadSettings)
 
   val genDeleteObjectParams = for {
     bucket                    <- Gen.alphaLowerStr
@@ -97,34 +103,37 @@ trait S3RequestGenerators {
     versionId                 <- genOptionStr
   } yield (bucket, key, bypassGovernanceRetention, mfa, requestPayer, versionId)
 
-  val genGetObjectParams = for {
-    bucket               <- Gen.alphaLowerStr
-    key                  <- Gen.alphaLowerStr
+  val genDownloadSettings = for {
     ifMatch              <- genOptionStr
     ifModifiedSince      <- Gen.option(Gen.oneOf(Seq(Instant.now())))
     ifNoneMatch          <- genOptionStr
     ifUnmodifiedSince    <- Gen.option(Gen.oneOf(Seq(Instant.now())))
-    partNumber           <- Gen.option(Gen.chooseNum[Int](1, 200))
-    range                <- genOptionStr
+    partNumber           <- Gen.option(Gen.chooseNum[Int](1, 200)) //maybe to be added in the future
     requestPayer         <- Gen.option(RequestPayer.fromValue("unknown"))
     sseCustomerAlgorithm <- genOptionStr
     sseCustomerKey       <- genOptionStr
     sseCustomerKeyMD5    <- genOptionStr
     versionId            <- genOptionStr
-  } yield (
-    bucket,
-    key,
-    ifMatch,
-    ifModifiedSince,
-    ifNoneMatch,
-    ifUnmodifiedSince,
-    partNumber,
-    range,
-    requestPayer,
-    sseCustomerAlgorithm,
-    sseCustomerKey,
-    sseCustomerKeyMD5,
-    versionId)
+  } yield {
+    DownloadSettings(
+      ifMatch,
+      ifModifiedSince,
+      ifNoneMatch,
+      ifUnmodifiedSince,
+      requestPayer,
+      sseCustomerAlgorithm,
+      sseCustomerKey,
+      sseCustomerKeyMD5,
+      versionId)
+  }
+
+  val genGetObjectParams = for {
+    bucket           <- Gen.alphaLowerStr
+    key              <- Gen.alphaLowerStr
+    nBytes           <- genOptionStr
+    downloadSettings <- genDownloadSettings
+
+  } yield (bucket, key, nBytes, downloadSettings)
 
   val genListObjectsParams = for {
     bucket       <- Gen.alphaLowerStr
@@ -145,59 +154,19 @@ trait S3RequestGenerators {
   } yield (bucket, continuationToken, fetchOwner, maxKeys, prefix, startAfter, requestPayer)
 
   val genUploadPartParams = for {
-    bucket               <- Gen.alphaLowerStr
-    key                  <- Gen.alphaLowerStr
-    partN                <- Gen.choose[Int](1, 1000)
-    uploadId             <- Gen.alphaLowerStr
-    contentLenght        <- Gen.choose[Long](1, 1000)
-    requestPayer         <- genOptionStr
-    sseCustomerAlgorithm <- genOptionStr
-    sseCustomerKey       <- genOptionStr
-    sseCustomerKeyMD5    <- genOptionStr
-  } yield (
-    bucket,
-    key,
-    partN,
-    uploadId,
-    contentLenght,
-    requestPayer,
-    sseCustomerAlgorithm,
-    sseCustomerKey,
-    sseCustomerKeyMD5)
+    bucket         <- Gen.alphaLowerStr
+    key            <- Gen.alphaLowerStr
+    partN          <- Gen.choose[Int](1, 1000)
+    uploadId       <- Gen.alphaLowerStr
+    contentLenght  <- Gen.choose[Long](1, 1000)
+    uploadSettings <- genUploadSettings
+  } yield (bucket, key, partN, uploadId, contentLenght, uploadSettings)
 
   val genPutObjectParams = for {
-    bucket                  <- Gen.alphaLowerStr
-    key                     <- Gen.alphaLowerStr
-    contentLenght           <- Gen.option(Gen.choose[Long](1, 1000))
-    contentType             <- genOptionStr
-    acl                     <- genOptionStr
-    grantFullControl        <- genOptionStr
-    grantRead               <- genOptionStr
-    grantReadACP            <- genOptionStr
-    grantWriteACP           <- genOptionStr
-    requestPayer            <- genOptionStr
-    serverSideEncryption    <- genOptionStr
-    sseCustomerAlgorithm    <- genOptionStr
-    sseCustomerKey          <- genOptionStr
-    sseCustomerKeyMD5       <- genOptionStr
-    ssekmsEncryptionContext <- genOptionStr
-    ssekmsKeyId             <- genOptionStr
-  } yield (
-    bucket,
-    key,
-    contentLenght,
-    contentType,
-    acl,
-    grantFullControl,
-    grantRead,
-    grantReadACP,
-    grantWriteACP,
-    requestPayer,
-    serverSideEncryption,
-    sseCustomerAlgorithm,
-    sseCustomerKey,
-    sseCustomerKeyMD5,
-    ssekmsEncryptionContext,
-    ssekmsKeyId)
+    bucket         <- Gen.alphaLowerStr
+    key            <- Gen.alphaLowerStr
+    contentLenght  <- Gen.option(Gen.choose[Long](1, 1000))
+    uploadSettings <- genUploadSettings
+  } yield (bucket, key, contentLenght, uploadSettings)
 
 }

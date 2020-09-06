@@ -49,7 +49,7 @@ private[storage] final class GcsBlob(val underlying: Blob) extends GcsDownloader
     *
     * == Example ==
     *
-    * {
+    * {{{
     *   import monix.connect.gcp.storage.{GcsStorage, GcsBlob}
     *   import monix.eval.Task
     *   import monix.reactive.Observable
@@ -62,7 +62,7 @@ private[storage] final class GcsBlob(val underlying: Blob) extends GcsDownloader
     *        case Some(blob) => blob.download()
     *        case None => Observable.empty
     *      }
-    * }
+    * }}}
     *
     */
   def download(chunkSize: Int = 4096): Observable[Array[Byte]] = {

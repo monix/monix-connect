@@ -31,7 +31,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 
 import scala.concurrent.duration._
 
-@Ignore //"There is a blocker on writing from proto to parquet: https://github.com/scalapb/ScalaPB/issues/844" 
+@Ignore //"There is a blocker on writing from proto to parquet: https://github.com/scalapb/ScalaPB/issues/844"
 class ProtoParquetSpec
   extends AnyWordSpecLike with Matchers with ProtoParquetFixture with AvroParquetFixture with BeforeAndAfterAll
   with Eventually {

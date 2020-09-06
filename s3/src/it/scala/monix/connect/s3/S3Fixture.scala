@@ -18,7 +18,7 @@ import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
 trait S3Fixture {
   this: TestSuite =>
 
-  val nonEmptyString = Coeval(Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString)
+  val nonEmptyString = Coeval("test" + Gen.nonEmptyListOf(Gen.alphaLowerChar).sample.get.mkString.take(50))
 
   val resourceFile = (fileName: String) => s"s3/src/it/resources/${fileName}"
 
