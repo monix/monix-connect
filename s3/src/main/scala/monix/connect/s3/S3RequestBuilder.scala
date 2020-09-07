@@ -238,7 +238,7 @@ private[s3] object S3RequestBuilder {
     maxKeys: Option[Int] = None,
     prefix: Option[String] = None,
     startAfter: Option[String] = None,
-    requestPayer: Option[String] = None): ListObjectsV2Request = {
+    requestPayer: Option[RequestPayer] = None): ListObjectsV2Request = {
     val request = ListObjectsV2Request.builder().bucket(bucket)
     fetchOwner.map(request.fetchOwner(_))
     startAfter.map(request.startAfter(_))
