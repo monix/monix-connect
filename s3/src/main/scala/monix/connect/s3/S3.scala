@@ -26,7 +26,7 @@ import monix.connect.s3.domain.{
   UploadSettings
 }
 import monix.reactive.{Consumer, Observable, OverflowStrategy}
-import monix.execution.{Ack, Scheduler}
+import monix.execution.Ack
 import monix.eval.Task
 import monix.execution.internal.InternalApi
 import monix.reactive.observers.Subscriber
@@ -138,15 +138,26 @@ object S3 {
     * This method creates a bucket given a [[CreateBucketRequest]].
     *
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/CreateBucketRequest.Builder.html
-    * @param request  An instance of [[CreateBucketRequest]]
-    * @param s3AsyncClient An implicit instance of a [[S3AsyncClient]].
-    * @return A [[Task]] with the create bucket response [[CreateBucketResponse]] .
+    * @param request  an instance of [[CreateBucketRequest]]
+    * @param s3AsyncClient an implicit instance of a [[S3AsyncClient]].
+    * @return a [[Task]] with the create bucket response [[CreateBucketResponse]] .
     */
   def createBucket(request: CreateBucketRequest)(implicit s3AsyncClient: S3AsyncClient): Task[CreateBucketResponse] = {
     Task.from(s3AsyncClient.createBucket(request))
   }
 
   //todo tests
+  /**
+    * Creates a copy of an object that is already stored in Amazon S3.
+    *
+    * @param sourceBucket the name of the source bucket.
+    * @param sourceKey the key of the source object.
+    * @param destinationBucket the name of the destination bucket.
+    * @param destinationKey the key of the destination object.
+    * @param copyObjectSettings adds the [[CopyObjectSettings]] on the request copy object request.
+    * @param s3AsyncClient an implicit instance of a [[S3AsyncClient]].
+    * @return a [[Task]] containing the result of the CopyObject operation returned by the service.
+    */
   def copyObject(
     sourceBucket: String,
     sourceKey: String,
@@ -160,12 +171,18 @@ object S3 {
     }
   }
 
-  //todo
+  /**
+    * Creates a copy of an object that is already stored in Amazon S3.
+    *
+    * @param request the [[CopyObjectRequest]].
+    * @param s3AsyncClient an implicit instance of a [[S3AsyncClient]].
+    * @return a [[Task]] containing the result of the CopyObject operation returned by the service.
+    */
   def copyObject(request: CopyObjectRequest)(implicit s3AsyncClient: S3AsyncClient): Task[CopyObjectResponse] = {
     Task.from(s3AsyncClient.copyObject(request))
   }
 
-  /**
+  /** //todo test
     * Provides options for deleting a specified bucket. Amazon S3 buckets can only be deleted when empty.
     *
     * @note When attempting to delete a bucket that does not exist, Amazon S3 returns a success message, not an error message.
@@ -199,8 +216,8 @@ object S3 {
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/DeleteObjectRequest.html
     * @param bucket the bucket name of the object to be deleted.
     * @param key the key of the object to be deleted.
-    * @param s3AsyncClient implicit instance of a [[S3AsyncClient]].
-    * @return A [[Task]] with the delete object response [[DeleteObjectResponse]] .
+    * @param s3AsyncClient an implicit instance of a [[S3AsyncClient]].
+    * @return a [[Task]] with the delete object response [[DeleteObjectResponse]] .
     */
   def deleteObject(
     bucket: String,
@@ -233,7 +250,7 @@ object S3 {
     * @param bucket the bucket name of the object to check its existance.
     * @param key the key of the object to be deleted.
     * @param s3AsyncClient implicit instance of a [[S3AsyncClient]].
-    * @return
+    * @return a boolean [[Task]] indicating whether the object existed or not.
     */
   def existsObject(bucket: String, key: String)(implicit s3AsyncClient: S3AsyncClient): Task[Boolean] = {
     Task.defer {
