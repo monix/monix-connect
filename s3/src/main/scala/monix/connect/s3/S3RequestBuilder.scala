@@ -175,9 +175,9 @@ private[s3] object S3RequestBuilder {
     copyObjectSettings: CopyObjectSettings) = {
     val request = CopyObjectRequest
       .builder()
-      .copySource(sourceBucket + sourceKey)
+      .copySource(sourceBucket + "/" + sourceKey)
       .destinationBucket(destinationBucket)
-      .destinationKey(destinationBucket)
+      .destinationKey(destinationKey)
     copyObjectSettings.copySourceIfMatches.map(request.copySourceIfMatch)
     copyObjectSettings.copySourceIfNoneMatch.map(request.copySourceIfNoneMatch)
     copyObjectSettings.copyIfModifiedSince.map(request.copySourceIfModifiedSince)

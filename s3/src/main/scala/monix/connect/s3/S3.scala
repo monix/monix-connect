@@ -20,6 +20,7 @@ package monix.connect.s3
 import monix.connect.s3.domain.{
   awsMinChunkSize,
   CopyObjectSettings,
+  DefaultCopyObjectSettings,
   DefaultDownloadSettings,
   DefaultUploadSettings,
   DownloadSettings,
@@ -146,7 +147,6 @@ object S3 {
     Task.from(s3AsyncClient.createBucket(request))
   }
 
-  //todo tests
   /**
     * Creates a copy of an object that is already stored in Amazon S3.
     *
@@ -163,12 +163,11 @@ object S3 {
     sourceKey: String,
     destinationBucket: String,
     destinationKey: String,
-    copyObjectSettings: CopyObjectSettings)(implicit s3AsyncClient: S3AsyncClient): Task[CopyObjectResponse] = {
+    copyObjectSettings: CopyObjectSettings = DefaultCopyObjectSettings)(
+    implicit s3AsyncClient: S3AsyncClient): Task[CopyObjectResponse] = {
     val copyRequest =
       S3RequestBuilder.copyObjectRequest(sourceBucket, sourceKey, destinationBucket, destinationKey, copyObjectSettings)
-    Task.from {
-      s3AsyncClient.copyObject(copyRequest)
-    }
+    copyObject(copyRequest)
   }
 
   /**
@@ -182,7 +181,7 @@ object S3 {
     Task.from(s3AsyncClient.copyObject(request))
   }
 
-  /** //todo test
+  /**
     * Provides options for deleting a specified bucket. Amazon S3 buckets can only be deleted when empty.
     *
     * @note When attempting to delete a bucket that does not exist, Amazon S3 returns a success message, not an error message.
@@ -196,7 +195,7 @@ object S3 {
   }
 
   /**
-    * //todo test deleting non existing bucket
+    *
     * Provides options for deleting a specified bucket. Amazon S3 buckets can only be deleted when empty.
     *
     * @note When attempting to delete a bucket that does not exist, Amazon S3 returns a success message, not an error message.
@@ -209,6 +208,7 @@ object S3 {
     Task.from(s3AsyncClient.deleteBucket(request))
   }
 
+  //todo
   /**
     * Deletes a specified object in a specified bucket.
     *
@@ -225,10 +225,10 @@ object S3 {
     bypassGovernanceRetention: Option[Boolean] = None,
     mfa: Option[String] = None,
     requestPayer: Option[String] = None,
-    versionId: Option[String])(implicit s3AsyncClient: S3AsyncClient): Task[DeleteObjectResponse] = {
+    versionId: Option[String] = None)(implicit s3AsyncClient: S3AsyncClient): Task[DeleteObjectResponse] = {
     val request: DeleteObjectRequest =
       S3RequestBuilder.deleteObject(bucket, key, bypassGovernanceRetention, mfa, requestPayer, versionId)
-    Task.from(s3AsyncClient.deleteObject(request))
+    deleteObject(request)
   }
 
   /**
@@ -240,9 +240,18 @@ object S3 {
     * @param s3AsyncClient implicit instance of a [[S3AsyncClient]].
     * @return A [[Task]] with the delete object response [[DeleteObjectResponse]] .
     */
-  def deleteObject(request: DeleteObjectRequest)(implicit s3AsyncClient: S3AsyncClient): Task[DeleteObjectResponse] = {
+  def deleteObject(request: DeleteObjectRequest)(implicit s3AsyncClient: S3AsyncClient): Task[DeleteObjectResponse] =
     Task.from(s3AsyncClient.deleteObject(request))
-  }
+
+  /**
+    * Check whether the specified bucket exists or not.
+    *
+    * @param bucketName the bucketname to check its existance
+    * @param s3AsyncClient implicit instance of a [[S3AsyncClient]].
+    * @return a boolean [[Task]] indicating whether the bucket exists or not.
+    */
+  def existsBucket(bucketName: String)(implicit s3AsyncClient: S3AsyncClient): Task[Boolean] =
+    S3.listBuckets().existsL(_.name == bucketName)
 
   /**
     * Checks whether the specified objects exists or not.
@@ -265,38 +274,14 @@ object S3 {
   }
 
   /**
-    * Check whether the specified bucket exists or not.
-    *
-    * @param bucketName the bucketname to check its existance
-    * @param s3AsyncClient implicit instance of a [[S3AsyncClient]].
-    * @return a boolean [[Task]] indicating whether the bucket exists or not.
-    */
-  def existsBucket(bucketName: String)(implicit s3AsyncClient: S3AsyncClient): Task[Boolean] =
-    S3.listBuckets().existsL(_.name == bucketName)
-
-  /**
-    * Downloads an Amazon S3 object as byte array.
-    *
-    * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/GetObjectRequest.html
-    * @param request the AWS get object request of type [[GetObjectRequest]].
-    * @param s3AsyncClient An implicit instance of a [[S3AsyncClient]].
-    * @return A [[Task]] that contains the downloaded object as a byte array.
-    */
-  def download(request: GetObjectRequest)(implicit s3AsyncClient: S3AsyncClient): Task[Array[Byte]] = {
-    Task
-      .from(s3AsyncClient.getObject(request, AsyncResponseTransformer.toBytes[GetObjectResponse]))
-      .map(_.asByteArray())
-  }
-
-  /**
     * Downloads a S3 object as byte array in a single request.
     *
     * The only two required fields are the [[bucket]] and [[key]], but it also
     * accepts additional settings for more specific requests, see [[DownloadSettings]].
     *
-    * Warn: this method is ONLY recommended to be used for small objects, since
-    * it performs a single download request, which might be unsafe
-    * since the object can be too big fit in memory or in the http body.
+    * Warn: this method is suitable to be used for downloading objects,
+    * of small size since it performs a single download request,
+    * which might be unsafe since the object can be too big fit in memory or in the http body.
     * See a safer alternative [[downloadMultipart]] to download complete objects.
     *
     * ==Example==
@@ -335,6 +320,20 @@ object S3 {
     Task
       .from(s3AsyncClient.getObject(request, AsyncResponseTransformer.toBytes[GetObjectResponse]))
       .map(r => r.asByteArray())
+  }
+
+  /**
+    * Downloads an Amazon S3 object as byte array.
+    *
+    * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/GetObjectRequest.html
+    * @param request the AWS get object request of type [[GetObjectRequest]].
+    * @param s3AsyncClient An implicit instance of a [[S3AsyncClient]].
+    * @return A [[Task]] that contains the downloaded object as a byte array.
+    */
+  def download(request: GetObjectRequest)(implicit s3AsyncClient: S3AsyncClient): Task[Array[Byte]] = {
+    Task
+      .from(s3AsyncClient.getObject(request, AsyncResponseTransformer.toBytes[GetObjectResponse]))
+      .map(_.asByteArray())
   }
 
   /**
@@ -571,11 +570,7 @@ object S3 {
     * @param s3AsyncClient implicit instance of [[S3AsyncClient]]
     * @return response from the put object http request as [[PutObjectResponse]]
     */
-  def upload(
-    bucket: String,
-    key: String,
-    content: Array[Byte],
-    uploadSettings: UploadSettings = DefaultUploadSettings)(
+  def upload(bucket: String, key: String, content: Array[Byte], uploadSettings: UploadSettings = DefaultUploadSettings)(
     implicit
     s3AsyncClient: S3AsyncClient): Task[PutObjectResponse] = {
     val actualLength: Long = content.length.toLong
@@ -600,5 +595,3 @@ object S3 {
   }
 
 }
-
-

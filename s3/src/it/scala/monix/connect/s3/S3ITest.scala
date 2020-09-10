@@ -5,9 +5,10 @@ import java.io.FileInputStream
 import monix.eval.Task
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
-import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadResponse, CreateBucketRequest, ListObjectsRequest, PutObjectResponse}
+import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadResponse, CopyObjectResponse, CreateBucketRequest, NoSuchBucketException, PutObjectResponse}
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.matchers.should.Matchers
+import Thread.sleep
 
 import scala.concurrent.duration._
 import monix.execution.Scheduler.Implicits.global
@@ -22,6 +23,14 @@ class S3ITest
   private val bucketName = "sample-bucket"
 
   override implicit val patienceConfig = PatienceConfig(10.seconds, 100.milliseconds)
+
+  override def beforeAll(): Unit = {
+    super.beforeAll()
+    Try(Task.from(s3AsyncClient.createBucket(CreateBucketRequest.builder().bucket(bucketName).build()))) match {
+      case Success(_) => info(s"Created S3 bucket ${bucketName} ")
+      case Failure(e) => info(s"Failed to create S3 bucket ${bucketName} with exception: ${e.getMessage}")
+    }
+  }
 
   s"${S3}" should {
 
@@ -239,6 +248,46 @@ class S3ITest
 
   it should {
 
+    "copy an object to a different location within the same bucket" in {
+      //given
+      val sourceKey = nonEmptyString.value()
+      val content = nonEmptyString.value().getBytes()
+      S3.upload(bucketName, sourceKey, content).runSyncUnsafe()
+
+      //and
+      val destinationKey = nonEmptyString.value()
+
+      //when
+      val copyObjectResponse = S3.copyObject(bucketName, sourceKey, bucketName, destinationKey).runSyncUnsafe()
+
+      //then
+      copyObjectResponse shouldBe a[CopyObjectResponse]
+      S3.download(bucketName, destinationKey).runSyncUnsafe() shouldBe content
+    }
+
+    "copy an object to a different location in a different bucket" in {
+      //given
+      val sourceKey = nonEmptyString.value()
+      val content = nonEmptyString.value().getBytes()
+      S3.upload(bucketName, sourceKey, content).runSyncUnsafe()
+
+      //and
+      val destinationBucket = nonEmptyString.value()
+      val destinationKey = nonEmptyString.value()
+      S3.createBucket(destinationBucket)
+
+      //when
+      val copyObjectResponse = S3.copyObject(bucketName, sourceKey, destinationBucket, destinationKey).runSyncUnsafe()
+
+      //then
+      copyObjectResponse shouldBe a[CopyObjectResponse]
+      S3.download(destinationBucket, destinationKey).runSyncUnsafe() shouldBe content
+    }
+
+  }
+
+  it should {
+
     "correctly perform a multipart upload" when {
 
       "a single chunk is passed to the consumer" in {
@@ -332,6 +381,53 @@ class S3ITest
   }
 
   it should {
+
+    "create and delete a bucket" in {
+      //given
+      val bucket = nonEmptyString.value()
+      S3.createBucket(bucket).runSyncUnsafe()
+      val existedBefore = S3.existsBucket(bucket).runSyncUnsafe()
+
+      //when
+      S3.deleteBucket(bucket).runSyncUnsafe()
+
+      //then
+      val existsAfterDeletion = S3.existsBucket(bucket).runSyncUnsafe()
+      existedBefore shouldBe true
+      existsAfterDeletion shouldBe false
+    }
+
+    "delete returns NoSuchBucketException when the bucket did not exist" in {
+      //given
+      val bucket = nonEmptyString.value()
+      val existedBefore = S3.existsBucket(bucket).runSyncUnsafe()
+
+      //when
+      val f = S3.deleteBucket(bucket).runToFuture(global)
+      sleep(500)
+
+      //then
+      f.value.get shouldBe a[Failure[NoSuchBucketException]]
+      val existsAfterDeletion = S3.existsBucket(bucket).runSyncUnsafe()
+      existedBefore shouldBe false
+      existsAfterDeletion shouldBe false
+    }
+
+    "delete a object" in {
+      //given
+      val key = nonEmptyString.value()
+      val content = nonEmptyString.value().getBytes()
+      S3.upload(bucketName, key, content).runSyncUnsafe()
+      val existedBefore = S3.existsObject(bucketName, key).runSyncUnsafe()
+
+      //when
+      S3.deleteObject(bucketName, key).runSyncUnsafe()
+
+      //then
+      val existsAfterDeletion = S3.existsObject(bucketName, key).runSyncUnsafe()
+      existedBefore shouldBe true
+      existsAfterDeletion shouldBe false
+    }
 
     "check if a bucket exists" in {
       //given
@@ -442,11 +538,4 @@ class S3ITest
 
   }
 
-  override def beforeAll(): Unit = {
-    super.beforeAll()
-    Try(Task.from(s3AsyncClient.createBucket(CreateBucketRequest.builder().bucket(bucketName).build()))) match {
-      case Success(_) => info(s"Created S3 bucket ${bucketName} ")
-      case Failure(e) => info(s"Failed to create s3 bucket ${bucketName} with exception: ${e.getMessage}")
-    }
-  }
 }

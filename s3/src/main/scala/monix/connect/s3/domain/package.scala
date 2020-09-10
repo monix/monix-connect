@@ -20,7 +20,6 @@ package monix.connect.s3
 import java.time.Instant
 
 import software.amazon.awssdk.services.s3.model.{
-  CopyObjectRequest,
   MetadataDirective,
   ObjectLockLegalHoldStatus,
   ObjectLockMode,
