@@ -89,6 +89,6 @@ object Dependencies {
     "com.google.cloud"   % "google-cloud-storage" % Versions.GCS,
     "org.typelevel" %% "cats-effect" % Versions.Cats_Effect,
     "com.google.cloud" % "google-cloud-nio" % Versions.GCNio % IntegrationTest,
-    "commons-io" % "commons-io" % "2.6" % Test
+    "commons-io" % "commons-io" % "2.8.0" % Test
   ) ++ commonDependencies(hasIntegrationTest = true)
 }
