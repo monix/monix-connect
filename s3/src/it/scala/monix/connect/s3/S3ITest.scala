@@ -5,7 +5,7 @@ import java.io.FileInputStream
 import monix.eval.Task
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
-import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadResponse, CopyObjectResponse, CreateBucketRequest, NoSuchBucketException, PutObjectResponse}
+import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadResponse, CopyObjectResponse, CreateBucketRequest, NoSuchBucketException, NoSuchKeyException, PutObjectResponse, S3Object}
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.matchers.should.Matchers
 import Thread.sleep
@@ -15,6 +15,7 @@ import monix.execution.Scheduler.Implicits.global
 import monix.reactive.{Consumer, Observable}
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 
+import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 class S3ITest
@@ -44,7 +45,7 @@ class S3ITest
           val content: String = Gen.alphaUpperStr.sample.get
 
           //when
-          val t: Task[PutObjectResponse] = S3.upload(bucketName, key, content.getBytes())
+          val t: Task[PutObjectResponse] = S3.upload(bucketName, key, content.getBytes()).asyncBoundary
 
           //then
           whenReady(t.runToFuture) { putResponse =>
@@ -168,7 +169,7 @@ class S3ITest
       }
     }
 
-    "fails if the numberOfBytes is not a positive number" in {
+    "download fails if the numberOfBytes is negative" in {
       //given
       val negativeNum = Gen.chooseNum(-10, 0).sample.get
       val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
@@ -180,7 +181,19 @@ class S3ITest
       t.isFailure shouldBe true
     }
 
-    "download multipart of small chunk size" in {
+    "download from a non existing key returns failed task" in {
+      //given
+      val key: String = "non-existing-key"
+
+      //when
+      val f: Future[Array[Byte]] = S3.download(bucketName, key).runToFuture(global)
+      sleep(300)
+
+      //then
+      f.value.get shouldBe a[Failure[NoSuchKeyException]]
+    }
+
+    "downloadMultipart of small chunk size" in {
       //given
       val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
       val content: String = nonEmptyString.value()
@@ -196,7 +209,7 @@ class S3ITest
       actualContent shouldBe content.getBytes()
     }
 
-    "download multipart in one part" in {
+    "downloadMultipart in one part" in {
       //given
       val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
       val content: String = nonEmptyString.value()
@@ -212,7 +225,7 @@ class S3ITest
       actualContent shouldBe content.getBytes()
     }
 
-    "download multipart big object" in {
+    "downloadMultipart big object" in {
       //given
       val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
       val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
@@ -231,7 +244,7 @@ class S3ITest
       actualContent shouldBe expectedArrayByte
     }
 
-    "downloading in multipart when object does not exist returns an empty byte array" in {
+    "downloadMultipart from a non existin object returns an empty byte array" in {
       //given
       val key: String = "non/existing/key"
 
@@ -242,6 +255,20 @@ class S3ITest
       result shouldBe Array.emptyByteArray
       S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe false
       result shouldBe a[Array[Byte]]
+    }
+
+    "downloading in multipart from a non existing bucket object returns failure" in {
+      //given
+      val bucket: String = "non-existing-bucket"
+      val key: String = "non/existing/key"
+
+      //when
+      val f = S3.downloadMultipart(bucket, key, 1).toListL.map(_.flatten.toArray).runToFuture(global)
+      sleep(300)
+
+      //then
+      f.value.get shouldBe a[Failure[NoSuchBucketException]]
+      S3.existsObject(bucket, key).runSyncUnsafe() shouldBe false
     }
 
   }
@@ -404,7 +431,7 @@ class S3ITest
 
       //when
       val f = S3.deleteBucket(bucket).runToFuture(global)
-      sleep(500)
+      sleep(300)
 
       //then
       f.value.get shouldBe a[Failure[NoSuchBucketException]]
@@ -524,7 +551,7 @@ class S3ITest
       s3Objects.map(_.key) should contain theSameElementsAs keys
     }
 
-    "list objects using the continuation token" in {
+    "list objects requisite of positive max total keys" in {
       //given/when
       val tryNegativeListObjects = Try(S3.listObjects(bucketName, prefix = Some("prefix"), maxTotalKeys = Some(-1)))
       val tryZeroListObjects = Try(S3.listObjects(bucketName, prefix = Some("prefix"), maxTotalKeys = Some(0)))
@@ -534,6 +561,15 @@ class S3ITest
       tryNegativeListObjects.isSuccess shouldBe false
       tryZeroListObjects.isSuccess shouldBe false
       tryPositiveListObjects.isSuccess shouldBe true
+    }
+
+    "list objects is resilient to failures" in {
+      //given/when
+      val f = S3.listObjects("no-existing-bucket", prefix = Some("prefix")).toListL.runToFuture(global)
+      sleep(300)
+
+      //then
+      f.value.get shouldBe a[Failure[NoSuchBucketException]]
     }
 
   }

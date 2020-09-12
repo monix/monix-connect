@@ -72,8 +72,9 @@ import scala.jdk.CollectionConverters._
   *   import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
   *   import software.amazon.awssdk.services.s3.S3AsyncClient
   *
-  *   /** the exceptions related with concurrency or timeouts from any of the requests,
-  *     * might be solved by configuring the underlying http client.
+  *   /** the exceptions related with concurrency or timeouts from any of the requests
+  *     * might be solved by rainsing the maxConcurrency, maxPendingConnectionAcquire or
+  *     connectionAcquisitionTimeout from the underlying netty http client.
   *     * see below an example on how to increase such values.
   *     */
   *   val httpClient = NettyNioAsyncHttpClient.builder()
@@ -87,7 +88,7 @@ import scala.jdk.CollectionConverters._
   *   implicit val s3AsyncClient: S3AsyncClient = S3AsyncClient
   *     .builder()
   *     .httpClient(httpClient)
-  *     .credentialsProvider(StaticCredentialsProvider.create(basicAWSCredentials))
+  *     .credentialsProvider(DefaultCredentialsProvider.create())
   *     .region(AWS_GLOBAL)
   *     .build
   * }}}
@@ -99,17 +100,16 @@ object S3 {
     * Executes the request to create a bucket given a [[bucket]] name.
     *
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/CreateBucketRequest.Builder.html
-    * @param bucket                     The name of the bucket to be created.
-    * @param acl                        The canned ACL (Access Control List) to apply to the object. For more information
-    *                                   If the service returns an enum value that is not available in the current SDK version, acl will return ObjectCannedACL.UNKNOWN_TO_SDK_VERSION.
-    *                                   The raw value returned by the service is available from aclAsString().
-    * @param grantFullControl           Gives the grantee READ, READ_ACP, and WRITE_ACP permissions on the object.
-    * @param grantRead                  Allows grantee to read the object data and its metadata.
-    * @param grantReadACP               Allows grantee to read the object ACL.
-    * @param grantWriteACP              Allows grantee to write the ACL for the applicable object.
-    * @param s3AsyncClient                   An implicit instance of a [[S3AsyncClient]].
-    * @param objectLockEnabledForBucket Specifies whether you want S3 Object Lock to be enabled for the new bucket.
-    * @return A [[Task]] with the create bucket response [[CreateBucketResponse]] .
+    * @param bucket            the name of the bucket to be created.
+    * @param acl               the canned ACL (Access Control List) to apply to the object.
+    *                          if the service returns an enum value that is not available in the current SDK version, acl will return ObjectCannedACL.UNKNOWN_TO_SDK_VERSION.
+    * @param grantFullControl  gives the grantee READ, READ_ACP, and WRITE_ACP permissions on the object.
+    * @param grantRead         allows grantee to read the object data and its metadata.
+    * @param grantReadACP      allows grantee to read the object ACL.
+    * @param grantWriteACP     allows grantee to write the ACL for the applicable object.
+    * @param s3AsyncClient     an implicit instance of a [[S3AsyncClient]].
+    * @param objectLockEnabledForBucket specifies whether you want S3 Object Lock to be enabled for the new bucket.
+    * @return a [[Task]] with the [[CreateBucketResponse]].
     */
   def createBucket(
     bucket: String,
@@ -136,7 +136,7 @@ object S3 {
   }
 
   /**
-    * This method creates a bucket given a [[CreateBucketRequest]].
+    * Creates a bucket given a [[CreateBucketRequest]].
     *
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/CreateBucketRequest.Builder.html
     * @param request  an instance of [[CreateBucketRequest]]
@@ -148,7 +148,7 @@ object S3 {
   }
 
   /**
-    * Creates a copy of an object that is already stored in Amazon S3.
+    * Creates a copy of from an already stored object.
     *
     * @param sourceBucket the name of the source bucket.
     * @param sourceKey the key of the source object.
@@ -171,7 +171,7 @@ object S3 {
   }
 
   /**
-    * Creates a copy of an object that is already stored in Amazon S3.
+    * Creates a copy from an already stored object.
     *
     * @param request the [[CopyObjectRequest]].
     * @param s3AsyncClient an implicit instance of a [[S3AsyncClient]].
@@ -208,9 +208,9 @@ object S3 {
     Task.from(s3AsyncClient.deleteBucket(request))
   }
 
-  //todo
   /**
-    * Deletes a specified object in a specified bucket.
+    * Deletes the specified object.
+    * Once deleted, the object can only be restored if versioning was enabled when the object was deleted.
     *
     * @note Once deleted, the object can only be restored if versioning was enabled when the object was deleted.
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/DeleteObjectRequest.html
@@ -232,7 +232,7 @@ object S3 {
   }
 
   /**
-    * Deletes a specified object in a specified bucket.
+    * Deletes the specified object given a [[DeleteBucketRequest]].
     * Once deleted, the object can only be restored if versioning was enabled when the object was deleted.
     *
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/DeleteObjectRequest.html
@@ -274,24 +274,28 @@ object S3 {
   }
 
   /**
-    * Downloads a S3 object as byte array in a single request.
+    * Downloads an object in a single request as byte array.
     *
     * The only two required fields are the [[bucket]] and [[key]], but it also
     * accepts additional settings for more specific requests, see [[DownloadSettings]].
     *
-    * Warn: this method is suitable to be used for downloading objects,
-    * of small size since it performs a single download request,
-    * which might be unsafe since the object can be too big fit in memory or in the http body.
-    * See a safer alternative [[downloadMultipart]] to download complete objects.
+    * Warn: this method is suitable to be used for downloading small objects,
+    * since it performed in a single download request, which might be unsafe
+    * when the object is too big to fit in memory or in the http body.
+    *
+    * See a safer alternative [[downloadMultipart]] to download objects in parts.
     *
     * ==Example==
     *
     * {{{
-    *   import software.amazon.awssdk.services.s3.S3AsyncClient
     *   import monix.eval.Task
+    *   import software.amazon.awssdk.services.s3.S3AsyncClient
     *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
+    *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
     *
-    *   implicit val client = S3AsyncClient.builder.region(AWS_GLOBAL).build()
+    *   //must be propelry configured
+    *   implicit val client = S3AsyncClient.builder.credentialsProvider(DefaultCredentialsProvider.create()).region(AWS_GLOBAL).build()
+    *
     *   val bucketName: String = "sample-bucket"
     *   val key: String = "path/to/test.csv"
     *
@@ -323,7 +327,7 @@ object S3 {
   }
 
   /**
-    * Downloads an Amazon S3 object as byte array.
+    * Downloads an object as byte array.
     *
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/GetObjectRequest.html
     * @param request the AWS get object request of type [[GetObjectRequest]].
@@ -337,16 +341,33 @@ object S3 {
   }
 
   /**
-    * A method that safely downloads objects of any size by performing multiple partial requests.
+    * A method that safely downloads objects of any size by performing partial download requests.
     * The number of bytes to download per each request is specified by the [[chunkSize]].
+    *
+    * ==Example==
+    *
+    * {{{
+    *   import monix.reactive.Observable
+    *   import software.amazon.awssdk.services.s3.S3AsyncClient
+    *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
+    *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
+    *
+    *   //must be propelry configured
+    *   implicit val client = S3AsyncClient.builder.credentialsProvider(DefaultCredentialsProvider.create()).region(AWS_GLOBAL).build()
+    *   val bucket: String = "sample-bucket"
+    *   val key: String = "sample-key"
+    *
+    *   val ob: Observable[Array[Byte]] = S3.downloadMultipart(bucketName, key, 2)
+    * }}}
     *
     * @param bucket               target S3 bucket name of the object to be downloaded.
     * @param key                  key of the object to be downloaded.
     * @param chunkSize            amount of bytes to download each part by, being by default (recommended) 5242880 bytes.
     * @param downloadSettings     additional settings to pass to the multipart download request.
     * @param s3AsyncClient       implicit instance of a [[S3AsyncClient]].
-    * @return an [[Observable]] that emits chunks of bytes of size [[chunkSize]], representing the different
-    *         parts of the s3 object until it completes.
+    * @return an [[Observable]] that emits chunks of bytes of size [[chunkSize]] until it completes.
+    *         in case the object does not exists an [[Array.emptyByteArray]] is returned,
+    *         whereas if the bucket does not exists it return a failed [[Task]] of [[software.amazon.awssdk.services.s3.model.NoSuchBucketException]].
     */
   def downloadMultipart(
     bucket: String,
@@ -379,28 +400,54 @@ object S3 {
     chunkSize: Long,
     getRequest: GetObjectRequest,
     offset: Int)(implicit s3AsyncClient: S3AsyncClient): Task[Unit] = {
-    download(getRequest).flatMap { bytes => Task.parZip2(Task.fromFuture(sub.onNext(bytes)), Task.now(bytes)) }.flatMap {
-      case (Ack.Continue, chunk) => {
-        val nextOffset = offset + chunk.size
-        if (nextOffset < totalSize) {
-          val nextRange = s"bytes=${nextOffset}-${nextOffset + chunkSize}"
-          val nextRequest = getRequest.toBuilder.range(nextRange).build()
-          downloadChunk(sub, totalSize, chunkSize, nextRequest, nextOffset)
-        } else {
-          sub.onComplete()
-          Task.unit
+    for {
+      chunk <- {
+        download(getRequest)
+          .onErrorHandleWith { ex =>
+            sub.onError(ex)
+            Task.raiseError(ex)
+          }
+      }
+      ack <- Task.fromFuture(sub.onNext(chunk))
+      nextChunk <- {
+        ack match {
+          case Ack.Continue => {
+            val nextOffset = offset + chunk.size
+            if (nextOffset < totalSize) {
+              val nextRange = s"bytes=${nextOffset}-${nextOffset + chunkSize}"
+              val nextRequest = getRequest.toBuilder.range(nextRange).build()
+              downloadChunk(sub, totalSize, chunkSize, nextRequest, nextOffset)
+            } else {
+              sub.onComplete()
+              Task.unit
+            }
+          }
+          case Ack.Stop => {
+            sub.onComplete()
+            Task.unit
+          }
         }
       }
-      case (Ack.Stop, _) => {
-        sub.onComplete()
-        Task.unit
-      };
-    }
-
+    } yield nextChunk
   }
 
   /**
     * Lists all the existing buckets.
+    *
+    * ==Example==
+    *
+    * {{{
+    *   import monix.reactive.Observable
+    *   import software.amazon.awssdk.services.s3.S3AsyncClient
+    *   import software.amazon.awssdk.services.s3.model.Bucket
+    *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
+    *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
+    *
+    *   //must be propelry configured
+    *   implicit val client = S3AsyncClient.builder.credentialsProvider(DefaultCredentialsProvider.create()).region(AWS_GLOBAL).build()
+    *
+    *   val ob: Observable[Bucket] = S3.listBuckets()
+    * }}}
     *
     * @param s3AsyncClient implicit instance of a [[S3AsyncClient]].
     * @return an [[Observable]] that emits the list of existing [[Bucket]]s.
@@ -415,6 +462,23 @@ object S3 {
   /**
     * Returns some or all of the objects in a bucket. You can use the request parameters as selection
     * criteria to return a subset of the objects in a bucket.
+    *
+    * ==Example==
+    *
+    * {{{
+    *   import monix.reactive.Observable
+    *   import software.amazon.awssdk.services.s3.S3AsyncClient
+    *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
+    *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
+    *
+    *   //must be propelry configured
+    *   implicit val client = S3AsyncClient.builder.credentialsProvider(DefaultCredentialsProvider.create()).region(AWS_GLOBAL).build()
+    *
+    *   val bucketName = "my-bucket"
+    *   val prefix = s"prefix/to/list/keys/"
+    *
+    *   val s3Objects: Observable[S3Object] = S3.listObjects(bucketName, maxTotalKeys = Some(1011), prefix = Some(prefix))
+    * }}}
     *
     * To use this operation in an AWS Identity and Access Management (IAM) policy, you must have permissions to perform
     * the <code>s3:ListBucket</code> action. The bucket owner has this permission by default and can grant this
@@ -437,16 +501,12 @@ object S3 {
     bucket: String,
     prefix: Option[String] = None,
     maxTotalKeys: Option[Int] = None,
-    limitObjectsPerRequest: Option[Int] = None,
     requestPayer: Option[RequestPayer] = None)(implicit s3AsyncClient: S3AsyncClient): Observable[S3Object] = {
     require(maxTotalKeys.getOrElse(1) > 0, "The max number of keys, if defined, need to be higher or equal than 1.")
-    val firstRequestSize = (maxTotalKeys, limitObjectsPerRequest) match {
-      case (Some(a), Some(b)) => Some(math.min(a, b))
-      case (a, b) => a.orElse(b)
-    }
+    val firstRequestSize = maxTotalKeys.map(maxKeys => math.min(maxKeys, 1000))
     val request: ListObjectsV2Request =
       S3RequestBuilder.listObjectsV2(bucket, prefix = prefix, maxKeys = firstRequestSize, requestPayer = requestPayer)
-    listAllObjectsV2(request, maxTotalKeys, limitObjectsPerRequest)
+    listAllObjectsV2(request, maxTotalKeys, firstRequestSize)
   }
 
   @InternalApi
@@ -465,7 +525,13 @@ object S3 {
         requestBuilder.build()
       }
       for {
-        r   <- Task.from(s3AsyncClient.listObjectsV2(request))
+        r  <- {
+          Task.from(s3AsyncClient.listObjectsV2(request))
+            .onErrorHandleWith { ex =>
+              sub.onError(ex)
+              Task.raiseError(ex)
+          }
+        }
         ack <- Task.deferFuture(sub.onNext(r))
         next <- {
           ack match {
@@ -502,48 +568,6 @@ object S3 {
   }
 
   /**
-    * Uploads an S3 object by making multiple http requests (parts) of the received chunks of bytes.
-    *
-    * ==Example==
-    *
-    * {{{
-    *   import monix.eval.Task
-    *   import monix.reactive.{Observable, Consumer}
-    *   import monix.connect.s3.S3
-    *   import software.amazon.awssdk.services.s3.S3AsyncClient
-    *   import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadResponse
-    *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
-    *   import monix.execution.Scheduler.Implicits.global
-    *
-    *   // must be properly configured
-    *   implicit val s3AsyncClient = S3AsyncClient.builder.region(AWS_GLOBAL).build()
-    *
-    *   val bucketName: String = "sample-bucket"
-    *   val key: String = "sample/key/to/s3/object"
-    *   val content: Array[Byte] = "Hello World!".getBytes
-    *
-    *   val multipartUploadConsumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] = S3.multipartUpload(bucketName, key)(s3AsyncClient)
-    *
-    *   val t: Task[CompleteMultipartUploadResponse] = Observable.pure(content).consumeWith(multipartUploadConsumer)
-    * }}}
-    *
-    * @param bucket                  The bucket name where the object will be stored
-    * @param key                     Key where the object will be stored.
-    * @param minChunkSize               Size of the chunks (parts) that will be sent in the http body. (the minimum size is set by default, don't use a lower one)
-    * @param s3AsyncClient                Implicit instance of the s3 client of type [[S3AsyncClient]]
-    * @return Returns the confirmation of the multipart upload as [[CompleteMultipartUploadResponse]]
-    */
-  def multipartUpload(
-    bucket: String,
-    key: String,
-    minChunkSize: Int = awsMinChunkSize,
-    uploadSettings: UploadSettings = DefaultUploadSettings)(
-    implicit
-    s3AsyncClient: S3AsyncClient): Consumer[Array[Byte], CompleteMultipartUploadResponse] = {
-    new MultipartUploadSubscriber(bucket, key, minChunkSize, uploadSettings)
-  }
-
-  /**
     * Uploads a new object to the specified Amazon S3 bucket.
     *
     * ==Example==
@@ -552,7 +576,6 @@ object S3 {
     *    import monix.eval.Task
     *    import software.amazon.awssdk.services.s3.S3AsyncClient
     *    import software.amazon.awssdk.services.s3.model.PutObjectResponse
-    *    import monix.execution.Scheduler.Implicits.global
     *
     *    // must be properly configured
     *    implicit val s3AsyncClient = S3AsyncClient.builder.region(AWS_GLOBAL).build()
@@ -593,5 +616,49 @@ object S3 {
     s3AsyncClient: S3AsyncClient): Task[PutObjectResponse] = {
     Task.from(s3AsyncClient.putObject(request, AsyncRequestBody.fromBytes(content)))
   }
+
+  /**
+    * Uploads an S3 object by making multiple http requests (parts) of the received chunks of bytes.
+    *
+    * ==Example==
+    *
+    * {{{
+    *   import monix.eval.Task
+    *   import monix.reactive.{Observable, Consumer}
+    *   import monix.connect.s3.S3
+    *   import monix.execution.Scheduler.Implicits.global
+    *   import software.amazon.awssdk.services.s3.S3AsyncClient
+    *   import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadResponse
+    *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
+    *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
+    *
+    *   //must be propelry configured
+    *   implicit val client = S3AsyncClient.builder.credentialsProvider(DefaultCredentialsProvider.create()).region(AWS_GLOBAL).build()
+    *
+    *   val bucketName: String = "sample-bucket"
+    *   val key: String = "sample/key/to/s3/object"
+    *   val content: Array[Byte] = "Hello World!".getBytes
+    *
+    *   val multipartUploadConsumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] = S3.multipartUpload(bucketName, key)(s3AsyncClient)
+    *
+    *   val t: Task[CompleteMultipartUploadResponse] = Observable.pure(content).consumeWith(multipartUploadConsumer)
+    * }}}
+    *
+    * @param bucket                  The bucket name where the object will be stored
+    * @param key                     Key where the object will be stored.
+    * @param minChunkSize               Size of the chunks (parts) that will be sent in the http body. (the minimum size is set by default, don't use a lower one)
+    * @param s3AsyncClient                Implicit instance of the s3 client of type [[S3AsyncClient]]
+    * @return Returns the confirmation of the multipart upload as [[CompleteMultipartUploadResponse]]
+    */
+  def multipartUpload(
+    bucket: String,
+    key: String,
+    minChunkSize: Int = awsMinChunkSize,
+    uploadSettings: UploadSettings = DefaultUploadSettings)(
+    implicit
+    s3AsyncClient: S3AsyncClient): Consumer[Array[Byte], CompleteMultipartUploadResponse] = {
+    new MultipartUploadSubscriber(bucket, key, minChunkSize, uploadSettings)
+  }
+
 
 }

@@ -31,7 +31,7 @@ import scala.concurrent.Future
 import scala.util.control.NonFatal
 
 /**
-  * An Amazon S3 multipart uploads is a write operation made
+  * An Amazon S3 multipart upload is a write operation made
   * progressively on individual chunks of an object (parts),
   * that finishes with a message to S3 that multipart upload is completed,
   * in which the concatenation of each of the individual chunks will end up
@@ -65,7 +65,7 @@ private[s3] class MultipartUploadSubscriber(
 
       /**
         *
-        * If the chunk lenght is bigger than the minimum size, perfom the part request [[UploadPartRequest]],
+        * If the chunk length is bigger than the minimum size, perfom the part request [[UploadPartRequest]],
         * which returns a [[CompletedPart]].
         * In the case it is not, the chunk is added to the buffer waiting to be aggregated with the next one.
         */
@@ -152,12 +152,5 @@ private[s3] class MultipartUploadSubscriber(
         .map(resp => S3RequestBuilder.completedPart(partNumber, resp))
     } yield completedPart
   }
-
-}
-
-object MultipartUploadSubscriber {
-
-  //Multipart upload minimum part size
-  val awsMinChunkSize: Int = 5 * 1024 * 1024 //5242880
 
 }
