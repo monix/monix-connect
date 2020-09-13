@@ -187,7 +187,7 @@ class S3ITest
 
       //when
       val f: Future[Array[Byte]] = S3.download(bucketName, key).runToFuture(global)
-      sleep(300)
+      sleep(400)
 
       //then
       f.value.get shouldBe a[Failure[NoSuchKeyException]]
@@ -264,7 +264,7 @@ class S3ITest
 
       //when
       val f = S3.downloadMultipart(bucket, key, 1).toListL.map(_.flatten.toArray).runToFuture(global)
-      sleep(300)
+      sleep(400)
 
       //then
       f.value.get shouldBe a[Failure[NoSuchBucketException]]
@@ -431,7 +431,7 @@ class S3ITest
 
       //when
       val f = S3.deleteBucket(bucket).runToFuture(global)
-      sleep(300)
+      sleep(400)
 
       //then
       f.value.get shouldBe a[Failure[NoSuchBucketException]]
@@ -534,7 +534,7 @@ class S3ITest
 
     "list all objects using the continuation token" in {
       //given
-      val n = 2000
+      val n = 1100
       val prefix = s"test-list-all-truncated/${nonEmptyString.value()}/"
       val keys: List[String] =
         Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + nonEmptyString.value() + str)).sample.get
@@ -566,7 +566,7 @@ class S3ITest
     "list objects is resilient to failures" in {
       //given/when
       val f = S3.listObjects("no-existing-bucket", prefix = Some("prefix")).toListL.runToFuture(global)
-      sleep(300)
+      sleep(400)
 
       //then
       f.value.get shouldBe a[Failure[NoSuchBucketException]]
