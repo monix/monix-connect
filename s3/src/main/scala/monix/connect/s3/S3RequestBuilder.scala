@@ -37,12 +37,9 @@ import software.amazon.awssdk.services.s3.model.{
   DeleteObjectRequest,
   GetObjectRequest,
   HeadObjectRequest,
-  ListBucketsRequest,
-  ListObjectsRequest,
   ListObjectsV2Request,
   PutObjectRequest,
   RequestPayer,
-  ServerSideEncryption,
   UploadPartRequest,
   UploadPartResponse
 }
@@ -188,7 +185,7 @@ private[s3] object S3RequestBuilder {
     copyObjectSettings.grantRead.map(request.grantRead)
     copyObjectSettings.grantReadACP.map(request.grantReadACP)
     copyObjectSettings.grantWriteACP.map(request.grantWriteACP)
-    if(copyObjectSettings.metadata.nonEmpty) request.metadata(copyObjectSettings.metadata.asJava)
+    if (copyObjectSettings.metadata.nonEmpty) request.metadata(copyObjectSettings.metadata.asJava)
     copyObjectSettings.metadataDirective.map(request.metadataDirective)
     copyObjectSettings.taggingDirective.map(request.taggingDirective)
     copyObjectSettings.requestPayer.map(request.requestPayer)

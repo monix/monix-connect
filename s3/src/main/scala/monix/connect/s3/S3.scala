@@ -67,22 +67,24 @@ import scala.jdk.CollectionConverters._
   * ==Example==
   *
   * {{{
+  *   import java.time.Duration
+  *
   *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
   *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
   *   import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
   *   import software.amazon.awssdk.services.s3.S3AsyncClient
   *
-  *   /** the exceptions related with concurrency or timeouts from any of the requests
-  *     * might be solved by rainsing the maxConcurrency, maxPendingConnectionAcquire or
-  *     connectionAcquisitionTimeout from the underlying netty http client.
-  *     * see below an example on how to increase such values.
-  *     */
+  *   // the exceptions related with concurrency or timeouts from any of the requests
+  *   // might be solved by rainsing the `maxConcurrency`, `maxPendingConnectionAcquire` or
+  *   // `connectionAcquisitionTimeout` from the underlying netty http client.
+  *   // see below an example on how to increase such values.
+  *
   *   val httpClient = NettyNioAsyncHttpClient.builder()
   *     .maxConcurrency(500)
   *     .maxPendingConnectionAcquires(50000)
   *     .connectionAcquisitionTimeout(Duration.ofSeconds(60))
   *     .readTimeout(Duration.ofSeconds(60))
-  *     .build();
+  *     .build()
   *
   *   // necessary for all the exposed methods in the [[S3]] object
   *   implicit val s3AsyncClient: S3AsyncClient = S3AsyncClient
@@ -90,7 +92,7 @@ import scala.jdk.CollectionConverters._
   *     .httpClient(httpClient)
   *     .credentialsProvider(DefaultCredentialsProvider.create())
   *     .region(AWS_GLOBAL)
-  *     .build
+  *     .build()
   * }}}
   *
   */
@@ -164,7 +166,8 @@ object S3 {
     destinationBucket: String,
     destinationKey: String,
     copyObjectSettings: CopyObjectSettings = DefaultCopyObjectSettings)(
-    implicit s3AsyncClient: S3AsyncClient): Task[CopyObjectResponse] = {
+    implicit
+    s3AsyncClient: S3AsyncClient): Task[CopyObjectResponse] = {
     val copyRequest =
       S3RequestBuilder.copyObjectRequest(sourceBucket, sourceKey, destinationBucket, destinationKey, copyObjectSettings)
     copyObject(copyRequest)
@@ -283,7 +286,7 @@ object S3 {
     * since it performed in a single download request, which might be unsafe
     * when the object is too big to fit in memory or in the http body.
     *
-    * See a safer alternative [[downloadMultipart]] to download objects in parts.
+    * @see the safer alternative [[downloadMultipart]] to for downloading objects in parts.
     *
     * ==Example==
     *
@@ -354,7 +357,7 @@ object S3 {
     *
     *   //must be propelry configured
     *   implicit val client = S3AsyncClient.builder.credentialsProvider(DefaultCredentialsProvider.create()).region(AWS_GLOBAL).build()
-    *   val bucket: String = "sample-bucket"
+    *   val bucketName: String = "sample-bucket"
     *   val key: String = "sample-key"
     *
     *   val ob: Observable[Array[Byte]] = S3.downloadMultipart(bucketName, key, 2)
@@ -402,11 +405,10 @@ object S3 {
     offset: Int)(implicit s3AsyncClient: S3AsyncClient): Task[Unit] = {
     for {
       chunk <- {
-        download(getRequest)
-          .onErrorHandleWith { ex =>
-            sub.onError(ex)
-            Task.raiseError(ex)
-          }
+        download(getRequest).onErrorHandleWith { ex =>
+          sub.onError(ex)
+          Task.raiseError(ex)
+        }
       }
       ack <- Task.fromFuture(sub.onNext(chunk))
       nextChunk <- {
@@ -470,6 +472,7 @@ object S3 {
     *   import software.amazon.awssdk.services.s3.S3AsyncClient
     *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
     *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
+    *   import software.amazon.awssdk.services.s3.model.S3Object
     *
     *   //must be propelry configured
     *   implicit val client = S3AsyncClient.builder.credentialsProvider(DefaultCredentialsProvider.create()).region(AWS_GLOBAL).build()
@@ -525,11 +528,10 @@ object S3 {
         requestBuilder.build()
       }
       for {
-        r  <- {
-          Task.from(s3AsyncClient.listObjectsV2(request))
-            .onErrorHandleWith { ex =>
-              sub.onError(ex)
-              Task.raiseError(ex)
+        r <- {
+          Task.from(s3AsyncClient.listObjectsV2(request)).onErrorHandleWith { ex =>
+            sub.onError(ex)
+            Task.raiseError(ex)
           }
         }
         ack <- Task.deferFuture(sub.onNext(r))
@@ -573,18 +575,21 @@ object S3 {
     * ==Example==
     *
     * {{{
-    *    import monix.eval.Task
-    *    import software.amazon.awssdk.services.s3.S3AsyncClient
-    *    import software.amazon.awssdk.services.s3.model.PutObjectResponse
+    *   import monix.eval.Task
+    *   import software.amazon.awssdk.services.s3.model.PutObjectResponse
+    *   import software.amazon.awssdk.services.s3.S3AsyncClient
+    *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
+    *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
+    *   import software.amazon.awssdk.services.s3.model.S3Object
     *
-    *    // must be properly configured
-    *    implicit val s3AsyncClient = S3AsyncClient.builder.region(AWS_GLOBAL).build()
+    *   //must be propelry configured
+    *   implicit val client = S3AsyncClient.builder.credentialsProvider(DefaultCredentialsProvider.create()).region(AWS_GLOBAL).build()
     *
-    *    val bucket: String = "sample-bucket"
-    *    val key: String = "sample/s3/object"
-    *    val content: Array[Byte] = "Whatever your content is".getBytes()
+    *   val bucket: String = "sample-bucket"
+    *   val key: String = "sample/s3/object"
+    *   val content: Array[Byte] = "Whatever your content is".getBytes()
     *
-    *    val t: Task[PutObjectResponse] = S3.upload(bucket, key, content)(s3AsyncClient)
+    *   val t: Task[PutObjectResponse] = S3.upload(bucket, key, content)
     * }}}
     *
     * @param bucket        the bucket where this request will upload a new object to
@@ -639,9 +644,9 @@ object S3 {
     *   val key: String = "sample/key/to/s3/object"
     *   val content: Array[Byte] = "Hello World!".getBytes
     *
-    *   val multipartUploadConsumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] = S3.multipartUpload(bucketName, key)(s3AsyncClient)
+    *   val uploadConusmer: Consumer[Array[Byte], CompleteMultipartUploadResponse] = S3.multipartUpload(bucketName, key)
     *
-    *   val t: Task[CompleteMultipartUploadResponse] = Observable.pure(content).consumeWith(multipartUploadConsumer)
+    *   val t: Task[CompleteMultipartUploadResponse] = Observable.pure(content).consumeWith(uploadConusmer)
     * }}}
     *
     * @param bucket                  The bucket name where the object will be stored
@@ -659,6 +664,5 @@ object S3 {
     s3AsyncClient: S3AsyncClient): Consumer[Array[Byte], CompleteMultipartUploadResponse] = {
     new MultipartUploadSubscriber(bucket, key, minChunkSize, uploadSettings)
   }
-
 
 }

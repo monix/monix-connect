@@ -64,10 +64,10 @@ private[s3] class MultipartUploadSubscriber(
       private var partN = 1
 
       /**
-        *
         * If the chunk length is bigger than the minimum size, perfom the part request [[UploadPartRequest]],
         * which returns a [[CompletedPart]].
-        * In the case it is not, the chunk is added to the buffer waiting to be aggregated with the next one.
+        * In the case it is not, the chunk is added to the buffer waiting to be aggregated with the next one,
+        * or in case it was the last chunk [[onComplete()]] will be called and will flush the buffer.
         */
       def onNext(chunk: Array[Byte]): Future[Ack] = {
         if (chunk.length < minChunkSize) {
@@ -85,10 +85,10 @@ private[s3] class MultipartUploadSubscriber(
               }
               ack <- Task(Ack.Continue)
             } yield ack
-          }.onErrorRecoverWith {
+          }.onErrorRecover {
             case NonFatal(ex) => {
               onError(ex)
-              Task.now(Ack.Stop)
+              Ack.Stop
             }
           }.runToFuture
         }
@@ -130,8 +130,8 @@ private[s3] class MultipartUploadSubscriber(
   }
 
   /**
-    * Abstracts the functionality to upload a single part to S3 with [[UploadPartRequest]].
-    * It should only be called when the received for chunks bigger than minimum size,
+    * Abstracts the functionality to upload a single part to the S3 object with [[UploadPartRequest]].
+    * It should be called either when the received chunk is bigger than minimum size,
     * or later when the last chunk arrives representing the completion of the stream.
     */
   def uploadPart(bucket: String, key: String, partNumber: Int, uploadId: String, chunk: Array[Byte])(

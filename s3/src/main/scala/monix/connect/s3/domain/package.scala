@@ -31,7 +31,8 @@ import software.amazon.awssdk.services.s3.model.{
 
 package object domain {
 
-  /** The minimum allowable part size for a multipart upload is 5 MB. For more information about
+  /**
+    * The minimum allowable part size for a multipart upload is 5 MB. For more information about
     *  multipart upload limits see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/qfacts.html">
     */
   val awsMinChunkSize: Int = 5 * 1024 * 1024 //5242880
