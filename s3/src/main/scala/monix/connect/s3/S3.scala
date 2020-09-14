@@ -46,6 +46,8 @@ import software.amazon.awssdk.services.s3.model.{
   DeleteObjectResponse,
   GetObjectRequest,
   GetObjectResponse,
+  ListObjectsRequest,
+  ListObjectsResponse,
   ListObjectsV2Request,
   ListObjectsV2Response,
   NoSuchKeyException,
@@ -505,28 +507,31 @@ object S3 {
     prefix: Option[String] = None,
     maxTotalKeys: Option[Int] = None,
     requestPayer: Option[RequestPayer] = None)(implicit s3AsyncClient: S3AsyncClient): Observable[S3Object] = {
-    require(maxTotalKeys.getOrElse(1) > 0, "The max number of keys, if defined, need to be higher or equal than 1.")
-    val firstRequestSize = maxTotalKeys.map(maxKeys => math.min(maxKeys, 1000))
+    require(maxTotalKeys.getOrElse(1) > 0, "The max number of keys, if defined, needs to be higher or equal than 1.")
+    val firstRequestSize = maxTotalKeys.map(maxKeys => math.min(maxKeys, domain.awsDefaulMaxKeysList))
     val request: ListObjectsV2Request =
       S3RequestBuilder.listObjectsV2(bucket, prefix = prefix, maxKeys = firstRequestSize, requestPayer = requestPayer)
-    listAllObjectsV2(request, maxTotalKeys, firstRequestSize)
+    listAllObjectsV2(request, maxTotalKeys)
   }
 
   @InternalApi
-  private def listAllObjectsV2(
-    initialRequest: ListObjectsV2Request,
-    maxKeys: Option[Int],
-    limitPerRequest: Option[Int])(implicit s3AsyncClient: S3AsyncClient): Observable[S3Object] = {
+  private def listAllObjectsV2(initialRequest: ListObjectsV2Request, maxKeys: Option[Int])(
+    implicit s3AsyncClient: S3AsyncClient): Observable[S3Object] = {
+
+    def prepareNextRequest(continuationToken: String, pendingKeys: Option[Int]): ListObjectsV2Request = {
+      val requestBuilder = initialRequest.toBuilder.continuationToken(continuationToken)
+      pendingKeys.map { n =>
+        val nextMaxkeys = math.min(n, domain.awsDefaulMaxKeysList)
+        requestBuilder.maxKeys(nextMaxkeys)
+      }.getOrElse(domain.awsDefaulMaxKeysList)
+      requestBuilder.build()
+    }
 
     def nextListRequest(
       sub: Subscriber[ListObjectsV2Response],
       pendingKeys: Option[Int],
       request: ListObjectsV2Request): Task[Unit] = {
-      def prepareNextRequest(continuationToken: String): ListObjectsV2Request = {
-        val requestBuilder = initialRequest.toBuilder.continuationToken(continuationToken)
-        limitPerRequest.map(requestBuilder.maxKeys(_))
-        requestBuilder.build()
-      }
+
       for {
         r <- {
           Task.from(s3AsyncClient.listObjectsV2(request)).onErrorHandleWith { ex =>
@@ -538,14 +543,21 @@ object S3 {
         next <- {
           ack match {
             case Ack.Continue => {
-              if (r.isTruncated && (r.continuationToken() != null)) {
+              if (r.isTruncated && (r.nextContinuationToken != null)) {
                 val updatedPendingKeys = pendingKeys.map(_ - r.contents.size)
                 updatedPendingKeys match {
                   case Some(pendingKeys) =>
                     if (pendingKeys <= 0) { sub.onComplete(); Task.unit }
-                    else nextListRequest(sub, updatedPendingKeys, prepareNextRequest(r.continuationToken()))
+                    else
+                      nextListRequest(
+                        sub,
+                        updatedPendingKeys,
+                        prepareNextRequest(r.nextContinuationToken, updatedPendingKeys))
                   case None =>
-                    nextListRequest(sub, updatedPendingKeys, prepareNextRequest(r.continuationToken()))
+                    nextListRequest(
+                      sub,
+                      updatedPendingKeys,
+                      prepareNextRequest(r.nextContinuationToken, updatedPendingKeys))
                 }
               } else {
                 sub.onComplete()

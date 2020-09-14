@@ -35,7 +35,9 @@ package object domain {
     * The minimum allowable part size for a multipart upload is 5 MB. For more information about
     *  multipart upload limits see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/qfacts.html">
     */
-  val awsMinChunkSize: Int = 5 * 1024 * 1024 //5242880
+  val awsMinChunkSize: Int = 5 * 1024 * 1024 //5242880 bytes
+
+  val awsDefaulMaxKeysList = 1000 // represents the default max keys request
 
   /**
     * @param grantFullControl        Gives the grantee READ, READ_ACP, and WRITE_ACP permissions on the object.

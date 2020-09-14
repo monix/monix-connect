@@ -37,6 +37,7 @@ import software.amazon.awssdk.services.s3.model.{
   DeleteObjectRequest,
   GetObjectRequest,
   HeadObjectRequest,
+  ListObjectsRequest,
   ListObjectsV2Request,
   PutObjectRequest,
   RequestPayer,

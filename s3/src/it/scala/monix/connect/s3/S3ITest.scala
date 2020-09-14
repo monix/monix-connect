@@ -27,7 +27,7 @@ class S3ITest
 
   override def beforeAll(): Unit = {
     super.beforeAll()
-    Try(Task.from(s3AsyncClient.createBucket(CreateBucketRequest.builder().bucket(bucketName).build()))) match {
+    Try(S3.createBucket(bucketName).runSyncUnsafe()) match {
       case Success(_) => info(s"Created S3 bucket ${bucketName} ")
       case Failure(e) => info(s"Failed to create S3 bucket ${bucketName} with exception: ${e.getMessage}")
     }
@@ -532,9 +532,29 @@ class S3ITest
       Task.from(s3AsyncClient.listObjectsV2(request)).runSyncUnsafe().isTruncated shouldBe true
     }
 
+    "list objects return continuationToken when set" in {
+      //given
+      val n = 120
+      val prefix = s"test-list-continuation/${nonEmptyString.value()}/"
+      val keys: List[String] =
+        Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + nonEmptyString.value() + str)).sample.get
+      val contents: List[String] = List.fill(n)(nonEmptyString.value())
+      Task
+        .sequence(keys.zip(contents).map { case (key, content) => S3.upload(bucketName, key, content.getBytes()) })
+        .runSyncUnsafe()
+
+      //when
+      val response = Task.from(s3AsyncClient.listObjectsV2(S3RequestBuilder.listObjectsV2(bucketName, prefix = Some(prefix), maxKeys = Some(10)))).runSyncUnsafe()
+
+      //then
+      response.nextContinuationToken should not be null
+      response.continuationToken shouldBe null
+      response.isTruncated shouldBe true
+    }
+
     "list all objects using the continuation token" in {
       //given
-      val n = 1100
+      val n = 2020
       val prefix = s"test-list-all-truncated/${nonEmptyString.value()}/"
       val keys: List[String] =
         Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + nonEmptyString.value() + str)).sample.get
@@ -544,11 +564,30 @@ class S3ITest
         .runSyncUnsafe()
 
       //when
-      val s3Objects = S3.listObjects(bucketName, prefix = Some(prefix)).toListL.runSyncUnsafe()
+      val s3Objects = S3.listObjects(bucketName, prefix = Some(prefix), maxTotalKeys = Some(n)).toListL.runSyncUnsafe()
 
       //then
       s3Objects.size shouldBe n
       s3Objects.map(_.key) should contain theSameElementsAs keys
+    }
+
+    "list a limited number of objects using the continuation token" in {
+      //given
+      val n = 1600
+      val limit = 1300
+      val prefix = s"test-list-limit-truncated/${nonEmptyString.value()}/"
+      val keys: List[String] =
+        Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + nonEmptyString.value() + str)).sample.get
+      val contents: List[String] = List.fill(n)(nonEmptyString.value())
+      Task
+        .sequence(keys.zip(contents).map { case (key, content) => S3.upload(bucketName, key, content.getBytes()) })
+        .runSyncUnsafe()
+
+      //when
+      val s3Objects = S3.listObjects(bucketName, prefix = Some(prefix), maxTotalKeys = Some(limit)).toListL.runSyncUnsafe()
+
+      //then
+      s3Objects.size shouldBe limit
     }
 
     "list objects requisite of positive max total keys" in {

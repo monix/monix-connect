@@ -34,7 +34,13 @@ package monix.connect.s3
  * limitations under the License.
  */
 
+import cats.effect.Timer
+import cats.effect.concurrent.Ref
+import monix.catnap.SchedulerEffect
 import monix.connect.s3.domain.{DownloadSettings, UploadSettings}
+import monix.eval.Coeval
+import monix.execution.Scheduler
+import monix.execution.schedulers.TestScheduler.Task
 import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import org.scalatest.matchers.should.Matchers
@@ -57,6 +63,7 @@ import software.amazon.awssdk.services.s3.model.{
 }
 
 import scala.collection.JavaConverters._
+import scala.concurrent.Await
 
 class S3RequestBuilderSpec
   extends AnyWordSpecLike with BeforeAndAfterEach with Matchers with BeforeAndAfterAll
@@ -275,5 +282,6 @@ class S3RequestBuilderSpec
           request.ssekmsEncryptionContext shouldBe uploadSettings.ssekmsEncryptionContext.orNull
       }
     }
+
   }
 }
