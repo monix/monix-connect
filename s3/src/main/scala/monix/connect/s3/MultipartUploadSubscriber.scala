@@ -31,11 +31,14 @@ import scala.concurrent.Future
 import scala.util.control.NonFatal
 
 /**
-  * An Amazon S3 multipart upload is a write operation made
-  * progressively on individual chunks of an object (parts),
-  * that finishes with a message to S3 that multipart upload is completed,
-  * in which the concatenation of each of the individual chunks will end up
-  * stored into the same object.
+  * The multipart upload subscriber allows to upload large objects in parts.
+  * Multipart uploading is a three-step process:
+  * 1- Initialised the upload
+  * 2- Upload the object parts
+  * 3- And after you have uploaded all the parts, you complete the multipart upload.
+  * Upon receiving the complete multipart upload request,
+  * The object is constructed from the different uploaded parts, and you can
+  * then access the object just as you would any other object in your bucket.
   */
 private[s3] class MultipartUploadSubscriber(
   bucket: String,
@@ -54,11 +57,12 @@ private[s3] class MultipartUploadSubscriber(
       implicit val scheduler = s
       private val createRequest: CreateMultipartUploadRequest =
         S3RequestBuilder.createMultipartUploadRequest(bucket, key, uploadSettings)
+      // initialises the multipart upload
       private val uploadId: Task[String] =
         Task
           .from(s3Client.createMultipartUpload(createRequest))
           .map(_.uploadId())
-          .memoize
+          .memoize // memoized since it must be the same for all future uploaded parts.
       private var buffer: Array[Byte] = Array.emptyByteArray
       private var completedParts: List[CompletedPart] = List.empty[CompletedPart]
       private var partN = 1
@@ -117,7 +121,7 @@ private[s3] class MultipartUploadSubscriber(
           completeMultipartUpload <- {
             val request = S3RequestBuilder
               .completeMultipartUploadRquest(bucket, key, uid, completedParts, uploadSettings.requestPayer)
-            Task.from(s3Client.completeMultipartUpload(request))
+            Task.from(s3Client.completeMultipartUpload(request)) // completes the multipart upload
           }
         } yield completeMultipartUpload
         response.runAsync(callback)

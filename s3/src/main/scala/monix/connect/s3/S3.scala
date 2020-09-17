@@ -46,8 +46,6 @@ import software.amazon.awssdk.services.s3.model.{
   DeleteObjectResponse,
   GetObjectRequest,
   GetObjectResponse,
-  ListObjectsRequest,
-  ListObjectsResponse,
   ListObjectsV2Request,
   ListObjectsV2Response,
   NoSuchKeyException,
@@ -101,17 +99,17 @@ import scala.jdk.CollectionConverters._
 object S3 {
 
   /**
-    * Executes the request to create a bucket given a [[bucket]] name.
+    * Creates a bucket.
     *
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/CreateBucketRequest.Builder.html
-    * @param bucket            the name of the bucket to be created.
-    * @param acl               the canned ACL (Access Control List) to apply to the object.
-    *                          if the service returns an enum value that is not available in the current SDK version, acl will return ObjectCannedACL.UNKNOWN_TO_SDK_VERSION.
-    * @param grantFullControl  gives the grantee READ, READ_ACP, and WRITE_ACP permissions on the object.
-    * @param grantRead         allows grantee to read the object data and its metadata.
-    * @param grantReadACP      allows grantee to read the object ACL.
-    * @param grantWriteACP     allows grantee to write the ACL for the applicable object.
-    * @param s3AsyncClient     an implicit instance of a [[S3AsyncClient]].
+    * @param bucket the name of the bucket to be created.
+    * @param acl the canned ACL (Access Control List) to apply to the object.
+    *            if the service returns an enum value that is not available in the current SDK version, acl will return ObjectCannedACL.UNKNOWN_TO_SDK_VERSION.
+    * @param grantFullControl gives the grantee READ, READ_ACP, and WRITE_ACP permissions on the object.
+    * @param grantRead allows grantee to read the object data and its metadata.
+    * @param grantReadACP allows grantee to read the object ACL.
+    * @param grantWriteACP allows grantee to write the ACL for the applicable object.
+    * @param s3AsyncClient an implicit instance of a [[S3AsyncClient]].
     * @param objectLockEnabledForBucket specifies whether you want S3 Object Lock to be enabled for the new bucket.
     * @return a [[Task]] with the [[CreateBucketResponse]].
     */
@@ -143,7 +141,7 @@ object S3 {
     * Creates a bucket given a [[CreateBucketRequest]].
     *
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/CreateBucketRequest.Builder.html
-    * @param request  an instance of [[CreateBucketRequest]]
+    * @param request an instance of [[CreateBucketRequest]]
     * @param s3AsyncClient an implicit instance of a [[S3AsyncClient]].
     * @return a [[Task]] with the create bucket response [[CreateBucketResponse]] .
     */
@@ -187,27 +185,26 @@ object S3 {
   }
 
   /**
-    * Provides options for deleting a specified bucket. Amazon S3 buckets can only be deleted when empty.
+    * Deletes the specified bucket. Which will only happen when it is empty.
     *
     * @note When attempting to delete a bucket that does not exist, Amazon S3 returns a success message, not an error message.
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/DeleteBucketRequest.html
-    * @param bucket   The bucket name to be deleted.
-    * @param s3AsyncClient An implicit instance of a [[S3AsyncClient]].
-    * @return A [[Task]] with the delete bucket response [[DeleteBucketResponse]] .
+    * @param bucket the bucket name to be deleted.
+    * @param s3AsyncClient an implicit instance of a [[S3AsyncClient]].
+    * @return a [[Task]] with the delete bucket response [[DeleteBucketResponse]] .
     */
   def deleteBucket(bucket: String)(implicit s3AsyncClient: S3AsyncClient): Task[DeleteBucketResponse] = {
     Task.from(s3AsyncClient.deleteBucket(S3RequestBuilder.deleteBucket(bucket)))
   }
 
   /**
-    *
-    * Provides options for deleting a specified bucket. Amazon S3 buckets can only be deleted when empty.
+    * Deletes the specified bucket. Which will only happen when it is empty.
     *
     * @note When attempting to delete a bucket that does not exist, Amazon S3 returns a success message, not an error message.
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/DeleteBucketRequest.html
-    * @param request  The AWS delete bucket request of type [[DeleteBucketRequest]]
-    * @param s3AsyncClient An implicit instance of a [[S3AsyncClient]].
-    * @return A [[Task]] with the delete bucket response [[DeleteBucketResponse]] .
+    * @param request the AWS delete bucket request of type [[DeleteBucketRequest]]
+    * @param s3AsyncClient an implicit instance of a [[S3AsyncClient]].
+    * @return a [[Task]] with the delete bucket response [[DeleteBucketResponse]] .
     */
   def deleteBucket(request: DeleteBucketRequest)(implicit s3AsyncClient: S3AsyncClient): Task[DeleteBucketResponse] = {
     Task.from(s3AsyncClient.deleteBucket(request))
@@ -243,7 +240,7 @@ object S3 {
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/DeleteObjectRequest.html
     * @param request the AWS delete object request of type [[DeleteObjectRequest]]
     * @param s3AsyncClient implicit instance of a [[S3AsyncClient]].
-    * @return A [[Task]] with the delete object response [[DeleteObjectResponse]] .
+    * @return a [[Task]] with the delete object response [[DeleteObjectResponse]] .
     */
   def deleteObject(request: DeleteObjectRequest)(implicit s3AsyncClient: S3AsyncClient): Task[DeleteObjectResponse] =
     Task.from(s3AsyncClient.deleteObject(request))
@@ -251,17 +248,17 @@ object S3 {
   /**
     * Check whether the specified bucket exists or not.
     *
-    * @param bucketName the bucketname to check its existance
+    * @param bucket the bucket name to check its existence
     * @param s3AsyncClient implicit instance of a [[S3AsyncClient]].
     * @return a boolean [[Task]] indicating whether the bucket exists or not.
     */
-  def existsBucket(bucketName: String)(implicit s3AsyncClient: S3AsyncClient): Task[Boolean] =
-    S3.listBuckets().existsL(_.name == bucketName)
+  def existsBucket(bucket: String)(implicit s3AsyncClient: S3AsyncClient): Task[Boolean] =
+    S3.listBuckets().existsL(_.name == bucket)
 
   /**
     * Checks whether the specified objects exists or not.
     *
-    * @param bucket the bucket name of the object to check its existance.
+    * @param bucket the bucket name of the object to check its existence.
     * @param key the key of the object to be deleted.
     * @param s3AsyncClient implicit instance of a [[S3AsyncClient]].
     * @return a boolean [[Task]] indicating whether the object existed or not.
@@ -298,33 +295,33 @@ object S3 {
     *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
     *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
     *
-    *   //must be propelry configured
+    *   //must be properly configured
     *   implicit val client = S3AsyncClient.builder.credentialsProvider(DefaultCredentialsProvider.create()).region(AWS_GLOBAL).build()
     *
-    *   val bucketName: String = "sample-bucket"
+    *   val bucket: String = "sample-bucket"
     *   val key: String = "path/to/test.csv"
     *
-    *   val t: Task[Array[Byte]] = S3.download(bucketName, key, numberOfBytes = Some(100))
+    *   val t: Task[Array[Byte]] = S3.download(bucket, key, firstNBytes = Some(100))
     * }}}
     *
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/mediastoredata/model/GetObjectRequest.html
-    * @param bucket               target S3 bucket name of the object to be downloaded.
-    * @param key                  key of the object to be downloaded.
-    * @param numberOfBytes        downloads the first [[numberOfBytes]] from the specified object,
-    *                             it must be a positive number if defined.
-    * @param downloadSettings     additional settings to pass to the download object request.
-    * @param s3AsyncClient       implicit instance of a [[S3AsyncClient]].
+    * @param bucket target S3 bucket name of the object to be downloaded.
+    * @param key key of the object to be downloaded.
+    * @param firstNBytes downloads the first [[firstNBytes]] from the specified object,
+    *                    it must be a positive number if defined.
+    * @param downloadSettings additional settings to pass to the download object request.
+    * @param s3AsyncClient implicit instance of a [[S3AsyncClient]].
     * @return a [[Task]] containing the downloaded object as a byte array.
     */
   def download(
     bucket: String,
     key: String,
-    numberOfBytes: Option[Int] = None,
+    firstNBytes: Option[Int] = None,
     downloadSettings: DownloadSettings = DefaultDownloadSettings)(
     implicit
     s3AsyncClient: S3AsyncClient): Task[Array[Byte]] = {
-    require(numberOfBytes.getOrElse(1) > 0, "The number of bytes if defined, must be a positive number.")
-    val range = numberOfBytes.map(n => s"bytes=0-${n - 1}")
+    require(firstNBytes.getOrElse(1) > 0, "The number of bytes if defined, must be a positive number.")
+    val range = firstNBytes.map(n => s"bytes=0-${n - 1}")
     val request: GetObjectRequest = S3RequestBuilder.getObjectRequest(bucket, key, range, downloadSettings)
     Task
       .from(s3AsyncClient.getObject(request, AsyncResponseTransformer.toBytes[GetObjectResponse]))
@@ -346,7 +343,7 @@ object S3 {
   }
 
   /**
-    * A method that safely downloads objects of any size by performing partial download requests.
+    * Safely downloads objects of any size by performing partial download requests.
     * The number of bytes to download per each request is specified by the [[chunkSize]].
     *
     * ==Example==
@@ -359,17 +356,17 @@ object S3 {
     *
     *   //must be propelry configured
     *   implicit val client = S3AsyncClient.builder.credentialsProvider(DefaultCredentialsProvider.create()).region(AWS_GLOBAL).build()
-    *   val bucketName: String = "sample-bucket"
+    *   val bucket: String = "sample-bucket"
     *   val key: String = "sample-key"
     *
-    *   val ob: Observable[Array[Byte]] = S3.downloadMultipart(bucketName, key, 2)
+    *   val ob: Observable[Array[Byte]] = S3.downloadMultipart(bucket, key, 2)
     * }}}
     *
-    * @param bucket               target S3 bucket name of the object to be downloaded.
-    * @param key                  key of the object to be downloaded.
-    * @param chunkSize            amount of bytes to download each part by, being by default (recommended) 5242880 bytes.
-    * @param downloadSettings     additional settings to pass to the multipart download request.
-    * @param s3AsyncClient       implicit instance of a [[S3AsyncClient]].
+    * @param bucket target S3 bucket name of the object to be downloaded.
+    * @param key path of the object to be downloaded (excluding the bucket).
+    * @param chunkSize amount of bytes to download each part by, being by default (recommended) 5242880 bytes.
+    * @param downloadSettings additional settings to pass to the multipart download request.
+    * @param s3AsyncClient implicit instance of a [[S3AsyncClient]].
     * @return an [[Observable]] that emits chunks of bytes of size [[chunkSize]] until it completes.
     *         in case the object does not exists an [[Array.emptyByteArray]] is returned,
     *         whereas if the bucket does not exists it return a failed [[Task]] of [[software.amazon.awssdk.services.s3.model.NoSuchBucketException]].
@@ -479,10 +476,10 @@ object S3 {
     *   //must be propelry configured
     *   implicit val client = S3AsyncClient.builder.credentialsProvider(DefaultCredentialsProvider.create()).region(AWS_GLOBAL).build()
     *
-    *   val bucketName = "my-bucket"
+    *   val bucket = "my-bucket"
     *   val prefix = s"prefix/to/list/keys/"
     *
-    *   val s3Objects: Observable[S3Object] = S3.listObjects(bucketName, maxTotalKeys = Some(1011), prefix = Some(prefix))
+    *   val s3Objects: Observable[S3Object] = S3.listObjects(bucket, maxTotalKeys = Some(1011), prefix = Some(prefix))
     * }}}
     *
     * To use this operation in an AWS Identity and Access Management (IAM) policy, you must have permissions to perform
@@ -493,13 +490,13 @@ object S3 {
     * href="https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html">Managing Access Permissions to Your
     * Amazon S3 Resources</a>.
     *
-    * @param bucket       target S3 bucket name of the object to be downloaded.
+    * @param bucket target S3 bucket name of the object to be downloaded.
     * @param maxTotalKeys sets the maximum number of keys to be list
-    * @param prefix       limits the response to keys that begin with the specified prefix.
-    * @param requestPayer Confirms that the requester knows that she or he will be charged for
+    * @param prefix limits the response to keys that begin with the specified prefix.
+    * @param requestPayer confirms that the requester knows that she or he will be charged for
     *                     the list objects request in V2 style.
     *                     Bucket owners need not specify this parameter in their requests.
-    * @param s3AsyncClient       implicit instance of a [[S3AsyncClient]].
+    * @param s3AsyncClient implicit instance of a [[S3AsyncClient]].
     * @return an [[Observable]] that emits the [[S3Object]]s.
     */
   def listObjects(
@@ -604,9 +601,9 @@ object S3 {
     *   val t: Task[PutObjectResponse] = S3.upload(bucket, key, content)
     * }}}
     *
-    * @param bucket        the bucket where this request will upload a new object to
-    * @param key           key under which to store the new object
-    * @param content       text content to be uploaded
+    * @param bucket the bucket where this request will upload a new object to
+    * @param key key under which to store the new object
+    * @param content text content to be uploaded
     * @param s3AsyncClient implicit instance of [[S3AsyncClient]]
     * @return response from the put object http request as [[PutObjectResponse]]
     */
@@ -623,16 +620,15 @@ object S3 {
     * Uploads a new object to the specified Amazon S3 bucket.
     *
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/PutObjectRequest.html
-    * @param request   instance of [[PutObjectRequest]]
-    * @param content   content to be uploaded
+    * @param request instance of [[PutObjectRequest]]
+    * @param content content to be uploaded
     * @param s3AsyncClient implicit instance of a [[S3AsyncClient]].
     * @return the response from the http put object request as [[PutObjectResponse]].
     */
   def upload(request: PutObjectRequest, content: Array[Byte])(
     implicit
-    s3AsyncClient: S3AsyncClient): Task[PutObjectResponse] = {
+    s3AsyncClient: S3AsyncClient): Task[PutObjectResponse] =
     Task.from(s3AsyncClient.putObject(request, AsyncRequestBody.fromBytes(content)))
-  }
 
   /**
     * Uploads an S3 object by making multiple http requests (parts) of the received chunks of bytes.
@@ -652,29 +648,28 @@ object S3 {
     *   //must be propelry configured
     *   implicit val client = S3AsyncClient.builder.credentialsProvider(DefaultCredentialsProvider.create()).region(AWS_GLOBAL).build()
     *
-    *   val bucketName: String = "sample-bucket"
+    *   val bucket: String = "sample-bucket"
     *   val key: String = "sample/key/to/s3/object"
     *   val content: Array[Byte] = "Hello World!".getBytes
     *
-    *   val uploadConusmer: Consumer[Array[Byte], CompleteMultipartUploadResponse] = S3.multipartUpload(bucketName, key)
+    *   val uploadConsumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] = S3.uploadMultipart(bucket, key)
     *
-    *   val t: Task[CompleteMultipartUploadResponse] = Observable.pure(content).consumeWith(uploadConusmer)
+    *   val t: Task[CompleteMultipartUploadResponse] = Observable.pure(content).consumeWith(uploadConsumer)
     * }}}
     *
-    * @param bucket                  The bucket name where the object will be stored
-    * @param key                     Key where the object will be stored.
-    * @param minChunkSize               Size of the chunks (parts) that will be sent in the http body. (the minimum size is set by default, don't use a lower one)
-    * @param s3AsyncClient                Implicit instance of the s3 client of type [[S3AsyncClient]]
-    * @return Returns the confirmation of the multipart upload as [[CompleteMultipartUploadResponse]]
+    * @param bucket the bucket name where the object will be stored
+    * @param key the key where the object will be stored.
+    * @param minChunkSize size of the chunks (parts) that will be sent in the http body. (the minimum size is set by default, don't use a lower one)
+    * @param s3AsyncClient implicit instance of the s3 client of type [[S3AsyncClient]]
+    * @return the confirmation of the multipart whole upload as [[CompleteMultipartUploadResponse]].
     */
-  def multipartUpload(
+  def uploadMultipart(
     bucket: String,
     key: String,
     minChunkSize: Int = awsMinChunkSize,
     uploadSettings: UploadSettings = DefaultUploadSettings)(
     implicit
-    s3AsyncClient: S3AsyncClient): Consumer[Array[Byte], CompleteMultipartUploadResponse] = {
+    s3AsyncClient: S3AsyncClient): Consumer[Array[Byte], CompleteMultipartUploadResponse] =
     new MultipartUploadSubscriber(bucket, key, minChunkSize, uploadSettings)
-  }
 
 }

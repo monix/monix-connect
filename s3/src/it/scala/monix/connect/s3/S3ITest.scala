@@ -135,7 +135,7 @@ class S3ITest
       val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
       val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
       val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
-        S3.multipartUpload(bucketName, key)
+        S3.uploadMultipart(bucketName, key)
       val _: CompleteMultipartUploadResponse = ob.consumeWith(consumer).runSyncUnsafe()
 
       //when
@@ -230,7 +230,7 @@ class S3ITest
       val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
       val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
       val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
-      val _ = ob.consumeWith(S3.multipartUpload(bucketName, key)).runSyncUnsafe()
+      val _ = ob.consumeWith(S3.uploadMultipart(bucketName, key)).runSyncUnsafe()
 
       //when
       val actualContent: Array[Byte] =
@@ -301,7 +301,7 @@ class S3ITest
       //and
       val destinationBucket = nonEmptyString.value()
       val destinationKey = nonEmptyString.value()
-      S3.createBucket(destinationBucket)
+      S3.createBucket(destinationBucket).runSyncUnsafe()
 
       //when
       val copyObjectResponse = S3.copyObject(bucketName, sourceKey, destinationBucket, destinationKey).runSyncUnsafe()
@@ -322,7 +322,7 @@ class S3ITest
         val key = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
         val content: Array[Byte] = Gen.alphaUpperStr.sample.get.getBytes
         val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
-          S3.multipartUpload(bucketName, key)
+          S3.uploadMultipart(bucketName, key)
         val ob = Observable.pure(content)
 
         //when
@@ -342,7 +342,7 @@ class S3ITest
         val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
         val chunks: List[Array[Byte]] = Gen.listOfN(10, Gen.alphaUpperStr).map(_.map(_.getBytes)).sample.get
         val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
-          S3.multipartUpload(bucketName, key)
+          S3.uploadMultipart(bucketName, key)
         val ob: Observable[Array[Byte]] = Observable.fromIterable(chunks)
 
         //when
@@ -365,7 +365,7 @@ class S3ITest
         val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
         val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
         val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
-          S3.multipartUpload(bucketName, key)
+          S3.uploadMultipart(bucketName, key)
 
         //when
         val t: Task[CompleteMultipartUploadResponse] = ob.consumeWith(consumer)
@@ -388,7 +388,7 @@ class S3ITest
           .fromInputStream(inputStream)
           .foldLeft(Array.emptyByteArray)((acc, chunk) => acc ++ chunk ++ chunk ++ chunk ++ chunk ++ chunk) //duplicates each chunk * 5
         val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
-          S3.multipartUpload(bucketName, key)
+          S3.uploadMultipart(bucketName, key)
 
         //when
         val t: Task[CompleteMultipartUploadResponse] = ob.consumeWith(consumer)

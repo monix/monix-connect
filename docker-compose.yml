@@ -18,13 +18,6 @@ services:
       retries: 3
     command: server --compat /data
 
-  localstack:
-    image: localstack/localstack:0.11.1
-    ports:
-      - '4569:4569'
-    environment:
-      - SERVICES=dynamodb
-
   mongo:
     image: mongo
     ports:
@@ -34,6 +27,13 @@ services:
     image: mongoclient/mongoclient
     ports:
       - "3000:3000"
+
+  localstack:
+    image: localstack/localstack:0.11.1
+    ports:
+      - '4569:4569'
+    environment:
+      - SERVICES=dynamodb
 
   redis:
     image: redis

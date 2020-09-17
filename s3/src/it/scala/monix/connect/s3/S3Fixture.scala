@@ -46,8 +46,8 @@ trait S3Fixture {
   def getRequest(bucket: String, key: String): GetObjectRequest =
     GetObjectRequest.builder().bucket(bucket).key(key).build()
 
-  def download(bucketName: String, key: String)(implicit scheduler: Scheduler): Option[Array[Byte]] = {
-    val s3LocalPath = s"minio/data/${bucketName}/${key}"
+  def download(bucket: String, key: String)(implicit scheduler: Scheduler): Option[Array[Byte]] = {
+    val s3LocalPath = s"minio/data/${bucket}/${key}"
     downloadFromFile(s3LocalPath)
   }
 
