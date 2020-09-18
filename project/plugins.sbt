@@ -9,4 +9,4 @@ addSbtPlugin("de.heikoseeberger"    % "sbt-header"      % "5.4.0")
 addSbtPlugin("com.geirsson" % "sbt-ci-release" % "1.5.3")
 addSbtPlugin("org.scoverage"        % "sbt-scoverage"   % "1.6.1")
 libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.10.1"
-addSbtPlugin("org.scalameta"       % "sbt-mdoc"        % "2.2.6")
+addSbtPlugin("org.scalameta"       % "sbt-mdoc"        % "2.2.9")
