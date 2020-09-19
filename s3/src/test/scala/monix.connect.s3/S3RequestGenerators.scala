@@ -19,9 +19,20 @@ package monix.connect.s3
 
 import java.time.Instant
 
-import monix.connect.s3.domain.{DownloadSettings, UploadSettings}
+import monix.connect.s3.domain.{CopyObjectSettings, DownloadSettings, UploadSettings}
 import org.scalacheck.Gen
-import software.amazon.awssdk.services.s3.model.{CompletedPart, RequestPayer}
+import software.amazon.awssdk.services.s3.model.{
+  BucketCannedACL,
+  CompletedPart,
+  MetadataDirective,
+  ObjectCannedACL,
+  ObjectLockLegalHoldStatus,
+  ObjectLockMode,
+  RequestPayer,
+  ServerSideEncryption,
+  StorageClass,
+  TaggingDirective
+}
 
 trait S3RequestGenerators {
 
@@ -29,8 +40,86 @@ trait S3RequestGenerators {
   val genOptionBool = Gen.option(Gen.oneOf(true, false))
   val genRequestPayer: Gen[Option[RequestPayer]] =
     Gen.option(Gen.oneOf(RequestPayer.REQUESTER, RequestPayer.UNKNOWN_TO_SDK_VERSION))
+  val genObjectLockLegalHoldStatus: Gen[Option[ObjectLockLegalHoldStatus]] =
+    Gen.option(Gen.oneOf(ObjectLockLegalHoldStatus.ON, ObjectLockLegalHoldStatus.OFF))
+  val genInstant: Gen[Option[Instant]] = Gen.option(Instant.now())
+  val genObjectLockMode: Gen[Option[ObjectLockMode]] =
+    Gen.option(Gen.oneOf(ObjectLockMode.COMPLIANCE, ObjectLockMode.GOVERNANCE))
+  val genMetadataDirective: Gen[Option[MetadataDirective]] =
+    Gen.option(Gen.oneOf(MetadataDirective.COPY, MetadataDirective.REPLACE))
+  val genTaggingDirective: Gen[Option[TaggingDirective]] =
+    Gen.option(Gen.oneOf(TaggingDirective.COPY, TaggingDirective.REPLACE))
+  val genServerSideEncription: Gen[Option[ServerSideEncryption]] =
+    Gen.option(Gen.oneOf(ServerSideEncryption.AES256, ServerSideEncryption.AWS_KMS))
+  val genObjectAcl = Gen.option(Gen.oneOf(ObjectCannedACL.AUTHENTICATED_READ, ObjectCannedACL.PUBLIC_READ_WRITE))
+  val genBucketAcl: Gen[Option[BucketCannedACL]] =
+    Gen.option(Gen.oneOf(BucketCannedACL.PRIVATE, BucketCannedACL.PUBLIC_READ_WRITE))
 
   val genCreateBucketParams = for {
+    bucket           <- Gen.alphaLowerStr
+    acl              <- genBucketAcl
+    grantFullControl <- genOptionStr
+    grantRead        <- genOptionStr
+    grantReadACP     <- genOptionStr
+    grantWrite       <- genOptionStr
+    grantWriteACP    <- genOptionStr
+  } yield (bucket, acl, grantFullControl, grantRead, grantReadACP, grantWrite, grantWriteACP)
+
+  val genCopyObjectSettings = for {
+    copySourceIfMatches            <- genOptionStr
+    copySourceIfNoneMatch          <- genOptionStr
+    copyIfModifiedSince            <- genInstant
+    copyIfUnmodifiedSince          <- genInstant
+    expires                        <- genInstant
+    acl                            <- genObjectAcl
+    grantFullControl               <- genOptionStr
+    grantRead                      <- genOptionStr
+    grantReadACP                   <- genOptionStr
+    grantWriteACP                  <- genOptionStr
+    metadataDirective              <- genMetadataDirective
+    taggingDirective               <- genTaggingDirective
+    serverSideEncryption           <- genServerSideEncription
+    sseCustomerAlgorithm           <- genOptionStr
+    sseCustomerKey                 <- genOptionStr
+    sseCustomerKeyMD5              <- genOptionStr
+    ssekmsKeyId                    <- genOptionStr
+    copySourceSSECustomerAlgorithm <- genOptionStr
+    copySourceSSECustomerKey       <- genOptionStr
+    copySourceSSECustomerKeyMD5    <- genOptionStr
+    objectLockMode                 <- genObjectLockMode
+    objectLockRetainUntilDate      <- genInstant
+    objectLockLegalHoldStatus      <- genObjectLockLegalHoldStatus
+    requestPayer                   <- genRequestPayer
+  } yield CopyObjectSettings(
+    copySourceIfMatches,
+    copySourceIfNoneMatch,
+    copyIfModifiedSince,
+    copyIfUnmodifiedSince,
+    expires,
+    acl,
+    grantFullControl,
+    grantRead,
+    grantReadACP,
+    grantWriteACP,
+    Map.empty,
+    metadataDirective,
+    taggingDirective,
+    serverSideEncryption,
+    StorageClass.STANDARD,
+    sseCustomerAlgorithm,
+    sseCustomerKey,
+    sseCustomerKeyMD5,
+    ssekmsKeyId,
+    copySourceSSECustomerAlgorithm,
+    copySourceSSECustomerKey,
+    copySourceSSECustomerKeyMD5,
+    objectLockMode,
+    objectLockRetainUntilDate,
+    objectLockLegalHoldStatus,
+    requestPayer
+  )
+
+  val genCopyObjectBucketParams = for {
     bucket           <- Gen.alphaLowerStr
     acl              <- genOptionStr
     grantFullControl <- genOptionStr
@@ -39,6 +128,9 @@ trait S3RequestGenerators {
     grantWrite       <- genOptionStr
     grantWriteACP    <- genOptionStr
   } yield (bucket, acl, grantFullControl, grantRead, grantReadACP, grantWrite, grantWriteACP)
+
+  val genCopyObjectParams = genCopyObjectSettings.map(settings =>
+    ("sourceBucket", "sourceKey", "destinationBucket", "destinationKey", settings))
 
   val genCompletedPartParams = for {
     partN <- Gen.choose(1, 100)
@@ -59,7 +151,7 @@ trait S3RequestGenerators {
   } yield (bucket, key, uploadId, completedParts, requestPayer)
 
   val genUploadSettings = for {
-    acl                     <- genOptionStr
+    acl                     <- genObjectAcl
     grantFullControl        <- genOptionStr
     grantRead               <- genOptionStr
     grantReadACP            <- genOptionStr

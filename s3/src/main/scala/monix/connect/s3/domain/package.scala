@@ -21,6 +21,7 @@ import java.time.Instant
 
 import software.amazon.awssdk.services.s3.model.{
   MetadataDirective,
+  ObjectCannedACL,
   ObjectLockLegalHoldStatus,
   ObjectLockMode,
   RequestPayer,
@@ -36,70 +37,12 @@ package object domain {
     *  multipart upload limits see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/qfacts.html">
     */
   val awsMinChunkSize: Int = 5 * 1024 * 1024 //5242880 bytes
-
   val awsDefaulMaxKeysList = 1000 // represents the default max keys request
 
-  /**
-    * @param grantFullControl        Gives the grantee READ, READ_ACP, and WRITE_ACP permissions on the object.
-    * @param grantRead               Allows grantee to read the object data and its metadata.
-    * @param grantReadACP            Allows grantee to read the object ACL.
-    * @param grantWriteACP           Allows grantee to write the ACL for the applicable object.
-    * @param serverSideEncryption    The server-side encryption algorithm used when storing this object in Amazon S3 (for example, AES256, aws:kms).
-    * @param sseCustomerAlgorithm    Specifies the algorithm to use to when encrypting the object (for example, AES256).
-    * @param sseCustomerKey          Specifies the customer-provided encryption key for Amazon S3 to use in encrypting data.
-    * @param sseCustomerKeyMD5       Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321.
-    * @param ssekmsEncryptionContext Specifies the AWS KMS Encryption Context to use for object encryption.
-    * @param ssekmsKeyId             Specifies the ID of the symmetric customer managed AWS KMS CMK to use for object encryption.
-    * @param requestPayer            Returns the value of the RequestPayer property for this object.
-    */
-  case class UploadSettings(
-    acl: Option[String] = None,
-    //contentType: Option[String] = None,
-    grantFullControl: Option[String] = None,
-    grantRead: Option[String] = None,
-    grantReadACP: Option[String] = None,
-    grantWriteACP: Option[String] = None,
-    serverSideEncryption: Option[String] = None,
-    sseCustomerAlgorithm: Option[String] = None,
-    sseCustomerKey: Option[String] = None,
-    sseCustomerKeyMD5: Option[String] = None,
-    ssekmsEncryptionContext: Option[String] = None,
-    ssekmsKeyId: Option[String] = None,
-    requestPayer: Option[RequestPayer] = None)
-
-  private[s3] val DefaultUploadSettings = UploadSettings()
-
-  /**
-    * @param ifMatch              Return the object only if its entity tag (ETag) is the same as the one specified, otherwise return a 412
-    * @param ifModifiedSince      Return the object only if it has been modified since the specified time, otherwise return a 304 (not
-    *                             modified).
-    * @param ifNoneMatch          Return the object only if its entity tag (ETag) is different from the one specified, otherwise return a 304
-    *                             (not modified).
-    * @param ifUnmodifiedSince    Return the object only if it has not been modified since the specified time, otherwise return a 412
-    *                             (precondition failed).
-    * @param versionId            VersionId used to reference a specific version of the object.
-    * @param sseCustomerAlgorithm Specifies the algorithm to use to when encrypting the object (for example, AES256).
-    * @param sseCustomerKey       Specifies the customer-provided encryption key for Amazon S3 to use in encrypting data. This value is used to
-    *                             store the object and then it is discarded; Amazon S3 does not store the encryption key. The key must be
-    *                             appropriate for use with the algorithm specified in the
-    *                             <code>x-amz-server-side​-encryption​-customer-algorithm</code> header.
-    * @param sseCustomerKeyMD5    Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321. Amazon S3 uses this header for
-    *                             a message integrity check to ensure that the encryption key was transmitted without error.
-    * @param requestPayer         Sets the value of the RequestPayer property for this object.
-    */
-  case class DownloadSettings(
-    ifMatch: Option[String] = None,
-    ifModifiedSince: Option[Instant] = None,
-    ifNoneMatch: Option[String] = None,
-    ifUnmodifiedSince: Option[Instant] = None,
-    requestPayer: Option[RequestPayer] = None,
-    sseCustomerAlgorithm: Option[String] = None,
-    sseCustomerKey: Option[String] = None,
-    sseCustomerKeyMD5: Option[String] = None,
-    versionId: Option[String] = None)
-  //contemplate part number
-
+  //default settings
   private[s3] val DefaultDownloadSettings = DownloadSettings()
+  private[s3] val DefaultCopyObjectSettings = CopyObjectSettings()
+  private[s3] val DefaultUploadSettings = UploadSettings()
 
   /**
     * @param copySourceIfMatches     copies the object if its entity tag (ETag) matches the specified tag.
@@ -145,7 +88,7 @@ package object domain {
     copyIfModifiedSince: Option[Instant] = None,
     copyIfUnmodifiedSince: Option[Instant] = None,
     expires: Option[Instant] = None,
-    acl: Option[String] = None,
+    acl: Option[ObjectCannedACL] = None,
     grantFullControl: Option[String] = None,
     grantRead: Option[String] = None,
     grantReadACP: Option[String] = None,
@@ -167,6 +110,61 @@ package object domain {
     objectLockLegalHoldStatus: Option[ObjectLockLegalHoldStatus] = None,
     requestPayer: Option[RequestPayer] = None)
 
-  private[s3] val DefaultCopyObjectSettings = CopyObjectSettings()
+  /**
+    * @param ifMatch              Return the object only if its entity tag (ETag) is the same as the one specified, otherwise return a 412
+    * @param ifModifiedSince      Return the object only if it has been modified since the specified time, otherwise return a 304 (not
+    *                             modified).
+    * @param ifNoneMatch          Return the object only if its entity tag (ETag) is different from the one specified, otherwise return a 304
+    *                             (not modified).
+    * @param ifUnmodifiedSince    Return the object only if it has not been modified since the specified time, otherwise return a 412
+    *                             (precondition failed).
+    * @param versionId            VersionId used to reference a specific version of the object.
+    * @param sseCustomerAlgorithm Specifies the algorithm to use to when encrypting the object (for example, AES256).
+    * @param sseCustomerKey       Specifies the customer-provided encryption key for Amazon S3 to use in encrypting data. This value is used to
+    *                             store the object and then it is discarded; Amazon S3 does not store the encryption key. The key must be
+    *                             appropriate for use with the algorithm specified in the
+    *                             <code>x-amz-server-side​-encryption​-customer-algorithm</code> header.
+    * @param sseCustomerKeyMD5    Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321. Amazon S3 uses this header for
+    *                             a message integrity check to ensure that the encryption key was transmitted without error.
+    * @param requestPayer         Sets the value of the RequestPayer property for this object.
+    */
+  case class DownloadSettings(
+    ifMatch: Option[String] = None,
+    ifModifiedSince: Option[Instant] = None,
+    ifNoneMatch: Option[String] = None,
+    ifUnmodifiedSince: Option[Instant] = None,
+    requestPayer: Option[RequestPayer] = None,
+    sseCustomerAlgorithm: Option[String] = None,
+    sseCustomerKey: Option[String] = None,
+    sseCustomerKeyMD5: Option[String] = None,
+    versionId: Option[String] = None)
+  //contemplate part number
 
+  /**
+    * @param grantFullControl        Gives the grantee READ, READ_ACP, and WRITE_ACP permissions on the object.
+    * @param grantRead               Allows grantee to read the object data and its metadata.
+    * @param grantReadACP            Allows grantee to read the object ACL.
+    * @param grantWriteACP           Allows grantee to write the ACL for the applicable object.
+    * @param serverSideEncryption    The server-side encryption algorithm used when storing this object in Amazon S3 (for example, AES256, aws:kms).
+    * @param sseCustomerAlgorithm    Specifies the algorithm to use to when encrypting the object (for example, AES256).
+    * @param sseCustomerKey          Specifies the customer-provided encryption key for Amazon S3 to use in encrypting data.
+    * @param sseCustomerKeyMD5       Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321.
+    * @param ssekmsEncryptionContext Specifies the AWS KMS Encryption Context to use for object encryption.
+    * @param ssekmsKeyId             Specifies the ID of the symmetric customer managed AWS KMS CMK to use for object encryption.
+    * @param requestPayer            Returns the value of the RequestPayer property for this object.
+    */
+  case class UploadSettings(
+    acl: Option[ObjectCannedACL] = None,
+    //contentType: Option[String] = None,
+    grantFullControl: Option[String] = None,
+    grantRead: Option[String] = None,
+    grantReadACP: Option[String] = None,
+    grantWriteACP: Option[String] = None,
+    serverSideEncryption: Option[String] = None,
+    sseCustomerAlgorithm: Option[String] = None,
+    sseCustomerKey: Option[String] = None,
+    sseCustomerKeyMD5: Option[String] = None,
+    ssekmsEncryptionContext: Option[String] = None,
+    ssekmsKeyId: Option[String] = None,
+    requestPayer: Option[RequestPayer] = None)
 }

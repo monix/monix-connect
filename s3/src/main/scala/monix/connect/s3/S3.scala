@@ -35,6 +35,7 @@ import software.amazon.awssdk.core.async.{AsyncRequestBody, AsyncResponseTransfo
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.model.{
   Bucket,
+  BucketCannedACL,
   CompleteMultipartUploadResponse,
   CopyObjectRequest,
   CopyObjectResponse,
@@ -115,7 +116,7 @@ object S3 {
     */
   def createBucket(
     bucket: String,
-    acl: Option[String] = None,
+    acl: Option[BucketCannedACL] = None,
     grantFullControl: Option[String] = None,
     grantRead: Option[String] = None,
     grantReadACP: Option[String] = None,
@@ -551,10 +552,7 @@ object S3 {
                         updatedPendingKeys,
                         prepareNextRequest(r.nextContinuationToken, updatedPendingKeys))
                   case None =>
-                    nextListRequest(
-                      sub,
-                      updatedPendingKeys,
-                      prepareNextRequest(r.nextContinuationToken, updatedPendingKeys))
+                    nextListRequest(sub, None, prepareNextRequest(r.nextContinuationToken, None))
                 }
               } else {
                 sub.onComplete()

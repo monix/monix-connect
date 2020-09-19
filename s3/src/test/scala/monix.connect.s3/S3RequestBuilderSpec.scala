@@ -34,36 +34,30 @@ package monix.connect.s3
  * limitations under the License.
  */
 
-import cats.effect.Timer
-import cats.effect.concurrent.Ref
-import monix.catnap.SchedulerEffect
-import monix.connect.s3.domain.{DownloadSettings, UploadSettings}
-import monix.eval.Coeval
-import monix.execution.Scheduler
-import monix.execution.schedulers.TestScheduler.Task
+import monix.connect.s3.domain.{CopyObjectSettings, DownloadSettings, UploadSettings}
 import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import software.amazon.awssdk.services.s3.model.{
+  BucketCannedACL,
   CompleteMultipartUploadRequest,
   CompletedPart,
+  CopyObjectRequest,
   CreateBucketRequest,
   CreateMultipartUploadRequest,
   DeleteBucketRequest,
   DeleteObjectRequest,
   GetObjectRequest,
-  ListObjectsRequest,
-  ListObjectsV2Request,
   PutObjectRequest,
   RequestPayer,
+  StorageClass,
   UploadPartRequest,
   UploadPartResponse
 }
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Await
 
 class S3RequestBuilderSpec
   extends AnyWordSpecLike with BeforeAndAfterEach with Matchers with BeforeAndAfterAll
@@ -82,7 +76,7 @@ class S3RequestBuilderSpec
       forAll(genCreateBucketParams) {
         case (
             bucket: String,
-            acl: Option[String],
+            acl: Option[BucketCannedACL],
             grantFullControl: Option[String],
             grantRead: Option[String],
             grantReadACP: Option[String],
@@ -95,12 +89,58 @@ class S3RequestBuilderSpec
 
           //then
           request.bucket shouldBe bucket
-          request.aclAsString shouldBe acl.orNull
+          request.acl() shouldBe acl.orNull
           request.grantFullControl shouldBe grantFullControl.orNull
           request.grantRead shouldBe grantRead.orNull
           request.grantReadACP shouldBe grantReadACP.orNull
           request.grantWrite shouldBe grantWrite.orNull
           request.grantWriteACP shouldBe grantWriteACP.orNull
+      }
+    }
+
+    s"builds `CopyObjectRequest`" in {
+      //given
+      forAll(genCopyObjectParams) {
+        case (
+            sourceBucket: String,
+            sourceKey: String,
+            destinationBucket: String,
+            destinationKey: String,
+            copyObjectSettings: CopyObjectSettings) =>
+          //when
+          val request: CopyObjectRequest =
+            S3RequestBuilder
+              .copyObjectRequest(sourceBucket, sourceKey, destinationBucket, destinationKey, copyObjectSettings)
+
+          //then
+          request.copySource shouldBe sourceBucket + "/" + sourceKey
+          request.destinationBucket shouldBe destinationBucket
+          request.destinationKey shouldBe destinationKey
+          request.copySourceIfNoneMatch shouldBe copyObjectSettings.copySourceIfNoneMatch.orNull
+          request.copySourceIfModifiedSince shouldBe copyObjectSettings.copyIfModifiedSince.orNull
+          request.copySourceIfUnmodifiedSince shouldBe copyObjectSettings.copyIfUnmodifiedSince.orNull
+          request.expires shouldBe copyObjectSettings.expires.orNull
+          request.acl shouldBe copyObjectSettings.acl.orNull
+          request.grantFullControl shouldBe copyObjectSettings.grantFullControl.orNull
+          request.grantRead shouldBe copyObjectSettings.grantRead.orNull
+          request.grantReadACP shouldBe copyObjectSettings.grantReadACP.orNull
+          request.grantWriteACP shouldBe copyObjectSettings.grantWriteACP.orNull
+          request.metadata shouldBe Map.empty.asJava
+          request.metadataDirective shouldBe copyObjectSettings.metadataDirective.orNull
+          request.taggingDirective shouldBe copyObjectSettings.taggingDirective.orNull
+          request.serverSideEncryption shouldBe copyObjectSettings.serverSideEncryption.orNull
+          request.storageClass shouldBe StorageClass.STANDARD
+          request.sseCustomerAlgorithm shouldBe copyObjectSettings.sseCustomerAlgorithm.orNull
+          request.sseCustomerKey shouldBe copyObjectSettings.sseCustomerKey.orNull
+          request.sseCustomerKeyMD5 shouldBe copyObjectSettings.sseCustomerKeyMD5.orNull
+          request.ssekmsKeyId shouldBe copyObjectSettings.ssekmsKeyId.orNull
+          request.copySourceSSECustomerAlgorithm shouldBe copyObjectSettings.copySourceSSECustomerAlgorithm.orNull
+          request.copySourceSSECustomerKey shouldBe copyObjectSettings.copySourceSSECustomerKey.orNull
+          request.copySourceSSECustomerKeyMD5 shouldBe copyObjectSettings.copySourceSSECustomerKeyMD5.orNull
+          request.objectLockMode shouldBe copyObjectSettings.objectLockMode.orNull
+          request.objectLockRetainUntilDate shouldBe copyObjectSettings.objectLockRetainUntilDate.orNull
+          request.objectLockLegalHoldStatus shouldBe copyObjectSettings.objectLockLegalHoldStatus.orNull
+          request.requestPayer shouldBe copyObjectSettings.requestPayer.orNull
       }
     }
 
@@ -153,12 +193,12 @@ class S3RequestBuilderSpec
           //then
           request.bucket shouldBe bucket
           request.key shouldBe key
-          request.aclAsString shouldBe uploadSettings.acl.orNull
+          request.acl shouldBe uploadSettings.acl.orNull
           request.grantFullControl shouldBe uploadSettings.grantFullControl.orNull
           request.grantRead shouldBe uploadSettings.grantRead.orNull
           request.grantReadACP shouldBe uploadSettings.grantReadACP.orNull
           request.grantWriteACP shouldBe uploadSettings.grantWriteACP.orNull
-          request.requestPayer() shouldBe uploadSettings.requestPayer.orNull
+          request.requestPayer shouldBe uploadSettings.requestPayer.orNull
           request.serverSideEncryptionAsString shouldBe uploadSettings.serverSideEncryption.orNull
           request.sseCustomerAlgorithm shouldBe uploadSettings.sseCustomerAlgorithm.orNull
           request.sseCustomerKey shouldBe uploadSettings.sseCustomerKey.orNull
@@ -269,7 +309,7 @@ class S3RequestBuilderSpec
           request.bucket shouldBe bucket
           request.key shouldBe key
           request.contentLength shouldBe contentLenght.getOrElse(null)
-          request.aclAsString shouldBe uploadSettings.acl.orNull
+          request.acl shouldBe uploadSettings.acl.orNull
           request.grantFullControl shouldBe uploadSettings.grantFullControl.orNull
           request.grantRead shouldBe uploadSettings.grantRead.orNull
           request.grantReadACP shouldBe uploadSettings.grantReadACP.orNull

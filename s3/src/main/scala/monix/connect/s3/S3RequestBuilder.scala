@@ -27,6 +27,7 @@ import monix.connect.s3.domain.{
   UploadSettings
 }
 import software.amazon.awssdk.services.s3.model.{
+  BucketCannedACL,
   CompleteMultipartUploadRequest,
   CompletedMultipartUpload,
   CompletedPart,
@@ -37,7 +38,6 @@ import software.amazon.awssdk.services.s3.model.{
   DeleteObjectRequest,
   GetObjectRequest,
   HeadObjectRequest,
-  ListObjectsRequest,
   ListObjectsV2Request,
   PutObjectRequest,
   RequestPayer,
@@ -63,9 +63,7 @@ private[s3] object S3RequestBuilder {
       .build()
   }
 
-  /**
-    * A builder for [[DeleteObjectRequest]]
-    */
+  /** A builder for [[DeleteObjectRequest]]. */
   def deleteObject(
     bucket: String,
     key: String,
@@ -84,12 +82,10 @@ private[s3] object S3RequestBuilder {
     request.build()
   }
 
-  /**
-    * A builder for [[CreateBucketRequest]]
-    */
+  /** A builder for [[CreateBucketRequest]]. */
   def createBucket(
     bucket: String,
-    acl: Option[String] = None,
+    acl: Option[BucketCannedACL] = None,
     grantFullControl: Option[String] = None,
     grantRead: Option[String] = None,
     grantReadACP: Option[String] = None,
@@ -109,9 +105,7 @@ private[s3] object S3RequestBuilder {
     request.build()
   }
 
-  /**
-    * A builder for [[CompletedPart]]
-    */
+  /** A builder for [[CompletedPart]]. */
   def completedPart(partN: Int, uploadPartResp: UploadPartResponse): CompletedPart =
     CompletedPart
       .builder()
@@ -119,9 +113,7 @@ private[s3] object S3RequestBuilder {
       .eTag(uploadPartResp.eTag())
       .build()
 
-  /**
-    * A builder for [[CompleteMultipartUploadRequest]]
-    */
+  /** A builder for [[CompleteMultipartUploadRequest]]. */
   def completeMultipartUploadRquest(
     bucket: String,
     key: String,
@@ -139,7 +131,7 @@ private[s3] object S3RequestBuilder {
     request.build()
   }
 
-  /** A builder for [[CreateMultipartUploadRequest]] */
+  /** A builder for [[CreateMultipartUploadRequest]]. */
   def createMultipartUploadRequest(
     bucket: String,
     key: String,
@@ -189,13 +181,19 @@ private[s3] object S3RequestBuilder {
     if (copyObjectSettings.metadata.nonEmpty) request.metadata(copyObjectSettings.metadata.asJava)
     copyObjectSettings.metadataDirective.map(request.metadataDirective)
     copyObjectSettings.taggingDirective.map(request.taggingDirective)
-    copyObjectSettings.requestPayer.map(request.requestPayer)
     copyObjectSettings.serverSideEncryption.map(request.serverSideEncryption)
     request.storageClass(copyObjectSettings.storageClass)
     copyObjectSettings.sseCustomerAlgorithm.map(request.sseCustomerAlgorithm)
     copyObjectSettings.sseCustomerKey.map(request.sseCustomerKey)
     copyObjectSettings.sseCustomerKeyMD5.map(request.sseCustomerKeyMD5)
     copyObjectSettings.ssekmsKeyId.map(request.ssekmsKeyId)
+    copyObjectSettings.copySourceSSECustomerAlgorithm.map(request.copySourceSSECustomerAlgorithm)
+    copyObjectSettings.copySourceSSECustomerKey.map(request.copySourceSSECustomerKey)
+    copyObjectSettings.copySourceSSECustomerKeyMD5.map(request.copySourceSSECustomerKeyMD5)
+    copyObjectSettings.objectLockRetainUntilDate.map(request.objectLockRetainUntilDate)
+    copyObjectSettings.objectLockLegalHoldStatus.map(request.objectLockLegalHoldStatus)
+    copyObjectSettings.objectLockMode.map(request.objectLockMode)
+    copyObjectSettings.requestPayer.map(request.requestPayer)
     request.build()
   }
 
@@ -258,9 +256,7 @@ private[s3] object S3RequestBuilder {
     request.build()
   }
 
-  /**
-    * A builder for [[UploadPartRequest]]
-    */
+  /** A builder for [[UploadPartRequest]]. */
   def uploadPartRequest(
     bucket: String,
     key: String,
@@ -283,9 +279,7 @@ private[s3] object S3RequestBuilder {
     request.build()
   }
 
-  /**
-    * A builder for [[PutObjectRequest]]
-    */
+  /** Builder for [[PutObjectRequest]]. */
   def putObjectRequest(
     bucket: String,
     key: String,
