@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
- * See the project homepage at: https://monix.io
+ * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,21 @@
 package monix.connect.mongodb
 
 import com.mongodb.client.model.{DeleteOptions, InsertManyOptions, InsertOneOptions, ReplaceOptions, UpdateOptions}
+import monix.connect.mongodb.domain.{
+  DefaultDeleteOptions,
+  DefaultDeleteResult,
+  DefaultInsertManyOptions,
+  DefaultInsertManyResult,
+  DefaultInsertOneOptions,
+  DefaultInsertOneResult,
+  DefaultReplaceOptions,
+  DefaultUpdateOptions,
+  DefaultUpdateResult,
+  DeleteResult,
+  InsertManyResult,
+  InsertOneResult,
+  UpdateResult
+}
 import com.mongodb.reactivestreams.client.MongoCollection
 import monix.eval.{Coeval, Task}
 import org.bson.conversions.Bson

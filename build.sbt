@@ -7,11 +7,23 @@ lazy val doNotPublishArtifact = Seq(
   publishArtifact in (Compile, packageBin) := false
 )
 
-val monixConnectSeries = "0.3.0"
+val monixConnectSeries = "0.5.0"
+
+inThisBuild(List(
+  organization := "io.monix",
+  homepage := Some(url("https://connect.monix.io")),
+  licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
+  developers := List(
+    Developer(
+      "paualarco",
+      "Pau Alarcón Cerdan",
+      "pau.alarcon.b@gmail.com",
+      url("https://connect.monix.io")
+    )
+  )
+))
 
 lazy val sharedSettings = Seq(
-  organization       := "io.monix",
-  homepage := Some(url("https://connect.monix.io")),
   scalaVersion       := "2.12.8",
   crossScalaVersions := Seq("2.12.10", "2.13.1"),
   scalafmtOnCompile  := true,
@@ -79,10 +91,9 @@ lazy val sharedSettings = Seq(
   autoAPIMappings := true,
   apiURL := Some(url("https://monix.github.io/monix-connect/api/")),
 
-  licenses      := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
   headerLicense := Some(HeaderLicense.Custom(
     """|Copyright (c) 2020-2020 by The Monix Connect Project Developers.
-       |See the project homepage at: https://monix.io
+       |See the project homepage at: https://connect.monix.io
        |
        |Licensed under the Apache License, Version 2.0 (the "License");
        |you may not use this file except in compliance with the License.
@@ -97,13 +108,6 @@ lazy val sharedSettings = Seq(
        |limitations under the License."""
       .stripMargin)),
 
-  developers := List(
-    Developer(
-      id = "paualarco",
-      name = "Pau Alarcon",
-      email = "pau.alarcon.b@gmail.com",
-      url = url("https://github.com/paualarco")
-    )),
   doctestTestFramework      := DoctestTestFramework.ScalaTest,
   doctestTestFramework      := DoctestTestFramework.ScalaCheck,
   doctestOnlyCodeBlocksMode := true
@@ -115,22 +119,6 @@ def mimaSettings(projectName: String) = Seq(
 
 mimaFailOnNoPrevious in ThisBuild := false
 
-lazy val unidocSettings = Seq(
-  //unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(akka, dynamodb, hdfs, s3, redis),
-  scalacOptions in (ScalaUnidoc, unidoc) +=
-    "-Xfatal-warnings",
-  scalacOptions in (ScalaUnidoc, unidoc) --=
-    Seq("-Ywarn-unused-import", "-Ywarn-unused:imports"),
-  scalacOptions in (ScalaUnidoc, unidoc) ++=
-    Opts.doc.title(s"Monix Connect"),
-  scalacOptions in (ScalaUnidoc, unidoc) ++=
-    Opts.doc.sourceUrl(s"https://github.com/monix/monix-connect/tree/v${version.value}€{FILE_PATH}.scala"),
-  //scalacOptions in (ScalaUnidoc, unidoc) ++=
-  //  Seq("-doc-root-content", file("rootdoc.txt").getAbsolutePath), //todo check usage
-  scalacOptions in (ScalaUnidoc, unidoc) ++=
-    Opts.doc.version(s"${version.value}")
-)
-
 def profile: Project => Project = pr => {
   val withCoverage = sys.env.getOrElse("SBT_PROFILE", "") match {
     case "coverage" => pr
@@ -141,7 +129,7 @@ def profile: Project => Project = pr => {
 
 val IT = config("it") extend Test
 
-lazy val monix = (project in file("."))
+lazy val monixConnect = (project in file("."))
   .configs(IntegrationTest, IT)
   .settings(sharedSettings)
   .settings(name := "monix-connect")
@@ -186,7 +174,7 @@ def monixConnector(
     .settings(additionalSettings: _*)
     .configure(profile)
     .configs(IntegrationTest, IT)
-    //.settings(mimaSettings(s"monix-$connectorName"))
+    .settings(mimaSettings(s"monix-$connectorName"))
 
 lazy val docs = project
   .in(file("monix-connect-docs"))
@@ -197,7 +185,6 @@ lazy val docs = project
     skipOnPublishSettings,
     mdocSettings
   )
-  .dependsOn()
   .enablePlugins(DocusaurusPlugin, MdocPlugin, ScalaUnidocPlugin)
 
 lazy val skipOnPublishSettings = Seq(
@@ -251,10 +238,10 @@ updateSiteVariables in ThisBuild := {
   val variables =
     Map[String, String](
       "organization" -> (organization in LocalRootProject).value,
-      "coreModuleName" -> (moduleName in monix).value,
+      "coreModuleName" -> (moduleName in monixConnect).value,
       "latestVersion" -> version.value,
       "scalaPublishVersions" -> {
-        val minorVersions = (crossScalaVersions in monix).value.map(minorVersion)
+        val minorVersions = (crossScalaVersions in monixConnect).value.map(minorVersion)
         if (minorVersions.size <= 2) minorVersions.mkString(" and ")
         else minorVersions.init.mkString(", ") ++ " and " ++ minorVersions.last
       }

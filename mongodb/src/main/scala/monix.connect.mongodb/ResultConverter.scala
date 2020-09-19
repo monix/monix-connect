@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
- * See the project homepage at: https://monix.io
+ * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 
 package monix.connect.mongodb
 
+import monix.connect.mongodb.domain.{DeleteResult, InsertManyResult, InsertOneResult, UpdateResult}
 import monix.execution.internal.InternalApi
 
 import scala.util.Try

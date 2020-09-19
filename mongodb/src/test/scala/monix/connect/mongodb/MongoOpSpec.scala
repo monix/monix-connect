@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
- * See the project homepage at: https://monix.io
+ * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,21 @@ import com.mongodb.client.result.{
   InsertManyResult => MongoInsertManyResult,
   InsertOneResult => MongoInsertOneResult,
   UpdateResult => MongoUpdateResult
+}
+import monix.connect.mongodb.domain.{
+  DefaultDeleteOptions,
+  DefaultDeleteResult,
+  DefaultInsertManyOptions,
+  DefaultInsertManyResult,
+  DefaultInsertOneOptions,
+  DefaultInsertOneResult,
+  DefaultReplaceOptions,
+  DefaultUpdateOptions,
+  DefaultUpdateResult,
+  DeleteResult,
+  InsertManyResult,
+  InsertOneResult,
+  UpdateResult
 }
 import monix.eval.Task
 import org.scalatest.BeforeAndAfterEach

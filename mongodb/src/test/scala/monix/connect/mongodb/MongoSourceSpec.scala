@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
- * See the project homepage at: https://monix.io
+ * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,24 +18,26 @@
 package monix.connect.mongodb
 
 import com.mongodb.client.model.{Filters, Updates}
-import com.mongodb.client.result.{DeleteResult, UpdateResult}
 import com.mongodb.reactivestreams.client.MongoCollection
-import monix.eval.{Coeval, Task}
+import monix.eval.Task
+import monix.connect.mongodb.domain.{
+  DefaultCountOptions,
+  DefaultFindOneAndDeleteOptions,
+  DefaultFindOneAndReplaceOptions,
+  DefaultFindOneAndUpdateOptions
+}
 import monix.execution.Scheduler.Implicits.global
 import monix.execution.exceptions.DummyException
 import monix.execution.schedulers.TestScheduler
 import monix.reactive.Observable
 import org.mockito.IdiomaticMockito
 import org.mockito.MockitoSugar.{times, verify, when}
-import org.reactivestreams.Publisher
-import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
-import scala.jdk.CollectionConverters._
 import scala.util.Failure
 
 class MongoSourceSpec

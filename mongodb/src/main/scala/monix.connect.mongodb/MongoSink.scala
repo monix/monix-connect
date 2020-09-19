@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
- * See the project homepage at: https://monix.io
+ * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,13 @@ import monix.reactive.observers.Subscriber
 import com.mongodb.reactivestreams.client.MongoCollection
 import monix.eval.Coeval
 import monix.execution.internal.InternalApi
+import monix.connect.mongodb.domain.{
+  DefaultDeleteOptions,
+  DefaultInsertManyOptions,
+  DefaultInsertOneOptions,
+  DefaultReplaceOptions,
+  DefaultUpdateOptions
+}
 import org.bson.conversions.Bson
 import org.reactivestreams.Publisher
 

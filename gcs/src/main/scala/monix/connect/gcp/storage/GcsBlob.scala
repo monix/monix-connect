@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
- * See the project homepage at: https://monix.io
+ * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ private[storage] final class GcsBlob(val underlying: Blob) extends GcsDownloader
     *
     * == Example ==
     *
-    * {
+    * {{{
     *   import monix.connect.gcp.storage.{GcsStorage, GcsBlob}
     *   import monix.eval.Task
     *   import monix.reactive.Observable
@@ -62,7 +62,7 @@ private[storage] final class GcsBlob(val underlying: Blob) extends GcsDownloader
     *        case Some(blob) => blob.download()
     *        case None => Observable.empty
     *      }
-    * }
+    * }}}
     *
     */
   def download(chunkSize: Int = 4096): Observable[Array[Byte]] = {

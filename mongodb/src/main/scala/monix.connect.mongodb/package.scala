@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
- * See the project homepage at: https://monix.io
+ * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,6 @@
 
 package monix.connect
 
-import com.mongodb.client.model.{
-  CountOptions,
-  DeleteOptions,
-  FindOneAndDeleteOptions,
-  FindOneAndReplaceOptions,
-  FindOneAndUpdateOptions,
-  InsertManyOptions,
-  InsertOneOptions,
-  ReplaceOptions,
-  UpdateOptions
-}
 import monix.eval.{Coeval, Task}
 import monix.execution.internal.InternalApi
 import org.reactivestreams.Publisher
@@ -35,35 +24,6 @@ import org.reactivestreams.Publisher
 import scala.concurrent.duration.FiniteDuration
 
 package object mongodb {
-
-  // default options
-  @InternalApi private[mongodb] val DefaultDeleteOptions = new DeleteOptions()
-  @InternalApi private[mongodb] val DefaultCountOptions = new CountOptions()
-  @InternalApi private[mongodb] val DefaultFindOneAndDeleteOptions = new FindOneAndDeleteOptions()
-  @InternalApi private[mongodb] val DefaultFindOneAndReplaceOptions = new FindOneAndReplaceOptions()
-  @InternalApi private[mongodb] val DefaultFindOneAndUpdateOptions = new FindOneAndUpdateOptions()
-  @InternalApi private[mongodb] val DefaultInsertOneOptions = new InsertOneOptions()
-  @InternalApi private[mongodb] val DefaultInsertManyOptions = new InsertManyOptions()
-  @InternalApi private[mongodb] val DefaultUpdateOptions = new UpdateOptions()
-  @InternalApi private[mongodb] val DefaultReplaceOptions = new ReplaceOptions()
-
-  // results
-  @InternalApi private[mongodb] case class DeleteResult(deleteCount: Long, wasAcknowledged: Boolean)
-  @InternalApi private[mongodb] case class InsertOneResult(insertedId: Option[String], wasAcknowledged: Boolean)
-  @InternalApi private[mongodb] case class InsertManyResult(insertedIds: Set[String], wasAcknowledged: Boolean)
-  @InternalApi private[mongodb] case class UpdateResult(
-    matchedCount: Long,
-    modifiedCount: Long,
-    wasAcknowledged: Boolean)
-
-  // default results
-  @InternalApi private[mongodb] val DefaultDeleteResult = DeleteResult(deleteCount = 0L, wasAcknowledged = false)
-  @InternalApi private[mongodb] val DefaultInsertOneResult =
-    InsertOneResult(insertedId = Option.empty[String], wasAcknowledged = false)
-  @InternalApi private[mongodb] val DefaultInsertManyResult =
-    InsertManyResult(insertedIds = Set.empty[String], wasAcknowledged = false)
-  @InternalApi private[mongodb] val DefaultUpdateResult =
-    UpdateResult(matchedCount = 0L, modifiedCount = 0L, wasAcknowledged = false)
 
   /**
     * An internal method used by those operations that wants to implement a retry interface based on

@@ -20,7 +20,6 @@ package monix.connect.mongodb
 import org.scalatest.flatspec.AnyFlatSpecLike
 import monix.execution.Scheduler.Implicits.global
 import com.mongodb.client.model.{Collation, CollationCaseFirst, DeleteOptions, Filters, Updates}
-import monix.eval.Task
 import org.bson.conversions.Bson
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
@@ -105,10 +104,9 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     val e = genEmployee.sample.get
 
     //when
-    val r: InsertOneResult = MongoOp.insertOne(col, e).runSyncUnsafe()
+    val r = MongoOp.insertOne(col, e).runSyncUnsafe()
 
     //then
-    val result = Task.fromReactivePublisher(col.insertOne(e)).runSyncUnsafe()
     r.insertedId.isDefined shouldBe true
     r.wasAcknowledged shouldBe true
 

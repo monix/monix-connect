@@ -127,15 +127,13 @@ const index = `
     const Layer1 = () => (
                     <Block layout="fourColumn">
                       {[
-
-                       ,
-                       {
-                        image: `${baseUrl}img/redis.png`,
-                        imageAlign: 'left'
-                       },
                         {
                         image: `${baseUrl}img/gcs.png`,
-                        imageAlign: 'right'
+                        imageAlign: 'left'
+                        },
+                        {
+                        image: `${baseUrl}img/amazon-dynamo-db.png`,
+                        imageAlign: 'left'
                         },
                         {
                         image: `${baseUrl}img/parquet.png`,
@@ -150,16 +148,14 @@ const index = `
     const Layer2 = () => (
           <Block layout="fourColumn">
             {[
-
+            {
+             image: `${baseUrl}img/redis.png`,
+             imageAlign: 'left'
+            },
               {
               image: `${baseUrl}img/akka.png`,
-              imageAlign: 'left'
-              },
-               {
-               image: `${baseUrl}img/amazon-dynamo-db.png`,
-               imageAlign: 'left'
-               }
-
+              imageAlign: 'right'
+              }
             ]}
           </Block>
         );

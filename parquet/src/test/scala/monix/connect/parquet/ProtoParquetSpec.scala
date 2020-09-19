@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
- * See the project homepage at: https://monix.io
+ * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,14 @@ import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
 import org.apache.avro.generic.GenericRecord
 import org.apache.parquet.hadoop.ParquetWriter
-import org.scalatest.BeforeAndAfterAll
+import org.scalatest.{BeforeAndAfterAll, Ignore}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
+
 import scala.concurrent.duration._
 
+@Ignore //"There is a blocker on writing from proto to parquet: https://github.com/scalapb/ScalaPB/issues/844"
 class ProtoParquetSpec
   extends AnyWordSpecLike with Matchers with ProtoParquetFixture with AvroParquetFixture with BeforeAndAfterAll
   with Eventually {
