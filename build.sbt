@@ -23,6 +23,8 @@ inThisBuild(List(
   )
 ))
 
+skip in publish := true //requered by sbt-ci-release
+
 lazy val sharedSettings = Seq(
   scalaVersion       := "2.12.8",
   crossScalaVersions := Seq("2.12.10", "2.13.1"),
@@ -192,7 +194,6 @@ lazy val skipOnPublishSettings = Seq(
   publish := (()),
   publishLocal := (()),
   publishArtifact := false,
-  publishTo := None
 )
 
 lazy val mdocSettings = Seq(
