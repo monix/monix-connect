@@ -1,12 +1,5 @@
 import sbt.Keys.version
 
-lazy val doNotPublishArtifact = Seq(
-  publishArtifact                          := false,
-  publishArtifact in (Compile, packageDoc) := false,
-  publishArtifact in (Compile, packageSrc) := false,
-  publishArtifact in (Compile, packageBin) := false
-)
-
 val monixConnectSeries = "0.4.0"
 
 inThisBuild(List(
@@ -86,7 +79,6 @@ lazy val sharedSettings = Seq(
   //dependencyClasspath in IntegrationTest := (dependencyClasspath in IntegrationTest).value ++ (exportedProducts in Test).value,
   // https://github.com/sbt/sbt/issues/2654
   incOptions := incOptions.value.withLogRecompileOnMacro(false),
-  publishArtifact in Test := false,
   pomIncludeRepository    := { _ => false }, // removes optional dependencies
 
   // ScalaDoc settings
@@ -191,8 +183,6 @@ lazy val docs = project
 
 lazy val skipOnPublishSettings = Seq(
   skip in publish := true,
-  publish := (()),
-  publishLocal := (()),
   publishArtifact := false,
 )
 
