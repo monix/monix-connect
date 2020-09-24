@@ -48,8 +48,7 @@ object Parquet {
     * @tparam T A hinder kinded type that represents element type of the parquet file to be read.
     * @return All the elements of type [[T]] the specified parquet file as [[Observable]]
     */
-  def reader[T](reader: ParquetReader[T])(implicit scheduler: Scheduler): Observable[T] = {
-    ParquetPublisher(reader).create
+  def fromReaderUnsafe[T](reader: ParquetReader[T])(implicit scheduler: Scheduler): Observable[T] = {
+    new ParquetPublisher[T](reader)
   }
-
 }

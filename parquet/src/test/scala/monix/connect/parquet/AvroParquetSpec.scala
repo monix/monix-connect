@@ -61,7 +61,7 @@ class AvroParquetSpec extends AnyWordSpecLike with Matchers with AvroParquetFixt
         .runSyncUnsafe()
 
       //when
-      val result: List[GenericRecord] = Parquet.reader(avroParquetReader(file, conf)).toListL.runSyncUnsafe()
+      val result: List[GenericRecord] = Parquet.fromReaderUnsafe(avroParquetReader(file, conf)).toListL.runSyncUnsafe()
 
       //then
       result.length shouldEqual n

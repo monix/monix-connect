@@ -19,6 +19,7 @@ package monix.connect.parquet
 
 import monix.execution.{Ack, Callback, Scheduler}
 import monix.execution.cancelables.AssignableCancelable
+import monix.execution.internal.Platform
 import monix.reactive.Consumer
 import monix.reactive.observers.Subscriber
 import org.apache.parquet.hadoop.ParquetWriter
@@ -36,32 +37,50 @@ class ParquetSubscriber[T](parquetWriter: ParquetWriter[T]) extends Consumer.Syn
     callback: Callback[Throwable, Long],
     s: Scheduler): (Subscriber.Sync[T], AssignableCancelable) = {
     val out = new Subscriber.Sync[T] {
-      override implicit def scheduler: Scheduler = s
+      override implicit val scheduler: Scheduler = s
 
       //the number of parquet files that has been written that is returned as materialized value
-      var nElements: Long = 0
+      private[this] var nElements: Long = 0
+
+      // Protects from the situation where last onNext throws, we call onError and then
+      // upstream calls onError or onComplete again
+      private[this] var isDone = false
+
       override def onNext(record: T): Ack = {
         try {
           parquetWriter.write(record)
           nElements = nElements + 1
           monix.execution.Ack.Continue
         } catch {
-          case ex if NonFatal(ex) => {
+          case ex if NonFatal(ex) =>
             onError(ex)
             Ack.Stop
-          }
         }
       }
 
-      override def onComplete() = {
-        parquetWriter.close()
-        callback.onSuccess(nElements)
-      }
+      override def onComplete(): Unit =
+        if (!isDone) {
+          isDone = true
+          try {
+            parquetWriter.close()
+            callback.onSuccess(nElements)
+          } catch {
+            case NonFatal(ex) =>
+              callback.onError(ex)
+          }
+        }
 
-      override def onError(ex: Throwable): Unit = {
-        parquetWriter.close()
-        callback.onError(ex)
-      }
+      override def onError(ex: Throwable): Unit =
+        if (!isDone) {
+          isDone = true
+          try {
+            parquetWriter.close()
+            callback.onError(ex)
+          } catch {
+            case NonFatal(ex2) =>
+              callback.onError(Platform.composeErrors(ex, ex2))
+          }
+        }
     }
 
     (out, AssignableCancelable.dummy)

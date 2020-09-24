@@ -92,7 +92,7 @@ class ProtoParquetSpec
         .runSyncUnsafe()
 
       //when
-      val l: List[ProtoDoc.Builder] = Parquet.reader(protoParquetReader(file, conf)).toListL.runSyncUnsafe()
+      val l: List[ProtoDoc.Builder] = Parquet.fromReaderUnsafe(protoParquetReader(file, conf)).toListL.runSyncUnsafe()
 
       //then
       l.length shouldEqual 1
