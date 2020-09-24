@@ -1,13 +1,6 @@
 import sbt.Keys.version
 
-lazy val doNotPublishArtifact = Seq(
-  publishArtifact                          := false,
-  publishArtifact in (Compile, packageDoc) := false,
-  publishArtifact in (Compile, packageSrc) := false,
-  publishArtifact in (Compile, packageBin) := false
-)
-
-val monixConnectSeries = "0.5.0"
+val monixConnectSeries = "0.4.0"
 
 inThisBuild(List(
   organization := "io.monix",
@@ -22,6 +15,8 @@ inThisBuild(List(
     )
   )
 ))
+
+skip in publish := true //requered by sbt-ci-release
 
 lazy val sharedSettings = Seq(
   scalaVersion       := "2.12.8",
@@ -84,7 +79,6 @@ lazy val sharedSettings = Seq(
   //dependencyClasspath in IntegrationTest := (dependencyClasspath in IntegrationTest).value ++ (exportedProducts in Test).value,
   // https://github.com/sbt/sbt/issues/2654
   incOptions := incOptions.value.withLogRecompileOnMacro(false),
-  publishArtifact in Test := false,
   pomIncludeRepository    := { _ => false }, // removes optional dependencies
 
   // ScalaDoc settings
@@ -133,8 +127,8 @@ lazy val monixConnect = (project in file("."))
   .configs(IntegrationTest, IT)
   .settings(sharedSettings)
   .settings(name := "monix-connect")
+  .settings(skipOnPublishSettings)
   .aggregate(akka, dynamodb, gcs, hdfs, mongodb, parquet, redis, s3)
-  .dependsOn(akka, dynamodb, gcs, hdfs, mongodb, parquet, redis, s3)
 
 lazy val akka = monixConnector("akka", Dependencies.Akka)
 
@@ -174,7 +168,7 @@ def monixConnector(
     .settings(additionalSettings: _*)
     .configure(profile)
     .configs(IntegrationTest, IT)
-    .settings(mimaSettings(s"monix-$connectorName"))
+    //.settings(mimaSettings(s"monix-$connectorName"))
 
 lazy val docs = project
   .in(file("monix-connect-docs"))
@@ -189,10 +183,7 @@ lazy val docs = project
 
 lazy val skipOnPublishSettings = Seq(
   skip in publish := true,
-  publish := (()),
-  publishLocal := (()),
   publishArtifact := false,
-  publishTo := None
 )
 
 lazy val mdocSettings = Seq(

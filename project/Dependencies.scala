@@ -5,7 +5,7 @@ object Dependencies {
   object Versions {
     
     //main
-    val AkkaStreams = "2.6.4"
+    val AkkaStreams = "2.6.9"
     val AWS = "1.11.749"
     val Cats_Effect = "2.1.3"
     val DynamoDb = "2.10.60"
@@ -14,7 +14,7 @@ object Dependencies {
     val Monix = "3.2.0"
     val MongoScala = "2.9.0"
     val MongoReactiveStreams = "4.1.0"
-    val S3 = "2.14.16"
+    val S3 = "2.14.21"
     val Parquet = "1.11.1"
 
     //test
@@ -74,8 +74,8 @@ object Dependencies {
   ) ++ commonDependencies(hasIntegrationTest = false)
 
   val S3 = Seq(
-    "software.amazon.awssdk" % "s3" % "2.14.6",
-    "org.scalatestplus" %% "scalacheck-1-14" % "3.1.4.0" % Test
+    "software.amazon.awssdk" % "s3" % "2.14.25",
+    "org.scalatestplus" %% "scalacheck-1-14" % "3.1.1.1" % Test
   ) ++ commonDependencies(hasIntegrationTest = true)
 
   val Redis = Seq(
