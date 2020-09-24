@@ -30,8 +30,8 @@ import monix.execution.Ack
 private[parquet] class ParquetPublisher[T](reader: ParquetReader[T]) {
 
   /**
-    * A tailrec function that reads a record of a parquet file until the last one.
-    * @param sub The subscriber to feed with the parquet records read.
+    * A recursive function that keeps reading records from a parquet file until the last one.
+    * @param sub The upstream subscriber to feed with the read records.
     */
   private def readRecords(sub: Subscriber[T]): Task[Unit] = {
     val t = Task(reader.read())
