@@ -29,12 +29,11 @@ object Parquet {
     * @param writer The apache hadoop generic implementation of a parquet writer.
     *               See the following known implementations of [[ParquetWriter]] for avro and protobuf respectively:
     *               [[org.apache.parquet.avro.AvroParquetWriter]], [[org.apache.parquet.proto.ProtoParquetWriter]].
-    * @param scheduler An implicit [[Scheduler]] instance to be in the scope of the call.
     * @tparam T A hinder kinded type that represents the element type of the parquet file to be written.
     * @return A [[Consumer]] that expects records of type [[T]] to be passed and materializes to [[Long]]
     *         that represents the number of elements written.
     */
-  def writer[T](writer: ParquetWriter[T])(implicit scheduler: Scheduler): Consumer[T, Long] = {
+  def writer[T](writer: ParquetWriter[T]): Consumer[T, Long] = {
     new ParquetSubscriber[T](writer)
   }
 
@@ -44,12 +43,10 @@ object Parquet {
     * @param reader The apache hadoop generic implementation of a parquet reader.
     *               See the following known implementations of [[ParquetWriter]] for avro and protobuf respectively:
     *               [[org.apache.parquet.avro.AvroParquetWriter]], [[org.apache.parquet.proto.ProtoParquetWriter]].
-    * @param scheduler An implicit [[Scheduler]] instance to be in the scope of the call.
     * @tparam T A hinder kinded type that represents element type of the parquet file to be read.
     * @return All the elements of type [[T]] the specified parquet file as [[Observable]]
     */
-  def reader[T](reader: ParquetReader[T])(implicit scheduler: Scheduler): Observable[T] = {
-    ParquetPublisher(reader).create
+  def fromReaderUnsafe[T](reader: ParquetReader[T]): Observable[T] = {
+    new ParquetPublisher[T](reader)
   }
-
 }
