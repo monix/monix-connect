@@ -113,21 +113,12 @@ def mimaSettings(projectName: String) = Seq(
 
 mimaFailOnNoPrevious in ThisBuild := false
 
-def profile: Project => Project = pr => {
-  val withCoverage = sys.env.getOrElse("SBT_PROFILE", "") match {
-    case "coverage" => pr
-    case _ => pr.disablePlugins(scoverage.ScoverageSbtPlugin)
-  }
-  withCoverage.enablePlugins(AutomateHeaderPlugin)
-}
-
 val IT = config("it") extend Test
 
 lazy val monixConnect = (project in file("."))
   .configs(IntegrationTest, IT)
   .settings(sharedSettings)
   .settings(name := "monix-connect")
-  .settings(skipOnPublishSettings)
   .aggregate(akka, dynamodb, gcs, hdfs, mongodb, parquet, redis, s3)
 
 lazy val akka = monixConnector("akka", Dependencies.Akka)
@@ -166,8 +157,8 @@ def monixConnector(
     .settings(name := s"monix-$connectorName", libraryDependencies ++= projectDependencies, Defaults.itSettings)
     .settings(sharedSettings)
     .settings(additionalSettings: _*)
-    .configure(profile)
     .configs(IntegrationTest, IT)
+    .enablePlugins(AutomateHeaderPlugin)
     //.settings(mimaSettings(s"monix-$connectorName"))
 
 lazy val docs = project
