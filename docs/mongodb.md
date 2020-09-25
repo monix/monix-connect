@@ -86,7 +86,7 @@ val isRenamed: Task[Boolean] = MongoDb.renameCollection(db, "oldCollection", "ne
 
 ### Drop
 
-And finally and _drop_ either the whole _database_ or a single _collection_.
+And finally _drop_ either the whole _database_ or a single _collection_.
 
 ```scala
 val databases: Task[Boolean] = MongoDb.dropDatabase(db)

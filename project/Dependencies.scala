@@ -5,7 +5,7 @@ object Dependencies {
   object Versions {
     
     //main
-    val AkkaStreams = "2.6.4"
+    val AkkaStreams = "2.6.9"
     val AWS = "1.11.749"
     val Cats_Effect = "2.1.3"
     val DynamoDb = "2.10.60"
@@ -14,7 +14,7 @@ object Dependencies {
     val Monix = "3.2.0"
     val MongoScala = "2.9.0"
     val MongoReactiveStreams = "4.1.0"
-    val S3 = "2.14.12"
+    val S3 = "2.14.21"
     val Parquet = "1.11.1"
 
     //test
@@ -32,7 +32,7 @@ object Dependencies {
 
   private val CommonProjectDependencies = Seq(
     "io.monix" %% "monix-reactive" % Versions.Monix,
-    "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.6", //todo used as replacement for `collection.JavaConverters`
+    "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0", //todo used as replacement for `collection.JavaConverters`
     "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0"
   )
 
@@ -47,7 +47,6 @@ object Dependencies {
 
   val DynamoDb = Seq(
     "com.amazonaws" % "aws-java-sdk-core" % Versions.AWS,
-    // "com.amazonaws"  % "aws-java-sdk-dynamodb" % DependencyVersions.AWS, //todo compatibility with java sdk aws
     "software.amazon.awssdk" % "dynamodb" % Versions.DynamoDb
   ) ++ commonDependencies(hasIntegrationTest = true)
 
@@ -75,9 +74,7 @@ object Dependencies {
   ) ++ commonDependencies(hasIntegrationTest = false)
 
   val S3 = Seq(
-    "software.amazon.awssdk" % "s3" % Versions.S3,
-    "com.amazonaws" % "aws-java-sdk-core" % Versions.AWS % IntegrationTest,
-    "com.amazonaws" % "aws-java-sdk-s3" % Versions.AWS % IntegrationTest,
+    "software.amazon.awssdk" % "s3" % "2.14.25",
     "org.scalatestplus" %% "scalacheck-1-14" % "3.1.1.1" % Test
   ) ++ commonDependencies(hasIntegrationTest = true)
 

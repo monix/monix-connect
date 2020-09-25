@@ -2,22 +2,23 @@ package monix.connect.s3
 
 import java.io.{File, FileInputStream}
 import java.net.URI
+import java.time.Duration
 
-import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
-import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
-import com.amazonaws.regions.Regions.US_EAST_1
-import com.amazonaws.services.s3.AmazonS3ClientBuilder
-import monix.eval.Task
+import monix.eval.{Coeval, Task}
 import monix.execution.Scheduler
 import monix.reactive.Observable
+import org.scalacheck.Gen
 import org.scalatest.TestSuite
 import software.amazon.awssdk.regions.Region.AWS_GLOBAL
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
 
 trait S3Fixture {
   this: TestSuite =>
+
+  val nonEmptyString = Coeval("test" + Gen.nonEmptyListOf(Gen.alphaLowerChar).sample.get.mkString.take(50))
 
   val resourceFile = (fileName: String) => s"s3/src/it/resources/${fileName}"
 
@@ -26,16 +27,17 @@ trait S3Fixture {
   val s3AccessKey: String = "TESTKEY"
   val s3SecretKey: String = "TESTSECRET"
 
-  val s3SyncClient = AmazonS3ClientBuilder
-    .standard()
-    .withPathStyleAccessEnabled(true)
-    .withEndpointConfiguration(new EndpointConfiguration(minioEndPoint, US_EAST_1.getName))
-    .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(s3AccessKey, s3SecretKey)))
-    .build
+  val httpClient = NettyNioAsyncHttpClient.builder()
+    .maxConcurrency(500)
+    .maxPendingConnectionAcquires(50000)
+    .connectionAcquisitionTimeout(Duration.ofSeconds(60))
+    .readTimeout(Duration.ofSeconds(60))
+    .build();
 
   val basicAWSCredentials = AwsBasicCredentials.create(s3AccessKey, s3SecretKey)
-  val s3AsyncClient: S3AsyncClient = S3AsyncClient
+  implicit val s3AsyncClient: S3AsyncClient = S3AsyncClient
     .builder()
+    .httpClient(httpClient)
     .credentialsProvider(StaticCredentialsProvider.create(basicAWSCredentials))
     .region(AWS_GLOBAL)
     .endpointOverride(URI.create(minioEndPoint))
@@ -44,8 +46,8 @@ trait S3Fixture {
   def getRequest(bucket: String, key: String): GetObjectRequest =
     GetObjectRequest.builder().bucket(bucket).key(key).build()
 
-  def download(bucketName: String, key: String)(implicit scheduler: Scheduler): Option[Array[Byte]] = {
-    val s3LocalPath = s"minio/data/${bucketName}/${key}"
+  def download(bucket: String, key: String)(implicit scheduler: Scheduler): Option[Array[Byte]] = {
+    val s3LocalPath = s"minio/data/${bucket}/${key}"
     downloadFromFile(s3LocalPath)
   }
 
