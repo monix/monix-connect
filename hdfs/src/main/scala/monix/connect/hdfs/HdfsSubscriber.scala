@@ -30,8 +30,8 @@ import scala.util.control.NonFatal
   *
   * @see https://hadoop.apache.org/docs/r2.8.2/api/org/apache/hadoop/fs/FileSystem.html
   * @see https://hadoop.apache.org/docs/r0.23.11/hadoop-project-dist/hadoop-common/core-default.xml
-  * @param fs
-  * @param path
+  * @param fs          An abstract base class for a fairly generic filesystem.
+  * @param path        Names a file or directory in a [[FileSystem]]. Path strings use slash as the directory separator.
   * @param overwrite   When a file with this name already exists, then if true, the file will be overwritten.
   *                    And if false an [[java.io.IOException]] will be thrown.
   *                    Files are overwritten by default.

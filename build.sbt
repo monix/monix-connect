@@ -1,12 +1,5 @@
 import sbt.Keys.version
 
-lazy val doNotPublishArtifact = Seq(
-  publishArtifact                          := false,
-  publishArtifact in (Compile, packageDoc) := false,
-  publishArtifact in (Compile, packageSrc) := false,
-  publishArtifact in (Compile, packageBin) := false
-)
-
 val monixConnectSeries = "0.4.0"
 
 inThisBuild(List(
@@ -22,6 +15,8 @@ inThisBuild(List(
     )
   )
 ))
+
+skip in publish := true //requered by sbt-ci-release
 
 lazy val sharedSettings = Seq(
   scalaVersion       := "2.12.8",
@@ -84,7 +79,6 @@ lazy val sharedSettings = Seq(
   //dependencyClasspath in IntegrationTest := (dependencyClasspath in IntegrationTest).value ++ (exportedProducts in Test).value,
   // https://github.com/sbt/sbt/issues/2654
   incOptions := incOptions.value.withLogRecompileOnMacro(false),
-  publishArtifact in Test := false,
   pomIncludeRepository    := { _ => false }, // removes optional dependencies
 
   // ScalaDoc settings
@@ -119,14 +113,6 @@ def mimaSettings(projectName: String) = Seq(
 
 mimaFailOnNoPrevious in ThisBuild := false
 
-def profile: Project => Project = pr => {
-  val withCoverage = sys.env.getOrElse("SBT_PROFILE", "") match {
-    case "coverage" => pr
-    case _ => pr.disablePlugins(scoverage.ScoverageSbtPlugin)
-  }
-  withCoverage.enablePlugins(AutomateHeaderPlugin)
-}
-
 val IT = config("it") extend Test
 
 lazy val monixConnect = (project in file("."))
@@ -134,7 +120,6 @@ lazy val monixConnect = (project in file("."))
   .settings(sharedSettings)
   .settings(name := "monix-connect")
   .aggregate(akka, dynamodb, gcs, hdfs, mongodb, parquet, redis, s3)
-  .dependsOn(akka, dynamodb, gcs, hdfs, mongodb, parquet, redis, s3)
 
 lazy val akka = monixConnector("akka", Dependencies.Akka)
 
@@ -172,9 +157,9 @@ def monixConnector(
     .settings(name := s"monix-$connectorName", libraryDependencies ++= projectDependencies, Defaults.itSettings)
     .settings(sharedSettings)
     .settings(additionalSettings: _*)
-    .configure(profile)
     .configs(IntegrationTest, IT)
-    .settings(mimaSettings(s"monix-$connectorName"))
+    .enablePlugins(AutomateHeaderPlugin)
+    //.settings(mimaSettings(s"monix-$connectorName"))
 
 lazy val docs = project
   .in(file("monix-connect-docs"))
@@ -189,10 +174,7 @@ lazy val docs = project
 
 lazy val skipOnPublishSettings = Seq(
   skip in publish := true,
-  publish := (()),
-  publishLocal := (()),
   publishArtifact := false,
-  publishTo := None
 )
 
 lazy val mdocSettings = Seq(
