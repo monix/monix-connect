@@ -1,11 +1,26 @@
+/*
+ * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * See the project homepage at: https://connect.monix.io
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package monix.connect.s3
 
-import java.io.FileInputStream
 import java.lang.Thread.sleep
 
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
-import monix.reactive.{Consumer, Observable}
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
@@ -13,7 +28,6 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import software.amazon.awssdk.services.s3.model._
 
-import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
@@ -128,13 +142,8 @@ class ListObjectsObservableSuite
 
     "list objects fails when bucket does not exists" in {
       //given/when
-      val f = {
-        for {
-          a <- S3.listObjects("no-existing-bucket", prefix = Some("prefix")).toListL
-          b <- Task.unit
-        } yield b
-      }.runToFuture
-      sleep(400)
+      val f = S3.listObjects("no-existing-bucket", prefix = Some("prefix")).toListL.runToFuture
+      sleep(200)
 
       //then
       f.value.get shouldBe a[Failure[NoSuchBucketException]]

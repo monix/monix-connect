@@ -5,7 +5,7 @@ import java.io.FileInputStream
 import monix.eval.Task
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
-import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadResponse, CopyObjectResponse, CreateBucketRequest, NoSuchBucketException, NoSuchKeyException, PutObjectResponse, S3Object}
+import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadResponse, CopyObjectResponse, NoSuchBucketException, NoSuchKeyException, PutObjectResponse}
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.matchers.should.Matchers
 import Thread.sleep
@@ -447,52 +447,9 @@ class S3ITest
       isPresent2 shouldBe false
     }
 
-    "limit the list to the maximum number of objects" in {
+    "list all objects" in {
       //given
-      val n = 10
-      val prefix = s"test-list-all-truncated/${nonEmptyString.value()}/"
-      val keys: List[String] =
-        Gen.listOfN(n, Gen.nonEmptyListOf(Gen.alphaChar).map(l => prefix + l.mkString)).sample.get
-      val contents: List[String] = Gen.listOfN(n, Gen.alphaUpperStr).sample.get
-      Task
-        .sequence(keys.zip(contents).map { case (key, content) => S3.upload(bucketName, key, content.getBytes()) })
-        .runSyncUnsafe()
-
-      //when
-      val s3Objects = S3.listObjects(bucketName, maxTotalKeys = Some(1), prefix = Some(prefix)).toListL.runSyncUnsafe()
-
-      //then
-      s3Objects.size shouldBe 1
-      keys.contains(s3Objects.head.key) shouldBe true
-
-      //and it should be truncated
-      val request = S3RequestBuilder.listObjectsV2(bucketName, maxKeys = Some(1))
-      Task.from(s3AsyncClient.listObjectsV2(request)).runSyncUnsafe().isTruncated shouldBe true
-    }
-
-    "list objects return continuationToken when set" in {
-      //given
-      val n = 120
-      val prefix = s"test-list-continuation/${nonEmptyString.value()}/"
-      val keys: List[String] =
-        Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + nonEmptyString.value() + str)).sample.get
-      val contents: List[String] = List.fill(n)(nonEmptyString.value())
-      Task
-        .sequence(keys.zip(contents).map { case (key, content) => S3.upload(bucketName, key, content.getBytes()) })
-        .runSyncUnsafe()
-
-      //when
-      val response = Task.from(s3AsyncClient.listObjectsV2(S3RequestBuilder.listObjectsV2(bucketName, prefix = Some(prefix), maxKeys = Some(10)))).runSyncUnsafe()
-
-      //then
-      response.nextContinuationToken should not be null
-      response.continuationToken shouldBe null
-      response.isTruncated shouldBe true
-    }
-
-    "list all objects using the continuation token" in {
-      //given
-      val n = 2020
+      val n = 1000
       val prefix = s"test-list-all-truncated/${nonEmptyString.value()}/"
       val keys: List[String] =
         Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + nonEmptyString.value() + str)).sample.get
@@ -506,46 +463,6 @@ class S3ITest
 
       //then
       count shouldBe n
-    }
-
-    "list a limited number of objects using the continuation token" in {
-      //given
-      val n = 1600
-      val limit = 1300
-      val prefix = s"test-list-limit-truncated/${nonEmptyString.value()}/"
-      val keys: List[String] =
-        Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + nonEmptyString.value() + str)).sample.get
-      val contents: List[String] = List.fill(n)(nonEmptyString.value())
-      Task
-        .sequence(keys.zip(contents).map { case (key, content) => S3.upload(bucketName, key, content.getBytes()) })
-        .runSyncUnsafe()
-
-      //when
-      val s3Objects = S3.listObjects(bucketName, prefix = Some(prefix), maxTotalKeys = Some(limit)).toListL.runSyncUnsafe()
-
-      //then
-      s3Objects.size shouldBe limit
-    }
-
-    "list objects requisite of positive max total keys" in {
-      //given/when
-      val tryNegativeListObjects = Try(S3.listObjects(bucketName, prefix = Some("prefix"), maxTotalKeys = Some(-1)))
-      val tryZeroListObjects = Try(S3.listObjects(bucketName, prefix = Some("prefix"), maxTotalKeys = Some(0)))
-      val tryPositiveListObjects = Try(S3.listObjects(bucketName, prefix = Some("prefix"), maxTotalKeys = Some(1)))
-
-      //then
-      tryNegativeListObjects.isSuccess shouldBe false
-      tryZeroListObjects.isSuccess shouldBe false
-      tryPositiveListObjects.isSuccess shouldBe true
-    }
-
-    "list objects is resilient to failures" in {
-      //given/when
-      val f = S3.listObjects("no-existing-bucket", prefix = Some("prefix")).toListL.runToFuture(global)
-      sleep(400)
-
-      //then
-      f.value.get shouldBe a[Failure[NoSuchBucketException]]
     }
 
   }

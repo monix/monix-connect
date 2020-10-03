@@ -26,7 +26,11 @@ import monix.reactive.observers.Subscriber
 import monix.reactive.Consumer
 import software.amazon.awssdk.core.async.AsyncRequestBody
 import software.amazon.awssdk.services.s3.S3AsyncClient
-import software.amazon.awssdk.services.s3.model._
+import software.amazon.awssdk.services.s3.model.{
+  CompleteMultipartUploadResponse,
+  CompletedPart,
+  CreateMultipartUploadRequest
+}
 
 import scala.concurrent.Future
 import scala.util.control.NonFatal

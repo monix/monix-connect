@@ -95,7 +95,7 @@ private[s3] class ListObjectsObservable(
 
 }
 
-object ListObjectsObservable {
+private[s3] object ListObjectsObservable {
   def apply(
     bucket: String,
     prefix: Option[String],

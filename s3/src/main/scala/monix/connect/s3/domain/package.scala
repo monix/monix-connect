@@ -17,19 +17,6 @@
 
 package monix.connect.s3
 
-import java.time.Instant
-
-import software.amazon.awssdk.services.s3.model.{
-  MetadataDirective,
-  ObjectCannedACL,
-  ObjectLockLegalHoldStatus,
-  ObjectLockMode,
-  RequestPayer,
-  ServerSideEncryption,
-  StorageClass,
-  TaggingDirective
-}
-
 package object domain {
 
   /**
