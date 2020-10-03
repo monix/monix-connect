@@ -209,68 +209,6 @@ class S3ITest
       actualContent shouldBe content.getBytes()
     }
 
-    "downloadMultipart in one part" in {
-      //given
-      val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-      val content: String = nonEmptyString.value()
-      S3.upload(bucketName, key, content.getBytes).runSyncUnsafe()
-
-      //when
-      val actualContent: Array[Byte] =
-        S3.downloadMultipart(bucketName, key, 52428).toListL.map(_.flatten.toArray).runSyncUnsafe()
-
-      //then
-      S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe true
-      actualContent shouldBe a[Array[Byte]]
-      actualContent shouldBe content.getBytes()
-    }
-
-    "downloadMultipart big object" in {
-      //given
-      val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-      val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
-      val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
-      val _ = ob.consumeWith(S3.uploadMultipart(bucketName, key)).runSyncUnsafe()
-
-      //when
-      val actualContent: Array[Byte] =
-        S3.downloadMultipart(bucketName, key, 52428).toListL.map(_.flatten.toArray).runSyncUnsafe()
-
-      //then
-      val expectedArrayByte: Array[Byte] =
-        ob.foldLeftL(Array.emptyByteArray)((acc, bytes) => acc ++ bytes).runSyncUnsafe()
-      S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe true
-      actualContent shouldBe a[Array[Byte]]
-      actualContent shouldBe expectedArrayByte
-    }
-
-    "downloadMultipart from a non existin object returns an empty byte array" in {
-      //given
-      val key: String = "non/existing/key"
-
-      //when
-      val result: Array[Byte] = S3.downloadMultipart(bucketName, key, 1).toListL.map(_.flatten.toArray).runSyncUnsafe()
-
-      //then
-      result shouldBe Array.emptyByteArray
-      S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe false
-      result shouldBe a[Array[Byte]]
-    }
-
-    "downloading in multipart from a non existing bucket object returns failure" in {
-      //given
-      val bucket: String = "non-existing-bucket"
-      val key: String = "non/existing/key"
-
-      //when
-      val f = S3.downloadMultipart(bucket, key, 1).toListL.map(_.flatten.toArray).runToFuture(global)
-      sleep(400)
-
-      //then
-      f.value.get shouldBe a[Failure[NoSuchBucketException]]
-      S3.existsObject(bucket, key).runSyncUnsafe() shouldBe false
-    }
-
   }
 
   it should {
@@ -564,11 +502,10 @@ class S3ITest
         .runSyncUnsafe()
 
       //when
-      val s3Objects = S3.listObjects(bucketName, prefix = Some(prefix), maxTotalKeys = Some(n)).toListL.runSyncUnsafe()
+      val count = S3.listObjects(bucketName, prefix = Some(prefix), maxTotalKeys = Some(n)).countL.runSyncUnsafe()
 
       //then
-      s3Objects.size shouldBe n
-      s3Objects.map(_.key) should contain theSameElementsAs keys
+      count shouldBe n
     }
 
     "list a limited number of objects using the continuation token" in {
