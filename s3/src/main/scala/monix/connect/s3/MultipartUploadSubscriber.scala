@@ -20,6 +20,7 @@ package monix.connect.s3
 import monix.connect.s3.domain.UploadSettings
 import monix.eval.Task
 import monix.execution.cancelables.AssignableCancelable
+import monix.execution.internal.InternalApi
 import monix.execution.{Ack, Callback, Scheduler}
 import monix.reactive.observers.Subscriber
 import monix.reactive.Consumer
@@ -40,6 +41,7 @@ import scala.util.control.NonFatal
   * The object is constructed from the different uploaded parts, and you can
   * then access the object just as you would any other object in your bucket.
   */
+@InternalApi
 private[s3] class MultipartUploadSubscriber(
   bucket: String,
   key: String,

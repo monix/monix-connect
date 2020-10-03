@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * See the project homepage at: https://connect.monix.io
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package monix.connect.s3
 
 import monix.connect.s3.S3.{download, listObjects}
@@ -21,9 +38,9 @@ private[s3] class MultipartDownloadObservable(
 
   require(chunkSize > 0, "Chunk size must be a positive number.")
 
-  private[self] val resizedChunk: Long = chunkSize - 1L
-  private[self] val firstChunkRange = s"bytes=0-${resizedChunk}"
-  private[self] val initialRequest: GetObjectRequest =
+  private[this] val resizedChunk: Long = chunkSize - 1L
+  private[this] val firstChunkRange = s"bytes=0-${resizedChunk}"
+  private[this] val initialRequest: GetObjectRequest =
     S3RequestBuilder.getObjectRequest(bucket, key, Some(firstChunkRange), downloadSettings)
 
   def unsafeSubscribeFn(subscriber: Subscriber[Array[Byte]]): Cancelable = {
@@ -42,8 +59,7 @@ private[s3] class MultipartDownloadObservable(
     f
   }
 
-  @InternalApi
-  private[self] def downloadChunk(
+  private[this] def downloadChunk(
     sub: Subscriber[Array[Byte]],
     totalSize: Long,
     chunkSize: Long,

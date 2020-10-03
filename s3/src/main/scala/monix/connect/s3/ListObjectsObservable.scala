@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * See the project homepage at: https://connect.monix.io
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package monix.connect.s3
 
 import monix.eval.Task
@@ -16,11 +33,10 @@ private[s3] class ListObjectsObservable(
   requestPayer: Option[RequestPayer] = None,
   s3AsyncClient: S3AsyncClient)
   extends Observable[ListObjectsV2Response] {
-  self =>
 
   require(maxTotalKeys.getOrElse(1) > 0, "The max number of keys, if defined, needs to be higher or equal than 1.")
-  private[self] val firstRequestSize = maxTotalKeys.map(maxKeys => math.min(maxKeys, domain.awsDefaulMaxKeysList))
-  private[self] val initialRequest: ListObjectsV2Request =
+  private[this] val firstRequestSize = maxTotalKeys.map(maxKeys => math.min(maxKeys, domain.awsDefaulMaxKeysList))
+  private[this] val initialRequest: ListObjectsV2Request =
     S3RequestBuilder.listObjectsV2(bucket, prefix = prefix, maxKeys = firstRequestSize, requestPayer = requestPayer)
 
   def unsafeSubscribeFn(subscriber: Subscriber[ListObjectsV2Response]): Cancelable = {
@@ -28,7 +44,7 @@ private[s3] class ListObjectsObservable(
     nextListRequest(subscriber, maxTotalKeys, initialRequest).runToFuture(s)
   }
 
-  private[self] def prepareNextRequest(continuationToken: String, pendingKeys: Option[Int]): ListObjectsV2Request = {
+  private[this] def prepareNextRequest(continuationToken: String, pendingKeys: Option[Int]): ListObjectsV2Request = {
     val requestBuilder = initialRequest.toBuilder.continuationToken(continuationToken)
     pendingKeys.map { n =>
       val nextMaxkeys = math.min(n, domain.awsDefaulMaxKeysList)
@@ -37,7 +53,7 @@ private[s3] class ListObjectsObservable(
     requestBuilder.build()
   }
 
-  private[self] def nextListRequest(
+  private[this] def nextListRequest(
     sub: Subscriber[ListObjectsV2Response],
     pendingKeys: Option[Int],
     request: ListObjectsV2Request): Task[Unit] = {
