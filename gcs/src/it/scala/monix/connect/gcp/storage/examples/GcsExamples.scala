@@ -204,7 +204,6 @@ class GcsExamples extends AnyWordSpecLike with IdiomaticMockito with Matchers wi
         ),
         storageClass = Some(StorageClass.REGIONAL)
       )
-      new Bucket()
       val bucket: Task[GcsBucket] = storage.createBucket("mybucket", Locations.`EUROPE-WEST1`, Some(metadata)).memoizeOnSuccess
     }
 
