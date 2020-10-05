@@ -26,6 +26,7 @@ import monix.connect.s3.domain.{
   DownloadSettings,
   UploadSettings
 }
+import monix.execution.internal.InternalApi
 import software.amazon.awssdk.services.s3.model.{
   BucketCannedACL,
   CompleteMultipartUploadRequest,
@@ -51,6 +52,7 @@ import scala.collection.JavaConverters._
   * A class that provides converter methods that given the required set of parameters for that
   * conversion, it builds the relative AWS java object.
   */
+@InternalApi
 private[s3] object S3RequestBuilder {
 
   /**
