@@ -99,7 +99,7 @@ private[storage] final class GcsUploader(
       }
     }
 
-    (sub, AssignableCancelable.single())
+    (sub, AssignableCancelable.dummy)
   }
 }
 
