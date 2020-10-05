@@ -94,7 +94,6 @@ class GcsStorageSuite extends AnyWordSpecLike with IdiomaticMockito with Matcher
       val ob = gcsStorage.listBlobs(bucketName)
       val gcsBlob: List[GcsBlob] = ob.toListL.runSyncUnsafe()
 
-      println("Blobs: " + gcsBlob.map(_.underlying.getName).mkString)
       //then
       gcsBlob.size shouldBe 2
     }

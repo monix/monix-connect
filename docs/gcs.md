@@ -92,14 +92,12 @@ It also exposes a get operation for _buckets_ and _blobs_ that gets executed `as
 with the resource we asked for, being _None_ if it did not existed:
 
 ```scala
-val getBucketT: Task[Option[GcsBucket]] = storage.getBucket("myBucket")
-
 val t: Task[Unit] = {
   for {
-    maybeBucket <- getBucketT
+    maybeBucket <- storage.getBucket("myBucket"): Task[Option[GcsBucket]]
     _ <- maybeBucket match {
       case Some(bucket) => Task.now(println("My bucket exists!"))
-      case None => Task.unit
+      case None => Task.unit // alternatively a failure could be raised
     }
   } yield ()
 }
@@ -108,13 +106,14 @@ val t: Task[Unit] = {
 The same would apply for _Blob_.
 
 ```scala
-val getBlobT: Task[Option[GcsBlob]] = storage.getBlob("myBucket", "myBlob")
+val getBlobT:  = 
 val t: Task[Unit] = {
   for {
-    maybeBlob <- getBlobT
+    maybeBlob <- storage.getBlob("myBucket", "myBlob"): Task[Option[GcsBlob]]
     _ <- maybeBlob match {
       case Some(blob) => Task.now(println("My blob exists!"))
-      case None => Task.unit
+      case None => Task.unit // alternatively a failure could be raised
+
     }
   } yield ()
 }
@@ -148,8 +147,7 @@ val bucket2: Task[Option[GcsBucket]] = storage.getBucket("myBucket2")
 
 /** 3- Finally, if you do already have an instance of [[com.google.cloud.storage.Bucket]],
   * you can convert it to a GcsBucket by using its compainon object*/
-val underlying: com.google.cloud.storage.Bucket = ???
-val bucket3: GcsBucket = GcsBucket(underlying)
+// val bucket3: GcsBucket = GcsBucket(underlying)
 ```
 
 Once we have an instance of `GcsBucket`, we will be able to use its very simple methods that it exposes to manage our _Bucket_, such like _get blob/s_ stored in it, _update_, _reload_ its metadata, various ones to manage its _Access Control List_ (_ACL_), etc.
@@ -162,13 +160,12 @@ There are no code examples on the documentation to show these operations since t
 In order to download a blob using the `GcsBucket` you would just need to specify the _Blob_ name that should be allocated in the same _Bucket_:
 
 ```scala
-val storage = GcsStorage(underlying)
 val bucket: Task[Option[GcsBucket]] = storage.getBucket("myBucket")
 val ob: Observable[Array[Byte]] = {
   Observable.fromTask(bucket)
     .flatMap {
       case Some(blob) => blob.download("myBlob")
-      case None => Observable.empty
+      case None => Observable.empty // alternatively a failure can be raised
     }
 }
 ```
@@ -185,15 +182,15 @@ import java.io.File
 import monix.connect.gcp.storage.{GcsStorage, GcsBucket}
 import monix.eval.Task
 
-val getBucketT: Task[Option[GcsBucket]] = storage.getBucket("myBucket")
+val storage = GcsStorage.create()
 val targetFile = new File("example/target/file.txt")
 
 val t: Task[Unit] = {
   for {
-    maybeBucket <- getBucketT
+    maybeBucket <- storage.getBucket("myBucket"): Task[Option[GcsBucket]]
     _ <- maybeBucket match {
       case Some(bucket) => bucket.downloadToFile("myBlob", targetFile.toPath)
-      case None => Task.unit
+      case None => Task.unit // alternatively a failure can be raised
     }
   } yield ()
 }
@@ -210,11 +207,12 @@ import monix.connect.gcp.storage.{GcsStorage, GcsBucket}
 import monix.eval.Task
 
 val storage = GcsStorage.create()
-val bucketT: Task[GcsBucket] = ???
 
-val ob: Observable[Array[Byte]] = ???
+val content = "Dummy content"
+val ob: Observable[Array[Byte]] = Observable.now(content.getBytes)
+
 val t: Task[Unit] = for {
-  b <- bucketT
+ bucket <- storage.createBucket("myBucket", Locations.`EUROPE-WEST1`).memoize
   _ <- ob.consumeWith(b.upload("myBlob"))
 } yield ()
 ```

@@ -18,6 +18,7 @@
 package monix.connect.hdfs
 
 import monix.execution.cancelables.AssignableCancelable
+import monix.execution.internal.Platform
 import monix.execution.{Ack, Callback, Scheduler}
 import monix.reactive.Consumer
 import monix.reactive.observers.Subscriber
@@ -59,29 +60,53 @@ private[hdfs] class HdfsSubscriber(
     val sub = new Subscriber.Sync[Array[Byte]] {
 
       override implicit def scheduler: Scheduler = s
-      private val out: FSDataOutputStream =
+      private[this] var isDone = false
+      private[this] val out: FSDataOutputStream =
         createOrAppendFS(fs, path, appendEnabled, overwrite, bufferSize, replication, blockSize)
-      private var off: Long = 0
+      private[this] var off: Long = 0
 
-      override def onComplete(): Unit = {
-        out.close()
-        callback.onSuccess(off)
-      }
-
-      override def onError(ex: Throwable): Unit = {
-        out.close()
-        callback.onError(ex)
-      }
-
-      override def onNext(chunk: Array[Byte]): Ack = {
+      def onNext(chunk: Array[Byte]): Ack = {
         val chunkWithSeparator: Array[Byte] = chunk ++ maybeLineBreak
         val len: Int = chunkWithSeparator.size
         try {
           out.write(chunkWithSeparator)
-        } catch { case e if NonFatal(e) => callback.onError(e) }
+        } catch {
+          case NonFatal(e) =>
+            callback.onError(e)
+        }
         off += len
         Ack.Continue
       }
+
+      def onComplete(): Unit = {
+        if (!isDone) {
+          isDone = true
+          try {
+            out.close()
+          } catch {
+            case NonFatal(ex) => {
+              onError(ex)
+            }
+          }
+          callback.onSuccess(off)
+        }
+      }
+
+      def onError(ex: Throwable): Unit = {
+        if (!isDone) {
+          isDone = true
+          try {
+            out.close()
+            callback.onError(ex)
+          } catch {
+            case NonFatal(ex2) => {
+              Platform.composeErrors(ex, ex2)
+              callback.onError(ex)
+            }
+          }
+        }
+      }
+
     }
 
     (sub, AssignableCancelable.single)
