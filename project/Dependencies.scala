@@ -45,6 +45,9 @@ object Dependencies {
   val Akka = Seq("com.typesafe.akka" %% "akka-stream" % Versions.AkkaStreams
   ) ++ commonDependencies(hasIntegrationTest = false)
 
+  val Benchmarks = Seq("org.scalacheck" %% "scalacheck" % Versions.Scalacheck
+  )++ commonDependencies(hasIntegrationTest = false)
+
   val DynamoDb = Seq(
     "com.amazonaws" % "aws-java-sdk-core" % Versions.AWS,
     "software.amazon.awssdk" % "dynamodb" % Versions.DynamoDb
@@ -68,7 +71,7 @@ object Dependencies {
     "org.apache.parquet" % "parquet-hadoop" % Versions.Parquet,
     "org.apache.parquet" % "parquet-protobuf" % Versions.Parquet,
     //"com.twitter.elephantbird" % "elephant-bird" % "4.17",
-    "org.apache.hadoop" % "hadoop-client" % Versions.Hadoop % Test,
+    "org.apache.hadoop" % "hadoop-client" % Versions.Hadoop,
     "org.apache.hadoop" % "hadoop-common" % Versions.Hadoop % Test,
     "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"
   ) ++ commonDependencies(hasIntegrationTest = false)

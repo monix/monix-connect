@@ -4,62 +4,104 @@ title: Apache Parquet
 ---
 
 ## Introduction
-[Apache Parquet](http://parquet.apache.org/) is a columnar storage format that provides the advantages of compressed, efficient data representation available to any project in the _Hadoop_ ecosystem.
+[Apache Parquet](http://parquet.apache.org/) is a columnar storage format that provides the advantages of _compressed_, _efficient_ data representation available to any project in the _Hadoop_ ecosystem.
 
- It has already been proved by multiple projects that have demonstrated the performance impact of applying the right compression and encoding scheme to the data.
+ t has already been proved by multiple projects that have demonstrated the performance impact of applying the right _compression_ and _encoding scheme_ to the data.
   
-Therefore, the `monix-parquet` _connector_ basically exposes stream integrations for _reading_ and _writing_ into and from parquet files either in the _local system_, _hdfs_ or _S3_ (this is at least for `avro` and `protobuf` parquet sub-modules).
+Therefore, the `monix-parquet` _connector_ basically exposes stream integrations for _reading_ and _writing_ into and from parquet files either in the _local system_, _hdfs_ or _AWS S3_.
  
 ## Set up
 
 Add the following dependency:
  
  ```scala
- libraryDependencies += "io.monix" %% "monix-parquet" % "0.3.3"
+ libraryDependencies += "io.monix" %% "monix-parquet" % "0.5.0"
  ```
 
 ## Getting started
 
-These two signatures `write` and `read` are built on top of the _apache parquet_  `ParquetWriter[T]` and `ParquetReader[T]` respectively, therefore they need an instance of these types to be passed.
+The two signatures `write` and `read` are built on top of the _apache parquet_ `ParquetWriter[T]` and `ParquetReader[T]` respectively, therefore they need an instance of these types to be passed.
 
 The _type parameter_ `T` represents the data type that is expected to be read or written in the parquet file.
 In which it can depend on the parquet implementation chosen, since `ParqueReader` and `ParquetWriter` are just the 
- generic classes, but you would need to use the implementation that fits to your use case.
+ generic classes but you would need to use the implementation that fits better to your use case.
 
-  
-### Writer
+The examples shown in the following sections uses the subclass `AvroParquet` in which the type parameter `T` would need to be a subtype of `org.apache.avro.generic.GenericRecord`. 
+For these examples we have created our own schema using `org.apache.avro.Schema`, however, it is *highly recommended* to generate them using  one of the existing libraries in the scala ecosystem such like [Avro4s](https://github.com/sksamuel/avro4s), [Avrohugger](https://github.com/julianpeeters/avrohugger), [Vulcan](https://fd4s.github.io/vulcan/docs/modules).
 
-The below example shows how to construct a parquet consumer that expects _Protobuf_ messages and pushes 
-them into the same parquet file of the specified location.
-In this case, the type parameter `T` would need to implement `com.google.protobuf.Message`, 
-and these were generated using [ScalaPB](https://scalapb.github.io/).
-
-```scala
-import monix.connect.parquet.Parquet
-import org.apache.hadoop.fs.Path
-import org.apache.parquet.avro.AvroParquetReader
-import org.apache.parquet.hadoop.ParquetWriter
-import org.apache.hadoop.conf.Configuration
-
-val file: String = "/invented/file/path"
-val conf = new Configuration()
-val messages: List[ProtoMessage] 
-val writeSupport = new ProtoWriteSupport[ProtoMessage](classOf[ProtoMessage])
-val w = new ParquetWriter[ProtoMessage](new Path(file), writeSupport)
-Observable
- .fromIterable(messages)
- .consumeWith(Parquet.writer(w))
-
+ ```scala
+// case class used to parse from and to `GenericRecord`, in a real world example it would be a subtype of it.
+case class Person(id: Int, name: String)
 ```
 
-In case you are seeking an example of avro parquet writer, you can refer to the [avro parquet tests](/parquet/src/test/scala/monix/connect/parquet/AvroParquetSpec.scala). 
+```scala
+import org.apache.avro.Schema
+// avro schema associated to the above case class
+val schema: Schema = new Schema.Parser().parse(
+    "{\"type\":\"record\",\"name\":\"Person\",\"fields\":[{\"name\":\"id\",\"type\":\"int\"},{\"name\":\"name\",\"type\":\"string\"}]}")
+```
+
+### Writer
+
+Now let's get our hands dirty with an example on how to write from `Person` into a parquet file.
+ To do so, we are going to use `AvroParquetWriter`. Since this one which expects elements subtype of `GenericRecord`, 
+ we need a function to convert from our `Person`s:
+ 
+```scala
+import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
+
+def personToGenericRecord(doc: Person): GenericRecord =
+    new GenericRecordBuilder(schema) // using the schema created before
+      .set("id", doc.id)
+      .set("name", doc.name)
+      .build()
+```
+
+And then we can consume an `Observable[Person]` that will write each of the emitted elements into the specified parquet file.
+ 
+```scala
+import monix.eval.Task
+import monix.reactive.Observable
+import monix.connect.parquet.Parquet
+import org.apache.hadoop.fs.Path
+import org.apache.parquet.hadoop.ParquetWriter
+import org.apache.parquet.avro.AvroParquetWriter
+import org.apache.avro.generic.GenericRecord
+import org.apache.hadoop.conf.Configuration
+
+val conf = new Configuration()
+conf.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, true)
+val path: Path = new Path("./writer/example/file.parquet")
+val elements: List[Person] = List(Person(1, "Alice"), Person(2, "Bob")) 
+val parquetWriter: ParquetWriter[GenericRecord] = {
+  AvroParquetWriter.builder[GenericRecord](path)
+    .withConf(conf)
+    .withSchema(schema)
+    .build()
+}
+
+// returns the number of written records
+val _: Task[Long] = {
+  Observable
+    .fromIterable(elements) // Observable[Person]
+    .map(_ => personToGenericRecord(_))
+    .consumeWith(Parquet.toWriterUnsafe(parquetWriter))
+}
+```
 
 ### Reader
 
-On the other hand, the following code shows how to pull _Avro_ records from a parquet file.
-In contrast, this time the type parameter `T` would need to be a subtype of `org.apache.avro.generic.GenericRecord`, 
-In this case we used  is `com.sksamuel.avro4s.Record` generated using [Avro4s](https://github.com/sksamuel/avro4s),
- but there are other libraries there such as [Avrohugger](https://github.com/julianpeeters/avrohugger) to generate these classes.
+Again, since we are using a low level api we need to write a function to to convert from `GenericRecord` to a `Person`:
+
+```scala
+def recordToPerson(record: GenericRecord): Person =
+    Person(
+      record.get("id").asInstanceOf[Int], 
+      record.get("name").toString
+    )
+```
+
+Then we will be able to read _parquet_ files as `Observable[Person]`. 
 
 ```scala
 import monix.connect.parquet.Parquet
@@ -67,20 +109,18 @@ import org.apache.hadoop.fs.Path
 import org.apache.parquet.avro.AvroParquetReader
 import org.apache.parquet.hadoop.util.HadoopInputFile
 
-val r: ParquetReader[AvroRecord] = {
+val conf = new Configuration()
+conf.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, true)
+val path: Path = new Path("./reader/example/file.parquet")
+val reader: ParquetReader[GenericRecord] = {
  AvroParquetReader
-  .builder[AvroRecord](HadoopInputFile.fromPath(new Path(file), conf))
+  .builder[GenericRecord](HadoopInputFile.fromPath(path, conf))
   .withConf(conf)
   .build()
 }
 
-val ob: Observable[AvroRecord] = Parquet.reader(r)
-
+val ob: Observable[Person] = Parquet.fromReaderUnsafe(reader).map(_ => recordToPerson(_))
 ```
-
-_Warning_: This connector provides with the logic of building a publisher and subscriber from a given apache hadoop `ParquetReader` and `ParquetWriter` respectively,
-but it does not cover any existing issue on the support of the apache parquet library with external ones.
-Notice for example, that an [issue](https://github.com/scalapb/ScalaPB/issues/844) was found while writing tests for _reading_ parquet as protobuf messages generated with `SacalaPB`, on the other hand for _writing_ it was all fine. 
 
 ## Local testing
 

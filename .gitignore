@@ -43,3 +43,6 @@ monix-s3/it/test-data/
 /website/static/api/
 /website/variables.js
 /website/yarn.lock
+
+#benchmarks
+benchmarks/data/*

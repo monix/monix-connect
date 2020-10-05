@@ -15,24 +15,32 @@
  * limitations under the License.
  */
 
-package monix.connect.parquet
+package monix.connect.benchmarks.parquet
 
-import monix.connect.parquet.test.User.ProtoDoc
-import org.apache.hadoop.conf.Configuration
-import org.apache.avro.Schema
-import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
-import org.apache.hadoop.fs.Path
-import org.apache.parquet.avro.{AvroParquetReader, AvroParquetWriter, AvroReadSupport}
-import org.apache.parquet.hadoop.{ParquetReader, ParquetWriter}
-import org.apache.parquet.hadoop.util.HadoopInputFile
-import org.scalacheck.Gen
+import java.util.UUID
 
-trait AvroParquetFixture extends ParquetFixture {
+import monix.eval.Coeval
+
+trait ParquetBenchFixture {
+
+  import org.apache.hadoop.conf.Configuration
+  import org.apache.avro.Schema
+  import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
+  import org.apache.hadoop.fs.Path
+  import org.apache.parquet.avro.{AvroParquetReader, AvroParquetWriter, AvroReadSupport}
+  import org.apache.parquet.hadoop.{ParquetReader, ParquetWriter}
+  import org.apache.parquet.hadoop.util.HadoopInputFile
+  import org.scalacheck.Gen
 
   case class Person(id: Int, name: String)
   val schema: Schema = new Schema.Parser().parse(
     "{\"type\":\"record\",\"name\":\"Person\",\"fields\":[{\"name\":\"id\",\"type\":\"int\"},{\"name\":\"name\",\"type\":\"string\"}]}")
 
+  val folder: String = "./data/parquet"
+  val genNonEmptyString = Gen.nonEmptyListOf(Gen.alphaChar).map(_.mkString)
+  val genFilePath = Coeval(folder + "/" + UUID.randomUUID() + ".parquet")
+
+  val conf = new Configuration()
   conf.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, true)
 
   val genPerson: Gen[Person] = for {
@@ -40,13 +48,13 @@ trait AvroParquetFixture extends ParquetFixture {
     name <- Gen.alphaLowerStr
   } yield { Person(id, name) }
 
-  val genAvroUsers: Int => Gen[List[Person]] = n => Gen.listOfN(n, genPerson)
+  val genPersons: Int => Gen[List[Person]] = n => Gen.listOfN(n, genPerson)
 
-  def parquetWriter(file: String, conf: Configuration, schema: Schema): ParquetWriter[GenericRecord] =
-    AvroParquetWriter.builder[GenericRecord](new Path(file)).withConf(conf).withSchema(schema).build()
+  def parquetWriter(file: String, conf: Configuration, schema: Schema): Coeval[ParquetWriter[GenericRecord]] =
+    Coeval(AvroParquetWriter.builder[GenericRecord](new Path(file)).withConf(conf).withSchema(schema).build())
 
-  def avroParquetReader[T <: GenericRecord](file: String, conf: Configuration): ParquetReader[T] =
-    AvroParquetReader.builder[T](HadoopInputFile.fromPath(new Path(file), conf)).withConf(conf).build()
+  def avroParquetReader[T <: GenericRecord](file: String, conf: Configuration): Coeval[ParquetReader[T]] =
+    Coeval(AvroParquetReader.builder[T](HadoopInputFile.fromPath(new Path(file), conf)).withConf(conf).build())
 
   def personToRecord(doc: Person): GenericRecord =
     new GenericRecordBuilder(schema)
@@ -60,10 +68,4 @@ trait AvroParquetFixture extends ParquetFixture {
       record.get("name").toString
     )
 
-  implicit class ExtendedAvroDocList(x: List[Person]) {
-    def singleEquiv(x: Person, y: ProtoDoc): Boolean =
-      ((x.id == y.getId) && (x.name == y.getName))
-    def equiv(y: List[ProtoDoc]): Boolean =
-      x.zip(y).map { case (a, p) => singleEquiv(a, p) }.filterNot(b => b).isEmpty
-  }
 }

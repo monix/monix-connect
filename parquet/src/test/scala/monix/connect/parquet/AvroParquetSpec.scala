@@ -29,13 +29,19 @@ import org.scalatest.BeforeAndAfterAll
 
 class AvroParquetSpec extends AnyWordSpecLike with Matchers with AvroParquetFixture with BeforeAndAfterAll {
 
+  override def afterAll(): Unit = {
+    import scala.reflect.io.Directory
+    val directory = new Directory(new File(folder))
+    directory.deleteRecursively()
+  }
+
   s"${Parquet}" should {
 
     "write avro records in parquet" in {
       //given
       val n: Int = 2
       val file: String = genFilePath()
-      val records: List[GenericRecord] = genAvroUsers(n).sample.get.map(avroDocToRecord)
+      val records: List[GenericRecord] = genAvroUsers(n).sample.get.map(personToRecord)
       val w: ParquetWriter[GenericRecord] = parquetWriter(file, conf, schema)
 
       //when
@@ -53,7 +59,7 @@ class AvroParquetSpec extends AnyWordSpecLike with Matchers with AvroParquetFixt
     "read from parquet file" in {
       //given
       val n: Int = 1
-      val records: List[GenericRecord] = genAvroUsers(n).sample.get.map(avroDocToRecord)
+      val records: List[GenericRecord] = genAvroUsers(n).sample.get.map(personToRecord)
       val file = genFilePath()
       Observable
         .fromIterable(records)
@@ -61,7 +67,7 @@ class AvroParquetSpec extends AnyWordSpecLike with Matchers with AvroParquetFixt
         .runSyncUnsafe()
 
       //when
-      val result: List[GenericRecord] = Parquet.fromReaderUnsafe(avroParquetReader(file, conf)).toListL.runSyncUnsafe()
+      val result: List[GenericRecord] = Parquet.reader(avroParquetReader(file, conf)).toListL.runSyncUnsafe()
 
       //then
       result.length shouldEqual n
@@ -69,9 +75,4 @@ class AvroParquetSpec extends AnyWordSpecLike with Matchers with AvroParquetFixt
     }
   }
 
-  override def afterAll(): Unit = {
-    import scala.reflect.io.Directory
-    val directory = new Directory(new File(folder))
-    directory.deleteRecursively()
-  }
 }

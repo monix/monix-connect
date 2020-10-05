@@ -17,23 +17,25 @@
 
 package monix.connect.parquet
 
-import monix.execution.{Ack, Callback, Scheduler}
+import monix.eval.Coeval
 import monix.execution.cancelables.AssignableCancelable
 import monix.execution.internal.{InternalApi, Platform}
+import monix.execution.{Ack, Callback, Scheduler}
 import monix.reactive.Consumer
 import monix.reactive.observers.Subscriber
 import org.apache.parquet.hadoop.ParquetWriter
 
+import scala.concurrent.Future
 import scala.util.control.NonFatal
 
 /**
-  * A parquet writer implemented as a [[Subscriber.Sync]].
+  * A sink that writes each element of [[T]] passed, into a single parquet file.
   *
   * @param parquetWriter The apache hadoop generic implementation of a parquet writer.
   * @tparam T Represents the type of the elements that will be written into the parquet file.
   */
 @InternalApi
-private[parquet] class ParquetSubscriber[T](parquetWriter: ParquetWriter[T]) extends Consumer[T, Long] {
+private[parquet] class ParquetSubscriberCoeval[T](parquetWriter: Coeval[ParquetWriter[T]]) extends Consumer[T, Long] {
 
   def createSubscriber(callback: Callback[Throwable, Long], s: Scheduler): (Subscriber[T], AssignableCancelable) = {
     val out = new Subscriber[T] {
@@ -41,45 +43,52 @@ private[parquet] class ParquetSubscriber[T](parquetWriter: ParquetWriter[T]) ext
 
       //the number of parquet files that has been written that is returned as materialized value
       private[this] var nElements: Long = 0
+      private[this] val memoizedWriter = parquetWriter
 
       // Protects from the situation where last onNext throws, we call onError and then
       // upstream calls onError or onComplete again
       private[this] var isDone = false
 
-      override def onNext(record: T): Ack = {
-        try {
-          parquetWriter.write(record)
-          nElements = nElements + 1
-          Ack.Continue
-        } catch {
-          case ex if NonFatal(ex) =>
-            onError(ex)
-            Ack.Stop
-        }
+      override def onNext(record: T): Future[Ack] = {
+        memoizedWriter.map { parquetWriter =>
+          try {
+            parquetWriter.write(record)
+            nElements = nElements + 1
+            Ack.Continue
+          } catch {
+            case ex if NonFatal(ex) =>
+              onError(ex)
+              Ack.Stop
+          }
+        }.value()
       }
 
       override def onComplete(): Unit =
         if (!isDone) {
           isDone = true
-          try {
-            parquetWriter.close()
-            callback.onSuccess(nElements)
-          } catch {
-            case NonFatal(ex) =>
-              callback.onError(ex)
-          }
+          memoizedWriter.map { writer =>
+            try {
+              writer.close()
+              callback.onSuccess(nElements)
+            } catch {
+              case NonFatal(ex) =>
+                callback.onError(ex)
+            }
+          }.value()
         }
 
       override def onError(ex: Throwable): Unit =
         if (!isDone) {
           isDone = true
-          try {
-            parquetWriter.close()
-            callback.onError(ex)
-          } catch {
-            case NonFatal(ex2) =>
-              callback.onError(Platform.composeErrors(ex, ex2))
-          }
+          memoizedWriter.map { writer =>
+            try {
+              writer.close()
+              callback.onError(ex)
+            } catch {
+              case NonFatal(ex2) =>
+                callback.onError(Platform.composeErrors(ex, ex2))
+            }
+          }.value()
         }
     }
 
