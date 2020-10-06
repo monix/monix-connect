@@ -17,35 +17,43 @@
 
 package monix.connect.parquet
 
-import monix.eval.Task
+import monix.eval.{Coeval, Task}
 import monix.execution.annotations.UnsafeBecauseImpure
 import monix.reactive.Observable
-import org.apache.parquet.hadoop.{ParquetReader, ParquetWriter}
+import org.apache.parquet.hadoop.ParquetReader
 
 object ParquetSource {
 
   /**
-    * Reads the records from a Parquet file.
+    * Reads all the records from a single parquet file.
     *
-    * @param reader The apache hadoop generic implementation of a parquet reader.
-    *               See the following known implementations of [[ParquetWriter]] for avro and protobuf respectively:
-    *               [[org.apache.parquet.avro.AvroParquetWriter]], [[org.apache.parquet.proto.ProtoParquetWriter]].
-    * @tparam T A hinder kinded type that represents element type of the parquet file to be read
-    * @return All the elements of type [[T]] the specified parquet file as [[Observable]]
+    * @param reader The raw [[ParquetReader]] of type [[T]].
+    * @tparam T represents element type of the parquet file to be read
+    * @return An [[Observable]] that emits all the read elements of type [[T]].
     */
   @UnsafeBecauseImpure
   def fromReaderUnsafe[T](reader: ParquetReader[T]): Observable[T] =
     new ParquetPublisher[T](reader)
 
   /**
-    * Reads the records from a Parquet file.
+    * Defines the evaluation of a call to [[ParquetReader]] that will read all
+    * from the parquet file and close the created resources.
     *
-    * @param reader The apache hadoop generic implementation of a parquet reader.
-    *               See the following known implementations of [[ParquetWriter]] for avro and protobuf respectively:
-    *               [[org.apache.parquet.avro.AvroParquetWriter]], [[org.apache.parquet.proto.ProtoParquetWriter]].
-    * @tparam T A hinder kinded type that represents element type of the parquet file to be read
-    * @return All the elements of type [[T]] the specified parquet file as [[Observable]]
+    * @param readerTask a [[Task]] with the [[ParquetReader]] of type [[T]].
+    * @tparam T element type of the parquet file to be read
+    * @return An [[Observable]] that emits all the read elements of type [[T]].
     */
-  def fromReader[T](reader: Task[ParquetReader[T]]): Observable[T] =
-    Observable.resource(reader)(reader => Task(reader.close())).flatMap(fromReaderUnsafe)
+  def fromReader[T](readerTask: Task[ParquetReader[T]]): Observable[T] =
+    Observable.resource(readerTask)(reader => Task(reader.close())).flatMap(fromReaderUnsafe)
+
+  /**
+    * Defines the evaluation of a call to [[ParquetReader]] that will read all
+    * from the parquet file and close the created resources.
+    *
+    * @param readerCoeval a [[Coeval]] with the [[ParquetReader]] of type [[T]].
+    * @tparam T the element type of the parquet file to be read
+    * @return An [[Observable]] that emits all the read elements of type [[T]].
+    */
+  def fromReader[T](readerCoeval: Coeval[ParquetReader[T]]): Observable[T] =
+    Observable.resource(Task.coeval(readerCoeval))(reader => Task(reader.close())).flatMap(fromReaderUnsafe)
 }

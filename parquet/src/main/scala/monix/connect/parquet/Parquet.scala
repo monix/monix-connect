@@ -20,15 +20,15 @@ package monix.connect.parquet
 import org.apache.parquet.hadoop.{ParquetReader, ParquetWriter}
 import monix.reactive.{Consumer, Observable}
 
-@deprecated("Splitted into `ParquetSource` and `ParquetSink`.", "0.5.0")
+@deprecated("Moved to `ParquetSource` and `ParquetSink`.", "0.5.0")
 object Parquet {
 
-  @deprecated("Renamed to fromReaderUnsafe", "0.5.0")
+  @deprecated("Moved to `ParquetSource.fromReaderUnsafe`", "0.5.0")
   def reader[T](reader: ParquetReader[T]): Observable[T] =
     new ParquetPublisher[T](reader)
 
-  @deprecated("Renamed to toWriterUnsafe", "0.5.0")
+  @deprecated("Moved to `ParquetSink.fromWriterUnsafe`", "0.5.0")
   def writer[T](writer: ParquetWriter[T]): Consumer[T, Long] =
-    new ParquetSubscriber[T](writer)
+    new ParquetSubscriberUnsafe[T](writer)
 
 }

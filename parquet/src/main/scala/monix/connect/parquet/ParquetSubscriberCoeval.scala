@@ -29,9 +29,9 @@ import scala.concurrent.Future
 import scala.util.control.NonFatal
 
 /**
-  * A sink that writes each element of [[T]] passed, into a single parquet file.
+  * A [[Consumer]] that writes each emitted element into the same parquet file.
   *
-  * @param parquetWriter The apache hadoop generic implementation of a parquet writer.
+  * @param parquetWriter the underlying apache hadoop [[ParquetWriter]] implementation.
   * @tparam T Represents the type of the elements that will be written into the parquet file.
   */
 @InternalApi
@@ -40,10 +40,10 @@ private[parquet] class ParquetSubscriberCoeval[T](parquetWriter: Coeval[ParquetW
   def createSubscriber(callback: Callback[Throwable, Long], s: Scheduler): (Subscriber[T], AssignableCancelable) = {
     val out = new Subscriber[T] {
       override implicit val scheduler: Scheduler = s
-
+      
       //the number of parquet files that has been written that is returned as materialized value
       private[this] var nElements: Long = 0
-      private[this] val memoizedWriter = parquetWriter
+      private[this] val memoizedWriter = parquetWriter.memoize
 
       // Protects from the situation where last onNext throws, we call onError and then
       // upstream calls onError or onComplete again

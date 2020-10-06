@@ -25,25 +25,21 @@ import org.apache.parquet.hadoop.ParquetWriter
 object ParquetSink {
 
   /**
-    * Writes records to a Parquet file.
+    * Writes all emitted elements to a parquet file.
     *
-    * @param writer The apache hadoop generic implementation of a parquet writer.
-    *               See the following known implementations of [[ParquetWriter]] for avro and protobuf respectively:
-    *               [[org.apache.parquet.avro.AvroParquetWriter]], [[org.apache.parquet.proto.ProtoParquetWriter]].
+    * @param writer the apache hadoop generic implementation of a parquet writer.
     * @tparam T A hinder kinded type that represents the element type of the parquet file to be written.
     * @return A [[Consumer]] that expects records of type [[T]] to be passed and materializes to [[Long]]
     *         that represents the number of elements written.
     */
   @UnsafeBecauseImpure
   def fromWriterUnsafe[T](writer: ParquetWriter[T]): Consumer[T, Long] =
-    new ParquetSubscriber[T](writer)
+    new ParquetSubscriberUnsafe[T](writer)
 
   /**
-    * Writes records to a Parquet file.
+    * Writes all emitted elements to a parquet file.
     *
     * @param writer The apache hadoop generic implementation of a parquet writer.
-    *               See the following known implementations of [[ParquetWriter]] for avro and protobuf respectively:
-    *               [[org.apache.parquet.avro.AvroParquetWriter]], [[org.apache.parquet.proto.ProtoParquetWriter]].
     * @tparam T A hinder kinded type that represents the element type of the parquet file to be written.
     * @return A [[Consumer]] that expects records of type [[T]] to be passed and materializes to [[Long]]
     *         that represents the number of elements written.
@@ -52,11 +48,9 @@ object ParquetSink {
     new ParquetSubscriberEval[T](writer)
 
   /**
-    * Writes records to a Parquet file.
+    * Writes all emitted elements to a parquet file.
     *
     * @param writer The apache hadoop generic implementation of a parquet writer.
-    *               See the following known implementations of [[ParquetWriter]] for avro and protobuf respectively:
-    *               [[org.apache.parquet.avro.AvroParquetWriter]], [[org.apache.parquet.proto.ProtoParquetWriter]].
     * @tparam T A hinder kinded type that represents the element type of the parquet file to be written.
     * @return A [[Consumer]] that expects records of type [[T]] to be passed and materializes to [[Long]]
     *         that represents the number of elements written.

@@ -29,9 +29,9 @@ import scala.concurrent.Future
 import scala.util.control.NonFatal
 
 /**
-  * A sink that writes each element of [[T]] passed, into a single parquet file.
+  * A [[Consumer]] that writes each emitted element into the same parquet file.
   *
-  * @param parquetWriter The apache hadoop generic implementation of a parquet writer.
+  * @param parquetWriter the underlying apache hadoop [[ParquetWriter]] implementation.
   * @tparam T Represents the type of the elements that will be written into the parquet file.
   */
 @InternalApi

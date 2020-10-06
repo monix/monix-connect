@@ -27,13 +27,13 @@ import org.apache.parquet.hadoop.ParquetWriter
 import scala.util.control.NonFatal
 
 /**
-  * A parquet writer implemented as a [[Subscriber.Sync]].
+  * A [[Consumer]] that writes each emitted element into the same parquet file.
   *
-  * @param parquetWriter The apache hadoop generic implementation of a parquet writer.
+  * @param parquetWriter the underlying apache hadoop [[ParquetWriter]] implementation.
   * @tparam T Represents the type of the elements that will be written into the parquet file.
   */
 @InternalApi
-private[parquet] class ParquetSubscriber[T](parquetWriter: ParquetWriter[T]) extends Consumer[T, Long] {
+private[parquet] class ParquetSubscriberUnsafe[T](parquetWriter: ParquetWriter[T]) extends Consumer[T, Long] {
 
   def createSubscriber(callback: Callback[Throwable, Long], s: Scheduler): (Subscriber[T], AssignableCancelable) = {
     val out = new Subscriber[T] {
