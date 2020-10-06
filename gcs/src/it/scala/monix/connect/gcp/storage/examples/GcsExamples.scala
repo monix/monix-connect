@@ -117,11 +117,11 @@ class GcsExamples extends AnyWordSpecLike with IdiomaticMockito with Matchers wi
       import monix.eval.Task
 
       val storage = GcsStorage.create()
-      val content = "dummy content"
-      val ob: Observable[Array[Byte]] = Observable.now(content.getBytes)
+      val memoizedBucket = storage.createBucket("myBucket", Locations.`EUROPE-WEST1`).memoize
+      val ob: Observable[Array[Byte]] = Observable.now("dummy content".getBytes)
 
       val t: Task[Unit] = for {
-        bucket <- storage.createBucket("myBucket", Locations.`EUROPE-WEST1`).memoize
+        bucket <- memoizedBucket: Task[GcsBucket]
         _ <- ob.consumeWith(bucket.upload("myBlob"))
       } yield ()
 
@@ -151,7 +151,7 @@ class GcsExamples extends AnyWordSpecLike with IdiomaticMockito with Matchers wi
       val storage = GcsStorage.create()
       val memoizedBlob = storage.createBlob("myBucket", "myBlob").memoize
 
-      val ob: Observable[Array[Byte]] = ???
+      val ob: Observable[Array[Byte]] = Observable.now("dummy content".getBytes)
       val t: Task[Unit] = for {
         blob <- memoizedBlob
         _ <- ob.consumeWith(blob.upload())
