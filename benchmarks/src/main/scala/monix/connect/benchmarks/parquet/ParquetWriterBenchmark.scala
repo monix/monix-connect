@@ -49,7 +49,7 @@ import org.apache.commons.io.FileUtils
 @Threads(5)
 class ParquetWriterBenchmark extends ParquetBenchFixture {
 
-  var size: Int = 10
+  var size: Int = 250
   val s = Scheduler.io("parquet-writer-benchmark")
   var records: List[GenericRecord] = _
 

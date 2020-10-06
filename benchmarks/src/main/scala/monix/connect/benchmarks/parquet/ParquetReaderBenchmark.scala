@@ -36,7 +36,7 @@ import scala.concurrent.duration.Duration
 @Threads(3)
 class ParquetReaderBenchmark extends ParquetBenchFixture {
 
-  var size: Int = 10
+  var size: Int = 250
   val s = Scheduler.io("parquet-writer-benchmark")
 
   val file: String = genFilePath.value()
