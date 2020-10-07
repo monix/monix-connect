@@ -48,10 +48,10 @@ trait AvroParquetFixture extends ParquetFixture {
   def avroParquetReader[T <: GenericRecord](file: String, conf: Configuration): ParquetReader[T] =
     AvroParquetReader.builder[T](HadoopInputFile.fromPath(new Path(file), conf)).withConf(conf).build()
 
-  def personToRecord(doc: Person): GenericRecord =
+  def personToRecord(person: Person): GenericRecord =
     new GenericRecordBuilder(schema)
-      .set("id", doc.id)
-      .set("name", doc.name)
+      .set("id", person.id)
+      .set("name", person.name)
       .build()
 
   def recordToPerson(record: GenericRecord): Person =

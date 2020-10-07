@@ -50,10 +50,10 @@ Now let's get our hands dirty with an example on how to write from `Person` into
 ```scala
 import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 
-def personToGenericRecord(doc: Person): GenericRecord =
-    new GenericRecordBuilder(schema) // using the schema created before
-      .set("id", doc.id)
-      .set("name", doc.name)
+def personToGenericRecord(person: Person): GenericRecord =
+    new GenericRecordBuilder(schema) // using the schema created previously
+      .set("id", person.id)
+      .set("name", person.name)
       .build()
 ```
 
@@ -62,7 +62,7 @@ And then we can consume an `Observable[Person]` that will write each of the emit
 ```scala
 import monix.eval.Task
 import monix.reactive.Observable
-import monix.connect.parquet.Parquet
+import monix.connect.parquet.ParquetSink
 import org.apache.hadoop.fs.Path
 import org.apache.parquet.hadoop.ParquetWriter
 import org.apache.parquet.avro.AvroParquetWriter
@@ -70,7 +70,6 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.hadoop.conf.Configuration
 
 val conf = new Configuration()
-conf.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, true)
 val path: Path = new Path("./writer/example/file.parquet")
 val elements: List[Person] = List(Person(1, "Alice"), Person(2, "Bob")) 
 val parquetWriter: ParquetWriter[GenericRecord] = {
@@ -85,7 +84,7 @@ val _: Task[Long] = {
   Observable
     .fromIterable(elements) // Observable[Person]
     .map(_ => personToGenericRecord(_))
-    .consumeWith(Parquet.toWriterUnsafe(parquetWriter))
+    .consumeWith(ParquetSink.fromWriterUnsafe(parquetWriter))
 }
 ```
 
@@ -104,9 +103,11 @@ def recordToPerson(record: GenericRecord): Person =
 Then we will be able to read _parquet_ files as `Observable[Person]`. 
 
 ```scala
-import monix.connect.parquet.Parquet
+import monix.connect.parquet.ParquetSource
 import org.apache.hadoop.fs.Path
-import org.apache.parquet.avro.AvroParquetReader
+import org.apache.parquet.avro.{AvroParquetReader, AvroReadSupport}
+import org.apache.avro.generic.GenericRecord
+import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.util.HadoopInputFile
 
 val conf = new Configuration()
@@ -119,7 +120,7 @@ val reader: ParquetReader[GenericRecord] = {
   .build()
 }
 
-val ob: Observable[Person] = Parquet.fromReaderUnsafe(reader).map(_ => recordToPerson(_))
+val ob: Observable[Person] = ParquetSource.fromReaderUnsafe(reader).map(_ => recordToPerson(_))
 ```
 
 ## Local testing
