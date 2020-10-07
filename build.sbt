@@ -115,6 +115,7 @@ mimaFailOnNoPrevious in ThisBuild := false
 
 val IT = config("it") extend Test
 
+//=> published modules
 lazy val monixConnect = (project in file("."))
   .configs(IntegrationTest, IT)
   .settings(sharedSettings)
@@ -160,6 +161,14 @@ def monixConnector(
     .configs(IntegrationTest, IT)
     .enablePlugins(AutomateHeaderPlugin)
     //.settings(mimaSettings(s"monix-$connectorName"))
+
+//=> non published modules
+
+lazy val benchmarks = monixConnector("benchmarks", Dependencies.Benchmarks)
+  .enablePlugins(JmhPlugin)
+  .settings(skipOnPublishSettings)
+  .dependsOn(parquet % "compile->compile;test->test")
+  .aggregate(parquet)
 
 lazy val docs = project
   .in(file("monix-connect-docs"))

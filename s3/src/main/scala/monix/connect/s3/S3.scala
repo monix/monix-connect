@@ -26,11 +26,8 @@ import monix.connect.s3.domain.{
   DownloadSettings,
   UploadSettings
 }
-import monix.reactive.{Consumer, Observable, OverflowStrategy}
-import monix.execution.Ack
+import monix.reactive.{Consumer, Observable}
 import monix.eval.Task
-import monix.execution.internal.InternalApi
-import monix.reactive.observers.Subscriber
 import software.amazon.awssdk.core.async.{AsyncRequestBody, AsyncResponseTransformer}
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.model.{
@@ -47,8 +44,6 @@ import software.amazon.awssdk.services.s3.model.{
   DeleteObjectResponse,
   GetObjectRequest,
   GetObjectResponse,
-  ListObjectsV2Request,
-  ListObjectsV2Response,
   NoSuchKeyException,
   PutObjectRequest,
   PutObjectResponse,
@@ -355,7 +350,7 @@ object S3 {
     *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
     *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
     *
-    *   //must be propelry configured
+    *   //must be properly configured
     *   implicit val client = S3AsyncClient.builder.credentialsProvider(DefaultCredentialsProvider.create()).region(AWS_GLOBAL).build()
     *   val bucket: String = "sample-bucket"
     *   val key: String = "sample-key"
@@ -365,7 +360,8 @@ object S3 {
     *
     * @param bucket target S3 bucket name of the object to be downloaded.
     * @param key path of the object to be downloaded (excluding the bucket).
-    * @param chunkSize amount of bytes to download each part by, being by default (recommended) 5242880 bytes.
+    * @param chunkSize amount of bytes to downloaded for each part request,
+    *                  must be a positive number, being by default (recommended) 5242880 bytes.
     * @param downloadSettings additional settings to pass to the multipart download request.
     * @param s3AsyncClient implicit instance of a [[S3AsyncClient]].
     * @return an [[Observable]] that emits chunks of bytes of size [[chunkSize]] until it completes.
@@ -379,58 +375,7 @@ object S3 {
     downloadSettings: DownloadSettings = DefaultDownloadSettings)(
     implicit
     s3AsyncClient: S3AsyncClient): Observable[Array[Byte]] = {
-    require(chunkSize > 0, "Chunk size must be a positive number.")
-    val resizedChunk: Long = chunkSize - 1L
-    val firstChunkRange = s"bytes=0-${resizedChunk}"
-    val initialRequest: GetObjectRequest =
-      S3RequestBuilder.getObjectRequest(bucket, key, Some(firstChunkRange), downloadSettings)
-
-    for {
-      totalObjectSize <- listObjects(bucket, prefix = Some(key), maxTotalKeys = Some(1)).head.map(_.size)
-      o2 <- {
-        Observable.create[Array[Byte]](OverflowStrategy.Unbounded) { sub =>
-          downloadChunk(sub, totalObjectSize, chunkSize, initialRequest, 0).runToFuture(sub.scheduler)
-        }
-      }
-    } yield o2
-
-  }
-
-  @InternalApi
-  private def downloadChunk(
-    sub: Subscriber[Array[Byte]],
-    totalSize: Long,
-    chunkSize: Long,
-    getRequest: GetObjectRequest,
-    offset: Int)(implicit s3AsyncClient: S3AsyncClient): Task[Unit] = {
-    for {
-      chunk <- {
-        download(getRequest).onErrorHandleWith { ex =>
-          sub.onError(ex)
-          Task.raiseError(ex)
-        }
-      }
-      ack <- Task.fromFuture(sub.onNext(chunk))
-      nextChunk <- {
-        ack match {
-          case Ack.Continue => {
-            val nextOffset = offset + chunk.size
-            if (nextOffset < totalSize) {
-              val nextRange = s"bytes=${nextOffset}-${nextOffset + chunkSize}"
-              val nextRequest = getRequest.toBuilder.range(nextRange).build()
-              downloadChunk(sub, totalSize, chunkSize, nextRequest, nextOffset)
-            } else {
-              sub.onComplete()
-              Task.unit
-            }
-          }
-          case Ack.Stop => {
-            sub.onComplete()
-            Task.unit
-          }
-        }
-      }
-    } yield nextChunk
+    new MultipartDownloadObservable(bucket, key, chunkSize, downloadSettings, s3AsyncClient)
   }
 
   /**
@@ -492,7 +437,8 @@ object S3 {
     * Amazon S3 Resources</a>.
     *
     * @param bucket target S3 bucket name of the object to be downloaded.
-    * @param maxTotalKeys sets the maximum number of keys to be list
+    * @param maxTotalKeys sets the maximum number of keys to be list,
+    *                     it must be a positive number.
     * @param prefix limits the response to keys that begin with the specified prefix.
     * @param requestPayer confirms that the requester knows that she or he will be charged for
     *                     the list objects request in V2 style.
@@ -505,75 +451,10 @@ object S3 {
     prefix: Option[String] = None,
     maxTotalKeys: Option[Int] = None,
     requestPayer: Option[RequestPayer] = None)(implicit s3AsyncClient: S3AsyncClient): Observable[S3Object] = {
-    require(maxTotalKeys.getOrElse(1) > 0, "The max number of keys, if defined, needs to be higher or equal than 1.")
-    val firstRequestSize = maxTotalKeys.map(maxKeys => math.min(maxKeys, domain.awsDefaulMaxKeysList))
-    val request: ListObjectsV2Request =
-      S3RequestBuilder.listObjectsV2(bucket, prefix = prefix, maxKeys = firstRequestSize, requestPayer = requestPayer)
-    listAllObjectsV2(request, maxTotalKeys)
-  }
-
-  @InternalApi
-  private def listAllObjectsV2(initialRequest: ListObjectsV2Request, maxKeys: Option[Int])(
-    implicit s3AsyncClient: S3AsyncClient): Observable[S3Object] = {
-
-    def prepareNextRequest(continuationToken: String, pendingKeys: Option[Int]): ListObjectsV2Request = {
-      val requestBuilder = initialRequest.toBuilder.continuationToken(continuationToken)
-      pendingKeys.map { n =>
-        val nextMaxkeys = math.min(n, domain.awsDefaulMaxKeysList)
-        requestBuilder.maxKeys(nextMaxkeys)
-      }.getOrElse(domain.awsDefaulMaxKeysList)
-      requestBuilder.build()
-    }
-
-    def nextListRequest(
-      sub: Subscriber[ListObjectsV2Response],
-      pendingKeys: Option[Int],
-      request: ListObjectsV2Request): Task[Unit] = {
-
-      for {
-        r <- {
-          Task.from(s3AsyncClient.listObjectsV2(request)).onErrorHandleWith { ex =>
-            sub.onError(ex)
-            Task.raiseError(ex)
-          }
-        }
-        ack <- Task.deferFuture(sub.onNext(r))
-        next <- {
-          ack match {
-            case Ack.Continue => {
-              if (r.isTruncated && (r.nextContinuationToken != null)) {
-                val updatedPendingKeys = pendingKeys.map(_ - r.contents.size)
-                updatedPendingKeys match {
-                  case Some(pendingKeys) =>
-                    if (pendingKeys <= 0) { sub.onComplete(); Task.unit }
-                    else
-                      nextListRequest(
-                        sub,
-                        updatedPendingKeys,
-                        prepareNextRequest(r.nextContinuationToken, updatedPendingKeys))
-                  case None =>
-                    nextListRequest(sub, None, prepareNextRequest(r.nextContinuationToken, None))
-                }
-              } else {
-                sub.onComplete()
-                Task.unit
-              }
-            }
-            case Ack.Stop => Task.unit
-          }
-        }
-      } yield next
-    }
-
     for {
-      listResponse <- {
-        Observable.create[ListObjectsV2Response](OverflowStrategy.Unbounded) { sub =>
-          nextListRequest(sub, maxKeys, initialRequest).runToFuture(sub.scheduler)
-        }
-      }
-      s3Object <- Observable.from(listResponse.contents.asScala.toList)
+      listResponse <- ListObjectsObservable(bucket, prefix, maxTotalKeys, requestPayer, s3AsyncClient)
+      s3Object     <- Observable.fromIterable(listResponse.contents.asScala)
     } yield s3Object
-
   }
 
   /**

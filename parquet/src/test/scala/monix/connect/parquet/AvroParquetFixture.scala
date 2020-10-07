@@ -29,18 +29,18 @@ import org.scalacheck.Gen
 
 trait AvroParquetFixture extends ParquetFixture {
 
-  case class AvroDoc(id: Int, name: String)
+  case class Person(id: Int, name: String)
   val schema: Schema = new Schema.Parser().parse(
-    "{\"type\":\"record\",\"name\":\"AvroDoc\",\"fields\":[{\"name\":\"id\",\"type\":\"int\"},{\"name\":\"name\",\"type\":\"string\"}]}")
+    "{\"type\":\"record\",\"name\":\"Person\",\"fields\":[{\"name\":\"id\",\"type\":\"int\"},{\"name\":\"name\",\"type\":\"string\"}]}")
 
   conf.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, true)
 
-  val genAvroUser: Gen[AvroDoc] = for {
+  val genPerson: Gen[Person] = for {
     id   <- Gen.choose(1, 10000)
     name <- Gen.alphaLowerStr
-  } yield { AvroDoc(id, name) }
+  } yield { Person(id, name) }
 
-  val genAvroUsers: Int => Gen[List[AvroDoc]] = n => Gen.listOfN(n, genAvroUser)
+  val genAvroUsers: Int => Gen[List[Person]] = n => Gen.listOfN(n, genPerson)
 
   def parquetWriter(file: String, conf: Configuration, schema: Schema): ParquetWriter[GenericRecord] =
     AvroParquetWriter.builder[GenericRecord](new Path(file)).withConf(conf).withSchema(schema).build()
@@ -48,17 +48,20 @@ trait AvroParquetFixture extends ParquetFixture {
   def avroParquetReader[T <: GenericRecord](file: String, conf: Configuration): ParquetReader[T] =
     AvroParquetReader.builder[T](HadoopInputFile.fromPath(new Path(file), conf)).withConf(conf).build()
 
-  def avroDocToRecord(doc: AvroDoc): GenericRecord =
+  def personToRecord(person: Person): GenericRecord =
     new GenericRecordBuilder(schema)
-      .set("id", doc.id)
-      .set("name", doc.name)
+      .set("id", person.id)
+      .set("name", person.name)
       .build()
 
-  def recordToAvroDoc(record: GenericRecord): AvroDoc =
-    AvroDoc(record.get("id").asInstanceOf[Int], record.get("name").toString)
+  def recordToPerson(record: GenericRecord): Person =
+    Person(
+      record.get("id").asInstanceOf[Int], // unsafe only used for documentation purposes
+      record.get("name").toString
+    )
 
-  implicit class ExtendedAvroDocList(x: List[AvroDoc]) {
-    def singleEquiv(x: AvroDoc, y: ProtoDoc): Boolean =
+  implicit class ExtendedAvroDocList(x: List[Person]) {
+    def singleEquiv(x: Person, y: ProtoDoc): Boolean =
       ((x.id == y.getId) && (x.name == y.getName))
     def equiv(y: List[ProtoDoc]): Boolean =
       x.zip(y).map { case (a, p) => singleEquiv(a, p) }.filterNot(b => b).isEmpty
