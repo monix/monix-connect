@@ -39,21 +39,21 @@ object ParquetSource {
     * Defines the evaluation of a call to [[ParquetReader]] that will read all
     * from the parquet file and close the created resources.
     *
-    * @param readerTask a [[Task]] with the [[ParquetReader]] of type [[T]].
+    * @param reader a [[Task]] with the [[ParquetReader]] of type [[T]].
     * @tparam T element type of the parquet file to be read
     * @return An [[Observable]] that emits all the read elements of type [[T]].
     */
-  def fromReader[T](readerTask: Task[ParquetReader[T]]): Observable[T] =
-    Observable.resource(readerTask)(reader => Task(reader.close())).flatMap(fromReaderUnsafe)
+  def fromReader[T](reader: Task[ParquetReader[T]]): Observable[T] =
+    Observable.resource(reader)(reader => Task(reader.close())).flatMap(fromReaderUnsafe)
 
   /**
     * Defines the evaluation of a call to [[ParquetReader]] that will read all
     * from the parquet file and close the created resources.
     *
-    * @param readerCoeval a [[Coeval]] with the [[ParquetReader]] of type [[T]].
+    * @param reader a [[Coeval]] with the [[ParquetReader]] of type [[T]].
     * @tparam T the element type of the parquet file to be read
     * @return An [[Observable]] that emits all the read elements of type [[T]].
     */
-  def fromReader[T](readerCoeval: Coeval[ParquetReader[T]]): Observable[T] =
-    Observable.resource(Task.coeval(readerCoeval))(reader => Task(reader.close())).flatMap(fromReaderUnsafe)
+  def fromReader[T](reader: Coeval[ParquetReader[T]]): Observable[T] =
+    Observable.resource(Task.coeval(reader))(reader => Task(reader.close())).flatMap(fromReaderUnsafe)
 }
