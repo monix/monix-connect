@@ -63,7 +63,7 @@ private[hdfs] class HdfsSubscriber(
       private[this] var isDone = false
       private[this] val out: FSDataOutputStream =
         createOrAppendFS(fs, path, appendEnabled, overwrite, bufferSize, replication, blockSize)
-      private[this] var off: Long = 0
+      private[this] var offset: Long = 0
 
       def onNext(chunk: Array[Byte]): Ack = {
         val chunkWithSeparator: Array[Byte] = chunk ++ maybeLineBreak
@@ -74,7 +74,7 @@ private[hdfs] class HdfsSubscriber(
           case NonFatal(e) =>
             callback.onError(e)
         }
-        off += len
+        offset += len
         Ack.Continue
       }
 
@@ -88,7 +88,7 @@ private[hdfs] class HdfsSubscriber(
               onError(ex)
             }
           }
-          callback.onSuccess(off)
+          callback.onSuccess(offset)
         }
       }
 
@@ -100,8 +100,7 @@ private[hdfs] class HdfsSubscriber(
             callback.onError(ex)
           } catch {
             case NonFatal(ex2) => {
-              Platform.composeErrors(ex, ex2)
-              callback.onError(ex)
+              callback.onError(Platform.composeErrors(ex, ex2))
             }
           }
         }
