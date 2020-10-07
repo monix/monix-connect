@@ -191,22 +191,6 @@ class GcsExamples extends AnyWordSpecLike with IdiomaticMockito with Matchers wi
       val bucket: Task[GcsBucket] = storage.createBucket("mybucket", Locations.`EUROPE-WEST1`, Some(metadata)).memoizeOnSuccess
     }
 
-    "create bucket from underlying" in {
-      import monix.connect.gcp.storage.configuration.GcsBucketInfo
-      import monix.connect.gcp.storage.configuration.GcsBucketInfo.Locations
-      import monix.connect.gcp.storage.{GcsBucket, GcsStorage}
-      import com.google.cloud.storage.Bucket
-      val storage = GcsStorage.create()
-
-      val metadata = GcsBucketInfo.Metadata(
-        labels = Map(
-          "project" -> "my-first-gcs-bucket"
-        ),
-        storageClass = Some(StorageClass.REGIONAL)
-      )
-      val bucket: Task[GcsBucket] = storage.createBucket("mybucket", Locations.`EUROPE-WEST1`, Some(metadata)).memoizeOnSuccess
-    }
-
     "create blob" in {
       import monix.connect.gcp.storage.{GcsBlob, GcsStorage}
 

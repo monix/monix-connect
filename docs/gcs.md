@@ -169,7 +169,7 @@ val ob: Observable[Array[Byte]] = {
   Observable.fromTask(bucket)
     .flatMap {
       case Some(bucket) => bucket.download("myBlob")
-      case None => Observable.empty // alternatively a failure can be raised
+      case None => Observable.empty // alternatively a failure could be raised
     }
 }
 ```
@@ -194,7 +194,7 @@ val t: Task[Unit] = {
     maybeBucket <- storage.getBucket("myBucket"): Task[Option[GcsBucket]]
     _ <- maybeBucket match {
       case Some(bucket) => bucket.downloadToFile("myBlob", targetFile.toPath)
-      case None => Task.unit // alternatively a failure can be raised
+      case None => Task.unit // alternatively a failure could be raised
     }
   } yield ()
 }
@@ -203,7 +203,7 @@ val t: Task[Unit] = {
 ##### upload
 
 On the other hand you can upload data into a _Blob_ by using the pre-built `Consumer` implementation that expects and pushes _byte arrays_
-  into the spewcified `Blob` and materializes to `Unit` when it completes.
+  into the specified `Blob` and materializes to `Unit` when it completes.
 
 ```scala
 
@@ -251,7 +251,7 @@ since it will use the one which the _Blob_ is stored in.
 
 ##### copyTo 
 
-This overloaded method that allows you to copy a _Blob_ into the specified target _Bucket_ and _Blob_.
+An overloaded method that allows you to _copy_ a _Blob_ into the specified _Bucket_ and _Blob_.
 The target _Bucket_ can be the same or a different as the source.
 
 ```scala
