@@ -40,7 +40,7 @@ private[parquet] class ParquetSubscriberCoeval[T](parquetWriter: Coeval[ParquetW
   def createSubscriber(callback: Callback[Throwable, Long], s: Scheduler): (Subscriber[T], AssignableCancelable) = {
     val out = new Subscriber[T] {
       override implicit val scheduler: Scheduler = s
-      
+
       //the number of parquet files that has been written that is returned as materialized value
       private[this] var nElements: Long = 0
       private[this] val memoizedWriter = parquetWriter.memoize
@@ -51,15 +51,12 @@ private[parquet] class ParquetSubscriberCoeval[T](parquetWriter: Coeval[ParquetW
 
       override def onNext(record: T): Future[Ack] = {
         memoizedWriter.map { parquetWriter =>
-          try {
-            parquetWriter.write(record)
-            nElements = nElements + 1
-            Ack.Continue
-          } catch {
-            case ex if NonFatal(ex) =>
-              onError(ex)
-              Ack.Stop
-          }
+          parquetWriter.write(record)
+          nElements = nElements + 1
+          Ack.Continue
+        }.onErrorHandle { ex =>
+          onError(ex)
+          Ack.Stop
         }.value()
       }
 
@@ -67,32 +64,22 @@ private[parquet] class ParquetSubscriberCoeval[T](parquetWriter: Coeval[ParquetW
         if (!isDone) {
           isDone = true
           memoizedWriter.map { writer =>
-            try {
-              writer.close()
-              callback.onSuccess(nElements)
-            } catch {
-              case NonFatal(ex) =>
-                callback.onError(ex)
-            }
-          }.value()
+            writer.close()
+            callback.onSuccess(nElements)
+          }.onErrorHandle { ex => callback.onError(ex) }.value()
         }
 
       override def onError(ex: Throwable): Unit =
         if (!isDone) {
           isDone = true
           memoizedWriter.map { writer =>
-            try {
-              writer.close()
-              callback.onError(ex)
-            } catch {
-              case NonFatal(ex2) =>
-                callback.onError(Platform.composeErrors(ex, ex2))
-            }
-          }.value()
+            writer.close()
+            callback.onError(ex)
+          }.onErrorHandle { ex2 => callback.onError(Platform.composeErrors(ex, ex2)) }.value()
         }
     }
 
-    (out, AssignableCancelable.multi())
+    (out, AssignableCancelable.dummy)
   }
 
 }

@@ -17,7 +17,7 @@
 
 package monix.connect.parquet
 
-import monix.eval.{Coeval, Task}
+import monix.eval.Coeval
 import monix.execution.annotations.UnsafeBecauseImpure
 import monix.reactive.Consumer
 import org.apache.parquet.hadoop.ParquetWriter
@@ -35,17 +35,6 @@ object ParquetSink {
   @UnsafeBecauseImpure
   def fromWriterUnsafe[T](writer: ParquetWriter[T]): Consumer[T, Long] =
     new ParquetSubscriberUnsafe[T](writer)
-
-  /**
-    * Writes all emitted elements to a parquet file.
-    *
-    * @param writer The apache hadoop generic implementation of a parquet writer.
-    * @tparam T A hinder kinded type that represents the element type of the parquet file to be written.
-    * @return A [[Consumer]] that expects records of type [[T]] to be passed and materializes to [[Long]]
-    *         that represents the number of elements written.
-    */
-  def fromWriter[T](writer: Task[ParquetWriter[T]]): Consumer[T, Long] =
-    new ParquetSubscriberEval[T](writer)
 
   /**
     * Writes all emitted elements to a parquet file.

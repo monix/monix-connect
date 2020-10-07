@@ -83,7 +83,7 @@ private[parquet] class ParquetSubscriberUnsafe[T](parquetWriter: ParquetWriter[T
         }
     }
 
-    (out, AssignableCancelable.multi())
+    (out, AssignableCancelable.dummy)
   }
 
 }
