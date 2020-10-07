@@ -151,7 +151,8 @@ val bucket2: Task[Option[GcsBucket]] = storage.getBucket("myBucket2")
 
 /** 3- Finally, if you do already have an instance of [[com.google.cloud.storage.Bucket]],
   * you can convert it to a GcsBucket by using its compainon object*/
-// val bucket3: GcsBucket = GcsBucket(underlying)
+val underlying: com.google.cloud.storage.Bucket = ???
+val bucket3: GcsBucket = GcsBucket(underlying)
 ```
 
 Once we have an instance of `GcsBucket`, we will be able to use its very simple methods that it exposes to manage our _Bucket_, such like _get blob/s_ stored in it, _update_, _reload_ its metadata, various ones to manage its _Access Control List_ (_ACL_), etc.
