@@ -45,4 +45,5 @@ monix-s3/it/test-data/
 /website/yarn.lock
 
 #benchmarks
+benchmarks/data
 benchmarks/data/*

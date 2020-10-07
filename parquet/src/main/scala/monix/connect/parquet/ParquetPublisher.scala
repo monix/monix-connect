@@ -30,8 +30,8 @@ import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
 
 /**
-  * The implementation of a reactive parquet publisher.
-  * @param reader The apache hadoop generic implementation of a parquet reader.
+  * A builder for creating a reactive parquet reader as [[Observable]].
+  * @param reader the underlying apache hadoop generic implementation of a parquet reader.
   */
 private[parquet] final class ParquetPublisher[T](reader: ParquetReader[T]) extends Observable[T] {
 

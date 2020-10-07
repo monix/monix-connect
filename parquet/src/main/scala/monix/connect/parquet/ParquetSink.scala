@@ -28,8 +28,8 @@ object ParquetSink {
     * Writes all emitted elements to a parquet file.
     *
     * @param writer the apache hadoop generic implementation of a parquet writer.
-    * @tparam T A hinder kinded type that represents the element type of the parquet file to be written.
-    * @return A [[Consumer]] that expects records of type [[T]] to be passed and materializes to [[Long]]
+    * @tparam T represents the element type of the parquet file to be written.
+    * @return a [[Consumer]] that expects records of type [[T]] to be passed and materializes to [[Long]]
     *         that represents the number of elements written.
     */
   @UnsafeBecauseImpure
@@ -39,9 +39,9 @@ object ParquetSink {
   /**
     * Writes all emitted elements to a parquet file.
     *
-    * @param writer The apache hadoop generic implementation of a parquet writer.
-    * @tparam T A hinder kinded type that represents the element type of the parquet file to be written.
-    * @return A [[Consumer]] that expects records of type [[T]] to be passed and materializes to [[Long]]
+    * @param writer the apache hadoop generic implementation of a parquet writer.
+    * @tparam T represents the element type of the parquet file to be written.
+    * @return a [[Consumer]] that expects records of type [[T]] to be passed and materializes to [[Long]]
     *         that represents the number of elements written.
     */
   def fromWriter[T](writer: Coeval[ParquetWriter[T]]): Consumer[T, Long] =

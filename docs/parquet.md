@@ -30,26 +30,27 @@ The examples shown in the following sections uses the subclass `AvroParquet` in 
 For these examples we have created our own schema using `org.apache.avro.Schema`, however, it is *highly recommended* to generate them using  one of the existing libraries in the scala ecosystem such like [Avro4s](https://github.com/sksamuel/avro4s), [Avrohugger](https://github.com/julianpeeters/avrohugger), [Vulcan](https://fd4s.github.io/vulcan/docs/modules).
 
  ```scala
-// case class used to parse from and to `GenericRecord`, in a real world example it would be a subtype of it.
+// used to parse from and to `GenericRecord`, in a real world example it would be a subtype of `GenericRecord`.
 case class Person(id: Int, name: String)
 ```
 
 ```scala
 import org.apache.avro.Schema
-// avro schema associated to the above case class
+// avro schema associated to the above case class 
 val schema: Schema = new Schema.Parser().parse(
     "{\"type\":\"record\",\"name\":\"Person\",\"fields\":[{\"name\":\"id\",\"type\":\"int\"},{\"name\":\"name\",\"type\":\"string\"}]}")
 ```
 
 ### Writer
 
-Now let's get our hands dirty with an example on how to write from `Person` into a parquet file.
- To do so, we are going to use `AvroParquetWriter`. Since this one which expects elements subtype of `GenericRecord`, 
- we need a function to convert from our `Person`s:
+Now, let's get our hands dirty with an example on how to write from `Person` into a parquet file.
+ To do so, we are going to use `AvroParquetWriter` which expects elements subtype of `GenericRecord`, 
+ First, we we need a function to convert from our `Person`s: 
  
 ```scala
 import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 
+// again, this wouldn't be necessary if we were using a scala avro schema generator (avro4s, avrohugger, ...)
 def personToGenericRecord(person: Person): GenericRecord =
     new GenericRecordBuilder(schema) // using the schema created previously
       .set("id", person.id)

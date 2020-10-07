@@ -29,7 +29,7 @@ object ParquetSource {
     *
     * @param reader The raw [[ParquetReader]] of type [[T]].
     * @tparam T represents element type of the parquet file to be read
-    * @return An [[Observable]] that emits all the read elements of type [[T]].
+    * @return an [[Observable]] that emits all the read elements of type [[T]].
     */
   @UnsafeBecauseImpure
   def fromReaderUnsafe[T](reader: ParquetReader[T]): Observable[T] =
@@ -41,7 +41,7 @@ object ParquetSource {
     *
     * @param reader a [[Task]] with the [[ParquetReader]] of type [[T]].
     * @tparam T element type of the parquet file to be read
-    * @return An [[Observable]] that emits all the read elements of type [[T]].
+    * @return an [[Observable]] that emits all the read elements of type [[T]].
     */
   def fromReader[T](reader: Task[ParquetReader[T]]): Observable[T] =
     Observable.resource(reader)(reader => Task(reader.close())).flatMap(fromReaderUnsafe)
@@ -52,7 +52,7 @@ object ParquetSource {
     *
     * @param reader a [[Coeval]] with the [[ParquetReader]] of type [[T]].
     * @tparam T the element type of the parquet file to be read
-    * @return An [[Observable]] that emits all the read elements of type [[T]].
+    * @return an [[Observable]] that emits all the read elements of type [[T]].
     */
   def fromReader[T](reader: Coeval[ParquetReader[T]]): Observable[T] =
     Observable.resource(Task.coeval(reader))(reader => Task(reader.close())).flatMap(fromReaderUnsafe)
