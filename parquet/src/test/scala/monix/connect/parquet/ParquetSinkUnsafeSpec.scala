@@ -34,7 +34,7 @@ import org.mockito.MockitoSugar.when
 import scala.concurrent.duration._
 import scala.util.Failure
 
-class ParquetSinkSpec
+class ParquetSinkUnsafeSpec
   extends AnyWordSpecLike with IdiomaticMockito with Matchers with AvroParquetFixture with BeforeAndAfterAll {
 
   override def afterAll(): Unit = {
