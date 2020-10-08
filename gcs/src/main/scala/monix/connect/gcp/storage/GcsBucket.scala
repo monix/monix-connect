@@ -27,9 +27,11 @@ import monix.connect.gcp.storage.components.{FileIO, GcsDownloader, GcsUploader,
 import monix.connect.gcp.storage.configuration.{GcsBlobInfo, GcsBucketInfo}
 import monix.connect.gcp.storage.configuration.GcsBlobInfo.Metadata
 import monix.eval.Task
+import monix.execution.annotations.Unsafe
 import monix.reactive.Observable
 
 import scala.collection.JavaConverters._
+import scala.util.control.NonFatal
 
 /**
   * This class wraps the [[com.google.cloud.storage.Bucket]] class, providing an idiomatic scala API
@@ -48,20 +50,22 @@ class GcsBucket private (underlying: Bucket) extends GcsDownloader with FileIO w
     *
     * == Example ==
     *
-    * {
+    * {{{
     *   import monix.connect.gcp.storage.configuration.GcsBucketInfo.Locations
     *   import monix.connect.gcp.storage.{GcsBucket, GcsStorage}
     *   import monix.eval.Task
     *   import monix.reactive.Observable
     *
     *   val storage = GcsStorage.create()
-    *   val bucket: Task[GcsBucket] = storage.createBucket("myBucket", Locations.`EUROPE-WEST3`).memoize
+    *   val memoizedBucket: Task[GcsBucket] = storage.createBucket("myBucket", Locations.`EUROPE-WEST3`).memoize
     *
-    *   val ob: Observable[Array[Byte]] = for {
-    *     bucket <- Observable.fromTask(bucket)
-    *     content <- bucket.download("myBlob")
-    *   } yield content
-    * }
+    *   val ob: Observable[Array[Byte]] = {
+    *     for {
+    *       bucket <- Observable.fromTask(memoizedBucket)
+    *       content <- bucket.download("myBlob")
+    *     } yield content
+    *   }
+    * }}}
     *
     */
   def download(blobName: String, chunkSize: Int = 4096): Observable[Array[Byte]] = {
@@ -70,30 +74,30 @@ class GcsBucket private (underlying: Bucket) extends GcsDownloader with FileIO w
   }
 
   /**
-    * Allows downloading a Blob from GCS directly to the specified file.
+    * Downloads a Blob from GCS directly to the specified file.
     *
     * == Example ==
     *
-    * {
+    * {{{
     *   import java.io.File
     *
     *   import monix.connect.gcp.storage.{GcsStorage, GcsBucket}
     *   import monix.eval.Task
     *
-    *   val storage: GcsStorage = ???
-    *   val getBucketT: Task[Option[GcsBucket]] = storage.getBucket("myBucket")
+    *   val storage = GcsStorage.create()
     *   val targetFile = new File("example/target/file.txt")
     *   val t: Task[Unit] = {
     *     for {
-    *       maybeBucket <- getBucketT
+    *       maybeBucket <- storage.getBucket("myBucket")
     *       _ <- maybeBucket match {
     *         case Some(bucket) => bucket.downloadToFile("myBlob", targetFile.toPath)
-    *         case None => Task.unit
+    *         case None => Task.unit // alternatively a failure can be raised
     *       }
     *     } yield ()
     *    }
-    * }
+    * }}}
     */
+  @Unsafe("Risk of downloading large amounts of data into the local filesystem.")
   def downloadToFile(blobName: String, path: Path, chunkSize: Int = 4096): Task[Unit] = {
     val blobId = BlobId.of(underlying.getName, blobName)
     (for {
@@ -103,29 +107,30 @@ class GcsBucket private (underlying: Bucket) extends GcsDownloader with FileIO w
   }
 
   /**
-    * Provides a pre-built [[monix.reactive.Consumer]] implementation from [[GcsUploader]]
-    * for uploading data to [[self]] Blob.
+    * Provides a pre-built [[monix.reactive.Consumer]] that expects array bytes and
+    * uploads them all to this Blob.
     *
     * ==Example==
     *
-    * {
+    * {{{
     *   import monix.execution.Scheduler.Implicits.global
     *   import monix.connect.gcp.storage.{GcsStorage, GcsBucket}
     *   import monix.connect.gcp.storage.configuration.GcsBucketInfo
     *   import monix.eval.Task
     *   import monix.reactive.Observable
     *
-    *   val storage: GcsStorage = ???
-    *   val createBucketT: Task[GcsBucket] = storage.createBucket("myBucket", GcsBucketInfo.Locations.`EUROPE-WEST1`).memoize
+    *   val storage = GcsStorage.create()
+    *   val memoizedBucket = storage.createBucket("myBucket", GcsBucketInfo.Locations.`EUROPE-WEST1`).memoize
     *
-    *   val ob: Observable[Array[Byte]] = ???
+    *   val ob: Observable[Array[Byte]] = Observable.now("dummy content".getBytes)
+    *
     *   val t: Task[Unit] = for {
-    *     bucket <- createBucketT
+    *     bucket <- memoizedBucket
     *     _ <- ob.consumeWith(bucket.upload("myBlob"))
     *   } yield ()
     *
     *   t.runToFuture(global)
-    * }
+    * }}}
     */
   def upload(
     name: String,
@@ -141,7 +146,7 @@ class GcsBucket private (underlying: Bucket) extends GcsDownloader with FileIO w
     *
     * ==Example==
     *
-    * {
+    * {{{
     *   import java.io.File
     *
     *   import monix.execution.Scheduler.Implicits.global
@@ -149,17 +154,16 @@ class GcsBucket private (underlying: Bucket) extends GcsDownloader with FileIO w
     *   import monix.connect.gcp.storage.configuration.GcsBucketInfo
     *   import monix.eval.Task
     *
-    *   val storage: GcsStorage = ???
-    *   val createBucketT: Task[GcsBucket] = storage.createBucket("myBucket", GcsBucketInfo.Locations.`US-WEST1`)
+    *   val storage = GcsStorage.create()
     *   val sourceFile = new File("example/source/file.txt")
     *
     *   val t: Task[Unit] = for {
-    *     bucket <- createBucketT
+    *     bucket <- storage.createBucket("myBucket", GcsBucketInfo.Locations.`US-WEST1`)
     *     unit <- bucket.uploadFromFile("myBlob", sourceFile.toPath)
     *   } yield ()
     *
     *  t.runToFuture(global)
-    * }
+    * }}}
     */
   def uploadFromFile(
     blobName: String,
