@@ -120,8 +120,8 @@ lazy val monixConnect = (project in file("."))
   .configs(IntegrationTest, IT)
   .settings(sharedSettings)
   .settings(name := "monix-connect")
-  .aggregate(akka, dynamodb, gcs, hdfs, mongodb, redis, s3)
-  .dependsOn(akka, dynamodb, gcs, hdfs, mongodb, redis, s3)
+  .aggregate(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3)
+  .dependsOn(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3)
 
 
 lazy val akka = monixConnector("akka", Dependencies.Akka)
@@ -143,7 +143,7 @@ val scalaPBSettings = Seq(
 
 lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb)
 
-//lazy val parquet = monixConnector("parquet", Dependencies.Parquet, scalaPBSettings)
+lazy val parquet = monixConnector("parquet", Dependencies.Parquet, scalaPBSettings)
 
 lazy val redis = monixConnector("redis", Dependencies.Redis)
 
@@ -169,11 +169,11 @@ def monixConnector(
 lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth)
   .settings(skipOnPublishSettings)
 
-//lazy val benchmarks = monixConnector("benchmarks", Dependencies.Benchmarks)
-//  .enablePlugins(JmhPlugin)
-//  .settings(skipOnPublishSettings)
-//  .dependsOn(parquet % "compile->compile;test->test")
-//  .aggregate(parquet)
+lazy val benchmarks = monixConnector("benchmarks", Dependencies.Benchmarks)
+  .enablePlugins(JmhPlugin)
+  .settings(skipOnPublishSettings)
+  .dependsOn(parquet % "compile->compile;test->test")
+  .aggregate(parquet)
 
 lazy val docs = project
   .in(file("monix-connect-docs"))
