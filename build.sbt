@@ -147,7 +147,7 @@ lazy val parquet = monixConnector("parquet", Dependencies.Parquet, scalaPBSettin
 
 lazy val redis = monixConnector("redis", Dependencies.Redis)
 
-lazy val s3 = monixConnector("s3", Dependencies.S3)
+lazy val s3 = monixConnector("s3", Dependencies.S3).aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
 
 lazy val gcs = monixConnector("gcs", Dependencies.GCS)
 
