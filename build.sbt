@@ -164,6 +164,10 @@ def monixConnector(
 
 //=> non published modules
 
+lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth)
+  .settings(skipOnPublishSettings)
+  .aggregate(parquet)
+
 lazy val benchmarks = monixConnector("benchmarks", Dependencies.Benchmarks)
   .enablePlugins(JmhPlugin)
   .settings(skipOnPublishSettings)
