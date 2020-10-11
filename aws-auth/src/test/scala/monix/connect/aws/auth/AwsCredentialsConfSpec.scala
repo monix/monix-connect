@@ -22,7 +22,7 @@ import org.scalatest.matchers.should.Matchers
 import pureconfig.ConfigSource
 import pureconfig._
 import pureconfig.generic.auto._
-import AwsClientConf._
+import MonixAwsConf.Implicits._
 import software.amazon.awssdk.auth.credentials.{
   AnonymousCredentialsProvider,
   AwsSessionCredentials,

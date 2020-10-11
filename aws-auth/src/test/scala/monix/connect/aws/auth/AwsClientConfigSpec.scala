@@ -21,22 +21,22 @@ import org.scalatest.flatspec.AnyFlatSpec
 import pureconfig.ConfigSource
 import pureconfig._
 import pureconfig.generic.auto._
-import AwsClientConf._
+import MonixAwsConf.Implicits._
 import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.regions.Region
 
 class AwsClientConfigSpec extends AnyFlatSpec with Matchers {
 
-  s"${AwsClientConf}" should "load from default config file" in {
+  s"${AppConf}" should "load from default config file" in {
     //given/when
-    val awsClientConf = AwsClientConf.loadOrThrow
+    val awsClientConf = AppConf.loadOrThrow
 
     //then
-    awsClientConf.credentials shouldBe a[DefaultCredentialsProvider]
-    awsClientConf.endpoint.isDefined shouldBe true
-    awsClientConf.httpClient.isDefined shouldBe true
-    awsClientConf.region shouldBe Region.AWS_GLOBAL
+    awsClientConf.monixAws.credentials shouldBe a[DefaultCredentialsProvider]
+    awsClientConf.monixAws.endpoint.isDefined shouldBe true
+    awsClientConf.monixAws.httpClient.isDefined shouldBe true
+    awsClientConf.monixAws.region shouldBe Region.AWS_GLOBAL
   }
 
   it should "not require endpoint nor http client settings" in {
@@ -45,21 +45,23 @@ class AwsClientConfigSpec extends AnyFlatSpec with Matchers {
       "" +
         s"""
            |{
-           |  credentials: {
-           |    provider: "default"
+           |  monix-aws: {
+           |    credentials: {
+           |      provider: "default"
+           |    }
+           |    region: "aws-global"
            |  }
-           |  region: "aws-global"
            |}
            |""".stripMargin)
 
     //when
-    val awsClientConf = configSource.loadOrThrow[AwsClientConf]
+    val awsClientConf = configSource.loadOrThrow[AppConf]
 
     //then
-    awsClientConf.credentials shouldBe a[DefaultCredentialsProvider]
-    awsClientConf.endpoint.isDefined shouldBe false
-    awsClientConf.httpClient.isDefined shouldBe false
-    awsClientConf.region shouldBe Region.AWS_GLOBAL
+    awsClientConf.monixAws.credentials shouldBe a[DefaultCredentialsProvider]
+    awsClientConf.monixAws.endpoint.isDefined shouldBe false
+    awsClientConf.monixAws.httpClient.isDefined shouldBe false
+    awsClientConf.monixAws.region shouldBe Region.AWS_GLOBAL
   }
 
 }
