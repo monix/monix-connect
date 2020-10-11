@@ -22,11 +22,12 @@ import monix.execution.internal.InternalApi
 import scala.concurrent.duration.FiniteDuration
 
 @InternalApi
-private[connect] final case class HttpClientConf(maxConcurrency: Option[Int],
-                          maxPendingConnectionAcquires: Option[Int],
-                          connectionAcquisitionTimeout: Option[FiniteDuration],
-                          connectionMaxIdleTime: Option[FiniteDuration],
-                          connectionTimeToLive: Option[FiniteDuration],
-                          useIdleConnectionReaper: Boolean,
-                          readTimeout: Option[FiniteDuration],
-                          writeTimeout: Option[FiniteDuration])
+private[connect] final case class HttpClientConf(
+  maxConcurrency: Option[Int],
+  maxPendingConnectionAcquires: Option[Int],
+  connectionAcquisitionTimeout: Option[FiniteDuration],
+  connectionMaxIdleTime: Option[FiniteDuration],
+  connectionTimeToLive: Option[FiniteDuration],
+  useIdleConnectionReaper: Boolean,
+  readTimeout: Option[FiniteDuration],
+  writeTimeout: Option[FiniteDuration])

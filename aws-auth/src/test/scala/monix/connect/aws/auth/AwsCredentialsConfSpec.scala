@@ -34,9 +34,9 @@ import software.amazon.awssdk.auth.credentials.{
   SystemPropertyCredentialsProvider
 }
 
-class AwsCredentialsProviderConfSpec extends AnyFlatSpec with Matchers {
+class AwsCredentialsConfSpec extends AnyFlatSpec with Matchers {
 
-  s"$AwsCredentialsProviderConf" should "allow to set aws default credentials" in {
+  s"$AwsCredentialsConf" should "allow to set aws default credentials" in {
     //given
     val configSource = ConfigSource.string(
       "" +
@@ -46,7 +46,7 @@ class AwsCredentialsProviderConfSpec extends AnyFlatSpec with Matchers {
           |}
           |""".stripMargin)
     //when
-    val credentialsConf = configSource.loadOrThrow[AwsCredentialsProviderConf]
+    val credentialsConf = configSource.loadOrThrow[AwsCredentialsConf]
 
     //then
     credentialsConf.credentialsProvider shouldBe a[DefaultCredentialsProvider]
@@ -63,7 +63,7 @@ class AwsCredentialsProviderConfSpec extends AnyFlatSpec with Matchers {
           |""".stripMargin)
 
     //when
-    val credentialsConf = configSource.loadOrThrow[AwsCredentialsProviderConf]
+    val credentialsConf = configSource.loadOrThrow[AwsCredentialsConf]
 
     //then
     credentialsConf.credentialsProvider shouldBe a[AnonymousCredentialsProvider]
@@ -81,7 +81,7 @@ class AwsCredentialsProviderConfSpec extends AnyFlatSpec with Matchers {
           |""".stripMargin)
 
     //when
-    val credentialsConf = configSource.loadOrThrow[AwsCredentialsProviderConf]
+    val credentialsConf = configSource.loadOrThrow[AwsCredentialsConf]
 
     //then
     credentialsConf.credentialsProvider shouldBe a[EnvironmentVariableCredentialsProvider]
@@ -98,7 +98,7 @@ class AwsCredentialsProviderConfSpec extends AnyFlatSpec with Matchers {
           |""".stripMargin)
 
     //when
-    val credentialsConf = configSource.loadOrThrow[AwsCredentialsProviderConf]
+    val credentialsConf = configSource.loadOrThrow[AwsCredentialsConf]
 
     //then
     credentialsConf.credentialsProvider shouldBe a[InstanceProfileCredentialsProvider]
@@ -115,7 +115,7 @@ class AwsCredentialsProviderConfSpec extends AnyFlatSpec with Matchers {
           |""".stripMargin)
 
     //when
-    val credentialsConf = configSource.loadOrThrow[AwsCredentialsProviderConf]
+    val credentialsConf = configSource.loadOrThrow[AwsCredentialsConf]
 
     //then
     credentialsConf.credentialsProvider shouldBe a[ProfileCredentialsProvider]
@@ -135,7 +135,7 @@ class AwsCredentialsProviderConfSpec extends AnyFlatSpec with Matchers {
            |""".stripMargin)
 
     //when
-    val credentialsConf = configSource.loadOrThrow[AwsCredentialsProviderConf]
+    val credentialsConf = configSource.loadOrThrow[AwsCredentialsConf]
 
     //then
     credentialsConf.credentialsProvider shouldBe a[ProfileCredentialsProvider]
@@ -160,7 +160,7 @@ class AwsCredentialsProviderConfSpec extends AnyFlatSpec with Matchers {
            |""".stripMargin)
 
     //when
-    val credentialsConf = configSource.loadOrThrow[AwsCredentialsProviderConf]
+    val credentialsConf = configSource.loadOrThrow[AwsCredentialsConf]
 
     //then
     credentialsConf.credentialsProvider shouldBe a[StaticCredentialsProvider]
@@ -188,7 +188,7 @@ class AwsCredentialsProviderConfSpec extends AnyFlatSpec with Matchers {
            |""".stripMargin)
 
     //when
-    val credentialsConf = configSource.loadOrThrow[AwsCredentialsProviderConf]
+    val credentialsConf = configSource.loadOrThrow[AwsCredentialsConf]
 
     //then
     credentialsConf.credentialsProvider shouldBe a[StaticCredentialsProvider]
@@ -210,7 +210,7 @@ class AwsCredentialsProviderConfSpec extends AnyFlatSpec with Matchers {
            |""".stripMargin)
 
     //when
-    val credentialsConf = configSource.loadOrThrow[AwsCredentialsProviderConf]
+    val credentialsConf = configSource.loadOrThrow[AwsCredentialsConf]
 
     //then
     credentialsConf.credentialsProvider shouldBe a[DefaultCredentialsProvider]
@@ -227,7 +227,7 @@ class AwsCredentialsProviderConfSpec extends AnyFlatSpec with Matchers {
            |""".stripMargin)
 
     //when
-    val credentialsConf = configSource.loadOrThrow[AwsCredentialsProviderConf]
+    val credentialsConf = configSource.loadOrThrow[AwsCredentialsConf]
 
     //then
     credentialsConf.credentialsProvider shouldBe a[SystemPropertyCredentialsProvider]

@@ -23,17 +23,17 @@ import pureconfig._
 import pureconfig.generic.auto._
 import AwsClientConf._
 import org.scalatest.matchers.should.Matchers
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.regions.Region
 
 class AwsClientConfigSpec extends AnyFlatSpec with Matchers {
 
   s"${AwsClientConf}" should "load from default config file" in {
     //given/when
-    val awsClientConf = AwsClientConf.load.toOption.get
+    val awsClientConf = AwsClientConf.loadOrThrow
 
     //then
-    awsClientConf.credentials.provider shouldBe Provider.Default
-    awsClientConf.credentials.static.isDefined shouldBe true
+    awsClientConf.credentials shouldBe a[DefaultCredentialsProvider]
     awsClientConf.endpoint.isDefined shouldBe true
     awsClientConf.httpClient.isDefined shouldBe true
     awsClientConf.region shouldBe Region.AWS_GLOBAL
@@ -56,7 +56,7 @@ class AwsClientConfigSpec extends AnyFlatSpec with Matchers {
     val awsClientConf = configSource.loadOrThrow[AwsClientConf]
 
     //then
-    awsClientConf.credentials.provider shouldBe Provider.Default
+    awsClientConf.credentials shouldBe a[DefaultCredentialsProvider]
     awsClientConf.endpoint.isDefined shouldBe false
     awsClientConf.httpClient.isDefined shouldBe false
     awsClientConf.region shouldBe Region.AWS_GLOBAL

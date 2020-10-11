@@ -18,10 +18,24 @@
 package monix.connect.aws.auth
 
 import monix.execution.internal.InternalApi
-import software.amazon.awssdk.auth.credentials.{AnonymousCredentialsProvider, AwsBasicCredentials, AwsCredentialsProvider, AwsSessionCredentials, DefaultCredentialsProvider, EnvironmentVariableCredentialsProvider, InstanceProfileCredentialsProvider, ProfileCredentialsProvider, StaticCredentialsProvider, SystemPropertyCredentialsProvider}
+import software.amazon.awssdk.auth.credentials.{
+  AnonymousCredentialsProvider,
+  AwsBasicCredentials,
+  AwsCredentialsProvider,
+  AwsSessionCredentials,
+  DefaultCredentialsProvider,
+  EnvironmentVariableCredentialsProvider,
+  InstanceProfileCredentialsProvider,
+  ProfileCredentialsProvider,
+  StaticCredentialsProvider,
+  SystemPropertyCredentialsProvider
+}
 
 @InternalApi
-private[connect] final case class AwsCredentialsProviderConf(provider: Provider.Type, profileName: Option[String], static: Option[StaticCredentialsConf]) {
+private[connect] final case class AwsCredentialsConf(
+  provider: Provider.Type,
+  profileName: Option[String],
+  static: Option[StaticCredentialsConf]) {
   val credentialsProvider: AwsCredentialsProvider = {
     provider match {
       case Provider.Anonymous => AnonymousCredentialsProvider.create()
@@ -52,4 +66,8 @@ private[connect] final case class AwsCredentialsProviderConf(provider: Provider.
       case _ => DefaultCredentialsProvider.create()
     }
   }
+}
+
+object AwsCredentialsConf {
+
 }
