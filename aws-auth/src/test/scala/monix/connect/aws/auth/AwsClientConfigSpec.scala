@@ -6,86 +6,42 @@ import pureconfig._
 import pureconfig.generic.auto._
 import AwsClientConf._
 import org.scalatest.matchers.should.Matchers
-import software.amazon.awssdk.auth.credentials.{
-  AnonymousCredentialsProvider,
-  DefaultCredentialsProvider,
-  StaticCredentialsProvider
-}
+import software.amazon.awssdk.regions.Region
 
 class AwsClientConfigSpec extends AnyFlatSpec with Matchers {
 
   s"${AwsClientConf}" should "load from default config file" in {
-    println("Config: " + AwsClientConf.load)
+    val awsClientConf = AwsClientConf.load.toOption.get
+
+    awsClientConf.credentials.provider shouldBe Provider.Default
+    awsClientConf.endpoint.isDefined shouldBe true
+    awsClientConf.httpClient.isDefined shouldBe true
+    awsClientConf.region shouldBe Region.AWS_GLOBAL
   }
 
-  it should "allow to use aws anonymous credentials" in {
-    val configSource = ConfigSource.string(
-      "" +
-        """
-          |{
-          |  provider: "default"
-          |}
-          |""".stripMargin)
-    val credentialsConf = configSource.loadOrThrow[CredentialsConf]
 
-    credentialsConf.credentialsProvider shouldBe a[DefaultCredentialsProvider]
-  }
-
-  it should "allow to configure aws anonymous credentials" in {
-    val configSource = ConfigSource.string(
-      "" +
-        """
-          |{
-          |  provider: "anonymous"
-          |}
-          |""".stripMargin)
-    val credentialsConf = configSource.loadOrThrow[CredentialsConf]
-
-    credentialsConf.credentialsProvider shouldBe a[AnonymousCredentialsProvider]
-
-  }
-
-  it should "allow to configure aws static credentials" in {
-    val accessKeyId = "sample-key"
-    val secretAccessKey = "sample-secret"
+  it should "not require endpoint nor http client settings" in {
+    //given
     val configSource = ConfigSource.string(
       "" +
         s"""
           |{
-          |  provider: "static"
-          |  static-credentials {
-          |    access-key-id: "$accessKeyId"
-          |    secret-access-key: "$secretAccessKey"
+          |  credentials: {
+          |    provider: "default"
           |  }
+          |  region: "aws-global"
           |}
           |""".stripMargin)
-    val credentialsConf = configSource.loadOrThrow[CredentialsConf]
 
-    credentialsConf.credentialsProvider shouldBe a[StaticCredentialsProvider]
-    val awsCredentials = credentialsConf.credentialsProvider.resolveCredentials()
-    awsCredentials.accessKeyId() shouldBe accessKeyId
-    awsCredentials.secretAccessKey() shouldBe secretAccessKey
+    //when
+    val awsClientConf = configSource.loadOrThrow[AwsClientConf]
+
+    //then
+    awsClientConf.credentials.provider shouldBe Provider.Default
+    awsClientConf.endpoint.isDefined shouldBe false
+    awsClientConf.httpClient.isDefined shouldBe false
+    awsClientConf.region shouldBe Region.AWS_GLOBAL
   }
 
-  it should "allow to configure aws static session credentials" in {
-    val accessKeyId = "sample-key"
-    val secretAccessKey = "sample-secret"
-    val configSource = ConfigSource.string(
-      "" +
-        s"""
-           |{
-           |  provider: "static"
-           |  static-credentials {
-           |    access-key-id: "$accessKeyId"
-           |    secret-access-key: "$secretAccessKey"
-           |  }
-           |}
-           |""".stripMargin)
-    val credentialsConf = configSource.loadOrThrow[CredentialsConf]
 
-    credentialsConf.credentialsProvider shouldBe a[StaticCredentialsProvider]
-    val awsCredentials = credentialsConf.credentialsProvider.resolveCredentials()
-    awsCredentials.accessKeyId() shouldBe accessKeyId
-    awsCredentials.secretAccessKey() shouldBe secretAccessKey
-  }
 }

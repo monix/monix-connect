@@ -1,9 +1,11 @@
 package monix.connect.aws.auth
 
+import monix.execution.internal.InternalApi
+
 import scala.concurrent.duration.FiniteDuration
 
-//todo add proxy, ssl and tls settings
-case class HttpClientConf(maxConcurrency: Option[Int],
+@InternalApi
+private[connect] case class HttpClientConf(maxConcurrency: Option[Int],
                           maxPendingConnectionAcquires: Option[Int],
                           connectionAcquisitionTimeout: Option[FiniteDuration],
                           connectionMaxIdleTime: Option[FiniteDuration],
