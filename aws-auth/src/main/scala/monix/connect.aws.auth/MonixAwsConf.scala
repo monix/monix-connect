@@ -22,23 +22,26 @@ import software.amazon.awssdk.regions.Region
 import pureconfig._
 import pureconfig.generic.auto._
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
+import java.net.URI
 
 import scala.language.implicitConversions
 
 @InternalApi
 private[connect] final case class MonixAwsConf(
   credentials: AwsCredentialsProvider,
-  endpoint: Option[String],
+  endpoint: Option[URI],
   httpClient: Option[HttpClientConf],
-  region: Region) {}
+  region: Region)
 
 @InternalApi
 private[connect] object MonixAwsConf {
 
   object Implicits {
-   implicit val credentialsProviderReader: ConfigReader[AwsCredentialsProvider] =
-     ConfigReader[AwsCredentialsConf].map { credentialsConf => credentialsConf.credentialsProvider }
-   implicit val providerReader: ConfigReader[Provider.Type] = ConfigReader[String].map(Provider.fromString(_))
-   implicit val regionsReader: ConfigReader[Region] = ConfigReader[String].map(Region.of(_))
+    implicit val credentialsProviderReader: ConfigReader[AwsCredentialsProvider] =
+      ConfigReader[AwsCredentialsConf].map { credentialsConf => credentialsConf.credentialsProvider }
+    implicit val providerReader: ConfigReader[Provider.Type] = ConfigReader[String].map(Provider.fromString(_))
+    implicit val regionReader: ConfigReader[Region] = ConfigReader[String].map(Region.of(_))
+    implicit val uriReader: ConfigReader[URI] = ConfigReader[String].map(URI.create(_))
+
   }
 }

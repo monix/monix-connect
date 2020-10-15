@@ -20,6 +20,7 @@ package monix.connect.aws.auth
 import monix.execution.internal.InternalApi
 import pureconfig.ConfigReader.Result
 import pureconfig._
+import pureconfig.error.ConfigReaderFailures
 import pureconfig.generic.auto._
 
 @InternalApi
@@ -28,6 +29,6 @@ private[connect] final case class AppConf(monixAws: MonixAwsConf)
 @InternalApi
 private[connect] object AppConf {
   import MonixAwsConf.Implicits._
-  val load: Result[AppConf] = ConfigSource.default.load[AppConf]
+  val load: Either[ConfigReaderFailures, AppConf] = ConfigSource.default.load[AppConf]
   val loadOrThrow = ConfigSource.default.loadOrThrow[AppConf]
 }
