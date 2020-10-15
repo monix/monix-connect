@@ -17,6 +17,8 @@
 
 package monix.connect.aws.auth
 
+import java.net.URI
+
 import org.scalatest.flatspec.AnyFlatSpec
 import pureconfig.ConfigSource
 import pureconfig._
@@ -34,8 +36,7 @@ class AwsClientConfigSpec extends AnyFlatSpec with Matchers {
 
     //then
     awsClientConf.monixAws.credentials shouldBe a[DefaultCredentialsProvider]
-    awsClientConf.monixAws.endpoint.isDefined shouldBe true
-    awsClientConf.monixAws.httpClient.isDefined shouldBe true
+    awsClientConf.monixAws.endpoint shouldBe Some(URI.create("localhost:4566"))
     awsClientConf.monixAws.region shouldBe Region.AWS_GLOBAL
   }
 

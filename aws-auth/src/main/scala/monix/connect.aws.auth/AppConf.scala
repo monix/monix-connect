@@ -18,7 +18,6 @@
 package monix.connect.aws.auth
 
 import monix.execution.internal.InternalApi
-import pureconfig.ConfigReader.Result
 import pureconfig._
 import pureconfig.error.ConfigReaderFailures
 import pureconfig.generic.auto._

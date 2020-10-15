@@ -28,10 +28,10 @@ import scala.language.implicitConversions
 
 @InternalApi
 private[connect] final case class MonixAwsConf(
+  region: Region,
   credentials: AwsCredentialsProvider,
   endpoint: Option[URI],
-  httpClient: Option[HttpClientConf],
-  region: Region)
+  httpClient: Option[HttpClientConf])
 
 @InternalApi
 private[connect] object MonixAwsConf {
@@ -42,6 +42,5 @@ private[connect] object MonixAwsConf {
     implicit val providerReader: ConfigReader[Provider.Type] = ConfigReader[String].map(Provider.fromString(_))
     implicit val regionReader: ConfigReader[Region] = ConfigReader[String].map(Region.of(_))
     implicit val uriReader: ConfigReader[URI] = ConfigReader[String].map(URI.create(_))
-
   }
 }

@@ -57,17 +57,10 @@ private[connect] final case class AwsCredentialsConf(
                 case Some(token) => AwsSessionCredentials.create(creeds.accessKeyId, creeds.secretAccessKey, token)
               }
             }
-          case None => {
-            println("WARN! - Basic credentials is empty!")
-            DefaultCredentialsProvider.create()
-          }
+          case None => DefaultCredentialsProvider.create()
         }
       case Provider.System => SystemPropertyCredentialsProvider.create()
       case _ => DefaultCredentialsProvider.create()
     }
   }
-}
-
-object AwsCredentialsConf {
-
 }

@@ -5,7 +5,7 @@ object Dependencies {
   object Versions {
     
     //main
-    val AwsAuth = "2.15.7"
+    val AwsSdk = "2.15.7"
     val AkkaStreams = "2.6.9"
     val AWS = "1.11.749"
     val Cats_Effect = "2.1.3"
@@ -49,7 +49,7 @@ object Dependencies {
 
   val AwsAuth = Seq(
     "io.monix" %% "monix-reactive" % Versions.Monix,
-    "software.amazon.awssdk" % "auth" % Versions.AwsAuth,
+    "software.amazon.awssdk" % "auth" % Versions.AwsSdk,
     "com.github.pureconfig" %% "pureconfig" % Versions.Pureconfig) ++ testDependencies(hasIt = false)
 
   val Benchmarks = Seq("org.scalacheck" %% "scalacheck" % Versions.Scalacheck
@@ -77,14 +77,13 @@ object Dependencies {
     "org.apache.parquet" % "parquet-avro" % Versions.Parquet,
     "org.apache.parquet" % "parquet-hadoop" % Versions.Parquet,
     "org.apache.parquet" % "parquet-protobuf" % Versions.Parquet,
-    //"com.twitter.elephantbird" % "elephant-bird" % "4.17",
     "org.apache.hadoop" % "hadoop-client" % Versions.Hadoop,
     "org.apache.hadoop" % "hadoop-common" % Versions.Hadoop % Test,
     "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"
   ) ++ testDependencies(hasIt = false)
 
   val S3 = Seq(
-    "software.amazon.awssdk" % "s3" % "2.14.25",
+    "software.amazon.awssdk" % "s3" % Versions.AwsSdk,
     "org.scalatestplus" %% "scalacheck-1-14" % "3.1.1.1" % Test
   ) ++ testDependencies(hasIt = true)
 
