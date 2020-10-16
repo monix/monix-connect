@@ -17,50 +17,70 @@
 
 package monix.connect.parquet
 
-import monix.eval.Task
-import monix.reactive.{Observable, OverflowStrategy}
+import monix.execution.Ack.{Continue, Stop}
+import monix.execution.cancelables.BooleanCancelable
+import monix.execution.{Ack, Cancelable, ExecutionModel, Scheduler}
+import monix.reactive.Observable
 import monix.reactive.observers.Subscriber
 import org.apache.parquet.hadoop.ParquetReader
-import monix.execution.Ack
+
+import scala.annotation.tailrec
+import scala.concurrent.Future
+import scala.util.control.NonFatal
+import scala.util.{Failure, Success}
 
 /**
-  * The implementation of a reactive parquet publisher.
-  * @param reader The apache hadoop generic implementation of a parquet reader.
+  * A builder for creating a reactive parquet reader as [[Observable]].
+  * @param reader the underlying apache hadoop generic implementation of a parquet reader.
   */
-private[parquet] class ParquetPublisher[T](reader: ParquetReader[T]) {
+private[parquet] final class ParquetPublisher[T](reader: ParquetReader[T]) extends Observable[T] {
 
-  /**
-    * A recursive function that keeps reading records from a parquet file until the last one.
-    * @param sub The upstream subscriber to feed with the read records.
-    */
-  private def readRecords(sub: Subscriber[T]): Task[Unit] = {
-    val t = Task(reader.read())
-    t.redeemWith(
-      ex => Task(sub.onError(ex)),
-      r => {
-        if (r != null) {
-          Task.deferFuture(sub.onNext(r)).flatMap {
-            case Ack.Continue => readRecords(sub)
-            case Ack.Stop => Task.unit
-          }
-        } else {
-          sub.onComplete()
-          Task.unit
-        }
-      }
-    )
+  def unsafeSubscribeFn(subscriber: Subscriber[T]): Cancelable = {
+    val s = subscriber.scheduler
+    val cancelable = BooleanCancelable()
+    fastLoop(subscriber, cancelable, s.executionModel, 0)(s)
+    cancelable
   }
 
-  /**
-    * Parquet reader [[Observable]] builder.
-    */
-  val create: Observable[T] =
-    Observable.create(OverflowStrategy.Unbounded) { sub => readRecords(sub).runToFuture(sub.scheduler) }
-}
+  @tailrec
+  def fastLoop(o: Subscriber[T], c: BooleanCancelable, em: ExecutionModel, syncIndex: Int)(
+    implicit
+    s: Scheduler): Unit = {
 
-/**
-  * Companion object builder for [[ParquetPublisher]].
-  */
-object ParquetPublisher {
-  private[parquet] def apply[T](reader: ParquetReader[T]): ParquetPublisher[T] = new ParquetPublisher(reader)
+    val ack =
+      try {
+        val r = reader.read()
+        if (r != null) o.onNext(r)
+        else {
+          o.onComplete()
+          Stop
+        }
+      } catch {
+        case ex if NonFatal(ex) =>
+          Future.failed(ex)
+      }
+
+    val nextIndex =
+      if (ack == Continue) em.nextFrameIndex(syncIndex)
+      else if (ack == Stop) -1
+      else 0
+
+    if (nextIndex > 0)
+      fastLoop(o, c, em, nextIndex)
+    else if (nextIndex == 0 && !c.isCanceled)
+      reschedule(ack, o, c, em)
+  }
+
+  def reschedule(ack: Future[Ack], o: Subscriber[T], c: BooleanCancelable, em: ExecutionModel)(
+    implicit
+    s: Scheduler): Unit =
+    ack.onComplete {
+      case Success(success) =>
+        if (success == Continue) fastLoop(o, c, em, 0)
+      case Failure(ex) =>
+        o.onError(ex)
+        s.reportFailure(ex)
+      case _ =>
+        () // this was a Stop, do nothing
+    }
 }

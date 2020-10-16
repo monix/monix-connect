@@ -113,22 +113,16 @@ def mimaSettings(projectName: String) = Seq(
 
 mimaFailOnNoPrevious in ThisBuild := false
 
-def profile: Project => Project = pr => {
-  val withCoverage = sys.env.getOrElse("SBT_PROFILE", "") match {
-    case "coverage" => pr
-    case _ => pr.disablePlugins(scoverage.ScoverageSbtPlugin)
-  }
-  withCoverage.enablePlugins(AutomateHeaderPlugin)
-}
-
 val IT = config("it") extend Test
 
+//=> published modules
 lazy val monixConnect = (project in file("."))
   .configs(IntegrationTest, IT)
   .settings(sharedSettings)
   .settings(name := "monix-connect")
-  .settings(skipOnPublishSettings)
-  .aggregate(akka, dynamodb, gcs, hdfs, mongodb, parquet, redis, s3)
+  .aggregate(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, awsAuth)
+  .dependsOn(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3)
+
 
 lazy val akka = monixConnector("akka", Dependencies.Akka)
 
@@ -166,9 +160,20 @@ def monixConnector(
     .settings(name := s"monix-$connectorName", libraryDependencies ++= projectDependencies, Defaults.itSettings)
     .settings(sharedSettings)
     .settings(additionalSettings: _*)
-    .configure(profile)
     .configs(IntegrationTest, IT)
+    .enablePlugins(AutomateHeaderPlugin)
     //.settings(mimaSettings(s"monix-$connectorName"))
+
+//=> non published modules
+
+lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth)
+  .settings(skipOnPublishSettings)
+
+lazy val benchmarks = monixConnector("benchmarks", Dependencies.Benchmarks)
+  .enablePlugins(JmhPlugin)
+  .settings(skipOnPublishSettings)
+  .dependsOn(parquet % "compile->compile;test->test")
+  .aggregate(parquet)
 
 lazy val docs = project
   .in(file("monix-connect-docs"))
