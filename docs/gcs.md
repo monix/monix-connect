@@ -69,7 +69,6 @@ import monix.connect.gcp.storage.configuration.GcsBucketInfo
 import monix.connect.gcp.storage.configuration.GcsBucketInfo.Locations
 
 val storage = GcsStorage.create()
-
 val metadata = GcsBucketInfo.Metadata(
   labels = Map(
     "project" -> "my-first-gcs-bucket"
@@ -92,14 +91,15 @@ It also exposes a get operation for _buckets_ and _blobs_ that gets executed `as
 with the resource we asked for, being _None_ if it did not existed:
 
 ```scala
-val getBucketT: Task[Option[GcsBucket]] = storage.getBucket("myBucket")
+import monix.connect.gcp.storage.{GcsStorage, GcsBlob}
 
+val storage: GcsStorage = GcsStorage.create()
 val t: Task[Unit] = {
   for {
-    maybeBucket <- getBucketT
+    maybeBucket <- storage.getBucket("myBucket"): Task[Option[GcsBucket]]
     _ <- maybeBucket match {
       case Some(bucket) => Task.now(println("My bucket exists!"))
-      case None => Task.unit
+      case None => Task.unit // alternatively a failure could be raised
     }
   } yield ()
 }
@@ -108,13 +108,16 @@ val t: Task[Unit] = {
 The same would apply for _Blob_.
 
 ```scala
-val getBlobT: Task[Option[GcsBlob]] = storage.getBlob("myBucket", "myBlob")
+import monix.connect.gcp.storage.{GcsStorage, GcsBlob}
+
+val storage: GcsStorage = GcsStorage.create()
 val t: Task[Unit] = {
   for {
-    maybeBlob <- getBlobT
+    maybeBlob <- storage.getBlob("myBucket", "myBlob"): Task[Option[GcsBlob]]
     _ <- maybeBlob match {
       case Some(blob) => Task.now(println("My blob exists!"))
-      case None => Task.unit
+      case None => Task.unit // alternatively a failure could be raised
+
     }
   } yield ()
 }
@@ -162,13 +165,12 @@ There are no code examples on the documentation to show these operations since t
 In order to download a blob using the `GcsBucket` you would just need to specify the _Blob_ name that should be allocated in the same _Bucket_:
 
 ```scala
-val storage = GcsStorage(underlying)
 val bucket: Task[Option[GcsBucket]] = storage.getBucket("myBucket")
 val ob: Observable[Array[Byte]] = {
   Observable.fromTask(bucket)
     .flatMap {
-      case Some(blob) => blob.download("myBlob")
-      case None => Observable.empty
+      case Some(bucket) => bucket.download("myBlob")
+      case None => Observable.empty // alternatively a failure could be raised
     }
 }
 ```
@@ -185,15 +187,15 @@ import java.io.File
 import monix.connect.gcp.storage.{GcsStorage, GcsBucket}
 import monix.eval.Task
 
-val getBucketT: Task[Option[GcsBucket]] = storage.getBucket("myBucket")
+val storage = GcsStorage.create()
 val targetFile = new File("example/target/file.txt")
 
 val t: Task[Unit] = {
   for {
-    maybeBucket <- getBucketT
+    maybeBucket <- storage.getBucket("myBucket"): Task[Option[GcsBucket]]
     _ <- maybeBucket match {
       case Some(bucket) => bucket.downloadToFile("myBlob", targetFile.toPath)
-      case None => Task.unit
+      case None => Task.unit // alternatively a failure could be raised
     }
   } yield ()
 }
@@ -202,7 +204,7 @@ val t: Task[Unit] = {
 ##### upload
 
 On the other hand you can upload data into a _Blob_ by using the pre-built `Consumer` implementation that expects and pushes _byte arrays_
-  into the specified `Blob` and materializes to `Unit` when it completes.   
+  into the specified `Blob` and materializes to `Unit` when it completes.
 
 ```scala
 
@@ -210,12 +212,11 @@ import monix.connect.gcp.storage.{GcsStorage, GcsBucket}
 import monix.eval.Task
 
 val storage = GcsStorage.create()
-val bucketT: Task[GcsBucket] = ???
-
-val ob: Observable[Array[Byte]] = ???
+val memoizedBucket = storage.createBucket("mybucket", Locations.`EUROPE-WEST1`, Some(metadata)).memoizeOnSuccess
+val ob: Observable[Array[Byte]] = Observable.now("dummy content".getBytes)
 val t: Task[Unit] = for {
-  b <- bucketT
-  _ <- ob.consumeWith(b.upload("myBlob"))
+  bucket <- memoizedBucket: Task[GcsBucket]
+  _ <- ob.consumeWith(bucket.upload("myBlob"))
 } yield ()
 ```
 
@@ -229,12 +230,12 @@ import java.io.File
 import monix.connect.gcp.storage.{GcsStorage, GcsBucket}
 import monix.eval.Task
 
-val bucketT: Task[GcsBucket] = ???
+val storage: GcsStorage = GcsStorage.create()
+val memoizedBucket = storage.createBucket("mybucket", Locations.`EUROPE-WEST1`, Some(metadata)).memoizeOnSuccess
 val sourceFile = new File("example/source/file.txt")
-
 val t: Task[Unit] = for {
-  b <- bucketT
-  unit <- b.uploadFromFile("myBlob", sourceFile.toPath)
+  bucket <- memoizedBucket
+  unit <- bucket.uploadFromFile("myBlob", sourceFile.toPath)
 } yield ()
 ```
 
@@ -251,14 +252,14 @@ since it will use the one which the _Blob_ is stored in.
 
 ##### copyTo 
 
-This thod has different signatures, and it allows you to copy a _Blob_ into the specified target _Bucket_ and _Blob_.
+An overloaded method that allows you to _copy_ a _Blob_ into the specified _Bucket_ and _Blob_.
 The target _Bucket_ can be the same or a different as the source.
 
 ```scala
 import monix.connect.gcp.storage.{GcsStorage, GcsBlob}
 import monix.eval.Task
 val storage = GcsStorage.create()
-val sourceBlob: Task[GcsBlob] = storage.createBlob("myBucket", "sourceBlob")
+val sourceBlob: Task[GcsBlob] = storage.createBlob("myBucket", "sourceBlob").memoizeOnSuccess
 val targetBlob: Task[GcsBlob] =  sourceBlob.flatMap(_.copyTo("targetBucket", "targetBlob"))
 ```
 
