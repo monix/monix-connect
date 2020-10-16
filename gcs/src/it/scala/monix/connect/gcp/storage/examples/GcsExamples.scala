@@ -57,13 +57,20 @@ class GcsExamples extends AnyWordSpecLike with IdiomaticMockito with Matchers wi
       import monix.reactive.Observable
 
       val storage = GcsStorage.create()
-      val getBlobT: Task[Option[GcsBlob]] = storage.getBlob("myBucket", "myBlob")
+      val memoizedBlob = storage.getBlob("myBucket", "myBlob").memoize
 
-      val ob: Observable[Array[Byte]] = Observable.fromTask(getBlobT)
-        .flatMap {
-          case Some(blob) => blob.download()
-          case None => Observable.empty
-        }
+      val ob: Observable[Array[Byte]] = {
+        for {
+          blob <- Observable.fromTask(memoizedBlob): Observable[Option[GcsBlob]]
+          bytes <- {
+            blob match {
+              case Some(blob) => blob.download()
+              case None => Observable.empty
+            }
+          }
+        } yield bytes
+      }
+
     }
 
     "bucket donwload to file" in {
@@ -73,12 +80,11 @@ class GcsExamples extends AnyWordSpecLike with IdiomaticMockito with Matchers wi
       import monix.eval.Task
 
       val storage = GcsStorage.create()
-      val getBucketT: Task[Option[GcsBucket]] = storage.getBucket("myBucket")
       val targetFile = new File("example/target/file.txt")
 
       val t: Task[Unit] = {
         for {
-          maybeBucket <- getBucketT
+          maybeBucket <-  storage.getBucket("myBucket"): Task[Option[GcsBucket]]
           _ <- maybeBucket match {
             case Some(bucket) => bucket.downloadToFile("myBlob", targetFile.toPath)
             case None => Task.unit
@@ -94,11 +100,10 @@ class GcsExamples extends AnyWordSpecLike with IdiomaticMockito with Matchers wi
       import monix.eval.Task
 
       val storage = GcsStorage.create()
-      val getBlobT: Task[Option[GcsBlob]] = storage.getBlob("myBucket", "myBlob")
       val targetFile = new File("example/target/file.txt")
       val t: Task[Unit] = {
         for {
-          maybeBucket <- getBlobT
+          maybeBucket <- storage.getBlob("myBucket", "myBlob"): Task[Option[GcsBlob]]
           _ <- maybeBucket match {
             case Some(blob) => blob.downloadToFile(targetFile.toPath)
             case None => Task.unit
@@ -112,11 +117,11 @@ class GcsExamples extends AnyWordSpecLike with IdiomaticMockito with Matchers wi
       import monix.eval.Task
 
       val storage = GcsStorage.create()
-      val createBucketT: Task[GcsBucket] = storage.createBucket("myBucket", Locations.`EUROPE-WEST1`).memoize
+      val memoizedBucket = storage.createBucket("myBucket", Locations.`EUROPE-WEST1`).memoize
+      val ob: Observable[Array[Byte]] = Observable.now("dummy content".getBytes)
 
-      val ob: Observable[Array[Byte]] = ???
       val t: Task[Unit] = for {
-        bucket <- createBucketT
+        bucket <- memoizedBucket: Task[GcsBucket]
         _ <- ob.consumeWith(bucket.upload("myBlob"))
       } yield ()
 
@@ -130,11 +135,10 @@ class GcsExamples extends AnyWordSpecLike with IdiomaticMockito with Matchers wi
       import monix.eval.Task
 
       val storage = GcsStorage.create()
-      val createBucketT: Task[GcsBucket] = storage.createBucket("myBucket", GcsBucketInfo.Locations.`US-WEST1`)
       val sourceFile = new File("path/to/your/path.txt")
 
       val t: Task[Unit] = for {
-        bucket <- createBucketT
+        bucket <- storage.createBucket("myBucket", GcsBucketInfo.Locations.`US-WEST1`): Task[GcsBucket]
         unit <- bucket.uploadFromFile("myBlob", sourceFile.toPath)
       } yield ()
     }
@@ -145,11 +149,11 @@ class GcsExamples extends AnyWordSpecLike with IdiomaticMockito with Matchers wi
       import monix.execution.Scheduler.Implicits.global
 
       val storage = GcsStorage.create()
-      val createBlobT: Task[GcsBlob] = storage.createBlob("myBucket", "myBlob").memoize
+      val memoizedBlob = storage.createBlob("myBucket", "myBlob").memoize
 
-      val ob: Observable[Array[Byte]] = ???
+      val ob: Observable[Array[Byte]] = Observable.now("dummy content".getBytes)
       val t: Task[Unit] = for {
-        blob <- createBlobT
+        blob <- memoizedBlob
         _ <- ob.consumeWith(blob.upload())
       } yield ()
 
@@ -163,11 +167,10 @@ class GcsExamples extends AnyWordSpecLike with IdiomaticMockito with Matchers wi
       import monix.eval.Task
 
       val storage = GcsStorage.create()
-      val createBlobT: Task[GcsBlob] = storage.createBlob("myBucket", "myBlob")
       val sourceFile = new File("path/to/your/path.txt")
 
       val t: Task[Unit] = for {
-        blob <- createBlobT
+        blob <- storage.createBlob("myBucket", "myBlob"): Task[GcsBlob]
         _ <- blob.uploadFromFile(sourceFile.toPath)
       } yield ()
     }

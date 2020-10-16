@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
- * See the project homepage at: https://monix.io
+ * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -210,7 +210,7 @@ class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with
       finalOffset shouldBe chunksB.flatten.size
     }
 
-    "files when appending to a non existing file" in new HdfsFixture {
+    "fail when appending to a non existing file" in new HdfsFixture {
       //given
       val path: Path = new Path(genFileName.sample.get)
       val chunksA: List[Array[Byte]] = genChunks.sample.get

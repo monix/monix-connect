@@ -1,8 +1,9 @@
-name: Update Documentation 
+name: docs
 on:
   push:
     branches:
       - docs
+    tags: ["*"]
 jobs:
   publish:
     name: publish 

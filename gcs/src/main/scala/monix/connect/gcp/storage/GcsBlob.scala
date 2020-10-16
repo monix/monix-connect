@@ -49,20 +49,26 @@ private[storage] final class GcsBlob(val underlying: Blob) extends GcsDownloader
     *
     * == Example ==
     *
-    * {
+    * {{{
     *   import monix.connect.gcp.storage.{GcsStorage, GcsBlob}
     *   import monix.eval.Task
     *   import monix.reactive.Observable
     *
-    *   val storage = GcsStorage.create()
-    *   val blob: Task[Option[GcsBlob]] = storage.getBlob("myBucket", "myBlob")
+    *    val storage = GcsStorage.create()
+    *    val memoizedBlob = storage.getBlob("myBucket", "myBlob").memoize
     *
-    *   val ob: Observable[Array[Byte]] = Observable.fromTask(blob)
-    *      .flatMap {
-    *        case Some(blob) => blob.download()
-    *        case None => Observable.empty
-    *      }
-    * }
+    *    val ob: Observable[Array[Byte]] = {
+    *      for {
+    *        blob <- Observable.fromTask(memoizedBlob): Observable[Option[GcsBlob]]
+    *        bytes <- {
+    *          blob match {
+    *            case Some(blob) => blob.download()
+    *            case None => Observable.empty
+    *          }
+    *        }
+    *      } yield bytes
+    *    }
+    * }}}
     *
     */
   def download(chunkSize: Int = 4096): Observable[Array[Byte]] = {
@@ -75,28 +81,26 @@ private[storage] final class GcsBlob(val underlying: Blob) extends GcsDownloader
     *
     * == Example ==
     *
-    * {
+    * {{{
     *   import java.io.File
     *
     *   import monix.execution.Scheduler.Implicits.global
     *   import monix.connect.gcp.storage.{GcsStorage, GcsBlob}
     *   import monix.eval.Task
     *
-    *   val storage: GcsStorage = ???
-    *   val getBlobT: Task[Option[GcsBlob]] = storage.getBlob("myBucket", "myBlob")
+    *   val storage: GcsStorage = GcsStorage.create()
     *   val file = new File("path/to/your/path.txt")
     *
     *   val t: Task[Unit] = {
     *     for {
-    *       maybeBlob <- getBlobT
+    *       maybeBlob <- storage.getBlob("myBucket", "myBlob"): Task[Option[GcsBlob]]
     *       _ <- maybeBlob match {
     *         case Some(blob) => blob.downloadToFile(file.toPath)
-    *         case None => Task.unit
+    *         case None => Task.unit // alternatively a failure can be raised
     *       }
     *     } yield ()
     *   }
-    *
-    * }
+    * }}}
     */
   def downloadToFile(path: Path, chunkSize: Int = 4096): Task[Unit] = {
     val blobId: BlobId = BlobId.of(underlying.getBucket, underlying.getName)
@@ -120,21 +124,20 @@ private[storage] final class GcsBlob(val underlying: Blob) extends GcsDownloader
     *
     * == Example ==
     *
-    * {
+    * {{{
     *   import monix.connect.gcp.storage.{GcsStorage, GcsBlob}
     *   import monix.eval.Task
     *
     *   import java.io.File
     *
-    *   val storage: GcsStorage = ???
-    *   val createBlobT: Task[GcsBlob] = storage.createBlob("myBucket", "myBlob")
+    *   val storage: GcsStorage = GcsStorage.create()
     *   val sourceFile = new File("path/to/your/path.txt")
     *
     *   val t: Task[Unit] = for {
-    *     blob <- createBlobT
+    *     blob <- storage.createBlob("myBucket", "myBlob"): Task[GcsBlob]
     *     _ <- blob.uploadFromFile(sourceFile.toPath)
     *   } yield ()
-    * }
+    * }}}
     */
   def uploadFromFile(
     path: Path,
@@ -155,20 +158,21 @@ private[storage] final class GcsBlob(val underlying: Blob) extends GcsDownloader
     *
     * == Example ==
     *
-    * {
+    * {{{
     *   import monix.connect.gcp.storage.{GcsStorage, GcsBlob}
     *   import monix.eval.Task
     *   import monix.reactive.Observable
     *
-    *   val storage: GcsStorage = ???
-    *   val createBlobT: Task[GcsBlob] = storage.createBlob("myBucket", "myBlob").memoize
+    *   val storage: GcsStorage = GcsStorage.create()
+    *   val memoizedBlob: Task[GcsBlob] = storage.createBlob("myBucket", "myBlob").memoize
     *
-    *   val ob: Observable[Array[Byte]] = ???
+    *   val ob: Observable[Array[Byte]] = Observable.now("dummy content".getBytes)
+    *
     *   val t: Task[Unit] = for {
-    *     blob <- createBlobT
+    *     blob <- memoizedBlob
     *     _ <- ob.consumeWith(blob.upload())
     *   } yield ()
-    * }
+    * }}}
     */
   def upload(
     metadata: Option[GcsBlobInfo.Metadata] = None,

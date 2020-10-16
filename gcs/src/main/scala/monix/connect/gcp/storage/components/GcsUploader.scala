@@ -23,13 +23,12 @@ import com.google.cloud.WriteChannel
 import com.google.cloud.storage.{BlobInfo, Storage}
 import com.google.cloud.storage.Storage.BlobWriteOption
 import monix.connect.gcp.storage.GcsStorage
-import monix.eval.Task
 import monix.execution.cancelables.AssignableCancelable
+import monix.execution.internal.Platform
 import monix.execution.{Ack, Callback, Scheduler}
 import monix.reactive.Consumer
 import monix.reactive.observers.Subscriber
 
-import scala.concurrent.Future
 import scala.util.control.NonFatal
 
 /**
@@ -46,40 +45,57 @@ private[storage] final class GcsUploader(
   override def createSubscriber(
     cb: Callback[Throwable, Unit],
     s: Scheduler): (Subscriber[Array[Byte]], AssignableCancelable) = {
-    val sub = new Subscriber[Array[Byte]] {
+    val sub = new Subscriber.Sync[Array[Byte]] {
       self =>
       override implicit def scheduler: Scheduler = s
 
       val writer: WriteChannel = storage.writer(blobInfo, options: _*)
       writer.setChunkSize(chunkSize)
+      private[this] var isDone = false
 
-      override def onNext(chunk: Array[Byte]): Future[Ack] = {
-        Task {
+      override def onNext(chunk: Array[Byte]): Ack = {
+        if (chunk.isEmpty) {
+          onComplete()
+          Ack.Stop
+        } else {
           try {
-            if (chunk.isEmpty) {
-              onComplete()
-              Ack.Stop
-            } else {
-              writer.write(ByteBuffer.wrap(chunk))
-              monix.execution.Ack.Continue
-            }
+            writer.write(ByteBuffer.wrap(chunk))
+            monix.execution.Ack.Continue
           } catch {
-            case ex if NonFatal(ex) => {
+            case NonFatal(ex) => {
               onError(ex)
               Ack.Stop
             }
           }
-        }.runToFuture
-      }
-
-      override def onError(ex: Throwable): Unit = {
-        writer.close()
-        cb.onError(ex)
+        }
       }
 
       override def onComplete(): Unit = {
-        writer.close()
-        cb.onSuccess(())
+        if (!isDone) {
+          isDone = true
+          try {
+            writer.close()
+            cb.onSuccess(())
+          } catch {
+            case NonFatal(ex) => {
+              onError(ex)
+            }
+          }
+        }
+      }
+
+      override def onError(ex: Throwable): Unit = {
+        if (!isDone) {
+          isDone = true
+          try {
+            writer.close()
+            cb.onError(ex)
+          } catch {
+            case NonFatal(ex2) => {
+              cb.onError(Platform.composeErrors(ex, ex2))
+            }
+          }
+        }
       }
     }
 

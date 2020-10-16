@@ -17,41 +17,40 @@
 
 package monix.connect.s3
 
+import monix.connect.s3.domain.UploadSettings
 import monix.eval.Task
 import monix.execution.cancelables.AssignableCancelable
+import monix.execution.internal.InternalApi
 import monix.execution.{Ack, Callback, Scheduler}
 import monix.reactive.observers.Subscriber
 import monix.reactive.Consumer
 import software.amazon.awssdk.core.async.AsyncRequestBody
 import software.amazon.awssdk.services.s3.S3AsyncClient
-import software.amazon.awssdk.services.s3.model._
+import software.amazon.awssdk.services.s3.model.{
+  CompleteMultipartUploadResponse,
+  CompletedPart,
+  CreateMultipartUploadRequest
+}
 
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
 /**
-  * An Amazon S3 multipart uploads is an write operation made progressively on individual chunks of an object (parts),
-  * that finishes with a message to S3 that multipart upload is completed, in which the concatenation
-  * of each of the individual chunks will end up stored into the same object.
-  * Implement the functionality to perform an S3 multipart update from received chunks of data.
+  * The multipart upload subscriber allows to upload large objects in parts.
+  * Multipart uploading is a three-step process:
+  * 1- Initialised the upload
+  * 2- Upload the object parts
+  * 3- And after you have uploaded all the parts, you complete the multipart upload.
+  * Upon receiving the complete multipart upload request,
+  * The object is constructed from the different uploaded parts, and you can
+  * then access the object just as you would any other object in your bucket.
   */
+@InternalApi
 private[s3] class MultipartUploadSubscriber(
   bucket: String,
   key: String,
-  minChunkSize: Int = MultipartUploadSubscriber.awsMinChunkSize,
-  acl: Option[String],
-  contentType: Option[String] = None,
-  grantFullControl: Option[String],
-  grantRead: Option[String],
-  grantReadACP: Option[String],
-  grantWriteACP: Option[String],
-  serverSideEncryption: Option[String] = None,
-  sseCustomerAlgorithm: Option[String] = None,
-  sseCustomerKey: Option[String] = None,
-  sseCustomerKeyMD5: Option[String] = None,
-  ssekmsEncryptionContext: Option[String],
-  ssekmsKeyId: Option[String],
-  requestPayer: Option[String])(
+  minChunkSize: Int,
+  uploadSettings: UploadSettings)(
   implicit
   s3Client: S3AsyncClient)
   extends Consumer[Array[Byte], CompleteMultipartUploadResponse] {
@@ -63,37 +62,22 @@ private[s3] class MultipartUploadSubscriber(
 
       implicit val scheduler = s
       private val createRequest: CreateMultipartUploadRequest =
-        S3RequestBuilder.createMultipartUploadRequest(
-          bucket = bucket,
-          key = key,
-          contentType = contentType,
-          acl = acl,
-          grantFullControl = grantFullControl,
-          grantRead = grantRead,
-          grantReadACP = grantReadACP,
-          grantWriteACP = grantWriteACP,
-          requestPayer = requestPayer,
-          serverSideEncryption = serverSideEncryption,
-          sseCustomerAlgorithm = sseCustomerAlgorithm,
-          sseCustomerKey = sseCustomerKey,
-          sseCustomerKeyMD5 = sseCustomerKeyMD5,
-          ssekmsEncryptionContext = ssekmsEncryptionContext,
-          ssekmsKeyId = ssekmsKeyId
-        )
+        S3RequestBuilder.createMultipartUploadRequest(bucket, key, uploadSettings)
+      // initialises the multipart upload
       private val uploadId: Task[String] =
         Task
           .from(s3Client.createMultipartUpload(createRequest))
           .map(_.uploadId())
-          .memoize
+          .memoize // memoized since it must be the same for all future uploaded parts.
       private var buffer: Array[Byte] = Array.emptyByteArray
       private var completedParts: List[CompletedPart] = List.empty[CompletedPart]
       private var partN = 1
 
       /**
-        *
-        * If the chunk lenght is bigger than the minimum size, perfom the part request [[UploadPartRequest]],
+        * If the chunk length is bigger than the minimum size, perfom the part request [[UploadPartRequest]],
         * which returns a [[CompletedPart]].
-        * In the case it is not, the chunk is added to the buffer waiting to be aggregated with the next one.
+        * In the case it is not, the chunk is added to the buffer waiting to be aggregated with the next one,
+        * or in case it was the last chunk [[onComplete()]] will be called and will flush the buffer.
         */
       def onNext(chunk: Array[Byte]): Future[Ack] = {
         if (chunk.length < minChunkSize) {
@@ -111,10 +95,10 @@ private[s3] class MultipartUploadSubscriber(
               }
               ack <- Task(Ack.Continue)
             } yield ack
-          }.onErrorRecoverWith {
+          }.onErrorRecover {
             case NonFatal(ex) => {
               onError(ex)
-              Task.now(Ack.Stop)
+              Ack.Stop
             }
           }.runToFuture
         }
@@ -141,8 +125,9 @@ private[s3] class MultipartUploadSubscriber(
             }
           }
           completeMultipartUpload <- {
-            val request = S3RequestBuilder.completeMultipartUploadRquest(bucket, key, uid, completedParts, requestPayer)
-            Task.from(s3Client.completeMultipartUpload(request))
+            val request = S3RequestBuilder
+              .completeMultipartUploadRquest(bucket, key, uid, completedParts, uploadSettings.requestPayer)
+            Task.from(s3Client.completeMultipartUpload(request)) // completes the multipart upload
           }
         } yield completeMultipartUpload
         response.runAsync(callback)
@@ -155,8 +140,8 @@ private[s3] class MultipartUploadSubscriber(
   }
 
   /**
-    * Abstracts the functionality to upload a single part to S3 with [[UploadPartRequest]].
-    * It should only be called when the received for chunks bigger than minimum size,
+    * Abstracts the functionality to upload a single part to the S3 object with [[UploadPartRequest]].
+    * It should be called either when the received chunk is bigger than minimum size,
     * or later when the last chunk arrives representing the completion of the stream.
     */
   def uploadPart(bucket: String, key: String, partNumber: Int, uploadId: String, chunk: Array[Byte])(
@@ -170,23 +155,12 @@ private[s3] class MultipartUploadSubscriber(
           partN = partNumber,
           uploadId = uploadId,
           contentLenght = chunk.size.toLong,
-          requestPayer = requestPayer,
-          sseCustomerAlgorithm = sseCustomerAlgorithm,
-          sseCustomerKey = sseCustomerKey,
-          sseCustomerKeyMD5 = sseCustomerKeyMD5
-        )
+          uploadSettings)
       }
       completedPart <- Task
         .from(s3Client.uploadPart(request, AsyncRequestBody.fromBytes(chunk)))
         .map(resp => S3RequestBuilder.completedPart(partNumber, resp))
     } yield completedPart
   }
-
-}
-
-object MultipartUploadSubscriber {
-
-  //Multipart upload minimum part size
-  val awsMinChunkSize: Int = 5 * 1024 * 1024 //5242880
 
 }

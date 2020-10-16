@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
- * See the project homepage at: https://monix.io
+ * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import org.scalacheck.Gen
 
 trait ParquetFixture {
 
-  val folder: String = "./" + Gen.alphaLowerStr.sample.get
+  val folder: String = "./results/" + Gen.alphaLowerStr.sample.get
   val genFilePath: () => String = () => folder + "/" + Gen.alphaLowerStr.sample.get + ".parquet"
 
   val conf = new Configuration()
