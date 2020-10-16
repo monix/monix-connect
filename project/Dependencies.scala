@@ -88,7 +88,7 @@ object Dependencies {
   ) ++ testDependencies(hasIt = true)
 
   val Redis = Seq(
-    "io.lettuce" % "lettuce-core" % "5.1.8.RELEASE"
+    "io.lettuce" % "lettuce-core" % "5.3.4.RELEASE"
   ) ++ testDependencies(hasIt = true)
 
   val GCS = Seq(
