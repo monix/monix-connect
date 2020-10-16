@@ -23,6 +23,7 @@ import pureconfig.ConfigSource
 import pureconfig._
 import pureconfig.generic.auto._
 import MonixAwsConf.Implicits._
+import pureconfig.error.ConfigReaderException
 import software.amazon.awssdk.auth.credentials.{
   AnonymousCredentialsProvider,
   AwsSessionCredentials,
@@ -33,6 +34,8 @@ import software.amazon.awssdk.auth.credentials.{
   StaticCredentialsProvider,
   SystemPropertyCredentialsProvider
 }
+
+import scala.util.{Failure, Try}
 
 class AwsCredentialsConfSpec extends AnyFlatSpec with Matchers {
 
@@ -231,5 +234,28 @@ class AwsCredentialsConfSpec extends AnyFlatSpec with Matchers {
 
     //then
     credentialsConf.credentialsProvider shouldBe a[SystemPropertyCredentialsProvider]
+  }
+
+  it should "fail when provider is not set" in {
+    //given
+    val configSource = ConfigSource.string(
+      "" +
+        s"""
+           |{
+           |  static {
+           |    access-key-id: ""
+           |    secret-access-key: ""
+           |    session-token: ""
+           |  }
+           |}
+           |""".stripMargin)
+
+    //when
+    val credentialsConf = Try(configSource.loadOrThrow[AwsCredentialsConf])
+
+    //then
+    credentialsConf.isFailure shouldBe true
+    credentialsConf shouldBe a[Failure[ConfigReaderException[AwsCredentialsConf]]]
+
   }
 }

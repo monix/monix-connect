@@ -39,8 +39,8 @@ class AwsClientConfigSpec extends AnyFlatSpec with Matchers {
 
     //then
     awsClientConf.monixAws.credentials shouldBe a[DefaultCredentialsProvider]
-    awsClientConf.monixAws.endpoint.isDefined shouldBe false //Some(URI.create("localhost:4566"))
-    awsClientConf.monixAws.region shouldBe Region.AWS_GLOBAL
+    awsClientConf.monixAws.endpoint.isDefined shouldBe false
+    awsClientConf.monixAws.region shouldBe Region.EU_WEST_1
   }
 
   it should "not require endpoint nor http client settings" in {

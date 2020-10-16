@@ -24,7 +24,6 @@ class ProviderSpec extends AnyFlatSpec with Matchers {
 
   s"$Provider" should "be parsed from anonymous,chain, default, environment, instance, profile, static and system" in {
     Provider.fromString("anonymous") shouldBe Provider.Anonymous
-    Provider.fromString("chain") shouldBe Provider.Chain
     Provider.fromString("default") shouldBe Provider.Default
     Provider.fromString("environment") shouldBe Provider.Environment
     Provider.fromString("instance") shouldBe Provider.Instance
@@ -36,7 +35,6 @@ class ProviderSpec extends AnyFlatSpec with Matchers {
 
   it should "not be case sensitive" in {
     Provider.fromString("Anonymous") shouldBe Provider.Anonymous
-    Provider.fromString("cHain") shouldBe Provider.Chain
     Provider.fromString("DEFAULT") shouldBe Provider.Default
     Provider.fromString("ENVironment") shouldBe Provider.Environment
     Provider.fromString("instancE") shouldBe Provider.Instance
