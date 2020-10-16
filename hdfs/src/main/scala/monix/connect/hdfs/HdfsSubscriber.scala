@@ -18,6 +18,7 @@
 package monix.connect.hdfs
 
 import monix.execution.cancelables.AssignableCancelable
+import monix.execution.internal.Platform
 import monix.execution.{Ack, Callback, Scheduler}
 import monix.reactive.Consumer
 import monix.reactive.observers.Subscriber
@@ -30,8 +31,8 @@ import scala.util.control.NonFatal
   *
   * @see https://hadoop.apache.org/docs/r2.8.2/api/org/apache/hadoop/fs/FileSystem.html
   * @see https://hadoop.apache.org/docs/r0.23.11/hadoop-project-dist/hadoop-common/core-default.xml
-  * @param fs
-  * @param path
+  * @param fs          An abstract base class for a fairly generic filesystem.
+  * @param path        Names a file or directory in a [[FileSystem]]. Path strings use slash as the directory separator.
   * @param overwrite   When a file with this name already exists, then if true, the file will be overwritten.
   *                    And if false an [[java.io.IOException]] will be thrown.
   *                    Files are overwritten by default.
@@ -59,29 +60,52 @@ private[hdfs] class HdfsSubscriber(
     val sub = new Subscriber.Sync[Array[Byte]] {
 
       override implicit def scheduler: Scheduler = s
-      private val out: FSDataOutputStream =
+      private[this] var isDone = false
+      private[this] val out: FSDataOutputStream =
         createOrAppendFS(fs, path, appendEnabled, overwrite, bufferSize, replication, blockSize)
-      private var off: Long = 0
+      private[this] var offset: Long = 0
 
-      override def onComplete(): Unit = {
-        out.close()
-        callback.onSuccess(off)
-      }
-
-      override def onError(ex: Throwable): Unit = {
-        out.close()
-        callback.onError(ex)
-      }
-
-      override def onNext(chunk: Array[Byte]): Ack = {
+      def onNext(chunk: Array[Byte]): Ack = {
         val chunkWithSeparator: Array[Byte] = chunk ++ maybeLineBreak
         val len: Int = chunkWithSeparator.size
         try {
           out.write(chunkWithSeparator)
-        } catch { case e if NonFatal(e) => callback.onError(e) }
-        off += len
+        } catch {
+          case NonFatal(e) =>
+            callback.onError(e)
+        }
+        offset += len
         Ack.Continue
       }
+
+      def onComplete(): Unit = {
+        if (!isDone) {
+          isDone = true
+          try {
+            out.close()
+          } catch {
+            case NonFatal(ex) => {
+              onError(ex)
+            }
+          }
+          callback.onSuccess(offset)
+        }
+      }
+
+      def onError(ex: Throwable): Unit = {
+        if (!isDone) {
+          isDone = true
+          try {
+            out.close()
+            callback.onError(ex)
+          } catch {
+            case NonFatal(ex2) => {
+              callback.onError(Platform.composeErrors(ex, ex2))
+            }
+          }
+        }
+      }
+
     }
 
     (sub, AssignableCancelable.single)

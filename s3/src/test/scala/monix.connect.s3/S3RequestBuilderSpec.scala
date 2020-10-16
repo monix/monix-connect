@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
- * See the project homepage at: https://monix.io
+ * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,24 +34,25 @@ package monix.connect.s3
  * limitations under the License.
  */
 
-import java.time.Instant
-
+import monix.connect.s3.domain.{CopyObjectSettings, DownloadSettings, UploadSettings}
 import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import software.amazon.awssdk.services.s3.model.{
+  BucketCannedACL,
   CompleteMultipartUploadRequest,
   CompletedPart,
+  CopyObjectRequest,
   CreateBucketRequest,
   CreateMultipartUploadRequest,
   DeleteBucketRequest,
   DeleteObjectRequest,
   GetObjectRequest,
-  ListObjectsRequest,
-  ListObjectsV2Request,
   PutObjectRequest,
+  RequestPayer,
+  StorageClass,
   UploadPartRequest,
   UploadPartResponse
 }
@@ -75,7 +76,7 @@ class S3RequestBuilderSpec
       forAll(genCreateBucketParams) {
         case (
             bucket: String,
-            acl: Option[String],
+            acl: Option[BucketCannedACL],
             grantFullControl: Option[String],
             grantRead: Option[String],
             grantReadACP: Option[String],
@@ -88,12 +89,58 @@ class S3RequestBuilderSpec
 
           //then
           request.bucket shouldBe bucket
-          request.aclAsString shouldBe acl.orNull
+          request.acl() shouldBe acl.orNull
           request.grantFullControl shouldBe grantFullControl.orNull
           request.grantRead shouldBe grantRead.orNull
           request.grantReadACP shouldBe grantReadACP.orNull
           request.grantWrite shouldBe grantWrite.orNull
           request.grantWriteACP shouldBe grantWriteACP.orNull
+      }
+    }
+
+    s"builds `CopyObjectRequest`" in {
+      //given
+      forAll(genCopyObjectParams) {
+        case (
+            sourceBucket: String,
+            sourceKey: String,
+            destinationBucket: String,
+            destinationKey: String,
+            copyObjectSettings: CopyObjectSettings) =>
+          //when
+          val request: CopyObjectRequest =
+            S3RequestBuilder
+              .copyObjectRequest(sourceBucket, sourceKey, destinationBucket, destinationKey, copyObjectSettings)
+
+          //then
+          request.copySource shouldBe sourceBucket + "/" + sourceKey
+          request.destinationBucket shouldBe destinationBucket
+          request.destinationKey shouldBe destinationKey
+          request.copySourceIfNoneMatch shouldBe copyObjectSettings.copySourceIfNoneMatch.orNull
+          request.copySourceIfModifiedSince shouldBe copyObjectSettings.copyIfModifiedSince.orNull
+          request.copySourceIfUnmodifiedSince shouldBe copyObjectSettings.copyIfUnmodifiedSince.orNull
+          request.expires shouldBe copyObjectSettings.expires.orNull
+          request.acl shouldBe copyObjectSettings.acl.orNull
+          request.grantFullControl shouldBe copyObjectSettings.grantFullControl.orNull
+          request.grantRead shouldBe copyObjectSettings.grantRead.orNull
+          request.grantReadACP shouldBe copyObjectSettings.grantReadACP.orNull
+          request.grantWriteACP shouldBe copyObjectSettings.grantWriteACP.orNull
+          request.metadata shouldBe Map.empty.asJava
+          request.metadataDirective shouldBe copyObjectSettings.metadataDirective.orNull
+          request.taggingDirective shouldBe copyObjectSettings.taggingDirective.orNull
+          request.serverSideEncryption shouldBe copyObjectSettings.serverSideEncryption.orNull
+          request.storageClass shouldBe StorageClass.STANDARD
+          request.sseCustomerAlgorithm shouldBe copyObjectSettings.sseCustomerAlgorithm.orNull
+          request.sseCustomerKey shouldBe copyObjectSettings.sseCustomerKey.orNull
+          request.sseCustomerKeyMD5 shouldBe copyObjectSettings.sseCustomerKeyMD5.orNull
+          request.ssekmsKeyId shouldBe copyObjectSettings.ssekmsKeyId.orNull
+          request.copySourceSSECustomerAlgorithm shouldBe copyObjectSettings.copySourceSSECustomerAlgorithm.orNull
+          request.copySourceSSECustomerKey shouldBe copyObjectSettings.copySourceSSECustomerKey.orNull
+          request.copySourceSSECustomerKeyMD5 shouldBe copyObjectSettings.copySourceSSECustomerKeyMD5.orNull
+          request.objectLockMode shouldBe copyObjectSettings.objectLockMode.orNull
+          request.objectLockRetainUntilDate shouldBe copyObjectSettings.objectLockRetainUntilDate.orNull
+          request.objectLockLegalHoldStatus shouldBe copyObjectSettings.objectLockLegalHoldStatus.orNull
+          request.requestPayer shouldBe copyObjectSettings.requestPayer.orNull
       }
     }
 
@@ -120,7 +167,7 @@ class S3RequestBuilderSpec
             key: String,
             uploadId: String,
             completedParts: List[CompletedPart],
-            requestPayer: Option[String]) =>
+            requestPayer: Option[RequestPayer]) =>
           //when
           val request: CompleteMultipartUploadRequest =
             S3RequestBuilder
@@ -131,64 +178,32 @@ class S3RequestBuilderSpec
           request.key shouldBe key
           request.uploadId shouldBe uploadId
           request.multipartUpload.parts shouldBe completedParts.asJava
-          request.requestPayerAsString shouldBe requestPayer.orNull
+          request.requestPayer() shouldBe requestPayer.orNull
       }
     }
 
     s"correctly build `CreateMultipartUploadRequest`" in {
       forAll(genCreateMultipartUploadParams) {
-        case (
-            bucket: String,
-            key: String,
-            contentType: Option[String],
-            acl: Option[String],
-            grantFullControl: Option[String],
-            grantRead: Option[String],
-            grantReadACP: Option[String],
-            grantWriteACP: Option[String],
-            requestPayer: Option[String],
-            serverSideEncryption: Option[String],
-            sseCustomerAlgorithm: Option[String],
-            sseCustomerKey: Option[String],
-            sseCustomerKeyMD5: Option[String],
-            ssekmsEncryptionContext: Option[String],
-            ssekmsKeyId: Option[String]) =>
+        case (bucket: String, key: String, uploadSettings: UploadSettings) =>
           //when
           val request: CreateMultipartUploadRequest =
             S3RequestBuilder
-              .createMultipartUploadRequest(
-                bucket,
-                key,
-                contentType,
-                acl,
-                grantFullControl,
-                grantRead,
-                grantReadACP,
-                grantWriteACP,
-                requestPayer,
-                serverSideEncryption,
-                sseCustomerAlgorithm,
-                sseCustomerKey,
-                sseCustomerKeyMD5,
-                ssekmsEncryptionContext,
-                ssekmsKeyId
-              )
+              .createMultipartUploadRequest(bucket, key, uploadSettings)
 
           //then
           request.bucket shouldBe bucket
           request.key shouldBe key
-          request.contentType shouldBe contentType.orNull
-          request.aclAsString shouldBe acl.orNull
-          request.grantFullControl shouldBe grantFullControl.orNull
-          request.grantRead shouldBe grantRead.orNull
-          request.grantReadACP shouldBe grantReadACP.orNull
-          request.grantWriteACP shouldBe grantWriteACP.orNull
-          request.requestPayerAsString shouldBe requestPayer.orNull
-          request.serverSideEncryptionAsString shouldBe serverSideEncryption.orNull
-          request.sseCustomerAlgorithm shouldBe sseCustomerAlgorithm.orNull
-          request.sseCustomerKey shouldBe sseCustomerKey.orNull
-          request.sseCustomerKeyMD5 shouldBe sseCustomerKeyMD5.orNull
-          request.ssekmsEncryptionContext shouldBe ssekmsEncryptionContext.orNull
+          request.acl shouldBe uploadSettings.acl.orNull
+          request.grantFullControl shouldBe uploadSettings.grantFullControl.orNull
+          request.grantRead shouldBe uploadSettings.grantRead.orNull
+          request.grantReadACP shouldBe uploadSettings.grantReadACP.orNull
+          request.grantWriteACP shouldBe uploadSettings.grantWriteACP.orNull
+          request.requestPayer shouldBe uploadSettings.requestPayer.orNull
+          request.serverSideEncryptionAsString shouldBe uploadSettings.serverSideEncryption.orNull
+          request.sseCustomerAlgorithm shouldBe uploadSettings.sseCustomerAlgorithm.orNull
+          request.sseCustomerKey shouldBe uploadSettings.sseCustomerKey.orNull
+          request.sseCustomerKeyMD5 shouldBe uploadSettings.sseCustomerKeyMD5.orNull
+          request.ssekmsEncryptionContext shouldBe uploadSettings.ssekmsEncryptionContext.orNull
       }
     }
 
@@ -231,102 +246,25 @@ class S3RequestBuilderSpec
     s"correctly build `GetObjectRequest`s" in {
       //given
       forAll(genGetObjectParams) {
-        case (
-            bucket: String,
-            key: String,
-            ifMatch: Option[String],
-            ifModifiedSince: Option[Instant],
-            ifNoneMatch: Option[String],
-            ifUnmodifiedSince: Option[Instant],
-            partNumber: Option[Int],
-            range: Option[String],
-            requestPayer: Option[String],
-            sseCustomerAlgorithm: Option[String],
-            sseCustomerKey: Option[String],
-            sseCustomerKeyMD5: Option[String],
-            versionId: Option[String]) =>
+        case (bucket: String, key: String, nBytes: Option[String], downloadSettings: DownloadSettings) =>
           //when
           val request: GetObjectRequest =
             S3RequestBuilder
-              .getObjectRequest(
-                bucket,
-                key,
-                ifMatch,
-                ifModifiedSince,
-                ifNoneMatch,
-                ifUnmodifiedSince,
-                partNumber,
-                range,
-                requestPayer,
-                sseCustomerAlgorithm,
-                sseCustomerKey,
-                sseCustomerKeyMD5,
-                versionId
-              )
+              .getObjectRequest(bucket, key, nBytes, downloadSettings)
 
           //then
           request.bucket shouldBe bucket
           request.key shouldBe key
-          request.ifMatch shouldBe ifMatch.orNull
-          request.ifModifiedSince shouldBe ifModifiedSince.orNull
-          request.ifNoneMatch shouldBe ifNoneMatch.orNull
-          request.ifUnmodifiedSince shouldBe ifUnmodifiedSince.orNull
-          request.partNumber shouldBe partNumber.getOrElse(null)
-          request.range shouldBe range.orNull
-          request.requestPayerAsString shouldBe requestPayer.orNull
-          request.sseCustomerAlgorithm shouldBe sseCustomerAlgorithm.orNull
-          request.sseCustomerKey shouldBe sseCustomerKey.orNull
-          request.sseCustomerKeyMD5 shouldBe sseCustomerKeyMD5.orNull
-          request.versionId shouldBe versionId.orNull
-      }
-    }
-    s"correctly build `ListObjects`" in {
-      //given
-      forAll(genListObjectsParams) {
-        case (
-            bucket: String,
-            marker: Option[String],
-            maxKeys: Option[Int],
-            prefix: Option[String],
-            requestPayer: Option[String]) =>
-          //when
-          val request: ListObjectsRequest =
-            S3RequestBuilder
-              .listObjects(bucket, marker, maxKeys, prefix, requestPayer)
-
-          //then
-          request.bucket shouldBe bucket
-          request.marker shouldBe marker.orNull
-          request.maxKeys shouldBe maxKeys.getOrElse(null)
-          request.prefix shouldBe prefix.orNull
-          request.requestPayerAsString shouldBe requestPayer.orNull
-      }
-    }
-
-    s"correctly build `ListObjectsV2`" in {
-      //given
-      forAll(genListObjectsV2Params) {
-        case (
-            bucket: String,
-            continuationToken: Option[String],
-            fetchOwner: Option[Boolean],
-            maxKeys: Option[Int],
-            prefix: Option[String],
-            startAfter: Option[String],
-            requestPayer: Option[String]) =>
-          //when
-          val request: ListObjectsV2Request =
-            S3RequestBuilder
-              .listObjectsV2(bucket, continuationToken, fetchOwner, maxKeys, prefix, startAfter, requestPayer)
-
-          //then
-          request.bucket shouldBe bucket
-          request.continuationToken shouldBe continuationToken.orNull
-          request.fetchOwner shouldBe fetchOwner.getOrElse(null)
-          request.maxKeys shouldBe maxKeys.getOrElse(null)
-          request.prefix shouldBe prefix.orNull
-          request.startAfter shouldBe startAfter.orNull
-          request.requestPayerAsString shouldBe requestPayer.orNull
+          request.ifMatch shouldBe downloadSettings.ifMatch.orNull
+          request.ifModifiedSince shouldBe downloadSettings.ifModifiedSince.orNull
+          request.ifNoneMatch shouldBe downloadSettings.ifNoneMatch.orNull
+          request.ifUnmodifiedSince shouldBe downloadSettings.ifUnmodifiedSince.orNull
+          request.range shouldBe nBytes.orNull
+          request.requestPayer() shouldBe downloadSettings.requestPayer.orNull
+          request.sseCustomerAlgorithm shouldBe downloadSettings.sseCustomerAlgorithm.orNull
+          request.sseCustomerKey shouldBe downloadSettings.sseCustomerKey.orNull
+          request.sseCustomerKeyMD5 shouldBe downloadSettings.sseCustomerKeyMD5.orNull
+          request.versionId shouldBe downloadSettings.versionId.orNull
       }
     }
 
@@ -339,24 +277,12 @@ class S3RequestBuilderSpec
             partN: Int,
             uploadId: String,
             contentLenght: Long,
-            requestPayer: Option[String],
-            sseCustomerAlgorithm: Option[String],
-            sseCustomerKey: Option[String],
-            sseCustomerKeyMD5: Option[String]
+            uploadSettings: UploadSettings
             ) =>
           //when
           val request: UploadPartRequest =
             S3RequestBuilder
-              .uploadPartRequest(
-                bucket,
-                key,
-                partN,
-                uploadId,
-                contentLenght,
-                requestPayer,
-                sseCustomerAlgorithm,
-                sseCustomerKey,
-                sseCustomerKeyMD5)
+              .uploadPartRequest(bucket, key, partN, uploadId, contentLenght, uploadSettings)
 
           //then
           request.bucket shouldBe bucket
@@ -364,71 +290,38 @@ class S3RequestBuilderSpec
           request.partNumber shouldBe partN
           request.uploadId shouldBe uploadId
           request.contentLength shouldBe contentLenght
-          request.requestPayerAsString shouldBe requestPayer.orNull
-          request.sseCustomerAlgorithm shouldBe sseCustomerAlgorithm.orNull
-          request.sseCustomerKey shouldBe sseCustomerKey.orNull
-          request.sseCustomerKeyMD5 shouldBe sseCustomerKeyMD5.orNull
+          request.requestPayer() shouldBe uploadSettings.requestPayer.orNull
+          request.sseCustomerAlgorithm shouldBe uploadSettings.sseCustomerAlgorithm.orNull
+          request.sseCustomerKey shouldBe uploadSettings.sseCustomerKey.orNull
+          request.sseCustomerKeyMD5 shouldBe uploadSettings.sseCustomerKeyMD5.orNull
       }
     }
 
     s"correctly build `PutObjectRequest`" in {
       forAll(genPutObjectParams) {
-        case (
-            bucket: String,
-            key: String,
-            contentLenght: Option[Long],
-            contentType: Option[String],
-            acl: Option[String],
-            grantFullControl: Option[String],
-            grantRead: Option[String],
-            grantReadACP: Option[String],
-            grantWriteACP: Option[String],
-            requestPayer: Option[String],
-            serverSideEncryption: Option[String],
-            sseCustomerAlgorithm: Option[String],
-            sseCustomerKey: Option[String],
-            sseCustomerKeyMD5: Option[String],
-            ssekmsEncryptionContext: Option[String],
-            ssekmsKeyId: Option[String]) =>
+        case (bucket: String, key: String, contentLenght: Option[Long], uploadSettings: UploadSettings) =>
           //when
           val request: PutObjectRequest =
             S3RequestBuilder
-              .putObjectRequest(
-                bucket,
-                key,
-                contentLenght,
-                contentType,
-                acl,
-                grantFullControl,
-                grantRead,
-                grantReadACP,
-                grantWriteACP,
-                requestPayer,
-                serverSideEncryption,
-                sseCustomerAlgorithm,
-                sseCustomerKey,
-                sseCustomerKeyMD5,
-                ssekmsEncryptionContext,
-                ssekmsKeyId
-              )
+              .putObjectRequest(bucket, key, contentLenght, uploadSettings)
 
           //then
           request.bucket shouldBe bucket
           request.key shouldBe key
           request.contentLength shouldBe contentLenght.getOrElse(null)
-          request.contentType shouldBe contentType.orNull
-          request.aclAsString shouldBe acl.orNull
-          request.grantFullControl shouldBe grantFullControl.orNull
-          request.grantRead shouldBe grantRead.orNull
-          request.grantReadACP shouldBe grantReadACP.orNull
-          request.grantWriteACP shouldBe grantWriteACP.orNull
-          request.requestPayerAsString shouldBe requestPayer.orNull
-          request.serverSideEncryptionAsString shouldBe serverSideEncryption.orNull
-          request.sseCustomerAlgorithm shouldBe sseCustomerAlgorithm.orNull
-          request.sseCustomerKey shouldBe sseCustomerKey.orNull
-          request.sseCustomerKeyMD5 shouldBe sseCustomerKeyMD5.orNull
-          request.ssekmsEncryptionContext shouldBe ssekmsEncryptionContext.orNull
+          request.acl shouldBe uploadSettings.acl.orNull
+          request.grantFullControl shouldBe uploadSettings.grantFullControl.orNull
+          request.grantRead shouldBe uploadSettings.grantRead.orNull
+          request.grantReadACP shouldBe uploadSettings.grantReadACP.orNull
+          request.grantWriteACP shouldBe uploadSettings.grantWriteACP.orNull
+          request.requestPayer() shouldBe uploadSettings.requestPayer.orNull
+          request.serverSideEncryptionAsString shouldBe uploadSettings.serverSideEncryption.orNull
+          request.sseCustomerAlgorithm shouldBe uploadSettings.sseCustomerAlgorithm.orNull
+          request.sseCustomerKey shouldBe uploadSettings.sseCustomerKey.orNull
+          request.sseCustomerKeyMD5 shouldBe uploadSettings.sseCustomerKeyMD5.orNull
+          request.ssekmsEncryptionContext shouldBe uploadSettings.ssekmsEncryptionContext.orNull
       }
     }
+
   }
 }
