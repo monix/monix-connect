@@ -35,10 +35,11 @@ trait S3Fixture {
     .build();
 
   val basicAWSCredentials = AwsBasicCredentials.create(s3AccessKey, s3SecretKey)
+  val staticCredProvider = StaticCredentialsProvider.create(basicAWSCredentials)
   implicit val s3AsyncClient: S3AsyncClient = S3AsyncClient
     .builder()
     .httpClient(httpClient)
-    .credentialsProvider(StaticCredentialsProvider.create(basicAWSCredentials))
+    .credentialsProvider(staticCredProvider)
     .region(AWS_GLOBAL)
     .endpointOverride(URI.create(minioEndPoint))
     .build

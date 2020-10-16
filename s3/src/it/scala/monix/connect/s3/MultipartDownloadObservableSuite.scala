@@ -28,9 +28,14 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadResponse, NoSuchBucketException, NoSuchKeyException}
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.s3.model.{
+  CompleteMultipartUploadResponse,
+  NoSuchBucketException,
+  NoSuchKeyException
+}
 
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
@@ -38,31 +43,32 @@ class MultipartDownloadObservableSuite
   extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with ScalaFutures with S3Fixture with Eventually {
 
   private val bucketName = "sample-bucket"
+  private val s3Resource = S3.createWith(staticCredProvider, Region.AWS_GLOBAL, Some(minioEndPoint), Some(httpClient))
 
   override implicit val patienceConfig = PatienceConfig(10.seconds, 100.milliseconds)
 
   override def beforeAll(): Unit = {
     super.beforeAll()
-    Try(S3.createBucket(bucketName).runSyncUnsafe()) match {
-      case Success(_) => info(s"Created S3 bucket ${bucketName} ")
-      case Failure(e) => info(s"Failed to create S3 bucket ${bucketName} with exception: ${e.getMessage}")
+    Try(s3Resource.use(_.createBucket(bucketName)).runSyncUnsafe()) match {
+      case Success(_) => info(s"Created s3 bucket ${bucketName} ")
+      case Failure(e) => info(s"Failed to create s3 bucket ${bucketName} with exception: ${e.getMessage}")
     }
   }
 
-  s"MultipartDownloadObservable" should {
+  "MultipartDownloadObservable" should {
 
     "download a s3 object as byte array" in {
       //given
       val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
       val content: String = Gen.alphaUpperStr.sample.get
-      S3.upload(bucketName, key, content.getBytes).runSyncUnsafe()
+      s3Resource.use(_.upload(bucketName, key, content.getBytes)).runSyncUnsafe()
 
       //when
-      val t: Task[Array[Byte]] = S3.download(bucketName, key)
+      val t: Task[Array[Byte]] = s3Resource.use(_.download(bucketName, key))
 
       //then
       whenReady(t.runToFuture) { actualContent: Array[Byte] =>
-        S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe true
+        s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe() shouldBe true
         actualContent shouldBe a[Array[Byte]]
         actualContent shouldBe content.getBytes()
       }
@@ -73,17 +79,19 @@ class MultipartDownloadObservableSuite
       val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
       val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
       val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
-      val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
-        S3.uploadMultipart(bucketName, key)
-      val _: CompleteMultipartUploadResponse = ob.consumeWith(consumer).runSyncUnsafe()
+      s3Resource.use { s3 =>
+        val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
+          s3.uploadMultipart(bucketName, key)
+        ob.consumeWith(consumer)
+      }.runSyncUnsafe()
 
       //when
-      val t = S3.download(bucketName, key)
+      val t = s3Resource.use(_.download(bucketName, key))
 
       //then
       whenReady(t.runToFuture) { actualContent: Array[Byte] =>
         val expectedArrayByte = ob.foldLeftL(Array.emptyByteArray)((acc, bytes) => acc ++ bytes).runSyncUnsafe()
-        S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe true
+        s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe() shouldBe true
         actualContent shouldBe a[Array[Byte]]
         actualContent.size shouldBe expectedArrayByte.size
         actualContent shouldBe expectedArrayByte
@@ -95,14 +103,14 @@ class MultipartDownloadObservableSuite
       val n = 5
       val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
       val content: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-      S3.upload(bucketName, key, content.getBytes).runSyncUnsafe()
+      s3Resource.use(_.upload(bucketName, key, content.getBytes)).runSyncUnsafe()
 
       //when
-      val t: Task[Array[Byte]] = S3.download(bucketName, key, Some(n))
+      val t: Task[Array[Byte]] = s3Resource.use(_.download(bucketName, key, Some(n)))
 
       //then
       whenReady(t.runToFuture) { partialContent: Array[Byte] =>
-        S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe true
+        s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe() shouldBe true
         partialContent shouldBe a[Array[Byte]]
         partialContent shouldBe content.getBytes().take(n)
       }
@@ -110,14 +118,15 @@ class MultipartDownloadObservableSuite
 
     "download fails if the numberOfBytes is negative" in {
       //given
-      val negativeNum = Gen.chooseNum(-10, 0).sample.get
+      val negativeNum = Gen.chooseNum(-10, -1).sample.get
       val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
 
       //when
-      val t: Try[Task[Array[Byte]]] = Try(S3.download(bucketName, key, Some(negativeNum)))
+      val f = s3Resource.use(_.download(bucketName, key, Some(negativeNum))).runToFuture
 
       //then
-      t.isFailure shouldBe true
+      Await.ready(f, 3.seconds)
+      f.value.get.isFailure shouldBe true
     }
 
     "download from a non existing key returns failed task" in {
@@ -125,7 +134,7 @@ class MultipartDownloadObservableSuite
       val key: String = "non-existing-key"
 
       //when
-      val f: Future[Array[Byte]] = S3.download(bucketName, key).runToFuture(global)
+      val f: Future[Array[Byte]] = s3Resource.use(_.download(bucketName, key)).runToFuture(global)
       sleep(400)
 
       //then
@@ -136,14 +145,15 @@ class MultipartDownloadObservableSuite
       //given
       val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
       val content: String = nonEmptyString.value()
-      S3.upload(bucketName, key, content.getBytes).runSyncUnsafe()
+      s3Resource.use(_.upload(bucketName, key, content.getBytes)).runSyncUnsafe()
+      println("1!")
 
       //when
       val actualContent: Array[Byte] =
-        S3.downloadMultipart(bucketName, key, 2).toListL.map(_.flatten.toArray).runSyncUnsafe()
+        s3Resource.use(_.downloadMultipart(bucketName, key, 2).toListL.map(_.flatten.toArray)).runSyncUnsafe()
 
       //then
-      S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe true
+      s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe() shouldBe true
       actualContent shouldBe a[Array[Byte]]
       actualContent shouldBe content.getBytes()
     }
@@ -152,14 +162,14 @@ class MultipartDownloadObservableSuite
       //given
       val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
       val content: String = nonEmptyString.value()
-      S3.upload(bucketName, key, content.getBytes).runSyncUnsafe()
+      s3Resource.use(_.upload(bucketName, key, content.getBytes)).runSyncUnsafe()
 
       //when
       val actualContent: Array[Byte] =
-        S3.downloadMultipart(bucketName, key, 52428).toListL.map(_.flatten.toArray).runSyncUnsafe()
+        s3Resource.use(_.downloadMultipart(bucketName, key, 52428).toListL).map(_.flatten.toArray).runSyncUnsafe()
 
       //then
-      S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe true
+      s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe() shouldBe true
       actualContent shouldBe a[Array[Byte]]
       actualContent shouldBe content.getBytes()
     }
@@ -169,30 +179,16 @@ class MultipartDownloadObservableSuite
       val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
       val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
       val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
-      val _ = ob.consumeWith(S3.uploadMultipart(bucketName, key)).runSyncUnsafe()
+      s3Resource.use(s3 => ob.consumeWith(s3.uploadMultipart(bucketName, key))).runSyncUnsafe()
 
       //when
       val actualContent: Array[Byte] =
-        S3.downloadMultipart(bucketName, key, 52428).toListL.map(_.flatten.toArray).runSyncUnsafe()
+        s3Resource.use(_.downloadMultipart(bucketName, key, 52428).toListL).map(_.flatten.toArray).runSyncUnsafe()
 
       //then
       val expectedArrayByte: Array[Byte] =
         ob.foldLeftL(Array.emptyByteArray)((acc, bytes) => acc ++ bytes).runSyncUnsafe()
-      S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe true
-      actualContent shouldBe a[Array[Byte]]
-      actualContent shouldBe expectedArrayByte
-    }
-
-    "downloadMultipart from a non existing object returns an empty byte array" in {
-      //given
-      val key: String = "non/existing/key"
-      //when
-      val f = S3.downloadMultipart(bucketName, key, 1).toListL.runToFuture
-      sleep(100)
-
-      //then
-      f.value.get shouldBe a[Failure[NoSuchKeyException]]
-      S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe false
+      expectedArrayByte shouldBe actualContent
     }
 
     "downloading in multipart from a non existing bucket object returns failure" in {
@@ -201,12 +197,12 @@ class MultipartDownloadObservableSuite
       val key: String = "non/existing/key"
 
       //when
-      val f = S3.downloadMultipart(bucket, key, 1).toListL.runToFuture
+      val f = s3Resource.use(_.downloadMultipart(bucket, key, 1).toListL).runToFuture
       sleep(100)
 
       //then
       f.value.get shouldBe a[Failure[NoSuchBucketException]]
-      S3.existsObject(bucket, key).runSyncUnsafe() shouldBe false
+      s3Resource.use(_.existsObject(bucket, key)).runSyncUnsafe() shouldBe false
     }
 
   }

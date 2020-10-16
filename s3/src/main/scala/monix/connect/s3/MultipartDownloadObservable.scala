@@ -17,14 +17,12 @@
 
 package monix.connect.s3
 
-import monix.connect.s3.S3.{download, listObjects}
 import monix.connect.s3.domain.{DefaultDownloadSettings, DownloadSettings}
 import monix.eval.Task
 import monix.execution.internal.InternalApi
 import monix.execution.{Ack, Cancelable}
 import monix.reactive.observers.Subscriber
 import monix.reactive.Observable
-import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
 
 @InternalApi
@@ -33,8 +31,8 @@ private[s3] class MultipartDownloadObservable(
   key: String,
   chunkSize: Long = domain.awsMinChunkSize,
   downloadSettings: DownloadSettings = DefaultDownloadSettings,
-  s3AsyncClient: S3AsyncClient)
-  extends Observable[Array[Byte]] { self =>
+  s3: S3)
+  extends Observable[Array[Byte]] {
 
   require(chunkSize > 0, "Chunk size must be a positive number.")
 
@@ -48,12 +46,14 @@ private[s3] class MultipartDownloadObservable(
     val f = {
       for {
         s3Object <- {
-          listObjects(bucket, prefix = Some(key), maxTotalKeys = Some(1))(s3AsyncClient).headL.onErrorHandleWith { ex =>
+          s3.listObjects(bucket, prefix = Some(key), maxTotalKeys = Some(1)).headL.onErrorHandleWith { ex =>
             subscriber.onError(ex)
             Task.raiseError(ex)
           }
         }
-        chunks <- downloadChunk(subscriber, s3Object.size(), chunkSize, initialRequest, 0)(s3AsyncClient)
+        chunks <- {
+          downloadChunk(subscriber, s3Object.size(), chunkSize, initialRequest, 0)
+        }
       } yield chunks
     }.runToFuture(scheduler)
     f
@@ -64,12 +64,11 @@ private[s3] class MultipartDownloadObservable(
     totalSize: Long,
     chunkSize: Long,
     getRequest: GetObjectRequest,
-    offset: Int)(implicit s3AsyncClient: S3AsyncClient): Task[Unit] = {
-    println(s"Download chunk on offset: ${offset}")
+    offset: Int): Task[Unit] = {
 
     for {
       chunk <- {
-        download(getRequest).onErrorHandleWith { ex =>
+        s3.download(getRequest).onErrorHandleWith { ex =>
           sub.onError(ex)
           Task.raiseError(ex)
         }

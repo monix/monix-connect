@@ -17,11 +17,15 @@
 
 package monix.connect.s3
 
+import java.net.URI
+
 import monix.eval.Task
 import monix.execution.{Ack, Cancelable}
 import monix.execution.internal.InternalApi
 import monix.reactive.Observable
 import monix.reactive.observers.Subscriber
+import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+import software.amazon.awssdk.regions.Region.AWS_GLOBAL
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.model.{ListObjectsV2Request, ListObjectsV2Response, RequestPayer}
 
@@ -52,6 +56,18 @@ private[s3] class ListObjectsObservable(
     }.getOrElse(domain.awsDefaulMaxKeysList)
     requestBuilder.build()
   }
+  val minioEndPoint: String = "http://localhost:9000"
+
+  val s3AccessKey: String = "TESTKEY"
+  val s3SecretKey: String = "TESTSECRET"
+  val basicAWSCredentials = AwsBasicCredentials.create(s3AccessKey, s3SecretKey)
+  val staticCredProvider = StaticCredentialsProvider.create(basicAWSCredentials)
+  implicit val asyncClient: S3AsyncClient = S3AsyncClient
+    .builder()
+    .credentialsProvider(staticCredProvider)
+    .region(AWS_GLOBAL)
+    .endpointOverride(URI.create(minioEndPoint))
+    .build
 
   private[this] def nextListRequest(
     sub: Subscriber[ListObjectsV2Response],
@@ -64,6 +80,7 @@ private[s3] class ListObjectsObservable(
           sub.onError(ex)
           Task.raiseError(ex)
         }
+
       }
       ack <- Task.deferFuture(sub.onNext(r))
       nextRequest <- {

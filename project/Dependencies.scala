@@ -3,7 +3,7 @@ import sbt._
 object Dependencies {
 
   object Versions {
-    
+
     //main
     val AwsSdk = "2.15.7"
     val AkkaStreams = "2.6.9"
@@ -28,54 +28,54 @@ object Dependencies {
 
   private def testDependencies(hasIt: Boolean = false): Seq[sbt.ModuleID] = {
     val common: Seq[ModuleID] = MonixDependency ++ CommonTestDependencies.map(_ % Test)
-    if (hasIt) common ++ CommonTestDependencies.map(_ % IntegrationTest)
+    if (hasIt) common ++ CommonTestDependencies.map(_                           % IntegrationTest)
     else common
   }
 
   private val MonixDependency = Seq(
-    "io.monix" %% "monix-reactive" % Versions.Monix,
+    "io.monix" %% "monix-reactive"                        % Versions.Monix,
     "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0", //todo used as replacement for `collection.JavaConverters`
-    "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0"
+    "org.scala-lang.modules" %% "scala-java8-compat"      % "0.9.0"
   )
 
   private val CommonTestDependencies = Seq(
-    "org.scalatest" %% "scalatest" % Versions.Scalatest,
+    "org.scalatest" %% "scalatest"   % Versions.Scalatest,
     "org.scalacheck" %% "scalacheck" % Versions.Scalacheck,
     "org.mockito" %% "mockito-scala" % Versions.Mockito
   )
 
-  val Akka = Seq("com.typesafe.akka" %% "akka-stream" % Versions.AkkaStreams
-  ) ++ testDependencies(hasIt = false)
+  val Akka = Seq("com.typesafe.akka" %% "akka-stream" % Versions.AkkaStreams) ++ testDependencies(hasIt = false)
 
   val AwsAuth = Seq(
     "io.monix" %% "monix-reactive" % Versions.Monix,
     "software.amazon.awssdk" % "auth" % Versions.AwsSdk,
     "com.github.pureconfig" %% "pureconfig" % Versions.Pureconfig) ++ testDependencies(hasIt = false)
 
-  val Benchmarks = Seq("org.scalacheck" %% "scalacheck" % Versions.Scalacheck
-  )++ testDependencies(hasIt = false)
+  val Benchmarks = Seq(
+    "org.scalacheck" %% "scalacheck"                 % Versions.Scalacheck,
+    "com.lightbend.akka" %% "akka-stream-alpakka-s3" % "2.0.2") ++ testDependencies(hasIt = false)
 
   val DynamoDb = Seq(
-    "com.amazonaws" % "aws-java-sdk-core" % Versions.AWS,
-    "software.amazon.awssdk" % "dynamodb" % Versions.DynamoDb
+    "com.amazonaws"          % "aws-java-sdk-core" % Versions.AWS,
+    "software.amazon.awssdk" % "dynamodb"          % Versions.DynamoDb
   ) ++ testDependencies(hasIt = true)
 
   val Hdfs = Seq(
-    "org.apache.hadoop" % "hadoop-client" % Versions.Hadoop,
-    "org.apache.hadoop" % "hadoop-common" % Versions.Hadoop,
-    "org.apache.hadoop" % "hadoop-hdfs" % Versions.Hadoop,
+    "org.apache.hadoop" % "hadoop-client"      % Versions.Hadoop,
+    "org.apache.hadoop" % "hadoop-common"      % Versions.Hadoop,
+    "org.apache.hadoop" % "hadoop-hdfs"        % Versions.Hadoop,
     "org.apache.hadoop" % "hadoop-minicluster" % Versions.Hadoop % Test
   ) ++ testDependencies(hasIt = false)
 
   val MongoDb = Seq(
-    "org.mongodb" % "mongodb-driver-reactivestreams" % Versions.MongoReactiveStreams,
-    "org.mongodb.scala" %% "mongo-scala-bson" % Versions.MongoScala,
+    "org.mongodb"                               % "mongodb-driver-reactivestreams" % Versions.MongoReactiveStreams,
+    "org.mongodb.scala" %% "mongo-scala-bson"   % Versions.MongoScala,
     "org.mongodb.scala" %% "mongo-scala-driver" % Versions.MongoScala
   ) ++ testDependencies(hasIt = true)
 
   val Parquet = Seq(
-    "org.apache.parquet" % "parquet-avro" % Versions.Parquet,
-    "org.apache.parquet" % "parquet-hadoop" % Versions.Parquet,
+    "org.apache.parquet" % "parquet-avro"     % Versions.Parquet,
+    "org.apache.parquet" % "parquet-hadoop"   % Versions.Parquet,
     "org.apache.parquet" % "parquet-protobuf" % Versions.Parquet,
     "org.apache.hadoop" % "hadoop-client" % Versions.Hadoop,
     "org.apache.hadoop" % "hadoop-common" % Versions.Hadoop % Test,
@@ -92,9 +92,9 @@ object Dependencies {
   ) ++ testDependencies(hasIt = true)
 
   val GCS = Seq(
-    "com.google.cloud"   % "google-cloud-storage" % Versions.GCS,
+    "com.google.cloud"               % "google-cloud-storage" % Versions.GCS,
     "org.typelevel" %% "cats-effect" % Versions.Cats_Effect,
-    "com.google.cloud" % "google-cloud-nio" % Versions.GCNio % IntegrationTest,
-    "commons-io" % "commons-io" % "2.6" % Test
+    "com.google.cloud"               % "google-cloud-nio" % Versions.GCNio % IntegrationTest,
+    "commons-io"                     % "commons-io" % "2.6" % Test
   ) ++ testDependencies(hasIt = true)
 }
