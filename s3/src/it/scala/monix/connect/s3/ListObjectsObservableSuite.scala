@@ -58,26 +58,20 @@ class ListObjectsObservableSuite
         Gen.listOfN(n, Gen.nonEmptyListOf(Gen.alphaChar).map(l => prefix + l.mkString)).sample.get
       val contents: List[String] = Gen.listOfN(n, Gen.alphaUpperStr).sample.get
 
-      (for {
-        _ <- {
-          s3Resource.use { s3 =>
-            Task
-              .sequence(keys.zip(contents).map { case (key, content) => s3.upload(bucketName, key, content.getBytes()) })
+      s3Resource.use { s3 =>
+        (for {
+          _ <- Task.sequence(keys.zip(contents).map { case (key, content) => s3.upload(bucketName, key, content.getBytes()) })
+          s3Objects <- s3.listObjects(bucketName, maxTotalKeys = Some(1), prefix = Some(prefix)).toListL
+          listRequest <- {
+            val request = S3RequestBuilder.listObjectsV2(bucketName, maxKeys = Some(1))
+            Task.from(s3AsyncClient.listObjectsV2(request))
           }
-        }
-        s3Objects <- {
-          S3.create()
-            .use(_.listObjects(bucketName, maxTotalKeys = Some(1), prefix = Some(prefix)).toListL)
-        }
-        listRequest <- {
-          val request = S3RequestBuilder.listObjectsV2(bucketName, maxKeys = Some(1))
-          Task.from(s3AsyncClient.listObjectsV2(request))
-        }
-      } yield {
-        s3Objects.size shouldBe 1
-        keys.contains(s3Objects.head.key) shouldBe true
-        listRequest.isTruncated shouldBe true
-      }).runSyncUnsafe()
+        } yield {
+          s3Objects.size shouldBe 1
+          keys.contains(s3Objects.head.key) shouldBe true
+          listRequest.isTruncated shouldBe true
+        })
+      }.runSyncUnsafe()
     }
 
     "list objects return continuationToken when set" in {
@@ -111,15 +105,13 @@ class ListObjectsObservableSuite
       val keys: List[String] =
         Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + nonEmptyString.value() + str)).sample.get
       val contents: List[String] = List.fill(n)(nonEmptyString.value())
-      s3Resource.use{ s3 =>
-      Task.sequence(keys.zip(contents).map { case (key, content) => s3.upload(bucketName, key, content.getBytes()) })
-      }.runSyncUnsafe()
 
-      //when
-      val count = S3.create().use(_.listObjects(bucketName, prefix = Some(prefix), maxTotalKeys = Some(n)).countL).runSyncUnsafe()
-
-      //then
-      count shouldBe n
+      (s3Resource.use { s3 =>
+        for {
+          _ <- Task.sequence(keys.zip(contents).map { case (key, content) => s3.upload(bucketName, key, content.getBytes()) })
+          count <- s3.listObjects(bucketName, prefix = Some(prefix), maxTotalKeys = Some(n)).countL
+        } yield (count shouldBe n)
+      }).runSyncUnsafe()
     }
 
     //"list a limited number of objects using the continuation token" in {

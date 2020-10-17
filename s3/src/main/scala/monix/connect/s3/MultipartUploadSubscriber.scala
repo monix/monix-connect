@@ -50,9 +50,7 @@ private[s3] class MultipartUploadSubscriber(
   bucket: String,
   key: String,
   minChunkSize: Int,
-  uploadSettings: UploadSettings)(
-  implicit
-  s3Client: S3AsyncClient)
+  uploadSettings: UploadSettings)(s3Client: S3AsyncClient)
   extends Consumer[Array[Byte], CompleteMultipartUploadResponse] {
 
   def createSubscriber(
@@ -80,8 +78,9 @@ private[s3] class MultipartUploadSubscriber(
         * or in case it was the last chunk [[onComplete()]] will be called and will flush the buffer.
         */
       def onNext(chunk: Array[Byte]): Future[Ack] = {
+        buffer = buffer ++ chunk
         if (chunk.length < minChunkSize) {
-          buffer = buffer ++ chunk
+          println("Chunk lenght: " + chunk.length)
           Future(Ack.Continue)
         } else {
           {
@@ -89,11 +88,12 @@ private[s3] class MultipartUploadSubscriber(
               uid           <- uploadId
               completedPart <- uploadPart(bucket, key, partN, uid, buffer)
               _ <- Task {
+                println("PartN: " + partN)
                 completedParts = completedPart :: completedParts
                 buffer = Array.emptyByteArray
                 partN += 1
               }
-              ack <- Task(Ack.Continue)
+              ack <- Task.now(Ack.Continue)
             } yield ack
           }.onErrorRecover {
             case NonFatal(ex) => {
