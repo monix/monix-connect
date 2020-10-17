@@ -17,9 +17,9 @@
 
 package monix.connect.s3
 
-import java.io.FileInputStream
+import java.io.{File, FileInputStream}
+import java.nio.file.Files
 
-import monix.connect.s3.domain.UploadSettings
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.{Consumer, Observable}
@@ -50,7 +50,7 @@ class MultipartUploadSubscriberSuite
     }
   }
 
-  "MultipartUploadSubscriber" should "upload in multipart when only a single chunk was emitted" in {
+  "MultipartUploadSubscriber" should "upload multipart when only a single chunk was emitted" in {
     //given
     val key = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
     val content: Array[Byte] = Gen.alphaUpperStr.sample.get.getBytes
@@ -67,7 +67,7 @@ class MultipartUploadSubscriberSuite
     }
   }
 
-  it should "upload in multipart chunks (of less than minimum size) are passed" in {
+  it should "upload multipart chunks (of less than minimum size) are passed" in {
     //given
     val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
     val chunks: List[Array[Byte]] = Gen.listOfN(10, Gen.alphaUpperStr).map(_.map(_.getBytes)).sample.get
@@ -86,7 +86,7 @@ class MultipartUploadSubscriberSuite
     }
   }
 
-  it should "upload in multipart single chunk of size (1MB)" in {
+  it should "upload multipart single chunk of size (1MB)" in {
     //given
     val key = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
     val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
@@ -109,17 +109,57 @@ class MultipartUploadSubscriberSuite
     }
   }
 
-  it should " upload in multipart with small chunk size and a big byte array" in {
+  it should "upload one part emitted with chunks smaller than the min size" in {
+    //given
+    val key = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+    val chunk = Files.readAllBytes(new File(resourceFile("test.csv")).toPath) //test.csv ~= 244Kb
+    val chunks = Array.fill(24)(chunk) // at the 21th chunk (5MB) the upload should be triggered
+
+    //when
+    val response = s3Resource.use { s3 =>
+      Observable.fromIterable(chunks).consumeWith(s3.uploadMultipart(bucketName, key))
+    }.runSyncUnsafe()
+
+    //then
+    eventually {
+      val s3Object: Array[Byte] = download(bucketName, key).get
+      s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe() shouldBe true
+      response shouldBe a[CompleteMultipartUploadResponse]
+      s3Object shouldBe chunks.flatten
+    }
+  }
+
+  it should "upload two parts emitted with chunks smaller than the min size" in {
+    //given
+    val key = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+    val chunk = Files.readAllBytes(new File(resourceFile("test.csv")).toPath) //test.csv ~= 244Kb
+    val chunks = Array.fill(48)(chunk) // two part uploads will be triggered at th 21th and 42th chunks
+
+    //when
+    val response = s3Resource.use { s3 =>
+      Observable.fromIterable(chunks).consumeWith(s3.uploadMultipart(bucketName, key))
+    }.runSyncUnsafe()
+
+    //then
+    eventually {
+      val s3Object: Array[Byte] = download(bucketName, key).get
+      s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe() shouldBe true
+      response shouldBe a[CompleteMultipartUploadResponse]
+      s3Object shouldBe chunks.flatten
+    }
+  }
+
+  it should " upload big chunks" in {
     //given
     val key = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
     val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
     val ob: Observable[Array[Byte]] = Observable
       .fromInputStream(inputStream)
-      .foldLeft(Array.emptyByteArray)((acc, chunk) => acc ++ chunk ++ chunk ++ chunk) //duplicates each chunk * 5
+      .foldLeft(Array.emptyByteArray)((acc, chunk) => acc ++ chunk ++ chunk ++ chunk ++ chunk ++ chunk) //duplicates each chunk * 5
 
-   //when
+    //when
     val response = s3Resource.use { s3 =>
-      ob.consumeWith(s3.uploadMultipart(bucketName, key, minChunkSize = 100000))
+      ob.consumeWith(s3.uploadMultipart(bucketName, key))
     }.runSyncUnsafe()
 
     //then
@@ -130,6 +170,20 @@ class MultipartUploadSubscriberSuite
       response shouldBe a[CompleteMultipartUploadResponse]
       s3Object shouldBe expectedArrayByte
     }
+  }
+
+  it should "fails to upload in multipart when min chunk size is lower than (5MB)" in {
+    //given
+    val minChunkSize = 5242879 //minimum is 5242880
+
+    //when
+    val f = s3Resource.use { s3 =>
+      Observable.now(Array.emptyByteArray)
+        .consumeWith(s3.uploadMultipart("no-bucket", "no-key", minChunkSize = minChunkSize))
+    }.runToFuture
+
+    //then
+    f.value.get shouldBe a[Failure[IllegalArgumentException]]
   }
 
 }

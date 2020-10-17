@@ -17,6 +17,7 @@
 
 package monix.connect.s3
 
+import monix.catnap.MVar
 import monix.connect.s3.domain.UploadSettings
 import monix.eval.Task
 import monix.execution.cancelables.AssignableCancelable
@@ -58,6 +59,8 @@ private[s3] class MultipartUploadSubscriber(
     s: Scheduler): (Subscriber[Array[Byte]], AssignableCancelable) = {
     val out = new Subscriber[Array[Byte]] {
 
+      require(domain.awsMinChunkSize <= minChunkSize, "minChunkSize < 5242880")
+
       implicit val scheduler = s
       private val createRequest: CreateMultipartUploadRequest =
         S3RequestBuilder.createMultipartUploadRequest(bucket, key, uploadSettings)
@@ -67,32 +70,32 @@ private[s3] class MultipartUploadSubscriber(
           .from(s3Client.createMultipartUpload(createRequest))
           .map(_.uploadId())
           .memoize // memoized since it must be the same for all future uploaded parts.
+
       private var buffer: Array[Byte] = Array.emptyByteArray
       private var completedParts: List[CompletedPart] = List.empty[CompletedPart]
-      private var partN = 1
+      private val partNMVarEval: Task[MVar[Task, Int]] = MVar[Task].of(0).memoize //
 
       /**
-        * If the chunk length is bigger than the minimum size, perfom the part request [[UploadPartRequest]],
+        * If the chunk length is bigger than the minimum size, perfom the part request [[software.amazon.awssdk.services.s3.model.UploadPartRequest]],
         * which returns a [[CompletedPart]].
         * In the case it is not, the chunk is added to the buffer waiting to be aggregated with the next one,
         * or in case it was the last chunk [[onComplete()]] will be called and will flush the buffer.
         */
       def onNext(chunk: Array[Byte]): Future[Ack] = {
         buffer = buffer ++ chunk
-        if (chunk.length < minChunkSize) {
-          println("Chunk lenght: " + chunk.length)
-          Future(Ack.Continue)
-        } else {
+        if (buffer.length < minChunkSize) Future(Ack.Continue)
+        else {
           {
             for {
               uid           <- uploadId
+              partNMvar     <- partNMVarEval
+              partN         <- partNMvar.take // acquire
               completedPart <- uploadPart(bucket, key, partN, uid, buffer)
               _ <- Task {
-                println("PartN: " + partN)
-                completedParts = completedPart :: completedParts
+                completedParts = completedParts ++ List(completedPart)
                 buffer = Array.emptyByteArray
-                partN += 1
               }
+              _   <- partNMvar.put(partN + 1) //release
               ack <- Task.now(Ack.Continue)
             } yield ack
           }.onErrorRecover {
@@ -115,9 +118,11 @@ private[s3] class MultipartUploadSubscriber(
           _ <- Task.defer {
             if (!buffer.isEmpty) { //perform the last update if buffer is not empty
               for {
-                lastPart <- uploadPart(bucket, key, partN, uid, buffer)
+                partMVar  <- partNMVarEval
+                lastPartN <- partMVar.read // waits for the last upload to finish
+                lastPart  <- uploadPart(bucket, key, lastPartN + 1, uid, buffer)
                 _ <- Task {
-                  completedParts = lastPart :: completedParts
+                  completedParts = completedParts ++ List(lastPart)
                 }
               } yield ()
             } else {
@@ -136,6 +141,7 @@ private[s3] class MultipartUploadSubscriber(
       def onError(ex: Throwable): Unit =
         callback.onError(ex)
     }
+
     (out, AssignableCancelable.single())
   }
 
