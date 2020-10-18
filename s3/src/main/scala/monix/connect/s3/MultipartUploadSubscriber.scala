@@ -59,7 +59,7 @@ private[s3] class MultipartUploadSubscriber(
     s: Scheduler): (Subscriber[Array[Byte]], AssignableCancelable) = {
     val out = new Subscriber[Array[Byte]] {
 
-      require(domain.awsMinChunkSize <= minChunkSize, "minChunkSize < 5242880")
+      require(minChunkSize >= domain.awsMinChunkSize, "minChunkSize >= 5242880")
 
       implicit val scheduler = s
       private val createRequest: CreateMultipartUploadRequest =
@@ -114,17 +114,14 @@ private[s3] class MultipartUploadSubscriber(
         */
       def onComplete(): Unit = {
         val response: Task[CompleteMultipartUploadResponse] = for {
-          uid <- uploadId
-          _ <- Task.defer {
-            if (!buffer.isEmpty) { //perform the last update if buffer is not empty
+          uid       <- uploadId
+          partMVar  <- partNMVarEval
+          lastPartN <- partMVar.read // waits for the last upload to finish
+          _ <- {
+            if (!buffer.isEmpty) { //uploads the last part if buffer is not empty
               for {
-                partMVar  <- partNMVarEval
-                lastPartN <- partMVar.read // waits for the last upload to finish
-                lastPart  <- uploadPart(bucket, key, lastPartN + 1, uid, buffer)
-                _ <- Task {
-                  completedParts = completedParts :+ lastPart
-                }
-              } yield ()
+                lastPart <- uploadPart(bucket, key, lastPartN + 1, uid, buffer)
+              } yield (completedParts = completedParts :+ lastPart)
             } else {
               Task.unit
             }

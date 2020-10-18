@@ -701,8 +701,10 @@ private[s3] trait S3 { self =>
     bucket: String,
     key: String,
     minChunkSize: Int = awsMinChunkSize,
-    uploadSettings: UploadSettings = DefaultUploadSettings): Consumer[Array[Byte], CompleteMultipartUploadResponse] =
+    uploadSettings: UploadSettings = DefaultUploadSettings): Consumer[Array[Byte], CompleteMultipartUploadResponse] = {
+    require(domain.awsMinChunkSize <= minChunkSize, "minChunkSize >= 5242880")
     new MultipartUploadSubscriber(bucket, key, minChunkSize, uploadSettings)(s3Client)
+  }
   @InternalApi
   private[s3] def close(): Unit = s3Client.close()
 
