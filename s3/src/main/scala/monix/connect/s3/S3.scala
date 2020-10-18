@@ -71,7 +71,7 @@ object S3 { self =>
     Resource.make {
       for {
         clientConf  <- Task.fromTry(Try(AppConf.loadOrThrow))
-        asyncClient <- Task.now(AsyncClient.fromMonixAwsConf(clientConf.monixAws))
+        asyncClient <- Task.now(AsyncClientConversions.fromMonixAwsConf(clientConf.monixAws))
       } yield {
         self.createUnsafe(asyncClient)
       }
@@ -104,7 +104,7 @@ object S3 { self =>
     endpoint: Option[String] = None,
     httpClient: Option[SdkAsyncHttpClient] = None): Resource[Task, S3] = {
     Resource.make {
-      Task.eval(AsyncClient.from(credentialsProvider, region, endpoint, httpClient)).map(createUnsafe)
+      Task.eval(AsyncClientConversions.from(credentialsProvider, region, endpoint, httpClient)).map(createUnsafe)
     } { s3 =>
       Task {
         s3.close()
@@ -127,6 +127,7 @@ private[s3] trait S3 { self =>
     *   import monix.eval.Task
     *   import monix.connect.s3.S3
     *   import cats.effect.Resource
+    *   import software.amazon.awssdk.services.s3.model.CreateBucketResponse
     *
     *   val s3Resource: Resource[Task, S3] = S3.create()
     *   val bucket = "my-bucket"
@@ -349,7 +350,7 @@ private[s3] trait S3 { self =>
     *   val key: String = "path/to/test.csv"
     *
     *   // only downloads the first 100 bytes of the object
-    *   val t: Task[Array[Byte]] = s3Resource.use(_.download(bucket, key, firstNBytes = Some(100))
+    *   val t: Task[Array[Byte]] = s3Resource.use(_.download(bucket, key, firstNBytes = Some(100)))
     * }}}
     *
     *  ==Unsafe Example==
@@ -360,18 +361,16 @@ private[s3] trait S3 { self =>
     *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
     *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
     *
-    *   //must be properly configured
+    *   // must be properly configured
     *   val s3AsyncClient = S3AsyncClient.builder
     *     .credentialsProvider(DefaultCredentialsProvider.create())
     *     .region(AWS_GLOBAL)
     *     .build()
     *
     *   val s3: S3 = S3.createUnsafe(s3AsyncClient)
-    *   val bucket = "sample-bucket"
-    *   val key = "path/to/test.csv"
     *
     *   // only downloads the first 100 bytes of the object
-    *   val t = s3.download(bucket, key, firstNBytes = Some(100))
+    *   val arr: Task[Array[Byte]] = s3.download(bucket, key, firstNBytes = Some(100))
     * }}}
     *
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/mediastoredata/model/GetObjectRequest.html
@@ -420,15 +419,15 @@ private[s3] trait S3 { self =>
     *   import monix.eval.Task
     *   import monix.connect.s3.S3
     *   import cats.effect.Resource
-    *
+    *   import monix.reactive.Consumer
     *   val s3Resource: Resource[Task, S3] = S3.create()
     *   val bucket: String = "sample-bucket"
     *   val key: String = "sample-key"
     *
     *   val t = s3Resource.use { s3 =>
-    *     val ob = Observable[Array[Byte]] = s3.downloadMultipart(bucket, key, 2)
+    *     val ob: Observable[Array[Byte]] = s3.downloadMultipart(bucket, key, 2)
     *     // do your business logic
-    *     // ob.consumeWith(???)
+    *     ob.consumeWith(Consumer.complete) // mere sample
     *    }
     * }}}
     *
@@ -440,16 +439,13 @@ private[s3] trait S3 { self =>
     *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
     *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
     *
-    *   //must be properly configured
+    *   // must be properly configured
     *   val client = S3AsyncClient.builder
     *     .credentialsProvider(DefaultCredentialsProvider.create())
     *     .region(AWS_GLOBAL)
     *     .build()
     *
-    *   val bucket: String = "sample-bucket"
-    *   val key: String = "sample-key"
-    *
-    *   val ob: Observable[Array[Byte]] = S3.unsafeCreate(client).downloadMultipart(bucket, key, 2)
+    *   val ob: Observable[Array[Byte]] = S3.createUnsafe(client).downloadMultipart(bucket, key, 2)
     * }}}
     *
     * @param bucket           target S3 bucket name of the object to be downloaded.
@@ -475,9 +471,9 @@ private[s3] trait S3 { self =>
     * ==Example==
     *
     * {{{
+    *   import monix.reactive.Consumer
     *   import monix.reactive.Observable
     *   import monix.eval.Task
-    *   import monix.connect.s3.S3
     *   import cats.effect.Resource
     *   import software.amazon.awssdk.services.s3.model.Bucket
     *
@@ -486,8 +482,9 @@ private[s3] trait S3 { self =>
     *   val key: String = "sample-key"
     *
     *   val t = s3Resource.use { s3 =>
-    *     val ob: Observable[Bucket] = s3.listBuckets()
+    *     val buckets: Observable[Bucket] = s3.listBuckets()
     *     // your business logic here
+    *     buckets.consumeWith(Consumer.complete) // mere example
     *   }
     * }}}
     *
@@ -500,7 +497,7 @@ private[s3] trait S3 { self =>
     *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
     *   import software.amazon.awssdk.services.s3.model.Bucket
     *
-    *   //must be propelry configured
+    *   // must be propelry configured
     *   val s3AsyncClient = S3AsyncClient.builder
     *     .credentialsProvider(DefaultCredentialsProvider.create())
     *     .region(AWS_GLOBAL)
@@ -525,10 +522,11 @@ private[s3] trait S3 { self =>
     * ==Example==
     *
     * {{{
+    *   import monix.reactive.Consumer
     *   import monix.reactive.Observable
     *   import monix.eval.Task
-    *   import monix.connect.s3.S3
     *   import cats.effect.Resource
+    *   import software.amazon.awssdk.services.s3.model.S3Object
     *
     *   val s3Resource: Resource[Task, S3] = S3.create()
     *   val bucket = "my-bucket"
@@ -536,8 +534,9 @@ private[s3] trait S3 { self =>
     *
     *   val t = s3Resource.use { s3 =>
     *     val s3Objects: Observable[S3Object] =
-    *       S3.listObjects(bucket, maxTotalKeys = Some(1011), prefix = Some(prefix))
-    *     // s3objects.consumeWith(???)
+    *         s3.listObjects(bucket, maxTotalKeys = Some(1011), prefix = Some(prefix))
+    *      //your business logic here
+    *      s3Objects.consumeWith(Consumer.complete) //mere example
     *   }
     * }}}
     *
@@ -557,8 +556,6 @@ private[s3] trait S3 { self =>
     *     .build()
     *
     *   val s3: S3 = S3.createUnsafe(s3AsyncClient)
-    *   val bucket = "my-bucket"
-    *   val prefix = s"prefix/to/list/keys/"
     *
     *   val s3Objects: Observable[S3Object] = s3.listObjects(bucket, maxTotalKeys = Some(1011), prefix = Some(prefix))
     * }}}
@@ -615,18 +612,15 @@ private[s3] trait S3 { self =>
     *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
     *   import software.amazon.awssdk.services.s3.model.S3Object
     *
-    *   //must be properly configured
+    *   // must be properly configured
     *   val s3AsyncClient = S3AsyncClient.builder
     *     .credentialsProvider(DefaultCredentialsProvider.create())
     *     .region(AWS_GLOBAL)
     *     .build()
     *
     *   val s3: S3 = S3.createUnsafe(s3AsyncClient)
-    *   val bucket: String = "sample-bucket"
-    *   val key: String = "sample/s3/object"
-    *   val content: Array[Byte] = "Whatever your content is".getBytes()
     *
-    *   val t: Task[PutObjectResponse] = s3.upload(bucket, key, content)
+    *   val response = s3.upload(bucket, key, content)
     * }}}
     *
     * @param bucket  the bucket where this request will upload a new object to
@@ -687,18 +681,15 @@ private[s3] trait S3 { self =>
     *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
     *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
     *
-    *   //must be properly configured
+    *   // must be properly configured
     *   val s3AsyncClient = S3AsyncClient.builder
     *     .credentialsProvider(DefaultCredentialsProvider.create())
     *     .region(AWS_GLOBAL)
     *     .build()
     *
     *   val s3: S3 = S3.createUnsafe(s3AsyncClient)
-    *   val bucket: String = "sample-bucket"
-    *   val key: String = "sample/key/to/s3/object"
-    *   val content: Array[Byte] = "Hello World!".getBytes
     *
-    *   val t = Observable.pure(content).consumeWith(S3.uploadMultipart(bucket, key))
+    *   val response = Observable.pure(content).consumeWith(s3.uploadMultipart(bucket, key))
     * }}}
     *
     * @param bucket        the bucket name where the object will be stored

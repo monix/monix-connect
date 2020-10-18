@@ -29,7 +29,7 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient
 
 @InternalApi
-private[s3] object AsyncClient { self =>
+private[s3] object AsyncClientConversions { self =>
 
   def fromMonixAwsConf(monixAwsConf: MonixAwsConf): S3AsyncClient = {
     val builder = S3AsyncClient.builder().credentialsProvider(monixAwsConf.credentials).region(monixAwsConf.region)

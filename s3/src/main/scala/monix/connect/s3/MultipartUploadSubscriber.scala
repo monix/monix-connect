@@ -92,10 +92,10 @@ private[s3] class MultipartUploadSubscriber(
               partN         <- partNMvar.take // acquire
               completedPart <- uploadPart(bucket, key, partN, uid, buffer)
               _ <- Task {
-                completedParts = completedParts ++ List(completedPart)
+                completedParts = completedParts :+ completedPart
                 buffer = Array.emptyByteArray
               }
-              _   <- partNMvar.put(partN + 1) //release
+              _   <- partNMvar.put(partN + 1) // release
               ack <- Task.now(Ack.Continue)
             } yield ack
           }.onErrorRecover {
@@ -122,7 +122,7 @@ private[s3] class MultipartUploadSubscriber(
                 lastPartN <- partMVar.read // waits for the last upload to finish
                 lastPart  <- uploadPart(bucket, key, lastPartN + 1, uid, buffer)
                 _ <- Task {
-                  completedParts = completedParts ++ List(lastPart)
+                  completedParts = completedParts :+ lastPart
                 }
               } yield ()
             } else {
