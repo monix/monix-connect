@@ -45,8 +45,8 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient
 
 class S3Spec
-  extends AnyFlatSpec with BeforeAndAfterEach with Matchers with BeforeAndAfterAll
-  with ScalaCheckDrivenPropertyChecks with S3RequestGenerators {
+  extends AnyFlatSpec with BeforeAndAfterEach with Matchers with BeforeAndAfterAll with ScalaCheckDrivenPropertyChecks
+  with S3RequestGenerators {
 
   override def beforeAll(): Unit = {
     super.beforeAll()
@@ -55,13 +55,12 @@ class S3Spec
   override def beforeEach(): Unit = {}
 
   s"${S3}" should "use default configurable params" in {
-    S3.create().use{ s3 =>
-      Task(s3 shouldBe a[S3])
-    }.runSyncUnsafe()
+    S3.create().use { s3 => Task(s3 shouldBe a[S3]) }.runSyncUnsafe()
   }
 
   it should "unsafely be created" in {
-    val s3AsyncClient = S3AsyncClient.builder()
+    val s3AsyncClient = S3AsyncClient
+      .builder()
       .credentialsProvider(AnonymousCredentialsProvider.create())
       .region(Region.EU_SOUTH_1)
       .build()
@@ -70,8 +69,6 @@ class S3Spec
 
   it should "be created from the passed configuration params" in {
     val credentials = AnonymousCredentialsProvider.create()
-    S3.createWith(credentials, Region.AWS_GLOBAL).use{ s3 =>
-      Task(s3 shouldBe a[S3])
-    }.runSyncUnsafe()
+    S3.createWith(credentials, Region.AWS_GLOBAL).use { s3 => Task(s3 shouldBe a[S3]) }.runSyncUnsafe()
   }
 }
