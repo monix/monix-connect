@@ -51,7 +51,8 @@ private[s3] class MultipartUploadSubscriber(
   bucket: String,
   key: String,
   minChunkSize: Int,
-  uploadSettings: UploadSettings)(s3Client: S3AsyncClient)
+  uploadSettings: UploadSettings,
+  s3Client: S3AsyncClient)
   extends Consumer[Array[Byte], CompleteMultipartUploadResponse] {
 
   def createSubscriber(
@@ -62,18 +63,18 @@ private[s3] class MultipartUploadSubscriber(
       require(minChunkSize >= domain.awsMinChunkSize, "minChunkSize >= 5242880")
 
       implicit val scheduler = s
-      private val createRequest: CreateMultipartUploadRequest =
+      private[this] val createRequest: CreateMultipartUploadRequest =
         S3RequestBuilder.createMultipartUploadRequest(bucket, key, uploadSettings)
       // initialises the multipart upload
-      private val uploadId: Task[String] =
+      private[this] val uploadId: Task[String] =
         Task
           .from(s3Client.createMultipartUpload(createRequest))
           .map(_.uploadId())
           .memoize // memoized since it must be the same for all future uploaded parts.
 
-      private var buffer: Array[Byte] = Array.emptyByteArray
-      private var completedParts: List[CompletedPart] = List.empty[CompletedPart]
-      private val partNMVarEval: Task[MVar[Task, Int]] = MVar[Task].of(0).memoize //
+      private[this] var buffer: Array[Byte] = Array.emptyByteArray
+      private[this] var completedParts: List[CompletedPart] = List.empty[CompletedPart]
+      private[this] val partNMVarEval: Task[MVar[Task, Int]] = MVar[Task].of(0).memoize
 
       /**
         * If the chunk length is bigger than the minimum size, perfom the part request [[software.amazon.awssdk.services.s3.model.UploadPartRequest]],

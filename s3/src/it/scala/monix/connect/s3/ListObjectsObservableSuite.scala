@@ -114,26 +114,26 @@ class ListObjectsObservableSuite
       }).runSyncUnsafe()
     }
 
-    //"list a limited number of objects using the continuation token" in {
-    //  //given
-    //  val n = 1600
-    //  val limit = 1300
-    //  val prefix = s"test-list-limit-truncated/${nonEmptyString.value()}/"
-    //  val keys: List[String] =
-    //    Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + nonEmptyString.value() + str)).sample.get
-    //  val contents: List[String] = List.fill(n)(nonEmptyString.value())
+    "list a limited number of objects using the continuation token" in {
+      //given
+      val n = 1600
+      val limit = 1300
+      val prefix = s"test-list-limit-truncated/${nonEmptyString.value()}/"
+      val keys: List[String] =
+        Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + nonEmptyString.value() + str)).sample.get
+      val contents: List[String] = List.fill(n)(nonEmptyString.value())
 
-    //  s3Resource.use{ s3 =>
-    //  Task
-    //    .sequence(keys.zip(contents).map { case (key, content) => s3.upload(bucketName, key, content.getBytes()) })
-    //  }.runSyncUnsafe()
+      s3Resource.use{ s3 =>
+      Task
+        .sequence(keys.zip(contents).map { case (key, content) => s3.upload(bucketName, key, content.getBytes()) })
+      }.runSyncUnsafe()
 
-    //  //when
-    //  val s3Objects = s3Resource.use(_.listObjects(bucketName, prefix = Some(prefix), maxTotalKeys = Some(limit)).toListL).runSyncUnsafe()
+      //when
+      val s3Objects = s3Resource.use(_.listObjects(bucketName, prefix = Some(prefix), maxTotalKeys = Some(limit)).toListL).runSyncUnsafe()
 
-    //  //then
-    //  s3Objects.size shouldBe limit
-    //}
+      //then
+      s3Objects.size shouldBe limit
+    }
 
     "list objects requisite of positive max total keys" in {
       //given/when

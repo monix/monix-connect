@@ -5,14 +5,7 @@ import java.io.FileInputStream
 import monix.eval.Task
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
-import software.amazon.awssdk.services.s3.model.{
-  CompleteMultipartUploadResponse,
-  CopyObjectResponse,
-  NoSuchBucketException,
-  NoSuchKeyException,
-  PutObjectResponse
-}
-import org.scalatest.wordspec.AnyWordSpecLike
+import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadResponse, CopyObjectResponse, NoSuchBucketException, NoSuchKeyException, PutObjectResponse}
 import org.scalatest.matchers.should.Matchers
 import Thread.sleep
 
@@ -23,7 +16,7 @@ import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.flatspec.AnyFlatSpec
 import software.amazon.awssdk.regions.Region
 
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
 
 class S3Suite
@@ -152,20 +145,33 @@ class S3Suite
     }
   }
 
-  it should "fails when trying to download with a negative `numberOfBytes`" in {
+  it should "download fails if the numberOfBytes is negative" in {
     //given
-    val negativeNum = Gen.chooseNum(-10, 0).sample.get
+    val negativeNum = Gen.chooseNum(-10, -1).sample.get
     val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
 
     //when
-    val f: Future[Array[Byte]] = s3Resource.use(_.download(bucketName, key, Some(negativeNum))).runToFuture
+    val f = s3Resource.use(_.download(bucketName, key, Some(negativeNum))).runToFuture
 
     //then
-
+    Await.ready(f, 3.seconds)
     f.value.get.isFailure shouldBe true
   }
 
-  it should "fail when with `NoSuchKeyException` when downloading from a non existing key" in {
+  it should "download fails if the numberOfBytes is zero" in {
+    //given
+    val chunkSize = 0
+
+    //when
+    val f = s3Resource.use(_.download("no-bucket", "no-key", Some(chunkSize)))
+      .runToFuture
+
+    //then
+    Await.ready(f, 3.seconds)
+    f.value.get.isFailure shouldBe true
+  }
+
+  it should "download from a non existing key returns failed task" in {
     //given
     val key: String = "non-existing-key"
 
@@ -351,4 +357,27 @@ class S3Suite
     count shouldBe n
   }
 
+  "A real example" should "reuse the resource evaluation" in {
+
+    val bucket = "my-bucket"
+    val key = "my-key"
+    val content = "my-content"
+
+    def runS3App(s3: S3): Task[Array[Byte]] = {
+      for {
+        _ <- s3.createBucket(bucket)
+        _ <- s3.upload(bucket, key, content.getBytes)
+        existsObject <- s3.existsObject(bucket, key)
+        download <- {
+          if(existsObject) s3.download(bucket, key)
+          else Task.raiseError(NoSuchKeyException.builder().build())
+        }
+      } yield download
+    }
+
+    val f = S3.create().use(s3 => runS3App(s3)).runToFuture
+
+    val result = Await.result(f, 3.seconds)
+    result shouldBe content.getBytes
+  }
 }
