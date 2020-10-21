@@ -25,8 +25,6 @@ RedisWriterBenchmark.listWriter                thrpt    5  1799.224 ± 235.473  
 RedisWriterBenchmark.setWriter                 thrpt    5  1805.233 ± 281.053  ops/s
 RedisWriterBenchmark.sortedSetWriter           thrpt    5  1740.674 ± 196.590  ops/s
 RedisWriterBenchmark.stringWriter              thrpt    5  1822.662 ± 149.060  ops/s
-
-
 ```
 
 ```
