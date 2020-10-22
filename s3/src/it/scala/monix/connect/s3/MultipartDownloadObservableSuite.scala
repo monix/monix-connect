@@ -54,7 +54,7 @@ class MultipartDownloadObservableSuite
       //given
       val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
       val content: String = nonEmptyString.value()
-      s3Resource.map(_.upload(bucketName, key, content.getBytes))
+      s3Resource.use(_.upload(bucketName, key, content.getBytes)).runSyncUnsafe()
 
       //when
       val actualContent: Array[Byte] =
@@ -99,7 +99,7 @@ class MultipartDownloadObservableSuite
       expectedArrayByte shouldBe actualContent
     }
 
-  it should "download in multipart from a non existing bucket object returns failure" in {
+  it should "fail when donwloading from a non existing object" in {
       //given
       val bucket: String = "non-existing-bucket"
       val key: String = "non/existing/key"
