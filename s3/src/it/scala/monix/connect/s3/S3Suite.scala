@@ -345,8 +345,7 @@ class S3Suite
       Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + nonEmptyString.value() + str)).sample.get
     val contents: List[String] = List.fill(n)(nonEmptyString.value())
     Task
-      .sequence(
-        keys.zip(contents).map { case (key, content) => s3Resource.use(_.upload(bucketName, key, content.getBytes())) })
+      .traverse(keys.zip(contents)){ case (key, content) => s3Resource.use(_.upload(bucketName, key, content.getBytes())) }
       .runSyncUnsafe()
 
     //when

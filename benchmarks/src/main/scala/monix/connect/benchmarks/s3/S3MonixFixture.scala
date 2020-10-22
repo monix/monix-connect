@@ -20,7 +20,6 @@ package monix.connect.benchmarks.s3
 import java.net.URI
 import java.time.Duration
 
-import akka.actor.ActorSystem
 import monix.connect.s3.S3
 import monix.eval.Coeval
 import monix.execution.Scheduler

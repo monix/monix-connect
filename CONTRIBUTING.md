@@ -28,20 +28,35 @@ escalate into larger problems.
    request. If you do have write access to the repository, never work
    directly on master.
    
-4. When the work is completed, verify it with following commands:
+4. When the work is completed verify that the unit tests are passing:
 
-```
-sbt scalafmtAll //it should be formatted on compile time
+```sbtshell
 sbt test
+```
+
+5. To run integration tests:
+```sbtshell
+sh start-dependencies.sh
 sbt it:test //triggers integration tests for each of the connectors
 ```
 
-5. Submit a Pull Request.
+6. Run scala formatter: 
+```sbtshell
+sbt scalafmtAll //it should be formatted on compile time
+```
 
-6. Anyone can comment on a pull request and you are expected to
+5. Update the documentation if required:
+```sbtshell
+sbt docs/docusaurusCreateSite
+cd website/
+yarn start
+```
+6. Submit a Pull Request.
+
+7. Anyone can comment on a pull request and you are expected to
    answer questions or to incorporate feedback.
 
-7. It is not allowed to force push to the branch on which the pull
+8. It is not allowed to force push to the branch on which the pull
    request is based.
 
 ## General Guidelines
