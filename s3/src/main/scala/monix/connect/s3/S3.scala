@@ -104,10 +104,10 @@ object S3 { self =>
     *
     * @return a [[Resource]] of [[Task]] that allocates and releases [[S3]].
     */
-  def create(): Resource[Task, S3] = {
+  def fromConfig: Resource[Task, S3] = {
     Resource.make {
       for {
-        clientConf  <- Task.fromTry(Try(AppConf.loadOrThrow))
+        clientConf  <- Task.evalOnce(AppConf.loadOrThrow)
         asyncClient <- Task.now(AsyncClientConversions.fromMonixAwsConf(clientConf.monixAws))
       } yield {
         self.createUnsafe(asyncClient)
@@ -135,7 +135,7 @@ object S3 { self =>
     *   import software.amazon.awssdk.regions.Region
     *
     *   val defaultCredentials = DefaultCredentialsProvider.create()
-    *   val s3Resource: Resource[Task, S3] = S3.createWith(defaultCredentials, Region.AWS_GLOBAL)
+    *   val s3Resource: Resource[Task, S3] = S3.create(defaultCredentials, Region.AWS_GLOBAL)
     * }}}
     *
     * @param credentialsProvider Strategy for loading credentials and authenticate to AWS S3
@@ -144,13 +144,16 @@ object S3 { self =>
     * @param httpClient Sets the [[SdkAsyncHttpClient]] that the SDK service client will use to make HTTP calls.
     * @return a [[Resource]] of [[Task]] that allocates and releases [[S3]].
     **/
-  def createWith(
+  def create(
     credentialsProvider: AwsCredentialsProvider,
     region: Region,
     endpoint: Option[String] = None,
     httpClient: Option[SdkAsyncHttpClient] = None): Resource[Task, S3] = {
     Resource.make {
-      Task.eval(AsyncClientConversions.from(credentialsProvider, region, endpoint, httpClient)).map(createUnsafe)
+      Task.eval {
+        val asyncClient = AsyncClientConversions.from(credentialsProvider, region, endpoint, httpClient)
+        createUnsafe(asyncClient)
+      }
     } { s3 =>
       Task {
         s3.close()
@@ -167,7 +170,7 @@ object S3 { self =>
     * Unsafe because the state of the passed [[S3AsyncClient]] is not guaranteed,
     * it can either be malformed or closed, which would result in underlying failures.
     *
-    * @see [[S3.create()]] and [[S3.createWith()]] for a pure usage of [[S3]].
+    * @see [[S3.fromConfig]] and [[S3.create]] for a pure usage of [[S3]].
     * They both will make sure that the s3 connection is created with the required
     * resources and guarantee that the client was not previously closed.
     *
@@ -223,13 +226,14 @@ object S3 { self =>
     * ==Example==
     *
     * {{{
+    *   import monix.execution.Scheduler.Implicits.global
     *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
     *   import software.amazon.awssdk.regions.Region
     *
     *   val defaultCred = DefaultCredentialsProvider.create()
-    *   val s3: S3 = S3.createUnsafeWith(defaultCred, Region.AWS_GLOBAL)
+    *   val s3: S3 = S3.createUnsafe(defaultCred, Region.AWS_GLOBAL)
     *   // do your stuff here
-    *   s3.close()
+    *   s3.close().runToFuture
     * }}}
     *
     * @param credentialsProvider Strategy for loading credentials and authenticate to AWS S3
@@ -239,7 +243,7 @@ object S3 { self =>
     * @return a [[Resource]] of [[Task]] that allocates and releases [[S3]].
     */
   @UnsafeBecauseImpure
-  def createUnsafeWith(
+  def createUnsafe(
     credentialsProvider: AwsCredentialsProvider,
     region: Region,
     endpoint: Option[String] = None,
@@ -248,7 +252,7 @@ object S3 { self =>
     self.createUnsafe(s3AsyncClient)
   }
 
-  @deprecated("Use one of the available builders `S3.create`", "0.5.0")
+  @deprecated("Use one of the builders like `S3.create`", "0.5.0")
   def createBucket(
     bucket: String,
     acl: Option[BucketCannedACL] = None,
@@ -273,12 +277,12 @@ object S3 { self =>
           objectLockEnabledForBucket)))
   }
 
-  @deprecated("Use one of the available builders `S3.create`", "0.5.0")
+  @deprecated("Use one of the builders like `S3.create`", "0.5.0")
   def createBucket(request: CreateBucketRequest)(implicit s3AsyncClient: S3AsyncClient): Task[CreateBucketResponse] = {
     Task.from(s3AsyncClient.createBucket(request))
   }
 
-  @deprecated("Use one of the available builders `S3.create`", "0.5.0")
+  @deprecated("Use one of the builders like `S3.create`", "0.5.0")
   def copyObject(
     sourceBucket: String,
     sourceKey: String,
@@ -292,22 +296,22 @@ object S3 { self =>
     copyObject(copyRequest)
   }
 
-  @deprecated("Use one of the available builders `S3.create`", "0.5.0")
+  @deprecated("Use one of the builders like `S3.create`", "0.5.0")
   def copyObject(request: CopyObjectRequest)(implicit s3AsyncClient: S3AsyncClient): Task[CopyObjectResponse] = {
     Task.from(s3AsyncClient.copyObject(request))
   }
 
-  @deprecated("Use one of the available builders `S3.create`", "0.5.0")
+  @deprecated("Use one of the builders like `S3.create`", "0.5.0")
   def deleteBucket(bucket: String)(implicit s3AsyncClient: S3AsyncClient): Task[DeleteBucketResponse] = {
     Task.from(s3AsyncClient.deleteBucket(S3RequestBuilder.deleteBucket(bucket)))
   }
 
-  @deprecated("Use one of the available builders `S3.create`", "0.5.0")
+  @deprecated("Use one of the builders like `S3.create`", "0.5.0")
   def deleteBucket(request: DeleteBucketRequest)(implicit s3AsyncClient: S3AsyncClient): Task[DeleteBucketResponse] = {
     Task.from(s3AsyncClient.deleteBucket(request))
   }
 
-  @deprecated("Use one of the available builders `S3.create`", "0.5.0")
+  @deprecated("Use one of the builders like `S3.create`", "0.5.0")
   def deleteObject(
     bucket: String,
     key: String,
@@ -320,15 +324,15 @@ object S3 { self =>
     deleteObject(request)
   }
 
-  @deprecated("Use one of the available builders `S3.create`", "0.5.0")
+  @deprecated("Use one of the builders like `S3.create`", "0.5.0")
   def deleteObject(request: DeleteObjectRequest)(implicit s3AsyncClient: S3AsyncClient): Task[DeleteObjectResponse] =
     Task.from(s3AsyncClient.deleteObject(request))
 
-  @deprecated("Use one of the available builders `S3.create`", "0.5.0")
+  @deprecated("Use one of the builders like `S3.create`", "0.5.0")
   def existsBucket(bucket: String)(implicit s3AsyncClient: S3AsyncClient): Task[Boolean] =
     S3.listBuckets().existsL(_.name == bucket)
 
-  @deprecated("Use one of the available builders `S3.create`", "0.5.0")
+  @deprecated("Use one of the builders like `S3.create`", "0.5.0")
   def existsObject(bucket: String, key: String)(implicit s3AsyncClient: S3AsyncClient): Task[Boolean] = {
     Task.defer {
       Task.from {
@@ -341,7 +345,7 @@ object S3 { self =>
       _ => Task.now(true))
   }
 
-  @deprecated("Use one of the available builders `S3.create`", "0.5.0")
+  @deprecated("Use one of the builders like `S3.create`", "0.5.0")
   def download(
     bucket: String,
     key: String,
@@ -357,14 +361,14 @@ object S3 { self =>
       .map(r => r.asByteArray())
   }
 
-  @deprecated("Use one of the available builders `S3.create`", "0.5.0")
+  @deprecated("Use one of the builders like `S3.create`", "0.5.0")
   def download(request: GetObjectRequest)(implicit s3AsyncClient: S3AsyncClient): Task[Array[Byte]] = {
     Task
       .from(s3AsyncClient.getObject(request, AsyncResponseTransformer.toBytes[GetObjectResponse]))
       .map(_.asByteArray())
   }
 
-  @deprecated("Use one of the available builders `S3.create`", "0.5.0")
+  @deprecated("Use one of the builders like `S3.create`", "0.5.0")
   def downloadMultipart(
     bucket: String,
     key: String,
@@ -375,7 +379,7 @@ object S3 { self =>
     new MultipartDownloadObservable(bucket, key, chunkSize, downloadSettings, S3.createUnsafe(s3AsyncClient))
   }
 
-  @deprecated("Use one of the available builders `S3.create`", "0.5.0")
+  @deprecated("Use one of the builders like `S3.create`", "0.5.0")
   def listBuckets()(implicit s3AsyncClient: S3AsyncClient): Observable[Bucket] = {
     for {
       response <- Observable.fromTaskLike(s3AsyncClient.listBuckets())
@@ -383,7 +387,7 @@ object S3 { self =>
     } yield bucket
   }
 
-  @deprecated("Use one of the available builders `S3.create`", "0.5.0")
+  @deprecated("Use one of the builders like `S3.create`", "0.5.0")
   def listObjects(
     bucket: String,
     prefix: Option[String] = None,
@@ -395,7 +399,7 @@ object S3 { self =>
     } yield s3Object
   }
 
-  @deprecated("Use one of the available builders `S3.create`", "0.5.0")
+  @deprecated("Use one of the builders like `S3.create`", "0.5.0")
   def upload(bucket: String, key: String, content: Array[Byte], uploadSettings: UploadSettings = DefaultUploadSettings)(
     implicit
     s3AsyncClient: S3AsyncClient): Task[PutObjectResponse] = {
@@ -405,13 +409,13 @@ object S3 { self =>
     Task.from(s3AsyncClient.putObject(request, AsyncRequestBody.fromBytes(content)))
   }
 
-  @deprecated("Use one of the available builders `S3.create`", "0.5.0")
+  @deprecated("Use one of the builders like `S3.create`", "0.5.0")
   def upload(request: PutObjectRequest, content: Array[Byte])(
     implicit
     s3AsyncClient: S3AsyncClient): Task[PutObjectResponse] =
     Task.from(s3AsyncClient.putObject(request, AsyncRequestBody.fromBytes(content)))
 
-  @deprecated("Use one of the available builders `S3.create`", "0.5.0")
+  @deprecated("Use one of the builders like `S3.create`", "0.5.0")
   def uploadMultipart(
     bucket: String,
     key: String,
@@ -437,7 +441,7 @@ private[s3] trait S3 { self =>
     *   import cats.effect.Resource
     *   import software.amazon.awssdk.services.s3.model.CreateBucketResponse
     *
-    *   val s3Resource: Resource[Task, S3] = S3.create()
+    *   val s3Resource: Resource[Task, S3] = S3.fromConfig
     *   val bucket = "my-bucket"
     *   val t: Task[CreateBucketResponse] = s3Resource.use(_.createBucket(bucket))
     * }}}
@@ -496,7 +500,7 @@ private[s3] trait S3 { self =>
     *   import monix.connect.s3.S3
     *   import cats.effect.Resource
     *
-    *   val s3Resource: Resource[Task, S3] = S3.create()
+    *   val s3Resource: Resource[Task, S3] = S3.fromConfig
     *
     *   val sourceBucket = "source-bucket"
     *   val sourceKey = "source/key.json"
@@ -611,7 +615,7 @@ private[s3] trait S3 { self =>
     *   import monix.connect.s3.S3
     *   import cats.effect.Resource
     *
-    *   val s3Resource: Resource[Task, S3] = S3.create()
+    *   val s3Resource: Resource[Task, S3] = S3.fromConfig
     *
     *   val bucket = "my-bucket"
     *   val s3Key = "my-key"
@@ -652,7 +656,7 @@ private[s3] trait S3 { self =>
     *   import monix.connect.s3.S3
     *   import cats.effect.Resource
     *
-    *   val s3Resource: Resource[Task, S3] = S3.create() // alternatively use `createWith`
+    *   val s3Resource: Resource[Task, S3] = S3.fromConfig // alternatively use `createWith`
     *
     *   val bucket: String = "sample-bucket"
     *   val key: String = "path/to/test.csv"
@@ -728,7 +732,7 @@ private[s3] trait S3 { self =>
     *   import monix.connect.s3.S3
     *   import cats.effect.Resource
     *   import monix.reactive.Consumer
-    *   val s3Resource: Resource[Task, S3] = S3.create()
+    *   val s3Resource: Resource[Task, S3] = S3.fromConfig
     *   val bucket: String = "sample-bucket"
     *   val key: String = "sample-key"
     *
@@ -786,7 +790,7 @@ private[s3] trait S3 { self =>
     *   import cats.effect.Resource
     *   import software.amazon.awssdk.services.s3.model.Bucket
     *
-    *   val s3Resource: Resource[Task, S3] = S3.create()
+    *   val s3Resource: Resource[Task, S3] = S3.fromConfig
     *   val bucket: String = "sample-bucket"
     *   val key: String = "sample-key"
     *
@@ -837,7 +841,7 @@ private[s3] trait S3 { self =>
     *   import cats.effect.Resource
     *   import software.amazon.awssdk.services.s3.model.S3Object
     *
-    *   val s3Resource: Resource[Task, S3] = S3.create()
+    *   val s3Resource: Resource[Task, S3] = S3.fromConfig
     *   val bucket = "my-bucket"
     *   val prefix = "prefix/to/list/keys/"
     *
@@ -902,7 +906,7 @@ private[s3] trait S3 { self =>
     *   import monix.eval.Task
     *   import cats.effect.Resource
     *
-    *   val s3Resource: Resource[Task, S3] = S3.create()
+    *   val s3Resource: Resource[Task, S3] = S3.fromConfig
     *   val bucket: String = "sample-bucket"
     *   val key: String = "sample/s3/object"
     *   val content: Array[Byte] = "Whatever your content is".getBytes()
@@ -969,7 +973,7 @@ private[s3] trait S3 { self =>
     *   import monix.reactive.{Observable, Consumer}
     *   import cats.effect.Resource
     *
-    *   val s3Resource: Resource[Task, S3] = S3.create()
+    *   val s3Resource: Resource[Task, S3] = S3.fromConfig
     *   val bucket: String = "sample-bucket"
     *   val key: String = "sample/key/to/s3/object"
     *   val content: Array[Byte] = "Hello World!".getBytes
@@ -1018,6 +1022,6 @@ private[s3] trait S3 { self =>
   /**
     * Closes the underlying [[S3AsyncClient]].
     */
-  def close(): Unit = s3Client.close()
+  def close(): Task[Unit] = Task.evalOnce(s3Client.close())
 
 }

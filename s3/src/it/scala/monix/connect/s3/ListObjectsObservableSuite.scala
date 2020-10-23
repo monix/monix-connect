@@ -37,7 +37,7 @@ class ListObjectsObservableSuite
 
   private val bucketName = "sample-bucket"
 
-  private val s3Resource = S3.createWith(staticCredProvider, Region.AWS_GLOBAL, Some(minioEndPoint), Some(httpClient))
+  private val s3Resource = S3.create(staticCredProvider, Region.AWS_GLOBAL, Some(minioEndPoint), Some(httpClient))
   override implicit val patienceConfig = PatienceConfig(10.seconds, 100.milliseconds)
 
   override def beforeAll(): Unit = {

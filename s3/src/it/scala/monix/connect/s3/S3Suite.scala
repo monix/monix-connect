@@ -24,7 +24,7 @@ class S3Suite
 
   private val bucketName = "sample-bucket"
   override implicit val patienceConfig = PatienceConfig(10.seconds, 100.milliseconds)
-  private val s3Resource = S3.createWith(staticCredProvider, Region.AWS_GLOBAL, Some(minioEndPoint), Some(httpClient))
+  private val s3Resource = S3.create(staticCredProvider, Region.AWS_GLOBAL, Some(minioEndPoint), Some(httpClient))
 
   override def beforeAll(): Unit = {
     super.beforeAll()
