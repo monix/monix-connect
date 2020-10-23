@@ -101,4 +101,9 @@ object Dependencies {
     "com.google.cloud"               % "google-cloud-nio" % Versions.GCNio % IntegrationTest,
     "commons-io"                     % "commons-io" % "2.6" % Test
   ) ++ testDependencies(hasIt = true)
+
+  val ES = Seq(
+    "com.sksamuel.elastic4s" %% "elastic4s-core" % "6.7.8",
+    "com.sksamuel.elastic4s" %% "elastic4s-http" % "6.7.8"
+  ) ++ testDependencies(hasIt = true)
 }

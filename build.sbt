@@ -151,6 +151,8 @@ lazy val s3 = monixConnector("s3", Dependencies.S3).aggregate(awsAuth).dependsOn
 
 lazy val gcs = monixConnector("gcs", Dependencies.GCS)
 
+lazy val es =  monixConnector("es", Dependencies.ES)
+
 def monixConnector(
   connectorName: String,
   projectDependencies: Seq[ModuleID],
