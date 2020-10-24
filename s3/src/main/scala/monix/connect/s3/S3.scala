@@ -85,7 +85,7 @@ import scala.util.Try
   *   } yield download
   * }
   *
-  * val t = S3.create().use(s3 => runS3App(s3))
+  * val t = S3.fromConfig.use(s3 => runS3App(s3))
   * }}}
   *
   */
@@ -220,7 +220,7 @@ object S3 { self =>
     *
     * It provides a fast forward access to the [[S3]] that avoids
     * dealing with [[Resource]], however in this case, the created
-    * resources will not be released like in [[createWith]].
+    * resources will not be released like in [[create]].
     * Thus, it is the user's responsability to close the [[S3]] connection.
     *
     * ==Example==
@@ -656,7 +656,7 @@ private[s3] trait S3 { self =>
     *   import monix.connect.s3.S3
     *   import cats.effect.Resource
     *
-    *   val s3Resource: Resource[Task, S3] = S3.fromConfig // alternatively use `createWith`
+    *   val s3Resource: Resource[Task, S3] = S3.fromConfig // alternatively use `create`
     *
     *   val bucket: String = "sample-bucket"
     *   val key: String = "path/to/test.csv"
