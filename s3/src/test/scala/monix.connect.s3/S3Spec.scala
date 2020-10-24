@@ -55,7 +55,7 @@ class S3Spec
   override def beforeEach(): Unit = {}
 
   s"${S3}" should "use default configurable params" in {
-    S3.create().use { s3 => Task(s3 shouldBe a[S3]) }.runSyncUnsafe()
+    S3.fromConfig.use { s3 => Task(s3 shouldBe a[S3]) }.runSyncUnsafe()
   }
 
   it should "unsafely be created" in {
@@ -69,6 +69,6 @@ class S3Spec
 
   it should "be created from the passed configuration params" in {
     val credentials = AnonymousCredentialsProvider.create()
-    S3.createWith(credentials, Region.AWS_GLOBAL).use { s3 => Task(s3 shouldBe a[S3]) }.runSyncUnsafe()
+    S3.create(credentials, Region.AWS_GLOBAL).use { s3 => Task(s3 shouldBe a[S3]) }.runSyncUnsafe()
   }
 }
