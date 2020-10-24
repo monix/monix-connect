@@ -34,7 +34,21 @@ class S3Suite
     }
   }
 
-  s"${S3}" should "implement upload method" in {
+  s"${S3}" can "reuse a s3Resource read from config" in {
+    //given
+    val s3FromConf = S3.fromConfig
+    val (k1, k2) = (nonEmptyString.value(), nonEmptyString.value())
+
+    //when
+    s3FromConf.use(s3 => s3.upload(bucketName, k1, k1.getBytes())).runSyncUnsafe()
+    s3FromConf.use(s3 => s3.upload(bucketName, k2, k2.getBytes())).runSyncUnsafe()
+
+    //then
+    val f = s3FromConf.use(s3 => Task.parZip2(s3.existsObject(bucketName, k1), s3.existsObject(bucketName, k2))).runToFuture
+    Await.result(f, 1.seconds) shouldBe (true, true)
+  }
+
+  it should "implement upload method" in {
     //given
     val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
     val content: String = Gen.alphaUpperStr.sample.get
@@ -358,7 +372,7 @@ class S3Suite
 
   "A real example" should "reuse the resource evaluation" in {
 
-    val bucket = "my-bucket"
+    val bucket = nonEmptyString.value()
     val key = "my-key"
     val content = "my-content"
 
@@ -374,7 +388,7 @@ class S3Suite
       } yield download
     }
 
-    val f = S3.create().use(s3 => runS3App(s3)).runToFuture
+    val f = S3.fromConfig.use(s3 => runS3App(s3)).runToFuture
 
     val result = Await.result(f, 3.seconds)
     result shouldBe content.getBytes
