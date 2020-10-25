@@ -628,14 +628,18 @@ private[s3] trait S3 { self =>
     * @return a boolean [[Task]] indicating whether the object existed or not.
     */
   def existsObject(bucket: String, key: String): Task[Boolean] = {
+    val headObjectRequest = S3RequestBuilder.headObjectRequest(bucket, Some(key))
     Task
-      .from(s3Client.headObject(S3RequestBuilder.headObjectRequest(bucket, Some(key))))
+      .from(s3Client.headObject(headObjectRequest))
       .redeemWith(
         ex =>
-          if (ex.isInstanceOf[NoSuchKeyException]) Task.now(false)
+          if (ex.isInstanceOf[NoSuchKeyException]) falseTask
           else Task.raiseError(ex),
-        _ => Task.now(true))
+        _ => trueTask)
   }
+
+  private[this] val falseTask = Task.now(false)
+  private[this] val trueTask = Task.now(false)
 
   /**
     * Downloads an object in a single request as byte array.
