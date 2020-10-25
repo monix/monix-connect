@@ -17,6 +17,8 @@ Monix Connect is an initiative to implement stream integrations for [Monix](http
 
 Learn more on how to get started in the [documentation page](https://monix.github.io/monix-connect/).
 
+Please, drop a ⭐ to support this project if you found it interesting!
+
 ### Connectors
 
 The below list comprehends the current set of available connectors:
