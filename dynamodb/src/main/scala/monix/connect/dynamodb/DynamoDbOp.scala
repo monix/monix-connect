@@ -19,91 +19,9 @@ package monix.connect.dynamodb
 
 import java.util.concurrent.CompletableFuture
 
+import monix.connect.dynamodb.domain.RetrySettings
 import monix.eval.Task
-import software.amazon.awssdk.services.dynamodb.model.{
-  BatchGetItemRequest,
-  BatchGetItemResponse,
-  BatchWriteItemRequest,
-  BatchWriteItemResponse,
-  CreateBackupRequest,
-  CreateBackupResponse,
-  CreateGlobalTableRequest,
-  CreateGlobalTableResponse,
-  CreateTableRequest,
-  CreateTableResponse,
-  DeleteBackupRequest,
-  DeleteBackupResponse,
-  DeleteItemRequest,
-  DeleteItemResponse,
-  DeleteTableRequest,
-  DeleteTableResponse,
-  DescribeBackupRequest,
-  DescribeBackupResponse,
-  DescribeContinuousBackupsRequest,
-  DescribeContinuousBackupsResponse,
-  DescribeContributorInsightsRequest,
-  DescribeContributorInsightsResponse,
-  DescribeEndpointsRequest,
-  DescribeEndpointsResponse,
-  DescribeGlobalTableRequest,
-  DescribeGlobalTableResponse,
-  DescribeGlobalTableSettingsRequest,
-  DescribeGlobalTableSettingsResponse,
-  DescribeLimitsRequest,
-  DescribeLimitsResponse,
-  DescribeTableReplicaAutoScalingRequest,
-  DescribeTableReplicaAutoScalingResponse,
-  DescribeTimeToLiveRequest,
-  DescribeTimeToLiveResponse,
-  DynamoDbRequest,
-  DynamoDbResponse,
-  GetItemRequest,
-  GetItemResponse,
-  ListBackupsRequest,
-  ListBackupsResponse,
-  ListContributorInsightsRequest,
-  ListContributorInsightsResponse,
-  ListGlobalTablesRequest,
-  ListGlobalTablesResponse,
-  ListTablesRequest,
-  ListTablesResponse,
-  ListTagsOfResourceRequest,
-  ListTagsOfResourceResponse,
-  PutItemRequest,
-  PutItemResponse,
-  QueryRequest,
-  QueryResponse,
-  RestoreTableFromBackupRequest,
-  RestoreTableFromBackupResponse,
-  RestoreTableToPointInTimeRequest,
-  RestoreTableToPointInTimeResponse,
-  ScanRequest,
-  ScanResponse,
-  TagResourceRequest,
-  TagResourceResponse,
-  TransactGetItemsRequest,
-  TransactGetItemsResponse,
-  TransactWriteItemsRequest,
-  TransactWriteItemsResponse,
-  UntagResourceRequest,
-  UntagResourceResponse,
-  UpdateContinuousBackupsRequest,
-  UpdateContinuousBackupsResponse,
-  UpdateContributorInsightsRequest,
-  UpdateContributorInsightsResponse,
-  UpdateGlobalTableRequest,
-  UpdateGlobalTableResponse,
-  UpdateGlobalTableSettingsRequest,
-  UpdateGlobalTableSettingsResponse,
-  UpdateItemRequest,
-  UpdateItemResponse,
-  UpdateTableReplicaAutoScalingRequest,
-  UpdateTableReplicaAutoScalingResponse,
-  UpdateTableRequest,
-  UpdateTableResponse,
-  UpdateTimeToLiveRequest,
-  UpdateTimeToLiveResponse
-}
+import software.amazon.awssdk.services.dynamodb.model.{BatchGetItemRequest, BatchGetItemResponse, BatchWriteItemRequest, BatchWriteItemResponse, CreateBackupRequest, CreateBackupResponse, CreateGlobalTableRequest, CreateGlobalTableResponse, CreateTableRequest, CreateTableResponse, DeleteBackupRequest, DeleteBackupResponse, DeleteItemRequest, DeleteItemResponse, DeleteTableRequest, DeleteTableResponse, DescribeBackupRequest, DescribeBackupResponse, DescribeContinuousBackupsRequest, DescribeContinuousBackupsResponse, DescribeContributorInsightsRequest, DescribeContributorInsightsResponse, DescribeEndpointsRequest, DescribeEndpointsResponse, DescribeGlobalTableRequest, DescribeGlobalTableResponse, DescribeGlobalTableSettingsRequest, DescribeGlobalTableSettingsResponse, DescribeLimitsRequest, DescribeLimitsResponse, DescribeTableReplicaAutoScalingRequest, DescribeTableReplicaAutoScalingResponse, DescribeTimeToLiveRequest, DescribeTimeToLiveResponse, DynamoDbRequest, DynamoDbResponse, GetItemRequest, GetItemResponse, ListBackupsRequest, ListBackupsResponse, ListContributorInsightsRequest, ListContributorInsightsResponse, ListGlobalTablesRequest, ListGlobalTablesResponse, ListTablesRequest, ListTablesResponse, ListTagsOfResourceRequest, ListTagsOfResourceResponse, PutItemRequest, PutItemResponse, QueryRequest, QueryResponse, RestoreTableFromBackupRequest, RestoreTableFromBackupResponse, RestoreTableToPointInTimeRequest, RestoreTableToPointInTimeResponse, ScanRequest, ScanResponse, TagResourceRequest, TagResourceResponse, TransactGetItemsRequest, TransactGetItemsResponse, TransactWriteItemsRequest, TransactWriteItemsResponse, UntagResourceRequest, UntagResourceResponse, UpdateContinuousBackupsRequest, UpdateContinuousBackupsResponse, UpdateContributorInsightsRequest, UpdateContributorInsightsResponse, UpdateGlobalTableRequest, UpdateGlobalTableResponse, UpdateGlobalTableSettingsRequest, UpdateGlobalTableSettingsResponse, UpdateItemRequest, UpdateItemResponse, UpdateTableReplicaAutoScalingRequest, UpdateTableReplicaAutoScalingResponse, UpdateTableRequest, UpdateTableResponse, UpdateTimeToLiveRequest, UpdateTimeToLiveResponse}
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 
 import scala.language.implicitConversions
@@ -207,6 +125,25 @@ object DynamoDbOp {
       DynamoDbOpFactory.build[UpdateTimeToLiveRequest, UpdateTimeToLiveResponse](_.updateTimeToLive(_))
   }
 
+  def getItem(
+    tableName: String,
+    projectionExpression: Option[String] = None,
+    consistentRead: Boolean = true,
+    expressionAttributeNames: Map[String, String] = Map.empty,
+    consumedCapacityDetail: ConsumedCapacity.Detail = ConsumedCapacity.NONE,
+    retryableSettings: RetrySettings = domain.DefaultRetrySettings)(
+    implicit asyncClient: DynamoDbAsyncClient): Task[GetItemResponse] = {
+    import Implicits.getItemOp
+    val getItemRequest =
+      RequestsBuilder.getItemRequest(
+        tableName,
+        projectionExpression,
+        consistentRead,
+        expressionAttributeNames,
+        consumedCapacityDetail)
+    create(getItemRequest, retryableSettings.retries, retryableSettings.delayAfterFailure)
+  }
+  
   /**
     * A factory for avoiding boilerplate when building specific [[DynamoDbOp]].
     */
