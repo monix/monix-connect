@@ -639,7 +639,7 @@ private[s3] trait S3 { self =>
   }
 
   private[this] val falseTask = Task.now(false)
-  private[this] val trueTask = Task.now(false)
+  private[this] val trueTask = Task.now(true)
 
   /**
     * Downloads an object in a single request as byte array.
