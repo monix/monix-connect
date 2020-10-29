@@ -1,15 +1,17 @@
 package monix.connect.es
 
-import com.sksamuel.elastic4s.IndexAndType
-import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.http.get.GetResponse
-import com.sksamuel.elastic4s.http.{ElasticClient, ElasticProperties, RequestFailure, RequestSuccess}
-import com.sksamuel.elastic4s.update.UpdateRequest
+import com.sksamuel.elastic4s.http.JavaClient
+import com.sksamuel.elastic4s.requests.delete.DeleteByIdRequest
+import com.sksamuel.elastic4s.requests.get.GetResponse
+import com.sksamuel.elastic4s.requests.indexes.IndexRequest
+import com.sksamuel.elastic4s.requests.update.UpdateRequest
+import com.sksamuel.elastic4s.{ElasticClient, ElasticProperties, RequestFailure, RequestSuccess}
 import monix.eval.Task
 import org.scalacheck.Gen
 
 trait Fixture {
-  implicit val elasticClient: ElasticClient = ElasticClient(ElasticProperties(s"http://localhost:9200"))
+  import com.sksamuel.elastic4s.ElasticDsl._
+  implicit val client: ElasticClient = ElasticClient(JavaClient(ElasticProperties("http://localhost:9200")))
   def genIndex: Gen[String] = Gen.nonEmptyListOf(Gen.alphaLowerChar).map(_.mkString.take(10))
   def getDocString(a: String, b: String) = s"""{"a":"$a","b":"$b"}"""
   def genDoc: Gen[String] =
@@ -23,10 +25,29 @@ trait Fixture {
       index <- genIndex
       id    <- Gen.nonEmptyListOf(Gen.alphaLowerChar).map(_.mkString.take(10))
       doc   <- genDoc
-    } yield update(id).in(IndexAndType(index, "_doc")).docAsUpsert(doc)
+    } yield updateById(index, id).docAsUpsert(doc)
+
+  def genUpdateRequest(index: String): Gen[UpdateRequest] =
+    for {
+      id    <- Gen.nonEmptyListOf(Gen.alphaLowerChar).map(_.mkString.take(10))
+      doc   <- genDoc
+    } yield updateById(index, id).docAsUpsert(doc)
+
+  def genDeleteRequest: Gen[DeleteByIdRequest] =
+    for {
+      index <- genIndex
+      id    <- Gen.nonEmptyListOf(Gen.alphaLowerChar).map(_.mkString.take(10))
+    } yield deleteById(index, id)
+
+  def genIndexRequest: Gen[IndexRequest] =
+    for {
+      index <- genIndex
+      id    <- Gen.nonEmptyListOf(Gen.alphaLowerChar).map(_.mkString.take(10))
+      doc   <- genDoc
+    } yield indexInto(index).id(id).doc(doc)
 
   def getById(index: String, id: String): Task[GetResponse] = {
-    elasticClient.execute(get(id).from(index, "_doc")).map {
+    client.execute(get(index, id)).map {
       case RequestSuccess(_, _, _, result) =>
         result
       case RequestFailure(_, _, _, error) =>

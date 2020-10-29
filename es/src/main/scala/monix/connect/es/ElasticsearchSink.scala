@@ -1,7 +1,7 @@
 package monix.connect.es
 
-import com.sksamuel.elastic4s.bulk.BulkCompatibleRequest
-import com.sksamuel.elastic4s.http.{ElasticClient, RequestFailure, RequestSuccess}
+import com.sksamuel.elastic4s._
+import com.sksamuel.elastic4s.requests.bulk.BulkCompatibleRequest
 import monix.execution.cancelables.AssignableCancelable
 import monix.execution.internal.InternalApi
 import monix.execution.{Ack, Callback, Scheduler}
@@ -9,7 +9,6 @@ import monix.reactive.Consumer
 import monix.reactive.observers.Subscriber
 
 import scala.concurrent.Future
-
 
 /**
   *  A pre-built [[Consumer]] implementation that expects incoming [[BulkCompatibleRequest]]
@@ -32,8 +31,8 @@ import scala.concurrent.Future
           .map {
             case RequestSuccess(_, _, _, _) =>
               Ack.Continue
-            case RequestFailure(status, _, _, error) =>
-              onError(new RuntimeException(s"$status: $error"))
+            case RequestFailure(_, _, _, error) =>
+              onError(error.asException)
               Ack.Stop
           }
           .runToFuture
