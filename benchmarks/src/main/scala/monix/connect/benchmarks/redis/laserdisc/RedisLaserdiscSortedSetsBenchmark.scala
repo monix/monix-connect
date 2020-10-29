@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
-package monix.connect.benchmarks.redis
+package monix.connect.benchmarks.redis.laserdisc
 
-import monix.connect.redis.{Redis, RedisKey}
-import monix.execution.Scheduler.Implicits.global
+import cats.implicits._
+import laserdisc.fs2._
+import laserdisc.protocol.SortedSetP.ScoreRange
+import laserdisc.{Index, Key, OneOrMore, ValidDouble, all => cmd}
 import org.openjdk.jmh.annotations._
 
 import scala.concurrent.Await
@@ -29,8 +31,7 @@ import scala.concurrent.duration.DurationInt
 @Measurement(iterations = 5)
 @Warmup(iterations = 1)
 @Fork(1)
-class RedisKeysBenchmark extends RedisBenchFixture {
-
+class RedisLaserdiscSortedSetsBenchmark extends RedisLaserdiscBenchFixture {
   var keysCycle: Iterator[String] = _
 
   @Setup
@@ -38,11 +39,15 @@ class RedisKeysBenchmark extends RedisBenchFixture {
     flushdb
 
     val keys = (0 to maxKey).toList.map(_.toString)
-    keysCycle = Stream.continually(keys).flatten.iterator
+    keysCycle = scala.Stream.continually(keys).flatten.iterator
 
     (1 to maxKey).foreach { key =>
       val value = getRandomString
-      val f = Redis.set(key.toString, value).runToFuture
+      val scoredMembers: OneOrMore[(String, ValidDouble)] =
+        OneOrMore.unsafeFrom[(String, ValidDouble)](List((value, ValidDouble.unsafeFrom(rnd.nextDouble))))
+      val f = laserdConn
+        .use(c => c.send(cmd.zadd(Key.unsafeFrom(key.toString), scoredMembers)))
+        .unsafeToFuture
       Await.ready(f, 1.seconds)
     }
   }
@@ -53,14 +58,27 @@ class RedisKeysBenchmark extends RedisBenchFixture {
   }
 
   @Benchmark
-  def keyExistsReader(): Unit = {
-    val f = RedisKey.exists(keysCycle.next).runToFuture
+  def sortedSetCardReader(): Unit = {
+    val f = laserdConn
+      .use(c => c.send(cmd.zcard(Key.unsafeFrom(keysCycle.next))))
+      .unsafeToFuture
     Await.ready(f, 1.seconds)
   }
 
   @Benchmark
-  def keyPttlReader(): Unit = {
-    val f = RedisKey.pttl(keysCycle.next).runToFuture
+  def sortedSetCountReader(): Unit = {
+    val range = ScoreRange.open(ValidDouble.unsafeFrom(0), ValidDouble.unsafeFrom(1))
+    val f = laserdConn
+      .use(c => c.send(cmd.zcount(Key.unsafeFrom(keysCycle.next), range)))
+      .unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def sortedSetRangeReader(): Unit = {
+    val f = laserdConn
+      .use(c => c.send(cmd.zrange[String](Key.unsafeFrom(keysCycle.next), Index.unsafeFrom(0), Index.unsafeFrom(1))))
+      .unsafeToFuture
     Await.ready(f, 1.seconds)
   }
 }

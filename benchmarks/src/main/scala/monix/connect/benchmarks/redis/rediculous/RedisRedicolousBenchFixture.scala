@@ -15,21 +15,34 @@
  * limitations under the License.
  */
 
-package monix.connect.benchmarks.redis
+package monix.connect.benchmarks.redis.rediculous
 
-import io.lettuce.core.RedisClient
-import io.lettuce.core.api.StatefulRedisConnection
-import monix.connect.redis.Redis
-import monix.execution.Scheduler.Implicits.global
+import cats.effect._
+import fs2.io.tcp._
+import io.chrisdavenport.rediculous._
 import org.scalacheck.Gen
 
-trait RedisBenchFixture {
-  final val redisUrl = "redis://localhost:6379"
-  implicit val connection: StatefulRedisConnection[String, String] = RedisClient.create(redisUrl).connect()
+import scala.concurrent.ExecutionContext
+
+trait RedisRedicolousBenchFixture {
+  implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
+  implicit val timer: Timer[IO] = IO.timer(ExecutionContext.global)
 
   val maxKey: Int = 5000
   val rnd = new scala.util.Random
 
-  def flushdb = Redis.flushdbAsync().runSyncUnsafe()
+  val redicolousConn =
+    for {
+      blocker <- Blocker[IO]
+      sg      <- SocketGroup[IO](blocker)
+      c       <- RedisConnection.queued[IO](sg, "localhost", 6379, maxQueued = 10000, workers = 2)
+    } yield c
+
+  type RedisIO[A] = Redis[IO, A]
+
+  def flushdb =
+    redicolousConn
+      .use(c => RedisCommands.flushdb[RedisIO].run(c))
+      .unsafeRunSync
   def getRandomString = Gen.alphaLowerStr.sample.get
 }

@@ -15,10 +15,9 @@
  * limitations under the License.
  */
 
-package monix.connect.benchmarks.redis
+package monix.connect.benchmarks.redis.rediculous
 
-import monix.connect.redis.{Redis, RedisKey}
-import monix.execution.Scheduler.Implicits.global
+import io.chrisdavenport.rediculous.RedisCommands
 import org.openjdk.jmh.annotations._
 
 import scala.concurrent.Await
@@ -29,8 +28,7 @@ import scala.concurrent.duration.DurationInt
 @Measurement(iterations = 5)
 @Warmup(iterations = 1)
 @Fork(1)
-class RedisKeysBenchmark extends RedisBenchFixture {
-
+class RedisRedicolousSetsBenchmark extends RedisRedicolousBenchFixture {
   var keysCycle: Iterator[String] = _
 
   @Setup
@@ -41,8 +39,10 @@ class RedisKeysBenchmark extends RedisBenchFixture {
     keysCycle = Stream.continually(keys).flatten.iterator
 
     (1 to maxKey).foreach { key =>
-      val value = getRandomString
-      val f = Redis.set(key.toString, value).runToFuture
+      val values = (1 to 3).map(_ => getRandomString).toList
+      val f = redicolousConn
+        .use(c => RedisCommands.sadd[RedisIO](key.toString, values).run(c))
+        .unsafeToFuture
       Await.ready(f, 1.seconds)
     }
   }
@@ -53,14 +53,29 @@ class RedisKeysBenchmark extends RedisBenchFixture {
   }
 
   @Benchmark
-  def keyExistsReader(): Unit = {
-    val f = RedisKey.exists(keysCycle.next).runToFuture
+  def setDiffWriter(): Unit = {
+    val key1 = keysCycle.next
+    val key2 = keysCycle.next
+    val keyDest = keysCycle.next
+    val f = redicolousConn
+      .use(c => RedisCommands.sinterstore[RedisIO](keyDest, List(key1, key2)).run(c))
+      .unsafeToFuture
     Await.ready(f, 1.seconds)
   }
 
   @Benchmark
-  def keyPttlReader(): Unit = {
-    val f = RedisKey.pttl(keysCycle.next).runToFuture
+  def setCardReader(): Unit = {
+    val f = redicolousConn
+      .use(c => RedisCommands.scard[RedisIO](keysCycle.next).run(c))
+      .unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def setMembersReader(): Unit = {
+    val f = redicolousConn
+      .use(c => RedisCommands.smembers[RedisIO](keysCycle.next).run(c))
+      .unsafeToFuture
     Await.ready(f, 1.seconds)
   }
 }

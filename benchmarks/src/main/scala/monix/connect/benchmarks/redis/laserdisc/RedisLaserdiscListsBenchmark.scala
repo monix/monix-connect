@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
-package monix.connect.benchmarks.redis
+package monix.connect.benchmarks.redis.laserdisc
 
-import monix.connect.redis.{Redis, RedisKey}
-import monix.execution.Scheduler.Implicits.global
+import cats.implicits._
+import laserdisc.fs2._
+import laserdisc.{Index, Key, all => cmd}
 import org.openjdk.jmh.annotations._
 
 import scala.concurrent.Await
@@ -29,8 +30,7 @@ import scala.concurrent.duration.DurationInt
 @Measurement(iterations = 5)
 @Warmup(iterations = 1)
 @Fork(1)
-class RedisKeysBenchmark extends RedisBenchFixture {
-
+class RedisLaserdiscListsBenchmark extends RedisLaserdiscBenchFixture {
   var keysCycle: Iterator[String] = _
 
   @Setup
@@ -38,11 +38,13 @@ class RedisKeysBenchmark extends RedisBenchFixture {
     flushdb
 
     val keys = (0 to maxKey).toList.map(_.toString)
-    keysCycle = Stream.continually(keys).flatten.iterator
+    keysCycle = scala.Stream.continually(keys).flatten.iterator
 
     (1 to maxKey).foreach { key =>
       val value = getRandomString
-      val f = Redis.set(key.toString, value).runToFuture
+      val f = laserdConn
+        .use(c => c.send(cmd.rpush(Key.unsafeFrom(key.toString), value)))
+        .unsafeToFuture
       Await.ready(f, 1.seconds)
     }
   }
@@ -53,14 +55,26 @@ class RedisKeysBenchmark extends RedisBenchFixture {
   }
 
   @Benchmark
-  def keyExistsReader(): Unit = {
-    val f = RedisKey.exists(keysCycle.next).runToFuture
+  def listLengthReader(): Unit = {
+    val f = laserdConn
+      .use(c => c.send(cmd.llen(Key.unsafeFrom(keysCycle.next))))
+      .unsafeToFuture
     Await.ready(f, 1.seconds)
   }
 
   @Benchmark
-  def keyPttlReader(): Unit = {
-    val f = RedisKey.pttl(keysCycle.next).runToFuture
+  def listByIndexReader(): Unit = {
+    val f = laserdConn
+      .use(c => c.send(cmd.lindex[String](Key.unsafeFrom(keysCycle.next), Index.unsafeFrom(0))))
+      .unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def listRangeReader(): Unit = {
+    val f = laserdConn
+      .use(c => c.send(cmd.lrange[String](Key.unsafeFrom(keysCycle.next), Index.unsafeFrom(0), Index.unsafeFrom(1))))
+      .unsafeToFuture
     Await.ready(f, 1.seconds)
   }
 }

@@ -21,6 +21,9 @@ import monix.connect.redis.RedisSet
 import monix.execution.Scheduler.Implicits.global
 import org.openjdk.jmh.annotations._
 
+import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
+
 @State(Scope.Thread)
 @BenchmarkMode(Array(Mode.Throughput))
 @Measurement(iterations = 5)
@@ -28,12 +31,19 @@ import org.openjdk.jmh.annotations._
 @Fork(1)
 class RedisSetsBenchmark extends RedisBenchFixture {
 
+  var keysCycle: Iterator[String] = _
+
   @Setup
   def setup(): Unit = {
     flushdb
+
+    val keys = (0 to maxKey).toList.map(_.toString)
+    keysCycle = Stream.continually(keys).flatten.iterator
+
     (1 to maxKey).foreach { key =>
-      val values = (1 to 3).map(_ => getNextValue.toString)
-      RedisSet.sadd(key.toString, values: _*).runSyncUnsafe()
+      val values = (1 to 3).map(_ => getRandomString)
+      val f = RedisSet.sadd(key.toString, values: _*).runToFuture
+      Await.ready(f, 1.seconds)
     }
   }
 
@@ -44,21 +54,22 @@ class RedisSetsBenchmark extends RedisBenchFixture {
 
   @Benchmark
   def setDiffWriter(): Unit = {
-    val key1 = getNextKey.toString
-    val key2 = getNextKey.toString
-    val keyDest = getNextKey.toString
-    RedisSet.sinterstore(keyDest, key1, key2).runSyncUnsafe()
+    val key1 = keysCycle.next
+    val key2 = keysCycle.next
+    val keyDest = keysCycle.next
+    val f = RedisSet.sinterstore(keyDest, key1, key2).runToFuture
+    Await.ready(f, 1.seconds)
   }
 
   @Benchmark
   def setCardReader(): Unit = {
-    val key = getNextKey.toString
-    RedisSet.scard(key).runSyncUnsafe()
+    val f = RedisSet.scard(keysCycle.next).runToFuture
+    Await.ready(f, 1.seconds)
   }
 
   @Benchmark
   def setMembersReader(): Unit = {
-    val key = getNextKey.toString
-    RedisSet.smembers(key).toListL.runSyncUnsafe()
+    val f = RedisSet.smembers(keysCycle.next).toListL.runToFuture
+    Await.ready(f, 1.seconds)
   }
 }

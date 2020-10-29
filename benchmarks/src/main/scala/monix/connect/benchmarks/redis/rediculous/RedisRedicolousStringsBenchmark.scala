@@ -15,10 +15,9 @@
  * limitations under the License.
  */
 
-package monix.connect.benchmarks.redis
+package monix.connect.benchmarks.redis.rediculous
 
-import monix.connect.redis.{Redis, RedisKey}
-import monix.execution.Scheduler.Implicits.global
+import io.chrisdavenport.rediculous.RedisCommands
 import org.openjdk.jmh.annotations._
 
 import scala.concurrent.Await
@@ -29,8 +28,7 @@ import scala.concurrent.duration.DurationInt
 @Measurement(iterations = 5)
 @Warmup(iterations = 1)
 @Fork(1)
-class RedisKeysBenchmark extends RedisBenchFixture {
-
+class RedisRedicolousStringsBenchmark extends RedisRedicolousBenchFixture {
   var keysCycle: Iterator[String] = _
 
   @Setup
@@ -42,7 +40,9 @@ class RedisKeysBenchmark extends RedisBenchFixture {
 
     (1 to maxKey).foreach { key =>
       val value = getRandomString
-      val f = Redis.set(key.toString, value).runToFuture
+      val f = redicolousConn
+        .use(c => RedisCommands.set[RedisIO](key.toString, value).run(c))
+        .unsafeToFuture
       Await.ready(f, 1.seconds)
     }
   }
@@ -53,14 +53,19 @@ class RedisKeysBenchmark extends RedisBenchFixture {
   }
 
   @Benchmark
-  def keyExistsReader(): Unit = {
-    val f = RedisKey.exists(keysCycle.next).runToFuture
+  def stringAppender(): Unit = {
+    val value = getRandomString
+    val f = redicolousConn
+      .use(c => RedisCommands.append[RedisIO](keysCycle.next, value).run(c))
+      .unsafeToFuture
     Await.ready(f, 1.seconds)
   }
 
   @Benchmark
-  def keyPttlReader(): Unit = {
-    val f = RedisKey.pttl(keysCycle.next).runToFuture
+  def stringReader(): Unit = {
+    val f = redicolousConn
+      .use(c => RedisCommands.get[RedisIO](keysCycle.next).run(c))
+      .unsafeToFuture
     Await.ready(f, 1.seconds)
   }
 }

@@ -24,6 +24,9 @@ import monix.connect.redis.RedisSortedSet
 import monix.execution.Scheduler.Implicits.global
 import org.openjdk.jmh.annotations._
 
+import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
+
 @State(Scope.Thread)
 @BenchmarkMode(Array(Mode.Throughput))
 @Measurement(iterations = 5)
@@ -32,14 +35,20 @@ import org.openjdk.jmh.annotations._
 class RedisSortedSetsBenchmark extends RedisBenchFixture {
 
   val unboundedRange = Range.unbounded()
+  var keysCycle: Iterator[String] = _
 
   @Setup
   def setup(): Unit = {
     flushdb
+
+    val keys = (0 to maxKey).toList.map(_.toString)
+    keysCycle = Stream.continually(keys).flatten.iterator
+
     (1 to maxKey).foreach { key =>
-      val value = getNextValue
-      val scoredValue: ScoredValue[String] = ScoredValue.from(value.doubleValue, Optional.of(value.toString))
-      RedisSortedSet.zadd(key.toString, scoredValue).runSyncUnsafe()
+      val value = getRandomString
+      val scoredValue: ScoredValue[String] = ScoredValue.from(rnd.nextDouble, Optional.of(value))
+      val f = RedisSortedSet.zadd(key.toString, scoredValue).runToFuture
+      Await.ready(f, 1.seconds)
     }
   }
 
@@ -50,19 +59,19 @@ class RedisSortedSetsBenchmark extends RedisBenchFixture {
 
   @Benchmark
   def sortedSetCardReader(): Unit = {
-    val key = getNextKey.toString
-    RedisSortedSet.zcard(key).runSyncUnsafe()
+    val f = RedisSortedSet.zcard(keysCycle.next).runToFuture
+    Await.ready(f, 1.seconds)
   }
 
   @Benchmark
   def sortedSetCountReader(): Unit = {
-    val key = getNextKey.toString
-    RedisSortedSet.zcount(key, unboundedRange).runSyncUnsafe()
+    val f = RedisSortedSet.zcount(keysCycle.next, unboundedRange).runToFuture
+    Await.ready(f, 1.seconds)
   }
 
   @Benchmark
   def sortedSetRangeReader(): Unit = {
-    val key = getNextKey.toString
-    RedisSortedSet.zrange(key, 0, 1).toListL.runSyncUnsafe()
+    val f = RedisSortedSet.zrange(keysCycle.next, 0, 1).toListL.runToFuture
+    Await.ready(f, 1.seconds)
   }
 }

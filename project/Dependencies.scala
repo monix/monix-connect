@@ -54,7 +54,9 @@ object Dependencies {
 
   val Benchmarks = Seq(
     "org.scalacheck" %% "scalacheck" % Versions.Scalacheck,
-    "io.lettuce" % "lettuce-core" % "5.1.8.RELEASE"
+    "dev.profunktor"    %% "redis4cats-effects" % "0.10.3",
+    "io.chrisdavenport" %% "rediculous"         % "0.0.8",
+    "io.laserdisc"      %% "laserdisc-fs2"      % "0.4.1"
   )++ testDependencies(hasIt = false)
 
   val DynamoDb = Seq(
