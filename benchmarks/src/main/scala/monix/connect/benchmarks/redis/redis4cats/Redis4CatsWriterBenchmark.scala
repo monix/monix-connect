@@ -15,13 +15,9 @@
  * limitations under the License.
  */
 
-package monix.connect.benchmarks.redis
+package monix.connect.benchmarks.redis.redis4cats
 
-import java.util.Optional
-
-import io.lettuce.core.ScoredValue
-import monix.connect.redis.{RedisHash, RedisList, RedisSet, RedisSortedSet, RedisString}
-import monix.execution.Scheduler.Implicits.global
+import dev.profunktor.redis4cats.effects.{Score, ScoreWithValue}
 import org.openjdk.jmh.annotations._
 
 import scala.concurrent.Await
@@ -32,15 +28,13 @@ import scala.concurrent.duration.DurationInt
 @Measurement(iterations = 5)
 @Warmup(iterations = 1)
 @Fork(1)
-class RedisWriterBenchmark extends RedisBenchFixture {
-
+class Redis4CatsWriterBenchmark extends Redis4CatsBenchFixture {
   var keysCycle: Iterator[String] = _
+  val keys = (0 to maxKey).toList.map(_.toString)
 
   @Setup
   def setup(): Unit = {
     flushdb
-
-    val keys = (0 to maxKey).toList.map(_.toString)
     keysCycle = Stream.continually(keys).flatten.iterator
   }
 
@@ -54,7 +48,7 @@ class RedisWriterBenchmark extends RedisBenchFixture {
     val key = keysCycle.next
     val field = getRandomString
     val value = getRandomString
-    val f = RedisHash.hset(key, field, value).runToFuture
+    val f = redis4catsConn.use(c => c.hSet(key, field, value)).unsafeToFuture()
     Await.ready(f, 1.seconds)
   }
 
@@ -62,7 +56,7 @@ class RedisWriterBenchmark extends RedisBenchFixture {
   def stringWriter(): Unit = {
     val key = keysCycle.next
     val value = getRandomString
-    val f = RedisString.set(key, value).runToFuture
+    val f = redis4catsConn.use(c => c.set(key, value)).unsafeToFuture
     Await.ready(f, 1.seconds)
   }
 
@@ -70,7 +64,7 @@ class RedisWriterBenchmark extends RedisBenchFixture {
   def listWriter(): Unit = {
     val key = keysCycle.next
     val value = getRandomString
-    val f = RedisList.rpush(key, value).runToFuture
+    val f = redis4catsConn.use(c => c.rPush(key, value)).unsafeToFuture
     Await.ready(f, 1.seconds)
   }
 
@@ -78,7 +72,7 @@ class RedisWriterBenchmark extends RedisBenchFixture {
   def setWriter(): Unit = {
     val key = keysCycle.next
     val values = (1 to 3).map(_ => getRandomString)
-    val f = RedisSet.sadd(key, values: _*).runToFuture
+    val f = redis4catsConn.use(c => c.sAdd(key, values: _*)).unsafeToFuture
     Await.ready(f, 1.seconds)
   }
 
@@ -86,9 +80,8 @@ class RedisWriterBenchmark extends RedisBenchFixture {
   def sortedSetWriter(): Unit = {
     val key = keysCycle.next
     val value = getRandomString
-    val scoredValue: ScoredValue[String] = ScoredValue.from(rnd.nextDouble, Optional.of(value))
-    val f = RedisSortedSet.zadd(key, scoredValue).runToFuture
+    val scoredValue: ScoreWithValue[String] = ScoreWithValue(Score(rnd.nextDouble), value)
+    val f = redis4catsConn.use(c => c.zAdd(key, args = None, scoredValue)).unsafeToFuture
     Await.ready(f, 1.seconds)
   }
-
 }

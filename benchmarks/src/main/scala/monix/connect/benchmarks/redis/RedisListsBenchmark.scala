@@ -21,6 +21,9 @@ import monix.connect.redis.RedisList
 import monix.execution.Scheduler.Implicits.global
 import org.openjdk.jmh.annotations._
 
+import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
+
 @State(Scope.Thread)
 @BenchmarkMode(Array(Mode.Throughput))
 @Measurement(iterations = 5)
@@ -28,12 +31,19 @@ import org.openjdk.jmh.annotations._
 @Fork(1)
 class RedisListsBenchmark extends RedisBenchFixture {
 
+  var keysCycle: Iterator[String] = _
+
   @Setup
   def setup(): Unit = {
     flushdb
+
+    val keys = (0 to maxKey).toList.map(_.toString)
+    keysCycle = Stream.continually(keys).flatten.iterator
+
     (1 to maxKey).foreach { key =>
-      val value = getNextValue.toString
-      RedisList.rpush(key.toString, value).runSyncUnsafe()
+      val value = getRandomString
+      val f = RedisList.rpush(key.toString, value).runToFuture
+      Await.ready(f, 1.seconds)
     }
   }
 
@@ -44,20 +54,20 @@ class RedisListsBenchmark extends RedisBenchFixture {
 
   @Benchmark
   def listLengthReader(): Unit = {
-    val key = getNextKey.toString
-    RedisList.llen(key).runSyncUnsafe()
+    val f = RedisList.llen(keysCycle.next).runToFuture
+    Await.ready(f, 1.seconds)
   }
 
   @Benchmark
   def listByIndexReader(): Unit = {
-    val key = getNextKey.toString
-    RedisList.lindex(key, 0).runSyncUnsafe()
+    val f = RedisList.lindex(keysCycle.next, 0).runToFuture
+    Await.ready(f, 1.seconds)
   }
 
   @Benchmark
   def listRangeReader(): Unit = {
-    val key = getNextKey.toString
-    RedisList.lrange(key, 0, 1).toListL.runSyncUnsafe()
+    val f = RedisList.lrange(keysCycle.next, 0, 1).toListL.runToFuture
+    Await.ready(f, 1.seconds)
   }
 
 }

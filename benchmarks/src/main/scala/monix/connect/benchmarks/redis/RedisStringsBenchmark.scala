@@ -21,6 +21,9 @@ import monix.connect.redis.RedisString
 import monix.execution.Scheduler.Implicits.global
 import org.openjdk.jmh.annotations._
 
+import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
+
 @State(Scope.Thread)
 @BenchmarkMode(Array(Mode.Throughput))
 @Measurement(iterations = 5)
@@ -28,12 +31,19 @@ import org.openjdk.jmh.annotations._
 @Fork(1)
 class RedisStringsBenchmark extends RedisBenchFixture {
 
+  var keysCycle: Iterator[String] = _
+
   @Setup
   def setup(): Unit = {
     flushdb
+
+    val keys = (0 to maxKey).toList.map(_.toString)
+    keysCycle = Stream.continually(keys).flatten.iterator
+
     (1 to maxKey).foreach { key =>
-      val value = getNextValue.toString
-      RedisString.set(key.toString, value).runSyncUnsafe()
+      val value = getRandomString
+      val f = RedisString.set(key.toString, value).runToFuture
+      Await.ready(f, 1.seconds)
     }
   }
 
@@ -44,14 +54,14 @@ class RedisStringsBenchmark extends RedisBenchFixture {
 
   @Benchmark
   def stringAppender(): Unit = {
-    val key = getNextKey.toString
-    val value = getNextValue.toString
-    RedisString.append(key, value).runSyncUnsafe()
+    val value = getRandomString
+    val f = RedisString.append(keysCycle.next, value).runToFuture
+    Await.ready(f, 1.seconds)
   }
 
   @Benchmark
   def stringReader(): Unit = {
-    val key = getNextKey.toString
-    RedisString.get(key).runSyncUnsafe()
+    val f = RedisString.get(keysCycle.next).runToFuture
+    Await.ready(f, 1.seconds)
   }
 }
