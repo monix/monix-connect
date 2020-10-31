@@ -5,8 +5,8 @@ object Dependencies {
   object Versions {
     
     //main
-    val AwsSdk = "2.15.9"
-    val AkkaStreams = "2.6.10"
+    val AwsSdk = "2.15.19"
+    val AkkaStreams = "2.6.9"
     val AWS = "1.11.749"
     val Cats_Effect = "2.1.3"
     val DynamoDb = "2.10.60"
