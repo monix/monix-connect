@@ -27,7 +27,7 @@ package object domain {
   val awsMinChunkSize: Int = 5 * 1024 * 1024 //5242880 bytes
   val awsDefaulMaxKeysList = 1000 // represents the default max keys request
 
-  //default settings
+  //default setting instances
   private[s3] val DefaultDownloadSettings = DownloadSettings()
   private[s3] val DefaultCopyObjectSettings = CopyObjectSettings()
   private[s3] val DefaultUploadSettings = UploadSettings()

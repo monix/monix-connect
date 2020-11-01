@@ -58,7 +58,6 @@ import software.amazon.awssdk.services.s3.model.{
 }
 
 import scala.jdk.CollectionConverters._
-import scala.util.Try
 
 /**
   * Singleton object provides builders for [[S3]].
@@ -438,12 +437,10 @@ private[s3] trait S3 { self =>
     * {{{
     *   import monix.eval.Task
     *   import monix.connect.s3.S3
-    *   import cats.effect.Resource
     *   import software.amazon.awssdk.services.s3.model.CreateBucketResponse
     *
-    *   val s3Resource: Resource[Task, S3] = S3.fromConfig
     *   val bucket = "my-bucket"
-    *   val t: Task[CreateBucketResponse] = s3Resource.use(_.createBucket(bucket))
+    *   val t: Task[CreateBucketResponse] = S3.fromConfig.use(_.createBucket(bucket))
     * }}}
     *
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/CreateBucketRequest.Builder.html
@@ -498,15 +495,12 @@ private[s3] trait S3 { self =>
     * {{{
     *   import monix.eval.Task
     *   import monix.connect.s3.S3
-    *   import cats.effect.Resource
-    *
-    *   val s3Resource: Resource[Task, S3] = S3.fromConfig
     *
     *   val sourceBucket = "source-bucket"
     *   val sourceKey = "source/key.json"
     *   val targetBucket = "target-bucket"
     *   val targetKey = "target/key.json"
-    *   val t = s3Resource.use(_.copyObject(sourceBucket, sourceKey, targetBucket, targetKey))
+    *   val t = S3.fromConfig.use(_.copyObject(sourceBucket, sourceKey, targetBucket, targetKey))
     * }}}
     *
     * @param sourceBucket       the name of the source bucket.
@@ -613,14 +607,11 @@ private[s3] trait S3 { self =>
     * {{{
     *   import monix.eval.Task
     *   import monix.connect.s3.S3
-    *   import cats.effect.Resource
-    *
-    *   val s3Resource: Resource[Task, S3] = S3.fromConfig
     *
     *   val bucket = "my-bucket"
     *   val s3Key = "my-key"
     *
-    *   val t: Task[Boolean] = s3Resource.use(_.existsObject(bucket, s3Key))
+    *   val t: Task[Boolean] = S3.fromConfig.use(_.existsObject(bucket, s3Key))
     * }}}
     *
     * @param bucket        the bucket name of the object to check its existence.
@@ -878,7 +869,7 @@ private[s3] trait S3 { self =>
     * }}}
     *
     * To use this operation in an AWS (IAM) policy, you must have permissions to perform
-    * the `ListBucket` action. The bucket owner has this permission by default and can grant this
+    * the `ListBucket` action. The bucket owner has this permission by default and can grant it.
     *
     * @param bucket        target S3 bucket name of the object to be downloaded.
     * @param maxTotalKeys  sets the maximum number of keys to be list,
