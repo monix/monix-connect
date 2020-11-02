@@ -184,8 +184,6 @@ object DynamoDbOp {
     implicit val scanOp = DynamoDbOpFactory.create[ScanRequest, ScanResponse](_.scan(_))
     implicit val tagResourceOp =
       DynamoDbOpFactory.create[TagResourceRequest, TagResourceResponse](_.tagResource(_))
-    implicit val transactGetItemOp =
-      DynamoDbOpFactory.create[TransactGetItemRequest, TransactGetItemsResponse](_.tra(_))
     implicit val transactGetItemsOp =
       DynamoDbOpFactory.create[TransactGetItemsRequest, TransactGetItemsResponse](_.transactGetItems(_))
     implicit val transactWriteItemsOp =
@@ -239,8 +237,8 @@ object DynamoDbOp {
     */
   def create[In <: DynamoDbRequest, Out <: DynamoDbResponse](
     request: In,
-    retries: Int,
-    delayAfterFailure: Option[FiniteDuration])(
+    retries: Int = 0,
+    delayAfterFailure: Option[FiniteDuration] = None)(
     implicit
     dynamoDbOp: DynamoDbOp[In, Out],
     client: DynamoDbAsyncClient): Task[Out] = {

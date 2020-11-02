@@ -18,14 +18,72 @@
 package monix.connect.dynamodb
 
 import monix.connect.dynamodb.DynamoDbOp.create
-import domain.{CreateTableSettings, DefaultCreateSettings, DefaultPutItemSettings, DefaultRestoreTableFromBackupSettings, DefaultRestoreTableToPointInTimeSettings, DefaultRetrySettings, DefaultRetryStrategy, DefaultUpdateTableSettings, GetItemSettings, PutItemSettings, RestoreTableToPointInTimeSettings, RetrySettings, RetryStrategy, UpdateItemSettings, UpdateTableSettings}
+import domain.{
+  CreateTableSettings,
+  DefaultCreateSettings,
+  DefaultPutItemSettings,
+  DefaultRestoreTableFromBackupSettings,
+  DefaultRestoreTableToPointInTimeSettings,
+  DefaultRetrySettings,
+  DefaultRetryStrategy,
+  DefaultUpdateTableSettings,
+  GetItemSettings,
+  PutItemSettings,
+  RestoreTableToPointInTimeSettings,
+  RetrySettings,
+  RetryStrategy,
+  UpdateItemSettings,
+  UpdateTableSettings
+}
 import monix.reactive.{Consumer, Observable}
 import monix.eval.Task
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
-import software.amazon.awssdk.services.dynamodb.model.{AttributeDefinition, AttributeValue, AutoScalingSettingsUpdate, BackupTypeFilter, BatchGetItemResponse, BatchWriteItemResponse, BillingMode, ContributorInsightsAction, CreateBackupResponse, CreateGlobalTableResponse, CreateTableResponse, DescribeBackupResponse, DynamoDbRequest, DynamoDbResponse, GetItemResponse, GlobalSecondaryIndex, GlobalSecondaryIndexAutoScalingUpdate, GlobalTableGlobalSecondaryIndexSettingsUpdate, KeySchemaElement, KeysAndAttributes, ListBackupsResponse, LocalSecondaryIndex, PointInTimeRecoverySpecification, ProvisionedThroughput, PutItemRequest, PutItemResponse, Replica, ReplicaAutoScalingUpdate, ReplicaSettingsUpdate, ReplicaUpdate, RestoreTableFromBackupResponse, ReturnConsumedCapacity, ReturnItemCollectionMetrics, ReturnValue, Tag, TransactGetItemsResponse, UntagResourceRequest, UpdateContinuousBackupsResponse, UpdateGlobalTableResponse, UpdateTableResponse}
+import software.amazon.awssdk.services.dynamodb.model.{
+  AttributeDefinition,
+  AttributeValue,
+  AutoScalingSettingsUpdate,
+  BackupTypeFilter,
+  BatchGetItemResponse,
+  BatchWriteItemResponse,
+  BillingMode,
+  ContributorInsightsAction,
+  CreateBackupResponse,
+  CreateGlobalTableResponse,
+  CreateTableResponse,
+  DescribeBackupResponse,
+  DynamoDbRequest,
+  DynamoDbResponse,
+  GetItemResponse,
+  GlobalSecondaryIndex,
+  GlobalSecondaryIndexAutoScalingUpdate,
+  GlobalTableGlobalSecondaryIndexSettingsUpdate,
+  KeySchemaElement,
+  KeysAndAttributes,
+  ListBackupsResponse,
+  LocalSecondaryIndex,
+  PointInTimeRecoverySpecification,
+  ProvisionedThroughput,
+  PutItemRequest,
+  PutItemResponse,
+  Replica,
+  ReplicaAutoScalingUpdate,
+  ReplicaSettingsUpdate,
+  ReplicaUpdate,
+  RestoreTableFromBackupResponse,
+  ReturnConsumedCapacity,
+  ReturnItemCollectionMetrics,
+  ReturnValue,
+  Tag,
+  TransactGetItemsResponse,
+  UntagResourceRequest,
+  UpdateContinuousBackupsResponse,
+  UpdateGlobalTableResponse,
+  UpdateTableResponse
+}
 import DynamoDbOp.Implicits._
 import DynamoDbOp.Implicits.{createBackupOp, createGlobalTableOp, createTableOp, getItemOp, putItemOp}
 import cats.effect.Resource
+import com.amazonaws.regions.Regions
 import monix.connect.aws.auth.AppConf
 import monix.execution.annotations.UnsafeBecauseImpure
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
@@ -59,11 +117,11 @@ object DynamoDb { self =>
     Resource.make {
       for {
         clientConf  <- Task.evalOnce(AppConf.loadOrThrow)
-        asyncClient <- Task.now(DynamoDbClientConversions.fromMonixAwsConf(clientConf.monixAws))
+        asyncClient <- Task.now(AsyncClientConversions.fromMonixAwsConf(clientConf.monixAws))
       } yield {
         self.createUnsafe(asyncClient)
       }
-    } { dynamoDb => Task(dynamoDb.close()) }
+    } { _.close }
   }
 
   /**
@@ -96,20 +154,16 @@ object DynamoDb { self =>
     * @return a [[Resource]] of [[Task]] that allocates and releases [[S3]].
     **/
   def create(
-              credentialsProvider: AwsCredentialsProvider,
-              region: Region,
-              endpoint: Option[String] = None,
-              httpClient: Option[SdkAsyncHttpClient] = None): Resource[Task, S3] = {
+    credentialsProvider: AwsCredentialsProvider,
+    region: Region,
+    endpoint: Option[String] = None,
+    httpClient: Option[SdkAsyncHttpClient] = None): Resource[Task, DynamoDb] = {
     Resource.make {
       Task.eval {
         val asyncClient = AsyncClientConversions.from(credentialsProvider, region, endpoint, httpClient)
         createUnsafe(asyncClient)
       }
-    } { s3 =>
-      Task {
-        s3.close()
-      }
-    }
+    } { _.close }
   }
 
   /**
@@ -176,6 +230,7 @@ object DynamoDb { self =>
     * @tparam Out output type parameter that must be a subtype os [[DynamoDbRequest]].
     * @return A [[monix.reactive.Consumer]] that expects and executes dynamodb requests.
     */
+  @deprecated
   def consumer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
     retries: Int = 0,
     delayAfterFailure: Option[FiniteDuration] = None)(
@@ -196,6 +251,7 @@ object DynamoDb { self =>
     * @tparam Out output type parameter that must be a subtype os [[DynamoDbRequest]].
     * @return DynamoDb operation transformer: `Observable[DynamoDbRequest] => Observable[DynamoDbRequest]`.
     */
+  @deprecated
   def transformer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
     retries: Int = 0,
     delayAfterFailure: Option[FiniteDuration] = None)(
@@ -210,12 +266,6 @@ object DynamoDb { self =>
 trait DynamoDb { self =>
 
   implicit val asyncClient: DynamoDbAsyncClient
-
-  def putItemSink(
-    retries: Int = 0,
-    delayAfterFailure: Option[FiniteDuration] = None): Consumer[PutItemRequest, Unit] = {
-    DynamoDbSubscriber(retries, delayAfterFailure, self)
-  }
 
   def batchGetItem(
     requestItems: Map[String, KeysAndAttributes],
@@ -358,11 +408,33 @@ trait DynamoDb { self =>
     create(listRequest, retries, Some(backoffDelay))
   }
 
-  def listTables(retryStrategy: RetryStrategy = DefaultRetryStrategy) = ???
+  def listTables(
+    tablePrefix: Option[String] = None,
+    limit: Int = 100,
+    retryStrategy: RetryStrategy = DefaultRetryStrategy) = {
+    val listRequest = RequestFactory.listTables(tablePrefix, limit)
+    val RetryStrategy(retries, backoffDelay) = retryStrategy
+    create(listRequest, retries, Some(backoffDelay))
+  }
 
-  def listGlobalTables(retryStrategy: RetryStrategy = DefaultRetryStrategy) = ???
+  def listGlobalTables(
+    tablePrefix: Option[String],
+    limit: Int,
+    region: Option[Regions],
+    retryStrategy: RetryStrategy = DefaultRetryStrategy) = {
+    val listRequest = RequestFactory.listGlobalTables(tablePrefix, limit, region)
+    val RetryStrategy(retries, backoffDelay) = retryStrategy
+    create(listRequest, retries, Some(backoffDelay))
+  }
 
-  def listTagsOfResource(retryStrategy: RetryStrategy = DefaultRetryStrategy) = ???
+  def listTagsOfResource(
+    resourceArn: String,
+    nextToken: Option[String] = None,
+    retryStrategy: RetryStrategy = DefaultRetryStrategy) = {
+    val listRequest = RequestFactory.listTagsOfResource(resourceArn, nextToken)
+    val RetryStrategy(retries, backoffDelay) = retryStrategy
+    create(listRequest, retries, Some(backoffDelay))
+  }
 
   def putItem(
     tableName: String,
@@ -373,6 +445,12 @@ trait DynamoDb { self =>
     val RetryStrategy(retries, backoffDelay) = retryStrategy
 
     create(putRequest, retryStrategy.retries, Some(backoffDelay))
+  }
+
+  def putItemSink(
+    retries: Int = 0,
+    delayAfterFailure: Option[FiniteDuration] = None): Consumer[PutItemRequest, Unit] = {
+    DynamoDbSubscriber(retries, delayAfterFailure, self)
   }
 
   def restoreTableFromBackup(
@@ -418,7 +496,7 @@ trait DynamoDb { self =>
   }
 
   //not yet supported
-  def transactWriteItems(retryStrategy: RetryStrategy = DefaultRetryStrategy) = ???
+  //def transactWriteItems(retryStrategy: RetryStrategy = DefaultRetryStrategy) =
 
   def untagResourceReque(
     resourceArn: String,

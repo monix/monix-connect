@@ -134,8 +134,9 @@ object RequestFactory {
     listRequest.build
   }
 
-  def listGlobalTables(regionName: Regions, limit: Int, startTableName: Option[String]): ListGlobalTablesRequest = {
-    val listRequest = ListGlobalTablesRequest.builder().regionName(regionName.getName).limit(limit)
+  def listGlobalTables(startTableName: Option[String], limit: Int, region: Option[Regions]): ListGlobalTablesRequest = {
+    val listRequest = ListGlobalTablesRequest.builder().limit(limit)
+    region.map(region => listRequest.regionName(region.getName))
     startTableName.map(listRequest.exclusiveStartGlobalTableName)
     listRequest.build
   }

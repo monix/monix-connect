@@ -20,9 +20,9 @@ trait DynamoDbFixture {
   val genTableName: Gen[String] =  Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "test-" + chars.mkString.take(200))  //table name max size is 255
 
   val genCitizenId = Gen.choose(1, 100000)
-  val keyMap = (city: String, citizens: Int) => Map("city" -> strAttr(city), "citizenId" -> numAttr(citizens))
+  val keyMap = (city: String, citizenId: Int) => Map("city" -> strAttr(city), "citizenId" -> numAttr(citizenId))
 
-  val item = (city: String, citizens: Int, debt: Double) => keyMap(city, citizens) ++ Map("debt" -> doubleAttr(debt))
+  val item = (city: String, citizenId: Int, debt: Double) => keyMap(city, citizenId) ++ Map("debt" -> doubleAttr(debt))
 
   def putItemRequest(tableName: String, city: String, citizenId: Int, debt: Double): PutItemRequest =
     PutItemRequest
@@ -79,7 +79,7 @@ trait DynamoDbFixture {
       .build()
   }
 
-  protected def createTable(table: String)(implicit client: DynamoDbAsyncClient, scheduler: Scheduler): Unit = {
+  protected def createTable(table: String)(client: DynamoDbAsyncClient): Unit = {
     val request: CreateTableRequest =
       createTableRequest(tableName = table, schema = keySchema, attributeDefinition = tableDefinition)
     Try(Task.from(client.createTable(request))) match {
