@@ -117,7 +117,7 @@ private[s3] class MultipartUploadSubscriber(
         val response: Task[CompleteMultipartUploadResponse] = for {
           uid       <- uploadId
           partMVar  <- partNMVarEval
-          lastPartN <- partMVar.read // waits for the last upload to finish
+          lastPartN <- partMVar.read.timeout(uploadSettings.lastUploadTimeout) // waits for the last upload to finish
           _ <- {
             if (!buffer.isEmpty) { //uploads the last part if buffer is not empty
               for {
