@@ -111,7 +111,7 @@ object S3 { self =>
       } yield {
         self.createUnsafe(asyncClient)
       }
-    } { s3 => Task(s3.close()) }
+    } { _.close }
   }
 
   /**
@@ -153,11 +153,7 @@ object S3 { self =>
         val asyncClient = AsyncClientConversions.from(credentialsProvider, region, endpoint, httpClient)
         createUnsafe(asyncClient)
       }
-    } { s3 =>
-      Task {
-        s3.close()
-      }
-    }
+    } { _.close }
   }
 
   /**
@@ -1017,6 +1013,6 @@ private[s3] trait S3 { self =>
   /**
     * Closes the underlying [[S3AsyncClient]].
     */
-  def close(): Task[Unit] = Task.evalOnce(s3Client.close())
+  def close: Task[Unit] = Task.evalOnce(s3Client.close())
 
 }
