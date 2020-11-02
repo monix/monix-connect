@@ -15,7 +15,6 @@ object Dependencies {
     val Monix = "3.2.0"
     val MongoScala = "4.1.1"
     val MongoReactiveStreams = "4.1.1"
-    val S3 = "2.14.21"
     val Parquet = "1.11.1"
     val Pureconfig = "0.14.0"
 
@@ -56,8 +55,8 @@ object Dependencies {
     "com.lightbend.akka" %% "akka-stream-alpakka-s3" % "2.0.2") ++ testDependencies(hasIt = false)
 
   val DynamoDb = Seq(
-    "com.amazonaws"          % "aws-java-sdk-core" % Versions.AWS,
-    "software.amazon.awssdk" % "dynamodb"          % Versions.DynamoDb
+    "com.amazonaws" % "aws-java-sdk-core" % Versions.AWS,
+    "software.amazon.awssdk" % "dynamodb" % Versions.AwsSdk
   ) ++ testDependencies(hasIt = true)
 
   val Hdfs = Seq(

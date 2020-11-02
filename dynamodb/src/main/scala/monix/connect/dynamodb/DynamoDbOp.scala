@@ -21,7 +21,90 @@ import java.util.concurrent.CompletableFuture
 
 import monix.connect.dynamodb.domain.RetrySettings
 import monix.eval.Task
-import software.amazon.awssdk.services.dynamodb.model.{BatchGetItemRequest, BatchGetItemResponse, BatchWriteItemRequest, BatchWriteItemResponse, CreateBackupRequest, CreateBackupResponse, CreateGlobalTableRequest, CreateGlobalTableResponse, CreateTableRequest, CreateTableResponse, DeleteBackupRequest, DeleteBackupResponse, DeleteItemRequest, DeleteItemResponse, DeleteTableRequest, DeleteTableResponse, DescribeBackupRequest, DescribeBackupResponse, DescribeContinuousBackupsRequest, DescribeContinuousBackupsResponse, DescribeContributorInsightsRequest, DescribeContributorInsightsResponse, DescribeEndpointsRequest, DescribeEndpointsResponse, DescribeGlobalTableRequest, DescribeGlobalTableResponse, DescribeGlobalTableSettingsRequest, DescribeGlobalTableSettingsResponse, DescribeLimitsRequest, DescribeLimitsResponse, DescribeTableReplicaAutoScalingRequest, DescribeTableReplicaAutoScalingResponse, DescribeTimeToLiveRequest, DescribeTimeToLiveResponse, DynamoDbRequest, DynamoDbResponse, GetItemRequest, GetItemResponse, ListBackupsRequest, ListBackupsResponse, ListContributorInsightsRequest, ListContributorInsightsResponse, ListGlobalTablesRequest, ListGlobalTablesResponse, ListTablesRequest, ListTablesResponse, ListTagsOfResourceRequest, ListTagsOfResourceResponse, PutItemRequest, PutItemResponse, QueryRequest, QueryResponse, RestoreTableFromBackupRequest, RestoreTableFromBackupResponse, RestoreTableToPointInTimeRequest, RestoreTableToPointInTimeResponse, ScanRequest, ScanResponse, TagResourceRequest, TagResourceResponse, TransactGetItemsRequest, TransactGetItemsResponse, TransactWriteItemsRequest, TransactWriteItemsResponse, UntagResourceRequest, UntagResourceResponse, UpdateContinuousBackupsRequest, UpdateContinuousBackupsResponse, UpdateContributorInsightsRequest, UpdateContributorInsightsResponse, UpdateGlobalTableRequest, UpdateGlobalTableResponse, UpdateGlobalTableSettingsRequest, UpdateGlobalTableSettingsResponse, UpdateItemRequest, UpdateItemResponse, UpdateTableReplicaAutoScalingRequest, UpdateTableReplicaAutoScalingResponse, UpdateTableRequest, UpdateTableResponse, UpdateTimeToLiveRequest, UpdateTimeToLiveResponse}
+import software.amazon.awssdk.services.dynamodb.model.{
+  BatchGetItemRequest,
+  BatchGetItemResponse,
+  BatchWriteItemRequest,
+  BatchWriteItemResponse,
+  CreateBackupRequest,
+  CreateBackupResponse,
+  CreateGlobalTableRequest,
+  CreateGlobalTableResponse,
+  CreateTableRequest,
+  CreateTableResponse,
+  DeleteBackupRequest,
+  DeleteBackupResponse,
+  DeleteItemRequest,
+  DeleteItemResponse,
+  DeleteTableRequest,
+  DeleteTableResponse,
+  DescribeBackupRequest,
+  DescribeBackupResponse,
+  DescribeContinuousBackupsRequest,
+  DescribeContinuousBackupsResponse,
+  DescribeContributorInsightsRequest,
+  DescribeContributorInsightsResponse,
+  DescribeEndpointsRequest,
+  DescribeEndpointsResponse,
+  DescribeGlobalTableRequest,
+  DescribeGlobalTableResponse,
+  DescribeGlobalTableSettingsRequest,
+  DescribeGlobalTableSettingsResponse,
+  DescribeLimitsRequest,
+  DescribeLimitsResponse,
+  DescribeTableReplicaAutoScalingRequest,
+  DescribeTableReplicaAutoScalingResponse,
+  DescribeTimeToLiveRequest,
+  DescribeTimeToLiveResponse,
+  DynamoDbRequest,
+  DynamoDbResponse,
+  GetItemRequest,
+  GetItemResponse,
+  ListBackupsRequest,
+  ListBackupsResponse,
+  ListContributorInsightsRequest,
+  ListContributorInsightsResponse,
+  ListGlobalTablesRequest,
+  ListGlobalTablesResponse,
+  ListTablesRequest,
+  ListTablesResponse,
+  ListTagsOfResourceRequest,
+  ListTagsOfResourceResponse,
+  PutItemRequest,
+  PutItemResponse,
+  QueryRequest,
+  QueryResponse,
+  RestoreTableFromBackupRequest,
+  RestoreTableFromBackupResponse,
+  RestoreTableToPointInTimeRequest,
+  RestoreTableToPointInTimeResponse,
+  ScanRequest,
+  ScanResponse,
+  TagResourceRequest,
+  TagResourceResponse,
+  TransactGetItemsRequest,
+  TransactGetItemsResponse,
+  TransactWriteItemsRequest,
+  TransactWriteItemsResponse,
+  UntagResourceRequest,
+  UntagResourceResponse,
+  UpdateContinuousBackupsRequest,
+  UpdateContinuousBackupsResponse,
+  UpdateContributorInsightsRequest,
+  UpdateContributorInsightsResponse,
+  UpdateGlobalTableRequest,
+  UpdateGlobalTableResponse,
+  UpdateGlobalTableSettingsRequest,
+  UpdateGlobalTableSettingsResponse,
+  UpdateItemRequest,
+  UpdateItemResponse,
+  UpdateTableReplicaAutoScalingRequest,
+  UpdateTableReplicaAutoScalingResponse,
+  UpdateTableRequest,
+  UpdateTableResponse,
+  UpdateTimeToLiveRequest,
+  UpdateTimeToLiveResponse
+}
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 
 import scala.language.implicitConversions
@@ -48,107 +131,90 @@ object DynamoDbOp {
   object Implicits {
 
     implicit val batchGetOp =
-      DynamoDbOpFactory.build[BatchGetItemRequest, BatchGetItemResponse](_.batchGetItem(_))
+      DynamoDbOpFactory.create[BatchGetItemRequest, BatchGetItemResponse](_.batchGetItem(_))
     implicit val batchWriteOp =
-      DynamoDbOpFactory.build[BatchWriteItemRequest, BatchWriteItemResponse](_.batchWriteItem(_))
+      DynamoDbOpFactory.create[BatchWriteItemRequest, BatchWriteItemResponse](_.batchWriteItem(_))
     implicit val createBackupOp =
-      DynamoDbOpFactory.build[CreateBackupRequest, CreateBackupResponse](_.createBackup(_))
+      DynamoDbOpFactory.create[CreateBackupRequest, CreateBackupResponse](_.createBackup(_))
     implicit val createGlobalTableOp =
-      DynamoDbOpFactory.build[CreateGlobalTableRequest, CreateGlobalTableResponse](_.createGlobalTable(_))
+      DynamoDbOpFactory.create[CreateGlobalTableRequest, CreateGlobalTableResponse](_.createGlobalTable(_))
     implicit val createTableOp =
-      DynamoDbOpFactory.build[CreateTableRequest, CreateTableResponse](_.createTable(_))
+      DynamoDbOpFactory.create[CreateTableRequest, CreateTableResponse](_.createTable(_))
     implicit val deleteBackupOp =
-      DynamoDbOpFactory.build[DeleteBackupRequest, DeleteBackupResponse](_.deleteBackup(_))
-    implicit val deleteItemOp = DynamoDbOpFactory.build[DeleteItemRequest, DeleteItemResponse](_.deleteItem(_))
+      DynamoDbOpFactory.create[DeleteBackupRequest, DeleteBackupResponse](_.deleteBackup(_))
+    implicit val deleteItemOp = DynamoDbOpFactory.create[DeleteItemRequest, DeleteItemResponse](_.deleteItem(_))
     implicit val describeBackupOp =
-      DynamoDbOpFactory.build[DescribeBackupRequest, DescribeBackupResponse](_.describeBackup(_))
+      DynamoDbOpFactory.create[DescribeBackupRequest, DescribeBackupResponse](_.describeBackup(_))
     implicit val describeContinuousBackupsOp = DynamoDbOpFactory
-      .build[DescribeContinuousBackupsRequest, DescribeContinuousBackupsResponse](_.describeContinuousBackups(_))
+      .create[DescribeContinuousBackupsRequest, DescribeContinuousBackupsResponse](_.describeContinuousBackups(_))
     implicit val describeContributorInsightsOp = DynamoDbOpFactory
-      .build[DescribeContributorInsightsRequest, DescribeContributorInsightsResponse](_.describeContributorInsights(_))
+      .create[DescribeContributorInsightsRequest, DescribeContributorInsightsResponse](_.describeContributorInsights(_))
     implicit val describeEndpointsOp =
-      DynamoDbOpFactory.build[DescribeEndpointsRequest, DescribeEndpointsResponse](_.describeEndpoints(_))
+      DynamoDbOpFactory.create[DescribeEndpointsRequest, DescribeEndpointsResponse](_.describeEndpoints(_))
     implicit val describeGlobalTableOp =
-      DynamoDbOpFactory.build[DescribeGlobalTableRequest, DescribeGlobalTableResponse](_.describeGlobalTable(_))
+      DynamoDbOpFactory.create[DescribeGlobalTableRequest, DescribeGlobalTableResponse](_.describeGlobalTable(_))
     implicit val describeGlobalTableSettingsOp = DynamoDbOpFactory
-      .build[DescribeGlobalTableSettingsRequest, DescribeGlobalTableSettingsResponse](_.describeGlobalTableSettings(_))
+      .create[DescribeGlobalTableSettingsRequest, DescribeGlobalTableSettingsResponse](_.describeGlobalTableSettings(_))
     implicit val describeLimitsOp =
-      DynamoDbOpFactory.build[DescribeLimitsRequest, DescribeLimitsResponse](_.describeLimits(_))
+      DynamoDbOpFactory.create[DescribeLimitsRequest, DescribeLimitsResponse](_.describeLimits(_))
     implicit val describeTableReplicaAutoScalingRequest =
-      DynamoDbOpFactory.build[DescribeTableReplicaAutoScalingRequest, DescribeTableReplicaAutoScalingResponse](
+      DynamoDbOpFactory.create[DescribeTableReplicaAutoScalingRequest, DescribeTableReplicaAutoScalingResponse](
         _.describeTableReplicaAutoScaling(_))
     implicit val deleteTableOp =
-      DynamoDbOpFactory.build[DeleteTableRequest, DeleteTableResponse](_.deleteTable(_))
+      DynamoDbOpFactory.create[DeleteTableRequest, DeleteTableResponse](_.deleteTable(_))
     implicit val describeTimeToLiveOp =
-      DynamoDbOpFactory.build[DescribeTimeToLiveRequest, DescribeTimeToLiveResponse](_.describeTimeToLive(_))
-    implicit val getItemOp = DynamoDbOpFactory.build[GetItemRequest, GetItemResponse](_.getItem(_))
+      DynamoDbOpFactory.create[DescribeTimeToLiveRequest, DescribeTimeToLiveResponse](_.describeTimeToLive(_))
+    implicit val getItemOp = DynamoDbOpFactory.create[GetItemRequest, GetItemResponse](_.getItem(_))
     implicit val listBackupsOp =
-      DynamoDbOpFactory.build[ListBackupsRequest, ListBackupsResponse](_.listBackups(_))
+      DynamoDbOpFactory.create[ListBackupsRequest, ListBackupsResponse](_.listBackups(_))
     implicit val listContributorInsightsOp = DynamoDbOpFactory
-      .build[ListContributorInsightsRequest, ListContributorInsightsResponse](_.listContributorInsights(_))
-    implicit val listTablesOp = DynamoDbOpFactory.build[ListTablesRequest, ListTablesResponse](_.listTables(_))
+      .create[ListContributorInsightsRequest, ListContributorInsightsResponse](_.listContributorInsights(_))
+    implicit val listTablesOp = DynamoDbOpFactory.create[ListTablesRequest, ListTablesResponse](_.listTables(_))
     implicit val listGlobalTablesOp =
-      DynamoDbOpFactory.build[ListGlobalTablesRequest, ListGlobalTablesResponse](_.listGlobalTables(_))
+      DynamoDbOpFactory.create[ListGlobalTablesRequest, ListGlobalTablesResponse](_.listGlobalTables(_))
     implicit val listTagsOfResourceOp =
-      DynamoDbOpFactory.build[ListTagsOfResourceRequest, ListTagsOfResourceResponse](_.listTagsOfResource(_))
-    implicit val putItemOp = DynamoDbOpFactory.build[PutItemRequest, PutItemResponse](_.putItem(_))
-    implicit val queryOp = DynamoDbOpFactory.build[QueryRequest, QueryResponse](_.query(_))
+      DynamoDbOpFactory.create[ListTagsOfResourceRequest, ListTagsOfResourceResponse](_.listTagsOfResource(_))
+    implicit val putItemOp = DynamoDbOpFactory.create[PutItemRequest, PutItemResponse](_.putItem(_))
+    implicit val queryOp = DynamoDbOpFactory.create[QueryRequest, QueryResponse](_.query(_))
     implicit val restoreTableFromBackupOp =
-      DynamoDbOpFactory.build[RestoreTableFromBackupRequest, RestoreTableFromBackupResponse](
+      DynamoDbOpFactory.create[RestoreTableFromBackupRequest, RestoreTableFromBackupResponse](
         _.restoreTableFromBackup(_))
     implicit val restoreTableToPointInTimeOp = DynamoDbOpFactory
-      .build[RestoreTableToPointInTimeRequest, RestoreTableToPointInTimeResponse](_.restoreTableToPointInTime(_))
-    implicit val scanOp = DynamoDbOpFactory.build[ScanRequest, ScanResponse](_.scan(_))
+      .create[RestoreTableToPointInTimeRequest, RestoreTableToPointInTimeResponse](_.restoreTableToPointInTime(_))
+    implicit val scanOp = DynamoDbOpFactory.create[ScanRequest, ScanResponse](_.scan(_))
     implicit val tagResourceOp =
-      DynamoDbOpFactory.build[TagResourceRequest, TagResourceResponse](_.tagResource(_))
+      DynamoDbOpFactory.create[TagResourceRequest, TagResourceResponse](_.tagResource(_))
+    implicit val transactGetItemOp =
+      DynamoDbOpFactory.create[TransactGetItemRequest, TransactGetItemsResponse](_.tra(_))
     implicit val transactGetItemsOp =
-      DynamoDbOpFactory.build[TransactGetItemsRequest, TransactGetItemsResponse](_.transactGetItems(_))
+      DynamoDbOpFactory.create[TransactGetItemsRequest, TransactGetItemsResponse](_.transactGetItems(_))
     implicit val transactWriteItemsOp =
-      DynamoDbOpFactory.build[TransactWriteItemsRequest, TransactWriteItemsResponse](_.transactWriteItems(_))
+      DynamoDbOpFactory.create[TransactWriteItemsRequest, TransactWriteItemsResponse](_.transactWriteItems(_))
     implicit val untagResourceRequest =
-      DynamoDbOpFactory.build[UntagResourceRequest, UntagResourceResponse](_.untagResource(_))
+      DynamoDbOpFactory.create[UntagResourceRequest, UntagResourceResponse](_.untagResource(_))
     implicit val updateContinuousBackupsOp = DynamoDbOpFactory
-      .build[UpdateContinuousBackupsRequest, UpdateContinuousBackupsResponse](_.updateContinuousBackups(_))
+      .create[UpdateContinuousBackupsRequest, UpdateContinuousBackupsResponse](_.updateContinuousBackups(_))
     implicit val updateContributorInsightsOp = DynamoDbOpFactory
-      .build[UpdateContributorInsightsRequest, UpdateContributorInsightsResponse](_.updateContributorInsights(_))
+      .create[UpdateContributorInsightsRequest, UpdateContributorInsightsResponse](_.updateContributorInsights(_))
     implicit val updateGlobalTableOp =
-      DynamoDbOpFactory.build[UpdateGlobalTableRequest, UpdateGlobalTableResponse](_.updateGlobalTable(_))
+      DynamoDbOpFactory.create[UpdateGlobalTableRequest, UpdateGlobalTableResponse](_.updateGlobalTable(_))
     implicit val updateGlobalTableSettingsOp = DynamoDbOpFactory
-      .build[UpdateGlobalTableSettingsRequest, UpdateGlobalTableSettingsResponse](_.updateGlobalTableSettings(_))
-    implicit val updateItemOp = DynamoDbOpFactory.build[UpdateItemRequest, UpdateItemResponse](_.updateItem(_))
+      .create[UpdateGlobalTableSettingsRequest, UpdateGlobalTableSettingsResponse](_.updateGlobalTableSettings(_))
+    implicit val updateItemOp = DynamoDbOpFactory.create[UpdateItemRequest, UpdateItemResponse](_.updateItem(_))
     implicit val updateTableReplicaAutoScalingOp =
-      DynamoDbOpFactory.build[UpdateTableReplicaAutoScalingRequest, UpdateTableReplicaAutoScalingResponse](
+      DynamoDbOpFactory.create[UpdateTableReplicaAutoScalingRequest, UpdateTableReplicaAutoScalingResponse](
         _.updateTableReplicaAutoScaling(_))
     implicit val updateTableOp =
-      DynamoDbOpFactory.build[UpdateTableRequest, UpdateTableResponse](_.updateTable(_))
+      DynamoDbOpFactory.create[UpdateTableRequest, UpdateTableResponse](_.updateTable(_))
     implicit val updateTimeToLiveOp =
-      DynamoDbOpFactory.build[UpdateTimeToLiveRequest, UpdateTimeToLiveResponse](_.updateTimeToLive(_))
+      DynamoDbOpFactory.create[UpdateTimeToLiveRequest, UpdateTimeToLiveResponse](_.updateTimeToLive(_))
   }
 
-  def getItem(
-    tableName: String,
-    projectionExpression: Option[String] = None,
-    consistentRead: Boolean = true,
-    expressionAttributeNames: Map[String, String] = Map.empty,
-    consumedCapacityDetail: ConsumedCapacity.Detail = ConsumedCapacity.NONE,
-    retryableSettings: RetrySettings = domain.DefaultRetrySettings)(
-    implicit asyncClient: DynamoDbAsyncClient): Task[GetItemResponse] = {
-    import Implicits.getItemOp
-    val getItemRequest =
-      RequestsBuilder.getItemRequest(
-        tableName,
-        projectionExpression,
-        consistentRead,
-        expressionAttributeNames,
-        consumedCapacityDetail)
-    create(getItemRequest, retryableSettings.retries, retryableSettings.delayAfterFailure)
-  }
-  
   /**
     * A factory for avoiding boilerplate when building specific [[DynamoDbOp]].
     */
   private[this] object DynamoDbOpFactory {
-    def build[Req <: DynamoDbRequest, Resp <: DynamoDbResponse](
+    def create[Req <: DynamoDbRequest, Resp <: DynamoDbResponse](
       operation: (DynamoDbAsyncClient, Req) => CompletableFuture[Resp]): DynamoDbOp[Req, Resp] = {
       new DynamoDbOp[Req, Resp] {
         def execute(request: Req)(
@@ -171,22 +237,20 @@ object DynamoDbOp {
     * @param dynamoDbOp an implicit [[DynamoDbOp]] that abstracts the execution of the specific operation.
     * @return A [[Task]] that ends successfully with the response as [[DynamoDbResponse]], or a failed one.
     */
-  final def create[In <: DynamoDbRequest, Out <: DynamoDbResponse](
+  def create[In <: DynamoDbRequest, Out <: DynamoDbResponse](
     request: In,
-    retries: Int = 0,
-    delayAfterFailure: Option[FiniteDuration] = None)(
+    retries: Int,
+    delayAfterFailure: Option[FiniteDuration])(
     implicit
     dynamoDbOp: DynamoDbOp[In, Out],
     client: DynamoDbAsyncClient): Task[Out] = {
-
-    require(retries >= 0, "Retries per operation must be higher or equal than 0.")
-
+    require(retries >= 0, "Retries per operation must be >= 0.")
     Task
       .defer(dynamoDbOp(request))
       .onErrorHandleWith { ex =>
         val t = Task
           .defer(
-            if (retries > 0) create(request, retries - 1, delayAfterFailure)
+            if (retries > 0) create(request, retries, delayAfterFailure)
             else Task.raiseError(ex))
         delayAfterFailure match {
           case Some(delay) => t.delayExecution(delay)
