@@ -17,6 +17,9 @@
 
 package monix.connect.benchmarks.redis
 
+import io.chrisdavenport.rediculous.RedisCommands
+import laserdisc.fs2._
+import laserdisc.{Key, all => cmd}
 import monix.connect.redis.RedisHash
 import monix.execution.Scheduler.Implicits.global
 import org.openjdk.jmh.annotations._
@@ -38,11 +41,11 @@ class RedisHashesBenchmark extends RedisBenchFixture {
     flushdb
 
     val keys = (0 to maxKey).toList.map(_.toString)
-    keysCycle = Stream.continually(keys).flatten.iterator
+    keysCycle = scala.Stream.continually(keys).flatten.iterator
 
     (1 to maxKey).foreach { key =>
-      val value = getRandomString
-      val field = getRandomString
+      val value = key.toString
+      val field = key.toString
       val f = RedisHash.hset(key.toString, field, value).runToFuture
       Await.ready(f, 1.seconds)
     }
@@ -54,14 +57,96 @@ class RedisHashesBenchmark extends RedisBenchFixture {
   }
 
   @Benchmark
+  def hashWriter(): Unit = {
+    val key = keysCycle.next
+    val f = RedisHash.hset(key, key, key).runToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
   def hashFieldValueReader(): Unit = {
-    val f = RedisHash.hget(keysCycle.next, getRandomString).runToFuture
+    val key = keysCycle.next
+    val f = RedisHash.hget(key, key).runToFuture
     Await.ready(f, 1.seconds)
   }
 
   @Benchmark
   def hashAllReader(): Unit = {
-    val f = RedisHash.hgetall(keysCycle.next).runToFuture
+    val key = keysCycle.next
+    val f = RedisHash.hgetall(key).runToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def laserdiscHashWriter(): Unit = {
+    val key = keysCycle.next
+    val f = laserdConn
+      .use(c => c.send(cmd.hset[String](Key.unsafeFrom(key), Key.unsafeFrom(key), key)))
+      .unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def laserdiscHashFieldValueReader(): Unit = {
+    val key = keysCycle.next
+    val f = laserdConn
+      .use(c => c.send(cmd.hget[String](Key.unsafeFrom(key), Key.unsafeFrom(key))))
+      .unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def laserdiscHashAllReader(): Unit = {
+    val key = keysCycle.next
+    val f = laserdConn.use(c => c.send(cmd.hgetall(Key.unsafeFrom(key)))).unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def redicolousHashWriter(): Unit = {
+    val key = keysCycle.next
+    val f = redicolousConn
+      .use(c => RedisCommands.hset[RedisIO](key, key, key).run(c))
+      .unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def redicolousHashFieldValueReader(): Unit = {
+    val key = keysCycle.next
+    val f = redicolousConn
+      .use(c => RedisCommands.hget[RedisIO](key, key).run(c))
+      .unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def redicolousHashAllReader(): Unit = {
+    val key = keysCycle.next
+    val f = redicolousConn
+      .use(c => RedisCommands.hgetall[RedisIO](key).run(c))
+      .unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def redis4catsHashWriter(): Unit = {
+    val key = keysCycle.next
+    val f = redis4catsConn.use(c => c.hSet(key, key, key)).unsafeToFuture()
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def redis4catsHashFieldValueReader(): Unit = {
+    val key = keysCycle.next
+    val f = redis4catsConn.use(c => c.hGet(key, key)).unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def redis4catsHashAllReader(): Unit = {
+    val key = keysCycle.next
+    val f = redis4catsConn.use(c => c.hGetAll(key)).unsafeToFuture
     Await.ready(f, 1.seconds)
   }
 }

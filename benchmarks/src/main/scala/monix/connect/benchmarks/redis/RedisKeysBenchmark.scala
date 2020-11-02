@@ -17,6 +17,9 @@
 
 package monix.connect.benchmarks.redis
 
+import io.chrisdavenport.rediculous.RedisCommands
+import laserdisc.fs2._
+import laserdisc.{Key, all => cmd}
 import monix.connect.redis.{Redis, RedisKey}
 import monix.execution.Scheduler.Implicits.global
 import org.openjdk.jmh.annotations._
@@ -38,10 +41,10 @@ class RedisKeysBenchmark extends RedisBenchFixture {
     flushdb
 
     val keys = (0 to maxKey).toList.map(_.toString)
-    keysCycle = Stream.continually(keys).flatten.iterator
+    keysCycle = scala.Stream.continually(keys).flatten.iterator
 
     (1 to maxKey).foreach { key =>
-      val value = getRandomString
+      val value = key.toString
       val f = Redis.set(key.toString, value).runToFuture
       Await.ready(f, 1.seconds)
     }
@@ -61,6 +64,50 @@ class RedisKeysBenchmark extends RedisBenchFixture {
   @Benchmark
   def keyPttlReader(): Unit = {
     val f = RedisKey.pttl(keysCycle.next).runToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def laserDiscKeyExistsReader(): Unit = {
+    val f = laserdConn
+      .use(c => c.send(cmd.exists(Key.unsafeFrom(keysCycle.next))))
+      .unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def laserDiscKeyPttlReader(): Unit = {
+    val f = laserdConn
+      .use(c => c.send(cmd.pttl(Key.unsafeFrom(keysCycle.next))))
+      .unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def redicolousKeyExistsReader(): Unit = {
+    val f = redicolousConn
+      .use(c => RedisCommands.exists[RedisIO](keysCycle.next).run(c))
+      .unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def redicolousKeyPttlReader(): Unit = {
+    val f = redicolousConn
+      .use(c => RedisCommands.pttl[RedisIO](keysCycle.next).run(c))
+      .unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def redis4catsKeyExistsReader(): Unit = {
+    val f = redis4catsConn.use(c => c.exists(keysCycle.next)).unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def redis4catsKeyPttlReader(): Unit = {
+    val f = redis4catsConn.use(c => c.pttl(keysCycle.next)).unsafeToFuture
     Await.ready(f, 1.seconds)
   }
 }

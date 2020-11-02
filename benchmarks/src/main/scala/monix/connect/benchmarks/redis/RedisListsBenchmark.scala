@@ -17,6 +17,9 @@
 
 package monix.connect.benchmarks.redis
 
+import io.chrisdavenport.rediculous.RedisCommands
+import laserdisc.fs2._
+import laserdisc.{Index, Key, all => cmd}
 import monix.connect.redis.RedisList
 import monix.execution.Scheduler.Implicits.global
 import org.openjdk.jmh.annotations._
@@ -38,10 +41,10 @@ class RedisListsBenchmark extends RedisBenchFixture {
     flushdb
 
     val keys = (0 to maxKey).toList.map(_.toString)
-    keysCycle = Stream.continually(keys).flatten.iterator
+    keysCycle = scala.Stream.continually(keys).flatten.iterator
 
     (1 to maxKey).foreach { key =>
-      val value = getRandomString
+      val value = key.toString
       val f = RedisList.rpush(key.toString, value).runToFuture
       Await.ready(f, 1.seconds)
     }
@@ -50,6 +53,14 @@ class RedisListsBenchmark extends RedisBenchFixture {
   @TearDown
   def shutdown(): Unit = {
     flushdb
+  }
+
+  @Benchmark
+  def listWriter(): Unit = {
+    val key = keysCycle.next
+    val value = key
+    val f = RedisList.rpush(key, value).runToFuture
+    Await.ready(f, 1.seconds)
   }
 
   @Benchmark
@@ -70,4 +81,97 @@ class RedisListsBenchmark extends RedisBenchFixture {
     Await.ready(f, 1.seconds)
   }
 
+  @Benchmark
+  def laserdiscListWriter(): Unit = {
+    val key = keysCycle.next
+    val value = key
+    val f = laserdConn
+      .use(c => c.send(cmd.rpush[String](Key.unsafeFrom(key), value)))
+      .unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def laserdiscListLengthReader(): Unit = {
+    val f = laserdConn
+      .use(c => c.send(cmd.llen(Key.unsafeFrom(keysCycle.next))))
+      .unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def laserdiscListByIndexReader(): Unit = {
+    val f = laserdConn
+      .use(c => c.send(cmd.lindex[String](Key.unsafeFrom(keysCycle.next), Index.unsafeFrom(0))))
+      .unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def laserdiscListRangeReader(): Unit = {
+    val f = laserdConn
+      .use(c => c.send(cmd.lrange[String](Key.unsafeFrom(keysCycle.next), Index.unsafeFrom(0), Index.unsafeFrom(1000))))
+      .unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def redicolousListWriter(): Unit = {
+    val key = keysCycle.next
+    val value = List(key)
+    val f = redicolousConn
+      .use(c => RedisCommands.rpush[RedisIO](key, value).run(c))
+      .unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def redicolousListLengthReader(): Unit = {
+    val f = redicolousConn
+      .use(c => RedisCommands.llen[RedisIO](keysCycle.next).run(c))
+      .unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def redicolousListByIndexReader(): Unit = {
+    val f = redicolousConn
+      .use(c => RedisCommands.lindex[RedisIO](keysCycle.next, 0).run(c))
+      .unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def redicolousListRangeReader(): Unit = {
+    val f = redicolousConn
+      .use(c => RedisCommands.lrange[RedisIO](keysCycle.next, 0, 1000).run(c))
+      .unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def redis4catsListWriter(): Unit = {
+    val key = keysCycle.next
+    val value = key
+    val f = redis4catsConn.use(c => c.rPush(key, value)).unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def redis4catsListLengthReader(): Unit = {
+    val f = redis4catsConn.use(c => c.lLen(keysCycle.next)).unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def redis4catsListByIndexReader(): Unit = {
+    val f = redis4catsConn.use(c => c.lIndex(keysCycle.next, 0)).unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
+
+  @Benchmark
+  def redis4catsListRangeReader(): Unit = {
+    val f = redis4catsConn.use(c => c.lRange(keysCycle.next, 0, 1000)).unsafeToFuture
+    Await.ready(f, 1.seconds)
+  }
 }

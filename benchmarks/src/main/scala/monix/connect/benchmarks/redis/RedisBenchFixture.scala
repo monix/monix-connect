@@ -17,19 +17,43 @@
 
 package monix.connect.benchmarks.redis
 
+import cats.effect.{Blocker, ContextShift, IO, Timer}
+import dev.profunktor._
+import dev.profunktor.redis4cats.effect.Log.NoOp._
+import fs2.io.tcp.SocketGroup
+import io.chrisdavenport.rediculous.{Redis, RedisConnection}
 import io.lettuce.core.RedisClient
 import io.lettuce.core.api.StatefulRedisConnection
-import monix.connect.redis.Redis
+import laserdisc._
+import monix.connect.redis
 import monix.execution.Scheduler.Implicits.global
-import org.scalacheck.Gen
+
+import scala.concurrent.ExecutionContext
 
 trait RedisBenchFixture {
-  final val redisUrl = "redis://localhost:6379"
+  type RedisIO[A] = Redis[IO, A]
+
+  final val RedisHost = "localhost"
+  final val RedisPort = 6379
+  final val redisUrl = s"redis://$RedisHost:$RedisPort"
+
+  implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
+  implicit val timer: Timer[IO] = IO.timer(ExecutionContext.global)
+
   implicit val connection: StatefulRedisConnection[String, String] = RedisClient.create(redisUrl).connect()
 
-  val maxKey: Int = 5000
-  val rnd = new scala.util.Random
+  val redis4catsConn = redis4cats.Redis[IO].utf8(redisUrl)
 
-  def flushdb = Redis.flushdbAsync().runSyncUnsafe()
-  def getRandomString = Gen.alphaLowerStr.sample.get
+  val redicolousConn =
+    for {
+      blocker <- Blocker[IO]
+      sg      <- SocketGroup[IO](blocker)
+      c       <- RedisConnection.queued[IO](sg, RedisHost, RedisPort, maxQueued = 10000, workers = 2)
+    } yield c
+
+  val laserdConn = fs2.RedisClient.to(Host.unsafeFrom(RedisHost), Port.unsafeFrom(RedisPort))
+
+  val maxKey: Int = 5000
+
+  def flushdb = redis.Redis.flushdbAsync().runSyncUnsafe()
 }
