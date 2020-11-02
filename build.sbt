@@ -126,7 +126,7 @@ lazy val monixConnect = (project in file("."))
 
 lazy val akka = monixConnector("akka", Dependencies.Akka)
 
-lazy val dynamodb = monixConnector("dynamodb", Dependencies.DynamoDb)
+lazy val dynamodb = monixConnector("dynamodb", Dependencies.DynamoDb).dependsOn(awsAuth % "compile->compile;test->test")
 
 lazy val hdfs = monixConnector("hdfs", Dependencies.Hdfs)
 

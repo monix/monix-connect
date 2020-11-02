@@ -18,70 +18,19 @@
 package monix.connect.dynamodb
 
 import monix.connect.dynamodb.DynamoDbOp.create
-import domain.{
-  CreateTableSettings,
-  DefaultCreateSettings,
-  DefaultPutItemSettings,
-  DefaultRestoreTableFromBackupSettings,
-  DefaultRestoreTableToPointInTimeSettings,
-  DefaultRetrySettings,
-  DefaultRetryStrategy,
-  DefaultUpdateTableSettings,
-  GetItemSettings,
-  PutItemSettings,
-  RestoreTableToPointInTimeSettings,
-  RetrySettings,
-  RetryStrategy,
-  UpdateItemSettings,
-  UpdateTableSettings
-}
+import domain.{CreateTableSettings, DefaultCreateSettings, DefaultPutItemSettings, DefaultRestoreTableFromBackupSettings, DefaultRestoreTableToPointInTimeSettings, DefaultRetrySettings, DefaultRetryStrategy, DefaultUpdateTableSettings, GetItemSettings, PutItemSettings, RestoreTableToPointInTimeSettings, RetrySettings, RetryStrategy, UpdateItemSettings, UpdateTableSettings}
 import monix.reactive.{Consumer, Observable}
 import monix.eval.Task
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
-import software.amazon.awssdk.services.dynamodb.model.{
-  AttributeDefinition,
-  AttributeValue,
-  AutoScalingSettingsUpdate,
-  BackupTypeFilter,
-  BatchGetItemResponse,
-  BatchWriteItemResponse,
-  BillingMode,
-  ContributorInsightsAction,
-  CreateBackupResponse,
-  CreateGlobalTableResponse,
-  CreateTableResponse,
-  DescribeBackupResponse,
-  DynamoDbRequest,
-  DynamoDbResponse,
-  GetItemResponse,
-  GlobalSecondaryIndex,
-  GlobalSecondaryIndexAutoScalingUpdate,
-  GlobalTableGlobalSecondaryIndexSettingsUpdate,
-  KeySchemaElement,
-  KeysAndAttributes,
-  ListBackupsResponse,
-  LocalSecondaryIndex,
-  PointInTimeRecoverySpecification,
-  ProvisionedThroughput,
-  PutItemRequest,
-  PutItemResponse,
-  Replica,
-  ReplicaAutoScalingUpdate,
-  ReplicaSettingsUpdate,
-  ReplicaUpdate,
-  RestoreTableFromBackupResponse,
-  ReturnConsumedCapacity,
-  ReturnItemCollectionMetrics,
-  ReturnValue,
-  Tag,
-  TransactGetItemsResponse,
-  UntagResourceRequest,
-  UpdateContinuousBackupsResponse,
-  UpdateGlobalTableResponse,
-  UpdateTableResponse
-}
+import software.amazon.awssdk.services.dynamodb.model.{AttributeDefinition, AttributeValue, AutoScalingSettingsUpdate, BackupTypeFilter, BatchGetItemResponse, BatchWriteItemResponse, BillingMode, ContributorInsightsAction, CreateBackupResponse, CreateGlobalTableResponse, CreateTableResponse, DescribeBackupResponse, DynamoDbRequest, DynamoDbResponse, GetItemResponse, GlobalSecondaryIndex, GlobalSecondaryIndexAutoScalingUpdate, GlobalTableGlobalSecondaryIndexSettingsUpdate, KeySchemaElement, KeysAndAttributes, ListBackupsResponse, LocalSecondaryIndex, PointInTimeRecoverySpecification, ProvisionedThroughput, PutItemRequest, PutItemResponse, Replica, ReplicaAutoScalingUpdate, ReplicaSettingsUpdate, ReplicaUpdate, RestoreTableFromBackupResponse, ReturnConsumedCapacity, ReturnItemCollectionMetrics, ReturnValue, Tag, TransactGetItemsResponse, UntagResourceRequest, UpdateContinuousBackupsResponse, UpdateGlobalTableResponse, UpdateTableResponse}
 import DynamoDbOp.Implicits._
 import DynamoDbOp.Implicits.{createBackupOp, createGlobalTableOp, createTableOp, getItemOp, putItemOp}
+import cats.effect.Resource
+import monix.connect.aws.auth.AppConf
+import monix.execution.annotations.UnsafeBecauseImpure
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
+import software.amazon.awssdk.http.async.SdkAsyncHttpClient
+import software.amazon.awssdk.regions.Region
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -91,10 +40,130 @@ import scala.concurrent.duration.FiniteDuration
   * It is built on top of the [[DynamoDbAsyncClient]], reason why all the exposed methods
   * expect an implicit instance of the client to be in the scope of the call.
   */
-object DynamoDb {
+object DynamoDb { self =>
 
-  def fromConfig = {
+  /**
+    * Creates a [[Resource]] that will use the values from a
+    * configuration file to allocate and release a [[S3]].
+    * Thus, the api expects an `application.conf` file to be present
+    * in the `resources` folder.
+    *
+    * @see how does the expected `.conf` file should look like
+    *      https://github.com/monix/monix-connect/blob/master/aws-auth/src/main/resources/reference.conf`
+    *
+    * @see the cats effect resource data type: https://typelevel.org/cats-effect/datatypes/resource.html
+    *
+    * @return a [[Resource]] of [[Task]] that allocates and releases [[S3]].
+    */
+  def fromConfig: Resource[Task, DynamoDb] = {
+    Resource.make {
+      for {
+        clientConf  <- Task.evalOnce(AppConf.loadOrThrow)
+        asyncClient <- Task.now(DynamoDbClientConversions.fromMonixAwsConf(clientConf.monixAws))
+      } yield {
+        self.createUnsafe(asyncClient)
+      }
+    } { dynamoDb => Task(dynamoDb.close()) }
+  }
 
+  /**
+    * Creates a [[Resource]] that will use the passed
+    * AWS configurations to allocate and release [[S3]].
+    * Thus, the api expects an `application.conf` file to be present
+    * in the `resources` folder.
+    *
+    * @see how does the expected `.conf` file should look like
+    *      https://github.com/monix/monix-connect/blob/master/aws-auth/src/main/resources/reference.conf`
+    *
+    * @see the cats effect resource data type: https://typelevel.org/cats-effect/datatypes/resource.html
+    *
+    * ==Example==
+    *
+    * {{{
+    *   import cats.effect.Resource
+    *   import monix.eval.Task
+    *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
+    *   import software.amazon.awssdk.regions.Region
+    *
+    *   val defaultCredentials = DefaultCredentialsProvider.create()
+    *   val s3Resource: Resource[Task, S3] = S3.create(defaultCredentials, Region.AWS_GLOBAL)
+    * }}}
+    *
+    * @param credentialsProvider Strategy for loading credentials and authenticate to AWS S3
+    * @param region An Amazon Web Services region that hosts a set of Amazon services.
+    * @param endpoint The endpoint with which the SDK should communicate.
+    * @param httpClient Sets the [[SdkAsyncHttpClient]] that the SDK service client will use to make HTTP calls.
+    * @return a [[Resource]] of [[Task]] that allocates and releases [[S3]].
+    **/
+  def create(
+              credentialsProvider: AwsCredentialsProvider,
+              region: Region,
+              endpoint: Option[String] = None,
+              httpClient: Option[SdkAsyncHttpClient] = None): Resource[Task, S3] = {
+    Resource.make {
+      Task.eval {
+        val asyncClient = AsyncClientConversions.from(credentialsProvider, region, endpoint, httpClient)
+        createUnsafe(asyncClient)
+      }
+    } { s3 =>
+      Task {
+        s3.close()
+      }
+    }
+  }
+
+  /**
+    * Creates a instance of [[S3]] out of a [[S3AsyncClient]].
+    *
+    * It provides a fast forward access to the [[S3]] that avoids
+    * dealing with [[Resource]].
+    *
+    * Unsafe because the state of the passed [[S3AsyncClient]] is not guaranteed,
+    * it can either be malformed or closed, which would result in underlying failures.
+    *
+    * @see [[DynamoDb.fromConfig]] and [[DynamoDb.create]] for a pure usage of [[S3]].
+    * They both will make sure that the s3 connection is created with the required
+    * resources and guarantee that the client was not previously closed.
+    *
+    * ==Example==
+    *
+    * {{{
+    *   import java.time.Duration
+    *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
+    *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
+    *   import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
+    *   import software.amazon.awssdk.services.s3.S3AsyncClient
+    *
+    *   // the exceptions related with concurrency or timeouts from any of the requests
+    *   // might be solved by raising the `maxConcurrency`, `maxPendingConnectionAcquire` or
+    *   // `connectionAcquisitionTimeout` from the underlying netty http async client.
+    *   // see below an example on how to increase such values.
+    *
+    *   val httpClient = NettyNioAsyncHttpClient.builder()
+    *     .maxConcurrency(500)
+    *     .maxPendingConnectionAcquires(50000)
+    *     .connectionAcquisitionTimeout(Duration.ofSeconds(60))
+    *     .readTimeout(Duration.ofSeconds(60))
+    *     .build()
+    *
+    *   val s3AsyncClient: S3AsyncClient = S3AsyncClient
+    *     .builder()
+    *     .httpClient(httpClient)
+    *     .credentialsProvider(DefaultCredentialsProvider.create())
+    *     .region(AWS_GLOBAL)
+    *     .build()
+    *
+    *     val s3: S3 = S3.createUnsafe(s3AsyncClient)
+    * }}}
+    *
+    * @param dynamoDbAsyncClient an instance of a [[S3AsyncClient]].
+    * @return An instance of [[S3]]
+    */
+  @UnsafeBecauseImpure
+  def createUnsafe(dynamoDbAsyncClient: DynamoDbAsyncClient): DynamoDb = {
+    new DynamoDb {
+      override val asyncClient: DynamoDbAsyncClient = dynamoDbAsyncClient
+    }
   }
 
   /**
@@ -289,9 +358,12 @@ trait DynamoDb { self =>
     create(listRequest, retries, Some(backoffDelay))
   }
 
-  def listTables(retryStrategy: RetryStrategy = DefaultRetryStrategy)
-  def listGlobalTables(retryStrategy: RetryStrategy = DefaultRetryStrategy)
-  def listTagsOfResource(retryStrategy: RetryStrategy = DefaultRetryStrategy)
+  def listTables(retryStrategy: RetryStrategy = DefaultRetryStrategy) = ???
+
+  def listGlobalTables(retryStrategy: RetryStrategy = DefaultRetryStrategy) = ???
+
+  def listTagsOfResource(retryStrategy: RetryStrategy = DefaultRetryStrategy) = ???
+
   def putItem(
     tableName: String,
     item: Map[String, AttributeValue],
@@ -346,7 +418,7 @@ trait DynamoDb { self =>
   }
 
   //not yet supported
-  def transactWriteItems(retryStrategy: RetryStrategy = DefaultRetryStrategy)
+  def transactWriteItems(retryStrategy: RetryStrategy = DefaultRetryStrategy) = ???
 
   def untagResourceReque(
     resourceArn: String,
