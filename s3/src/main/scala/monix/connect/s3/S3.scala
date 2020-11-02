@@ -228,7 +228,7 @@ object S3 { self =>
     *   val defaultCred = DefaultCredentialsProvider.create()
     *   val s3: S3 = S3.createUnsafe(defaultCred, Region.AWS_GLOBAL)
     *   // do your stuff here
-    *   s3.close().runToFuture
+    *   s3.close.runToFuture
     * }}}
     *
     * @param credentialsProvider Strategy for loading credentials and authenticate to AWS S3
