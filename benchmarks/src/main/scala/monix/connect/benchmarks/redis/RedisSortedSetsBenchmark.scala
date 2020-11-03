@@ -21,7 +21,7 @@ import java.util.Optional
 
 import dev.profunktor.redis4cats.effects.{Score, ScoreWithValue, ZRange}
 import io.chrisdavenport.rediculous.RedisCommands
-import io.lettuce.core.{Range, ScoredValue}
+import io.lettuce.core.ScoredValue
 import laserdisc.fs2._
 import laserdisc.protocol.SortedSetP.ScoreRange
 import laserdisc.{Index, Key, OneOrMore, ValidDouble, all => cmd}
@@ -39,7 +39,9 @@ import scala.concurrent.duration.DurationInt
 @Fork(1)
 class RedisSortedSetsBenchmark extends RedisBenchFixture {
 
-  val unboundedRange = Range.unbounded()
+  val lowerBoundary = 0
+  val upperBoundary = 1000
+  val range = io.lettuce.core.Range.create[Integer](lowerBoundary, upperBoundary)
   var keysCycle: Iterator[String] = _
 
   @Setup
@@ -79,13 +81,13 @@ class RedisSortedSetsBenchmark extends RedisBenchFixture {
 
   @Benchmark
   def sortedSetCountReader(): Unit = {
-    val f = RedisSortedSet.zcount(keysCycle.next, unboundedRange).runToFuture
+    val f = RedisSortedSet.zcount(keysCycle.next, range).runToFuture
     Await.ready(f, 1.seconds)
   }
 
   @Benchmark
   def sortedSetRangeReader(): Unit = {
-    val f = RedisSortedSet.zrange(keysCycle.next, 0, 1).toListL.runToFuture
+    val f = RedisSortedSet.zrange(keysCycle.next, lowerBoundary, upperBoundary).toListL.runToFuture
     Await.ready(f, 1.seconds)
   }
 
@@ -111,7 +113,7 @@ class RedisSortedSetsBenchmark extends RedisBenchFixture {
 
   @Benchmark
   def laserdiscSortedSetCountReader(): Unit = {
-    val range = ScoreRange.open(ValidDouble.unsafeFrom(0), ValidDouble.unsafeFrom(1000))
+    val range = ScoreRange.open(ValidDouble.unsafeFrom(lowerBoundary), ValidDouble.unsafeFrom(upperBoundary))
     val f = laserdConn
       .use(c => c.send(cmd.zcount(Key.unsafeFrom(keysCycle.next), range)))
       .unsafeToFuture
@@ -121,7 +123,12 @@ class RedisSortedSetsBenchmark extends RedisBenchFixture {
   @Benchmark
   def laserdiscSortedSetRangeReader(): Unit = {
     val f = laserdConn
-      .use(c => c.send(cmd.zrange[String](Key.unsafeFrom(keysCycle.next), Index.unsafeFrom(0), Index.unsafeFrom(1000))))
+      .use(c =>
+        c.send(
+          cmd.zrange[String](
+            Key.unsafeFrom(keysCycle.next),
+            Index.unsafeFrom(lowerBoundary),
+            Index.unsafeFrom(upperBoundary))))
       .unsafeToFuture
     Await.ready(f, 1.seconds)
   }
@@ -147,7 +154,7 @@ class RedisSortedSetsBenchmark extends RedisBenchFixture {
   @Benchmark
   def redicolousSortedSetCountReader(): Unit = {
     val f = redicolousConn
-      .use(c => RedisCommands.zcount[RedisIO](keysCycle.next, 0, 1000).run(c))
+      .use(c => RedisCommands.zcount[RedisIO](keysCycle.next, lowerBoundary, upperBoundary).run(c))
       .unsafeToFuture
     Await.ready(f, 1.seconds)
   }
@@ -155,7 +162,7 @@ class RedisSortedSetsBenchmark extends RedisBenchFixture {
   @Benchmark
   def redicolousSortedSetRangeReader(): Unit = {
     val f = redicolousConn
-      .use(c => RedisCommands.zrange[RedisIO](keysCycle.next, 0, 1000).run(c))
+      .use(c => RedisCommands.zrange[RedisIO](keysCycle.next, lowerBoundary, upperBoundary).run(c))
       .unsafeToFuture
     Await.ready(f, 1.seconds)
   }
@@ -177,13 +184,15 @@ class RedisSortedSetsBenchmark extends RedisBenchFixture {
 
   @Benchmark
   def redis4catsSortedSetCountReader(): Unit = {
-    val f = redis4catsConn.use(c => c.zLexCount(keysCycle.next, ZRange("0", "1000"))).unsafeToFuture
+    val f = redis4catsConn
+      .use(c => c.zLexCount(keysCycle.next, ZRange(lowerBoundary.toString, upperBoundary.toString)))
+      .unsafeToFuture
     Await.ready(f, 1.seconds)
   }
 
   @Benchmark
   def redis4catsSortedSetRangeReader(): Unit = {
-    val f = redis4catsConn.use(c => c.zRange(keysCycle.next, 0, 1000)).unsafeToFuture
+    val f = redis4catsConn.use(c => c.zRange(keysCycle.next, lowerBoundary, upperBoundary)).unsafeToFuture
     Await.ready(f, 1.seconds)
   }
 }

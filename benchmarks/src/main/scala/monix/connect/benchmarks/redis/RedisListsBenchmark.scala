@@ -34,6 +34,8 @@ import scala.concurrent.duration.DurationInt
 @Fork(1)
 class RedisListsBenchmark extends RedisBenchFixture {
 
+  val lowerBoundary = 0
+  val upperBoundary = 1000
   var keysCycle: Iterator[String] = _
 
   @Setup
@@ -77,7 +79,7 @@ class RedisListsBenchmark extends RedisBenchFixture {
 
   @Benchmark
   def listRangeReader(): Unit = {
-    val f = RedisList.lrange(keysCycle.next, 0, 1).toListL.runToFuture
+    val f = RedisList.lrange(keysCycle.next, lowerBoundary, upperBoundary).toListL.runToFuture
     Await.ready(f, 1.seconds)
   }
 
@@ -110,7 +112,12 @@ class RedisListsBenchmark extends RedisBenchFixture {
   @Benchmark
   def laserdiscListRangeReader(): Unit = {
     val f = laserdConn
-      .use(c => c.send(cmd.lrange[String](Key.unsafeFrom(keysCycle.next), Index.unsafeFrom(0), Index.unsafeFrom(1000))))
+      .use(c =>
+        c.send(
+          cmd.lrange[String](
+            Key.unsafeFrom(keysCycle.next),
+            Index.unsafeFrom(lowerBoundary),
+            Index.unsafeFrom(upperBoundary))))
       .unsafeToFuture
     Await.ready(f, 1.seconds)
   }
@@ -144,7 +151,7 @@ class RedisListsBenchmark extends RedisBenchFixture {
   @Benchmark
   def redicolousListRangeReader(): Unit = {
     val f = redicolousConn
-      .use(c => RedisCommands.lrange[RedisIO](keysCycle.next, 0, 1000).run(c))
+      .use(c => RedisCommands.lrange[RedisIO](keysCycle.next, lowerBoundary, upperBoundary).run(c))
       .unsafeToFuture
     Await.ready(f, 1.seconds)
   }
@@ -171,7 +178,7 @@ class RedisListsBenchmark extends RedisBenchFixture {
 
   @Benchmark
   def redis4catsListRangeReader(): Unit = {
-    val f = redis4catsConn.use(c => c.lRange(keysCycle.next, 0, 1000)).unsafeToFuture
+    val f = redis4catsConn.use(c => c.lRange(keysCycle.next, lowerBoundary, upperBoundary)).unsafeToFuture
     Await.ready(f, 1.seconds)
   }
 }

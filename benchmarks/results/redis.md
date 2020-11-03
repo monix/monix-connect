@@ -37,22 +37,22 @@ RedisKeysBenchmark.redis4catsKeyPttlReader    thrpt    5   243.537 ± 130.926  o
 *Lists*
 ```
 Benchmark                                         Mode  Cnt     Score     Error  Units
-RedisListsBenchmark.laserdiscListByIndexReader   thrpt    5   194.431 ± 123.406  ops/s
-RedisListsBenchmark.laserdiscListLengthReader    thrpt    5   200.767 ±  26.233  ops/s
-RedisListsBenchmark.laserdiscListRangeReader     thrpt    5   196.387 ±  84.310  ops/s
-RedisListsBenchmark.laserdiscListWriter          thrpt    5   199.612 ±  32.968  ops/s
-RedisListsBenchmark.listByIndexReader            thrpt    5  1811.244 ± 574.423  ops/s
-RedisListsBenchmark.listLengthReader             thrpt    5  1707.834 ± 236.450  ops/s
-RedisListsBenchmark.listRangeReader              thrpt    5  1768.539 ± 265.738  ops/s
+RedisListsBenchmark.laserdiscListByIndexReader   thrpt    5   157.208 ±  45.700  ops/s
+RedisListsBenchmark.laserdiscListLengthReader    thrpt    5   136.873 ±  38.442  ops/s
+RedisListsBenchmark.laserdiscListRangeReader     thrpt    5   165.093 ± 237.914  ops/s
+RedisListsBenchmark.laserdiscListWriter          thrpt    5   165.620 ± 112.546  ops/s
+RedisListsBenchmark.listByIndexReader            thrpt    5  1504.266 ± 596.492  ops/s
+RedisListsBenchmark.listLengthReader             thrpt    5  1561.305 ± 528.915  ops/s
+RedisListsBenchmark.listRangeReader              thrpt    5  1456.099 ± 909.016  ops/s
 RedisListsBenchmark.listWriter                   thrpt    5  1771.367 ± 652.887  ops/s
-RedisListsBenchmark.redicolousListByIndexReader  thrpt    5   176.882 ±  45.443  ops/s
-RedisListsBenchmark.redicolousListLengthReader   thrpt    5   176.140 ±  35.992  ops/s
-RedisListsBenchmark.redicolousListRangeReader    thrpt    5   177.325 ±  45.086  ops/s
-RedisListsBenchmark.redicolousListWriter         thrpt    5   176.589 ±  52.523  ops/s
-RedisListsBenchmark.redis4catsListByIndexReader  thrpt    5   259.882 ± 157.432  ops/s
-RedisListsBenchmark.redis4catsListLengthReader   thrpt    5   251.967 ± 140.038  ops/s
-RedisListsBenchmark.redis4catsListRangeReader    thrpt    5   247.708 ± 142.126  ops/s
-RedisListsBenchmark.redis4catsListWriter         thrpt    5   246.073 ± 102.478  ops/s
+RedisListsBenchmark.redicolousListByIndexReader  thrpt    5   135.511 ±  33.624  ops/s
+RedisListsBenchmark.redicolousListLengthReader   thrpt    5   117.951 ±  66.588  ops/s
+RedisListsBenchmark.redicolousListRangeReader    thrpt    5   126.667 ± 330.676  ops/s
+RedisListsBenchmark.redicolousListWriter         thrpt    5   150.982 ±  94.001  ops/s
+RedisListsBenchmark.redis4catsListByIndexReader  thrpt    5   214.701 ±  52.466  ops/s
+RedisListsBenchmark.redis4catsListLengthReader   thrpt    5   195.073 ± 408.724  ops/s
+RedisListsBenchmark.redis4catsListRangeReader    thrpt    5   216.921 ± 357.256  ops/s
+RedisListsBenchmark.redis4catsListWriter         thrpt    5   206.256 ± 555.952  ops/s
 ```
 
 *Sets*
@@ -79,22 +79,22 @@ RedisSetsBenchmark.setWriter                   thrpt    5  1707.503 ± 407.231  
 *SortedSets*
 ```
 Benchmark                                                 Mode  Cnt     Score     Error  Units
-RedisSortedSetsBenchmark.laserdiscSortedSetCardReader    thrpt    5   192.175 ±  78.528  ops/s
-RedisSortedSetsBenchmark.laserdiscSortedSetCountReader   thrpt    5   192.044 ±  68.811  ops/s
-RedisSortedSetsBenchmark.laserdiscSortedSetRangeReader   thrpt    5   179.252 ±   6.918  ops/s
-RedisSortedSetsBenchmark.laserdiscSortedSetWriter        thrpt    5   191.463 ±  76.444  ops/s
-RedisSortedSetsBenchmark.redicolousSortedSetCardReader   thrpt    5   174.171 ±  32.104  ops/s
-RedisSortedSetsBenchmark.redicolousSortedSetCountReader  thrpt    5   176.946 ±  44.693  ops/s
-RedisSortedSetsBenchmark.redicolousSortedSetRangeReader  thrpt    5   176.423 ±  36.893  ops/s
-RedisSortedSetsBenchmark.redicolousSortedSetWriter       thrpt    5   176.394 ±  21.315  ops/s
-RedisSortedSetsBenchmark.redis4catsSortedSetCardReader   thrpt    5   261.120 ±  36.522  ops/s
-RedisSortedSetsBenchmark.redis4catsSortedSetCountReader  thrpt    5   262.222 ±  49.408  ops/s
-RedisSortedSetsBenchmark.redis4catsSortedSetRangeReader  thrpt    5   252.987 ±  72.341  ops/s
-RedisSortedSetsBenchmark.redis4catsSortedSetWriter       thrpt    5   229.063 ± 175.804  ops/s
-RedisSortedSetsBenchmark.sortedSetCardReader             thrpt    5  1735.682 ± 261.956  ops/s
-RedisSortedSetsBenchmark.sortedSetCountReader            thrpt    5  1714.058 ± 476.550  ops/s
-RedisSortedSetsBenchmark.sortedSetRangeReader            thrpt    5  1534.811 ± 388.417  ops/s
-RedisSortedSetsBenchmark.sortedSetWriter                 thrpt    5  1600.286 ± 494.597  ops/s
+RedisSortedSetsBenchmark.laserdiscSortedSetCardReader    thrpt    5   170.267 ±  89.732  ops/s
+RedisSortedSetsBenchmark.laserdiscSortedSetCountReader   thrpt    5   179.003 ±  40.080  ops/s
+RedisSortedSetsBenchmark.laserdiscSortedSetRangeReader   thrpt    5   178.721 ±  50.206  ops/s
+RedisSortedSetsBenchmark.laserdiscSortedSetWriter        thrpt    5   172.339 ±  30.774  ops/s
+RedisSortedSetsBenchmark.redicolousSortedSetCardReader   thrpt    5   158.050 ±  28.218  ops/s
+RedisSortedSetsBenchmark.redicolousSortedSetCountReader  thrpt    5   154.691 ±  28.389  ops/s
+RedisSortedSetsBenchmark.redicolousSortedSetRangeReader  thrpt    5   156.128 ±  22.739  ops/s
+RedisSortedSetsBenchmark.redicolousSortedSetWriter       thrpt    5   154.230 ±  38.051  ops/s
+RedisSortedSetsBenchmark.redis4catsSortedSetCardReader   thrpt    5   243.307 ±  60.217  ops/s
+RedisSortedSetsBenchmark.redis4catsSortedSetCountReader  thrpt    5   232.416 ±  66.536  ops/s
+RedisSortedSetsBenchmark.redis4catsSortedSetRangeReader  thrpt    5   236.565 ±  63.771  ops/s
+RedisSortedSetsBenchmark.redis4catsSortedSetWriter       thrpt    5   232.165 ±  54.573  ops/s
+RedisSortedSetsBenchmark.sortedSetCardReader             thrpt    5  1742.036 ± 234.697  ops/s
+RedisSortedSetsBenchmark.sortedSetCountReader            thrpt    5  1595.086 ± 343.268  ops/s
+RedisSortedSetsBenchmark.sortedSetRangeReader            thrpt    5  1678.910 ± 628.130  ops/s
+RedisSortedSetsBenchmark.sortedSetWriter                 thrpt    5  1546.634 ± 416.838  ops/s
 ```
 
 *Strings*
