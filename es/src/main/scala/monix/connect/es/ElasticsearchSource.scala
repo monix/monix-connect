@@ -2,7 +2,6 @@ package monix.connect.es
 
 import com.sksamuel.elastic4s.requests.searches.{SearchHit, SearchRequest, SearchResponse}
 import com.sksamuel.elastic4s.{ElasticClient, RequestFailure, RequestSuccess, Response}
-import monix.connect.es.ElasticsearchSource.SearchSettings
 import monix.eval.Task
 import monix.execution.internal.InternalApi
 import monix.execution.{Ack, Cancelable, Scheduler}
@@ -15,18 +14,17 @@ import scala.collection.mutable
   *  A pre-built [[monix.reactive.Observable]] implementation that
   *  publishes documents using an elasticsearch scroll cursor.
   *
-  * @param settings settings for how documents are queried
+  * @param request [[SearchRequest]]
   * @param client an implicit instance of a [[ElasticClient]]
   */
-@InternalApi private[es] class ElasticsearchSource(settings: SearchSettings)(implicit client: ElasticClient)
+@InternalApi private[es] class ElasticsearchSource(request: SearchRequest)(implicit client: ElasticClient)
   extends Observable[SearchHit] {
 
   import com.sksamuel.elastic4s.ElasticDsl._
 
-  require(settings.search.keepAlive.isDefined, "The SearchRequest must have a scroll defined (a keep alive time)")
   private var scrollId: String = _
   // Parse the keep alive setting out of the original query.
-  private val keepAlive = settings.search.keepAlive.getOrElse("1m")
+  private val keepAlive = request.keepAlive.getOrElse("1m")
 
   override def unsafeSubscribeFn(subscriber: Subscriber[SearchHit]): Cancelable = {
     runLoop(mutable.Queue.empty, subscriber).runToFuture(subscriber.scheduler)
@@ -85,15 +83,13 @@ import scala.collection.mutable
   // if no fetch is in progress then fire one
   private def fetch(buffer: mutable.Queue[SearchHit], sub: Subscriber[SearchHit]): Task[Unit] = {
     Option(scrollId) match {
-      case None => client.execute(settings.search).map(populateHandler(_, buffer, sub))
+      case None => client.execute(request.keepAlive(keepAlive)).map(populateHandler(_, buffer, sub))
       case Some(id) => client.execute(searchScroll(id).keepAlive(keepAlive)).map(populateHandler(_, buffer, sub))
     }
   }
 }
 
 object ElasticsearchSource {
-  case class SearchSettings(search: SearchRequest)
-
-  def search(settings: SearchSettings)(implicit client: ElasticClient): ElasticsearchSource =
-    new ElasticsearchSource(settings)
+  def search(request: SearchRequest)(implicit client: ElasticClient): ElasticsearchSource =
+    new ElasticsearchSource(request)
 }

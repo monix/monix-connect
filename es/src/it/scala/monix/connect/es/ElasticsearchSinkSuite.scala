@@ -90,7 +90,7 @@ class ElasticsearchSinkSuite extends AnyFlatSpecLike with Fixture with Matchers 
     r should contain theSameElementsAs indexRequests.flatMap(_.source)
   }
 
-  it should "fails when es error occurs" in {
+  it should "fails when the es index not exists" in {
     // given
     val requests = Seq(updateById("test_index", "test_id"))
 

@@ -179,15 +179,16 @@ class ElasticsearchSuite extends AnyFlatSpecLike with Fixture with Matchers with
 
   it should "execute a single count request" in {
     // given
-    val updateRequest = genUpdateRequest.sample.get
-    val countRequest = count(Indexes(updateRequest.index.name)).query(matchAllQuery())
+    val index = genIndex.sample.get
+    val updateRequests = Gen.listOfN(100, genUpdateRequest(index)).sample.get
+    val countRequest = count(Indexes(index)).query(matchAllQuery())
 
     // when
-    Elasticsearch.singleUpdate(updateRequest).runSyncUnsafe()
-    Elasticsearch.refresh(Seq(updateRequest.index.name)).runSyncUnsafe()
+    Task.parSequence(updateRequests.map(Elasticsearch.singleUpdate)).runSyncUnsafe()
+    Elasticsearch.refresh(Seq(index)).runSyncUnsafe()
     val r = Elasticsearch.singleCount(countRequest).runSyncUnsafe()
 
     // then
-    r.result.count shouldBe 1
+    r.result.count shouldBe updateRequests.map(_.id).distinct.length
   }
 }
