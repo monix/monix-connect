@@ -172,8 +172,8 @@ lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth)
 lazy val benchmarks = monixConnector("benchmarks", Dependencies.Benchmarks)
   .enablePlugins(JmhPlugin)
   .settings(skipOnPublishSettings)
-  .dependsOn(parquet % "compile->compile;test->test")
-  .aggregate(parquet)
+  .dependsOn(parquet % "compile->compile;test->test", redis % "compile->compile;test->test")
+  .aggregate(parquet, redis)
 
 lazy val docs = project
   .in(file("monix-connect-docs"))

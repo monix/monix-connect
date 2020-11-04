@@ -52,7 +52,11 @@ object Dependencies {
     "software.amazon.awssdk" % "auth" % Versions.AwsSdk,
     "com.github.pureconfig" %% "pureconfig" % Versions.Pureconfig) ++ testDependencies(hasIt = false)
 
-  val Benchmarks = Seq("org.scalacheck" %% "scalacheck" % Versions.Scalacheck
+  val Benchmarks = Seq(
+    "org.scalacheck" %% "scalacheck" % Versions.Scalacheck,
+    "dev.profunktor"    %% "redis4cats-effects" % "0.10.3",
+    "io.chrisdavenport" %% "rediculous"         % "0.0.8",
+    "io.laserdisc"      %% "laserdisc-fs2"      % "0.4.1"
   )++ testDependencies(hasIt = false)
 
   val DynamoDb = Seq(
