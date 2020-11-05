@@ -29,10 +29,11 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 
 @InternalApi
-private[s3] object AsyncClientConversions { self =>
+private[dynamodb] object AsyncClientConversions { self =>
 
   def fromMonixAwsConf(monixAwsConf: MonixAwsConf): DynamoDbAsyncClient = {
-    val builder = DynamoDbAsyncClient.builder().credentialsProvider(monixAwsConf.credentials).region(monixAwsConf.region)
+    val builder =
+      DynamoDbAsyncClient.builder().credentialsProvider(monixAwsConf.credentials).region(monixAwsConf.region)
     monixAwsConf.httpClient.map(httpConf => builder.httpClient(self.httpConfToClient(httpConf)))
     monixAwsConf.endpoint.map(builder.endpointOverride(_))
     builder.build()

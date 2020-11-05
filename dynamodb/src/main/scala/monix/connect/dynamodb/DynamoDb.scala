@@ -76,9 +76,11 @@ import software.amazon.awssdk.services.dynamodb.model.{
   Tag,
   TransactGetItemsResponse,
   UntagResourceRequest,
+  UntagResourceResponse,
   UpdateContinuousBackupsResponse,
   UpdateGlobalTableResponse,
-  UpdateTableResponse
+  UpdateTableResponse,
+  WriteRequest
 }
 import DynamoDbOp.Implicits._
 import DynamoDbOp.Implicits.{createBackupOp, createGlobalTableOp, createTableOp, getItemOp, putItemOp}
@@ -102,7 +104,7 @@ object DynamoDb { self =>
 
   /**
     * Creates a [[Resource]] that will use the values from a
-    * configuration file to allocate and release a [[S3]].
+    * configuration file to allocate and release a [[DynamoDb]].
     * Thus, the api expects an `application.conf` file to be present
     * in the `resources` folder.
     *
@@ -111,12 +113,12 @@ object DynamoDb { self =>
     *
     * @see the cats effect resource data type: https://typelevel.org/cats-effect/datatypes/resource.html
     *
-    * @return a [[Resource]] of [[Task]] that allocates and releases [[S3]].
+    * @return a [[Resource]] of [[Task]] that allocates and releases [[DynamoDb]].
     */
   def fromConfig: Resource[Task, DynamoDb] = {
     Resource.make {
       for {
-        clientConf  <- Task.evalOnce(AppConf.loadOrThrow)
+        clientConf  <- Task.eval(AppConf.loadOrThrow)
         asyncClient <- Task.now(AsyncClientConversions.fromMonixAwsConf(clientConf.monixAws))
       } yield {
         self.createUnsafe(asyncClient)
@@ -126,7 +128,7 @@ object DynamoDb { self =>
 
   /**
     * Creates a [[Resource]] that will use the passed
-    * AWS configurations to allocate and release [[S3]].
+    * AWS configurations to allocate and release [[DynamoDb]].
     * Thus, the api expects an `application.conf` file to be present
     * in the `resources` folder.
     *
@@ -144,7 +146,7 @@ object DynamoDb { self =>
     *   import software.amazon.awssdk.regions.Region
     *
     *   val defaultCredentials = DefaultCredentialsProvider.create()
-    *   val s3Resource: Resource[Task, S3] = S3.create(defaultCredentials, Region.AWS_GLOBAL)
+    *   val s3Resource: Resource[Task, DynamoDb] = DynamoDb.create(defaultCredentials, Region.AWS_GLOBAL)
     * }}}
     *
     * @param credentialsProvider Strategy for loading credentials and authenticate to AWS S3
@@ -167,15 +169,15 @@ object DynamoDb { self =>
   }
 
   /**
-    * Creates a instance of [[S3]] out of a [[S3AsyncClient]].
+    * Creates a instance of [[DynamoDb]] out of a [[DynamoDbAsyncClient]].
     *
-    * It provides a fast forward access to the [[S3]] that avoids
+    * It provides a fast forward access to the [[DynamoDb]] that avoids
     * dealing with [[Resource]].
     *
-    * Unsafe because the state of the passed [[S3AsyncClient]] is not guaranteed,
+    * Unsafe because the state of the passed [[DynamoDbAsyncClient]] is not guaranteed,
     * it can either be malformed or closed, which would result in underlying failures.
     *
-    * @see [[DynamoDb.fromConfig]] and [[DynamoDb.create]] for a pure usage of [[S3]].
+    * @see [[DynamoDb.fromConfig]] and [[DynamoDb.create]] for a pure usage of [[DynamoDb]].
     * They both will make sure that the s3 connection is created with the required
     * resources and guarantee that the client was not previously closed.
     *
@@ -186,28 +188,6 @@ object DynamoDb { self =>
     *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
     *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
     *   import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
-    *   import software.amazon.awssdk.services.s3.S3AsyncClient
-    *
-    *   // the exceptions related with concurrency or timeouts from any of the requests
-    *   // might be solved by raising the `maxConcurrency`, `maxPendingConnectionAcquire` or
-    *   // `connectionAcquisitionTimeout` from the underlying netty http async client.
-    *   // see below an example on how to increase such values.
-    *
-    *   val httpClient = NettyNioAsyncHttpClient.builder()
-    *     .maxConcurrency(500)
-    *     .maxPendingConnectionAcquires(50000)
-    *     .connectionAcquisitionTimeout(Duration.ofSeconds(60))
-    *     .readTimeout(Duration.ofSeconds(60))
-    *     .build()
-    *
-    *   val s3AsyncClient: S3AsyncClient = S3AsyncClient
-    *     .builder()
-    *     .httpClient(httpClient)
-    *     .credentialsProvider(DefaultCredentialsProvider.create())
-    *     .region(AWS_GLOBAL)
-    *     .build()
-    *
-    *     val s3: S3 = S3.createUnsafe(s3AsyncClient)
     * }}}
     *
     * @param dynamoDbAsyncClient an instance of a [[S3AsyncClient]].
@@ -220,23 +200,13 @@ object DynamoDb { self =>
     }
   }
 
-  /**
-    * Pre-built [[Consumer]] implementation that expects and executes [[DynamoDbRequest]]s.
-    * It provides with the flexibility of retrying a failed execution with delay to recover from it.
-    *
-    * @param dynamoDbOp abstracts the execution of any given [[DynamoDbRequest]] with its correspondent operation that returns [[DynamoDbResponse]].
-    * @param client an asyncronous dynamodb client.
-    * @tparam In the input request as type parameter lower bounded by [[DynamoDbRequest]].
-    * @tparam Out output type parameter that must be a subtype os [[DynamoDbRequest]].
-    * @return A [[monix.reactive.Consumer]] that expects and executes dynamodb requests.
-    */
-  @deprecated
-  def consumer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
-    retries: Int = 0,
-    delayAfterFailure: Option[FiniteDuration] = None)(
-    implicit
-    dynamoDbOp: DynamoDbOp[In, Out],
-    client: DynamoDbAsyncClient): Consumer[In, Unit] = DynamoDbSubscriber(retries, delayAfterFailure)
+  // @deprecated
+  // def consumer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
+  //   retries: Int = 0,
+  //   delayAfterFailure: Option[FiniteDuration] = None)(
+  //   implicit
+  //   dynamoDbOp: DynamoDbOp[In, Out],
+  //   client: DynamoDbAsyncClient): Consumer[In, Unit] = DynamoDbSubscriber(retries, delayAfterFailure)
 
   /**
     * Transformer that executes any given [[DynamoDbRequest]] and transforms them to its subsequent [[DynamoDbResponse]] within [[Task]].
@@ -277,7 +247,7 @@ trait DynamoDb { self =>
   }
 
   def batchWrite(
-    requestItems: Map[String, KeysAndAttributes],
+    requestItems: Map[String, List[WriteRequest]],
     returnConsumedCapacity: ReturnConsumedCapacity,
     returnItemCollectionMetrics: ReturnItemCollectionMetrics,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[BatchWriteItemResponse] = {
@@ -497,11 +467,10 @@ trait DynamoDb { self =>
 
   //not yet supported
   //def transactWriteItems(retryStrategy: RetryStrategy = DefaultRetryStrategy) =
-
-  def untagResourceReque(
+  def untagResource(
     resourceArn: String,
     tagKeys: Seq[String],
-    retryStrategy: RetryStrategy = DefaultRetryStrategy) = {
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[UntagResourceResponse] = {
     val untagRequest = RequestFactory.untagResource(resourceArn: String, tagKeys: _*)
     val RetryStrategy(retries, backoffDelay) = retryStrategy
     create(untagRequest, retries, Some(backoffDelay))
@@ -582,15 +551,15 @@ trait DynamoDb { self =>
     create(updateRequest, retries, Some(backoffDelay))
   }
 
-  def updateTable(
-    tableName: String,
-    attributeDefinitions: Seq[AttributeDefinition],
-    updateTableSettings: UpdateTableSettings = DefaultUpdateTableSettings,
-    retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[UpdateTableResponse] = {
-    val updateTableRequest = RequestFactory.updateTable(tableName, attributeDefinitions, updateTableSettings)
-    val RetryStrategy(retries, backoffDelay) = retryStrategy
-    create(updateTableRequest, retries, Some(backoffDelay))
-  }
+  //def updateTable(
+  //  tableName: String,
+  //  attributeDefinitions: Seq[AttributeDefinition],
+  //  updateTableSettings: UpdateTableSettings = DefaultUpdateTableSettings,
+  //  retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[UpdateTableResponse] = {
+  //  val updateTableRequest = RequestFactory.updateTable(tableName, attributeDefinitions, updateTableSettings)
+  //  val RetryStrategy(retries, backoffDelay) = retryStrategy
+  //  create(updateTableRequest, retries, Some(backoffDelay))
+  //}
 
   val close: Task[Unit] = Task(asyncClient.close())
 }

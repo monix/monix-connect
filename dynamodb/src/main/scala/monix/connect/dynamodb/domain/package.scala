@@ -19,21 +19,33 @@ package monix.connect.dynamodb
 
 import java.time.Instant
 
-import software.amazon.awssdk.services.dynamodb.model.{AttributeValue, BillingMode, GlobalSecondaryIndex, GlobalSecondaryIndexUpdate, LocalSecondaryIndex, ProvisionedThroughput, ReplicationGroupUpdate, ReturnConsumedCapacity, ReturnItemCollectionMetrics, ReturnValue, SSESpecification, StreamSpecification, Tag}
+import software.amazon.awssdk.services.dynamodb.model.{
+  AttributeValue,
+  BillingMode,
+  GlobalSecondaryIndex,
+  GlobalSecondaryIndexUpdate,
+  LocalSecondaryIndex,
+  ProvisionedThroughput,
+  ReplicationGroupUpdate,
+  ReturnConsumedCapacity,
+  ReturnItemCollectionMetrics,
+  ReturnValue,
+  SSESpecification,
+  StreamSpecification,
+  Tag
+}
 
 import scala.concurrent.duration._
 import scala.concurrent.duration.FiniteDuration
 
 package object domain {
 
-  @Deprecated("See `RetryStrategy")
+  @deprecated("See `RetryStrategy")
   case class RetrySettings(retries: Int, delayAfterFailure: Option[FiniteDuration])
   final val DefaultRetrySettings = RetrySettings(0, Option.empty)
 
   case class RetryStrategy(retries: Int, backoffDelay: FiniteDuration)
   final val DefaultRetryStrategy = RetryStrategy(0, 0.seconds)
-
-
 
   case class PutItemSettings(
     conditionalExpression: Option[String],
@@ -91,18 +103,21 @@ package object domain {
     timeRangeUppeBound = Instant.MAX,
     limit = 1)
 
-  case class RestoreTableToPointInTimeSettings(restoreDateTime: Option[Instant],
-                                       billingMode: BillingMode,
-                                       globalSecondaryIndex: Seq[GlobalSecondaryIndex],
-                                       localSecondaryIndex: Seq[LocalSecondaryIndex],
-                                       provisionedThroughput: Option[ProvisionedThroughput])
+  case class RestoreTableToPointInTimeSettings(
+    restoreDateTime: Option[Instant],
+    billingMode: BillingMode,
+    globalSecondaryIndex: Seq[GlobalSecondaryIndex],
+    localSecondaryIndex: Seq[LocalSecondaryIndex],
+    provisionedThroughput: Option[ProvisionedThroughput])
 
-  final val DefaultRestoreTableToPointInTimeSettings = RestoreTableToPointInTimeSettings(None, BillingMode.UNKNOWN_TO_SDK_VERSION, Seq.empty, Seq.empty, None)
+  final val DefaultRestoreTableToPointInTimeSettings =
+    RestoreTableToPointInTimeSettings(None, BillingMode.UNKNOWN_TO_SDK_VERSION, Seq.empty, Seq.empty, None)
 
-  case class RestoreTableFromBackupSettings(billingMode: BillingMode,
-  globalSecondaryIndex: Seq[GlobalSecondaryIndex],
-  localSecondaryIndex: Seq[LocalSecondaryIndex],
-  provisionedThroughput: Option[ProvisionedThroughput])
+  case class RestoreTableFromBackupSettings(
+    billingMode: BillingMode,
+    globalSecondaryIndex: Seq[GlobalSecondaryIndex],
+    localSecondaryIndex: Seq[LocalSecondaryIndex],
+    provisionedThroughput: Option[ProvisionedThroughput])
 
   final val DefaultRestoreTableFromBackupSettings = RestoreTableFromBackupSettings(
     billingMode = BillingMode.UNKNOWN_TO_SDK_VERSION,
@@ -112,30 +127,34 @@ package object domain {
   )
 
   case class UpdateItemSettings(
-                                 expressionAttributeNames: Map[String, String],
-                                 expressionAttributeValues: Map[String, AttributeValue],
-                                 consumedCapacity: ReturnConsumedCapacity,
-                                 returnItemCollectionMetrics: ReturnItemCollectionMetrics,
-                                 returnValue: ReturnValue)
+    expressionAttributeNames: Map[String, String],
+    expressionAttributeValues: Map[String, AttributeValue],
+    consumedCapacity: ReturnConsumedCapacity,
+    returnItemCollectionMetrics: ReturnItemCollectionMetrics,
+    returnValue: ReturnValue)
 
   final val DefaultUpdateItemSetting = UpdateItemSettings(
-  expressionAttributeNames = Map.empty,
-  expressionAttributeValues = Map.empty,
-  consumedCapacity = ReturnConsumedCapacity.UNKNOWN_TO_SDK_VERSION,
-  returnItemCollectionMetrics = ReturnItemCollectionMetrics.UNKNOWN_TO_SDK_VERSION,
-  returnValue = ReturnValue.UNKNOWN_TO_SDK_VERSION)
+    expressionAttributeNames = Map.empty,
+    expressionAttributeValues = Map.empty,
+    consumedCapacity = ReturnConsumedCapacity.UNKNOWN_TO_SDK_VERSION,
+    returnItemCollectionMetrics = ReturnItemCollectionMetrics.UNKNOWN_TO_SDK_VERSION,
+    returnValue = ReturnValue.UNKNOWN_TO_SDK_VERSION
+  )
 
-  case class UpdateTableSettings(billingMode: BillingMode,
-                                 globalSecondaryIndex: Seq[GlobalSecondaryIndexUpdate],
-                                 replicaUpdates: Seq[ReplicationGroupUpdate],
-                                 provisionedThroughput: Option[ProvisionedThroughput],
-                                 ssESpecification: Option[SSESpecification],
-                                 streamSpecification: Option[StreamSpecification])
+  case class UpdateTableSettings(
+    billingMode: BillingMode,
+    globalSecondaryIndex: Seq[GlobalSecondaryIndexUpdate],
+    replicaUpdates: Seq[ReplicationGroupUpdate],
+    provisionedThroughput: Option[ProvisionedThroughput],
+    ssESpecification: Option[SSESpecification],
+    streamSpecification: Option[StreamSpecification])
 
-  final val DefaultUpdateTableSettings = UpdateTableSettings(billingMode = BillingMode.UNKNOWN_TO_SDK_VERSION,
-                                                                          globalSecondaryIndex = Seq.empty,
-                                                                          replicaUpdates = Seq.empty,
-                                                                          provisionedThroughput = Option.empty,
-                                                                          ssESpecification = Option.empty,
-                                                                          streamSpecification = Option.empty)
+  final val DefaultUpdateTableSettings = UpdateTableSettings(
+    billingMode = BillingMode.UNKNOWN_TO_SDK_VERSION,
+    globalSecondaryIndex = Seq.empty,
+    replicaUpdates = Seq.empty,
+    provisionedThroughput = Option.empty,
+    ssESpecification = Option.empty,
+    streamSpecification = Option.empty
+  )
 }

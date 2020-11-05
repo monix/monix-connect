@@ -1,10 +1,100 @@
+/*
+ * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * See the project homepage at: https://connect.monix.io
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package monix.connect.dynamodb
 
-import java.time.Instant
-
 import com.amazonaws.regions.{Region, Regions}
-import monix.connect.dynamodb.domain.{CreateTableSettings, GetItemSettings, ListBackupsSettings, RetrySettings, UpdateItemSettings, UpdateTableSettings}
-import software.amazon.awssdk.services.dynamodb.model.{AttributeDefinition, AttributeValue, AttributeValueUpdate, AutoScalingSettingsUpdate, BackupType, BackupTypeFilter, BatchGetItemRequest, BatchWriteItemRequest, BillingMode, ContributorInsightsAction, CreateBackupRequest, CreateGlobalTableRequest, CreateTableRequest, DeleteBackupRequest, DeleteTableRequest, DescribeBackupRequest, DescribeContinuousBackupsRequest, DescribeContributorInsightsRequest, DescribeEndpointsRequest, DescribeGlobalTableRequest, DescribeLimitsRequest, DescribeTableReplicaAutoScalingRequest, DescribeTimeToLiveRequest, Get, GetItemRequest, GlobalSecondaryIndex, GlobalSecondaryIndexAutoScalingUpdate, GlobalSecondaryIndexUpdate, GlobalTableGlobalSecondaryIndexSettingsUpdate, KeySchemaElement, KeysAndAttributes, ListBackupsRequest, ListContributorInsightsRequest, ListGlobalTablesRequest, ListTablesRequest, ListTagsOfResourceRequest, LocalSecondaryIndex, PointInTimeRecoverySpecification, ProvisionedThroughput, PutItemRequest, Replica, ReplicaAutoScalingUpdate, ReplicaSettingsUpdate, ReplicaUpdate, ReplicationGroupUpdate, RestoreTableFromBackupRequest, RestoreTableToPointInTimeRequest, ReturnConsumedCapacity, ReturnItemCollectionMetrics, ReturnValue, SSESpecification, StreamSpecification, Tag, TagResourceRequest, TransactGetItem, TransactGetItemsRequest, TransactWriteItem, TransactWriteItemsRequest, UntagResourceRequest, UpdateContinuousBackupsRequest, UpdateContributorInsightsRequest, UpdateGlobalTableRequest, UpdateGlobalTableSettingsRequest, UpdateItemRequest, UpdateTableReplicaAutoScalingRequest, UpdateTableRequest}
+import monix.connect.dynamodb.domain.{
+  CreateTableSettings,
+  GetItemSettings,
+  ListBackupsSettings,
+  RetrySettings,
+  UpdateItemSettings,
+  UpdateTableSettings
+}
+import software.amazon.awssdk.services.dynamodb.model.{
+  AttributeDefinition,
+  AttributeValue,
+  AttributeValueUpdate,
+  AutoScalingSettingsUpdate,
+  BackupType,
+  BackupTypeFilter,
+  BatchGetItemRequest,
+  BatchWriteItemRequest,
+  BillingMode,
+  ContributorInsightsAction,
+  CreateBackupRequest,
+  CreateGlobalTableRequest,
+  CreateTableRequest,
+  DeleteBackupRequest,
+  DeleteTableRequest,
+  DescribeBackupRequest,
+  DescribeContinuousBackupsRequest,
+  DescribeContributorInsightsRequest,
+  DescribeEndpointsRequest,
+  DescribeGlobalTableRequest,
+  DescribeLimitsRequest,
+  DescribeTableReplicaAutoScalingRequest,
+  DescribeTimeToLiveRequest,
+  Get,
+  GetItemRequest,
+  GlobalSecondaryIndex,
+  GlobalSecondaryIndexAutoScalingUpdate,
+  GlobalSecondaryIndexUpdate,
+  GlobalTableGlobalSecondaryIndexSettingsUpdate,
+  KeySchemaElement,
+  KeysAndAttributes,
+  ListBackupsRequest,
+  ListContributorInsightsRequest,
+  ListGlobalTablesRequest,
+  ListTablesRequest,
+  ListTagsOfResourceRequest,
+  LocalSecondaryIndex,
+  PointInTimeRecoverySpecification,
+  ProvisionedThroughput,
+  PutItemRequest,
+  Replica,
+  ReplicaAutoScalingUpdate,
+  ReplicaSettingsUpdate,
+  ReplicaUpdate,
+  ReplicationGroupUpdate,
+  RestoreTableFromBackupRequest,
+  RestoreTableToPointInTimeRequest,
+  ReturnConsumedCapacity,
+  ReturnItemCollectionMetrics,
+  ReturnValue,
+  SSESpecification,
+  StreamSpecification,
+  Tag,
+  TagResourceRequest,
+  TransactGetItem,
+  TransactGetItemsRequest,
+  TransactWriteItem,
+  TransactWriteItemsRequest,
+  UntagResourceRequest,
+  UpdateContinuousBackupsRequest,
+  UpdateContributorInsightsRequest,
+  UpdateGlobalTableRequest,
+  UpdateGlobalTableSettingsRequest,
+  UpdateItemRequest,
+  UpdateTableReplicaAutoScalingRequest,
+  UpdateTableRequest,
+  WriteRequest
+}
 import sun.tools.tree.ConditionalExpression
 
 import scala.jdk.CollectionConverters._
@@ -17,11 +107,11 @@ object RequestFactory {
     BatchGetItemRequest.builder().requestItems(requestItems.asJava).returnConsumedCapacity(consumedCapacity).build()
 
   def batchWrite(
-    requestItems: Map[String, KeysAndAttributes],
+    requestItems: Map[String, List[WriteRequest]],
     returnConsumedCapacity: ReturnConsumedCapacity,
     returnItemCollectionMetrics: ReturnItemCollectionMetrics): BatchWriteItemRequest = {
     BatchWriteItemRequest.builder
-      .requestItems(requestItems.asJava)
+    //to.requestItems(requestItems.asJava)
       .returnConsumedCapacity(returnConsumedCapacity)
       .returnItemCollectionMetrics(returnItemCollectionMetrics)
       .build()
@@ -165,8 +255,7 @@ object RequestFactory {
     backupArn: String,
     targetTableName: String,
     settings: domain.RestoreTableFromBackupSettings): RestoreTableFromBackupRequest = {
-    val restoreRequest = RestoreTableFromBackupRequest
-      .builder
+    val restoreRequest = RestoreTableFromBackupRequest.builder
       .backupArn(backupArn)
       .targetTableName(targetTableName)
       .billingModeOverride(settings.billingMode)
@@ -213,18 +302,19 @@ object RequestFactory {
     TransactGetItem.builder().get(get.build).build
   }
 
-  def transactGetItem(tableName: String,
-                       key: Map[String, AttributeValue],
-                      projectionExpression: Option[String],
-                      expressionAttributeNames: Map[String, String],
-                      returnConsumedCapacity: ReturnConsumedCapacity): TransactGetItemsRequest = {
-    val transactGetItem = RequestFactory.transactGetItem(tableName,
-      key,
-      projectionExpression,
-      expressionAttributeNames)
-    TransactGetItemsRequest.builder().transactItems(Seq(transactGetItem): _*).returnConsumedCapacity(returnConsumedCapacity).build()
+  def transactGetItem(
+    tableName: String,
+    key: Map[String, AttributeValue],
+    projectionExpression: Option[String],
+    expressionAttributeNames: Map[String, String],
+    returnConsumedCapacity: ReturnConsumedCapacity): TransactGetItemsRequest = {
+    val transactGetItem = RequestFactory.transactGetItem(tableName, key, projectionExpression, expressionAttributeNames)
+    TransactGetItemsRequest
+      .builder()
+      .transactItems(Seq(transactGetItem): _*)
+      .returnConsumedCapacity(returnConsumedCapacity)
+      .build()
   }
-
 
   //todo
   def transactWriteItems(transactItems: TransactWriteItem): TransactWriteItem.Builder = {
@@ -259,14 +349,16 @@ object RequestFactory {
     UpdateGlobalTableRequest.builder().globalTableName(globalTableName).replicaUpdates(replicaUpdates: _*).build
   }
 
-  def updateGlobalTableSettings(globalTableName: String,
-                                secondaryIndexSettings: Seq[GlobalTableGlobalSecondaryIndexSettingsUpdate],
-                                autoScalingSettingsUpdate: Option[AutoScalingSettingsUpdate],
-                                provisionedWriteCapacityUnits: Option[Long],
-                                billingMode: BillingMode,
-                                replicaSettingsUpdate: Seq[ReplicaSettingsUpdate]): UpdateGlobalTableSettingsRequest = {
+  def updateGlobalTableSettings(
+    globalTableName: String,
+    secondaryIndexSettings: Seq[GlobalTableGlobalSecondaryIndexSettingsUpdate],
+    autoScalingSettingsUpdate: Option[AutoScalingSettingsUpdate],
+    provisionedWriteCapacityUnits: Option[Long],
+    billingMode: BillingMode,
+    replicaSettingsUpdate: Seq[ReplicaSettingsUpdate]): UpdateGlobalTableSettingsRequest = {
     val updateRequest = UpdateGlobalTableSettingsRequest.builder
-      .globalTableName(globalTableName).globalTableBillingMode(billingMode)
+      .globalTableName(globalTableName)
+      .globalTableBillingMode(billingMode)
       .globalTableGlobalSecondaryIndexSettingsUpdate(secondaryIndexSettings: _*)
       .replicaSettingsUpdate(replicaSettingsUpdate: _*)
     provisionedWriteCapacityUnits.map(updateRequest.globalTableProvisionedWriteCapacityUnits(_))
@@ -280,8 +372,7 @@ object RequestFactory {
     updateExpression: Option[String],
     conditionExpression: Option[String],
     updateItemSettings: UpdateItemSettings): UpdateItemRequest = {
-    val updateRequest = UpdateItemRequest
-      .builder
+    val updateRequest = UpdateItemRequest.builder
       .tableName(tableName)
       .expressionAttributeNames(updateItemSettings.expressionAttributeNames.asJava)
       .expressionAttributeValues(updateItemSettings.expressionAttributeValues.asJava)
@@ -305,21 +396,21 @@ object RequestFactory {
     updateRequest.build
   }
 
-  def updateTable(
-    tableName: String,
-    attributeDefinitions: Seq[AttributeDefinition],
-    updateTableSettings: UpdateTableSettings): UpdateTableRequest = {
-
-    val updateRequest = UpdateTableRequest.builder
-      .tableName(tableName)
-      .attributeDefinitions(attributeDefinitions: _*)
-      .billingMode(billingMode)
-      .globalSecondaryIndexUpdates(globalSecondaryIndex: _*)
-      .replicaUpdates(replicaUpdates: _*)
-    ssESpecification.map(updateRequest.sseSpecification)
-    provisionedThroughput.map(updateRequest.provisionedThroughput)
-    streamSpecification.map(updateRequest.streamSpecification)
-    updateRequest.build
-  }
+  //def updateTable(
+  //  tableName: String,
+  //  attributeDefinitions: Seq[AttributeDefinition],
+  //  updateTableSettings: UpdateTableSettings): UpdateTableRequest = {
+//
+  //  val updateRequest = UpdateTableRequest.builder
+  //    .tableName(tableName)
+  //    .attributeDefinitions(attributeDefinitions: _*)
+  //    .billingMode(billingMode)
+  //    .globalSecondaryIndexUpdates(globalSecondaryIndex: _*)
+  //    .replicaUpdates(replicaUpdates: _*)
+  //  ssESpecification.map(updateRequest.sseSpecification)
+  //  provisionedThroughput.map(updateRequest.provisionedThroughput)
+  //  streamSpecification.map(updateRequest.streamSpecification)
+  //  updateRequest.build
+  //}
 
 }
