@@ -25,17 +25,7 @@ import monix.execution.Scheduler
 import monix.reactive.Observable
 import org.apache.avro.generic.GenericRecord
 import org.apache.parquet.hadoop.ParquetWriter
-import org.openjdk.jmh.annotations.{
-  BenchmarkMode,
-  Fork,
-  Measurement,
-  Mode,
-  Scope,
-  State,
-  Threads,
-  Warmup,
-  _
-}
+import org.openjdk.jmh.annotations.{BenchmarkMode, Fork, Measurement, Mode, Scope, State, Threads, Warmup, _}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -84,17 +74,7 @@ class ParquetWriterBenchmark extends ParquetBenchFixture {
       .consumeWith(ParquetSink.fromWriter(Coeval(writer)))
       .runToFuture(s)
     Await.result(f, Duration.Inf)
-  }
 
-  @Benchmark
-  def fromTask(): Unit = {
-    val file: String = genFilePath.value()
-    val writer: ParquetWriter[GenericRecord] = parquetWriter(file, conf, schema).value()
-    val f = Observable
-      .fromIterable(records)
-      .consumeWith(ParquetSink.fromWriter(Task(writer)))
-      .runToFuture(s)
-    Await.result(f, Duration.Inf)
   }
 
 }

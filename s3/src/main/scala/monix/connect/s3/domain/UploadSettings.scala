@@ -19,6 +19,9 @@ package monix.connect.s3.domain
 
 import software.amazon.awssdk.services.s3.model.{ObjectCannedACL, RequestPayer}
 
+import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
+
 /**
   * @param grantFullControl        Gives the grantee READ, READ_ACP, and WRITE_ACP permissions on the object.
   * @param grantRead               Allows grantee to read the object data and its metadata.
@@ -45,4 +48,5 @@ case class UploadSettings(
   sseCustomerKeyMD5: Option[String] = None,
   ssekmsEncryptionContext: Option[String] = None,
   ssekmsKeyId: Option[String] = None,
-  requestPayer: Option[RequestPayer] = None)
+  requestPayer: Option[RequestPayer] = None,
+  lastUploadTimeout: FiniteDuration = 1.minute)

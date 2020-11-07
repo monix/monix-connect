@@ -147,7 +147,7 @@ lazy val parquet = monixConnector("parquet", Dependencies.Parquet, scalaPBSettin
 
 lazy val redis = monixConnector("redis", Dependencies.Redis)
 
-lazy val s3 = monixConnector("s3", Dependencies.S3)
+lazy val s3 = monixConnector("s3", Dependencies.S3).aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
 
 lazy val gcs = monixConnector("gcs", Dependencies.GCS)
 
@@ -172,8 +172,8 @@ lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth)
 lazy val benchmarks = monixConnector("benchmarks", Dependencies.Benchmarks)
   .enablePlugins(JmhPlugin)
   .settings(skipOnPublishSettings)
-  .dependsOn(parquet % "compile->compile;test->test")
-  .aggregate(parquet)
+  .dependsOn(parquet % "compile->compile;test->test", redis % "compile->compile;test->test", s3 % "compile->compile;test->test")
+  .aggregate(parquet, redis, s3)
 
 lazy val docs = project
   .in(file("monix-connect-docs"))
