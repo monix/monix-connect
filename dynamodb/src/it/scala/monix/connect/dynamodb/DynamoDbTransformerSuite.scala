@@ -10,7 +10,6 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model._
 import DynamoDbOp.Implicits._
 import monix.reactive.Observable.Transformer
@@ -23,7 +22,6 @@ class DynamoDbTransformerSuite
   extends AnyWordSpecLike with Matchers with ScalaFutures with DynamoDbFixture with BeforeAndAfterAll {
 
   implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 300.milliseconds)
-  implicit val client: DynamoDbAsyncClient = DynamoDbClient()
 
   s"${DynamoDb}.transformer() creates a transformer operator" that {
 
@@ -64,9 +62,9 @@ class DynamoDbTransformerSuite
           val transformer: Transformer[PutItemRequest, PutItemResponse] =
             DynamoDb.transformer[PutItemRequest, PutItemResponse]()
           val city = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-          val citizenId = genCitizenId.sample.get
+          val citizenId = Gen.identifier.sample.get
           val debt = Gen.choose(0, 10000).sample.get
-          val request: PutItemRequest = putItemRequest(tableName, city, citizenId, debt)
+          val request: PutItemRequest = putItemRequest(tableName, citizenId, city, debt)
 
           //when
           val t: Task[PutItemResponse] = Observable.fromIterable(Iterable(request)).transform(transformer).lastL
@@ -74,7 +72,7 @@ class DynamoDbTransformerSuite
           //then
           whenReady(t.runToFuture) { r =>
             r shouldBe a[PutItemResponse]
-            val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, city, citizenId))).futureValue
+            val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, citizenId, city))).futureValue
             getResponse.item().values().asScala.head.n().toDouble shouldBe debt
           }
         }
@@ -83,8 +81,8 @@ class DynamoDbTransformerSuite
           //given
           val transformer: Transformer[PutItemRequest, PutItemResponse] =
             DynamoDb.transformer[PutItemRequest, PutItemResponse]()
-          val requestAttr: List[(String, Int, Double)] = Gen.nonEmptyListOf(genRequestAttributes).sample.get
-          val requests: List[PutItemRequest] = requestAttr.map { case (city, citizenId, debt) => putItemRequest(tableName, city, citizenId, debt) }
+          val requestAttr: List[Citizen] = Gen.nonEmptyListOf(genCitizen).sample.get
+          val requests: List[PutItemRequest] = requestAttr.map { citizen => putItemRequest(tableName, citizen.citizenId, citizen.city, citizen.debt) }
 
           //when
           val t =
@@ -93,13 +91,12 @@ class DynamoDbTransformerSuite
               .transform(transformer)
               .lastL
 
-
           //then
           whenReady(t.runToFuture) { r =>
             r shouldBe a[PutItemResponse]
-            requestAttr.map { case (city, citizenId, debt) =>
-              val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, city, citizenId))).futureValue
-              getResponse.item().values().asScala.head.n().toDouble shouldBe debt
+            requestAttr.map { citizen =>
+              val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, citizen.citizenId, citizen.city))).futureValue
+              getResponse.item().values().asScala.head.n().toDouble shouldBe citizen.debt
             }
           }
         }
@@ -110,10 +107,10 @@ class DynamoDbTransformerSuite
       s"transforms a single `GetItemRequest` to `GetItemResponse` " in {
         //given
         val city = "London"
-        val citizenId = 613371
+        val citizenId = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
         val debt: Int = 550
-        toScala(client.putItem(putItemRequest(tableName, city, citizenId, debt))).futureValue
-        val request: GetItemRequest = getItemRequest(tableName, city, citizenId)
+        toScala(client.putItem(putItemRequest(tableName,citizenId, city, debt))).futureValue
+        val request: GetItemRequest = getItemRequest(tableName, citizenId, city)
         val transformer: Transformer[GetItemRequest, GetItemResponse] = DynamoDb.transformer()
 
         //when

@@ -87,6 +87,6 @@ private[dynamodb] object DynamoDbSubscriber {
     delayAfterFailure: Option[FiniteDuration])(
     implicit
     dynamoDbOp: DynamoDbOp[In, Out],
-    client: DynamoDbAsyncClient): DynamoDbSubscriber[In, Out] =
+    client: DynamoDbAsyncClient): Consumer[In, Unit] =
     new DynamoDbSubscriber(retriesPerOp, delayAfterFailure)(dynamoDbOp, client)
 }

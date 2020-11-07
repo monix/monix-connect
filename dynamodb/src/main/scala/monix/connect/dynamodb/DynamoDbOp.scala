@@ -114,7 +114,7 @@ import scala.concurrent.duration.FiniteDuration
   * @tparam In The input request as type parameter lower bounded by [[DynamoDbRequest]].
   * @tparam Out The response of the execution as type parameter lower bounded by [[DynamoDbResponse]].
   */
-trait DynamoDbOp[In <: DynamoDbRequest, Out <: DynamoDbResponse] {
+private[dynamodb] trait DynamoDbOp[In <: DynamoDbRequest, Out <: DynamoDbResponse] {
   def apply(dynamoDbRequest: In)(implicit client: DynamoDbAsyncClient): Task[Out] =
     Task.defer(Task.from(execute(dynamoDbRequest)))
   def execute(dynamoDbRequest: In)(implicit client: DynamoDbAsyncClient): CompletableFuture[Out]
@@ -125,7 +125,7 @@ trait DynamoDbOp[In <: DynamoDbRequest, Out <: DynamoDbResponse] {
   * @note All of them are defined implicitly, and can be imported from the object [[DynamoDbOp.Implicits]]
   *       which will automatically infer and extend the [[DynamoDbRequest]] as [[DynamoDbOp]].
   */
-object DynamoDbOp {
+private object DynamoDbOp {
 
   object Implicits {
 
@@ -223,17 +223,7 @@ object DynamoDbOp {
     }
   }
 
-  /**
-    * Creates the description of the execution of a single request that
-    * under failure it will be retried as many times as set in [[retries]].
-    *
-    * @param request the [[DynamoDbRequest]] that will be executed.
-    * @param retries the number of times that an operation can be retried before actually returning a failed [[Task]].
-    *        it must be higher or equal than 0.
-    * @param delayAfterFailure delay after failure for the execution of a single [[DynamoDbOp]].
-    * @param dynamoDbOp an implicit [[DynamoDbOp]] that abstracts the execution of the specific operation.
-    * @return A [[Task]] that ends successfully with the response as [[DynamoDbResponse]], or a failed one.
-    */
+  @deprecated("use `Dynamodb single`")
   final def create[In <: DynamoDbRequest, Out <: DynamoDbResponse](
     request: In,
     retries: Int = 0,

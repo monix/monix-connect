@@ -7,16 +7,14 @@ import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model._
 
 import scala.collection.JavaConverters._
-import scala.compat.java8.FutureConverters._
 
+@deprecated
 class DynamoDbOpSuite
   extends AnyWordSpecLike with Matchers with DynamoDbFixture with BeforeAndAfterAll {
 
-  implicit val client: DynamoDbAsyncClient = DynamoDbClient()
 
   s"${DynamoDbOp} exposes a create method" that {
 
@@ -25,7 +23,7 @@ class DynamoDbOpSuite
     "defines the execution of any DynamoDb request" in {
       //given
       val city = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-      val citizenId = genCitizenId.sample.get
+      val citizenId = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
       val debt = Gen.choose(0, 10000).sample.get
       val request: PutItemRequest = putItemRequest(tableName, city, citizenId, debt)
 
@@ -34,7 +32,7 @@ class DynamoDbOpSuite
 
       //then
       t.runSyncUnsafe() shouldBe a[PutItemResponse]
-      val getResponse: GetItemResponse = Task.from(toScala(client.getItem(getItemRequest(tableName, city, citizenId)))).runSyncUnsafe()
+      val getResponse: GetItemResponse = Task.from(client.getItem(getItemRequest(tableName, city, citizenId))).runSyncUnsafe()
       getResponse.item().values().asScala.head.n().toDouble shouldBe debt
     }
 
