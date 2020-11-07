@@ -37,8 +37,7 @@ import scala.util.{Failure, Success, Try}
 class MultipartDownloadObservableSuite
   extends AnyFlatSpec with Matchers with BeforeAndAfterAll with ScalaFutures with S3Fixture with Eventually {
 
-  private val bucketName = "sample-bucket"
-  private val s3Resource = S3.create(staticCredProvider, Region.AWS_GLOBAL, Some(minioEndPoint), Some(httpClient))
+  private val bucketName = "download-test"
 
   override implicit val patienceConfig = PatienceConfig(10.seconds, 100.milliseconds)
 
@@ -82,21 +81,22 @@ class MultipartDownloadObservableSuite
       actualContent shouldBe content.getBytes()
     }
 
-  it should  "download a big object in multipart" in {
+  it should "download a big object in multiparts" in {
       //given
       val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-      val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
+      val inputStream = Task(new FileInputStream(resourceFile("244KB.csv")))
       val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
       s3Resource.use(s3 => ob.consumeWith(s3.uploadMultipart(bucketName, key))).runSyncUnsafe()
 
       //when
-      val actualContent: Array[Byte] =
-        s3Resource.use(_.downloadMultipart(bucketName, key, 52428).toListL).map(_.flatten.toArray).runSyncUnsafe()
+      val downloadedChunks: List[Array[Byte]] =
+        s3Resource.use(_.downloadMultipart(bucketName, key, 25000).toListL).runSyncUnsafe()
 
       //then
       val expectedArrayByte: Array[Byte] =
         ob.foldLeftL(Array.emptyByteArray)((acc, bytes) => acc ++ bytes).runSyncUnsafe()
-      expectedArrayByte shouldBe actualContent
+      downloadedChunks.size shouldBe 10
+      expectedArrayByte shouldBe downloadedChunks.flatten
     }
 
   it should "fail when donwloading from a non existing object" in {

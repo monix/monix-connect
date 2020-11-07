@@ -37,8 +37,7 @@ import scala.util.{Failure, Success, Try}
 class MultipartUploadSubscriberSuite
   extends AnyFlatSpec with Matchers with BeforeAndAfterAll with ScalaFutures with S3Fixture with Eventually {
 
-  private val bucketName = "sample-bucket"
-  private val s3Resource = S3.create(staticCredProvider, Region.AWS_GLOBAL, Some(minioEndPoint), Some(httpClient))
+  private val bucketName = "multipart-upload-test"
 
   override implicit val patienceConfig = PatienceConfig(10.seconds, 100.milliseconds)
 
@@ -67,7 +66,7 @@ class MultipartUploadSubscriberSuite
     }
   }
 
-  it should "upload multipart chunks (of less than minimum size) are passed" in {
+  it can "upload chunks (of less than minimum size) are passed" in {
     //given
     val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
     val chunks: List[Array[Byte]] = Gen.listOfN(10, Gen.alphaUpperStr).map(_.map(_.getBytes)).sample.get
@@ -86,7 +85,7 @@ class MultipartUploadSubscriberSuite
     }
   }
 
-  it should "upload multipart single chunk of size (1MB)" in {
+  it should "upload in a single chunk of size (1MB)" in {
     //given
     val key = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
     val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
@@ -109,10 +108,10 @@ class MultipartUploadSubscriberSuite
     }
   }
 
-  it should "upload one part emitted with chunks smaller than the min size" in {
+  it should "aggregate and upload chunks emitted from smaller size than the minimum" in {
     //given
     val key = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-    val chunk = Files.readAllBytes(new File(resourceFile("test.csv")).toPath) //test.csv ~= 244Kb
+    val chunk = Files.readAllBytes(new File(resourceFile("244KB.csv")).toPath) //test.csv ~= 244Kb
     val chunks = Array.fill(24)(chunk) // at the 21th chunk (5MB) the upload should be triggered
 
     //when
@@ -129,10 +128,10 @@ class MultipartUploadSubscriberSuite
     }
   }
 
-  it should "upload two parts emitted with chunks smaller than the min size" in {
+  it should "upload in two (aggregated) parts emitted from chunks smaller than the min size" in {
     //given
     val key = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-    val chunk = Files.readAllBytes(new File(resourceFile("test.csv")).toPath) //test.csv ~= 244Kb
+    val chunk = Files.readAllBytes(new File(resourceFile("244KB.csv")).toPath) //test.csv ~= 244Kb
     val chunks = Array.fill(48)(chunk) // two part uploads will be triggered at th 21th and 42th chunks
 
     //when
@@ -149,13 +148,13 @@ class MultipartUploadSubscriberSuite
     }
   }
 
-  it should " upload big chunks" in {
+  it should "upload big chunks" in {
     //given
     val key = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
     val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
     val ob: Observable[Array[Byte]] = Observable
       .fromInputStream(inputStream)
-      .foldLeft(Array.emptyByteArray)((acc, chunk) => acc ++ chunk ++ chunk ++ chunk ++ chunk ++ chunk) //duplicates each chunk * 5
+      .foldLeft(Array.emptyByteArray)((acc, chunk) => acc ++ chunk ++ chunk ++ chunk ++ chunk ++ chunk) //each chunk * 5
 
     //when
     val response = s3Resource.use { s3 =>

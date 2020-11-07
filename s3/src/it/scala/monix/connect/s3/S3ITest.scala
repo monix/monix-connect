@@ -72,24 +72,6 @@ class S3ITest
           }
         }
 
-        "the payload is bigger" in {
-          //given
-          val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-          val content: Array[Byte] = downloadFromFile(resourceFile("empty.txt")).get
-
-          //when
-          val t: Task[PutObjectResponse] = S3.upload(bucketName, key, content)
-
-          //then
-          whenReady(t.runToFuture) { putResponse =>
-            eventually {
-              val s3Object: Array[Byte] = download(bucketName, key).get
-              putResponse shouldBe a[PutObjectResponse]
-              s3Object shouldBe content
-            }
-          }
-        }
-
         "the chunk is empty" in {
           //given
           val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString

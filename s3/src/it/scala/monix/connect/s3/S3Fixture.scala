@@ -14,6 +14,7 @@ import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
+import software.amazon.awssdk.regions.Region
 
 trait S3Fixture {
   this: TestSuite =>
@@ -43,6 +44,8 @@ trait S3Fixture {
     .region(AWS_GLOBAL)
     .endpointOverride(URI.create(minioEndPoint))
     .build
+
+  protected val s3Resource = S3.create(staticCredProvider, Region.AWS_GLOBAL, Some(minioEndPoint), Some(httpClient))
 
   def getRequest(bucket: String, key: String): GetObjectRequest =
     GetObjectRequest.builder().bucket(bucket).key(key).build()

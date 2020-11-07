@@ -24,7 +24,6 @@ class S3Suite
 
   private val bucketName = "sample-bucket"
   override implicit val patienceConfig = PatienceConfig(10.seconds, 100.milliseconds)
-  private val s3Resource = S3.create(staticCredProvider, Region.AWS_GLOBAL, Some(minioEndPoint), Some(httpClient))
 
   override def beforeAll(): Unit = {
     super.beforeAll()
@@ -34,7 +33,7 @@ class S3Suite
     }
   }
 
-  s"${S3}" can "reuse a s3Resource read from config" in {
+  s"${S3}" can "be created from config files" in {
     //given
     val s3FromConf = S3.fromConfig
     val (k1, k2) = (nonEmptyString.value(), nonEmptyString.value())
@@ -64,25 +63,7 @@ class S3Suite
     }
   }
 
-  it should "upload an empty file" in {
-    //given
-    val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-    val content: Array[Byte] = downloadFromFile(resourceFile("empty.txt")).get
-
-    //when
-    val t: Task[PutObjectResponse] = s3Resource.use(_.upload(bucketName, key, content))
-
-    //then
-    whenReady(t.runToFuture) { putResponse =>
-      eventually {
-        val s3Object: Array[Byte] = download(bucketName, key).get
-        putResponse shouldBe a[PutObjectResponse]
-        s3Object shouldBe content
-      }
-    }
-  }
-
-  it should "create an empty object out of an empty chunk" in {
+  it can "upload an empty bytearray" in {
     //given
     val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
     val content: Array[Byte] = Array.emptyByteArray
@@ -100,7 +81,25 @@ class S3Suite
     }
   }
 
-  it should "download a s3 object as byte array" in {
+  it can "create an empty object out of an empty chunk" in {
+    //given
+    val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+    val content: Array[Byte] = Array.emptyByteArray
+
+    //when
+    val t: Task[PutObjectResponse] = s3Resource.use(_.upload(bucketName, key, content))
+
+    //then
+    whenReady(t.runToFuture) { putResponse =>
+      eventually {
+        val s3Object: Array[Byte] = download(bucketName, key).get
+        putResponse shouldBe a[PutObjectResponse]
+        s3Object shouldBe content
+      }
+    }
+  }
+
+  it can "download a s3 object as byte array" in {
     //given
     val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
     val content: String = Gen.alphaUpperStr.sample.get
@@ -117,7 +116,7 @@ class S3Suite
     }
   }
 
-  it should "download a s3 object bigger than 1MB as byte array" in {
+  it can "download a s3 object bigger than 1MB as byte array" in {
     //given
     val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
     val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
@@ -141,7 +140,7 @@ class S3Suite
     }
   }
 
-  it should "download the first n bytes form an object" in {
+  it can "download the first n bytes form an object" in {
     //given
     val n = 5
     val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
@@ -159,7 +158,7 @@ class S3Suite
     }
   }
 
-  it should "download fails if the numberOfBytes is negative" in {
+  it should "fail when downloading with a negative `numberOfBytes`" in {
     //given
     val negativeNum = Gen.chooseNum(-10, -1).sample.get
     val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
@@ -172,7 +171,7 @@ class S3Suite
     f.value.get.isFailure shouldBe true
   }
 
-  it should "download fails if the numberOfBytes is zero" in {
+  it should "fail when downloading with a `numberOfBytes` equal to zero" in {
     //given
     val chunkSize = 0
 
@@ -185,7 +184,7 @@ class S3Suite
     f.value.get.isFailure shouldBe true
   }
 
-  it should "download from a non existing key returns failed task" in {
+  it should "fail when downloading from a non existing key" in {
     //given
     val key: String = "non-existing-key"
 
@@ -197,7 +196,7 @@ class S3Suite
     f.value.get shouldBe a[Failure[NoSuchKeyException]]
   }
 
-  it should "download in multipart" in {
+  it can "download in multipart" in {
     //given
     val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
     val content: String = nonEmptyString.value()
@@ -213,7 +212,7 @@ class S3Suite
     actualContent shouldBe content.getBytes()
   }
 
-  it should "copy an object to a different location within the same bucket" in {
+  it can "copy an object to a different location within the same bucket" in {
     //given
     val sourceKey = nonEmptyString.value()
     val content = nonEmptyString.value().getBytes()
@@ -231,7 +230,7 @@ class S3Suite
     s3Resource.use(_.download(bucketName, destinationKey)).runSyncUnsafe() shouldBe content
   }
 
-  it should "copy an object to a different location in a different bucket" in {
+  it can "copy an object to a different location in a different bucket" in {
     //given
     val sourceKey = nonEmptyString.value()
     val content = nonEmptyString.value().getBytes()
@@ -251,7 +250,7 @@ class S3Suite
     s3Resource.use(_.download(destinationBucket, destinationKey)).runSyncUnsafe() shouldBe content
   }
 
-  it should "create and delete a bucket" in {
+  it can "create and delete a bucket" in {
     //given
     val bucket = nonEmptyString.value()
     s3Resource.use(_.createBucket(bucket)).runSyncUnsafe()
@@ -282,7 +281,7 @@ class S3Suite
     existsAfterDeletion shouldBe false
   }
 
-  it should "delete a object" in {
+  it can "delete a object" in {
     //given
     val key = nonEmptyString.value()
     val content = nonEmptyString.value().getBytes()
@@ -298,7 +297,7 @@ class S3Suite
     existsAfterDeletion shouldBe false
   }
 
-  it should "check if a bucket exists" in {
+  it can "check if a bucket exists" in {
     //given
     val bucketNameA = nonEmptyString.value()
     val bucketNameB = nonEmptyString.value()
@@ -315,7 +314,7 @@ class S3Suite
     isPresentB shouldBe false
   }
 
-  it should "list existing buckets" in {
+  it can "list existing buckets" in {
     //given
     val bucketNameA = nonEmptyString.value()
     val _ = nonEmptyString.value()
@@ -334,7 +333,7 @@ class S3Suite
     (buckets diff initialBuckets).map(_.name) should contain theSameElementsAs List(bucketNameA, bucketNameC)
   }
 
-  it should "check if an object exists" in {
+  it can "check if an object exists" in {
     //given
     val prefix = s"test-exists-object/${nonEmptyString.value()}/"
     val key: String = prefix + nonEmptyString.value()
@@ -351,7 +350,7 @@ class S3Suite
     isPresent2 shouldBe false
   }
 
-  it should "list all objects" in {
+  it can "list all objects" in {
     //given
     val n = 1000
     val prefix = s"test-list-all-truncated/${nonEmptyString.value()}/"
@@ -370,7 +369,7 @@ class S3Suite
     count shouldBe n
   }
 
-  "A real example" should "reuse the resource evaluation" in {
+  "A good real example" should "reuse the resource evaluation" in {
 
     val bucket = nonEmptyString.value()
     val key = "my-key"
