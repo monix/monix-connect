@@ -17,15 +17,11 @@
 
 package monix.connect.s3
 
-import java.net.URI
-
 import monix.eval.Task
 import monix.execution.{Ack, Cancelable}
 import monix.execution.internal.InternalApi
 import monix.reactive.Observable
 import monix.reactive.observers.Subscriber
-import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
-import software.amazon.awssdk.regions.Region.AWS_GLOBAL
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.model.{ListObjectsV2Request, ListObjectsV2Response, RequestPayer}
 

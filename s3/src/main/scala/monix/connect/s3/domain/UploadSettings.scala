@@ -21,6 +21,7 @@ import software.amazon.awssdk.services.s3.model.{ObjectCannedACL, RequestPayer}
 
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.duration._
+
 /**
   * @param grantFullControl        Gives the grantee READ, READ_ACP, and WRITE_ACP permissions on the object.
   * @param grantRead               Allows grantee to read the object data and its metadata.

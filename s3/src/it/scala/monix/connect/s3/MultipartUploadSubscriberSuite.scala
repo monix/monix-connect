@@ -28,7 +28,6 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadResponse
 
 import scala.concurrent.duration._

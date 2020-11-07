@@ -14,7 +14,6 @@ import monix.execution.Scheduler.Implicits.global
 import monix.reactive.{Consumer, Observable}
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.flatspec.AnyFlatSpec
-import software.amazon.awssdk.regions.Region
 
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
