@@ -116,8 +116,7 @@ class DynamoDbConsumerSuite
   }
 
   override def beforeAll(): Unit = {
-    createTable(tableName)
-    sleep(2000)
+    createTable(tableName).runSyncUnsafe()
     super.beforeAll()
   }
 

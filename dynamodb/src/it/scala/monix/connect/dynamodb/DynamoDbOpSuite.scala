@@ -15,7 +15,6 @@ import scala.collection.JavaConverters._
 class DynamoDbOpSuite
   extends AnyWordSpecLike with Matchers with DynamoDbFixture with BeforeAndAfterAll {
 
-
   s"${DynamoDbOp} exposes a create method" that {
 
     import monix.connect.dynamodb.DynamoDbOp.Implicits._
@@ -39,8 +38,7 @@ class DynamoDbOpSuite
   }
 
   override def beforeAll(): Unit = {
-    createTable(tableName)
-    sleep(3000)
+    createTable(tableName).runSyncUnsafe()
     super.beforeAll()
   }
 

@@ -260,7 +260,7 @@ trait DynamoDb { self =>
       .onErrorHandleWith { ex =>
         val t = Task
           .defer(
-            if (retries > 0) create(request, retries - 1, delayAfterFailure)
+            if (retries > 0) single(request, retries - 1, delayAfterFailure)
             else Task.raiseError(ex))
         delayAfterFailure match {
           case Some(delay) => t.delayExecution(delay)

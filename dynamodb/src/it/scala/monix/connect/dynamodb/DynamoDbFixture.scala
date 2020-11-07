@@ -9,10 +9,10 @@ import org.scalatest.TestSuite
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
-import software.amazon.awssdk.services.dynamodb.model.{AttributeDefinition, AttributeValue, CreateTableRequest, DeleteTableRequest, DeleteTableResponse, GetItemRequest, KeySchemaElement, KeyType, ProvisionedThroughput, PutItemRequest, ScalarAttributeType}
+import software.amazon.awssdk.services.dynamodb.model.{AttributeDefinition, AttributeValue, CreateTableRequest, CreateTableResponse, DeleteTableRequest, DeleteTableResponse, GetItemRequest, KeySchemaElement, KeyType, ProvisionedThroughput, PutItemRequest, ScalarAttributeType}
 
 import scala.collection.JavaConverters._
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.duration._
 
 trait DynamoDbFixture {
   this: TestSuite =>
@@ -22,13 +22,13 @@ trait DynamoDbFixture {
   val numAttr: Int => AttributeValue = value => AttributeValue.builder().n(value.toString).build()
   val doubleAttr: Double => AttributeValue = value => AttributeValue.builder().n(value.toString).build()
 
-  val defaultAwsCredProvider = StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x"))
+  val staticAwsCredProvider = StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x"))
 
   val tableName = "citizens"
 
   protected implicit val client = DynamoDbAsyncClient
     .builder()
-    .credentialsProvider(defaultAwsCredProvider)
+    .credentialsProvider(staticAwsCredProvider)
     .endpointOverride(new URI("http://localhost:4569"))
     .region(Region.AWS_GLOBAL)
     .build()
@@ -95,13 +95,10 @@ trait DynamoDbFixture {
       .build()
   }
 
-  protected def createTable(table: String)(implicit client: DynamoDbAsyncClient, scheduler: Scheduler): Unit = {
+  protected def createTable(table: String)(implicit client: DynamoDbAsyncClient, scheduler: Scheduler): Task[CreateTableResponse] = {
     val request: CreateTableRequest =
       createTableRequest(tableName = table, schema = keySchema, attributeDefinition = tableDefinition)
-    Try(Task.from(client.createTable(request))) match {
-      case Success(_) => println(s"Table ${table} was created")
-      case Failure(exception) => println("Failed to create table cities with exception: " + exception)
-    }
+    Task.from(client.createTable(request)).delayResult(1.second)
   }
 
   def deleteTable(tableName: String)(implicit client: DynamoDbAsyncClient, scheduler: Scheduler): Task[DeleteTableResponse] = {

@@ -207,9 +207,7 @@ private object DynamoDbOp {
       DynamoDbOpFactory.build[UpdateTimeToLiveRequest, UpdateTimeToLiveResponse](_.updateTimeToLive(_))
   }
 
-  /**
-    * A factory for avoiding boilerplate when building specific [[DynamoDbOp]].
-    */
+  /** A factory for avoiding boilerplate when building specific [[DynamoDbOp]]. */
   private[this] object DynamoDbOpFactory {
     def build[Req <: DynamoDbRequest, Resp <: DynamoDbResponse](
       operation: (DynamoDbAsyncClient, Req) => CompletableFuture[Resp]): DynamoDbOp[Req, Resp] = {
