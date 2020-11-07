@@ -58,7 +58,7 @@ trait S3MonixFixture {
     .endpointOverride(URI.create(minioEndPoint))
     .build
 
-  protected val s3Resource = S3.createWith(staticCredProvider, Region.AWS_GLOBAL, Some(minioEndPoint), Some(httpClient))
+  protected val s3Resource = S3.create(staticCredProvider, Region.AWS_GLOBAL, Some(minioEndPoint), Some(httpClient))
 
   def createBucket(bucketName: String)(implicit scheduler: Scheduler) = {
     Try(s3Resource.use(_.createBucket(bucketName)).runSyncUnsafe()) match {

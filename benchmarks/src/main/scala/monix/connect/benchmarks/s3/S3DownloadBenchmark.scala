@@ -85,7 +85,7 @@ class S3DownloadBenchmark extends S3MonixFixture {
   }
 
   def monixConfigDownload(): Unit = {
-    val t = S3.create().use(_.download(bucketName, key))
+    val t = S3.fromConfig.use(_.download(bucketName, key))
 
     Await.result(t.runToFuture(s), Duration.Inf)
   }
@@ -123,7 +123,7 @@ class S3DownloadBenchmark extends S3MonixFixture {
 
   @Benchmark
   def monixConfigDownloadMultipart(): Unit = {
-    val t = S3.create().use(_.downloadMultipart(bucketName, key, 5242880).lastL)
+    val t = S3.fromConfig.use(_.downloadMultipart(bucketName, key, 5242880).lastL)
 
     Await.result(t.runToFuture(s), Duration.Inf)
   }

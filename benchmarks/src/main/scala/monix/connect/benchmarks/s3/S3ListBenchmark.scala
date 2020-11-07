@@ -66,7 +66,7 @@ class S3ListBenchmark extends S3MonixFixture {
 
   @Benchmark
   def monixConfigListObjects(): Unit = {
-    val t = S3.create().use(_.listObjects(bucketName, Some(prefix)).lastL)
+    val t = S3.fromConfig.use(_.listObjects(bucketName, Some(prefix)).lastL)
 
     Await.result(t.runToFuture(s), Duration.Inf)
   }

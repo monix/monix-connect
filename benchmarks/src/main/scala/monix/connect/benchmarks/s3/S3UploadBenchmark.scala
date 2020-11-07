@@ -77,7 +77,7 @@ class S3UploadBenchmark extends S3MonixFixture {
   @Benchmark
   def monixConfigUpload(): Unit = {
     val newKey = nonEmptyString.value()
-    val t = S3.create().use(_.upload(bucketName, newKey, contents.flatten))
+    val t = S3.fromConfig.use(_.upload(bucketName, newKey, contents.flatten))
 
     Await.result(t.runToFuture(s), Duration.Inf)
   }
@@ -101,7 +101,7 @@ class S3UploadBenchmark extends S3MonixFixture {
   @Benchmark
   def monixConfigUploadMultipart(): Unit = {
     val newKey = nonEmptyString.value()
-    val t = S3.create().use(s3 => Observable.fromIterable(contents).consumeWith(s3.uploadMultipart(bucketName, newKey)))
+    val t = S3.fromConfig.use(s3 => Observable.fromIterable(contents).consumeWith(s3.uploadMultipart(bucketName, newKey)))
 
     Await.result(t.runToFuture(s), Duration.Inf)
   }
