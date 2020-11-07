@@ -86,7 +86,7 @@ import DynamoDbOp.Implicits._
 import DynamoDbOp.Implicits.{createBackupOp, createGlobalTableOp, createTableOp, getItemOp, putItemOp}
 import cats.effect.Resource
 import com.amazonaws.regions.Regions
-import monix.connect.aws.auth.AppConf
+//import monix.connect.aws.auth.AppConf
 import monix.execution.annotations.UnsafeBecauseImpure
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
@@ -102,7 +102,7 @@ import scala.concurrent.duration.FiniteDuration
   */
 object DynamoDb { self =>
 
-  /**
+ /* /**
     * Creates a [[Resource]] that will use the values from a
     * configuration file to allocate and release a [[DynamoDb]].
     * Thus, the api expects an `application.conf` file to be present
@@ -125,6 +125,7 @@ object DynamoDb { self =>
       }
     } { _.close }
   }
+*/
 
   /**
     * Creates a [[Resource]] that will use the passed
@@ -177,7 +178,7 @@ object DynamoDb { self =>
     * Unsafe because the state of the passed [[DynamoDbAsyncClient]] is not guaranteed,
     * it can either be malformed or closed, which would result in underlying failures.
     *
-    * @see [[DynamoDb.fromConfig]] and [[DynamoDb.create]] for a pure usage of [[DynamoDb]].
+    * @see [[DynamoDb]] and [[DynamoDb.create]] for a pure usage of [[DynamoDb]].
     * They both will make sure that the s3 connection is created with the required
     * resources and guarantee that the client was not previously closed.
     *
@@ -291,6 +292,7 @@ trait DynamoDb { self =>
     val RetryStrategy(retries, backoffDelay) = retryStrategy
     create(deleteBackupRequest, retries, Some(backoffDelay))
   }
+
   def describeBackup(
     backupArn: String,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[DescribeBackupResponse] = {

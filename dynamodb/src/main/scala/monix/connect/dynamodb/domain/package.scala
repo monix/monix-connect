@@ -69,14 +69,14 @@ package object domain {
     globalSecondaryIndex: Seq[GlobalSecondaryIndex],
     localSecondaryIndexes: Seq[LocalSecondaryIndex],
     tags: Seq[Tag],
-    provisionedThroughput: Option[ProvisionedThroughput],
+    provisionedThroughput: ProvisionedThroughput,
     sseSpecification: Option[SSESpecification])
 
   final val DefaultCreateSettings = CreateTableSettings(
-    billingMode = BillingMode.UNKNOWN_TO_SDK_VERSION,
+    billingMode = BillingMode.PAY_PER_REQUEST,
     globalSecondaryIndex = Seq.empty[GlobalSecondaryIndex],
     localSecondaryIndexes = Seq.empty[LocalSecondaryIndex],
-    provisionedThroughput = None,
+    provisionedThroughput = ProvisionedThroughput.builder.build,
     sseSpecification = None,
     tags = Seq.empty
   )

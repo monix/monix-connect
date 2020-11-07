@@ -137,10 +137,14 @@ object RequestFactory {
         .keySchema(keySchema: _*)
         .attributeDefinitions(attributeDefinitions: _*)
         .billingMode(createTableSettings.billingMode)
-        .globalSecondaryIndexes(createTableSettings.globalSecondaryIndex: _*)
-        .localSecondaryIndexes(createTableSettings.localSecondaryIndexes: _*)
         .tags(createTableSettings.tags: _*)
-    createTableSettings.provisionedThroughput.map(builder.provisionedThroughput)
+        .provisionedThroughput(createTableSettings.provisionedThroughput)
+    if(createTableSettings.globalSecondaryIndex.nonEmpty) {
+      builder.globalSecondaryIndexes(createTableSettings.globalSecondaryIndex: _*)
+    }
+    if(createTableSettings.localSecondaryIndexes.nonEmpty) {
+      builder.localSecondaryIndexes(createTableSettings.localSecondaryIndexes: _*)
+    }
     createTableSettings.sseSpecification.map(builder.sseSpecification)
     builder.build
   }

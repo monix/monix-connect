@@ -13,8 +13,8 @@ import scala.util.{Failure, Success, Try}
 trait DynamoDbFixture {
   this: TestSuite =>
 
-  case class Item(humanId: String, city: String, debt: Double) {
-    val attributes = itemAttr(humanId, city, debt)
+  case class Item(employeeId: String, companyId: Int, salary: Double) {
+    val attributes = itemAttr(employeeId, companyId, salary)
   }
   val strAttr: String => AttributeValue = value => AttributeValue.builder().s(value).build()
   val numAttr: Int => AttributeValue = value => AttributeValue.builder().n(value.toString).build()
@@ -23,59 +23,57 @@ trait DynamoDbFixture {
   val genTableName: Gen[String] =  Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "test-" + chars.mkString.take(200))  //table name max size is 255
 
   val genCitizenId = Gen.choose(1, 100000)
-  val keyMap = (humanId: String, city: String) => Map("humanId" -> strAttr(humanId), "city" -> strAttr(city))
+  val keyMap = (employeeId: String, companyId: Int) => Map("employeeId" -> strAttr(employeeId), "companyId" -> numAttr(companyId))
 
-  val itemAttr = (humanId: String, city: String, debt: Double) => keyMap(humanId, city) ++ Map("debt" -> doubleAttr(debt))
+  val itemAttr = (employeeId: String, companyId: Int, salary: Double) => keyMap(employeeId, companyId) ++ Map("salary" -> doubleAttr(salary))
 
-  def putItemRequest(tableName: String, humanId: String, city: String, debt: Double): PutItemRequest =
+  def putItemRequest(tableName: String, employeeId: String, companyId: Int, salary: Double): PutItemRequest =
     PutItemRequest
       .builder()
       .tableName(tableName)
-      .item(itemAttr(humanId, city, debt).asJava)
+      .item(itemAttr(employeeId, companyId, salary).asJava)
       .build()
-
-  val genCity = Gen.oneOf(Seq("Barcelona", "London", "Istambul", "Milton Keynes", "Paris"))
 
   val genItem: Gen[Item] =
     for {
-      humanId <- Gen.identifier
-      city <- genCity
-      debt <- Gen.choose(1, 1000)
-    } yield Item(humanId, city, debt)
+      employeeId <- Gen.identifier
+      companyId <- Gen.choose(1, 1000)
+      salary <- Gen.choose(1, 1000)
+    } yield Item(employeeId, companyId, salary)
 
   val genPutItemRequest: Gen[PutItemRequest] =
     for {
-      humanId <- Gen.identifier
-      city <- genCity
-      debt <- Gen.choose(1, 1000)
-    } yield putItemRequest(tableName, humanId, city, debt)
+      employeeId <- Gen.identifier
+      companyId <- Gen.choose(1, 1000)
+      salary <- Gen.choose(1, 1000)
+    } yield putItemRequest(tableName, employeeId, companyId, salary)
 
   def genPutItemRequests: Gen[List[PutItemRequest]] = Gen.listOfN(3, genPutItemRequest)
 
-  def getItemRequest(tableName: String, humanId: String, city: String) =
-    GetItemRequest.builder().tableName(tableName).key(keyMap(humanId, city).asJava).attributesToGet("debt").build()
+  def getItemRequest(tableName: String, employeeId: String, companyId: Int) =
+    GetItemRequest.builder().tableName(tableName).key(keyMap(employeeId, companyId).asJava).attributesToGet("salary").build()
 
   val getItemMalformedRequest =
     GetItemRequest.builder().tableName(tableName).attributesToGet("not_present").build()
 
   protected val keySchema: List[KeySchemaElement] = {
     List(
-      KeySchemaElement.builder().attributeName("id").keyType(KeyType.HASH).build(),
-      KeySchemaElement.builder().attributeName("city").keyType(KeyType.RANGE).build()
+      KeySchemaElement.builder().attributeName("employeeId").keyType(KeyType.HASH).build(),
+      KeySchemaElement.builder().attributeName("companyId").keyType(KeyType.RANGE).build()
     )
   }
 
   protected val tableDefinition: List[AttributeDefinition] = {
     List(
-      AttributeDefinition.builder().attributeName("id").attributeType(ScalarAttributeType.S).build(),
-      AttributeDefinition.builder().attributeName("city").attributeType(ScalarAttributeType.S).build()
+      AttributeDefinition.builder().attributeName("employeeId").attributeType(ScalarAttributeType.S).build(),
+      AttributeDefinition.builder().attributeName("companyId").attributeType(ScalarAttributeType.N).build()
     )
   }
 
   protected val baseProvisionedThroughput =
     ProvisionedThroughput.builder().readCapacityUnits(10L).writeCapacityUnits(10L).build()
 
-  val tableName = "cities_test"
+  val tableName = "employeesepa"
 
   def createTableRequest(
     tableName: String = Gen.alphaLowerStr.sample.get,
@@ -107,10 +105,10 @@ trait DynamoDbFixture {
 
   def genRequestAttributes: Gen[(String, Int, Double)] = {
     for {
-      city <- Gen.nonEmptyListOf(Gen.alphaChar)
+      companyId <- Gen.nonEmptyListOf(Gen.alphaChar)
       citizenId <- genCitizenId
-      debt <- Gen.choose(0, 10000)
-    } yield ("-" + city.mkString, citizenId, debt.toDouble) // '-' was added to avoid empty strings
+      salary <- Gen.choose(0, 10000)
+    } yield ("-" + companyId.mkString, citizenId, salary.toDouble) // '-' was added to avoid empty strings
   }
 
 }

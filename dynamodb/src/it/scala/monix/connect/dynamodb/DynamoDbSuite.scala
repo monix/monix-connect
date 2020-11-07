@@ -38,13 +38,13 @@ class DynamoDbSuite extends AnyFlatSpec with Matchers with DynamoDbFixture with 
     //then
     t.runSyncUnsafe() shouldBe a[PutItemResponse]
     val getResponse: GetItemResponse =
-      Task.from(toScala(client.getItem(getItemRequest(tableName, newItem.humanId, newItem.city)))).runSyncUnsafe()
-    getResponse.item().values().asScala.head.n().toDouble shouldBe newItem.debt
+      Task.from(toScala(client.getItem(getItemRequest(tableName, newItem.employeeId, newItem.companyId)))).runSyncUnsafe()
+    getResponse.item().values().asScala.head.n().toDouble shouldBe newItem.salary
   }
 
   override def beforeAll(): Unit = {
-    val f = dynamoDb.createTable(tableName, keySchema, tableDefinition).runToFuture
-    Await.ready(f, 1.second)
+    val f = dynamoDb.createTable(tableName, keySchema, tableDefinition).runToFuture(global)
+    Await.result(f, 2.seconds)
     super.beforeAll()
   }
 

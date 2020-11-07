@@ -120,13 +120,13 @@ lazy val monixConnect = (project in file("."))
   .configs(IntegrationTest, IT)
   .settings(sharedSettings)
   .settings(name := "monix-connect")
-  .aggregate(akka, parquet, gcs, hdfs, mongodb, redis, s3, awsAuth)
-  .dependsOn(akka, parquet, gcs, hdfs, mongodb, redis, s3)
+  .aggregate(akka, parquet, gcs, hdfs, mongodb, redis, awsAuth)
+  .dependsOn(akka, parquet, gcs, hdfs, mongodb, redis)
 
 
 lazy val akka = monixConnector("akka", Dependencies.Akka)
 
-//lazy val dynamodb = monixConnector("dynamodb", Dependencies.DynamoDb).dependsOn(awsAuth)
+lazy val dynamodb = monixConnector("dynamodb", Dependencies.DynamoDb)//.dependsOn(awsAuth)
 
 lazy val hdfs = monixConnector("hdfs", Dependencies.Hdfs)
 
@@ -147,7 +147,7 @@ lazy val parquet = monixConnector("parquet", Dependencies.Parquet, scalaPBSettin
 
 lazy val redis = monixConnector("redis", Dependencies.Redis)
 
-lazy val s3 = monixConnector("s3", Dependencies.S3).aggregate(awsAuth).dependsOn(awsAuth)
+//lazy val s3 = monixConnector("s3", Dependencies.S3).aggregate(awsAuth).dependsOn(awsAuth)
 
 lazy val gcs = monixConnector("gcs", Dependencies.GCS)
 
@@ -169,11 +169,11 @@ def monixConnector(
 lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth)
   .settings(skipOnPublishSettings)
 
-lazy val benchmarks = monixConnector("benchmarks", Dependencies.Benchmarks)
-  .enablePlugins(JmhPlugin)
-  .settings(skipOnPublishSettings)
-  .dependsOn(parquet % "compile->compile;test->test", s3 % "compile->compile;test->test")
-  .aggregate(parquet, s3)
+//lazy val benchmarks = monixConnector("benchmarks", Dependencies.Benchmarks)
+//  .enablePlugins(JmhPlugin)
+//  .settings(skipOnPublishSettings)
+//  .dependsOn(parquet % "compile->compile;test->test", s3 % "compile->compile;test->test")
+//  .aggregate(parquet, s3)
 
 lazy val docs = project
   .in(file("monix-connect-docs"))
@@ -194,7 +194,7 @@ lazy val skipOnPublishSettings = Seq(
 lazy val mdocSettings = Seq(
   scalacOptions --= Seq("-Xfatal-warnings", "-Ywarn-unused"),
   crossScalaVersions := Seq(scalaVersion.value),
-  unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(akka, parquet, dynamodb, s3, gcs, hdfs, mongodb, redis),
+  unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(akka, parquet, dynamodb, gcs, hdfs, mongodb, redis),
   target in (ScalaUnidoc, unidoc) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",
   cleanFiles += (target in (ScalaUnidoc, unidoc)).value,
   docusaurusCreateSite := docusaurusCreateSite

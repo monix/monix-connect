@@ -56,7 +56,7 @@ object Dependencies {
 
   val DynamoDb = Seq(
     "com.amazonaws" % "aws-java-sdk-core" % Versions.AWS,
-    "software.amazon.awssdk" % "dynamodb" % Versions.AwsSdk
+    "software.amazon.awssdk" % "dynamodb" % Versions.DynamoDb
   ) ++ testDependencies(hasIt = true)
 
   val Hdfs = Seq(
