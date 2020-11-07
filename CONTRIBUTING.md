@@ -28,20 +28,41 @@ escalate into larger problems.
    request. If you do have write access to the repository, never work
    directly on master.
    
-4. When the work is completed, verify it with following commands:
+4. When the work is completed, verify that the unit tests are passing:
 
-```
-sbt scalafmtAll //it should be formatted on compile time
+```sbtshell
 sbt test
+```
+
+5. To run the _integration tests_:
+
+You'll need to have docker installed and start the dependencies: 
+```shell script
+sh start-dependencies.sh
+```
+
+Then, to only run the _it_:
+```sbtshell
 sbt it:test //triggers integration tests for each of the connectors
 ```
 
-5. Submit a Pull Request.
+6. Make sure the code is formatted with: 
+```sbtshell
+sbt scalafmtAll //it should be formatted on compile time
+```
 
-6. Anyone can comment on a pull request and you are expected to
+5. To revise documentation changes, you can run the web page on localhost with:
+```sbtshell
+sbt docs/docusaurusCreateSite
+cd website/
+yarn start
+```
+6. Submit a Pull Request.
+
+7. Anyone can comment on a pull request and you are expected to
    answer questions or to incorporate feedback.
 
-7. It is not allowed to force push to the branch on which the pull
+8. It is not allowed to force push to the branch on which the pull
    request is based.
 
 ## General Guidelines
@@ -62,9 +83,8 @@ sbt it:test //triggers integration tests for each of the connectors
 ## Finding Starting Point
 
 If you want to contribute but you don't know where to start - have a look at [issues](https://github.com/monix/monix-connect/issues).
-If there aren't any, have unclear description or seem too complicated - visit [monix/monix](https://gitter.im/monix/monix) Gitter channel, there is 
-currently tons of work to be done like: code documentation, web documentation, improving existing connectors as well as improving test coverage or even adding a new one. 
-Gitter is a go-to place in case you have any questions or need guidance since we're more than happy to help new contributors regardless of their experience.
+If there aren't any, have unclear description or seem too complicated - reach us out on the [monix/monix-connect](https://gitter.im/monix/monix-connect) gitter channel,
+ a go-to place in case you have any questions or need guidance since we're more than happy to help new contributors regardless of their experience.
    
 ## License
 
@@ -72,8 +92,8 @@ All code must be licensed under the Apache 2.0 license and all files
 must include the following copyright header:
 
 ```
-Copyright (c) 2014-$today.year by The Monix Project Developers.
-See the project homepage at: https://monix.io
+Copyright (c) 2020-$today.year by The Monix Connect Project Developers.
+See the project homepage at: https://connect.monix.io/
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
