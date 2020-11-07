@@ -18,7 +18,6 @@
 package monix.connect.dynamodb
 
 import monix.reactive.{Consumer, Observable}
-import monix.eval.Task
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.{DynamoDbRequest, DynamoDbResponse}
 
@@ -59,7 +58,7 @@ object DynamoDb {
     * @param dynamoDbOp implicit [[DynamoDbOp]] that abstracts the execution of the specific operation.
     * @param client asynchronous DynamoDb client.
     * @tparam In input type parameter that must be a subtype os [[DynamoDbRequest]].
-    * @tparam Out output type parameter that must be a subtype os [[DynamoDbRequest]].
+    * @tparam Out output type parameter that will be a subtype os [[DynamoDbRequest]].
     * @return DynamoDb operation transformer: `Observable[DynamoDbRequest] => Observable[DynamoDbRequest]`.
     */
   def transformer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
@@ -67,8 +66,8 @@ object DynamoDb {
     delayAfterFailure: Option[FiniteDuration] = None)(
     implicit
     dynamoDbOp: DynamoDbOp[In, Out],
-    client: DynamoDbAsyncClient): Observable[In] => Observable[Task[Out]] = { inObservable: Observable[In] =>
-    inObservable.map(request => DynamoDbOp.create(request, retries, delayAfterFailure))
+    client: DynamoDbAsyncClient): Observable[In] => Observable[Out] = { inObservable: Observable[In] =>
+    inObservable.mapEval(request => DynamoDbOp.create(request, retries, delayAfterFailure))
   }
 
 }

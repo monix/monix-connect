@@ -13,6 +13,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model._
 import DynamoDbOp.Implicits._
+import monix.reactive.Observable.Transformer
 
 import scala.concurrent.duration._
 import scala.collection.JavaConverters._
@@ -31,17 +32,17 @@ class DynamoDbTransformerSuite
       s"transform `CreateTableRequests` to `CreateTableResponses`" in {
         //given
         val randomTableName: String = genTableName.sample.get
-        val transformer: Transformer[CreateTableRequest, Task[CreateTableResponse]] =
+        val transformer: Transformer[CreateTableRequest, CreateTableResponse] =
           DynamoDb.transformer[CreateTableRequest, CreateTableResponse]()
         val request =
           createTableRequest(tableName = randomTableName, schema = keySchema, attributeDefinition = tableDefinition)
 
         //when
-        val ob: Observable[Task[CreateTableResponse]] =
+        val ob: Observable[CreateTableResponse] =
           Observable
             .pure(request)
             .transform(transformer)
-        val t: Task[CreateTableResponse] = ob.headL.runToFuture.futureValue
+        val t: Task[CreateTableResponse] = ob.headL
 
         //then
         whenReady(t.runToFuture) { response =>
@@ -60,7 +61,7 @@ class DynamoDbTransformerSuite
 
         s"transform a single`PutItemRequest` to `PutItemResponse` " in {
           //given
-          val transformer: Transformer[PutItemRequest, Task[PutItemResponse]] =
+          val transformer: Transformer[PutItemRequest, PutItemResponse] =
             DynamoDb.transformer[PutItemRequest, PutItemResponse]()
           val city = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
           val citizenId = genCitizenId.sample.get
@@ -68,7 +69,7 @@ class DynamoDbTransformerSuite
           val request: PutItemRequest = putItemRequest(tableName, city, citizenId, debt)
 
           //when
-          val t: Task[PutItemResponse] = Observable.fromIterable(Iterable(request)).transform(transformer).headL.flatten
+          val t: Task[PutItemResponse] = Observable.fromIterable(Iterable(request)).transform(transformer).lastL
 
           //then
           whenReady(t.runToFuture) { r =>
@@ -80,23 +81,22 @@ class DynamoDbTransformerSuite
 
         s"transform `PutItemRequests` to `PutItemResponses` " in {
           //given
-          val transformer: Transformer[PutItemRequest, Task[PutItemResponse]] =
+          val transformer: Transformer[PutItemRequest, PutItemResponse] =
             DynamoDb.transformer[PutItemRequest, PutItemResponse]()
           val requestAttr: List[(String, Int, Double)] = Gen.nonEmptyListOf(genRequestAttributes).sample.get
           val requests: List[PutItemRequest] = requestAttr.map { case (city, citizenId, debt) => putItemRequest(tableName, city, citizenId, debt) }
 
           //when
-          val t: Task[List[PutItemResponse]] =
+          val t =
             Observable
               .fromIterable(requests)
               .transform(transformer)
-              .toListL
-              .map(Task.sequence(_))
-              .flatten
+              .lastL
+
 
           //then
           whenReady(t.runToFuture) { r =>
-            r shouldBe a[List[PutItemResponse]]
+            r shouldBe a[PutItemResponse]
             requestAttr.map { case (city, citizenId, debt) =>
               val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, city, citizenId))).futureValue
               getResponse.item().values().asScala.head.n().toDouble shouldBe debt
@@ -114,11 +114,11 @@ class DynamoDbTransformerSuite
         val debt: Int = 550
         toScala(client.putItem(putItemRequest(tableName, city, citizenId, debt))).futureValue
         val request: GetItemRequest = getItemRequest(tableName, city, citizenId)
-        val transformer: Transformer[GetItemRequest, Task[GetItemResponse]] = DynamoDb.transformer()
+        val transformer: Transformer[GetItemRequest, GetItemResponse] = DynamoDb.transformer()
 
         //when
         val t: Task[GetItemResponse] =
-          Observable.fromIterable(Iterable(request)).transform(transformer).headL.runSyncUnsafe()
+          Observable.fromIterable(Iterable(request)).transform(transformer).headL
 
         //then
         whenReady(t.runToFuture) { response =>
