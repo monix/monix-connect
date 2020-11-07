@@ -5,7 +5,7 @@ object Dependencies {
   object Versions {
 
     //main
-    val AwsSdk = "2.15.7"
+    val AwsSdk = "2.15.19"
     val AkkaStreams = "2.6.9"
     val AWS = "1.11.749"
     val Cats_Effect = "2.1.3"
@@ -52,8 +52,12 @@ object Dependencies {
     "com.github.pureconfig" %% "pureconfig" % Versions.Pureconfig) ++ testDependencies(hasIt = false)
 
   val Benchmarks = Seq(
-    "org.scalacheck" %% "scalacheck"                 % Versions.Scalacheck,
-    "com.lightbend.akka" %% "akka-stream-alpakka-s3" % "2.0.2") ++ testDependencies(hasIt = false)
+   "com.lightbend.akka" %% "akka-stream-alpakka-s3" % "2.0.2",
+    "org.scalacheck" %% "scalacheck" % Versions.Scalacheck,
+    "dev.profunktor"    %% "redis4cats-effects" % "0.10.3",
+    "io.chrisdavenport" %% "rediculous"         % "0.0.8",
+    "io.laserdisc"      %% "laserdisc-fs2"      % "0.4.1"
+  )++ testDependencies(hasIt = false)
 
   val DynamoDb = Seq(
     "com.amazonaws"          % "aws-java-sdk-core" % Versions.AWS,
