@@ -4,6 +4,7 @@ import java.lang.Thread.sleep
 
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
+import monix.reactive.Observable
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -35,7 +36,9 @@ class DynamoDbSuite extends AnyFlatSpec with Matchers with DynamoDbFixture with 
 
     //when
     val dynamodbResource = DynamoDb.create(staticAwsCredProvider, Region.AWS_GLOBAL, endpoint = Some("http://localhost:4569"))
-    val t: Task[ListTablesResponse] = dynamodbResource.use(_.single(listRequest))
+    val t: Task[ListTablesResponse] = dynamodbResource.use { dynamodb =>
+      Observable.now(listRequest).transform(dynamodb.transformer()).headL
+    }
 
     //then
     val listedTables = t.runSyncUnsafe()
@@ -49,10 +52,9 @@ class DynamoDbSuite extends AnyFlatSpec with Matchers with DynamoDbFixture with 
     val request: PutItemRequest = putItemRequest(tableName, citizen)
 
     //when
-    val t: Task[PutItemResponse] = DynamoDb.createUnsafe(client).single(request)
+    Observable.now(request).consumeWith(DynamoDb.createUnsafe(client).sink()).runSyncUnsafe()
 
     //then
-    t.runSyncUnsafe() shouldBe a[PutItemResponse]
     val getResponse = Task.from(client.getItem(getItemRequest(tableName, citizen.citizenId, citizen.city))).runSyncUnsafe()
     getResponse.item().values().asScala.head.n().toDouble shouldBe citizen.debt
   }

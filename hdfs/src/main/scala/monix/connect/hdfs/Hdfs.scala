@@ -36,10 +36,10 @@ object Hdfs {
     * @param scheduler An implicit [[Scheduler]] instance to be in the scope of the call.
     * @return A [[Long]] that represents the number of bytes that has been written.
     */
-  def append(fs: FileSystem, path: Path, lineSeparator: Option[String] = None)(
+  def append(fs: FileSystem, path: Path)(
     implicit
     scheduler: Scheduler): Consumer[Array[Byte], Long] = {
-    new HdfsSubscriber(fs, path, appendEnabled = true, lineSeparator = lineSeparator)
+    new HdfsSubscriber(fs, path, appendEnabled = true)
   }
 
   /**
@@ -65,9 +65,8 @@ object Hdfs {
     overwrite: Boolean = true,
     replication: Short = 3,
     bufferSize: Int = 4096,
-    blockSize: Int = 134217728,
-    lineSeparator: Option[String] = None)(implicit scheduler: Scheduler): Consumer[Array[Byte], Long] = {
-    new HdfsSubscriber(fs, path, overwrite, bufferSize, replication, blockSize, appendEnabled = false, lineSeparator)
+    blockSize: Int = 134217728)(implicit scheduler: Scheduler): Consumer[Array[Byte], Long] = {
+    new HdfsSubscriber(fs, path, overwrite, bufferSize, replication, blockSize, appendEnabled = false)
   }
 
   /**

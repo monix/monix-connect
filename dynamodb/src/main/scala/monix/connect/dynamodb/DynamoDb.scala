@@ -19,10 +19,6 @@ package monix.connect.dynamodb
 
 import cats.effect.Resource
 import monix.connect.aws.auth.AppConf
-import monix.connect.dynamodb.domain.{GetItemSettings, RestoreTableToPointInTimeSettings, RetryStrategy}
-import monix.connect.dynamodb.DynamoDbOp.create
-import monix.connect.dynamodb.DynamoDbOp.Implicits._
-import monix.connect.dynamodb.domain._
 import monix.eval.Task
 import monix.execution.annotations.UnsafeBecauseImpure
 import monix.reactive.{Consumer, Observable}
@@ -30,47 +26,7 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
-import software.amazon.awssdk.services.dynamodb.model.{
-  AttributeDefinition,
-  AttributeValue,
-  AutoScalingSettingsUpdate,
-  BackupTypeFilter,
-  BatchGetItemResponse,
-  BatchWriteItemResponse,
-  BillingMode,
-  ContributorInsightsAction,
-  CreateBackupResponse,
-  CreateGlobalTableResponse,
-  CreateTableResponse,
-  DescribeBackupResponse,
-  DynamoDbRequest,
-  DynamoDbResponse,
-  GetItemResponse,
-  GlobalSecondaryIndexAutoScalingUpdate,
-  GlobalTableGlobalSecondaryIndexSettingsUpdate,
-  KeySchemaElement,
-  KeysAndAttributes,
-  ListBackupsResponse,
-  ListContributorInsightsResponse,
-  ListGlobalTablesResponse,
-  ListTablesResponse,
-  PointInTimeRecoverySpecification,
-  PutItemRequest,
-  PutItemResponse,
-  Replica,
-  ReplicaAutoScalingUpdate,
-  ReplicaSettingsUpdate,
-  ReplicaUpdate,
-  RestoreTableFromBackupResponse,
-  ReturnConsumedCapacity,
-  ReturnItemCollectionMetrics,
-  Tag,
-  TransactGetItemsResponse,
-  UntagResourceResponse,
-  UpdateContinuousBackupsResponse,
-  UpdateGlobalTableResponse,
-  WriteRequest
-}
+import software.amazon.awssdk.services.dynamodb.model.{DynamoDbRequest, DynamoDbResponse}
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -180,7 +136,7 @@ object DynamoDb { self =>
     }
   }
 
-  @deprecated("moved to the trait for safer usage")
+  @deprecated("moved to the trait as `sink`")
   def consumer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
     retries: Int = 0,
     delayAfterFailure: Option[FiniteDuration] = None)(
@@ -213,7 +169,7 @@ trait DynamoDb { self =>
     * @tparam Out output type parameter that must be a subtype os [[DynamoDbRequest]].
     * @return A [[monix.reactive.Consumer]] that expects and executes dynamodb requests.
     */
-  def consumer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
+  def sink[In <: DynamoDbRequest, Out <: DynamoDbResponse](
     retries: Int = 0,
     delayAfterFailure: Option[FiniteDuration] = None)(implicit dynamoDbOp: DynamoDbOp[In, Out]): Consumer[In, Unit] =
     DynamoDbSubscriber(retries, delayAfterFailure)

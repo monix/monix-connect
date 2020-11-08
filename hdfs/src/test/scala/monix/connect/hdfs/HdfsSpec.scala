@@ -43,14 +43,14 @@ class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with
     "dfs.client.block.write.replace-datanode-on-failure.policy",
     "NEVER"
   ) //needed for performing append operation on hadoop-minicluster
-  val fs: FileSystem = FileSystem.get(conf)
+  val fs: FileSystem = FileSystem.getLocal(conf)
 
   s"${Hdfs}" should {
 
     "write and read back a single chunk of bytes" in new HdfsFixture {
       //given
       val path: Path = new Path(genFileName.sample.get)
-      val hdfsWriter: Consumer[Array[Byte], Long] = Hdfs.write(fs, path, lineSeparator = None)
+      val hdfsWriter: Consumer[Array[Byte], Long] = Hdfs.write(fs, path)
       val chunk: Array[Byte] = genChunk.sample.get
 
       //when
@@ -68,7 +68,7 @@ class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with
     "write and read back multiple chunks" in new HdfsFixture {
       //given
       val path: Path = new Path(genFileName.sample.get)
-      val hdfsWriter: Consumer[Array[Byte], Long] = Hdfs.write(fs, path, lineSeparator = None)
+      val hdfsWriter: Consumer[Array[Byte], Long] = Hdfs.write(fs, path)
       val chunks: List[Array[Byte]] = genChunks.sample.get
 
       //when
@@ -86,8 +86,7 @@ class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with
     "write and read back multiple chunks with a line separator" in new HdfsFixture {
       //given
       val path: Path = new Path(genFileName.sample.get)
-      val lineSeparator: String = "\n"
-      val hdfsWriter: Consumer[Array[Byte], Long] = Hdfs.write(fs, path, lineSeparator = Some(lineSeparator))
+      val hdfsWriter: Consumer[Array[Byte], Long] = Hdfs.write(fs, path)
       val chunks: List[Array[Byte]] = genChunks.sample.get
       val nChunks = chunks.size
 
@@ -99,10 +98,10 @@ class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with
 
       //then
       val r: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
-      val expectedResult: List[Byte] = chunks.map(_ ++ lineSeparator.getBytes).flatten
+      val expectedResult: List[Byte] = chunks.flatten
 
       r shouldBe expectedResult
-      offset shouldBe (chunks.flatten.size + (nChunks * lineSeparator.getBytes.size))
+      offset shouldBe chunks.flatten.size
     }
 
     "allow to overwrite if enabled" in new HdfsFixture {
