@@ -40,7 +40,7 @@ import scala.concurrent.duration.FiniteDuration
 
 package object domain {
 
-  @deprecated("See `RetryStrategy")
+  @deprecated("See `RetryStrategy`")
   case class RetrySettings(retries: Int, delayAfterFailure: Option[FiniteDuration])
   final val DefaultRetrySettings = RetrySettings(0, Option.empty)
 

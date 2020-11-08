@@ -125,7 +125,7 @@ private[dynamodb] trait DynamoDbOp[In <: DynamoDbRequest, Out <: DynamoDbRespons
   * @note All of them are defined implicitly, and can be imported from the object [[DynamoDbOp.Implicits]]
   *       which will automatically infer and extend the [[DynamoDbRequest]] as [[DynamoDbOp]].
   */
-private object DynamoDbOp {
+object DynamoDbOp {
 
   object Implicits {
 

@@ -106,10 +106,7 @@ private[hdfs] class HdfsSubscriber(
     (sub, AssignableCancelable.single)
   }
 
-  /**
-    * A builder for creating an instance of [[FSDataOutputStream]] that
-    * @return
-    */
+  /** A builder for creating an instance of [[FSDataOutputStream]]. */
   protected def createOrAppendFS(
     fs: FileSystem,
     path: Path,

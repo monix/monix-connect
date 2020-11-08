@@ -59,6 +59,39 @@ class DynamoDbSuite extends AnyFlatSpec with Matchers with DynamoDbFixture with 
     getResponse.item().values().asScala.head.n().toDouble shouldBe citizen.debt
   }
 
+  "A real example" should "reuse the resource evaluation" in {
+    import software.amazon.awssdk.services.dynamodb.model.{PutItemRequest, AttributeValue}
+
+    //given
+    val citizen1 = Citizen("001", "Lisbon", 100)
+    val citizen2 = Citizen("001", "Lisbon", 100)
+    val citizen3 = Citizen("001", "Lisbon", 100)
+
+    val bucket = "my-bucket"
+    val key = "my-key"
+    val content = "my-content"
+    val strAttr: String => AttributeValue = value => AttributeValue.builder.s(value).build
+
+    def putItemRequest(tableName: String, citizenId: String, city: String, debt: Double): PutItemRequest =
+      PutItemRequest
+        .builder
+        .tableName(tableName)
+        .item(Map("citizenId" -> strAttr(citizenId), "city" -> strAttr(city)).asJava)
+        .build
+
+    def runDynamoDbApp(dynamoDb: DynamoDb): Task[Array[Byte]] = {
+      for {
+        _ <- s3.createBucket(bucket)
+        _ <- s3.upload(bucket, key, content.getBytes)
+        existsObject <- s3.existsObject(bucket, key)
+        download <- {
+          if(existsObject) s3.download(bucket, key)
+          else Task.raiseError(NoSuchKeyException.builder().build())
+        }
+      } yield download
+    }
+  }
+
   override def beforeAll(): Unit = {
     createTable(tableName).runSyncUnsafe()
     super.beforeAll()

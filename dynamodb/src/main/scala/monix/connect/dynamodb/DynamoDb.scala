@@ -28,7 +28,7 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.{DynamoDbRequest, DynamoDbResponse}
 
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.{Duration, FiniteDuration}
 
 /**
   * An idiomatic DynamoDb client integrated with Monix ecosystem.
@@ -63,15 +63,8 @@ object DynamoDb { self =>
   }
 
   /**
-    * Creates a [[Resource]] that will use the passed
-    * AWS configurations to allocate and release [[DynamoDb]].
-    * Thus, the api expects an `application.conf` file to be present
-    * in the `resources` folder.
-    *
-    * @see how does the expected `.conf` file should look like
-    *      https://github.com/monix/monix-connect/blob/master/aws-auth/src/main/resources/reference.conf`
-    *
-    * @see the cats effect resource data type: https://typelevel.org/cats-effect/datatypes/resource.html
+    * Creates a [[Resource]] that will use the passed-by-parameter
+    * AWS configurations to acquire and release [[DynamoDb]].
     *
     * ==Example==
     *
@@ -82,14 +75,14 @@ object DynamoDb { self =>
     *   import software.amazon.awssdk.regions.Region
     *
     *   val defaultCredentials = DefaultCredentialsProvider.create()
-    *   val s3Resource: Resource[Task, DynamoDb] = DynamoDb.create(defaultCredentials, Region.AWS_GLOBAL)
+    *   val dynamoDbResource: Resource[Task, DynamoDb] = DynamoDb.create(defaultCredentials, Region.AWS_GLOBAL)
     * }}}
     *
-    * @param credentialsProvider Strategy for loading credentials and authenticate to AWS S3
-    * @param region An Amazon Web Services region that hosts a set of Amazon services.
-    * @param endpoint The endpoint with which the SDK should communicate.
-    * @param httpClient Sets the [[SdkAsyncHttpClient]] that the SDK service client will use to make HTTP calls.
-    * @return a [[Resource]] of [[Task]] that allocates and releases [[S3]].
+    * @param credentialsProvider the strategy for loading credentials and authenticate to AWS S3
+    * @param region an Amazon Web Services region that hosts a set of Amazon services.
+    * @param endpoint the endpoint url with which the SDK should communicate.
+    * @param httpClient sets the [[SdkAsyncHttpClient]] that the SDK service client will use to make HTTP calls.
+    * @return a [[Resource]] of [[Task]] that allocates and releases [[DynamoDb]].
     **/
   def create(
     credentialsProvider: AwsCredentialsProvider,
@@ -114,7 +107,7 @@ object DynamoDb { self =>
     * it can either be malformed or closed, which would result in underlying failures.
     *
     * @see [[DynamoDb.fromConfig]] and [[DynamoDb.create]] for a pure usage of [[DynamoDb]].
-    * They both will make sure that the s3 connection is created with the required
+    * They both will make sure that the connection is created with the required
     * resources and guarantee that the client was not previously closed.
     *
     * ==Example==
@@ -123,7 +116,15 @@ object DynamoDb { self =>
     *   import java.time.Duration
     *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
     *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
-    *   import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
+    *   import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
+    *
+    *   val asyncClient: DynamoDbAsyncClient = DynamoDbAsyncClient
+    *      .builder()
+    *      .credentialsProvider(DefaultCredentialsProvider.create())
+    *      .region(AWS_GLOBAL)
+    *      .build()
+    *
+    *   val dynamoDb: DynamoDb = DynamoDb.createUnsafe(asyncClient)
     * }}}
     *
     * @param dynamoDbAsyncClient an instance of a [[S3AsyncClient]].
@@ -134,6 +135,43 @@ object DynamoDb { self =>
     new DynamoDb {
       override val asyncClient: DynamoDbAsyncClient = dynamoDbAsyncClient
     }
+  }
+
+  /**
+    * Creates a new [[DynamoDb]] instance out of the the passed AWS configurations.
+    *
+    * It provides a fast forward access to the [[DynamoDb]] that avoids
+    * dealing with [[Resource]], however in this case, the created
+    * resources will not be released like in [[create]].
+    * Thus, it is the user's responsability to close the connection.
+    *
+    * ==Example==
+    *
+    * {{{
+    *   import monix.execution.Scheduler.Implicits.global
+    *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
+    *   import software.amazon.awssdk.regions.Region
+    *
+    *   val defaultCred = DefaultCredentialsProvider.create()
+    *   val dynamoDb: DynamoDb = DynamoDb.createUnsafe(defaultCred, Region.AWS_GLOBAL)
+    *   // do your stuff here
+    *   dynamoDb.close.runToFuture
+    * }}}
+    *
+    * @param credentialsProvider Strategy for loading credentials and authenticate to AWS.
+    * @param region An Amazon Web Services region that hosts a set of Amazon services.
+    * @param endpoint The endpoint url which the SDK should communicate to.
+    * @param httpClient Sets the [[SdkAsyncHttpClient]] that the SDK service client will use to make HTTP calls.
+    * @return a [[Resource]] of [[Task]] that allocates and releases [[DynamoDb]].
+    */
+  @UnsafeBecauseImpure
+  def createUnsafe(
+                    credentialsProvider: AwsCredentialsProvider,
+                    region: Region,
+                    endpoint: Option[String] = None,
+                    httpClient: Option[SdkAsyncHttpClient] = None): DynamoDb = {
+    val asyncClient = AsyncClientConversions.from(credentialsProvider, region, endpoint, httpClient)
+    self.createUnsafe(asyncClient)
   }
 
   @deprecated("moved to the trait as `sink`")
@@ -207,7 +245,7 @@ trait DynamoDb { self =>
   def single[In <: DynamoDbRequest, Out <: DynamoDbResponse](
     request: In,
     retries: Int = 0,
-    delayAfterFailure: Option[FiniteDuration] = None)(implicit dynamoDbOp: DynamoDbOp[In, Out]): Task[Out] = {
+    delayAfterFailure: FiniteDuration = Duration.Zero)(implicit dynamoDbOp: DynamoDbOp[In, Out]): Task[Out] = {
 
     require(retries >= 0, "Retries per operation must be higher or equal than 0.")
 
@@ -219,13 +257,13 @@ trait DynamoDb { self =>
             if (retries > 0) single(request, retries - 1, delayAfterFailure)
             else Task.raiseError(ex))
         delayAfterFailure match {
-          case Some(delay) => t.delayExecution(delay)
-          case None => t
+          case Duration.Zero => t
+          case _ => t.delayExecution(delayAfterFailure)
         }
       }
   }
 
-  /** Closes the underlying [[S3AsyncClient]] */
-  def close: Task[Unit] = Task.evalOnce(asyncClient.close())
+  /** Closes the [[asyncClient]] */
+  def close: Task[Unit] = Task.eval(asyncClient.close())
 
 }

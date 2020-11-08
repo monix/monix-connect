@@ -43,7 +43,7 @@ class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with
     "dfs.client.block.write.replace-datanode-on-failure.policy",
     "NEVER"
   ) //needed for performing append operation on hadoop-minicluster
-  val fs: FileSystem = FileSystem.getLocal(conf)
+  val fs: FileSystem = FileSystem.get(conf)
 
   s"${Hdfs}" should {
 

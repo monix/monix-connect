@@ -9,7 +9,7 @@ import org.scalatest.TestSuite
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
-import software.amazon.awssdk.services.dynamodb.model.{AttributeDefinition, AttributeValue, CreateTableRequest, CreateTableResponse, DeleteTableRequest, DeleteTableResponse, GetItemRequest, KeySchemaElement, KeyType, ProvisionedThroughput, PutItemRequest, ScalarAttributeType}
+import software.amazon.awssdk.services.dynamodb.model.{AttributeDefinition, AttributeValue, BillingMode, CreateTableRequest, CreateTableResponse, DeleteTableRequest, DeleteTableResponse, GetItemRequest, KeySchemaElement, KeyType, ProvisionedThroughput, PutItemRequest, ScalarAttributeType}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -18,8 +18,8 @@ trait DynamoDbFixture {
   this: TestSuite =>
 
   case class Citizen(citizenId: String, city: String, debt: Double)
-  val strAttr: String => AttributeValue = value => AttributeValue.builder().s(value).build()
-  val numAttr: Int => AttributeValue = value => AttributeValue.builder().n(value.toString).build()
+  val strAttr: String => AttributeValue = value => AttributeValue.builder.s(value).build
+  val numAttr: Int => AttributeValue = value => AttributeValue.builder.n(value.toString).build
   val doubleAttr: Double => AttributeValue = value => AttributeValue.builder().n(value.toString).build()
 
   val staticAwsCredProvider = StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x"))
@@ -38,16 +38,16 @@ trait DynamoDbFixture {
   val genCitizenId = Gen.choose(1, 100000)
   val keyMap = (citizenId: String, city: String) => Map("citizenId" -> strAttr(citizenId), "city" -> strAttr(city))
 
-  val item = (citizenId: String, city: String, debt: Double) => keyMap(citizenId, city) ++ Map("debt" -> doubleAttr(debt))
+  val citizenItem = (citizenId: String, city: String, debt: Double) => keyMap(citizenId, city) ++ Map("debt" -> doubleAttr(debt))
 
   def putItemRequest(tableName: String, citizen: Citizen): PutItemRequest = putItemRequest(tableName, citizen.citizenId, citizen.city, citizen.debt)
 
   def putItemRequest(tableName: String, citizenId: String, city: String, debt: Double): PutItemRequest =
     PutItemRequest
-      .builder()
+      .builder
       .tableName(tableName)
-      .item(item(citizenId, city, debt).asJava)
-      .build()
+      .item(Map("citizenId" -> strAttr(citizenId), "city" -> strAttr(city)).asJava)
+      .build
 
   val genPutItemRequest: Gen[PutItemRequest] =
     for {
@@ -73,8 +73,8 @@ trait DynamoDbFixture {
 
   protected val tableDefinition: List[AttributeDefinition] = {
     List(
-      AttributeDefinition.builder().attributeName("citizenId").attributeType(ScalarAttributeType.S).build(),
-      AttributeDefinition.builder().attributeName("city").attributeType(ScalarAttributeType.S).build()
+      AttributeDefinition.builder.attributeName("citizenId").attributeType(ScalarAttributeType.S).build(),
+      AttributeDefinition.builder.attributeName("city").attributeType(ScalarAttributeType.S).build()
     )
   }
 
@@ -87,11 +87,11 @@ trait DynamoDbFixture {
     attributeDefinition: List[AttributeDefinition],
     provisionedThroughput: ProvisionedThroughput = baseProvisionedThroughput): CreateTableRequest = {
     CreateTableRequest
-      .builder()
+      .builder
       .tableName(tableName)
       .keySchema(schema: _*)
       .attributeDefinitions(attributeDefinition: _*)
-      .provisionedThroughput(provisionedThroughput)
+      .billingMode(BillingMode.PAY_PER_REQUEST)
       .build()
   }
 
