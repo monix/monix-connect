@@ -1,6 +1,5 @@
 package monix.connect.dynamodb
 
-import java.lang.Thread.sleep
 
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
@@ -12,7 +11,6 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import software.amazon.awssdk.services.dynamodb.model._
-import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 
 import scala.concurrent.duration._
 import scala.collection.JavaConverters._
@@ -56,8 +54,8 @@ class DynamoDbConsumerSuite
           DynamoDb.consumer[PutItemRequest, PutItemResponse]()
         val city = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
         val citizenId = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-        val debt = Gen.choose(0, 10000).sample.get
-        val request: PutItemRequest = putItemRequest(tableName, city, citizenId, debt)
+        val age = Gen.choose(0, 100).sample.get
+        val request: PutItemRequest = putItemRequest(tableName, city, citizenId, age)
 
         //when
         val t: Task[Unit] = Observable.pure(request).consumeWith(consumer)
@@ -66,7 +64,7 @@ class DynamoDbConsumerSuite
         whenReady(t.runToFuture) { r =>
           r shouldBe a[Unit]
           val getResponse: GetItemResponse = Task.from(client.getItem(getItemRequest(tableName, city, citizenId))).runSyncUnsafe()
-          getResponse.item().values().asScala.head.n().toDouble shouldBe debt
+          getResponse.item().values().asScala.head.n().toDouble shouldBe age
         }
       }
 
@@ -75,7 +73,7 @@ class DynamoDbConsumerSuite
         val consumer: Consumer[PutItemRequest, Unit] =
           DynamoDb.consumer[PutItemRequest, PutItemResponse]()
         val requestAttr: List[Citizen] = Gen.nonEmptyListOf(genCitizen).sample.get
-        val requests: List[PutItemRequest] = requestAttr.map { citizen => putItemRequest(tableName, citizen.citizenId, citizen.city, citizen.debt) }
+        val requests: List[PutItemRequest] = requestAttr.map { citizen => putItemRequest(tableName, citizen.citizenId, citizen.city, citizen.age) }
 
         //when
         val t: Task[Unit] = Observable.fromIterable(requests).consumeWith(consumer)
@@ -85,7 +83,7 @@ class DynamoDbConsumerSuite
           r shouldBe a[Unit]
           requestAttr.map { citizen =>
             val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, citizen.citizenId, citizen.city))).futureValue
-            getResponse.item().values().asScala.head.n().toDouble shouldBe citizen.debt
+            getResponse.item().values().asScala.head.n().toDouble shouldBe citizen.age
           }
         }
       }
@@ -98,8 +96,8 @@ class DynamoDbConsumerSuite
         //given
         val city = "Barcelona"
         val citizenId = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-        val debt: Int = 1015
-        Task.from(client.putItem(putItemRequest(tableName, city, citizenId, debt))).runSyncUnsafe()
+        val age: Int = 1015
+        Task.from(client.putItem(putItemRequest(tableName, city, citizenId, age))).runSyncUnsafe()
         val request: GetItemRequest = getItemRequest(tableName, city, citizenId)
 
         //when

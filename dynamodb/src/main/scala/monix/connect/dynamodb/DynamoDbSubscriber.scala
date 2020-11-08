@@ -35,16 +35,16 @@ import scala.concurrent.duration.FiniteDuration
   *                     it must be higher or equal than 0.
   * @param dynamoDbOp an implicit [[DynamoDbOp]] that would abstract the execution of the specific operation.
   * @param delayAfterFailure delay after failure for the execution of a single [[DynamoDbOp]].
-  * @param client an implicit instance of a [[DynamoDbAsyncClient]].
+  * @param dynamoDb an implicit instance of a [[DynamoDb]].
   * @tparam In a lower bounded type of [[DynamoDbRequest]] that represents the incoming elements.
   * @tparam Out The response of the execution as type parameter lower bounded by [[DynamoDbResponse]].
   */
 private[dynamodb] class DynamoDbSubscriber[In <: DynamoDbRequest, Out <: DynamoDbResponse](
+  dynamoDb: DynamoDb,
   retriesPerOp: Int,
-  delayAfterFailure: Option[FiniteDuration])(
+  delayAfterFailure: FiniteDuration)(
   implicit
-  dynamoDbOp: DynamoDbOp[In, Out],
-  client: DynamoDbAsyncClient)
+  dynamoDbOp: DynamoDbOp[In, Out])
   extends Consumer[In, Unit] {
 
   require(retriesPerOp >= 0, "Retries per operation must be higher or equal than 0.")
@@ -55,8 +55,8 @@ private[dynamodb] class DynamoDbSubscriber[In <: DynamoDbRequest, Out <: DynamoD
       implicit val scheduler = s
 
       def onNext(request: In): Future[Ack] = {
-        DynamoDbOp
-          .create(request, retriesPerOp, delayAfterFailure)
+        dynamoDb
+          .single(request, retriesPerOp, delayAfterFailure)
           .redeem(ex => {
             onError(ex)
             Ack.Stop
@@ -83,10 +83,10 @@ private[dynamodb] class DynamoDbSubscriber[In <: DynamoDbRequest, Out <: DynamoD
 /** Companion object of [[DynamoDbSubscriber]] class */
 private[dynamodb] object DynamoDbSubscriber {
   def apply[In <: DynamoDbRequest, Out <: DynamoDbResponse](
+    dynamoDb: DynamoDb,
     retriesPerOp: Int,
-    delayAfterFailure: Option[FiniteDuration])(
+    delayAfterFailure: FiniteDuration)(
     implicit
-    dynamoDbOp: DynamoDbOp[In, Out],
-    client: DynamoDbAsyncClient): Consumer[In, Unit] =
-    new DynamoDbSubscriber(retriesPerOp, delayAfterFailure)(dynamoDbOp, client)
+    dynamoDbOp: DynamoDbOp[In, Out]): Consumer[In, Unit] =
+    new DynamoDbSubscriber(dynamoDb, retriesPerOp, delayAfterFailure)(dynamoDbOp)
 }

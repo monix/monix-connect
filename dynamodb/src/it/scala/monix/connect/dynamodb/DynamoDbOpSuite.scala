@@ -1,6 +1,5 @@
 package monix.connect.dynamodb
 
-import java.lang.Thread.sleep
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import org.scalacheck.Gen
@@ -23,8 +22,8 @@ class DynamoDbOpSuite
       //given
       val city = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
       val citizenId = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-      val debt = Gen.choose(0, 10000).sample.get
-      val request: PutItemRequest = putItemRequest(tableName, city, citizenId, debt)
+      val age = Gen.choose(0, 10000).sample.get
+      val request: PutItemRequest = putItemRequest(tableName, city, citizenId, age)
 
       //when
       val t: Task[PutItemResponse] = DynamoDbOp.create(request)
@@ -32,7 +31,7 @@ class DynamoDbOpSuite
       //then
       t.runSyncUnsafe() shouldBe a[PutItemResponse]
       val getResponse: GetItemResponse = Task.from(client.getItem(getItemRequest(tableName, city, citizenId))).runSyncUnsafe()
-      getResponse.item().values().asScala.head.n().toDouble shouldBe debt
+      getResponse.item().values().asScala.head.n().toDouble shouldBe age
     }
 
   }

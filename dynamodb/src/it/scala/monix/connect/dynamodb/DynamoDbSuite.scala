@@ -1,16 +1,16 @@
 package monix.connect.dynamodb
 
-import java.lang.Thread.sleep
-
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
+import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.dynamodb.model._
+import software.amazon.awssdk.services.dynamodb.model.{GetItemRequest, GetItemResponse, ListTablesRequest, ListTablesResponse, PutItemRequest}
 
+import scala.concurrent.duration._
 import scala.collection.JavaConverters._
 
 class DynamoDbSuite extends AnyFlatSpec with Matchers with DynamoDbFixture with BeforeAndAfterAll {
@@ -19,6 +19,7 @@ class DynamoDbSuite extends AnyFlatSpec with Matchers with DynamoDbFixture with 
 
   s"${DynamoDbOp}" can "be created from config" in {
     //given
+    import monix.connect.dynamodb.DynamoDbOp.Implicits.listTablesOp
     val listRequest = ListTablesRequest.builder.build
 
     //when
@@ -32,6 +33,7 @@ class DynamoDbSuite extends AnyFlatSpec with Matchers with DynamoDbFixture with 
 
   it can "be safely created from the parameter configurations" in {
     //given
+    import monix.connect.dynamodb.DynamoDbOp.Implicits.putItemOp
     val listRequest = ListTablesRequest.builder.build
 
     //when
@@ -48,6 +50,7 @@ class DynamoDbSuite extends AnyFlatSpec with Matchers with DynamoDbFixture with 
 
   it can "be created unsafely" in {
     //given
+    import monix.connect.dynamodb.DynamoDbOp.Implicits.putItemOp
     val citizen = genCitizen.sample.get
     val request: PutItemRequest = putItemRequest(tableName, citizen)
 
@@ -56,40 +59,47 @@ class DynamoDbSuite extends AnyFlatSpec with Matchers with DynamoDbFixture with 
 
     //then
     val getResponse = Task.from(client.getItem(getItemRequest(tableName, citizen.citizenId, citizen.city))).runSyncUnsafe()
-    getResponse.item().values().asScala.head.n().toDouble shouldBe citizen.debt
+    getResponse.item().values().asScala.head.n().toDouble shouldBe citizen.age
   }
 
-  "A real example" should "reuse the resource evaluation" in {
-    import software.amazon.awssdk.services.dynamodb.model.{PutItemRequest, AttributeValue}
-
+  it can "sink multiple incoming requests" in {
     //given
-    val citizen1 = Citizen("001", "Lisbon", 100)
-    val citizen2 = Citizen("001", "Lisbon", 100)
-    val citizen3 = Citizen("001", "Lisbon", 100)
+    import monix.connect.dynamodb.DynamoDbOp.Implicits.putItemOp
+    val citizens = Gen.listOfN(3, genCitizen).sample.get
+    val putItemRequests: List[PutItemRequest] = citizens.map(putItemRequest(tableName, _))
 
-    val bucket = "my-bucket"
-    val key = "my-key"
-    val content = "my-content"
-    val strAttr: String => AttributeValue = value => AttributeValue.builder.s(value).build
+    //when
+    DynamoDb.fromConfig.use{ dynamoDb =>
+      Observable
+        .fromIterable(putItemRequests)
+        .consumeWith(dynamoDb.sink(retries = 3, delayAfterFailure = 1.second))
+    }.runSyncUnsafe()
 
-    def putItemRequest(tableName: String, citizenId: String, city: String, debt: Double): PutItemRequest =
-      PutItemRequest
-        .builder
-        .tableName(tableName)
-        .item(Map("citizenId" -> strAttr(citizenId), "city" -> strAttr(city)).asJava)
-        .build
+    //then
+    val getResponses = Task.traverse(citizens)(citizen => Task.from(client.getItem(getItemRequest(tableName, citizen.citizenId, citizen.city)))).runSyncUnsafe()
+    getResponses.map(_.item().values().asScala.head.n().toDouble) should contain theSameElementsAs citizens.map(_.age)
+  }
 
-    def runDynamoDbApp(dynamoDb: DynamoDb): Task[Array[Byte]] = {
-      for {
-        _ <- s3.createBucket(bucket)
-        _ <- s3.upload(bucket, key, content.getBytes)
-        existsObject <- s3.existsObject(bucket, key)
-        download <- {
-          if(existsObject) s3.download(bucket, key)
-          else Task.raiseError(NoSuchKeyException.builder().build())
-        }
-      } yield download
-    }
+  it can "transform multiple incoming requests" in {
+    //given
+    import monix.connect.dynamodb.DynamoDbOp.Implicits.getItemOp
+    val citizens = List(Citizen("citizen1", "Rome", 52), Citizen("citizen2", "Rome", 43))
+    val putItemRequests: List[PutItemRequest] = citizens.map(putItemRequest(tableName, _))
+    Task.parSequence(putItemRequests.map(req => Task.from(client.putItem(req)))).runSyncUnsafe()
+
+    //and
+    val getItemRequests: List[GetItemRequest] = List("citizen1", "citizen2").map(getItemRequest(tableName, _, city = "Rome"))
+
+    //then
+    val f: List[GetItemResponse] = DynamoDb.fromConfig.use{ dynamoDb =>
+      Observable
+        .fromIterable(getItemRequests)
+        .transform(dynamoDb.transformer(retries = 3, delayAfterFailure = 1.second))
+        .toListL
+    }.runSyncUnsafe()
+
+    //then
+    f.map(_.item().values().asScala.head.n().toInt) should contain theSameElementsAs citizens.map(_.age)
   }
 
   override def beforeAll(): Unit = {

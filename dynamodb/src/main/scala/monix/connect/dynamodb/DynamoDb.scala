@@ -166,10 +166,10 @@ object DynamoDb { self =>
     */
   @UnsafeBecauseImpure
   def createUnsafe(
-                    credentialsProvider: AwsCredentialsProvider,
-                    region: Region,
-                    endpoint: Option[String] = None,
-                    httpClient: Option[SdkAsyncHttpClient] = None): DynamoDb = {
+    credentialsProvider: AwsCredentialsProvider,
+    region: Region,
+    endpoint: Option[String] = None,
+    httpClient: Option[SdkAsyncHttpClient] = None): DynamoDb = {
     val asyncClient = AsyncClientConversions.from(credentialsProvider, region, endpoint, httpClient)
     self.createUnsafe(asyncClient)
   }
@@ -180,7 +180,8 @@ object DynamoDb { self =>
     delayAfterFailure: Option[FiniteDuration] = None)(
     implicit
     dynamoDbOp: DynamoDbOp[In, Out],
-    client: DynamoDbAsyncClient): Consumer[In, Unit] = DynamoDbSubscriber(retries, delayAfterFailure)
+    client: DynamoDbAsyncClient): Consumer[In, Unit] =
+    DynamoDbSubscriber(DynamoDb.createUnsafe(client), retries, delayAfterFailure.getOrElse(Duration.Zero))
 
   @deprecated("moved to the trait for safer usage")
   def transformer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
@@ -209,8 +210,8 @@ trait DynamoDb { self =>
     */
   def sink[In <: DynamoDbRequest, Out <: DynamoDbResponse](
     retries: Int = 0,
-    delayAfterFailure: Option[FiniteDuration] = None)(implicit dynamoDbOp: DynamoDbOp[In, Out]): Consumer[In, Unit] =
-    DynamoDbSubscriber(retries, delayAfterFailure)
+    delayAfterFailure: FiniteDuration = Duration.Zero)(implicit dynamoDbOp: DynamoDbOp[In, Out]): Consumer[In, Unit] =
+    DynamoDbSubscriber(self, retries, delayAfterFailure)
 
   /**
     * Transformer that executes any given [[DynamoDbRequest]] and transforms them to its subsequent [[DynamoDbResponse]] within [[Task]].
@@ -226,7 +227,7 @@ trait DynamoDb { self =>
     */
   def transformer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
     retries: Int = 0,
-    delayAfterFailure: Option[FiniteDuration] = None)(
+    delayAfterFailure: FiniteDuration = Duration.Zero)(
     implicit dynamoDbOp: DynamoDbOp[In, Out]): Observable[In] => Observable[Out] = { inObservable: Observable[In] =>
     inObservable.mapEval(single(_, retries, delayAfterFailure))
   }

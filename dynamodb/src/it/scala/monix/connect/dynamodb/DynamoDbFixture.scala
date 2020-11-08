@@ -17,49 +17,53 @@ import scala.concurrent.duration._
 trait DynamoDbFixture {
   this: TestSuite =>
 
-  case class Citizen(citizenId: String, city: String, debt: Double)
+  case class Citizen(citizenId: String, city: String, age: Int)
   val strAttr: String => AttributeValue = value => AttributeValue.builder.s(value).build
-  val numAttr: Int => AttributeValue = value => AttributeValue.builder.n(value.toString).build
-  val doubleAttr: Double => AttributeValue = value => AttributeValue.builder().n(value.toString).build()
+  val doubleAttr: Int => AttributeValue = value => AttributeValue.builder().n(value.toString).build
 
   val staticAwsCredProvider = StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x"))
-
   val tableName = "citizens"
 
   protected implicit val client = DynamoDbAsyncClient
-    .builder()
+    .builder
     .credentialsProvider(staticAwsCredProvider)
     .endpointOverride(new URI("http://localhost:4569"))
     .region(Region.AWS_GLOBAL)
-    .build()
+    .build
 
   val genTableName: Gen[String] =  Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "test-" + chars.mkString.take(200))  //table name max size is 255
 
-  val genCitizenId = Gen.choose(1, 100000)
   val keyMap = (citizenId: String, city: String) => Map("citizenId" -> strAttr(citizenId), "city" -> strAttr(city))
 
-  val citizenItem = (citizenId: String, city: String, debt: Double) => keyMap(citizenId, city) ++ Map("debt" -> doubleAttr(debt))
+  def citizenItem(citizenId: String, city: String, age: Int) =  Map("citizenId" -> strAttr(citizenId), "city" -> strAttr(city)) ++ Map("age" -> doubleAttr(age))
 
-  def putItemRequest(tableName: String, citizen: Citizen): PutItemRequest = putItemRequest(tableName, citizen.citizenId, citizen.city, citizen.debt)
 
-  def putItemRequest(tableName: String, citizenId: String, city: String, debt: Double): PutItemRequest =
+  def putItemRequest(tableName: String, citizen: Citizen): PutItemRequest = putItemRequest(tableName, citizen.citizenId, citizen.city, citizen.age)
+
+  def putItemRequest(tableName: String, citizenId: String, city: String, age: Int): PutItemRequest =
     PutItemRequest
       .builder
       .tableName(tableName)
-      .item(Map("citizenId" -> strAttr(citizenId), "city" -> strAttr(city)).asJava)
+      .item(citizenItem(citizenId, city, age).asJava)
       .build
 
   val genPutItemRequest: Gen[PutItemRequest] =
     for {
       city <- Gen.identifier
       citizenId <- Gen.identifier
-      debt <- Gen.choose(1, 1000)
-    } yield putItemRequest(tableName, city, citizenId, debt)
+      age <- Gen.choose(1, 1000)
+    } yield putItemRequest(tableName, city, citizenId, age)
 
   def genPutItemRequests: Gen[List[PutItemRequest]] = Gen.listOfN(3, genPutItemRequest)
 
-  def getItemRequest(tableName: String, citizenId: String, city: String) =
-    GetItemRequest.builder().tableName(tableName).key(keyMap(citizenId, city).asJava).attributesToGet("debt").build()
+  def getItemRequest(tableName: String, citizen: Citizen): GetItemRequest = getItemRequest(tableName, citizen.citizenId, citizen.city)
+
+  def getItemRequest(tableName: String, citizenId: String, city: String): GetItemRequest =
+    GetItemRequest.builder
+      .tableName(tableName)
+      .key(keyMap(citizenId, city).asJava)
+      .attributesToGet("age")
+      .build
 
   val getItemMalformedRequest =
     GetItemRequest.builder().tableName(tableName).attributesToGet("not_present").build()
@@ -82,7 +86,7 @@ trait DynamoDbFixture {
     ProvisionedThroughput.builder().readCapacityUnits(10L).writeCapacityUnits(10L).build()
 
   def createTableRequest(
-    tableName: String = Gen.alphaLowerStr.sample.get,
+    tableName: String = Gen.identifier.sample.get,
     schema: List[KeySchemaElement],
     attributeDefinition: List[AttributeDefinition],
     provisionedThroughput: ProvisionedThroughput = baseProvisionedThroughput): CreateTableRequest = {
@@ -110,8 +114,8 @@ trait DynamoDbFixture {
     for {
       citizenId <- Gen.identifier
       city <- Gen.identifier
-      debt <- Gen.choose(0, 10000)
-    } yield Citizen(citizenId, city, debt.toDouble)
+      age <- Gen.choose(0, 10000)
+    } yield Citizen(citizenId, city, age)
   }
 
 }

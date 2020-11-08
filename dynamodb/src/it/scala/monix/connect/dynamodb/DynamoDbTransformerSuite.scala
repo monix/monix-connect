@@ -82,7 +82,7 @@ class DynamoDbTransformerSuite
           val transformer: Transformer[PutItemRequest, PutItemResponse] =
             DynamoDb.transformer[PutItemRequest, PutItemResponse]()
           val requestAttr: List[Citizen] = Gen.nonEmptyListOf(genCitizen).sample.get
-          val requests: List[PutItemRequest] = requestAttr.map { citizen => putItemRequest(tableName, citizen.citizenId, citizen.city, citizen.debt) }
+          val requests: List[PutItemRequest] = requestAttr.map { citizen => putItemRequest(tableName, citizen.citizenId, citizen.city, citizen.age) }
 
           //when
           val t =
@@ -96,7 +96,7 @@ class DynamoDbTransformerSuite
             r shouldBe a[PutItemResponse]
             requestAttr.map { citizen =>
               val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, citizen.citizenId, citizen.city))).futureValue
-              getResponse.item().values().asScala.head.n().toDouble shouldBe citizen.debt
+              getResponse.item().values().asScala.head.n().toDouble shouldBe citizen.age
             }
           }
         }
@@ -108,8 +108,8 @@ class DynamoDbTransformerSuite
         //given
         val city = "London"
         val citizenId = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-        val debt: Int = 550
-        toScala(client.putItem(putItemRequest(tableName,citizenId, city, debt))).futureValue
+        val age: Int = 34
+        toScala(client.putItem(putItemRequest(tableName,citizenId, city, age))).futureValue
         val request: GetItemRequest = getItemRequest(tableName, citizenId, city)
         val transformer: Transformer[GetItemRequest, GetItemResponse] = DynamoDb.transformer()
 
@@ -121,8 +121,8 @@ class DynamoDbTransformerSuite
         whenReady(t.runToFuture) { response =>
           response shouldBe a[GetItemResponse]
           response.hasItem shouldBe true
-          response.item() should contain key "debt"
-          response.item().values().asScala.head.n().toDouble shouldBe debt
+          response.item() should contain key "age"
+          response.item().values().asScala.head.n().toDouble shouldBe age
         }
       }
     }

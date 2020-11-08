@@ -26,15 +26,11 @@ libraryDependencies += "io.monix" %% "monix-dynamodb" % "0.5.0"
 ```
 
 ## Async Client
- 
- This connector uses the _underlying_ `S3AsyncClient` from the [java aws sdk](https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/package-summary.html),
- it will allow us to authenticate and create a _non blocking_ channel between our application and the _AWS S3 service_. 
- 
- There are different ways to create the connection, all available from the singleton object `monix.connect.s3.S3`. It is explained in more detail in the following sub-sections:
- 
+
   This connector uses the _underlying_ [DynamoDbAsyncClient](https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/dynamodb/DynamoDbAsyncClient.html),
  that allows us to authenticate and create a _non blocking_ channel between our application and the _AWS DynamoDB_. 
-   
+ 
+ There are different ways to create the connection, all available from the singleton object `monix.connect.dynamodb.DynamoDb`. Explained in more detail in the following sub-sections:
 
  ### From config
   
@@ -85,7 +81,7 @@ This config file needs to be placed in the `resource` folder,
 therefore it will be automatically picked up from the method call `DynamoDb.fromConfig`, which will return a `cats.effect.Resource[Task, DynamoDb]`.
 The [resource](https://typelevel.org/cats-effect/datatypes/resource.html) will be responsible to *acquire* and *release* the _DynamoDb connection_. 
 
-The best way of using it is to make it transparent in your application and directly expect an instance of _S3_ in your methods and classes, which will be called from within the 
+The best way of using the client is to make it transparent in your application and directly expect an instance of _DynamoDb_ in your methods and classes, which will be called from within the 
 _usage_ of the _Resource_. See below code snippet to understand the concept:
 
 ```scala
@@ -124,9 +120,9 @@ val f = DynamoDb.fromConfig.use(runDynamoDbApp(_)).runToFuture
  import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
  import software.amazon.awssdk.regions.Region
  
- val s3AccessKey: String = "TESTKEY"
- val s3SecretKey: String = "TESTSECRET"
- val basicAWSCredentials = AwsBasicCredentials.create(s3AccessKey, s3SecretKey)
+ val accessKey: String = "TESTKEY"
+ val secretKey: String = "TESTSECRET"
+ val basicAWSCredentials = AwsBasicCredentials.create(accessKey, secretKey)
  val staticCredProvider = StaticCredentialsProvider.create(basicAWSCredentials)
 
  val dynamoDbResource: Resource[Task, DynamoDb] = DynamoDb.create(staticCredProvider, Region.AWS_GLOBAL)   
@@ -134,8 +130,8 @@ val f = DynamoDb.fromConfig.use(runDynamoDbApp(_)).runToFuture
 
 ### Create Unsafe
 
-Another different alternatively is to just pass an already created instance of a `software.amazon.awssdk.services.s3.S3AsyncClient`, which in that case, 
-the return type would be directly `S3`, so there won't be no need to deal with `Resource`. 
+Another different alternatively is to just pass an already created instance of a `software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient`, 
+which in that case the return type would be directly `DynamoDb`, so there won't be no need to deal with `Resource`. 
 As the same tittle suggests, this is not a pure way of creating an `S3` since it might be possible to pass a malformed 
 instance by parameter or just one that was already released (closed). 
 
@@ -241,33 +237,42 @@ val t: Task[GetItemResponse] =
   DynamoDb.fromConfig.use(_.single(getItemRequest, retries = 5, delayAfterFailure = 500.milliseconds))
 ```
 
-
 ### Consumer 
 
 A pre-built _Monix_ `Consumer[DynamoDbRequest, DynamoDbResponse]` that provides a safe implementation 
 for executing any subtype of `DynamoDbRequest` and materializes to its respective response.
 It does also provide with the flexibility to specifying the number of times to retrying failed operations and the delay between them, which by default is no retry.
 
-An example of a stream that consumes and executes DynamoDb `PutItemRequest`s:
 ```scala
 import monix.connect.dynamodb.DynamoDbOp.Implicits._
 import monix.connect.dynamodb.DynamoDb
-import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
-import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
+import monix.execution.Scheduler.Implicits.global
+import monix.reactive.Observable
+import software.amazon.awssdk.services.dynamodb.model.{PutItemRequest, AttributeValue}
 
-//presumably you will have a stream of DynamoDb requests coming in. 
-val putItemRequests = List[PutItemRequest] = ???
-implicit val client : DynamoDbAsyncClient = ???
+import scala.concurrent.duration._
 
-val ob = Task[Unit] = {
+val strAttr: String => AttributeValue = value => AttributeValue.builder.s(value).build
+val numAttr: Int => AttributeValue = value => AttributeValue.builder().n(value.toString).build
+
+import monix.connect.dynamodb.DynamoDbOp.Implicits.putItemOp
+def putItemRequest(tableName: String, citizen: Citizen): PutItemRequest =
+  PutItemRequest
+    .builder
+    .tableName(tableName)
+    .item(Map("citizenId" -> strAttr(citizen.citizenId), "city" -> strAttr(citizen.city), "age" -> numAttr(citizen.age)).asJava)
+    .build
+
+val citizen1 = Citizen("citizen1", "Rome", 52)
+val citizen2 = Citizen("citizen2", "Rome", 43)
+val putItemRequests: List[PutItemRequest] = List(citizen1, citizen2).map(putItemRequest("citizens-table", _))
+
+val f = DynamoDb.fromConfig.use{ dynamoDb =>
   Observable
     .fromIterable(putItemRequests)
-    .consumeWith(DynamoDb.consumer()) //asynchronous consumer that executes incoming put item requests
-} 
-//it materialises to Unit
+    .consumeWith(dynamoDb.sink(retries = 3, delayAfterFailure = 1.second))
+}.runToFuture
 ```
-
-_Notice_ that as same as the `DynamoDbOp.create()` method used for _single requests_ shown the previous section, the `DynamoDb.consumer()` also accepts a number of _retries_ and _delay after a failure_ to be passed.
 
 ### Transformer
 
@@ -279,22 +284,30 @@ The below code shows an example of a stream that transforms incoming get request
 ```scala
 import monix.connect.dynamodb.DynamoDbOp.Implicits._
 import monix.connect.dynamodb.DynamoDb
+import monix.execution.Scheduler.Implicits.global
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.{GetItemRequest, GetItemResponse}
 
-//presumably you will have a stream of dynamo db `GetItemRequest`, this is just an example on how to use it
-val dynamoDbRequests = List[GetItemRequest] = ???
-implicit val client : DynamoDbAsyncClient = ???
+import monix.connect.dynamodb.DynamoDbOp.Implicits.getItemOp
 
-val ob = Observable[Task[GetItemResponse]] = {
+def getItemRequest(tableName: String, citizenId: String, city: String): GetItemRequest =
+   GetItemRequest.builder
+     .tableName(tableName)
+     .key(Map("citizenId" -> strAttr(citizen.citizenId), "city" -> strAttr(citizen.city)).asJava)
+     .attributesToGet("age")
+     .build
+
+val getItemRequests: List[GetItemRequest] = List("citizen1", "citizen2").map(getItemRequest("citizens", _, city = "Rome"))
+
+val f = DynamoDb.fromConfig.use{ dynamoDb =>
   Observable
-    .fromIterable(dynamoDbRequests) 
-    .transform(DynamoDb.transofrmer()) //transforms each get request operation into its respective get response 
-} 
-
+    .fromIterable(getItemRequests)
+    .transform(dynamoDb.transformer())
+    .toListL
+}.runToFuture
 ```
 
-The _transformer_ accepts also a number of _retries_ and _delay after a failure_ to be passed.
+The _transformer_ accepts also number of _retries_ and _delay after a failure_ to be passed.
 
 ## Local testing
 
@@ -320,24 +333,39 @@ docker-compose -f docker-compose.yml up -d dynamodb
 
 Check out that the service has started correctly.
 
-Finally create the client to connect to the local dynamodb via `DynamoDbAsyncClient`:
+Finally create the dynamodb connection:
 
 ```scala
-import java.net.URI
-
+import monix.connect.dynamodb.DynamoDb
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 
-val defaultAwsCredProvider = StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x"))
-implicit val client: DynamoDbAsyncClient = {
-  DynamoDbAsyncClient
-    .builder()
-    .credentialsProvider(defaultAwsCredProvider)
-    .endpointOverride(new URI("http://localhost:4569"))
-    .region(Region.AWS_GLOBAL)
-    .build()
-  }
+val staticCredentialsProvider = StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x"))
+val dynamoDb = DynamoDb.create(staticCredentialsProvider, Region.AWS_GLOBAL, "http://localhost:4569")
 ``` 
+
+Alternatively, you can create the client from config file, in this case you'd need to placed under the _resources_ folder `src/test/resources/application.conf`:
+
+ ```hocon
+{
+  monix-aws: {
+    credentials {
+      provider: "static"  
+      access-key-id: "x"
+      secret-access-key: "x"    
+    }
+    endpoint: "http://localhost:4569"
+    region: "us-west-2"
+  }
+}
+```
+
+As seen in previous sections, to create the connection from config:
+
+```scala
+import monix.connect.dynamodb.DynamoDb
+
+val dynamoDb = DynamoDb.fromConfig
+``` 
+
 You are now ready to run your application! 
-_Notice_ that the above example defines the `client` as `implicit`, since it is how the api will expect it.
