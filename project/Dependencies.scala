@@ -20,7 +20,7 @@ object Dependencies {
     val Pureconfig = "0.14.0"
 
     //test
-    val Scalatest = "3.2.2"
+    val Scalatest = "3.2.3"
     val Scalacheck = "1.14.0"
     val Mockito = "1.15.0"
     val GCNio = "0.121.2"
