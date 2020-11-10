@@ -1,12 +1,11 @@
 package monix.connect.es
 
 import cats.effect.Resource
-import com.sksamuel.elastic4s.http.JavaClient
 import com.sksamuel.elastic4s.requests.delete.DeleteByIdRequest
 import com.sksamuel.elastic4s.requests.get.GetResponse
 import com.sksamuel.elastic4s.requests.indexes.IndexRequest
 import com.sksamuel.elastic4s.requests.update.UpdateRequest
-import com.sksamuel.elastic4s.{ElasticClient, ElasticProperties, RequestFailure, RequestSuccess}
+import com.sksamuel.elastic4s.{RequestFailure, RequestSuccess}
 import monix.eval.Task
 import org.scalacheck.Gen
 
