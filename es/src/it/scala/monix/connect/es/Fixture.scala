@@ -1,5 +1,6 @@
 package monix.connect.es
 
+import cats.effect.Resource
 import com.sksamuel.elastic4s.http.JavaClient
 import com.sksamuel.elastic4s.requests.delete.DeleteByIdRequest
 import com.sksamuel.elastic4s.requests.get.GetResponse
@@ -11,8 +12,8 @@ import org.scalacheck.Gen
 
 trait Fixture {
   import com.sksamuel.elastic4s.ElasticDsl._
-  implicit val client: ElasticClient = ElasticClient(JavaClient(ElasticProperties("http://localhost:9200")))
-  def genIndex: Gen[String] = Gen.nonEmptyListOf(Gen.alphaLowerChar).map(_.mkString.take(10))
+  protected val esResource: Resource[Task, Elasticsearch] = Elasticsearch.create("http://localhost:9200")
+  def genIndex: Gen[String] = Gen.listOfN(8, Gen.alphaLowerChar).map(_.mkString)
   def getDocString(a: String, b: String) = s"""{"a":"$a","b":"$b"}"""
   def genDoc: Gen[String] =
     for {
@@ -29,8 +30,8 @@ trait Fixture {
 
   def genUpdateRequest(index: String): Gen[UpdateRequest] =
     for {
-      id    <- Gen.nonEmptyListOf(Gen.alphaLowerChar).map(_.mkString.take(10))
-      doc   <- genDoc
+      id  <- Gen.nonEmptyListOf(Gen.alphaLowerChar).map(_.mkString.take(10))
+      doc <- genDoc
     } yield updateById(index, id).docAsUpsert(doc)
 
   def genDeleteRequest: Gen[DeleteByIdRequest] =
@@ -47,11 +48,13 @@ trait Fixture {
     } yield indexInto(index).id(id).doc(doc)
 
   def getById(index: String, id: String): Task[GetResponse] = {
-    client.execute(get(index, id)).map {
-      case RequestSuccess(_, _, _, result) =>
-        result
-      case RequestFailure(_, _, _, error) =>
-        throw new RuntimeException(error.toString)
+    esResource.use { es =>
+      es.getById(get(index, id)).map {
+        case RequestSuccess(_, _, _, result) =>
+          result
+        case RequestFailure(_, _, _, error) =>
+          throw new RuntimeException(error.toString)
+      }
     }
   }
 }

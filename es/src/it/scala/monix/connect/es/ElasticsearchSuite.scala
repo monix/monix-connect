@@ -10,17 +10,13 @@ import org.scalatest.matchers.should.Matchers
 
 class ElasticsearchSuite extends AnyFlatSpecLike with Fixture with Matchers with BeforeAndAfterEach {
   import com.sksamuel.elastic4s.ElasticDsl._
-  override def beforeEach(): Unit = {
-    super.beforeEach()
-    client.execute(deleteIndex("*")).runSyncUnsafe()
-  }
 
   "Elasticsearch" should "execute many update requests" in {
     // given
     val updateRequests = Gen.listOfN(10, genUpdateRequest).sample.get
 
     // when
-    Elasticsearch.bulkRequest(updateRequests).runSyncUnsafe()
+    esResource.use(_.bulkExecuteRequest(updateRequests)).runSyncUnsafe()
 
     // then
     val r =
@@ -39,8 +35,15 @@ class ElasticsearchSuite extends AnyFlatSpecLike with Fixture with Matchers with
     val deleteRequests = updateRequests.take(5).map(r => deleteById(r.index, r.id))
 
     // when
-    Elasticsearch.bulkRequest(updateRequests).runSyncUnsafe()
-    Elasticsearch.bulkRequest(deleteRequests).runSyncUnsafe()
+    esResource.use { es =>
+      Task.sequence(
+        Seq(
+          es.bulkExecuteRequest(updateRequests),
+          es.refresh(updateRequests.map(_.index.name)),
+          es.bulkExecuteRequest(deleteRequests)
+        )
+      )
+    }.runSyncUnsafe()
 
     // then
     val r =
@@ -58,7 +61,7 @@ class ElasticsearchSuite extends AnyFlatSpecLike with Fixture with Matchers with
     val indexRequests = Gen.listOfN(10, genIndexRequest).sample.get
 
     // when
-    Elasticsearch.bulkRequest(indexRequests).runSyncUnsafe()
+    esResource.use(_.bulkExecuteRequest(indexRequests)).runSyncUnsafe()
 
     // then
     val r =
@@ -76,7 +79,7 @@ class ElasticsearchSuite extends AnyFlatSpecLike with Fixture with Matchers with
     val request = genUpdateRequest.sample.get
 
     // when
-    Elasticsearch.singleUpdate(request).runSyncUnsafe()
+    esResource.use(_.singleUpdate(request)).runSyncUnsafe()
 
     // then
     val r = getById(request.index.name, request.id)
@@ -92,8 +95,11 @@ class ElasticsearchSuite extends AnyFlatSpecLike with Fixture with Matchers with
     val deleteRequest = deleteById(updateRequests.head.index, updateRequests.head.id)
 
     // when
-    updateRequests.map(Elasticsearch.singleUpdate(_).runSyncUnsafe())
-    Elasticsearch.singleDeleteById(deleteRequest).runSyncUnsafe()
+    esResource.use { es =>
+      Task
+        .parSequence(updateRequests.map(es.singleUpdate))
+        .flatMap(_ => es.singleDeleteById(deleteRequest))
+    }.runSyncUnsafe()
 
     // then
     val r = updateRequests.map { request =>
@@ -110,16 +116,22 @@ class ElasticsearchSuite extends AnyFlatSpecLike with Fixture with Matchers with
     val deleteRequest = deleteByQuery(updateRequest.index, idsQuery(updateRequest.id))
 
     // when
-    Elasticsearch.singleUpdate(updateRequest).runSyncUnsafe()
-    Elasticsearch.refresh(Seq(updateRequest.index.name)).runSyncUnsafe()
-    Elasticsearch.singleDeleteByQuery(deleteRequest).runSyncUnsafe()
-    Elasticsearch.refresh(Seq(updateRequest.index.name)).runSyncUnsafe()
+    esResource.use { es =>
+      Task.sequence(
+        Seq(
+          es.singleUpdate(updateRequest),
+          es.refresh(Seq(updateRequest.index.name)),
+          es.singleDeleteByQuery(deleteRequest),
+          es.refresh(Seq(updateRequest.index.name))
+        )
+      )
+    }.runSyncUnsafe()
 
     // then
-    val r = Elasticsearch
-      .searchRequest(search(updateRequest.index).query(matchAllQuery()))
-      .map(_.result.hits.total.value)
-      .runSyncUnsafe()
+    val r = esResource.use {
+      _.search(search(updateRequest.index).query(matchAllQuery()))
+        .map(_.result.hits.total.value)
+    }.runSyncUnsafe()
     r shouldBe 0
   }
 
@@ -129,9 +141,16 @@ class ElasticsearchSuite extends AnyFlatSpecLike with Fixture with Matchers with
     val searchRequest = search(updateRequest.index.name).query(matchAllQuery())
 
     // when
-    Elasticsearch.singleUpdate(updateRequest).runSyncUnsafe()
-    Elasticsearch.refresh(Seq(updateRequest.index.name)).runSyncUnsafe()
-    val r = Elasticsearch.searchRequest(searchRequest).runSyncUnsafe()
+    val r = esResource.use { es =>
+      Task
+        .sequence(
+          Seq(
+            es.singleUpdate(updateRequest),
+            es.refresh(Seq(updateRequest.index.name))
+          )
+        )
+        .flatMap(_ => es.search(searchRequest))
+    }.runSyncUnsafe()
 
     // then
     r.result.hits.hits.head.sourceAsString shouldBe updateRequest.documentSource.get
@@ -144,11 +163,11 @@ class ElasticsearchSuite extends AnyFlatSpecLike with Fixture with Matchers with
     val createIndexRequest = createIndex(indexName).source(indexSource)
 
     // when
-    Elasticsearch.createIndex(createIndexRequest).runSyncUnsafe()
+    esResource.use { es => es.createIndex(createIndexRequest) }.runSyncUnsafe()
 
     // then
-    val indexResult = client
-      .execute(getIndex(indexName))
+    val indexResult = esResource
+      .use(_.getIndex(getIndex(indexName)))
       .runSyncUnsafe()
       .result(indexName)
     val mappings = indexResult.mappings.properties("a")
@@ -165,15 +184,21 @@ class ElasticsearchSuite extends AnyFlatSpecLike with Fixture with Matchers with
     val deleteIndexRequest = deleteIndex(indexName)
 
     // when
-    Elasticsearch.createIndex(createIndexRequest).runSyncUnsafe()
-    Elasticsearch.deleteIndex(deleteIndexRequest).runSyncUnsafe()
+    esResource.use { es =>
+      Task.sequence(
+        Seq(
+          es.createIndex(createIndexRequest),
+          es.deleteIndex(deleteIndexRequest)
+        )
+      )
+    }
 
     // then
     intercept[NoSuchElementException] {
-      client
-        .execute(getIndex(indexName))
+      esResource
+        .use(_.getIndex(getIndex(indexName)))
         .runSyncUnsafe()
-        .result
+        .result(indexName)
     }
   }
 
@@ -184,10 +209,12 @@ class ElasticsearchSuite extends AnyFlatSpecLike with Fixture with Matchers with
     val countRequest = count(Indexes(index)).query(matchAllQuery())
 
     // when
-    Task.parSequence(updateRequests.map(Elasticsearch.singleUpdate)).runSyncUnsafe()
-    Elasticsearch.refresh(Seq(index)).runSyncUnsafe()
-    val r = Elasticsearch.singleCount(countRequest).runSyncUnsafe()
-
+    val r = esResource.use { es =>
+      Task
+        .parSequence(updateRequests.map(es.singleUpdate))
+        .flatMap(_ => es.refresh(Seq(index)))
+        .flatMap(_ => es.singleCount(countRequest))
+    }.runSyncUnsafe()
     // then
     r.result.count shouldBe updateRequests.map(_.id).distinct.length
   }

@@ -1,45 +1,116 @@
 package monix.connect.es
 
+import cats.effect.Resource
+import com.sksamuel.elastic4s.http.JavaClient
 import com.sksamuel.elastic4s.requests.bulk.{BulkCompatibleRequest, BulkResponse}
 import com.sksamuel.elastic4s.requests.count.{CountRequest, CountResponse}
 import com.sksamuel.elastic4s.requests.delete._
+import com.sksamuel.elastic4s.requests.get.{GetRequest, GetResponse}
 import com.sksamuel.elastic4s.requests.indexes._
 import com.sksamuel.elastic4s.requests.indexes.admin.{DeleteIndexResponse, RefreshIndexResponse}
-import com.sksamuel.elastic4s.requests.searches.{SearchRequest, SearchResponse}
+import com.sksamuel.elastic4s.requests.searches.{SearchHit, SearchRequest, SearchResponse}
 import com.sksamuel.elastic4s.requests.update.{UpdateRequest, UpdateResponse}
-import com.sksamuel.elastic4s.{ElasticClient, Response}
+import com.sksamuel.elastic4s.{ElasticClient, ElasticProperties, HttpClient, Response}
 import monix.eval.Task
+import monix.execution.annotations.UnsafeBecauseImpure
+import monix.reactive.{Consumer, Observable}
 
 /**
-  * Object for managing the Elasticsearch
+  * Singleton object provides builders for [[Elasticsearch]].
+  *
+  * ===Example===
+  *{{{
+  * import com.sksamuel.elastic4s.ElasticDsl._
+  * import com.sksamuel.elastic4s._
+  *
+  * val esResource = Elasticsearch.create("http://localhost:9200")
+  *
+  * val indexName = "test_index"
+  * val indexSource = """{"settings":{"number_of_shards":1},"mappings":{"properties":{"a":{"type":"text"} } } }"""
+  * val createIndexRequest = createIndex(indexName).source(indexSource)
+  * val id = "test_id"
+  * val doc = """{"a":"test"}"""
+  * val updateRequest = updateById(indexName, id).docAsUpsert(doc)
+  *
+  * esResource.use { es =>
+  *   Task.sequence(
+  *     Seq(
+  *       es.createIndex(createIndexRequest),
+  *       es.singleUpdate(updateRequest),
+  *       es.refresh(Seq(indexName))
+  *     )
+  *   )
+  * }
+  * }}}
   */
 object Elasticsearch {
+  def create(httpClientFactory: => HttpClient): Resource[Task, Elasticsearch] = {
+    Resource.make {
+      Task.eval {
+        val client = ElasticClient(client = httpClientFactory)
+        createUnsafe(client)
+      }
+    } { _.close() }
+  }
 
+  /**
+    * Creates [[Elasticsearch]] from an URI
+    *
+    * @param uri an URI for creating es client. format: http(s)://host:port,host:port(/prefix)?querystring
+    * @return a [[Elasticsearch]] object
+    */
+  def create(uri: String): Resource[Task, Elasticsearch] = create(JavaClient(ElasticProperties(uri)))
+
+  @UnsafeBecauseImpure
+  def createUnsafe(esClient: ElasticClient): Elasticsearch = {
+    new Elasticsearch {
+      override val client: ElasticClient = esClient
+    }
+  }
+
+}
+
+private[es] trait Elasticsearch { self =>
   import com.sksamuel.elastic4s.ElasticDsl._
+
+  private[es] val client: ElasticClient
 
   /**
     * Execute bulk requests
     *
     * @param requests some [[BulkCompatibleRequest]]
-    * @param client an implicit instance of a [[ElasticClient]]
     * @return a [[Task]] with [[Response]] with [[BulkResponse]]
     */
-  def bulkRequest(requests: Seq[BulkCompatibleRequest])(
-    implicit client: ElasticClient
-  ): Task[Response[BulkResponse]] = {
+  def bulkExecuteRequest(requests: Seq[BulkCompatibleRequest]): Task[Response[BulkResponse]] = {
     client.execute(bulk(requests))
+  }
+
+  /**
+    * Get a document by id
+    *
+    * @param request a [[GetRequest]]
+    * @return a [[Task]] with [[Response]] with [[GetResponse]]
+    */
+  def getById(request: GetRequest): Task[Response[GetResponse]] = {
+    client.execute(request)
+  }
+  /**
+    * Get index info
+    *
+    * @param request a [[GetIndexRequest]]
+    * @return a [[Task]] with [[Response]] with [[GetIndexResponse]]
+    */
+  def getIndex(request: GetIndexRequest): Task[Response[Map[String, GetIndexResponse]]] = {
+    client.execute(request)
   }
 
   /**
     * Execute a single update request
     *
     * @param request a update request
-    * @param client an implicit instance of a [[ElasticClient]]
     * @return a [[Task]] with [[Response]] with [[UpdateResponse]]
     */
-  def singleUpdate(request: UpdateRequest)(
-    implicit client: ElasticClient
-  ): Task[Response[UpdateResponse]] = {
+  def singleUpdate(request: UpdateRequest): Task[Response[UpdateResponse]] = {
     client.execute(request)
   }
 
@@ -47,12 +118,9 @@ object Elasticsearch {
     * Execute a single search request
     *
     * @param request a search request
-    * @param client an implicit instance of a [[ElasticClient]]
     * @return a [[Task]] with [[Response]] with [[SearchResponse]]
     */
-  def searchRequest(request: SearchRequest)(
-    implicit client: ElasticClient
-  ): Task[Response[SearchResponse]] = {
+  def search(request: SearchRequest): Task[Response[SearchResponse]] = {
     client.execute(request)
   }
 
@@ -60,12 +128,9 @@ object Elasticsearch {
     * Execute a single delete by id request
     *
     * @param request a delete by id request
-    * @param client an implicit instance of a [[ElasticClient]]
     * @return a [[Task]] with [[Response]] with [[DeleteResponse]]
     */
-  def singleDeleteById(request: DeleteByIdRequest)(
-    implicit client: ElasticClient
-  ): Task[Response[DeleteResponse]] = {
+  def singleDeleteById(request: DeleteByIdRequest): Task[Response[DeleteResponse]] = {
     client.execute(request)
   }
 
@@ -73,12 +138,9 @@ object Elasticsearch {
     * Execute a single delete by query request
     *
     * @param request a delete by query request
-    * @param client an implicit instance of a [[ElasticClient]]
     * @return a [[Task]] with [[Response]] with [[DeleteByQueryResponse]]
     */
-  def singleDeleteByQuery(request: DeleteByQueryRequest)(
-    implicit client: ElasticClient
-  ): Task[Response[DeleteByQueryResponse]] = {
+  def singleDeleteByQuery(request: DeleteByQueryRequest): Task[Response[DeleteByQueryResponse]] = {
     client.execute(request)
   }
 
@@ -86,12 +148,9 @@ object Elasticsearch {
     * Execute a single create index request
     *
     * @param request a create index request
-    * @param client an implicit instance of a [[ElasticClient]]
     * @return a [[Task]] with [[Response]] with [[CreateIndexRequest]]
     */
-  def createIndex(request: CreateIndexRequest)(
-    implicit client: ElasticClient
-  ): Task[Response[CreateIndexResponse]] = {
+  def createIndex(request: CreateIndexRequest): Task[Response[CreateIndexResponse]] = {
     client.execute(request)
   }
 
@@ -99,12 +158,9 @@ object Elasticsearch {
     * Execute a single delete index request
     *
     * @param request a delete index request
-    * @param client an implicit instance of a [[ElasticClient]]
     * @return a [[Task]] with [[Response]] with [[DeleteIndexResponse]]
     */
-  def deleteIndex(request: DeleteIndexRequest)(
-    implicit client: ElasticClient
-  ): Task[Response[DeleteIndexResponse]] = {
+  def deleteIndex(request: DeleteIndexRequest): Task[Response[DeleteIndexResponse]] = {
     client.execute(request)
   }
 
@@ -112,12 +168,9 @@ object Elasticsearch {
     * Execute a single count request
     *
     * @param request a count request
-    * @param client an implicit instance of a [[ElasticClient]]
     * @return a [[Task]] with [[Response]] with [[CountResponse]]
     */
-  def singleCount(request: CountRequest)(
-    implicit client: ElasticClient
-  ): Task[Response[CountResponse]] = {
+  def singleCount(request: CountRequest): Task[Response[CountResponse]] = {
     client.execute(request)
   }
 
@@ -125,17 +178,34 @@ object Elasticsearch {
     * Refresh indexes
     *
     * @param indexes names of indexes
-    * @param client an implicit instance of a [[ElasticClient]]
     * @return a [[Task]] with [[Response]] with [[RefreshIndexResponse]]
     */
-  def refresh(indexes: Iterable[String])(
-    implicit client: ElasticClient
-  ): Task[Response[RefreshIndexResponse]] = {
+  def refresh(indexes: Iterable[String]): Task[Response[RefreshIndexResponse]] = {
     client.execute(refreshIndex(indexes))
   }
 
-  def refresh(first: String, rest: String*)(
-    implicit client: ElasticClient
-  ): Task[Response[RefreshIndexResponse]] =
+  def refresh(first: String, rest: String*): Task[Response[RefreshIndexResponse]] =
     refresh(first +: rest)
+
+  /**
+    * Retrieve large sets of results from a single scrolling search request.
+    * @param request a [[SearchRequest]] object
+    * @return an [[Observable]] that emits the [[SearchHit]]
+    */
+  def scroll(request: SearchRequest): Observable[SearchHit] = {
+    new ElasticsearchSource(request)(client)
+  }
+
+  /**
+    * Bulk execute es requests
+    * @return an [[Consumer]] that receives a list of [[BulkCompatibleRequest]]
+    */
+  def createBulkRequestsSink(es: Elasticsearch = this): Consumer[Seq[BulkCompatibleRequest], Unit] = {
+    new ElasticsearchSink(es)
+  }
+
+  /**
+    * Closes the underlying [[ElasticClient]].
+    */
+  def close(): Task[Unit] = Task.evalOnce(client.close())
 }

@@ -4,7 +4,7 @@ import com.sksamuel.elastic4s.requests.searches.{SearchHit, SearchRequest, Searc
 import com.sksamuel.elastic4s.{ElasticClient, RequestFailure, RequestSuccess, Response}
 import monix.eval.Task
 import monix.execution.internal.InternalApi
-import monix.execution.{Ack, Cancelable, Scheduler}
+import monix.execution.{Ack, Cancelable}
 import monix.reactive.Observable
 import monix.reactive.observers.Subscriber
 
@@ -22,31 +22,26 @@ import scala.collection.mutable
 
   import com.sksamuel.elastic4s.ElasticDsl._
 
-  private var scrollId: String = _
-  // Parse the keep alive setting out of the original query.
+  private var scrollId: Option[String] = None
+
   private val keepAlive = request.keepAlive.getOrElse("1m")
 
   override def unsafeSubscribeFn(subscriber: Subscriber[SearchHit]): Cancelable = {
-    runLoop(mutable.Queue.empty, subscriber).runToFuture(subscriber.scheduler)
+    fastLoop(mutable.Queue.empty, subscriber).runToFuture(subscriber.scheduler)
   }
 
-  private def runLoop(buffer: mutable.Queue[SearchHit], sub: Subscriber[SearchHit]): Task[Unit] = {
-    fastLoop(buffer, sub).flatMap {
-      case Ack.Continue =>
-        runLoop(buffer, sub)
-      case Ack.Stop =>
-        sub.onComplete()
-        Task.unit
-    }
-  }
-
-  private def fastLoop(buffer: mutable.Queue[SearchHit], sub: Subscriber[SearchHit]): Task[Ack] = {
-    implicit val s: Scheduler = sub.scheduler
-    maybeFetch(buffer, sub).flatMap { _ =>
+  private def fastLoop(buffer: mutable.Queue[SearchHit], sub: Subscriber[SearchHit]): Task[Unit] = {
+    fetch(buffer, sub).flatMap { _ =>
       if (buffer.nonEmpty)
         Task.deferFuture(sub.onNext(buffer.dequeue))
       else
         Task.now(Ack.Stop)
+    }.flatMap {
+      case Ack.Continue =>
+        fastLoop(buffer, sub)
+      case Ack.Stop =>
+        sub.onComplete()
+        Task.unit
     }
   }
 
@@ -63,8 +58,8 @@ import scala.collection.mutable
           case None =>
             sub.onError(new RuntimeException("Search response did not include a scroll id"))
           case Some(id) =>
-            scrollId = id
-            if (result.hits.hits.length == 0) {
+            scrollId = Some(id)
+            if (result.hits.hits.length == 0 && buffer.isEmpty) {
               sub.onComplete()
             } else {
               buffer ++= result.hits.hits
@@ -73,18 +68,14 @@ import scala.collection.mutable
     }
   }
 
-  private def maybeFetch(buffer: mutable.Queue[SearchHit], sub: Subscriber[SearchHit]): Task[Unit] = {
-    if (buffer.isEmpty)
-      fetch(buffer, sub)
-    else
-      Task.unit
-  }
-
-  // if no fetch is in progress then fire one
   private def fetch(buffer: mutable.Queue[SearchHit], sub: Subscriber[SearchHit]): Task[Unit] = {
-    Option(scrollId) match {
-      case None => client.execute(request.keepAlive(keepAlive)).map(populateHandler(_, buffer, sub))
-      case Some(id) => client.execute(searchScroll(id).keepAlive(keepAlive)).map(populateHandler(_, buffer, sub))
+    if (buffer.isEmpty) {
+      scrollId match {
+        case Some(id) => client.execute(searchScroll(id).keepAlive(keepAlive)).map(populateHandler(_, buffer, sub))
+        case None => client.execute(request.keepAlive(keepAlive)).map(populateHandler(_, buffer, sub))
+      }
+    } else {
+      Task.unit
     }
   }
 }

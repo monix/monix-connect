@@ -1,39 +1,39 @@
 package monix.connect.es
 
+import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 
-import scala.concurrent.duration._
 import scala.util.Try
 
 class ElasticsearchSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with BeforeAndAfterEach {
   import com.sksamuel.elastic4s.ElasticDsl._
-  override def beforeEach(): Unit = {
-    super.beforeEach()
-    client.execute(deleteIndex("*")).runSyncUnsafe()
-  }
 
   "ElasticsearchSource" should "emit searched results to downstream" in {
     // given
     val index = genIndex.sample.get
     val updateRequests = Gen.listOfN(1000, genUpdateRequest(index)).sample.get
     val searchRequest = search(index).query(matchAllQuery()).keepAlive("1m")
-    val source = ElasticsearchSource.search(searchRequest)
 
     // when
-    Elasticsearch.bulkRequest(updateRequests).runSyncUnsafe()
-    Elasticsearch.refresh(index).runSyncUnsafe()
-
+    esResource.use { es =>
+      Task
+        .sequence(
+          Seq(
+            es.bulkExecuteRequest(updateRequests),
+            es.refresh(index)
+          )
+        )
+    }.runSyncUnsafe()
     // then
-    val r = source
-      .bufferTimedAndCounted(100.millis, 100)
-      .map(_.map(_.id))
-      .toListL
-      .runSyncUnsafe()
-      .flatten
+    val r = esResource.use { es =>
+      es.scroll(searchRequest)
+        .map(_.id)
+        .toListL
+    }.runSyncUnsafe()
     r should contain theSameElementsAs updateRequests.map(_.id).distinct
   }
 
@@ -42,14 +42,19 @@ class ElasticsearchSourceSuite extends AnyFlatSpecLike with Fixture with Matcher
     val index = genIndex.sample.get
     val updateRequests = Gen.listOfN(1000, genUpdateRequest(index)).sample.get
     val searchRequest = search(index).query(matchAllQuery())
-    val source = ElasticsearchSource.search(searchRequest)
 
     // when
-    Elasticsearch.bulkRequest(updateRequests).runSyncUnsafe()
-    Elasticsearch.refresh(index).runSyncUnsafe()
+    esResource.use { es =>
+      Task.sequence(
+        Seq(
+          es.bulkExecuteRequest(updateRequests),
+          es.refresh(index)
+        )
+      )
+    }.runSyncUnsafe()
 
     // then
-    val r = source.map(_.id).toListL.runSyncUnsafe()
+    val r = esResource.use(_.scroll(searchRequest).map(_.id).toListL).runSyncUnsafe()
     r should contain theSameElementsAs updateRequests.map(_.id).distinct
   }
 
@@ -57,24 +62,21 @@ class ElasticsearchSourceSuite extends AnyFlatSpecLike with Fixture with Matcher
     // given
     val index = genIndex.sample.get
     val searchRequest = search(index).query(matchAllQuery()).keepAlive("1m")
-    val source = ElasticsearchSource.search(searchRequest)
 
     // when
-    val result = Try(source.map(_.id).toListL.runSyncUnsafe())
+    val r = Try(esResource.use(_.scroll(searchRequest).map(_.id).toListL).runSyncUnsafe())
 
     // then
-    result.isFailure shouldBe true
+    r.isFailure shouldBe true
   }
 
   it should "returns an empty list when result is empty" in {
     // given
     val index = genIndex.sample.get
-    Elasticsearch.createIndex(createIndex(index)).runSyncUnsafe()
+    esResource.use(_.createIndex(createIndex(index))).runSyncUnsafe()
     val searchRequest = search(index).query(matchAllQuery()).keepAlive("1m")
-    val source = ElasticsearchSource.search(searchRequest)
-
     // when
-    val result = source.map(_.id).toListL.runSyncUnsafe()
+    val result = esResource.use(_.scroll(searchRequest).map(_.id).toListL).runSyncUnsafe()
 
     // then
     result.isEmpty shouldBe true

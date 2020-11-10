@@ -120,8 +120,8 @@ lazy val monixConnect = (project in file("."))
   .configs(IntegrationTest, IT)
   .settings(sharedSettings)
   .settings(name := "monix-connect")
-  .aggregate(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, awsAuth)
-  .dependsOn(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3)
+  .aggregate(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, awsAuth, es)
+  .dependsOn(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, es)
 
 
 lazy val akka = monixConnector("akka", Dependencies.Akka)

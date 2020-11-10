@@ -13,10 +13,9 @@ import scala.concurrent.Future
 /**
   *  A pre-built [[Consumer]] implementation that expects incoming [[BulkCompatibleRequest]]
   *
-  * @param client an implicit instance of a [[ElasticClient]]
+  * @param es an instance of a [[Elasticsearch]]
   */
-@InternalApi private[es] class ElasticsearchSink(implicit client: ElasticClient)
-  extends Consumer[Seq[BulkCompatibleRequest], Unit] {
+@InternalApi private[es] class ElasticsearchSink(es: Elasticsearch) extends Consumer[Seq[BulkCompatibleRequest], Unit] {
   override def createSubscriber(
     cb: Callback[Throwable, Unit],
     s: Scheduler
@@ -26,8 +25,7 @@ import scala.concurrent.Future
       override implicit def scheduler: Scheduler = s
 
       override def onNext(elem: Seq[BulkCompatibleRequest]): Future[Ack] = {
-        Elasticsearch
-          .bulkRequest(elem)
+        es.bulkExecuteRequest(elem)
           .map {
             case RequestSuccess(_, _, _, _) =>
               Ack.Continue
@@ -47,11 +45,5 @@ import scala.concurrent.Future
       }
     }
     (subscriber, AssignableCancelable.single())
-  }
-}
-
-object ElasticsearchSink {
-  def bulk(implicit client: ElasticClient): ElasticsearchSink = {
-    new ElasticsearchSink()
   }
 }
