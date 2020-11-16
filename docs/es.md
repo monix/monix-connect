@@ -6,7 +6,7 @@ title: Elasticsearch
 ## Introduction
 
 _Elasticsearch_ ([ES](https://www.elastic.co/elasticsearch)) is a distributed, RESTful search and analytics engine 
-capable of addressing a growing number of use cases. It can now be easily integrated with monix.
+capable of addressing a growing number of use cases. It can now be easily integrated with _Monix_.
    
 ## Dependency
  
@@ -72,7 +72,7 @@ val task: Task[Response[Map[String, GetIndexResponse]]] = esResource.use { es =>
 }
 ```
 
-##Delete index 
+## Delete index 
 
  ```scala
 import cats.effect.Resource
@@ -237,7 +237,8 @@ val observable: Task[List[SearchHit]] = esResource.use { es =>
 }
 ```
 
-## Consume requests from the source (ElasticsearchSink)
+## Consume bulk requests (ElasticsearchSink)
+
 Create a `Consumer` object for consuming requests from the source.
 
  ```scala
@@ -269,13 +270,8 @@ esResource.use { es =>
 
 ## Local testing
 
-There is actually a very good support on regards to testing `Elasticsearch` locally.
- 
-### docker
-
- A local _Elasticsearch_ available as a docker image.
- 
- You would just need to define it as a service in your `docker-compose.yml`:
+There is actually a very good support on regards to testing `Elasticsearch` locally using docker,
+you would just need to add the  _elasticsearch_ docker image as service in your `docker-compose.yml`:
  
  ```yaml
   elasticsearch:
