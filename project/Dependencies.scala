@@ -23,7 +23,7 @@ object Dependencies {
     val Scalatest = "3.2.2"
     val Scalacheck = "1.14.0"
     val Mockito = "1.15.0"
-    val GCNio = "0.121.2"
+    val GCNio = "0.122.1"
   }
 
   private def testDependencies(hasIt: Boolean = false): Seq[sbt.ModuleID] = {
