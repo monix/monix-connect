@@ -5,7 +5,7 @@ object Dependencies {
   object Versions {
 
     //main
-    val AwsSdk = "2.15.19"
+    val AwsSdk = "2.15.30"
     val AkkaStreams = "2.6.9"
     val AWS = "1.11.749"
     val Cats_Effect = "2.1.3"
