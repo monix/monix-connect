@@ -5,7 +5,7 @@ title: Elasticsearch
 
 ## Introduction
 
-_Elasticsearch_ ([ES](https://www.elastic.co/elasticsearch)) is a distributed, RESTful search and analytics engine 
+[_Elasticsearch_](https://www.elastic.co/elasticsearch) is a distributed, RESTful search and analytics engine 
 capable of addressing a growing number of use cases. It can now be easily integrated with _Monix_.
    
 ## Dependency
@@ -13,7 +13,7 @@ capable of addressing a growing number of use cases. It can now be easily integr
  Add the following dependency:
  
  ```scala
- libraryDependencies += "io.monix" %% "monix-es" % "0.5.0"
+ libraryDependencies += "io.monix" %% "monix-elasticsearch" % "0.5.0"
  ```
  
 ## Client

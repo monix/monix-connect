@@ -1,4 +1,4 @@
-package monix.connect.es
+package monix.connect.elasticsearch
 
 import cats.effect.Resource
 import com.sksamuel.elastic4s.requests.delete.DeleteByIdRequest

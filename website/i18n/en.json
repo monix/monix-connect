@@ -11,7 +11,7 @@
       "dynamodb": {
         "title": "AWS DynamoDB"
       },
-      "es": {
+      "elasticsearch": {
         "title": "Elasticsearch"
       },
       "gcs": {

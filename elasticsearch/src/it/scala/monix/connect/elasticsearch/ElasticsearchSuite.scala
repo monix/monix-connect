@@ -1,4 +1,4 @@
-package monix.connect.es
+package monix.connect.elasticsearch
 
 import com.sksamuel.elastic4s.Indexes
 import monix.eval.Task

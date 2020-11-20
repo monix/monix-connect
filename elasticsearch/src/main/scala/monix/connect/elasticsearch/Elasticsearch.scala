@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package monix.connect.es
+package monix.connect.elasticsearch
 
 import cats.effect.Resource
 import com.sksamuel.elastic4s.http.JavaClient
@@ -88,10 +88,10 @@ object Elasticsearch {
 
 }
 
-private[es] trait Elasticsearch { self =>
+private[elasticsearch] trait Elasticsearch { self =>
   import com.sksamuel.elastic4s.ElasticDsl._
 
-  private[es] val client: ElasticClient
+  private[elasticsearch] val client: ElasticClient
 
   /**
     * Execute bulk requests

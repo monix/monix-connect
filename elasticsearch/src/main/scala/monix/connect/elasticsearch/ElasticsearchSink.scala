@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package monix.connect.es
+package monix.connect.elasticsearch
 
 import com.sksamuel.elastic4s._
 import com.sksamuel.elastic4s.requests.bulk.BulkCompatibleRequest
@@ -32,7 +32,8 @@ import scala.concurrent.Future
   *
   * @param es an instance of a [[Elasticsearch]]
   */
-@InternalApi private[es] class ElasticsearchSink(es: Elasticsearch) extends Consumer[Seq[BulkCompatibleRequest], Unit] {
+@InternalApi private[elasticsearch] class ElasticsearchSink(es: Elasticsearch)
+  extends Consumer[Seq[BulkCompatibleRequest], Unit] {
   override def createSubscriber(
     cb: Callback[Throwable, Unit],
     s: Scheduler

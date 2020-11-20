@@ -103,7 +103,7 @@ object Dependencies {
     "commons-io"                     % "commons-io" % "2.6" % Test
   ) ++ testDependencies(hasIt = true)
 
-  val ES = Seq(
+  val Elasticsearch = Seq(
     "com.sksamuel.elastic4s" %% "elastic4s-client-esjava" % Versions.Elastic4s
   ) ++ testDependencies(hasIt = true)
 }

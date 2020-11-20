@@ -1,4 +1,4 @@
-package monix.connect.es
+package monix.connect.elasticsearch
 
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global

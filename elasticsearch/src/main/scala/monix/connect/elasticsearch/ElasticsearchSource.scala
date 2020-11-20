@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package monix.connect.es
+package monix.connect.elasticsearch
 
 import com.sksamuel.elastic4s.requests.searches.{SearchHit, SearchRequest, SearchResponse}
 import com.sksamuel.elastic4s.{ElasticClient, RequestFailure, RequestSuccess, Response}
@@ -34,7 +34,7 @@ import scala.collection.mutable
   * @param request [[SearchRequest]]
   * @param client an implicit instance of a [[ElasticClient]]
   */
-@InternalApi private[es] class ElasticsearchSource(request: SearchRequest)(implicit client: ElasticClient)
+@InternalApi private[elasticsearch] class ElasticsearchSource(request: SearchRequest)(implicit client: ElasticClient)
   extends Observable[SearchHit] {
 
   import com.sksamuel.elastic4s.ElasticDsl._
