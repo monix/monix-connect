@@ -23,7 +23,8 @@ object Dependencies {
     val Scalatest = "3.2.2"
     val Scalacheck = "1.14.0"
     val Mockito = "1.15.0"
-    val GCNio = "0.122.1"
+    val GCNio = "0.121.2"
+    val Elastic4s = "7.9.1"
   }
 
   private def testDependencies(hasIt: Boolean = false): Seq[sbt.ModuleID] = {
@@ -100,5 +101,9 @@ object Dependencies {
     "org.typelevel" %% "cats-effect" % Versions.Cats_Effect,
     "com.google.cloud"               % "google-cloud-nio" % Versions.GCNio % IntegrationTest,
     "commons-io"                     % "commons-io" % "2.6" % Test
+  ) ++ testDependencies(hasIt = true)
+
+  val Elasticsearch = Seq(
+    "com.sksamuel.elastic4s" %% "elastic4s-client-esjava" % Versions.Elastic4s
   ) ++ testDependencies(hasIt = true)
 }

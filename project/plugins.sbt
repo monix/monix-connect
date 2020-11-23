@@ -5,6 +5,6 @@ addSbtPlugin("com.github.tkawachi"  % "sbt-doctest"     % "0.9.6")
 addSbtPlugin("com.eed3si9n"         % "sbt-unidoc"      % "0.4.3")
 addSbtPlugin("com.typesafe"         % "sbt-mima-plugin" % "0.8.0")
 addSbtPlugin("de.heikoseeberger"    % "sbt-header"      % "5.4.0")
-addSbtPlugin("com.geirsson" % "sbt-ci-release" % "1.5.3")
+addSbtPlugin("com.geirsson" % "sbt-ci-release" % "1.5.4")
 addSbtPlugin("pl.project13.scala"   % "sbt-jmh"         % "0.4.0")
 libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.10.1"

@@ -11,6 +11,9 @@
       "dynamodb": {
         "title": "AWS DynamoDB"
       },
+      "elasticsearch": {
+        "title": "Elasticsearch"
+      },
       "gcs": {
         "title": "Google Cloud Storage"
       },
