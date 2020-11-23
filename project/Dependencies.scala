@@ -24,7 +24,7 @@ object Dependencies {
     val Scalacheck = "1.14.0"
     val Mockito = "1.15.0"
     val GCNio = "0.122.1"
-    val Elastic4s = "7.9.1"
+    val Elastic4s = "7.9.2"
   }
 
   private def testDependencies(hasIt: Boolean = false): Seq[sbt.ModuleID] = {
