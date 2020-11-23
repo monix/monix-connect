@@ -39,6 +39,7 @@ lazy val sharedSettings = Seq(
   scalacOptions ++= Seq(
     "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
     "-Ywarn-dead-code", // Warn when dead code is identified.
+    "-Wunused:imports",
     // Turns all warnings into errors ;-)
     //"-Xfatal-warnings", //Turning of fatal warnings for the moment
     // Enables linter options

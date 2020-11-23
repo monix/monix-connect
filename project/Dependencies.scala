@@ -35,7 +35,6 @@ object Dependencies {
 
   private val MonixDependency = Seq(
     "io.monix" %% "monix-reactive"                        % Versions.Monix,
-    "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0", //todo used as replacement for `collection.JavaConverters`
     "org.scala-lang.modules" %% "scala-java8-compat"      % "0.9.0"
   )
 
