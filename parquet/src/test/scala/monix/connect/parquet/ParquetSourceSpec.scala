@@ -24,7 +24,7 @@ import monix.execution.Scheduler.Implicits.global
 import monix.execution.schedulers.TestScheduler
 import monix.reactive.Observable
 import org.apache.avro.generic.GenericRecord
-import org.apache.parquet.hadoop.{ParquetReader}
+import org.apache.parquet.hadoop.ParquetReader
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
