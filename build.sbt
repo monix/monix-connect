@@ -19,8 +19,8 @@ inThisBuild(List(
 skip in publish := true //requered by sbt-ci-release
 
 lazy val sharedSettings = Seq(
-  scalaVersion       := "2.12.8",
-  crossScalaVersions := Seq("2.12.10", "2.13.1"),
+  scalaVersion       := "2.13.4",
+  crossScalaVersions := Seq("2.12.10", "2.13.4"),
   scalafmtOnCompile  := true,
   scalacOptions ++= Seq(
     // warnings
@@ -43,8 +43,6 @@ lazy val sharedSettings = Seq(
     //"-Xfatal-warnings", //Turning of fatal warnings for the moment
     // Enables linter options
     "-Xlint:adapted-args", // warn if an argument list is modified to match the receiver
-    "-Xlint:nullary-unit", // warn when nullary methods return Unit
-    "-Xlint:nullary-override", // warn when non-nullary `def f()' overrides nullary `def f'
     "-Xlint:infer-any", // warn when a type argument is inferred to be `Any`
     "-Xlint:missing-interpolator", // a string literal appears to be missing an interpolator id
     "-Xlint:doc-detached", // a ScalaDoc comment appears to be detached from its element
@@ -120,7 +118,7 @@ lazy val monixConnect = (project in file("."))
   .configs(IntegrationTest, IT)
   .settings(sharedSettings)
   .settings(name := "monix-connect")
-  .aggregate(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, awsAuth, elasticsearch)
+  .aggregate(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, elasticsearch, awsAuth)
   .dependsOn(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, elasticsearch)
 
 
@@ -185,7 +183,7 @@ lazy val skipOnPublishSettings = Seq(
 lazy val mdocSettings = Seq(
   scalacOptions --= Seq("-Xfatal-warnings", "-Ywarn-unused"),
   crossScalaVersions := Seq(scalaVersion.value),
-  unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(akka, parquet, dynamodb, s3, gcs, hdfs, mongodb, redis),
+  unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(akka, parquet, dynamodb, s3, elasticsearch, gcs, hdfs, mongodb, redis),
   target in (ScalaUnidoc, unidoc) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",
   cleanFiles += (target in (ScalaUnidoc, unidoc)).value,
   docusaurusCreateSite := docusaurusCreateSite
