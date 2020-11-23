@@ -80,10 +80,8 @@ object Dependencies {
   val Parquet = Seq(
     "org.apache.parquet" % "parquet-avro"     % Versions.Parquet,
     "org.apache.parquet" % "parquet-hadoop"   % Versions.Parquet,
-    "org.apache.parquet" % "parquet-protobuf" % Versions.Parquet,
     "org.apache.hadoop" % "hadoop-client" % Versions.Hadoop,
-    "org.apache.hadoop" % "hadoop-common" % Versions.Hadoop % Test,
-    "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"
+    "org.apache.hadoop" % "hadoop-common" % Versions.Hadoop % Test
   ) ++ testDependencies(hasIt = false)
 
   val S3 = Seq(
