@@ -130,20 +130,9 @@ lazy val dynamodb = monixConnector("dynamodb", Dependencies.DynamoDb)
 
 lazy val hdfs = monixConnector("hdfs", Dependencies.Hdfs)
 
-val scalaPBSettings = Seq(
-  PB.targets in Compile := Seq(
-    scalapb.gen() -> (sourceManaged in Compile).value
-  ),
-  PB.targets in Compile := Seq(
-    scalapb.gen(javaConversions = true) -> (sourceManaged in Compile).value,
-    PB.gens.java -> (sourceManaged in Compile).value
-  ),
-  PB.protoSources in Compile := Seq(new File("parquet/src/test/protobuf")),
-)
-
 lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb)
 
-lazy val parquet = monixConnector("parquet", Dependencies.Parquet, scalaPBSettings)
+lazy val parquet = monixConnector("parquet", Dependencies.Parquet)
 
 lazy val redis = monixConnector("redis", Dependencies.Redis)
 

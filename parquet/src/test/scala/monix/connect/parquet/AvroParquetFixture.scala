@@ -17,7 +17,6 @@
 
 package monix.connect.parquet
 
-import monix.connect.parquet.test.User.ProtoDoc
 import org.apache.hadoop.conf.Configuration
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
@@ -60,10 +59,4 @@ trait AvroParquetFixture extends ParquetFixture {
       record.get("name").toString
     )
 
-  implicit class ExtendedAvroDocList(x: List[Person]) {
-    def singleEquiv(x: Person, y: ProtoDoc): Boolean =
-      ((x.id == y.getId) && (x.name == y.getName))
-    def equiv(y: List[ProtoDoc]): Boolean =
-      x.zip(y).map { case (a, p) => singleEquiv(a, p) }.filterNot(b => b).isEmpty
-  }
 }
