@@ -5,7 +5,7 @@ object Dependencies {
   object Versions {
 
     //main
-    val AwsSdk = "2.15.19"
+    val AwsSdk = "2.15.33"
     val AkkaStreams = "2.6.9"
     val AWS = "1.11.749"
     val Cats_Effect = "2.1.3"
@@ -20,11 +20,11 @@ object Dependencies {
     val Pureconfig = "0.14.0"
 
     //test
-    val Scalatest = "3.2.2"
+    val Scalatest = "3.2.3"
     val Scalacheck = "1.14.0"
     val Mockito = "1.15.0"
-    val GCNio = "0.121.2"
-    val Elastic4s = "7.9.2"
+    val GCNio = "0.122.1"
+    val Elastic4s = "7.9.1"
   }
 
   private def testDependencies(hasIt: Boolean = false): Seq[sbt.ModuleID] = {
@@ -81,10 +81,8 @@ object Dependencies {
   val Parquet = Seq(
     "org.apache.parquet" % "parquet-avro"     % Versions.Parquet,
     "org.apache.parquet" % "parquet-hadoop"   % Versions.Parquet,
-    "org.apache.parquet" % "parquet-protobuf" % Versions.Parquet,
     "org.apache.hadoop" % "hadoop-client" % Versions.Hadoop,
-    "org.apache.hadoop" % "hadoop-common" % Versions.Hadoop % Test,
-    "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"
+    "org.apache.hadoop" % "hadoop-common" % Versions.Hadoop % Test
   ) ++ testDependencies(hasIt = false)
 
   val S3 = Seq(

@@ -26,7 +26,6 @@ import monix.reactive.observers.Subscriber
 import org.apache.parquet.hadoop.ParquetWriter
 
 import scala.concurrent.Future
-import scala.util.control.NonFatal
 
 /**
   * A [[Consumer]] that writes each emitted element into the same parquet file.
