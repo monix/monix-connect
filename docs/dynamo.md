@@ -13,10 +13,10 @@ All of them simply extend the same generic _request_ class [DynamoDbRequest](htt
 and the same happens with the return types, they all implement [DynamoDbResponse](https://sdk.amazonaws.com/java/api/2.0.0/software/amazon/awssdk/services/dynamodb/model/DynamoDbResponse.html).  
 
 The fact that all types implements from the same _Request_ and _Response_ type, makes it possible to create an abstraction layer on top of it for executing any operation in the same way.
-_Credits:__ This design pattern is similar to the one used internally by _alpakka-dynamodb_, which we got inspired from. 
+_Credits:__ This design pattern is similar to the one used internally by _alpakka-dynamodb_, which this connector got inspired from. 
 
-From there on, the connector provides three main methods: __single__, __transformer__ and __sink__ that implements the mentioned pattern and therefore allows to deal with 
- any dynamodb operation.  
+From there on, the connector provides three generic methods __single__, __transformer__ and __sink__ that implements the mentioned pattern and therefore allows to deal with 
+ any _dynamodb_ operation in different circumstances.  
 
 ## Dependency
 
@@ -34,12 +34,10 @@ libraryDependencies += "io.monix" %% "monix-dynamodb" % "0.5.0"
 
  ### From config
   
-  The laziest and best way to create the _DynamoDb_ connection is from a configuration file.
-  To do so, you'd just need to create an `application.conf` following the template [reference.conf](https://github.com/monix/monix-connect/tree/master/aws-auth/src/main/resources/reference.conf).
-  If you don't create your own config file, it will default to the `reference.conf` mentioned just before, which uses `DefaultCredentialsProvider`.
+  The laziest and recommended way to create the _DynamoDb_ connection is from a configuration file.
+  To do so, you'd just need to create an `application.conf` following the template from [reference.conf](https://github.com/monix/monix-connect/tree/master/aws-auth/src/main/resources/reference.conf).
     
-    
-  Below snippet shows an example of the configuration file to authenticate via `StaticCredentialsProvider` and region `EU-WEST-1`, as you can appreciate, the 
+  Below snippet shows an example of the configuration file to authenticate via `StaticCredentialsProvider` and region `EU-WEST-1`, as you can appreciate the 
   _http client_ settings are commented out since they are optional, however they could have been specified too for a more grained configuration of the underlying `NettyNioAsyncHttpClient`.
     
 ```hocon
@@ -241,7 +239,7 @@ val t: Task[GetItemResponse] =
 
 A pre-built _Monix_ `Consumer[DynamoDbRequest, DynamoDbResponse]` that provides a safe implementation 
 for executing any subtype of `DynamoDbRequest` and materializes to its respective response.
-It does also provide with the flexibility to specifying the number of times to retrying failed operations and the delay between them, which by default is no retry.
+It does also allow to specifying the backoff strategy, which represents the number of times to retrying failed operations and the delay between them, being _no retry_ by default.
 
 ```scala
 import monix.connect.dynamodb.DynamoDbOp.Implicits._
@@ -277,13 +275,14 @@ val f = DynamoDb.fromConfig.use{ dynamoDb =>
 ### Transformer
 
 Finally, the connector also provides a _transformer_ for `Observable`  that describes the execution of 
- any type of _DynamoDb_ request, returning its respective response: `Observable[DynamoDbRequest] => Observable[Task[DynamoDbResponse]]`.
+ any type of _DynamoDb_ request, returning its respective response: `Observable[DynamoDbRequest] => Observable[DynamoDbResponse]`.
 
 The below code shows an example of a stream that transforms incoming get requests into its subsequent responses:
 
 ```scala
 import monix.connect.dynamodb.DynamoDbOp.Implicits._
 import monix.connect.dynamodb.DynamoDb
+import monix.reactive.Observable
 import monix.execution.Scheduler.Implicits.global
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.{GetItemRequest, GetItemResponse}
@@ -299,15 +298,16 @@ def getItemRequest(tableName: String, citizenId: String, city: String): GetItemR
 
 val getItemRequests: List[GetItemRequest] = List("citizen1", "citizen2").map(getItemRequest("citizens", _, city = "Rome"))
 
-val f = DynamoDb.fromConfig.use{ dynamoDb =>
+val dynamoDb: DynamoDb
+val ob: Observable[GetItemResponse] = {
   Observable
-    .fromIterable(getItemRequests)
+    .fromIterable(getItemRequests) 
     .transform(dynamoDb.transformer())
-    .toListL
-}.runToFuture
-```
+} 
 
-The _transformer_ accepts also number of _retries_ and _delay after a failure_ to be passed.
+``
+
+The _transformer_ signature also accepts also the number of _retries_ and _delay after a failure_ to be passed.
 
 ## Local testing
 
@@ -325,7 +325,7 @@ dynamodb:
     - SERVICES=dynamodb
 ```
 
-Run the following command to build, and start the _DynamoDb_ service:
+Run the following command to run the _DynamoDb_ service:
 
 ```shell script
 docker-compose -f docker-compose.yml up -d dynamodb
@@ -333,7 +333,7 @@ docker-compose -f docker-compose.yml up -d dynamodb
 
 Check out that the service has started correctly.
 
-Finally create the dynamodb connection:
+Finally create the _dynamodb connection_:
 
 ```scala
 import monix.connect.dynamodb.DynamoDb

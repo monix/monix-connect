@@ -221,7 +221,7 @@ object DynamoDbOp {
     }
   }
 
-  @deprecated("use `Dynamodb single`")
+  @deprecated("use `single` from DynamoDb")
   final def create[In <: DynamoDbRequest, Out <: DynamoDbResponse](
     request: In,
     retries: Int = 0,
