@@ -12,7 +12,6 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - uses: olafurpg/setup-scala@v10
-      - uses: olafurpg/setup-gpg@v2
       - name: Publish documentation web page
         run: |
           ./.github/scripts/create-web-site.sh
