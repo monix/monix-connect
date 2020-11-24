@@ -5,6 +5,7 @@ object Dependencies {
   object Versions {
 
     //main
+    val Monix = "3.3.0"
     val AwsSdk = "2.15.33"
     val AkkaStreams = "2.6.9"
     val AWS = "1.11.749"
@@ -12,19 +13,18 @@ object Dependencies {
     val DynamoDb = "2.10.60"
     val GCS = "1.107.0"
     val Hadoop = "3.1.4"
-    val Monix = "3.2.0"
     val MongoScala = "4.1.1"
     val MongoReactiveStreams = "4.1.1"
     val S3 = "2.14.21"
     val Parquet = "1.11.1"
     val Pureconfig = "0.14.0"
+    val Elastic4s = "7.9.1"
 
     //test
     val Scalatest = "3.2.3"
     val Scalacheck = "1.14.0"
     val Mockito = "1.15.0"
     val GCNio = "0.122.1"
-    val Elastic4s = "7.9.1"
   }
 
   private def testDependencies(hasIt: Boolean = false): Seq[sbt.ModuleID] = {
