@@ -80,7 +80,7 @@ This config file needs to be placed in the `resource` folder,
 therefore it will be automatically picked up from the method call `DynamoDb.fromConfig`, which will return a `cats.effect.Resource[Task, DynamoDb]`.
 The [resource](https://typelevel.org/cats-effect/datatypes/resource.html) will be responsible to *acquire* and *release* the _DynamoDb connection_. 
 
-The best way of using the client is to make it transparent in your application and directly expect an instance of _DynamoDb_ in your methods and classes, which will be called from within the 
+The recommended way of using the client is to make the resouce transparent in your application by directly expecting an instance of _DynamoDb_ in your methods and class arguments, which might be called from within the 
 _usage_ of the _Resource_. See below code snippet to understand the concept:
 
 ```scala

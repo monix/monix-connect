@@ -18,14 +18,16 @@
 package monix.connect
 
 import monix.eval.{Task, TaskLike}
-import monix.reactive.Observable
 import reactor.core.publisher.Mono
 
 package object redis {
 
   private[redis] implicit val fromMono: TaskLike[Mono] = new TaskLike[Mono] {
     def apply[A](m: Mono[A]): Task[A] =
-      Observable.fromReactivePublisher(m).headL
+      Task.fromReactivePublisher(m).flatMap { op =>
+        if (op.nonEmpty) Task.now(op.get)
+        else Task.raiseError(new Exception("The result from the executed redis operation was empty."))
+      }
   }
 
 }
