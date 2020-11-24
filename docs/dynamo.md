@@ -9,13 +9,14 @@ _Amazon DynamoDB_ is a _key-value_ and document database that performs at any sc
 a key component for many platforms of the world's fastest growing enterprises that depend on it to support their mission-critical workloads.
    
 The _DynamoDB_ api provides a large list of operations to _create_, _describe_, _delete_, _get_, _put, _batch_, _scan_, _list_ and more. 
-All of them simply extend the same generic _request_ class [DynamoDbRequest](https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/dynamodb/model/DynamoDbRequest.html),
-and the same happens with the return types, they all implement [DynamoDbResponse](https://sdk.amazonaws.com/java/api/2.0.0/software/amazon/awssdk/services/dynamodb/model/DynamoDbResponse.html).  
+All of them simply extend the same generic superclass on its input and output, the _request_ class they will extend [DynamoDbRequest](https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/dynamodb/model/DynamoDbRequest.html),
+and for the _response_ from [DynamoDbResponse](https://sdk.amazonaws.com/java/api/2.0.0/software/amazon/awssdk/services/dynamodb/model/DynamoDbResponse.html).  
 
-The fact that all types implements from the same _Request_ and _Response_ type, makes it possible to create an abstraction layer on top of it for executing any operation in the same way.
-_Credits:__ This design pattern is similar to the one used internally by _alpakka-dynamodb_, which this connector got inspired from. 
+The fact that all request types implements from the same superclass, makes it possible to create an abstraction layer on top of it for executing any operation in the same way.
 
-From there on, the connector provides three generic methods __single__, __transformer__ and __sink__ that implements the mentioned pattern and therefore allows to deal with 
+_Credits:_ This design pattern is similar to the one used internally by _alpakka-dynamodb_, which this connector got inspiration from. 
+
+Therefore, the connector provides three generic methods __single__, __transformer__ and __sink__ that implements the mentioned pattern and therefore allows to deal with 
  any _dynamodb_ operation in different circumstances.  
 
 ## Dependency
@@ -171,7 +172,7 @@ val dynamoDb: DynamoDb = DynamoDb.createUnsafe(DefaultCredentialsProvider.create
    by importing them all you'll be able to execute any `DynamoDbRequest`.
   The next sections will not just show an example for creating a _single request_ but also for _transforming_ and _consuming_ streams of DynamoDB requests.
 
-### Single Operation 
+## Single Operation 
 
 There are cases where we do only want to execute a __single request__, 
 see on below snippet an example on how to create a table:
@@ -235,7 +236,7 @@ val t: Task[GetItemResponse] =
   DynamoDb.fromConfig.use(_.single(getItemRequest, retries = 5, delayAfterFailure = 500.milliseconds))
 ```
 
-### Consumer 
+## Consumer 
 
 A pre-built _Monix_ `Consumer[DynamoDbRequest, DynamoDbResponse]` that provides a safe implementation 
 for executing any subtype of `DynamoDbRequest` and materializes to its respective response.
@@ -272,7 +273,7 @@ val f = DynamoDb.fromConfig.use{ dynamoDb =>
 }.runToFuture
 ```
 
-### Transformer
+## Transformer
 
 Finally, the connector also provides a _transformer_ for `Observable`  that describes the execution of 
  any type of _DynamoDb_ request, returning its respective response: `Observable[DynamoDbRequest] => Observable[DynamoDbResponse]`.
