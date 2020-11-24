@@ -220,20 +220,23 @@ val t: Task[PutItemResponse] = DynamoDb.fromConfig.use(_.single(createTableReque
 _Notice_ that in this case the `single` signature was used to create the table, but actually it does also accept any subtype of `DynamoDbRequest` with its respective operation from `monix.connect.dynamodb.DynamoDbOp.Implicits`.
 
 
-It is also an _overloaded_ method that also accepts the number of retries after failure and delay between them, 
+The signature also accepts the number of _retries_ after failure and the delay between them, 
 let's see in the following example how to use that to _query_ items from the table: 
 
 ```scala
 import monix.eval.Task
 import monix.connect.dynamodb.DynamoDb
+import monix.connect.dynamodb.DynamoDbOp.Implicits.getItemOp // required to execute a get operation 
+import monix.connect.dynamodb.domain.RetryStrategy
 import software.amazon.awssdk.services.dynamodb.model.{GetItemRequest, GetItemResponse}
+
 import scala.concurrent.duration._
 
 val getItemRequest: GetItemRequest = ???
+val retryStrategy = RetryStrategy(retries = 5, backoffDelay = 600.milliseconds)
 
-import monix.connect.dynamodb.DynamoDbOp.Implicits.getItemOp
 val t: Task[GetItemResponse] = 
-  DynamoDb.fromConfig.use(_.single(getItemRequest, retries = 5, delayAfterFailure = 500.milliseconds))
+  DynamoDb.fromConfig.use(_.single(getItemRequest, retryStrategy))
 ```
 
 ## Consumer 
@@ -245,16 +248,19 @@ It does also allow to specifying the backoff strategy, which represents the numb
 ```scala
 import monix.connect.dynamodb.DynamoDbOp.Implicits._
 import monix.connect.dynamodb.DynamoDb
+import monix.connect.dynamodb.domain.RetryStrategy
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
 import software.amazon.awssdk.services.dynamodb.model.{PutItemRequest, AttributeValue}
 
 import scala.concurrent.duration._
 
+
 val strAttr: String => AttributeValue = value => AttributeValue.builder.s(value).build
 val numAttr: Int => AttributeValue = value => AttributeValue.builder().n(value.toString).build
 
 import monix.connect.dynamodb.DynamoDbOp.Implicits.putItemOp
+val dynamoDb: DynamoDb
 def putItemRequest(tableName: String, citizen: Citizen): PutItemRequest =
   PutItemRequest
     .builder
@@ -266,11 +272,9 @@ val citizen1 = Citizen("citizen1", "Rome", 52)
 val citizen2 = Citizen("citizen2", "Rome", 43)
 val putItemRequests: List[PutItemRequest] = List(citizen1, citizen2).map(putItemRequest("citizens-table", _))
 
-val f = DynamoDb.fromConfig.use{ dynamoDb =>
-  Observable
+val t = Observable
     .fromIterable(putItemRequests)
-    .consumeWith(dynamoDb.sink(retries = 3, delayAfterFailure = 1.second))
-}.runToFuture
+    .consumeWith(dynamoDb.sink())
 ```
 
 ## Transformer
@@ -306,7 +310,7 @@ val ob: Observable[GetItemResponse] = {
     .transform(dynamoDb.transformer())
 } 
 
-``
+```
 
 The _transformer_ signature also accepts also the number of _retries_ and _delay after a failure_ to be passed.
 

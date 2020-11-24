@@ -17,16 +17,20 @@
 
 package monix.connect.dynamodb
 
+
 import scala.concurrent.duration._
 import scala.concurrent.duration.FiniteDuration
 
 package object domain {
 
-  @deprecated("See `RetryStrategy`")
-  case class RetrySettings(retries: Int, delayAfterFailure: Option[FiniteDuration])
-  final val DefaultRetrySettings = RetrySettings(0, Option.empty)
-
-  case class RetryStrategy(retries: Int, backoffDelay: FiniteDuration)
-  final val DefaultRetryStrategy = RetryStrategy(0, 0.seconds)
+  /**
+    * A retry strategy is defined by the amount of retries and backoff delay.
+    *
+    * @param retries the number of times that an operation can be retried before actually returning a failed [[Task]].
+    *        it must be higher or equal than 0.
+    * @param backoffDelay delay after failure for the execution of a single [[DynamoDbOp]].
+    */
+  case class RetryStrategy(retries: Int = 0, backoffDelay: FiniteDuration = Duration.Zero)
+  final val DefaultRetryStrategy = RetryStrategy(0, Duration.Zero)
 
 }

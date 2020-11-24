@@ -1,5 +1,6 @@
 package monix.connect.dynamodb
 
+import monix.connect.dynamodb.domain.RetryStrategy
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
@@ -72,7 +73,7 @@ class DynamoDbSuite extends AnyFlatSpec with Matchers with DynamoDbFixture with 
     DynamoDb.fromConfig.use{ dynamoDb =>
       Observable
         .fromIterable(putItemRequests)
-        .consumeWith(dynamoDb.sink(retries = 3, delayAfterFailure = 1.second))
+        .consumeWith(dynamoDb.sink(RetryStrategy(retries = 3, backoffDelay = 1.second)))
     }.runSyncUnsafe()
 
     //then
@@ -94,7 +95,7 @@ class DynamoDbSuite extends AnyFlatSpec with Matchers with DynamoDbFixture with 
     val f: List[GetItemResponse] = DynamoDb.fromConfig.use{ dynamoDb =>
       Observable
         .fromIterable(getItemRequests)
-        .transform(dynamoDb.transformer(retries = 3, delayAfterFailure = 1.second))
+        .transform(dynamoDb.transformer(RetryStrategy(retries = 3, backoffDelay = 1.second)))
         .toListL
     }.runSyncUnsafe()
 

@@ -19,6 +19,8 @@ package monix.connect.dynamodb
 
 import cats.effect.Resource
 import monix.connect.aws.auth.AppConf
+import monix.connect.dynamodb.domain.RetryStrategy
+import monix.connect.dynamodb.domain.DefaultRetryStrategy
 import monix.eval.Task
 import monix.execution.annotations.UnsafeBecauseImpure
 import monix.reactive.{Consumer, Observable}
@@ -180,8 +182,10 @@ object DynamoDb { self =>
     delayAfterFailure: Option[FiniteDuration] = None)(
     implicit
     dynamoDbOp: DynamoDbOp[In, Out],
-    client: DynamoDbAsyncClient): Consumer[In, Unit] =
-    DynamoDbSubscriber(DynamoDb.createUnsafe(client), retries, delayAfterFailure.getOrElse(Duration.Zero))
+    client: DynamoDbAsyncClient): Consumer[In, Unit] = {
+    val retryStrategy = RetryStrategy(retries, delayAfterFailure.getOrElse(Duration.Zero))
+    DynamoDbSubscriber(DynamoDb.createUnsafe(client), retryStrategy)
+  }
 
   @deprecated("moved to the trait for safer usage")
   def transformer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
@@ -200,66 +204,59 @@ trait DynamoDb { self =>
   private[dynamodb] implicit val asyncClient: DynamoDbAsyncClient
 
   /**
-    * Pre-built [[Consumer]] implementation that expects and executes [[DynamoDbRequest]]s.
-    * It provides with the flexibility of retrying a failed execution with delay to recover from it.
+    * Pre-built [[Consumer]] implementation that expects
+    * and executes any subtype [[DynamoDbRequest]].
+    * It provides with the flexibility of retrying a
+    * failed execution with delay to recover from it.
     *
-    * @param dynamoDbOp abstracts the execution of any given [[DynamoDbRequest]] with its correspondent operation that returns [[DynamoDbResponse]].
-    * @tparam In the input request as type parameter lower bounded by [[DynamoDbRequest]].
-    * @tparam Out output type parameter that must be a subtype os [[DynamoDbRequest]].
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
+    * @param dynamoDbOp an implicit [[DynamoDbOp]] of the operation that wants to be executed.
     * @return A [[monix.reactive.Consumer]] that expects and executes dynamodb requests.
     */
-  def sink[In <: DynamoDbRequest, Out <: DynamoDbResponse](
-    retries: Int = 0,
-    delayAfterFailure: FiniteDuration = Duration.Zero)(implicit dynamoDbOp: DynamoDbOp[In, Out]): Consumer[In, Unit] =
-    DynamoDbSubscriber(self, retries, delayAfterFailure)
+  def sink[In <: DynamoDbRequest, Out <: DynamoDbResponse](retryStrategy: RetryStrategy = DefaultRetryStrategy)
+                                                          (implicit dynamoDbOp: DynamoDbOp[In, Out]): Consumer[In, Unit] =
+    DynamoDbSubscriber(self, retryStrategy)
 
   /**
-    * Transformer that executes any given [[DynamoDbRequest]] and transforms them to its subsequent [[DynamoDbResponse]] within [[Task]].
-    * It also provides with the flexibility of retrying a failed execution with delay to recover from it.
+    * Transformer that executes any given [[DynamoDbRequest]] and transforms
+    * them to its corresponding [[DynamoDbResponse]] within [[Task]].
+    * It also provides with the flexibility of retrying a failed
+    * execution with delay to recover from it.
     *
-    * @param retries the number of times that an operation can be retried before actually returning a failed [[Task]].
-    *        it must be higher or equal than 0.
-    * @param delayAfterFailure delay after failure for the execution of a single [[DynamoDbOp]].
-    * @param dynamoDbOp implicit [[DynamoDbOp]] that abstracts the execution of the specific operation.
-    * @tparam In input type parameter that must be a subtype os [[DynamoDbRequest]].
-    * @tparam Out output type parameter that will be a subtype os [[DynamoDbRequest]].
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests
+    * @param dynamoDbOp an implicit [[DynamoDbOp]] of the operation that wants to be executed.
     * @return DynamoDb operation transformer: `Observable[DynamoDbRequest] => Observable[DynamoDbRequest]`.
     */
   def transformer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
-    retries: Int = 0,
-    delayAfterFailure: FiniteDuration = Duration.Zero)(
+    retryStrategy: RetryStrategy = DefaultRetryStrategy)(
     implicit dynamoDbOp: DynamoDbOp[In, Out]): Observable[In] => Observable[Out] = { inObservable: Observable[In] =>
-    inObservable.mapEval(single(_, retries, delayAfterFailure))
+    inObservable.mapEval(self.single(_, retryStrategy))
   }
 
   /**
-    * Creates the description of the execution of a single request that
-    * under failure it will be retried as many times as set in [[retries]].
+    * Describes a single execution of any [[DynamoDbRequest]] that
+    * will return its corresponding [[DynamoDbResponse]].
     *
     * @param request the [[DynamoDbRequest]] that will be executed.
-    * @param retries the number of times that an operation can be retried before actually returning a failed [[Task]].
-    *        it must be higher or equal than 0.
-    * @param delayAfterFailure delay after failure for the execution of a single [[DynamoDbOp]].
-    * @param dynamoDbOp an implicit [[DynamoDbOp]] that abstracts the execution of the specific operation.
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
+    * @param dynamoDbOp an implicit [[DynamoDbOp]] of the operation that wants to be executed.
     * @return A [[Task]] that ends successfully with the response as [[DynamoDbResponse]], or a failed one.
     */
   def single[In <: DynamoDbRequest, Out <: DynamoDbResponse](
     request: In,
-    retries: Int = 0,
-    delayAfterFailure: FiniteDuration = Duration.Zero)(implicit dynamoDbOp: DynamoDbOp[In, Out]): Task[Out] = {
-
-    require(retries >= 0, "Retries per operation must be higher or equal than 0.")
-
+    retryStrategy: RetryStrategy = DefaultRetryStrategy)(implicit dynamoDbOp: DynamoDbOp[In, Out]): Task[Out] = {
+    val RetryStrategy(retries, backoffDelay) = retryStrategy
+    require(retryStrategy.retries >= 0, "Retries per operation must be higher or equal than 0.")
     Task
       .defer(dynamoDbOp(request))
       .onErrorHandleWith { ex =>
         val t = Task
           .defer(
-            if (retries > 0) single(request, retries - 1, delayAfterFailure)
+            if (retries > 0) single(request, RetryStrategy(retries - 1, backoffDelay))
             else Task.raiseError(ex))
-        delayAfterFailure match {
+        backoffDelay match {
           case Duration.Zero => t
-          case _ => t.delayExecution(delayAfterFailure)
+          case _ => t.delayExecution(backoffDelay)
         }
       }
   }
