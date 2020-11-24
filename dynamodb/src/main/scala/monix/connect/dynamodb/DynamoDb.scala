@@ -49,7 +49,7 @@ object DynamoDb { self =>
     *
     * @see the cats effect resource data type: https://typelevel.org/cats-effect/datatypes/resource.html
     *
-    * @return a [[Resource]] of [[Task]] that allocates and releases [[DynamoDb]].
+    * @return a [[Resource]] of [[Task]] that allocates and releases a Monix [[DynamoDb]] client.
     */
   def fromConfig: Resource[Task, DynamoDb] = {
     Resource.make {
@@ -64,7 +64,7 @@ object DynamoDb { self =>
 
   /**
     * Creates a [[Resource]] that will use the passed-by-parameter
-    * AWS configurations to acquire and release [[DynamoDb]].
+    * AWS configurations to acquire and release a Monix [[DynamoDb]] client.
     *
     * ==Example==
     *
@@ -78,11 +78,11 @@ object DynamoDb { self =>
     *   val dynamoDbResource: Resource[Task, DynamoDb] = DynamoDb.create(defaultCredentials, Region.AWS_GLOBAL)
     * }}}
     *
-    * @param credentialsProvider the strategy for loading credentials and authenticate to AWS S3
+    * @param credentialsProvider the strategy for loading credentials and authenticate to AWS DynamoDb
     * @param region an Amazon Web Services region that hosts a set of Amazon services.
     * @param endpoint the endpoint url with which the SDK should communicate.
     * @param httpClient sets the [[SdkAsyncHttpClient]] that the SDK service client will use to make HTTP calls.
-    * @return a [[Resource]] of [[Task]] that allocates and releases [[DynamoDb]].
+    * @return a [[Resource]] of [[Task]] that allocates and releases a Monix [[DynamoDb]] client.
     **/
   def create(
     credentialsProvider: AwsCredentialsProvider,
@@ -127,8 +127,8 @@ object DynamoDb { self =>
     *   val dynamoDb: DynamoDb = DynamoDb.createUnsafe(asyncClient)
     * }}}
     *
-    * @param dynamoDbAsyncClient an instance of a [[S3AsyncClient]].
-    * @return An instance of [[S3]]
+    * @param dynamoDbAsyncClient an instance of a [[DynamoDbAsyncClient]].
+    * @return An instance of the Monix [[DynamoDb]] client
     */
   @UnsafeBecauseImpure
   def createUnsafe(dynamoDbAsyncClient: DynamoDbAsyncClient): DynamoDb = {
@@ -162,7 +162,7 @@ object DynamoDb { self =>
     * @param region An Amazon Web Services region that hosts a set of Amazon services.
     * @param endpoint The endpoint url which the SDK should communicate to.
     * @param httpClient Sets the [[SdkAsyncHttpClient]] that the SDK service client will use to make HTTP calls.
-    * @return a [[Resource]] of [[Task]] that allocates and releases [[DynamoDb]].
+    * @return a [[Resource]] of [[Task]] that allocates and releases a Monix [[DynamoDb]] client.
     */
   @UnsafeBecauseImpure
   def createUnsafe(
