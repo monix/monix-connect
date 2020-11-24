@@ -17,7 +17,6 @@
 
 package monix.connect.dynamodb
 
-
 import scala.concurrent.duration._
 import scala.concurrent.duration.FiniteDuration
 

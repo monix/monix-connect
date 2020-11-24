@@ -78,9 +78,7 @@ private[dynamodb] class DynamoDbSubscriber[In <: DynamoDbRequest, Out <: DynamoD
 
 /** Companion object of [[DynamoDbSubscriber]] class */
 private[dynamodb] object DynamoDbSubscriber {
-  def apply[In <: DynamoDbRequest, Out <: DynamoDbResponse](
-    dynamoDb: DynamoDb,
-    retryStrategy: RetryStrategy)(
+  def apply[In <: DynamoDbRequest, Out <: DynamoDbResponse](dynamoDb: DynamoDb, retryStrategy: RetryStrategy)(
     implicit
     dynamoDbOp: DynamoDbOp[In, Out]): Consumer[In, Unit] =
     new DynamoDbSubscriber(dynamoDb, retryStrategy)(dynamoDbOp)

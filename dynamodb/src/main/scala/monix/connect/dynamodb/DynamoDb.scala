@@ -213,8 +213,8 @@ trait DynamoDb { self =>
     * @param dynamoDbOp an implicit [[DynamoDbOp]] of the operation that wants to be executed.
     * @return A [[monix.reactive.Consumer]] that expects and executes dynamodb requests.
     */
-  def sink[In <: DynamoDbRequest, Out <: DynamoDbResponse](retryStrategy: RetryStrategy = DefaultRetryStrategy)
-                                                          (implicit dynamoDbOp: DynamoDbOp[In, Out]): Consumer[In, Unit] =
+  def sink[In <: DynamoDbRequest, Out <: DynamoDbResponse](retryStrategy: RetryStrategy = DefaultRetryStrategy)(
+    implicit dynamoDbOp: DynamoDbOp[In, Out]): Consumer[In, Unit] =
     DynamoDbSubscriber(self, retryStrategy)
 
   /**
@@ -227,8 +227,7 @@ trait DynamoDb { self =>
     * @param dynamoDbOp an implicit [[DynamoDbOp]] of the operation that wants to be executed.
     * @return DynamoDb operation transformer: `Observable[DynamoDbRequest] => Observable[DynamoDbRequest]`.
     */
-  def transformer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
-    retryStrategy: RetryStrategy = DefaultRetryStrategy)(
+  def transformer[In <: DynamoDbRequest, Out <: DynamoDbResponse](retryStrategy: RetryStrategy = DefaultRetryStrategy)(
     implicit dynamoDbOp: DynamoDbOp[In, Out]): Observable[In] => Observable[Out] = { inObservable: Observable[In] =>
     inObservable.mapEval(self.single(_, retryStrategy))
   }
