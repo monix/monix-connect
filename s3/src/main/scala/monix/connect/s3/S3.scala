@@ -115,15 +115,8 @@ object S3 { self =>
   }
 
   /**
-    * Creates a [[Resource]] that will use the passed
-    * AWS configurations to allocate and release [[S3]].
-    * Thus, the api expects an `application.conf` file to be present
-    * in the `resources` folder.
-    *
-    * @see how does the expected `.conf` file should look like
-    *      https://github.com/monix/monix-connect/blob/master/aws-auth/src/main/resources/reference.conf`
-    *
-    * @see the cats effect resource data type: https://typelevel.org/cats-effect/datatypes/resource.html
+    * Creates a [[Resource]] that will use the passed-by-parameter
+    * AWS configurations to acquire and release [[S3]].
     *
     * ==Example==
     *
@@ -137,10 +130,10 @@ object S3 { self =>
     *   val s3Resource: Resource[Task, S3] = S3.create(defaultCredentials, Region.AWS_GLOBAL)
     * }}}
     *
-    * @param credentialsProvider Strategy for loading credentials and authenticate to AWS S3
-    * @param region An Amazon Web Services region that hosts a set of Amazon services.
-    * @param endpoint The endpoint with which the SDK should communicate.
-    * @param httpClient Sets the [[SdkAsyncHttpClient]] that the SDK service client will use to make HTTP calls.
+    * @param credentialsProvider strategy for loading credentials and authenticate to AWS S3
+    * @param region an Amazon Web Services region that hosts a set of Amazon services.
+    * @param endpoint the endpoint with which the SDK should communicate.
+    * @param httpClient sets the [[SdkAsyncHttpClient]] that the SDK service client will use to make HTTP calls.
     * @return a [[Resource]] of [[Task]] that allocates and releases [[S3]].
     **/
   def create(

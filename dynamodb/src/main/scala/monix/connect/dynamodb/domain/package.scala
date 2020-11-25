@@ -15,19 +15,21 @@
  * limitations under the License.
  */
 
-package monix.connect
+package monix.connect.dynamodb
 
-import monix.eval.{Task, TaskLike}
-import reactor.core.publisher.Mono
+import scala.concurrent.duration._
+import scala.concurrent.duration.FiniteDuration
 
-package object redis {
+package object domain {
 
-  private[redis] implicit val fromMono: TaskLike[Mono] = new TaskLike[Mono] {
-    def apply[A](m: Mono[A]): Task[A] =
-      Task.fromReactivePublisher(m).flatMap { op =>
-        if (op.nonEmpty) Task.now(op.get)
-        else Task.raiseError(new Exception("The result from the executed redis operation was empty."))
-      }
-  }
+  /**
+    * A retry strategy is defined by the amount of retries and backoff delay.
+    *
+    * @param retries the number of times that an operation can be retried before actually returning a failed [[Task]].
+    *        it must be higher or equal than 0.
+    * @param backoffDelay delay after failure for the execution of a single [[DynamoDbOp]].
+    */
+  case class RetryStrategy(retries: Int = 0, backoffDelay: FiniteDuration = Duration.Zero)
+  final val DefaultRetryStrategy = RetryStrategy(0, Duration.Zero)
 
 }

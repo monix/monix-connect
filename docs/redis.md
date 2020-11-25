@@ -9,20 +9,6 @@ It supports data structures such as string, hashes, lists, sets, sorted sets wit
 It has a defined a set of [commands](https://redis.io/commands) to inter-operate with, and most of them are also available from the java api.
 
 This connector has been built on top of [lettuce](https://lettuce.io/), the most popular java library for operating with a _non blocking_ Redis client.
-
-Then `monix-redis` is nothing els that a nice interoperability between the reactive types returned by the lettuce api like (`Mono<T>` and `Flux<T>`) from  [Reactor](https://projectreactor.io/docs/core/release/reference/) project or `RedisFuture[T]`
-At the same time that it returns the right values from scala lang and not form java, resulting in a idiomatic api that greatly reduces boilerplate code makes the user to have a nice experience while integrating 
- redis operations using monix.
- 
- See an example in below table: 
- 
-  | _Async_ | _Reactive_ | _Monix_ |
-  | :---: | :---: | :---: |
-  | _RedisFuture<java.lang.Long>_ | _Mono<java.lang.Long>_ | _Task[Long]_  |
-  | _RedisFuture<java.lang.Boolean>_ | _Mono<java.lang.Boolean>_ | _Task[Boolean]_ |
-  | _RedisFuture<java.utli.List<V>>_ | _Flux<V>_ | _Observable[V]_ |
-  | ... | ... | ... |
-  
   
 ## Dependency
 

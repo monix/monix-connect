@@ -60,10 +60,7 @@ object Dependencies {
     "io.laserdisc"      %% "laserdisc-fs2"      % "0.4.1"
   )++ testDependencies(hasIt = false)
 
-  val DynamoDb = Seq(
-    "com.amazonaws"          % "aws-java-sdk-core" % Versions.AWS,
-    "software.amazon.awssdk" % "dynamodb"          % Versions.DynamoDb
-  ) ++ testDependencies(hasIt = true)
+  val DynamoDb = Seq("software.amazon.awssdk" % "dynamodb" % Versions.AwsSdk) ++ testDependencies(hasIt = true)
 
   val Hdfs = Seq(
     "org.apache.hadoop" % "hadoop-client"      % Versions.Hadoop,

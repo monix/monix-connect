@@ -1,91 +1,108 @@
 package monix.connect.dynamodb
 
+import java.net.URI
+
 import monix.eval.Task
 import monix.execution.Scheduler
 import org.scalacheck.Gen
 import org.scalatest.TestSuite
+import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
-import software.amazon.awssdk.services.dynamodb.model.{AttributeDefinition, AttributeValue, CreateTableRequest, DeleteTableRequest, DeleteTableResponse, GetItemRequest, KeySchemaElement, KeyType, ProvisionedThroughput, PutItemRequest, ScalarAttributeType}
+import software.amazon.awssdk.services.dynamodb.model.{AttributeDefinition, AttributeValue, BillingMode, CreateTableRequest, CreateTableResponse, DeleteTableRequest, DeleteTableResponse, GetItemRequest, KeySchemaElement, KeyType, ProvisionedThroughput, PutItemRequest, ScalarAttributeType}
 
 import scala.collection.JavaConverters._
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.duration._
 
 trait DynamoDbFixture {
   this: TestSuite =>
 
-  val strAttr: String => AttributeValue = value => AttributeValue.builder().s(value).build()
-  val numAttr: Int => AttributeValue = value => AttributeValue.builder().n(value.toString).build()
-  val doubleAttr: Double => AttributeValue = value => AttributeValue.builder().n(value.toString).build()
+  case class Citizen(citizenId: String, city: String, age: Int)
+  val strAttr: String => AttributeValue = value => AttributeValue.builder.s(value).build
+  val doubleAttr: Int => AttributeValue = value => AttributeValue.builder().n(value.toString).build
+
+  val staticAwsCredProvider = StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x"))
+  val tableName = "citizens"
+
+  protected implicit val client = DynamoDbAsyncClient
+    .builder
+    .credentialsProvider(staticAwsCredProvider)
+    .endpointOverride(new URI("http://localhost:4569"))
+    .region(Region.AWS_GLOBAL)
+    .build
 
   val genTableName: Gen[String] =  Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "test-" + chars.mkString.take(200))  //table name max size is 255
 
-  val genCitizenId = Gen.choose(1, 100000)
-  val keyMap = (city: String, citizens: Int) => Map("city" -> strAttr(city), "citizenId" -> numAttr(citizens))
+  val keyMap = (citizenId: String, city: String) => Map("citizenId" -> strAttr(citizenId), "city" -> strAttr(city))
 
-  val item = (city: String, citizens: Int, debt: Double) => keyMap(city, citizens) ++ Map("debt" -> doubleAttr(debt))
+  def citizenItem(citizenId: String, city: String, age: Int) =  Map("citizenId" -> strAttr(citizenId), "city" -> strAttr(city)) ++ Map("age" -> doubleAttr(age))
 
-  def putItemRequest(tableName: String, city: String, citizenId: Int, debt: Double): PutItemRequest =
+
+  def putItemRequest(tableName: String, citizen: Citizen): PutItemRequest = putItemRequest(tableName, citizen.citizenId, citizen.city, citizen.age)
+
+  def putItemRequest(tableName: String, citizenId: String, city: String, age: Int): PutItemRequest =
     PutItemRequest
-      .builder()
+      .builder
       .tableName(tableName)
-      .item(item(city, citizenId, debt).asJava)
-      .build()
+      .item(citizenItem(citizenId, city, age).asJava)
+      .build
 
   val genPutItemRequest: Gen[PutItemRequest] =
     for {
-      city <- Gen.alphaLowerStr
-      citizenId <- genCitizenId
-      debt <- Gen.choose(1, 1000)
-    } yield putItemRequest(tableName, city, citizenId, debt)
+      city <- Gen.identifier
+      citizenId <- Gen.identifier
+      age <- Gen.choose(1, 1000)
+    } yield putItemRequest(tableName, city, citizenId, age)
 
   def genPutItemRequests: Gen[List[PutItemRequest]] = Gen.listOfN(3, genPutItemRequest)
 
-  def getItemRequest(tableName: String, city: String, citizenId: Int) =
-    GetItemRequest.builder().tableName(tableName).key(keyMap(city, citizenId).asJava).attributesToGet("debt").build()
+  def getItemRequest(tableName: String, citizen: Citizen): GetItemRequest = getItemRequest(tableName, citizen.citizenId, citizen.city)
+
+  def getItemRequest(tableName: String, citizenId: String, city: String): GetItemRequest =
+    GetItemRequest.builder
+      .tableName(tableName)
+      .key(keyMap(citizenId, city).asJava)
+      .attributesToGet("age")
+      .build
 
   val getItemMalformedRequest =
     GetItemRequest.builder().tableName(tableName).attributesToGet("not_present").build()
 
   protected val keySchema: List[KeySchemaElement] = {
     List(
-      KeySchemaElement.builder().attributeName("city").keyType(KeyType.HASH).build(),
-      KeySchemaElement.builder().attributeName("citizenId").keyType(KeyType.RANGE).build()
+      KeySchemaElement.builder().attributeName("citizenId").keyType(KeyType.HASH).build(),
+      KeySchemaElement.builder().attributeName("city").keyType(KeyType.RANGE).build()
     )
   }
 
   protected val tableDefinition: List[AttributeDefinition] = {
     List(
-      AttributeDefinition.builder().attributeName("city").attributeType(ScalarAttributeType.S).build(),
-      AttributeDefinition.builder().attributeName("citizenId").attributeType(ScalarAttributeType.N).build()
+      AttributeDefinition.builder.attributeName("citizenId").attributeType(ScalarAttributeType.S).build(),
+      AttributeDefinition.builder.attributeName("city").attributeType(ScalarAttributeType.S).build()
     )
   }
 
   protected val baseProvisionedThroughput =
     ProvisionedThroughput.builder().readCapacityUnits(10L).writeCapacityUnits(10L).build()
 
-  val tableName = "cities_test"
-
   def createTableRequest(
-    tableName: String = Gen.alphaLowerStr.sample.get,
+    tableName: String = Gen.identifier.sample.get,
     schema: List[KeySchemaElement],
     attributeDefinition: List[AttributeDefinition],
     provisionedThroughput: ProvisionedThroughput = baseProvisionedThroughput): CreateTableRequest = {
     CreateTableRequest
-      .builder()
+      .builder
       .tableName(tableName)
       .keySchema(schema: _*)
       .attributeDefinitions(attributeDefinition: _*)
-      .provisionedThroughput(provisionedThroughput)
+      .billingMode(BillingMode.PAY_PER_REQUEST)
       .build()
   }
 
-  protected def createTable(table: String)(implicit client: DynamoDbAsyncClient, scheduler: Scheduler): Unit = {
+  protected def createTable(table: String)(implicit client: DynamoDbAsyncClient, scheduler: Scheduler): Task[CreateTableResponse] = {
     val request: CreateTableRequest =
       createTableRequest(tableName = table, schema = keySchema, attributeDefinition = tableDefinition)
-    Try(Task.from(client.createTable(request))) match {
-      case Success(_) => println(s"Table ${table} was created")
-      case Failure(exception) => println("Failed to create table cities with exception: " + exception)
-    }
+    Task.from(client.createTable(request)).delayResult(1.second)
   }
 
   def deleteTable(tableName: String)(implicit client: DynamoDbAsyncClient, scheduler: Scheduler): Task[DeleteTableResponse] = {
@@ -93,12 +110,12 @@ trait DynamoDbFixture {
     Task.from(client.deleteTable(deleteRequest))
   }
 
-  def genRequestAttributes: Gen[(String, Int, Double)] = {
+  def genCitizen: Gen[Citizen] = {
     for {
-      city <- Gen.nonEmptyListOf(Gen.alphaChar)
-      citizenId <- genCitizenId
-      debt <- Gen.choose(0, 10000)
-    } yield ("-" + city.mkString, citizenId, debt.toDouble) // '-' was added to avoid empty strings
+      citizenId <- Gen.identifier
+      city <- Gen.identifier
+      age <- Gen.choose(0, 10000)
+    } yield Citizen(citizenId, city, age)
   }
 
 }

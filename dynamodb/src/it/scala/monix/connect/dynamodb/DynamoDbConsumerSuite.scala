@@ -1,6 +1,5 @@
 package monix.connect.dynamodb
 
-import java.lang.Thread.sleep
 
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
@@ -12,7 +11,6 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import software.amazon.awssdk.services.dynamodb.model._
-import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 
 import scala.concurrent.duration._
 import scala.collection.JavaConverters._
@@ -22,7 +20,6 @@ class DynamoDbConsumerSuite
   extends AnyWordSpecLike with Matchers with ScalaFutures with DynamoDbFixture with BeforeAndAfterAll {
 
   implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 300.milliseconds)
-  implicit val client: DynamoDbAsyncClient = DynamoDbClient()
 
   s"${DynamoDb}.consumer() creates a ${Consumer}" that {
 
@@ -30,7 +27,7 @@ class DynamoDbConsumerSuite
 
       s"consume a single `CreateTableRequest` and materializes to `CreateTableResponse`" in {
         //given
-        val randomTableName: String = genTableName.sample.get
+        val randomTableName: String = Gen.identifier.sample.get
         val consumer: Consumer[CreateTableRequest, Unit] =
           DynamoDb.consumer[CreateTableRequest, CreateTableResponse]()
         val request =
@@ -56,9 +53,9 @@ class DynamoDbConsumerSuite
         val consumer: Consumer[PutItemRequest, Unit] =
           DynamoDb.consumer[PutItemRequest, PutItemResponse]()
         val city = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-        val citizenId = genCitizenId.sample.get
-        val debt = Gen.choose(0, 10000).sample.get
-        val request: PutItemRequest = putItemRequest(tableName, city, citizenId, debt)
+        val citizenId = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+        val age = Gen.choose(0, 100).sample.get
+        val request: PutItemRequest = putItemRequest(tableName, city, citizenId, age)
 
         //when
         val t: Task[Unit] = Observable.pure(request).consumeWith(consumer)
@@ -66,8 +63,8 @@ class DynamoDbConsumerSuite
         //then
         whenReady(t.runToFuture) { r =>
           r shouldBe a[Unit]
-          val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, city, citizenId))).futureValue
-          getResponse.item().values().asScala.head.n().toDouble shouldBe debt
+          val getResponse: GetItemResponse = Task.from(client.getItem(getItemRequest(tableName, city, citizenId))).runSyncUnsafe()
+          getResponse.item().values().asScala.head.n().toDouble shouldBe age
         }
       }
 
@@ -75,8 +72,8 @@ class DynamoDbConsumerSuite
         //given
         val consumer: Consumer[PutItemRequest, Unit] =
           DynamoDb.consumer[PutItemRequest, PutItemResponse]()
-        val requestAttr: List[(String, Int, Double)] = Gen.nonEmptyListOf(genRequestAttributes).sample.get
-        val requests: List[PutItemRequest] = requestAttr.map { case (city, citizenId, debt) => putItemRequest(tableName, city, citizenId, debt) }
+        val requestAttr: List[Citizen] = Gen.nonEmptyListOf(genCitizen).sample.get
+        val requests: List[PutItemRequest] = requestAttr.map { citizen => putItemRequest(tableName, citizen.citizenId, citizen.city, citizen.age) }
 
         //when
         val t: Task[Unit] = Observable.fromIterable(requests).consumeWith(consumer)
@@ -84,9 +81,9 @@ class DynamoDbConsumerSuite
         //then
         whenReady(t.runToFuture) { r =>
           r shouldBe a[Unit]
-          requestAttr.map { case (city, citizenId, debt) =>
-            val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, city, citizenId))).futureValue
-            getResponse.item().values().asScala.head.n().toDouble shouldBe debt
+          requestAttr.map { citizen =>
+            val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, citizen.citizenId, citizen.city))).futureValue
+            getResponse.item().values().asScala.head.n().toDouble shouldBe citizen.age
           }
         }
       }
@@ -98,9 +95,9 @@ class DynamoDbConsumerSuite
       s"consume a single `GetItemRequest` and materialize it to `GetItemResponse` " in {
         //given
         val city = "Barcelona"
-        val citizenId = 11292
-        val debt: Int = 1015
-        toScala(client.putItem(putItemRequest(tableName, city, citizenId, debt))).futureValue
+        val citizenId = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+        val age: Int = 1015
+        Task.from(client.putItem(putItemRequest(tableName, city, citizenId, age))).runSyncUnsafe()
         val request: GetItemRequest = getItemRequest(tableName, city, citizenId)
 
         //when
@@ -117,8 +114,7 @@ class DynamoDbConsumerSuite
   }
 
   override def beforeAll(): Unit = {
-    createTable(tableName)
-    sleep(2000)
+    createTable(tableName).runSyncUnsafe()
     super.beforeAll()
   }
 
