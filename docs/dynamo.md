@@ -35,11 +35,13 @@ libraryDependencies += "io.monix" %% "monix-dynamodb" % "0.5.0"
 
  ### From config
   
-  The laziest and recommended way to create the _DynamoDb_ connection is from a configuration file.
-  To do so, you'd just need to create an `application.conf` following the template from [reference.conf](https://github.com/monix/monix-connect/tree/master/aws-auth/src/main/resources/reference.conf).
+  
+  The laziest and recommended way to create the _S3_ connection is to do it from configuration file.
+  To do so, you'd just need to create an `application.conf` following the template from [reference.conf](https://github.com/monix/monix-connect/tree/master/aws-auth/src/main/resources/reference.conf),
+  which also represents the default config in case no additional is provided.
     
   Below snippet shows an example of the configuration file to authenticate via `StaticCredentialsProvider` and region `EU-WEST-1`, as you can appreciate the 
-  _http client_ settings are commented out since they are optional, however they could have been specified too for a more grained configuration of the underlying `NettyNioAsyncHttpClient`.
+  _http client_ settings are commented out since they are optional, however they could have been specified too for a more fine grained configuration of the underlying `NettyNioAsyncHttpClient`.
     
 ```hocon
 {
@@ -76,11 +78,10 @@ libraryDependencies += "io.monix" %% "monix-dynamodb" % "0.5.0"
 }
 ```
 
-This config file needs to be placed in the `resource` folder, 
-therefore it will be automatically picked up from the method call `DynamoDb.fromConfig`, which will return a `cats.effect.Resource[Task, DynamoDb]`.
-The [resource](https://typelevel.org/cats-effect/datatypes/resource.html) will be responsible to *acquire* and *release* the _DynamoDb connection_. 
+This config file should be placed in the `resources` folder, therefore it will be automatically picked up from the method call `S3.fromConfig`, which will return a `cats.effect.Resource[Task, S3]`.
+The [resource](https://typelevel.org/cats-effect/datatypes/resource.html) is responsible of the *creation* and *release* of the _S3 client_. 
 
-The recommended way of using the client is to make the resouce transparent in your application by directly expecting an instance of _DynamoDb_ in your methods and class arguments, which might be called from within the 
+We recommend using it transparently in your application, meaning that your methods and classes will directly expect an instance of _S3_, which will be called from within the 
 _usage_ of the _Resource_. See below code snippet to understand the concept:
 
 ```scala
