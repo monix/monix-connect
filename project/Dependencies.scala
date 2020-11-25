@@ -84,7 +84,7 @@ object Dependencies {
 
   val S3 = Seq(
     "software.amazon.awssdk" % "s3" % Versions.AwsSdk,
-    "org.scalatestplus" %% "scalacheck-1-14" % "3.1.4.0" % Test
+    "org.scalatestplus" %% "scalacheck-1-14" % "3.2.2.0" % Test
   ) ++ testDependencies(hasIt = true)
 
   val Redis = Seq(
