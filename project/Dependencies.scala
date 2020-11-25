@@ -8,7 +8,7 @@ object Dependencies {
     val Monix = "3.3.0"
     val AwsSdk = "2.15.33"
     val AkkaStreams = "2.6.9"
-    val AWS = "1.11.749"
+    val AWS = "1.11.908"
     val Cats_Effect = "2.1.3"
     val DynamoDb = "2.10.60"
     val GCS = "1.107.0"
