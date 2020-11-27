@@ -42,7 +42,7 @@ class S3ITest
 
         "contentLength and contentType are not defined and therefore infered by the method" in {
           //given
-          val key: String = Gen.identifier.sample.get
+          val key: String = genKey.sample.get
           val content: String = Gen.alphaUpperStr.sample.get
 
           //when
@@ -58,7 +58,7 @@ class S3ITest
 
         "contentLength and contentType are defined respectively as the array length and 'application/json'" in {
           //given
-          val key: String = Gen.identifier.sample.get
+          val key: String = genKey.sample.get
           val content: String = Gen.alphaUpperStr.sample.get
 
           //when
@@ -74,7 +74,7 @@ class S3ITest
 
         "the chunk is empty" in {
           //given
-          val key: String = Gen.identifier.sample.get
+          val key: String = genKey.sample.get
           val content: Array[Byte] = Array.emptyByteArray
 
           //when
@@ -97,7 +97,7 @@ class S3ITest
 
     "download a s3 object as byte array" in {
       //given
-      val key: String = Gen.identifier.sample.get
+      val key: String = genKey.sample.get
       val content: String = Gen.alphaUpperStr.sample.get
       S3.upload(bucketName, key, content.getBytes).runSyncUnsafe()
 
@@ -114,7 +114,7 @@ class S3ITest
 
     "download a s3 object bigger than 1MB as byte array" in {
       //given
-      val key: String = Gen.identifier.sample.get
+      val key: String = genKey.sample.get
       val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
       val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
       val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
@@ -137,7 +137,7 @@ class S3ITest
     "download the first n bytes form an object" in {
       //given
       val n = 5
-      val key: String = Gen.identifier.sample.get
+      val key: String = genKey.sample.get
       val content: String = Gen.identifier.sample.get
       S3.upload(bucketName, key, content.getBytes).runSyncUnsafe()
 
@@ -155,7 +155,7 @@ class S3ITest
     "download fails if the numberOfBytes is negative" in {
       //given
       val negativeNum = Gen.chooseNum(-10, 0).sample.get
-      val key: String = Gen.identifier.sample.get
+      val key: String = genKey.sample.get
 
       //when
       val t: Try[Task[Array[Byte]]] = Try(S3.download(bucketName, key, Some(negativeNum)))
@@ -178,7 +178,7 @@ class S3ITest
 
     "downloadMultipart of small chunk size" in {
       //given
-      val key: String = Gen.identifier.sample.get
+      val key: String = genKey.sample.get
       val content: String = Gen.identifier.sample.get
       S3.upload(bucketName, key, content.getBytes).runSyncUnsafe()
 
@@ -198,7 +198,7 @@ class S3ITest
 
     "copy an object to a different location within the same bucket" in {
       //given
-      val sourceKey = Gen.identifier.sample.get
+      val sourceKey = genKey.sample.get
       val content = Gen.identifier.sample.get.getBytes()
       S3.upload(bucketName, sourceKey, content).runSyncUnsafe()
 
@@ -215,7 +215,7 @@ class S3ITest
 
     "copy an object to a different location in a different bucket" in {
       //given
-      val sourceKey = Gen.identifier.sample.get
+      val sourceKey = genKey.sample.get
       val content = Gen.identifier.sample.get.getBytes()
       S3.upload(bucketName, sourceKey, content).runSyncUnsafe()
 
@@ -240,7 +240,7 @@ class S3ITest
 
       "a single chunk is passed to the consumer" in {
         //given
-        val key = Gen.identifier.sample.get
+        val key = genKey.sample.get
         val content: Array[Byte] = Gen.identifier.sample.get.getBytes
         val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
           S3.uploadMultipart(bucketName, key)
@@ -260,7 +260,7 @@ class S3ITest
 
       "multiple chunks (of less than minimum size) are passed" in {
         //given
-        val key: String = Gen.identifier.sample.get
+        val key: String = genKey.sample.get
         val chunks: List[Array[Byte]] = Gen.listOfN(10, Gen.identifier.map(_.getBytes)).sample.get
         val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
           S3.uploadMultipart(bucketName, key)
@@ -282,7 +282,7 @@ class S3ITest
 
       "a single chunk of size (1MB)" in {
         //given
-        val key = Gen.identifier.sample.get
+        val key = genKey.sample.get
         val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
         val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
         val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
@@ -303,7 +303,7 @@ class S3ITest
 
       "multiple chunks bigger than minimum size (5MB)" in {
         //given
-        val key = Gen.identifier.sample.get
+        val key = genKey.sample.get
         val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
         val ob: Observable[Array[Byte]] = Observable
           .fromInputStream(inputStream)
@@ -433,7 +433,7 @@ class S3ITest
       //given
       val n = 1000
       val prefix = s"test-list-all-truncated/${Gen.identifier.sample.get}/"
-      val keys: List[String] = Gen.listOfN(n, Gen.identifier.map(str => prefix + str)).sample.get
+      val keys: List[String] = Gen.listOfN(n, genKey.map(str => prefix + str)).sample.get
       val contents: List[String] = List.fill(n)(Gen.identifier.sample.get)
       Task
         .sequence(keys.zip(contents).map { case (key, content) => S3.upload(bucketName, key, content.getBytes()) })

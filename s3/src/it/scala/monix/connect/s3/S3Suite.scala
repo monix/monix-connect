@@ -236,7 +236,7 @@ class S3Suite
     s3Resource.use(_.upload(bucketName, sourceKey, content)).runSyncUnsafe()
 
     //and
-    val destinationBucket = Gen.identifier.sample.get.take(10)
+    val destinationBucket = genBucketName.sample.get
     val destinationKey = Gen.identifier.sample.get
     s3Resource.use(_.createBucket(destinationBucket)).runSyncUnsafe()
 
@@ -282,7 +282,7 @@ class S3Suite
 
   it can "delete a object" in {
     //given
-    val key = Gen.identifier.sample.get
+    val key = genKey.sample.get
     val content = Gen.identifier.sample.get.getBytes()
     s3Resource.use(_.upload(bucketName, key, content)).runSyncUnsafe()
     val existedBefore = s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe()
@@ -334,7 +334,7 @@ class S3Suite
   it can "check if an object exists" in {
     //given
     val prefix = s"test-exists-object/${Gen.identifier.sample.get}/"
-    val key: String = prefix + Gen.identifier.sample.get
+    val key: String = prefix + genKey.sample.get
 
     //and
     s3Resource.use(_.upload(bucketName, key, "dummy content".getBytes())).runSyncUnsafe()
@@ -353,7 +353,7 @@ class S3Suite
     val n = 1000
     val prefix = s"test-list-all-truncated/${Gen.identifier.sample.get}/"
     val keys: List[String] =
-      Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + Gen.identifier.sample.get + str)).sample.get
+      Gen.listOfN(n, genKey.map(str => prefix + str)).sample.get
     val contents: List[String] = Gen.listOfN(n, Gen.identifier).sample.get
     Task
       .traverse(keys.zip(contents)){ case (key, content) => s3Resource.use(_.upload(bucketName, key, content.getBytes())) }

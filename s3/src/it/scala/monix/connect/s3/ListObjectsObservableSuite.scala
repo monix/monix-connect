@@ -51,7 +51,7 @@ class ListObjectsObservableSuite
     val n = 10
     val prefix = s"test-list-all-truncated/${Gen.identifier.sample.get}/"
     val keys: List[String] =
-      Gen.listOfN(n, Gen.identifier.map(str => prefix + str)).sample.get
+      Gen.listOfN(n, genKey.map(str => prefix + str)).sample.get
     val contents: List[String] = Gen.listOfN(n, Gen.alphaUpperStr).sample.get
 
     s3Resource.use { s3 =>
@@ -77,7 +77,7 @@ class ListObjectsObservableSuite
     val n = 120
     val prefix = s"test-list-continuation/${Gen.identifier.sample.get}/"
     val keys: List[String] =
-      Gen.listOfN(n, Gen.identifier).sample.get
+      Gen.listOfN(n, genKey).sample.get
     val contents: List[String] = Gen.listOfN(n, Gen.identifier).sample.get
     s3Resource.use { s3 =>
       Task
@@ -102,7 +102,7 @@ class ListObjectsObservableSuite
     val n = 2020
     val prefix = s"test-list-all-truncated/${Gen.identifier.sample.get}/"
     val keys: List[String] =
-      Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + Gen.identifier.sample.get + str)).sample.get
+      Gen.listOfN(n, genKey.map(str => prefix + str)).sample.get
     val contents: List[String] = Gen.listOfN(n, Gen.identifier.sample.get).sample.get
 
     (s3Resource.use { s3 =>
@@ -120,7 +120,7 @@ class ListObjectsObservableSuite
     val n = 1600
     val limit = 1300
     val prefix = s"test-list-limit-truncated/${Gen.identifier.sample.get}/"
-    val keys: List[String] = Gen.listOfN(n, Gen.identifier).sample.get
+    val keys: List[String] = Gen.listOfN(n, genKey).sample.get
     val contents: List[String] = Gen.listOfN(n, Gen.identifier).sample.get
 
     s3Resource.use { s3 =>
