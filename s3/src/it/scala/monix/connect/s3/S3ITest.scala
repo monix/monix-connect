@@ -220,8 +220,8 @@ class S3ITest
       S3.upload(bucketName, sourceKey, content).runSyncUnsafe()
 
       //and
-      val destinationBucket = Gen.identifier.sample.get
-      val destinationKey = Gen.identifier.sample.get
+      val destinationBucket = genBucketName.sample.get
+      val destinationKey = genKey.sample.get
       S3.createBucket(destinationBucket).runSyncUnsafe()
 
       //when
@@ -432,9 +432,10 @@ class S3ITest
     "list all objects" in {
       //given
       val n = 1000
-      val prefix = s"test-list-all-truncated/${Gen.identifier.sample.get}/"
-      val keys: List[String] = Gen.listOfN(n, genKey.map(str => prefix + str)).sample.get
-      val contents: List[String] = List.fill(n)(Gen.identifier.sample.get)
+      val prefix = s"test-list-all-truncated/${genKey.sample.get}/"
+      val keys: List[String] =
+        Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + genKey.sample.get + str)).sample.get
+      val contents: List[String] = List.fill(n)(genKey.sample.get)
       Task
         .sequence(keys.zip(contents).map { case (key, content) => S3.upload(bucketName, key, content.getBytes()) })
         .runSyncUnsafe()
