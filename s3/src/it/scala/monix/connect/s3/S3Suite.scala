@@ -351,7 +351,7 @@ class S3Suite
   it can "list all objects" in {
     //given
     val n = 1000
-    val prefix = s"test-list-all-truncated/${Gen.identifier.sample.get}/"
+    val prefix = s"test-list-all-truncated/${genKey.sample.get}/"
     val keys: List[String] =
       Gen.listOfN(n, genKey.map(str => prefix + str)).sample.get
     val contents: List[String] = Gen.listOfN(n, Gen.identifier).sample.get

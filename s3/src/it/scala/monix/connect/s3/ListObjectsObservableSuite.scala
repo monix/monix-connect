@@ -49,7 +49,7 @@ class ListObjectsObservableSuite
   s"${ListObjectsObservable}" can "use a small limit of maximum number of objects listed" in {
     //given
     val n = 10
-    val prefix = s"test-list-all-truncated/${Gen.identifier.sample.get}/"
+    val prefix = s"test-list-all-truncated/${genKey.sample.get}/"
     val keys: List[String] =
       Gen.listOfN(n, genKey.map(str => prefix + str)).sample.get
     val contents: List[String] = Gen.listOfN(n, Gen.alphaUpperStr).sample.get
@@ -75,7 +75,7 @@ class ListObjectsObservableSuite
   it should "return nextContinuationToken when set" in {
     //given
     val n = 120
-    val prefix = s"test-list-continuation/${Gen.identifier.sample.get}/"
+    val prefix = s"test-list-continuation/${genKey.sample.get}/"
     val keys: List[String] =
       Gen.listOfN(n, genKey).sample.get
     val contents: List[String] = Gen.listOfN(n, Gen.identifier).sample.get
@@ -100,7 +100,7 @@ class ListObjectsObservableSuite
   it should "list all objects" in {
     //given
     val n = 2020
-    val prefix = s"test-list-all-truncated/${Gen.identifier.sample.get}/"
+    val prefix = s"test-list-all-truncated/${genKey.sample.get}/"
     val keys: List[String] =
       Gen.listOfN(n, genKey.map(str => prefix + str)).sample.get
     val contents: List[String] = Gen.listOfN(n, Gen.identifier.sample.get).sample.get
@@ -119,7 +119,7 @@ class ListObjectsObservableSuite
     //given
     val n = 1600
     val limit = 1300
-    val prefix = s"test-list-limit-truncated/${Gen.identifier.sample.get}/"
+    val prefix = s"test-list-limit-truncated/${genKey.sample.get}/"
     val keys: List[String] = Gen.listOfN(n, genKey).sample.get
     val contents: List[String] = Gen.listOfN(n, Gen.identifier).sample.get
 
