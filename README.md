@@ -11,7 +11,7 @@
  [release]:                 https://search.maven.org/search?q=a:monix-connect*
  [release-badge]:           https://img.shields.io/github/v/tag/monix/monix-connect.svg
  
- ⚠️   _Mind that the project isn't yet stable, so binary compatibility is not guaranteed._
+ ⚠️   _Mind that the project isn't yet stable, so **binary compatibility is not guaranteed**._
   
 Monix Connect is an initiative to implement stream integrations for [Monix](https://monix.io/).
 

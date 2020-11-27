@@ -34,7 +34,8 @@ import scala.collection.mutable
   * @param request [[SearchRequest]]
   * @param client an implicit instance of a [[ElasticClient]]
   */
-@InternalApi private[elasticsearch] class ElasticsearchSource(request: SearchRequest)(implicit client: ElasticClient)
+@InternalApi
+private[elasticsearch] class ElasticsearchSource(request: SearchRequest)(implicit client: ElasticClient)
   extends Observable[SearchHit] {
 
   import com.sksamuel.elastic4s.ElasticDsl._

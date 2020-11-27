@@ -27,7 +27,7 @@ class DynamoDbConsumerSuite
 
       s"consume a single `CreateTableRequest` and materializes to `CreateTableResponse`" in {
         //given
-        val randomTableName: String = Gen.identifier.sample.get
+        val randomTableName: String = Gen.identifier.sample.get.take(10) //a table must be btween 3 and 255 characters
         val consumer: Consumer[CreateTableRequest, Unit] =
           DynamoDb.consumer[CreateTableRequest, CreateTableResponse]()
         val request =

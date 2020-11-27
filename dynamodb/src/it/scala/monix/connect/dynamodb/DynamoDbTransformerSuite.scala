@@ -29,7 +29,7 @@ class DynamoDbTransformerSuite
 
       s"transform `CreateTableRequests` to `CreateTableResponses`" in {
         //given
-        val randomTableName: String = genTableName.sample.get
+        val randomTableName: String = genTableName.sample.get.take(10)
         val transformer: Transformer[CreateTableRequest, CreateTableResponse] =
           DynamoDb.transformer[CreateTableRequest, CreateTableResponse]()
         val request =

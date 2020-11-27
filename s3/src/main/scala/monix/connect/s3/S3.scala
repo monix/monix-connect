@@ -414,7 +414,11 @@ object S3 { self =>
     new MultipartUploadSubscriber(bucket, key, minChunkSize, uploadSettings, s3AsyncClient)
 }
 
-private[s3] trait S3 { self =>
+/**
+  * Represents the Monix S3 client which can
+  * be created using the builders from its companion object.
+  */
+trait S3 { self =>
 
   private[s3] val s3Client: S3AsyncClient
 

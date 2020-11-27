@@ -5,8 +5,10 @@ title: Elasticsearch
 
 ## Introduction
 
-[_Elasticsearch_](https://www.elastic.co/elasticsearch) is a distributed, RESTful search and analytics engine 
-capable of addressing a growing number of use cases. It can now be easily integrated with _Monix_.
+[_Elasticsearch_](https://www.elastic.co/elasticsearch) is a distributed, _RESTful_ search and analytics engine 
+capable of addressing a growing number of use cases. Which now can easily be integrated with _Monix_, providing 
+a functional api for use cases can come from executing single operations (_create_, _get_ and _delete_ index or _get_, _update_, _count_ docs and more...),
+but also to _search_ or _upload_ in a reactive fashion with _Monix Reactive_.
    
 ## Dependency
  
@@ -17,34 +19,58 @@ capable of addressing a growing number of use cases. It can now be easily integr
  ```
  
 ## Client
+ This connector has been built on top of the `ElasticClient` from [elastic4s](https://github.com/sksamuel/elastic4s),
+ which expoeses a pure, idiomatic, non-blocking and reactive api to interact with _Elasticsearch_.  
+  
+ You can find different builders to create the client under `monix.connect.elasticsearch.Elasticsearch`,
+  which we will show on continuation.   
+
+
+### Create
+
+This builder is the recommended way to create the client, since it exposes a pure implementation that is backed 
+ by the _Cats Effect_ [Resource](https://typelevel.org/cats-effect/datatypes/resource.html). 
  
- This connector uses the _underlying_ `ElasticClient` from the [elastic4s](https://github.com/sksamuel/elastic4s),
- it is a concise, idiomatic, reactive, type safe Scala client for Elasticsearch. We use _cats effect_ to acquire and
- release the resource (`ElasticClient`).
-
- Example:
-
  ```scala
 import cats.effect.Resource
 import com.sksamuel.elastic4s.ElasticDsl._
-import monix.connect.es.Elasticsearch
+import monix.connect.elasticsearch.Elasticsearch
 import monix.eval.Task
 
-val esResource: Resource[Task, Elasticsearch] = Elasticsearch.create("http://localhost:9200")
+val elasticsearchUrl = "http://localhost:9200"
+val esResource: Resource[Task, Elasticsearch] = Elasticsearch.create(elasticsearchUrl)
 ```
-##Create index 
+### Unsafe create
+Alternatively, you can create the 
+ ```scala
+import monix.connect.elasticsearch.Elasticsearch
+import com.sksamuel.elastic4s.http.JavaClient
+import com.sksamuel.elastic4s.{ElasticProperties, HttpClient}
+import com.sksamuel.elastic4s.ElasticDsl._
+import com.sksamuel.elastic4s._
+import monix.eval.Task
+
+val uri = "http://localhost:9200"
+val elasticProperties = ElasticProperties(uri) // here different options could be set
+val httpClient = JavaClient(elasticProperties)
+val elasticsearch: Elasticsearch = Elasticsearch.createUnsafe(ElasticClient(client = httpClient))
+```
+
+## Single operation
+
+### Create index 
 
  ```scala
 import cats.effect.Resource
 import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s.Response
 import com.sksamuel.elastic4s.requests.indexes.CreateIndexResponse
-import monix.connect.es.Elasticsearch
+import monix.connect.elasticsearch.Elasticsearch
 import monix.eval.Task
 
 val esResource: Resource[Task, Elasticsearch] = Elasticsearch.create("http://localhost:9200")
 
-val indexName = "test_index"
+val indexName = "my_index"
 val indexSource = """{"settings":{"number_of_shards":1},"mappings":{"properties":{"a":{"type":"text"} } } }"""
 val createIndexRequest = createIndex(indexName).source(indexSource)
 
@@ -52,226 +78,210 @@ val task: Task[Response[CreateIndexResponse]] = esResource.use { es =>
     es.createIndex(createIndexRequest)
 }
 ```
-##Get index 
+
+### Get index 
 
  ```scala
 import cats.effect.Resource
 import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s.Response
 import com.sksamuel.elastic4s.requests.indexes.GetIndexResponse
-import monix.connect.es.Elasticsearch
+import monix.connect.elasticsearch.Elasticsearch
 import monix.eval.Task
 
 val esResource: Resource[Task, Elasticsearch] = Elasticsearch.create("http://localhost:9200")
 
-val indexName = "test_index"
+val indexName = "my_index"
 val getIndexRequest = getIndex(indexName)
 
-val task: Task[Response[Map[String, GetIndexResponse]]] = esResource.use { es =>
-    es.getIndex(getIndexRequest)
-}
+val task: Task[Response[Map[String, GetIndexResponse]]] = esResource.use (_.getIndex(getIndexRequest))
 ```
 
-## Delete index 
+### Delete index 
 
  ```scala
 import cats.effect.Resource
 import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s.Response
 import com.sksamuel.elastic4s.requests.indexes.admin.DeleteIndexResponse
-import monix.connect.es.Elasticsearch
+import monix.connect.elasticsearch.Elasticsearch
 import monix.eval.Task
 
 val esResource: Resource[Task, Elasticsearch] = Elasticsearch.create("http://localhost:9200")
 
-val indexName = "test_index"
+val indexName = "my_index"
 val deleteIndexRequest = deleteIndex(indexName)
 
-val task: Task[Response[DeleteIndexResponse]] = esResource.use { es =>
-    es.deleteIndex(deleteIndexRequest)
-}
+val task: Task[Response[DeleteIndexResponse]] = esResource.use(_.deleteIndex(deleteIndexRequest))
 ```
 
-## Update a doc in the index 
+### Update a doc
  ```scala
 import cats.effect.Resource
 import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s.Response
 import com.sksamuel.elastic4s.requests.update.UpdateResponse
-import monix.connect.es.Elasticsearch
+import monix.connect.elasticsearch.Elasticsearch
 import monix.eval.Task
 
-val esResource: Resource[Task, Elasticsearch] = Elasticsearch.create("http://localhost:9200")
+val elasticsearch: Elasticsearch
 
-val indexName = "test_index"
+val indexName = "my_index"
 val id = "test_id"
 val doc = """{"a":"test"}"""
 val updateRequest = updateById(indexName, id).docAsUpsert(doc)
 
-val task: Task[Response[UpdateResponse]] = esResource.use { es =>
-    es.singleUpdate(updateRequest)
-}
+val task: Task[Response[UpdateResponse]] = elasticsearch.singleUpdate(updateRequest)
+
 ```
 
-## Get a doc from the index by id 
+### Get a doc by id 
  ```scala
 import cats.effect.Resource
 import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s.Response
 import com.sksamuel.elastic4s.requests.get.GetResponse
-import monix.connect.es.`Elasticsearch`
+import monix.connect.elasticsearch.Elasticsearch
 import monix.eval.Task
 
-val esResource: Resource[Task, Elasticsearch] = Elasticsearch.create("http://localhost:9200")
+val elasticsearch: Elasticsearch
 
-val indexName = "test_index"
+val indexName = "my_index"
 val id = "test_id"
 val doc = """{"a":"test"}"""
 
 val getByIdRequest = get(indexName, id)
-val task: Task[Response[GetResponse]] = esResource.use { es =>
-    es.getById(getByIdRequest)
-}
+val t: Task[Response[GetResponse]] = elasticsearch.getById(getByIdRequest)
 
 ```
 
-## Delete a doc in the index
+### Delete doc 
  ```scala
 import cats.effect.Resource
 import com.sksamuel.elastic4s.ElasticDsl._
-import monix.connect.es.Elasticsearch
+import monix.connect.elasticsearch.Elasticsearch
 import monix.eval.Task
 
-val esResource: Resource[Task, Elasticsearch] = Elasticsearch.create("http://localhost:9200")
+val elasticsearch: Elasticsearch
 
-val indexName = "test_index"
+val indexName = "my_index"
 val id = "test_id"
 
 val deleteRequest = deleteById(indexName, id)
-val task = esResource.use { es =>
-    es.singleDeleteById(deleteRequest)
-}
+val t = elasticsearch.singleDeleteById(deleteRequest)
 ```
 
-## Count docs in the index
+### Count docs 
  ```scala
-import cats.effect.Resource
 import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s.Response
 import com.sksamuel.elastic4s.Indexes
 import com.sksamuel.elastic4s.requests.count.CountResponse
-import monix.connect.es.Elasticsearch
+import monix.connect.elasticsearch.Elasticsearch
 import monix.eval.Task
 
-val esResource: Resource[Task, Elasticsearch] = Elasticsearch.create("http://localhost:9200")
+val elasticsearch: Elasticsearch
 
-val indexName = "test_index"
+val indexName = "my_index"
 val countRequest = count(Indexes(indexName)).query(matchAllQuery())
 
-val task: Task[Response[CountResponse]] = esResource.use { es =>
-    es.singleCount(countRequest)
+val t: Task[Response[CountResponse]] = elasticsearch.singleCount(countRequest)
 }
 ```
 
-## Execute bulk requests
+### Bulk requests
  
  ```scala
 import cats.effect.Resource
 import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s.Response
 import com.sksamuel.elastic4s.requests.bulk.BulkResponse
-import monix.connect.es.Elasticsearch
+import monix.connect.elasticsearch.Elasticsearch
 import monix.eval.Task
 
-val esResource: Resource[Task, Elasticsearch] = Elasticsearch.create("http://localhost:9200")
+val elasticsearch: Elasticsearch
 
-val indexName = "test_index"
+val indexName = "my_index"
 val id = "test_id"
 val doc = """{"a":"test"}"""
 
 val updateRequest = updateById(indexName, id).docAsUpsert(doc)
 val deleteRequest = deleteById(indexName, id)
 
-val task: Task[Response[BulkResponse]] = esResource.use { es =>
-    es.bulkExecuteRequest(Seq(updateRequest, deleteRequest))
-}
+val t: Task[Response[BulkResponse]] = elasticsearch.bulkExecuteRequest(Seq(updateRequest, deleteRequest))
 ```
 
-## Search
+### Search request
+
  ```scala
 import cats.effect.Resource
 import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s.Response
 import com.sksamuel.elastic4s.requests.searches.SearchResponse
-import monix.connect.es.Elasticsearch
+import monix.connect.elasticsearch.Elasticsearch
 import monix.eval.Task
 
-val esResource: Resource[Task, Elasticsearch] = Elasticsearch.create("http://localhost:9200")
+val elasticsearch: Elasticsearch
 
-val indexName = "test_index"
+val indexName = "my_index"
 val searchRequest = search(indexName).query(matchAllQuery())
 
-val task: Task[Response[SearchResponse]] = esResource.use { es =>
-    es.search(searchRequest)
-}
+val t: Task[Response[SearchResponse]] = elasticsearch.search(searchRequest)
 ```
 
-## Scroll (ElasticsearchSource) 
-Create a `Observable` object for retrieving large numbers of results (or even all results) from a single search request.
+## ElasticsearchSource
+
+### Scroll
+
+Used to retrieve large numbers of results (or even all results) of a search request, 
+which performs safely with an `Observable` that emits `SearchHit`s.
 
  ```scala
 import cats.effect.Resource
 import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s.requests.searches.SearchHit
-import monix.connect.es.Elasticsearch
-import monix.eval.Task
+import monix.connect.elasticsearch.Elasticsearch
+import monix.reactive.Observable
 
-val esResource: Resource[Task, Elasticsearch] = Elasticsearch.create("http://localhost:9200")
+val elasticsearch: Elasticsearch
 
-val indexName = "test_index"
+val indexName = "my_index"
 val searchRequest = search(indexName).query(matchAllQuery()).keepAlive("1m")
 
-val observable: Task[List[SearchHit]] = esResource.use { es =>
-    es.scroll(searchRequest)
-      .toListL
-}
+val ob: Observable[SearchHit] = elasticsearch.scroll(searchRequest)
 ```
 
-## Consume bulk requests (ElasticsearchSink)
+## ElasticsearchSink
 
-Create a `Consumer` object for consuming requests from the source.
+### Consume bulk requests 
+
+Creates a `Consumer` object that performs any type of elasticsearch requests emitted.
 
  ```scala
-import cats.effect.Resource
 import com.sksamuel.elastic4s.ElasticDsl._
-import monix.connect.es.Elasticsearch
+import monix.connect.elasticsearch.Elasticsearch
 import monix.eval.Task
 import monix.reactive.Observable
 
-val esResource: Resource[Task, Elasticsearch] = Elasticsearch.create("http://localhost:9200")
+val elasticsearch: Elasticsearch
 
-val indexName = "test_index"
+val indexName = "my_index"
 val indexSource = """{"settings":{"number_of_shards":1},"mappings":{"properties":{"a":{"type":"text"} } } }"""
 val id = "test_id"
 val doc = """{"a":"test"}"""
 
 val updateRequest = updateById(indexName, id).docAsUpsert(doc)
 val deleteRequest = deleteById(indexName, id)
-val observable = 
-    Observable
-      .from(Seq(updateRequest, deleteRequest))
-      .bufferTumbling(2)
 
-esResource.use { es =>
-    observable
-      .consumeWith(es.createBulkRequestsSink())
-}
+val t = Observable
+          .now(Seq(updateRequest, deleteRequest))
+          .consumeWith(elasticsearch.bulkRequestSink())     
 ```
 
 ## Local testing
 
-There is actually a very good support on regards to testing `Elasticsearch` locally using docker,
-you would just need to add the  _elasticsearch_ docker image as service in your `docker-compose.yml`:
+In order to test `Elasticsearch` service locally, we would just need to use the `elasticsearch` image from DockerHub,
+see in below snipped how it is being defined in the `docker-compose.yaml file.
  
  ```yaml
   elasticsearch:
@@ -287,8 +297,19 @@ you would just need to add the  _elasticsearch_ docker image as service in your 
       retries: 5
 ``` 
 
- Then, execute the following command to build and run the _elasticsearch_ image:
+Then, execute the following command to build and run the _elasticsearch_ image:
  
  ```shell script
  docker-compose -f ./docker-compose.yml up -d elasticsearch
+```
+
+Finally, refer to the port that the container is exposing:
+
+```scala
+import cats.effect.Resource
+import monix.connect.elasticsearch.Elasticsearch
+import monix.eval.Task
+
+val elasticsearchUrl = "http://localhost:9200"
+val resource: Resource[Task, Elasticsearch] = Elasticsearch.create("http://localhost:9200")
 ```

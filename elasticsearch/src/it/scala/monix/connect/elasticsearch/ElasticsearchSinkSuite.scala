@@ -22,7 +22,7 @@ class ElasticsearchSinkSuite extends AnyFlatSpecLike with Fixture with Matchers 
       Observable
         .from(updateRequests)
         .bufferTumbling(5)
-        .consumeWith(es.createBulkRequestsSink())
+        .consumeWith(es.bulkRequestSink())
     }.runSyncUnsafe()
 
     // then
@@ -46,13 +46,13 @@ class ElasticsearchSinkSuite extends AnyFlatSpecLike with Fixture with Matchers 
       Observable
         .from(updateRequests)
         .bufferTumbling(5)
-        .consumeWith(es.createBulkRequestsSink())
+        .consumeWith(es.bulkRequestSink())
     }.runSyncUnsafe()
     esResource.use { es =>
       Observable
         .from(deleteRequests)
         .bufferTumbling(5)
-        .consumeWith(es.createBulkRequestsSink())
+        .consumeWith(es.bulkRequestSink())
     }.runSyncUnsafe()
     // then
     val r =
@@ -74,7 +74,7 @@ class ElasticsearchSinkSuite extends AnyFlatSpecLike with Fixture with Matchers 
       Observable
         .from(indexRequests)
         .bufferTumbling(5)
-        .consumeWith(es.createBulkRequestsSink())
+        .consumeWith(es.bulkRequestSink())
     }.runSyncUnsafe()
 
     // then
@@ -98,7 +98,7 @@ class ElasticsearchSinkSuite extends AnyFlatSpecLike with Fixture with Matchers 
         Observable
           .from(requests)
           .bufferTumbling(5)
-          .consumeWith(es.createBulkRequestsSink())
+          .consumeWith(es.bulkRequestSink())
       }
 
     // then

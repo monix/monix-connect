@@ -199,6 +199,10 @@ object DynamoDb { self =>
 
 }
 
+/**
+  * Represents the Monix DynamoDb client which can
+  * be created using the builders from its companion object.
+  */
 trait DynamoDb { self =>
 
   private[dynamodb] implicit val asyncClient: DynamoDbAsyncClient
