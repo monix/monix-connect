@@ -20,7 +20,19 @@ package monix.connect.benchmarks.s3
 import akka.actor.ActorSystem
 import monix.execution.Scheduler
 import monix.reactive.Observable
-import org.openjdk.jmh.annotations.{Benchmark, BenchmarkMode, Fork, Measurement, Mode, Scope, Setup, State, TearDown, Threads, Warmup}
+import org.openjdk.jmh.annotations.{
+  Benchmark,
+  BenchmarkMode,
+  Fork,
+  Measurement,
+  Mode,
+  Scope,
+  Setup,
+  State,
+  TearDown,
+  Threads,
+  Warmup
+}
 import akka.stream.alpakka.s3.scaladsl.{S3 => AkkaS3}
 import akka.stream.scaladsl.{Keep, Source}
 import akka.util.ByteString
@@ -90,7 +102,8 @@ class S3UploadBenchmark extends S3MonixFixture {
   @Benchmark
   def monixConfigUploadMultipart(): Unit = {
     val newKey = Gen.identifier.sample.get
-    val t = S3.fromConfig.use(s3 => Observable.fromIterable(contents).consumeWith(s3.uploadMultipart(bucketName, newKey)))
+    val t =
+      S3.fromConfig.use(s3 => Observable.fromIterable(contents).consumeWith(s3.uploadMultipart(bucketName, newKey)))
 
     Await.result(t.runToFuture(s), Duration.Inf)
   }
