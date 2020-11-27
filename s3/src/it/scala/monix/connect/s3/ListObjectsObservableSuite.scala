@@ -80,16 +80,16 @@ class ListObjectsObservableSuite
       Gen.listOfN(n, genKey).sample.get
     val contents: List[String] = Gen.listOfN(n, Gen.identifier).sample.get
     s3Resource.use { s3 =>
-      Task
-        .sequence(keys.zip(contents).map { case (key, content) => s3.upload(bucketName, key, content.getBytes()) })
+      Task.sequence(keys.zip(contents).map {
+        case (key, content) => s3.upload(bucketName, key, content.getBytes())
+      })
     }.runSyncUnsafe()
 
     //when
-    val response = Task
-      .from(
+    val response = Task.from(
         s3AsyncClient.listObjectsV2(
-          S3RequestBuilder.listObjectsV2(bucketName, prefix = Some(prefix), maxKeys = Some(10))))
-      .runSyncUnsafe()
+          S3RequestBuilder.listObjectsV2(bucketName, prefix = Some(prefix), maxKeys = Some(10)))
+    ).runSyncUnsafe()
 
     //then
     response.nextContinuationToken should not be null
@@ -105,14 +105,16 @@ class ListObjectsObservableSuite
       Gen.listOfN(n, genKey.map(str => prefix + str)).sample.get
     val contents: List[String] = Gen.listOfN(n, Gen.identifier.sample.get).sample.get
 
-    (s3Resource.use { s3 =>
+    val count = (s3Resource.use { s3 =>
       for {
-        _ <- Task.sequence(keys.zip(contents).map {
+        _ <- Task.parSequence(keys.zip(contents).map {
           case (key, content) => s3.upload(bucketName, key, content.getBytes())
-        })
+        }).delayResult(1.second)
         count <- s3.listObjects(bucketName, prefix = Some(prefix), maxTotalKeys = Some(n)).countL
-      } yield (count shouldBe n)
+      } yield count
     }).runSyncUnsafe()
+
+    count shouldBe n
   }
 
   it can "set a big limit of the number of objects returned" in {

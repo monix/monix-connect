@@ -213,12 +213,12 @@ class S3Suite
 
   it can "copy an object to a different location within the same bucket" in {
     //given
-    val sourceKey = Gen.identifier.sample.get
+    val sourceKey = genKey.sample.get
     val content = Gen.identifier.sample.get.getBytes()
     s3Resource.use(_.upload(bucketName, sourceKey, content)).runSyncUnsafe()
 
     //and
-    val destinationKey = Gen.identifier.sample.get
+    val destinationKey = genKey.sample.get
 
     //when
     val copyObjectResponse =
@@ -231,13 +231,13 @@ class S3Suite
 
   it can "copy an object to a different location in a different bucket" in {
     //given
-    val sourceKey = genBucketName.sample.get
+    val sourceKey = genKey.sample.get
     val content = Gen.identifier.sample.get.getBytes()
     s3Resource.use(_.upload(bucketName, sourceKey, content)).runSyncUnsafe()
 
     //and
     val destinationBucket = genBucketName.sample.get
-    val destinationKey = Gen.identifier.sample.get
+    val destinationKey = genKey.sample.get
     s3Resource.use(_.createBucket(destinationBucket)).runSyncUnsafe()
 
     //when
