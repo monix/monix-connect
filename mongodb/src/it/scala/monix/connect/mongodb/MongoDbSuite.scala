@@ -138,7 +138,7 @@ class MongoDbSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
 
   it should "list collections" in {
     //given
-    val collectionNames: Seq[String] = Gen.listOfN(10, Gen.alphaLowerStr).map(_.map("test-" + _.take(5))).sample.get
+    val collectionNames: Seq[String] = Gen.listOfN(10, Gen.identifier.map("test-" + _.take(20))).sample.get
     Task.sequence(collectionNames.map(MongoDb.createCollection(db, _))).runSyncUnsafe()
 
     //when
