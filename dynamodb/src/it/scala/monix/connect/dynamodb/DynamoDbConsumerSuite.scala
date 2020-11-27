@@ -52,8 +52,8 @@ class DynamoDbConsumerSuite
         //given
         val consumer: Consumer[PutItemRequest, Unit] =
           DynamoDb.consumer[PutItemRequest, PutItemResponse]()
-        val city = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-        val citizenId = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+        val city = Gen.identifier.sample.get
+        val citizenId = Gen.identifier.sample.get
         val age = Gen.choose(0, 100).sample.get
         val request: PutItemRequest = putItemRequest(tableName, city, citizenId, age)
 
@@ -95,7 +95,7 @@ class DynamoDbConsumerSuite
       s"consume a single `GetItemRequest` and materialize it to `GetItemResponse` " in {
         //given
         val city = "Barcelona"
-        val citizenId = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+        val citizenId = Gen.identifier.sample.get
         val age: Int = 1015
         Task.from(client.putItem(putItemRequest(tableName, city, citizenId, age))).runSyncUnsafe()
         val request: GetItemRequest = getItemRequest(tableName, city, citizenId)

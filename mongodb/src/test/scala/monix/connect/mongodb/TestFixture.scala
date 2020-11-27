@@ -24,9 +24,9 @@ trait TestFixture {
   case class Employee(name: String, age: Int, city: String, activities: List[String] = List.empty)
 
   val genEmployee = for {
-    name        <- Gen.nonEmptyListOf(Gen.alphaChar)
+    name        <- Gen.identifier
     age         <- Gen.chooseNum(16, 65)
-    nationality <- Gen.nonEmptyListOf(Gen.alphaChar)
-  } yield Employee(name.mkString.take(8), age, nationality.mkString.take(8), List.empty)
+    nationality <- Gen.identifier
+  } yield Employee(name.take(8), age, nationality.take(8), List.empty)
 
 }

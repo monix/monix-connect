@@ -19,9 +19,8 @@ class GcsUploaderSuite extends AnyWordSpecLike with IdiomaticMockito with Matche
 
   val storage = LocalStorageHelper.getOptions.getService
   val dir = new File("gcs/tmp").toPath
-  val nonEmptyString: Gen[String] = Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "test-" + chars.mkString.take(20))
-  val genLocalPath = nonEmptyString.map(s => dir.toAbsolutePath.toString + "/" + s)
-  val testBucketName = nonEmptyString.sample.get
+  val genLocalPath = Gen.identifier.map(s => dir.toAbsolutePath.toString + "/" + s)
+  val testBucketName = Gen.identifier.sample.get
 
   override def beforeAll(): Unit = {
     FileUtils.deleteDirectory(dir.toFile)
@@ -39,11 +38,11 @@ class GcsUploaderSuite extends AnyWordSpecLike with IdiomaticMockito with Matche
 
       "it is empty" in {
         //given
-        val blobPath = nonEmptyString.sample.get
+        val blobPath = Gen.identifier.sample.get
         val blobInfo: BlobInfo = BlobInfo.newBuilder(BlobId.of(testBucketName, blobPath)).build
         val blob: Blob = storage.create(blobInfo)
         val gcsBlob = new GcsBlob(blob)
-        val content: Array[Byte] = nonEmptyString.sample.get.getBytes()
+        val content: Array[Byte] = Gen.identifier.sample.get.getBytes()
         val uploader = GcsUploader(GcsStorage(storage), blobInfo)
 
         //when
@@ -61,9 +60,9 @@ class GcsUploaderSuite extends AnyWordSpecLike with IdiomaticMockito with Matche
 
       "it is not empty" in {
         //given
-        val blobPath = nonEmptyString.sample.get
+        val blobPath = Gen.identifier.sample.get
         val blobInfo: BlobInfo = BlobInfo.newBuilder(BlobId.of(testBucketName, blobPath)).build
-        val content: Array[Byte] = nonEmptyString.sample.get.getBytes()
+        val content: Array[Byte] = Gen.identifier.sample.get.getBytes()
         val blob: Blob = storage.create(blobInfo, content)
         val gcsBlob = new GcsBlob(blob)
         val uploader = GcsUploader(GcsStorage(storage), blobInfo)
@@ -84,7 +83,7 @@ class GcsUploaderSuite extends AnyWordSpecLike with IdiomaticMockito with Matche
 
       "the consumed observable is empty" in {
         //given
-        val blobName = nonEmptyString.sample.get
+        val blobName = Gen.identifier.sample.get
         val blobInfo: BlobInfo = BlobInfo.newBuilder(BlobId.of(testBucketName, blobName)).build
         val blob: Blob = storage.create(blobInfo)
         val gcsBlob = new GcsBlob(blob)

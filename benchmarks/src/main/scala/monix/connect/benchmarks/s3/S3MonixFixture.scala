@@ -33,8 +33,6 @@ import scala.util.{Failure, Success, Try}
 
 trait S3MonixFixture {
 
-  val nonEmptyString = Coeval("test" + Gen.nonEmptyListOf(Gen.alphaLowerChar).sample.get.mkString.take(50))
-
   val minioEndPoint: String = "http://localhost:9000"
 
   val s3AccessKey: String = "TESTKEY"

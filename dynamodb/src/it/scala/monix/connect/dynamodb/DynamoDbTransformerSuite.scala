@@ -61,7 +61,7 @@ class DynamoDbTransformerSuite
           //given
           val transformer: Transformer[PutItemRequest, PutItemResponse] =
             DynamoDb.transformer[PutItemRequest, PutItemResponse]()
-          val city = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+          val city = Gen.identifier.sample.get
           val citizenId = Gen.identifier.sample.get
           val debt = Gen.choose(0, 10000).sample.get
           val request: PutItemRequest = putItemRequest(tableName, citizenId, city, debt)
@@ -107,7 +107,7 @@ class DynamoDbTransformerSuite
       s"transforms a single `GetItemRequest` to `GetItemResponse` " in {
         //given
         val city = "London"
-        val citizenId = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+        val citizenId = Gen.identifier.sample.get
         val age: Int = 34
         toScala(client.putItem(putItemRequest(tableName,citizenId, city, age))).futureValue
         val request: GetItemRequest = getItemRequest(tableName, citizenId, city)

@@ -37,7 +37,6 @@ trait ParquetBenchFixture {
     "{\"type\":\"record\",\"name\":\"Person\",\"fields\":[{\"name\":\"id\",\"type\":\"int\"},{\"name\":\"name\",\"type\":\"string\"}]}")
 
   val folder: String = "./data/parquet"
-  val genNonEmptyString = Gen.nonEmptyListOf(Gen.alphaChar).map(_.mkString)
   val genFilePath = Coeval(folder + "/" + UUID.randomUUID() + ".parquet")
 
   val conf = new Configuration()
