@@ -50,7 +50,7 @@ class MultipartUploadSubscriberSuite
 
   "MultipartUploadSubscriber" should "upload multipart when only a single chunk was emitted" in {
     //given
-    val key = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+    val key = Gen.identifier.sample.get
     val content: Array[Byte] = Gen.alphaUpperStr.sample.get.getBytes
 
     //when
@@ -67,7 +67,7 @@ class MultipartUploadSubscriberSuite
 
   it can "upload chunks (of less than minimum size) are passed" in {
     //given
-    val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+    val key: String = Gen.identifier.sample.get
     val chunks: List[Array[Byte]] = Gen.listOfN(10, Gen.alphaUpperStr).map(_.map(_.getBytes)).sample.get
 
     //when
@@ -86,7 +86,7 @@ class MultipartUploadSubscriberSuite
 
   it should "upload in a single chunk of size (1MB)" in {
     //given
-    val key = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+    val key = Gen.identifier.sample.get
     val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
     val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
 
@@ -109,7 +109,7 @@ class MultipartUploadSubscriberSuite
 
   it should "aggregate and upload chunks emitted from smaller size than the minimum" in {
     //given
-    val key = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+    val key = Gen.identifier.sample.get
     val chunk = Files.readAllBytes(new File(resourceFile("244KB.csv")).toPath) //test.csv ~= 244Kb
     val chunks = Array.fill(24)(chunk) // at the 21th chunk (5MB) the upload should be triggered
 
@@ -129,7 +129,7 @@ class MultipartUploadSubscriberSuite
 
   it should "upload in two (aggregated) parts emitted from chunks smaller than the min size" in {
     //given
-    val key = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+    val key = Gen.identifier.sample.get
     val chunk = Files.readAllBytes(new File(resourceFile("244KB.csv")).toPath) //test.csv ~= 244Kb
     val chunks = Array.fill(48)(chunk) // two part uploads will be triggered at th 21th and 42th chunks
 
@@ -149,7 +149,7 @@ class MultipartUploadSubscriberSuite
 
   it should "upload big chunks" in {
     //given
-    val key = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+    val key = Gen.identifier.sample.get
     val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
     val ob: Observable[Array[Byte]] = Observable
       .fromInputStream(inputStream)

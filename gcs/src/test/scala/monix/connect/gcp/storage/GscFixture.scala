@@ -30,7 +30,7 @@ import scala.concurrent.duration._
 trait GscFixture {
 
   val genBool: Gen[Boolean] = Gen.oneOf(true, false)
-  val genNonEmtyStr: Gen[String] = Gen.nonEmptyListOf(Gen.alphaChar).map(_.mkString)
+  val genNonEmtyStr: Gen[String] = Gen.identifier.sample.get
   val genAcl: Gen[Acl] = for {
     entity <- Gen
       .oneOf[Entity](User.ofAllUsers(), new Group("sample@email.com"), new Project(Project.ProjectRole.OWNERS, "id"))

@@ -31,7 +31,7 @@ trait DynamoDbFixture {
     .region(Region.AWS_GLOBAL)
     .build
 
-  val genTableName: Gen[String] =  Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "test-" + chars.mkString.take(200))  //table name max size is 255
+  val genTableName: Gen[String] =  Gen.identifier.map(str => "test-" + str.take(200))  //table name max size is 255
 
   val keyMap = (citizenId: String, city: String) => Map("citizenId" -> strAttr(citizenId), "city" -> strAttr(city))
 

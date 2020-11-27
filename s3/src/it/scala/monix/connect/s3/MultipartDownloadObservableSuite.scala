@@ -50,8 +50,8 @@ class MultipartDownloadObservableSuite
 
   "MultipartDownloadObservable" should "downloadMultipart of small chunk size" in {
       //given
-      val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-      val content: String = nonEmptyString.value()
+      val key: String = Gen.identifier.sample.get
+      val content: String = Gen.identifier.sample.get
       s3Resource.use(_.upload(bucketName, key, content.getBytes)).runSyncUnsafe()
 
       //when
@@ -66,8 +66,8 @@ class MultipartDownloadObservableSuite
 
   it should "download 'multipart' in a single part" in {
       //given
-      val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-      val content: String = nonEmptyString.value()
+      val key: String = Gen.identifier.sample.get
+      val content: String = Gen.identifier.sample.get
       s3Resource.use(_.upload(bucketName, key, content.getBytes)).runSyncUnsafe()
 
       //when
@@ -82,7 +82,7 @@ class MultipartDownloadObservableSuite
 
   it should "download a big object in multiparts" in {
       //given
-      val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+      val key: String = Gen.identifier.sample.get
       val inputStream = Task(new FileInputStream(resourceFile("244KB.csv")))
       val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
       s3Resource.use(s3 => ob.consumeWith(s3.uploadMultipart(bucketName, key))).runSyncUnsafe()

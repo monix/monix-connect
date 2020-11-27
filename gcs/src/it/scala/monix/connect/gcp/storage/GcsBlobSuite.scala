@@ -19,9 +19,8 @@ class GcsBlobSuite extends AnyWordSpecLike with IdiomaticMockito with Matchers w
 
   val storage: Storage = LocalStorageHelper.getOptions.getService
   val dir = new File("gcs/tmp").toPath
-  val nonEmptyString: Gen[String] = Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "test-" + chars.mkString.take(20))
-  val genLocalPath = nonEmptyString.map(s => dir.toAbsolutePath.toString + "/" + s)
-  val testBucketName = nonEmptyString.sample.get
+  val genLocalPath = Gen.identifier.map(s => dir.toAbsolutePath.toString + "/" + s)
+  val testBucketName = Gen.identifier.sample.get
 
   override def beforeAll(): Unit = {
     FileUtils.deleteDirectory(dir.toFile)
@@ -37,9 +36,9 @@ class GcsBlobSuite extends AnyWordSpecLike with IdiomaticMockito with Matchers w
 
     "return true if exists" in {
       //given
-      val blobPath = nonEmptyString.sample.get
+      val blobPath = Gen.identifier.sample.get
       val blobInfo: BlobInfo = BlobInfo.newBuilder(BlobId.of(testBucketName, blobPath)).build
-      val content: Array[Byte] = nonEmptyString.sample.get.getBytes()
+      val content: Array[Byte] = Gen.identifier.sample.get.getBytes()
       val blob: Blob = storage.create(blobInfo, content)
       val gcsBlob = new GcsBlob(blob)
 
@@ -52,9 +51,9 @@ class GcsBlobSuite extends AnyWordSpecLike with IdiomaticMockito with Matchers w
 
     "return delete if exists" in {
       //given
-      val blobPath = nonEmptyString.sample.get
+      val blobPath = Gen.identifier.sample.get
       val blobInfo: BlobInfo = BlobInfo.newBuilder(BlobId.of(testBucketName, blobPath)).build
-      val content: Array[Byte] = nonEmptyString.sample.get.getBytes()
+      val content: Array[Byte] = Gen.identifier.sample.get.getBytes()
       val blob: Blob = storage.create(blobInfo, content)
       val gcsBlob = new GcsBlob(blob)
       val existedBefore = gcsBlob.exists().runSyncUnsafe()
@@ -72,9 +71,9 @@ class GcsBlobSuite extends AnyWordSpecLike with IdiomaticMockito with Matchers w
 
     "download a small blob in form of observable" in {
       //given
-      val blobPath = nonEmptyString.sample.get
+      val blobPath = Gen.identifier.sample.get
       val blobInfo: BlobInfo = BlobInfo.newBuilder(BlobId.of(testBucketName, blobPath)).build
-      val content: Array[Byte] = nonEmptyString.sample.get.getBytes()
+      val content: Array[Byte] = Gen.identifier.sample.get.getBytes()
       val blob: Blob = storage.create(blobInfo, content)
       val gcsBlob = new GcsBlob(blob)
 
@@ -90,7 +89,7 @@ class GcsBlobSuite extends AnyWordSpecLike with IdiomaticMockito with Matchers w
 
     "download blob from a GcsBlob that resides within a task" in {
       //given
-      val content: Array[Byte] = nonEmptyString.sample.get.getBytes()
+      val content: Array[Byte] = Gen.identifier.sample.get.getBytes()
       val gcsStorage = GcsStorage(storage)
       val blob: Task[GcsBlob] = gcsStorage.createBlob("myBucket", "myBlob").memoize
       blob.flatMap(b => Observable.now(content).consumeWith(b.upload())).runSyncUnsafe()
@@ -105,10 +104,10 @@ class GcsBlobSuite extends AnyWordSpecLike with IdiomaticMockito with Matchers w
 
     "download to file" in {
       //given
-      val blobPath = nonEmptyString.sample.get
+      val blobPath = Gen.identifier.sample.get
       val blobInfo: BlobInfo = BlobInfo.newBuilder(BlobId.of(testBucketName, blobPath)).build
       val filePath: Path = new File(genLocalPath.sample.get).toPath
-      val content: Array[Byte] = nonEmptyString.sample.get.getBytes()
+      val content: Array[Byte] = Gen.identifier.sample.get.getBytes()
       val blob: Blob = storage.create(blobInfo, content)
       val gcsBlob = new GcsBlob(blob)
 
@@ -127,11 +126,11 @@ class GcsBlobSuite extends AnyWordSpecLike with IdiomaticMockito with Matchers w
 
       "it is empty" in {
         //given
-        val blobPath = nonEmptyString.sample.get
+        val blobPath = Gen.identifier.sample.get
         val blobInfo: BlobInfo = BlobInfo.newBuilder(BlobId.of(testBucketName, blobPath)).build
         val blob: Blob = storage.create(blobInfo)
         val gcsBlob = new GcsBlob(blob)
-        val content: Array[Byte] = nonEmptyString.sample.get.getBytes()
+        val content: Array[Byte] = Gen.identifier.sample.get.getBytes()
 
         //when
         val downloader: Observable[Array[Byte]] = gcsBlob.download()
@@ -148,10 +147,10 @@ class GcsBlobSuite extends AnyWordSpecLike with IdiomaticMockito with Matchers w
 
       "it is not empty" in {
         //given
-        val blobPath = nonEmptyString.sample.get
+        val blobPath = Gen.identifier.sample.get
         val blobInfo: BlobInfo = BlobInfo.newBuilder(BlobId.of(testBucketName, blobPath)).build
-        val oldContent: Array[Byte] = nonEmptyString.sample.get.getBytes()
-        val newContent: Array[Byte] = nonEmptyString.sample.get.getBytes()
+        val oldContent: Array[Byte] = Gen.identifier.sample.get.getBytes()
+        val newContent: Array[Byte] = Gen.identifier.sample.get.getBytes()
         val blob: Blob = storage.create(blobInfo, oldContent)
         val gcsBlob = new GcsBlob(blob)
 
@@ -170,7 +169,7 @@ class GcsBlobSuite extends AnyWordSpecLike with IdiomaticMockito with Matchers w
 
       "the consumed observable is empty" in {
         //given
-        val blobPath = nonEmptyString.sample.get
+        val blobPath = Gen.identifier.sample.get
         val blobInfo: BlobInfo = BlobInfo.newBuilder(BlobId.of(testBucketName, blobPath)).build
         val blob: Blob = storage.create(blobInfo)
         val gcsBlob = new GcsBlob(blob)
@@ -189,13 +188,13 @@ class GcsBlobSuite extends AnyWordSpecLike with IdiomaticMockito with Matchers w
 
     "uploads to the blob from a file" in {
       //given
-      val blobPath = nonEmptyString.sample.get
+      val blobPath = Gen.identifier.sample.get
       val blobInfo: BlobInfo = BlobInfo.newBuilder(BlobId.of(testBucketName, blobPath)).build
       val blob: Blob = storage.create(blobInfo)
       val gcsBlob = new GcsBlob(blob)
       val sourcePath = new File(genLocalPath.sample.get).toPath
       val targetPath = new File(genLocalPath.sample.get).toPath
-      val content: Array[Byte] = nonEmptyString.sample.get.getBytes()
+      val content: Array[Byte] = Gen.identifier.sample.get.getBytes()
       Files.write(sourcePath, content)
 
       //when
@@ -215,7 +214,7 @@ class GcsBlobSuite extends AnyWordSpecLike with IdiomaticMockito with Matchers w
 
     "return a failed task when uploading from a non existent file" in {
       //given
-      val blobPath = nonEmptyString.sample.get
+      val blobPath = Gen.identifier.sample.get
       val blobInfo: BlobInfo = BlobInfo.newBuilder(BlobId.of(testBucketName, blobPath)).build
       val blob: Blob = storage.create(blobInfo)
       val gcsBlob = new GcsBlob(blob)

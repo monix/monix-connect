@@ -35,7 +35,7 @@ class S3Suite
   s"${S3}" can "be created from config files" in {
     //given
     val s3FromConf = S3.fromConfig
-    val (k1, k2) = (nonEmptyString.value(), nonEmptyString.value())
+    val (k1, k2) = (Gen.identifier.sample.get, Gen.identifier.sample.get)
 
     //when
     s3FromConf.use(s3 => s3.upload(bucketName, k1, k1.getBytes())).runSyncUnsafe()
@@ -48,7 +48,7 @@ class S3Suite
 
   it should "implement upload method" in {
     //given
-    val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+    val key: String = Gen.identifier.sample.get
     val content: String = Gen.alphaUpperStr.sample.get
 
     //when
@@ -64,7 +64,7 @@ class S3Suite
 
   it can "upload an empty bytearray" in {
     //given
-    val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+    val key: String = Gen.identifier.sample.get
     val content: Array[Byte] = Array.emptyByteArray
 
     //when
@@ -82,7 +82,7 @@ class S3Suite
 
   it can "create an empty object out of an empty chunk" in {
     //given
-    val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+    val key: String = Gen.identifier.sample.get
     val content: Array[Byte] = Array.emptyByteArray
 
     //when
@@ -100,7 +100,7 @@ class S3Suite
 
   it can "download a s3 object as byte array" in {
     //given
-    val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+    val key: String = Gen.identifier.sample.get
     val content: String = Gen.alphaUpperStr.sample.get
     s3Resource.use(_.upload(bucketName, key, content.getBytes)).runSyncUnsafe()
 
@@ -117,7 +117,7 @@ class S3Suite
 
   it can "download a s3 object bigger than 1MB as byte array" in {
     //given
-    val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+    val key: String = Gen.identifier.sample.get
     val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
     val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
     s3Resource.use { s3 =>
@@ -142,8 +142,8 @@ class S3Suite
   it can "download the first n bytes form an object" in {
     //given
     val n = 5
-    val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-    val content: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+    val key: String = Gen.identifier.sample.get
+    val content: String = Gen.identifier.sample.get
     s3Resource.use(_.upload(bucketName, key, content.getBytes)).runSyncUnsafe()
 
     //when
@@ -160,7 +160,7 @@ class S3Suite
   it should "fail when downloading with a negative `numberOfBytes`" in {
     //given
     val negativeNum = Gen.chooseNum(-10, -1).sample.get
-    val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+    val key: String = Gen.identifier.sample.get
 
     //when
     val f = s3Resource.use(_.download(bucketName, key, Some(negativeNum))).runToFuture
@@ -197,8 +197,8 @@ class S3Suite
 
   it can "download in multipart" in {
     //given
-    val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-    val content: String = nonEmptyString.value()
+    val key: String = Gen.identifier.sample.get
+    val content: String = Gen.identifier.sample.get
     s3Resource.use(_.upload(bucketName, key, content.getBytes)).runSyncUnsafe()
 
     //when
@@ -213,12 +213,12 @@ class S3Suite
 
   it can "copy an object to a different location within the same bucket" in {
     //given
-    val sourceKey = nonEmptyString.value()
-    val content = nonEmptyString.value().getBytes()
+    val sourceKey = Gen.identifier.sample.get
+    val content = Gen.identifier.sample.get.getBytes()
     s3Resource.use(_.upload(bucketName, sourceKey, content)).runSyncUnsafe()
 
     //and
-    val destinationKey = nonEmptyString.value()
+    val destinationKey = Gen.identifier.sample.get
 
     //when
     val copyObjectResponse =
@@ -231,13 +231,13 @@ class S3Suite
 
   it can "copy an object to a different location in a different bucket" in {
     //given
-    val sourceKey = nonEmptyString.value()
-    val content = nonEmptyString.value().getBytes()
+    val sourceKey = genBucketName.sample.get
+    val content = Gen.identifier.sample.get.getBytes()
     s3Resource.use(_.upload(bucketName, sourceKey, content)).runSyncUnsafe()
 
     //and
-    val destinationBucket = nonEmptyString.value()
-    val destinationKey = nonEmptyString.value()
+    val destinationBucket = Gen.identifier.sample.get.take(10)
+    val destinationKey = Gen.identifier.sample.get
     s3Resource.use(_.createBucket(destinationBucket)).runSyncUnsafe()
 
     //when
@@ -251,7 +251,7 @@ class S3Suite
 
   it can "create and delete a bucket" in {
     //given
-    val bucket = nonEmptyString.value()
+    val bucket = genBucketName.sample.get
     s3Resource.use(_.createBucket(bucket)).runSyncUnsafe()
     val existedBefore = s3Resource.use(_.existsBucket(bucket)).runSyncUnsafe()
 
@@ -266,7 +266,7 @@ class S3Suite
 
   it should "fail with `NoSuchBucketException` trying to delete a non existing bucket" in {
     //given
-    val bucket = nonEmptyString.value()
+    val bucket = Gen.identifier.sample.get
     val existedBefore = s3Resource.use(_.existsBucket(bucket)).runSyncUnsafe()
 
     //when
@@ -282,8 +282,8 @@ class S3Suite
 
   it can "delete a object" in {
     //given
-    val key = nonEmptyString.value()
-    val content = nonEmptyString.value().getBytes()
+    val key = Gen.identifier.sample.get
+    val content = Gen.identifier.sample.get.getBytes()
     s3Resource.use(_.upload(bucketName, key, content)).runSyncUnsafe()
     val existedBefore = s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe()
 
@@ -298,8 +298,8 @@ class S3Suite
 
   it can "check if a bucket exists" in {
     //given
-    val bucketNameA = nonEmptyString.value()
-    val bucketNameB = nonEmptyString.value()
+    val bucketNameA = genBucketName.sample.get
+    val bucketNameB = genBucketName.sample.get
 
     //and
     s3Resource.use(_.createBucket(bucketNameA)).runSyncUnsafe()
@@ -315,27 +315,26 @@ class S3Suite
 
   it can "list existing buckets" in {
     //given
-    val bucketNameA = nonEmptyString.value()
-    val _ = nonEmptyString.value()
-    val bucketNameC = nonEmptyString.value()
+    val bucketName1 = genBucketName.sample.get
+    val bucketName2 = genBucketName.sample.get
 
     //and
     val initialBuckets = s3Resource.use(_.listBuckets().toListL).runSyncUnsafe()
-    s3Resource.use(_.createBucket(bucketNameA)).runSyncUnsafe()
-    s3Resource.use(_.createBucket(bucketNameC)).runSyncUnsafe()
+    s3Resource.use(_.createBucket(bucketName1)).runSyncUnsafe()
+    s3Resource.use(_.createBucket(bucketName2)).runSyncUnsafe()
 
     //when
     val buckets = s3Resource.use(_.listBuckets().toListL).runSyncUnsafe()
 
     //then
     buckets.size - initialBuckets.size shouldBe 2
-    (buckets diff initialBuckets).map(_.name) should contain theSameElementsAs List(bucketNameA, bucketNameC)
+    (buckets diff initialBuckets).map(_.name) should contain theSameElementsAs List(bucketName1, bucketName2)
   }
 
   it can "check if an object exists" in {
     //given
-    val prefix = s"test-exists-object/${nonEmptyString.value()}/"
-    val key: String = prefix + nonEmptyString.value()
+    val prefix = s"test-exists-object/${Gen.identifier.sample.get}/"
+    val key: String = prefix + Gen.identifier.sample.get
 
     //and
     s3Resource.use(_.upload(bucketName, key, "dummy content".getBytes())).runSyncUnsafe()
@@ -352,10 +351,10 @@ class S3Suite
   it can "list all objects" in {
     //given
     val n = 1000
-    val prefix = s"test-list-all-truncated/${nonEmptyString.value()}/"
+    val prefix = s"test-list-all-truncated/${Gen.identifier.sample.get}/"
     val keys: List[String] =
-      Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + nonEmptyString.value() + str)).sample.get
-    val contents: List[String] = List.fill(n)(nonEmptyString.value())
+      Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + Gen.identifier.sample.get + str)).sample.get
+    val contents: List[String] = Gen.listOfN(n, Gen.identifier).sample.get
     Task
       .traverse(keys.zip(contents)){ case (key, content) => s3Resource.use(_.upload(bucketName, key, content.getBytes())) }
       .runSyncUnsafe()
@@ -370,7 +369,7 @@ class S3Suite
 
   "A good real example" should "reuse the resource evaluation" in {
 
-    val bucket = nonEmptyString.value()
+    val bucket = Gen.identifier.sample.get
     val key = "my-key"
     val content = "my-content"
 

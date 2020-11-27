@@ -39,20 +39,19 @@ trait Fixture {
   val col: MongoCollection[Employee] = db.getCollection("myCollection", classOf[Employee])
     .withCodecRegistry(codecRegistry)
 
-  protected val genNonEmptyStr = Gen.nonEmptyListOf(Gen.alphaLowerChar).map(_.mkString.take(10))
+  protected val genNonEmptyStr = Gen.identifier.map(_.take(10))
 
   val genEmployee = for {
-    name <- Gen.nonEmptyListOf(Gen.alphaChar)
+    name <- Gen.identifier
     age <- Gen.chooseNum(16, 65)
-    age <- Gen.chooseNum(16, 65)
-    city <- Gen.nonEmptyListOf(Gen.alphaChar)
+    city <- Gen.identifier
   } yield Employee(name.mkString.take(8), age, city.mkString.take(8), List.empty)
 
   def genEmployeeWith(name: Option[String] = None, age: Option[Int] = None, city: Option[String] = None, activities: List[String] = List.empty) = {
     for {
-      name <- if(name.isEmpty) Gen.nonEmptyListOf(Gen.alphaChar).map(_.mkString.take(8)) else Gen.const(name.get)
+      name <- if(name.isEmpty) Gen.identifier.map(_.take(8)) else Gen.const(name.get)
       age <-  if(age.isEmpty) Gen.chooseNum(16, 65) else Gen.const(age.get)
-      city <- if(city.isEmpty) Gen.nonEmptyListOf(Gen.alphaChar).map(_.mkString.take(8)) else Gen.const(city.get)
+      city <- if(city.isEmpty) Gen.identifier.map(_.take(8)) else Gen.const(city.get)
     } yield Employee(name, age, city, activities)
   }
 

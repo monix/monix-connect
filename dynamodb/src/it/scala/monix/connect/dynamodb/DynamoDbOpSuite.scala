@@ -20,8 +20,8 @@ class DynamoDbOpSuite
 
     "defines the execution of any DynamoDb request" in {
       //given
-      val city = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-      val citizenId = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+      val city = Gen.identifier.sample.get
+      val citizenId = Gen.identifier.sample.get
       val age = Gen.choose(0, 10000).sample.get
       val request: PutItemRequest = putItemRequest(tableName, city, citizenId, age)
 
