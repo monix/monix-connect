@@ -17,7 +17,7 @@ class RedisIntegrationTest extends AnyFlatSpec with Matchers with BeforeAndAfter
   val redisUrl = "redis://localhost:6379"
   type K = String
   type V = Int
-  val genRedisKey: Gen[K] = Gen.alphaStr
+  val genRedisKey: Gen[K] = Gen.identifier
   val genRedisValue: Gen[V] = Gen.choose(0, 10000)
   val genRedisValues: Gen[List[V]] = for {
     n      <- Gen.chooseNum(2, 10)
