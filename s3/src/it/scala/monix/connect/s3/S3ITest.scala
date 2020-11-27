@@ -332,7 +332,7 @@ class S3ITest
 
     "create and delete a bucket" in {
       //given
-      val bucket = Gen.identifier.sample.get
+      val bucket = genBucketName.sample.get
       S3.createBucket(bucket).runSyncUnsafe()
       val existedBefore = S3.existsBucket(bucket).runSyncUnsafe()
 
@@ -379,8 +379,8 @@ class S3ITest
 
     "check if a bucket exists" in {
       //given
-      val bucketNameA = Gen.identifier.sample.get
-      val bucketNameB = Gen.identifier.sample.get
+      val bucketNameA = genBucketName.sample.get
+      val bucketNameB = genBucketName.sample.get
 
       //and
       S3.createBucket(bucketNameA).runSyncUnsafe()
@@ -396,8 +396,8 @@ class S3ITest
 
     "list existing buckets" in {
       //given
-      val bucketNameA = Gen.identifier.sample.get
-      val bucketNameC = Gen.identifier.sample.get
+      val bucketNameA = genBucketName.sample.get
+      val bucketNameC = genBucketName.sample.get
 
       //and
       val initialBuckets = S3.listBuckets().toListL.runSyncUnsafe()
