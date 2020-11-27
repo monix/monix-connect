@@ -353,7 +353,7 @@ class S3Suite
     val n = 1000
     val prefix = s"test-list-all-truncated/${genKey.sample.get}/"
     val keys: List[String] =
-      Gen.listOfN(n, genKey.map(str => prefix + str)).sample.get
+      Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + genKey.sample.get + str)).sample.get
     val contents: List[String] = Gen.listOfN(n, Gen.identifier).sample.get
     Task
       .traverse(keys.zip(contents)){ case (key, content) => s3Resource.use(_.upload(bucketName, key, content.getBytes())) }
