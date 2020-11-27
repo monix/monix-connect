@@ -19,7 +19,7 @@ import software.amazon.awssdk.regions.Region
 trait S3Fixture {
   this: TestSuite =>
 
-  val genBucketName = Gen.identifier.map(_.take(15)) //buckets have to be in a range of 3-63 chars long
+  val genBucketName = Gen.identifier.map(_.take(15).toLowerCase) //buckets have to be in a range of 3-63 chars long
   val resourceFile = (fileName: String) => s"s3/src/it/resources/${fileName}"
 
   val minioEndPoint: String = "http://localhost:9000"
