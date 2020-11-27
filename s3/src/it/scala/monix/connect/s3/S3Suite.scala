@@ -266,7 +266,7 @@ class S3Suite
 
   it should "fail with `NoSuchBucketException` trying to delete a non existing bucket" in {
     //given
-    val bucket = Gen.identifier.sample.get
+    val bucket = genBucketName.sample.get
     val existedBefore = s3Resource.use(_.existsBucket(bucket)).runSyncUnsafe()
 
     //when
@@ -369,7 +369,7 @@ class S3Suite
 
   "A good real example" should "reuse the resource evaluation" in {
 
-    val bucket = Gen.identifier.sample.get
+    val bucket = genBucketName.sample.get
     val key = "my-key"
     val content = "my-content"
 
