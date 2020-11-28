@@ -143,22 +143,23 @@ lazy val elasticsearch =  monixConnector("elasticsearch", Dependencies.Elasticse
 def monixConnector(
   connectorName: String,
   projectDependencies: Seq[ModuleID],
-  additionalSettings: sbt.Def.SettingsDefinition*): Project =
+  isMimaEnabled: Boolean = true): Project = {
   Project(id = connectorName, base = file(connectorName))
     .enablePlugins(AutomateHeaderPlugin)
     .settings(name := s"monix-$connectorName", libraryDependencies ++= projectDependencies, Defaults.itSettings)
     .settings(sharedSettings)
-    .settings(additionalSettings: _*)
     .configs(IntegrationTest, IT)
     .enablePlugins(AutomateHeaderPlugin)
-    .settings(mimaSettings(s"monix-$connectorName"))
+    .settings(if(isMimaEnabled) mimaSettings(s"monix-$connectorName") else Seq.empty)
+}
+
 
 //=> non published modules
 
-lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth)
+lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth, isMimaEnabled = false)
   .settings(skipOnPublishSettings)
 
-lazy val benchmarks = monixConnector("benchmarks", Dependencies.Benchmarks)
+lazy val benchmarks = monixConnector("benchmarks", Dependencies.Benchmarks, isMimaEnabled = false)
   .enablePlugins(JmhPlugin)
   .settings(skipOnPublishSettings)
   .dependsOn(parquet % "compile->compile;test->test", redis % "compile->compile;test->test", s3 % "compile->compile;test->test")
