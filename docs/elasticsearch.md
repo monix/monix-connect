@@ -1,5 +1,5 @@
 ---
-id: es
+id: elasticsearch
 title: Elasticsearch
 ---
 

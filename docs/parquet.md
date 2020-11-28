@@ -6,9 +6,9 @@ title: Apache Parquet
 ## Introduction
 [Apache Parquet](http://parquet.apache.org/) is a columnar storage format that provides the advantages of _compressed_, _efficient_ data representation available to any project in the _Hadoop_ ecosystem.
 
- t has already been proved by multiple projects that have demonstrated the performance impact of applying the right _compression_ and _encoding scheme_ to the data.
+It has already been proved by multiple projects that have demonstrated the performance impact of applying the right _compression_ and _encoding scheme_ to the data.
   
-Therefore, the `monix-parquet` _connector_ basically exposes stream integrations for _reading_ and _writing_ into and from parquet files either in the _local system_, _hdfs_ or _AWS S3_.
+Therefore, the `monix-parquet` _connector_ basically exposes stream integrations for _reading_ and _writing_  from and into parquet files either in the _local system_, _hdfs_ or _AWS S3_.
  
 ## Set up
 
@@ -32,9 +32,7 @@ For these examples we have created our own schema using `org.apache.avro.Schema`
  ```scala
 // used to parse from and to `GenericRecord`, in a real world example it would be a subtype of `GenericRecord`.
 case class Person(id: Int, name: String)
-```
 
-```scala
 import org.apache.avro.Schema
 // avro schema associated to the above case class 
 val schema: Schema = new Schema.Parser().parse(
@@ -50,7 +48,7 @@ Now, let's get our hands dirty with an example on how to write from `Person` int
 ```scala
 import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 
-// again, this wouldn't be necessary if we were using a scala avro schema generator (avro4s, avrohugger, ...)
+// wouldn't be necessary if we were using a scala avro schema generator (avro4s, avrohugger, ...)
 def personToGenericRecord(person: Person): GenericRecord =
     new GenericRecordBuilder(schema) // using the schema created previously
       .set("id", person.id)
@@ -81,7 +79,7 @@ val parquetWriter: ParquetWriter[GenericRecord] = {
 }
 
 // returns the number of written records
-val _: Task[Long] = {
+val t: Task[Long] = {
   Observable
     .fromIterable(elements) // Observable[Person]
     .map(_ => personToGenericRecord(_))
@@ -95,10 +93,8 @@ Again, since we are using a low level api we need to write a function to to conv
 
 ```scala
 def recordToPerson(record: GenericRecord): Person =
-    Person(
-      record.get("id").asInstanceOf[Int], 
-      record.get("name").toString
-    )
+    Person(record.get("id").asInstanceOf[Int], 
+           record.get("name").toString)
 ```
 
 Then we will be able to read _parquet_ files as `Observable[Person]`. 
@@ -121,7 +117,7 @@ val reader: ParquetReader[GenericRecord] = {
   .build()
 }
 
-val ob: Observable[Person] = ParquetSource.fromReaderUnsafe(reader).map(_ => recordToPerson(_))
+val ob: Observable[Person] = ParquetSource.fromReaderUnsafe(reader).map(recordToPerson)
 ```
 
 ## Local testing
