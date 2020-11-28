@@ -29,9 +29,7 @@ class RedisIntegrationTest extends AnyFlatSpec with Matchers with BeforeAndAfter
   } yield values
 
   implicit val connection: StatefulRedisConnection[String, String] = RedisClient.create(redisUrl).connect()
-
-  override implicit val patienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
-
+  
   s"${Redis}" should "access non existing key in redis and get None" in {
     //given
     val scheduler = TestScheduler()
