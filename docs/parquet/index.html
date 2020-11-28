@@ -55,63 +55,97 @@
               }
             });
         </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Apache Parquet</h1></header><article><div><span><h2><a class="anchor" aria-hidden="true" id="introduction"></a><a href="#introduction" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Introduction</h2>
-<p><a href="http://parquet.apache.org/">Apache Parquet</a> is a columnar storage format that provides the advantages of compressed, efficient data representation available to any project in the <em>Hadoop</em> ecosystem.</p>
-<p>It has already been proved by multiple projects that have demonstrated the performance impact of applying the right compression and encoding scheme to the data.</p>
-<p>Therefore, the <code>monix-parquet</code> <em>connector</em> basically exposes stream integrations for <em>reading</em> and <em>writing</em> into and from parquet files either in the <em>local system</em>, <em>hdfs</em> or <em>S3</em> (this is at least for <code>avro</code> and <code>protobuf</code> parquet sub-modules).</p>
+<p><a href="http://parquet.apache.org/">Apache Parquet</a> is a columnar storage format that provides the advantages of <em>compressed</em>, <em>efficient</em> data representation available to any project in the <em>Hadoop</em> ecosystem.</p>
+<p>t has already been proved by multiple projects that have demonstrated the performance impact of applying the right <em>compression</em> and <em>encoding scheme</em> to the data.</p>
+<p>Therefore, the <code>monix-parquet</code> <em>connector</em> basically exposes stream integrations for <em>reading</em> and <em>writing</em> into and from parquet files either in the <em>local system</em>, <em>hdfs</em> or <em>AWS S3</em>.</p>
 <h2><a class="anchor" aria-hidden="true" id="set-up"></a><a href="#set-up" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Set up</h2>
 <p>Add the following dependency:</p>
-<pre><code class="hljs css language-scala">libraryDependencies += <span class="hljs-string">"io.monix"</span> %% <span class="hljs-string">"monix-parquet"</span> % <span class="hljs-string">"0.3.3"</span>
+<pre><code class="hljs css language-scala">libraryDependencies += <span class="hljs-string">"io.monix"</span> %% <span class="hljs-string">"monix-parquet"</span> % <span class="hljs-string">"0.5.0"</span>
 </code></pre>
 <h2><a class="anchor" aria-hidden="true" id="getting-started"></a><a href="#getting-started" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Getting started</h2>
-<p>These two signatures <code>write</code> and <code>read</code> are built on top of the <em>apache parquet</em>  <code>ParquetWriter[T]</code> and <code>ParquetReader[T]</code> respectively, therefore they need an instance of these types to be passed.</p>
+<p>The two signatures <code>write</code> and <code>read</code> are built on top of the <em>apache parquet</em> <code>ParquetWriter[T]</code> and <code>ParquetReader[T]</code> respectively, therefore they need an instance of these types to be passed.</p>
 <p>The <em>type parameter</em> <code>T</code> represents the data type that is expected to be read or written in the parquet file.
 In which it can depend on the parquet implementation chosen, since <code>ParqueReader</code> and <code>ParquetWriter</code> are just the
-generic classes, but you would need to use the implementation that fits to your use case.</p>
+generic classes but you would need to use the implementation that fits better to your use case.</p>
+<p>The examples shown in the following sections uses the subclass <code>AvroParquet</code> in which the type parameter <code>T</code> would need to be a subtype of <code>org.apache.avro.generic.GenericRecord</code>.
+For these examples we have created our own schema using <code>org.apache.avro.Schema</code>, however, it is <em>highly recommended</em> to generate them using  one of the existing libraries in the scala ecosystem such like <a href="https://github.com/sksamuel/avro4s">Avro4s</a>, <a href="https://github.com/julianpeeters/avrohugger">Avrohugger</a>, <a href="https://fd4s.github.io/vulcan/docs/modules">Vulcan</a>.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-comment">// used to parse from and to `GenericRecord`, in a real world example it would be a subtype of `GenericRecord`.</span>
+<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span>(<span class="hljs-params">id: <span class="hljs-type">Int</span>, name: <span class="hljs-type">String</span></span>)</span>
+</code></pre>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> org.apache.avro.<span class="hljs-type">Schema</span>
+<span class="hljs-comment">// avro schema associated to the above case class </span>
+<span class="hljs-keyword">val</span> schema: <span class="hljs-type">Schema</span> = <span class="hljs-keyword">new</span> <span class="hljs-type">Schema</span>.<span class="hljs-type">Parser</span>().parse(
+    <span class="hljs-string">"{\"type\":\"record\",\"name\":\"Person\",\"fields\":[{\"name\":\"id\",\"type\":\"int\"},{\"name\":\"name\",\"type\":\"string\"}]}"</span>)
+</code></pre>
 <h3><a class="anchor" aria-hidden="true" id="writer"></a><a href="#writer" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Writer</h3>
-<p>The below example shows how to construct a parquet consumer that expects <em>Protobuf</em> messages and pushes
-them into the same parquet file of the specified location.
-In this case, the type parameter <code>T</code> would need to implement <code>com.google.protobuf.Message</code>,
-and these were generated using <a href="https://scalapb.github.io/">ScalaPB</a>.</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.parquet.<span class="hljs-type">Parquet</span>
+<p>Now, let's get our hands dirty with an example on how to write from <code>Person</code> into a parquet file.
+To do so, we are going to use <code>AvroParquetWriter</code> which expects elements subtype of <code>GenericRecord</code>,
+First, we we need a function to convert from our <code>Person</code>s:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> org.apache.avro.generic.{<span class="hljs-type">GenericRecord</span>, <span class="hljs-type">GenericRecordBuilder</span>}
+
+<span class="hljs-comment">// again, this wouldn't be necessary if we were using a scala avro schema generator (avro4s, avrohugger, ...)</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">personToGenericRecord</span></span>(person: <span class="hljs-type">Person</span>): <span class="hljs-type">GenericRecord</span> =
+    <span class="hljs-keyword">new</span> <span class="hljs-type">GenericRecordBuilder</span>(schema) <span class="hljs-comment">// using the schema created previously</span>
+      .set(<span class="hljs-string">"id"</span>, person.id)
+      .set(<span class="hljs-string">"name"</span>, person.name)
+      .build()
+</code></pre>
+<p>And then we can consume an <code>Observable[Person]</code> that will write each of the emitted elements into the specified parquet file.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+<span class="hljs-keyword">import</span> monix.reactive.<span class="hljs-type">Observable</span>
+<span class="hljs-keyword">import</span> monix.connect.parquet.<span class="hljs-type">ParquetSink</span>
 <span class="hljs-keyword">import</span> org.apache.hadoop.fs.<span class="hljs-type">Path</span>
-<span class="hljs-keyword">import</span> org.apache.parquet.avro.<span class="hljs-type">AvroParquetReader</span>
 <span class="hljs-keyword">import</span> org.apache.parquet.hadoop.<span class="hljs-type">ParquetWriter</span>
+<span class="hljs-keyword">import</span> org.apache.parquet.avro.<span class="hljs-type">AvroParquetWriter</span>
+<span class="hljs-keyword">import</span> org.apache.avro.generic.<span class="hljs-type">GenericRecord</span>
 <span class="hljs-keyword">import</span> org.apache.hadoop.conf.<span class="hljs-type">Configuration</span>
 
-<span class="hljs-keyword">val</span> file: <span class="hljs-type">String</span> = <span class="hljs-string">"/invented/file/path"</span>
 <span class="hljs-keyword">val</span> conf = <span class="hljs-keyword">new</span> <span class="hljs-type">Configuration</span>()
-<span class="hljs-keyword">val</span> messages: <span class="hljs-type">List</span>[<span class="hljs-type">ProtoMessage</span>] 
-<span class="hljs-keyword">val</span> writeSupport = <span class="hljs-keyword">new</span> <span class="hljs-type">ProtoWriteSupport</span>[<span class="hljs-type">ProtoMessage</span>](classOf[<span class="hljs-type">ProtoMessage</span>])
-<span class="hljs-keyword">val</span> w = <span class="hljs-keyword">new</span> <span class="hljs-type">ParquetWriter</span>[<span class="hljs-type">ProtoMessage</span>](<span class="hljs-keyword">new</span> <span class="hljs-type">Path</span>(file), writeSupport)
-<span class="hljs-type">Observable</span>
- .fromIterable(messages)
- .consumeWith(<span class="hljs-type">Parquet</span>.writer(w))
+<span class="hljs-keyword">val</span> path: <span class="hljs-type">Path</span> = <span class="hljs-keyword">new</span> <span class="hljs-type">Path</span>(<span class="hljs-string">"./writer/example/file.parquet"</span>)
+<span class="hljs-keyword">val</span> elements: <span class="hljs-type">List</span>[<span class="hljs-type">Person</span>] = <span class="hljs-type">List</span>(<span class="hljs-type">Person</span>(<span class="hljs-number">1</span>, <span class="hljs-string">"Alice"</span>), <span class="hljs-type">Person</span>(<span class="hljs-number">2</span>, <span class="hljs-string">"Bob"</span>)) 
+<span class="hljs-keyword">val</span> parquetWriter: <span class="hljs-type">ParquetWriter</span>[<span class="hljs-type">GenericRecord</span>] = {
+  <span class="hljs-type">AvroParquetWriter</span>.builder[<span class="hljs-type">GenericRecord</span>](path)
+    .withConf(conf)
+    .withSchema(schema)
+    .build()
+}
 
+<span class="hljs-comment">// returns the number of written records</span>
+<span class="hljs-keyword">val</span> _: <span class="hljs-type">Task</span>[<span class="hljs-type">Long</span>] = {
+  <span class="hljs-type">Observable</span>
+    .fromIterable(elements) <span class="hljs-comment">// Observable[Person]</span>
+    .map(_ =&gt; personToGenericRecord(_))
+    .consumeWith(<span class="hljs-type">ParquetSink</span>.fromWriterUnsafe(parquetWriter))
+}
 </code></pre>
-<p>In case you are seeking an example of avro parquet writer, you can refer to the <a href="/parquet/src/test/scala/monix/connect/parquet/AvroParquetSpec.scala">avro parquet tests</a>.</p>
 <h3><a class="anchor" aria-hidden="true" id="reader"></a><a href="#reader" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Reader</h3>
-<p>On the other hand, the following code shows how to pull <em>Avro</em> records from a parquet file.
-In contrast, this time the type parameter <code>T</code> would need to be a subtype of <code>org.apache.avro.generic.GenericRecord</code>,
-In this case we used  is <code>com.sksamuel.avro4s.Record</code> generated using <a href="https://github.com/sksamuel/avro4s">Avro4s</a>,
-but there are other libraries there such as <a href="https://github.com/julianpeeters/avrohugger">Avrohugger</a> to generate these classes.</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.parquet.<span class="hljs-type">Parquet</span>
+<p>Again, since we are using a low level api we need to write a function to to convert from <code>GenericRecord</code> to a <code>Person</code>:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">recordToPerson</span></span>(record: <span class="hljs-type">GenericRecord</span>): <span class="hljs-type">Person</span> =
+    <span class="hljs-type">Person</span>(
+      record.get(<span class="hljs-string">"id"</span>).asInstanceOf[<span class="hljs-type">Int</span>], 
+      record.get(<span class="hljs-string">"name"</span>).toString
+    )
+</code></pre>
+<p>Then we will be able to read <em>parquet</em> files as <code>Observable[Person]</code>.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.parquet.<span class="hljs-type">ParquetSource</span>
 <span class="hljs-keyword">import</span> org.apache.hadoop.fs.<span class="hljs-type">Path</span>
-<span class="hljs-keyword">import</span> org.apache.parquet.avro.<span class="hljs-type">AvroParquetReader</span>
+<span class="hljs-keyword">import</span> org.apache.parquet.avro.{<span class="hljs-type">AvroParquetReader</span>, <span class="hljs-type">AvroReadSupport</span>}
+<span class="hljs-keyword">import</span> org.apache.avro.generic.<span class="hljs-type">GenericRecord</span>
+<span class="hljs-keyword">import</span> org.apache.hadoop.conf.<span class="hljs-type">Configuration</span>
 <span class="hljs-keyword">import</span> org.apache.parquet.hadoop.util.<span class="hljs-type">HadoopInputFile</span>
 
-<span class="hljs-keyword">val</span> r: <span class="hljs-type">ParquetReader</span>[<span class="hljs-type">AvroRecord</span>] = {
+<span class="hljs-keyword">val</span> conf = <span class="hljs-keyword">new</span> <span class="hljs-type">Configuration</span>()
+conf.setBoolean(<span class="hljs-type">AvroReadSupport</span>.<span class="hljs-type">AVRO_COMPATIBILITY</span>, <span class="hljs-literal">true</span>)
+<span class="hljs-keyword">val</span> path: <span class="hljs-type">Path</span> = <span class="hljs-keyword">new</span> <span class="hljs-type">Path</span>(<span class="hljs-string">"./reader/example/file.parquet"</span>)
+<span class="hljs-keyword">val</span> reader: <span class="hljs-type">ParquetReader</span>[<span class="hljs-type">GenericRecord</span>] = {
  <span class="hljs-type">AvroParquetReader</span>
-  .builder[<span class="hljs-type">AvroRecord</span>](<span class="hljs-type">HadoopInputFile</span>.fromPath(<span class="hljs-keyword">new</span> <span class="hljs-type">Path</span>(file), conf))
+  .builder[<span class="hljs-type">GenericRecord</span>](<span class="hljs-type">HadoopInputFile</span>.fromPath(path, conf))
   .withConf(conf)
   .build()
 }
 
-<span class="hljs-keyword">val</span> ob: <span class="hljs-type">Observable</span>[<span class="hljs-type">AvroRecord</span>] = <span class="hljs-type">Parquet</span>.reader(r)
-
+<span class="hljs-keyword">val</span> ob: <span class="hljs-type">Observable</span>[<span class="hljs-type">Person</span>] = <span class="hljs-type">ParquetSource</span>.fromReaderUnsafe(reader).map(_ =&gt; recordToPerson(_))
 </code></pre>
-<p><em>Warning</em>: This connector provides with the logic of building a publisher and subscriber from a given apache hadoop <code>ParquetReader</code> and <code>ParquetWriter</code> respectively,
-but it does not cover any existing issue on the support of the apache parquet library with external ones.
-Notice for example, that an <a href="https://github.com/scalapb/ScalaPB/issues/844">issue</a> was found while writing tests for <em>reading</em> parquet as protobuf messages generated with <code>SacalaPB</code>, on the other hand for <em>writing</em> it was all fine.</p>
 <h2><a class="anchor" aria-hidden="true" id="local-testing"></a><a href="#local-testing" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Local testing</h2>
 <p>It will depend on the specific use case, as we mentioned earlier in the introductory section it can operate on the <em>local filesystem</em> on <em>hdfs</em> or even in <em>S3</em> (for <em>avro</em> and <em>protobuf</em> parquet sub-modules)</p>
 <p>Therefore, depending on the application requirements, the hadoop <code>Configuration</code> class will need to be configured accordingly.</p>

@@ -56,106 +56,276 @@
             });
         </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">AWS S3</h1></header><article><div><span><h2><a class="anchor" aria-hidden="true" id="introduction"></a><a href="#introduction" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Introduction</h2>
 <p><em>AWS Simple Storage Service</em> (<a href="https://aws.amazon.com/s3/?nc=sn&amp;loc=0">S3</a>) is an object storage service that offers industry leading scalability, availability, security and performance.
-It allows data storage of any amount of data, commonly used as a data lake for big data applications which can now be easily integrated with monix.</p>
+It allows data storage of any amount of data, commonly used as a data lake for big data applications which can now be easily integrated with <em>monix</em>.</p>
+<p>This module exposes a wide range of methods for interacting with S3 <em>buckets</em> and <em>objects</em>, where the most exciting ones are the multipart <em>download</em> and <em>upload</em>,
+since they use the power of reactive streams to deal with objects of any size in smaller parts (chunks).</p>
 <h2><a class="anchor" aria-hidden="true" id="dependency"></a><a href="#dependency" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Dependency</h2>
-<p>Add the following dependency:</p>
-<pre><code class="hljs css language-scala">libraryDependencies += <span class="hljs-string">"io.monix"</span> %% <span class="hljs-string">"monix-s3"</span> % <span class="hljs-string">"0.3.3"</span>
+<p>Add the following dependency in your <em>build.sbt</em>:</p>
+<pre><code class="hljs css language-scala">libraryDependencies += <span class="hljs-string">"io.monix"</span> %% <span class="hljs-string">"monix-s3"</span> % <span class="hljs-string">"0.5.0"</span>
 </code></pre>
-<h2><a class="anchor" aria-hidden="true" id="getting-started"></a><a href="#getting-started" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Getting started</h2>
-<p>First of all, we need to create the s3 client that will allow us to authenticate and create an channel between our
-application and the AWS S3 service.</p>
-<h3><a class="anchor" aria-hidden="true" id="asyncclient"></a><a href="#asyncclient" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>asyncClient</h3>
-<p>This module has been implemented using the <code>S3AsyncClient</code> from the <a href="https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/package-summary.html">aws sdk</a>, since it only exposes non blocking methods.
-So, all of the methods exposed under <code>monix.connect.s3.S3</code> object would expect an <em>implicit</em> instance of
-this async client class to be in the scope of the call.</p>
-<p>Below code shows an example on how to set up this connection.
-Note that in this case the authentication is using AWS access and secret keys, but you might use another method such an <em>IAM</em> role.</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> java.net.<span class="hljs-type">URI</span>
-<span class="hljs-keyword">import</span> software.amazon.awssdk.auth.credentials.{<span class="hljs-type">AwsBasicCredentials</span>, <span class="hljs-type">StaticCredentialsProvider</span>}
-<span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.<span class="hljs-type">S3AsyncClient</span>
-<span class="hljs-keyword">import</span> software.amazon.awssdk.regions.<span class="hljs-type">Region</span>.<span class="hljs-type">AWS_GLOBAL</span>
+<h2><a class="anchor" aria-hidden="true" id="async-client"></a><a href="#async-client" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Async Client</h2>
+<p>This connector uses the <em>underlying</em> <code>S3AsyncClient</code> from the <a href="https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/package-summary.html">java aws sdk</a>,
+it will allow us to authenticate and create a <em>non blocking</em> channel between our application and the <em>AWS S3 service</em>.</p>
+<p>There are different ways to create the connection, all available from the singleton object <code>monix.connect.s3.S3</code>. It is explained in more detail in the following sub-sections:</p>
+<h3><a class="anchor" aria-hidden="true" id="from-config"></a><a href="#from-config" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>From config</h3>
+<p>The laziest and recommended way to create the <em>S3</em> connection is to do it from configuration file.
+To do so, you'd just need to create an <code>application.conf</code> following the template from <a href="https://github.com/monix/monix-connect/tree/master/aws-auth/src/main/resources/reference.conf">reference.conf</a>,
+which also represents the default config in case no additional is provided.</p>
+<p>Below snippet shows an example of the configuration file to authenticate via <code>StaticCredentialsProvider</code> and region <code>EU-WEST-1</code>, as you can appreciate the
+<em>http client</em> settings are commented out since they are optional, however they could have been specified too for a more fine grained configuration of the underlying <code>NettyNioAsyncHttpClient</code>.</p>
+<pre><code class="hljs css language-hocon">{
+  <span class="hljs-attribute">monix-aws</span>: {
+    credentials {
+      <span class="hljs-comment">// [anonymous, default, environment, instance, system, profile, static]</span>
+      <span class="hljs-attribute">provider</span>: <span class="hljs-string">"static"</span> 
 
-<span class="hljs-keyword">val</span> basicAWSCredentials: <span class="hljs-type">AwsBasicCredentials</span> = <span class="hljs-type">AwsBasicCredentials</span>.create(s3AccessKey, s3SecretKey)
-<span class="hljs-keyword">val</span> credentialsProvider: <span class="hljs-type">StaticCredentialsProvider</span> = <span class="hljs-type">StaticCredentialsProvider</span>.create(basicAWSCredentials)
+      <span class="hljs-comment">// optional - only required with static credentials</span>
+      static {
+        <span class="hljs-attribute">access-key-id</span>: <span class="hljs-string">"TESTKEY"</span>      
+        <span class="hljs-attribute">secret-access-key</span>: <span class="hljs-string">"TESTSECRET"</span>
+        <span class="hljs-attribute">session-token</span>: <span class="hljs-string">""</span>
+      }
+    }
+  
+    <span class="hljs-comment">// [ap-south-1, us-gov-east-1, af-south-1, eu-west-2, ...]</span>
+    <span class="hljs-attribute">region</span>: <span class="hljs-string">"eu-west-1"</span>
 
-<span class="hljs-comment">//note that the client is defined as implicit, this is on purpose since each of the methods defined in</span>
-<span class="hljs-comment">//the monix s3 connector will expect that.</span>
-<span class="hljs-keyword">implicit</span> <span class="hljs-keyword">val</span> s3Client: <span class="hljs-type">S3AsyncClient</span> = <span class="hljs-type">S3AsyncClient</span>
-   .builder()
-   .credentialsProvider(credentialsProvider)
-   .region(<span class="hljs-type">AWS_GLOBAL</span>)
-   .endpointOverride(<span class="hljs-type">URI</span>.create(endPoint)) <span class="hljs-comment">//this one is used to point to the localhost s3 service, not used in prod </span>
-   .build
-</code></pre>
-<h3><a class="anchor" aria-hidden="true" id="createbucket"></a><a href="#createbucket" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>createBucket</h3>
-<p>Once you have configured the client, you would probably need to create a bucket:</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.model.<span class="hljs-type">CreateBucketResponse</span>
+    <span class="hljs-comment">// optional</span>
+    #<span class="hljs-attribute">endpoint</span>: <span class="hljs-string">""</span>
 
-<span class="hljs-keyword">val</span> bucketName: <span class="hljs-type">String</span> = <span class="hljs-string">"myBucket"</span> 
-<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">CreateBucketResponse</span>] = <span class="hljs-type">S3</span>.createBucket(bucketName)
-</code></pre>
-<h3><a class="anchor" aria-hidden="true" id="deletebucket"></a><a href="#deletebucket" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>deleteBucket</h3>
-<p>On the other hand if you want to remove the bucket:</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.model.<span class="hljs-type">DeleteBucketResponse</span>
-
-<span class="hljs-keyword">val</span> bucketName: <span class="hljs-type">String</span> = <span class="hljs-string">"myBucket"</span> 
-<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">DeleteBucketResponse</span>] = <span class="hljs-type">S3</span>.deleteBucket(bucketName)
-</code></pre>
-<h3><a class="anchor" aria-hidden="true" id="putobject"></a><a href="#putobject" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>putObject</h3>
-<p>You can also easily create and write into an S3 object with put object operation.
-Note that if you need to update large amount of data you should not be using this method, see instead <a href="###m">multipartUpload</a>`.</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.model.<span class="hljs-type">PutObjectResponse</span>
-
-<span class="hljs-keyword">val</span> content: <span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>] = <span class="hljs-string">"file content"</span>.getBytes()
-<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">PutObjectResponse</span>] = <span class="hljs-type">S3</span>.putObject(bucketName, objectKey, content)
+    <span class="hljs-comment">// optional</span>
+    # <span class="hljs-attribute">http-client</span>: {
+    #   <span class="hljs-attribute">max-concurrency</span>: <span class="hljs-number">10</span>
+    #   <span class="hljs-attribute">max-pending-connection-acquires</span>: <span class="hljs-number">1000</span>
+    #   <span class="hljs-attribute">connection-acquisition-timeout</span>: <span class="hljs-number">2</span> minutes
+    #   <span class="hljs-attribute">connection-time-to-live</span>: <span class="hljs-number">1</span> minute
+    #   <span class="hljs-attribute">use-idle-connection-reaper</span>: false
+    #   <span class="hljs-attribute">read-timeout</span>: <span class="hljs-number">100</span> seconds
+    #   <span class="hljs-attribute">write-timeout</span>: <span class="hljs-number">100</span> seconds
+    # }
+  }
 }
 </code></pre>
-<h3><a class="anchor" aria-hidden="true" id="deleteobject"></a><a href="#deleteobject" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>deleteObject</h3>
-<p>You can also operate at object level within a bucket with:</p>
+<p>This config file should be placed in the <code>resources</code> folder, therefore it will be automatically picked up from the method call <code>S3.fromConfig</code>, which will return a <code>cats.effect.Resource[Task, S3]</code>.
+The <a href="https://typelevel.org/cats-effect/datatypes/resource.html">resource</a> is responsible of the <em>creation</em> and <em>release</em> of the <em>S3 client</em>.</p>
+<p>We recommend using it transparently in your application, meaning that your methods and classes will directly expect an instance of <em>S3</em>, which will be called from within the
+<em>usage</em> of the <em>Resource</em>. See below code snippet to understand the concept:</p>
+<pre><code class="hljs css language-scala"> <span class="hljs-keyword">import</span> monix.connect.s3.<span class="hljs-type">S3</span>
+ <span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+ <span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.model.<span class="hljs-type">NoSuchKeyException</span>
+
+ <span class="hljs-keyword">val</span> bucket = <span class="hljs-string">"my-bucket"</span>
+ <span class="hljs-keyword">val</span> key = <span class="hljs-string">"my-key"</span>
+ <span class="hljs-keyword">val</span> content = <span class="hljs-string">"my-content"</span>
+ 
+ <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">runS3App</span></span>(s3: <span class="hljs-type">S3</span>): <span class="hljs-type">Task</span>[<span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>]] = {
+   <span class="hljs-keyword">for</span> {
+     _ &lt;- s3.createBucket(bucket)
+     _ &lt;- s3.upload(bucket, key, content.getBytes)
+     existsObject &lt;- s3.existsObject(bucket, key)
+     download &lt;- {
+       <span class="hljs-keyword">if</span>(existsObject) s3.download(bucket, key)
+       <span class="hljs-keyword">else</span> <span class="hljs-type">Task</span>.raiseError(<span class="hljs-type">NoSuchKeyException</span>.builder().build()) 
+     }
+   } <span class="hljs-keyword">yield</span> download
+ }
+ 
+  <span class="hljs-comment">// the connection gets created and released within the use method and the `S3`</span>
+  <span class="hljs-comment">// instance is directly passed to our application for an easier interoperability</span>
+  <span class="hljs-keyword">val</span> f = <span class="hljs-type">S3</span>.fromConfig.use(s3 =&gt; runS3App(s3)).runToFuture
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="create"></a><a href="#create" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Create</h2>
+<p>An alternative to using a config file is to pass the <em>AWS configurations</em> by parameters.
+This is a safe implementation since the method, again, handles the <em>creation</em> and <em>release</em> of the connection with the <em>cats effect</em>
+<code>Resource</code> data type. The example below produce exactly the same result as previously using the <em>config</em> file:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> monix.connect.s3.<span class="hljs-type">S3</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+<span class="hljs-keyword">import</span> software.amazon.awssdk.auth.credentials.{<span class="hljs-type">AwsBasicCredentials</span>, <span class="hljs-type">StaticCredentialsProvider</span>}
+<span class="hljs-keyword">import</span> software.amazon.awssdk.regions.<span class="hljs-type">Region</span>
+
+<span class="hljs-keyword">val</span> s3AccessKey: <span class="hljs-type">String</span> = <span class="hljs-string">"TESTKEY"</span>
+<span class="hljs-keyword">val</span> s3SecretKey: <span class="hljs-type">String</span> = <span class="hljs-string">"TESTSECRET"</span>
+<span class="hljs-keyword">val</span> basicAWSCredentials = <span class="hljs-type">AwsBasicCredentials</span>.create(s3AccessKey, s3SecretKey)
+<span class="hljs-keyword">val</span> staticCredProvider = <span class="hljs-type">StaticCredentialsProvider</span>.create(basicAWSCredentials)
+
+<span class="hljs-keyword">val</span> s3: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">S3</span>] = <span class="hljs-type">S3</span>.create(staticCredProvider, <span class="hljs-type">Region</span>.<span class="hljs-type">AWS_GLOBAL</span>)   
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="create-unsafe"></a><a href="#create-unsafe" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Create Unsafe</h2>
+<p>Another different alternatively is to just pass an already created instance of a <code>software.amazon.awssdk.services.s3.S3AsyncClient</code>, which in that case,
+the return type would be directly <code>S3</code>, so there won't be no need to deal with <code>Resource</code>.
+As the same tittle suggests, this is not a pure way of creating an <code>S3</code> since it might be possible to pass a malformed
+instance by parameter or just one that was already released (closed).</p>
+<p>An example:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.s3.<span class="hljs-type">S3</span>
+<span class="hljs-keyword">import</span> software.amazon.awssdk.auth.credentials.<span class="hljs-type">DefaultCredentialsProvider</span>
+<span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.<span class="hljs-type">S3AsyncClient</span>
+<span class="hljs-keyword">import</span> software.amazon.awssdk.regions.<span class="hljs-type">Region</span>
+
+<span class="hljs-keyword">val</span> s3AsyncClient: <span class="hljs-type">S3AsyncClient</span> = <span class="hljs-type">S3AsyncClient</span>
+ .builder()
+ .credentialsProvider(<span class="hljs-type">DefaultCredentialsProvider</span>.create())
+ .region(<span class="hljs-type">Region</span>.<span class="hljs-type">EU_CENTRAL_1</span>)
+ .build()
+
+<span class="hljs-keyword">val</span> s3: <span class="hljs-type">S3</span> = <span class="hljs-type">S3</span>.createUnsafe(s3AsyncClient)
+</code></pre>
+<p>Notice that <code>createUnsafe</code> an overloaded method that also has just another variant that excepts settings values:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> software.amazon.awssdk.auth.credentials.<span class="hljs-type">DefaultCredentialsProvider</span>
+<span class="hljs-keyword">import</span> software.amazon.awssdk.regions.<span class="hljs-type">Region</span>
+<span class="hljs-keyword">import</span> monix.connect.s3.<span class="hljs-type">S3</span>
+
+<span class="hljs-keyword">val</span> bucket: <span class="hljs-type">String</span> = <span class="hljs-string">"my-bucket"</span> 
+<span class="hljs-keyword">val</span> s3: <span class="hljs-type">S3</span> = <span class="hljs-type">S3</span>.createUnsafe(<span class="hljs-type">DefaultCredentialsProvider</span>.create(), <span class="hljs-type">Region</span>.<span class="hljs-type">AF_SOUTH_1</span>)
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="create-bucket"></a><a href="#create-bucket" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Create bucket</h2>
+<p>Once you have configured the client, you would probably need to <em>create a bucket</em>:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.model.<span class="hljs-type">CreateBucketResponse</span>
+<span class="hljs-keyword">import</span> monix.connect.s3.<span class="hljs-type">S3</span>
+
+<span class="hljs-keyword">val</span> bucket: <span class="hljs-type">String</span> = <span class="hljs-string">"my-bucket"</span> 
+<span class="hljs-keyword">val</span> s3: <span class="hljs-type">S3</span>
+
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">CreateBucketResponse</span>] = s3.createBucket(bucket)
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="delete-bucket"></a><a href="#delete-bucket" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Delete bucket</h2>
+<p>On the other hand if you want to remove the bucket:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.model.<span class="hljs-type">DeleteBucketResponse</span>
+<span class="hljs-keyword">import</span> monix.connect.s3.<span class="hljs-type">S3</span>
+
+<span class="hljs-keyword">val</span> bucket: <span class="hljs-type">String</span> = <span class="hljs-string">"my-bucket"</span> 
+<span class="hljs-keyword">val</span> s3: <span class="hljs-type">S3</span>
+
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">DeleteBucketResponse</span>] = s3.deleteBucket(bucket)
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="delete-object"></a><a href="#delete-object" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Delete object</h2>
+<p>You can also delete an <em>object</em> within the specified <em>bucket</em> with:</p>
 <pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.model.{<span class="hljs-type">DeleteObjectResponse</span>, <span class="hljs-type">ListObjectsResponse</span>}
+<span class="hljs-keyword">import</span> monix.connect.s3.<span class="hljs-type">S3</span>
 
-<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">DeleteObjectResponse</span>] = <span class="hljs-type">S3</span>.deleteObject(bucketName)
+<span class="hljs-keyword">val</span> bucket: <span class="hljs-type">String</span> = <span class="hljs-string">"my-bucket"</span> 
+<span class="hljs-keyword">val</span> key: <span class="hljs-type">String</span> = <span class="hljs-string">"path/to/my/object.txt"</span> 
+<span class="hljs-keyword">val</span> s3: <span class="hljs-type">S3</span>
+
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">DeleteObjectResponse</span>] = s3.deleteObject(bucket, key)
 </code></pre>
-<h3><a class="anchor" aria-hidden="true" id="listobject"></a><a href="#listobject" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>listObject</h3>
-<p>Lists all the objects within a bucket:</p>
+<h2><a class="anchor" aria-hidden="true" id="exists-bucket"></a><a href="#exists-bucket" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Exists bucket</h2>
+<p>Check whether the specified bucket exists or not.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.s3.<span class="hljs-type">S3</span>
+
+<span class="hljs-keyword">val</span> bucket: <span class="hljs-type">String</span> = <span class="hljs-string">"my-bucket"</span> 
+<span class="hljs-keyword">val</span> s3: <span class="hljs-type">S3</span>
+
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">Boolean</span>] = s3.existsBucket(bucket)
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="exists-object"></a><a href="#exists-object" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Exists object</h2>
+<p>Check whether the specified object exists or not.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.s3.<span class="hljs-type">S3</span>
+
+<span class="hljs-keyword">val</span> bucket: <span class="hljs-type">String</span> = <span class="hljs-string">"my-bucket"</span> 
+<span class="hljs-keyword">val</span> key: <span class="hljs-type">String</span> = <span class="hljs-string">"path/to/my/object.txt"</span> 
+<span class="hljs-keyword">val</span> s3: <span class="hljs-type">S3</span>
+
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">Boolean</span>] = s3.existsObject(bucket, key))
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="list-objects"></a><a href="#list-objects" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>List objects</h2>
+<p>Lists the objects within a <em>bucket</em> and <em>prefix</em>.</p>
 <pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.model.{<span class="hljs-type">DeleteObjectResponse</span>, <span class="hljs-type">ListObjectsResponse</span>}
+<span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.model.<span class="hljs-type">S3Object</span>
+<span class="hljs-keyword">import</span> monix.connect.s3.<span class="hljs-type">S3</span>
+<span class="hljs-keyword">import</span> monix.reactive.<span class="hljs-type">Observable</span>
+<span class="hljs-keyword">import</span> monix.reactive.<span class="hljs-type">Consumer</span>
 
-<span class="hljs-keyword">val</span> _: <span class="hljs-type">Task</span>[<span class="hljs-type">ListObjectsResponse</span>] = <span class="hljs-type">S3</span>.listObjects(bucketName)
-</code></pre>
-<h3><a class="anchor" aria-hidden="true" id="getobject"></a><a href="#getobject" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>getObject</h3>
-<p>Download the given S3 object as a single byte array.
-Note that this operation is dangerous to perform on large objects, <code>multipartDownload</code> would be supported in future releases to
-support those use cases.</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> objectKey: <span class="hljs-type">String</span> = <span class="hljs-string">"/object/file.txt"</span>
-<span class="hljs-keyword">val</span> _: <span class="hljs-type">Task</span>[<span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>]] = <span class="hljs-type">S3</span>.getObject(bucketName, objectKey)
+<span class="hljs-keyword">val</span> bucket = <span class="hljs-string">"my-bucket"</span>
+<span class="hljs-keyword">val</span> prefix = <span class="hljs-string">s"prefix/to/list/keys/"</span>
 
+<span class="hljs-comment">// example to calculate the total object's size</span>
+<span class="hljs-keyword">val</span> totalSize: <span class="hljs-type">Task</span>[<span class="hljs-type">Long</span>] = <span class="hljs-type">S3</span>.fromConfig.use{s3 =&gt;
+ s3.listObjects(bucket, prefix = <span class="hljs-type">Some</span>(prefix))
+   .consumeWith(<span class="hljs-type">Consumer</span>.foldLeft(<span class="hljs-number">0</span>)((acc, s3Object) =&gt; acc + s3Object.size))
+}
+
+<span class="hljs-comment">// use `maxTotalKeys` to set a limit to the number of keys you want to fetch</span>
+<span class="hljs-keyword">val</span> s3ObjectsWithLimit: <span class="hljs-type">Observable</span>[<span class="hljs-type">S3Object</span>] = 
+ <span class="hljs-type">S3</span>.createUnsafe(credentialsProvider, region)
+   .listObjects(bucket, maxTotalKeys = <span class="hljs-type">Some</span>(<span class="hljs-number">1011</span>), prefix = <span class="hljs-type">Some</span>(prefix))
 </code></pre>
-<h3><a class="anchor" aria-hidden="true" id="multipartupload"></a><a href="#multipartupload" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>multipartUpload</h3>
-<p>Finally, for dealing with large files of data you might want to use the <code>multipartUpload</code> implementation.
-This one can be used to consume an observable of bytes that would send a partial upload request for each received element if it was bigger than the minimum size, otherwise the chunk will be concatenated on the next request.</p>
-<p>Thus, it reduces substantially the risk on having <em>OOM</em> errors or getting http requests failures,
-since the whole file does not need to be allocated in the memory and the http request body won't be that big because it would have been done by parts.</p>
-<p>Note that the method can be tuned with specific aws configurations such as <code>acl's</code>, <code>requestPayer</code>, etc. But a very important one to have present is by the minimum <code>chunksize</code> that will be sent, being 5MB the default and minimum size (lower values would result in failure).</p>
+<p>Listing a very long list of objects might take time and and cause the underlying netty connection to error because
+of the request timeout, in order increase that see fix that you can increase those timeouts with a new configuration for <code>software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient</code>
+that will be added to the <code>software.amazon.awssdk.services.s3.S3AsyncClient</code>. <em>See</em> an example <em>Async Client</em> [section](##Async Client)</p>
+<h2><a class="anchor" aria-hidden="true" id="download"></a><a href="#download" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Download</h2>
+<p>Downloads the specified object in a single request as <em>byte array</em>.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.model.<span class="hljs-type">PutObjectResponse</span>
+<span class="hljs-keyword">import</span> monix.connect.s3.<span class="hljs-type">S3</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+
+<span class="hljs-keyword">val</span> bucket = <span class="hljs-string">"my-bucket"</span>
+<span class="hljs-keyword">val</span> key = <span class="hljs-string">"sample/download/path/file.txt"</span>
+<span class="hljs-keyword">val</span> content: <span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>] = <span class="hljs-string">"Dummy file content"</span>.getBytes()
+<span class="hljs-keyword">val</span> s3: <span class="hljs-type">S3</span>
+
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>]] = s3.download(<span class="hljs-string">"my-bucket"</span>, key)
+</code></pre>
+<p>Note that this operation is only suitable to be used for small objects,
+for large ones <code>downloadMultipart</code> should be used.</p>
+<p>On contrast, it might be useful in those cases in which the user
+only wants to download the first <em>n</em> bytes from an object:</p>
+<pre><code class="hljs css language-scala">  <span class="hljs-comment">// only downloads the first 10 bytes</span>
+  s3.download(<span class="hljs-string">"my-bucket"</span>, key, firstNBytes = <span class="hljs-type">Some</span>(<span class="hljs-number">10</span>))
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="download-multipart"></a><a href="#download-multipart" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Download multipart</h2>
+<p>A method that <em>safely</em> downloads objects of any size by performing <em>partial download requests</em>.
+The number of bytes to get per each request is specified by the <code>chunkSize</code>.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.s3.<span class="hljs-type">S3</span>
+<span class="hljs-keyword">import</span> monix.reactive.<span class="hljs-type">Observable</span>
+<span class="hljs-keyword">import</span> monix.reactive.<span class="hljs-type">Consumer</span>
+<span class="hljs-keyword">val</span> bucket = <span class="hljs-string">"my-bucket"</span>
+<span class="hljs-keyword">val</span> key = <span class="hljs-string">"sample/path/file.json"</span>
+<span class="hljs-keyword">val</span> s3: <span class="hljs-type">S3</span>
+
+<span class="hljs-keyword">val</span> ob: <span class="hljs-type">Observable</span>[<span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>]] = s3.downloadMultipart(<span class="hljs-string">"my-bucket"</span>, key, chunkSize = <span class="hljs-number">5242880</span>)
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="upload"></a><a href="#upload" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Upload</h2>
+<p>You can also easily upload an object into an <em>S3</em>  with the <em>upload</em> signature.
+Note that if you need to update large amount of data you should not be using this method, see instead <a href="https://connect.monix.io/docs/s3#multipart-upload">multipartUpload</a>`.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.model.<span class="hljs-type">PutObjectResponse</span>
+<span class="hljs-keyword">import</span> monix.connect.s3.<span class="hljs-type">S3</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+
+<span class="hljs-keyword">val</span> bucket = <span class="hljs-string">"my-bucket"</span>
+<span class="hljs-keyword">val</span> key = <span class="hljs-string">"sample/upload/path/file.txt"</span>
+<span class="hljs-keyword">val</span> content: <span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>] = <span class="hljs-string">"Dummy file content"</span>.getBytes()
+<span class="hljs-keyword">val</span> s3: <span class="hljs-type">S3</span>
+
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">PutObjectResponse</span>] = s3.upload(<span class="hljs-string">"my-bucket"</span>, key, content)
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="upload-multipart"></a><a href="#upload-multipart" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Upload multipart</h2>
+<p>When dealing with large files of data you should use the <code>multipartUpload</code> operation.
+It is used for consuming an observable of bytes that sends partial upload request of an specific minimum size.
+When the emitted bytes are smallaller than the minimumb request chunk size, they will keep being accumulated until reaching the minimum size mentioned previously.</p>
+<p>This, in comparison with the <em>single upload</em>, it reduces substantially the risk on having <em>OOM</em> errors or failed <em>http requests</em> due to the size of the body.</p>
 <pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.model.<span class="hljs-type">CompleteMultipartUploadResponse</span>
+<span class="hljs-keyword">import</span> monix.connect.s3.<span class="hljs-type">S3</span>
+<span class="hljs-keyword">import</span> monix.reactive.<span class="hljs-type">Observable</span>
+<span class="hljs-keyword">import</span> monix.reactive.<span class="hljs-type">Consumer</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
 
-<span class="hljs-comment">// given an stream of array bytes </span>
-<span class="hljs-keyword">val</span> ob: <span class="hljs-type">Observable</span>[<span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>]] = <span class="hljs-type">Observable</span>.fromIterable(chunks)
+<span class="hljs-keyword">val</span> bucket = <span class="hljs-string">"my-bucket"</span>
+<span class="hljs-keyword">val</span> key = <span class="hljs-string">"sample/upload/path/file.txt"</span>
+<span class="hljs-keyword">val</span> ob = <span class="hljs-type">Observable</span>[<span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>]] <span class="hljs-comment">// preasumably we have a byte array `Obserbable`</span>
+<span class="hljs-keyword">val</span> s3: <span class="hljs-type">S3</span>
 
-<span class="hljs-comment">// and a multipart upload consumer</span>
-<span class="hljs-keyword">val</span> multipartUploadConsumer: <span class="hljs-type">Consumer</span>[<span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>], <span class="hljs-type">Task</span>[<span class="hljs-type">CompleteMultipartUploadResponse</span>]] =
-  <span class="hljs-type">S3</span>.multipartUpload(bucketName, objectKey)
-
-<span class="hljs-comment">// then</span>
-ob.fromIterable(chunks).consumeWith(multipartUploadConsumer)
+<span class="hljs-keyword">val</span> f = ob.consumeWith(s3.uploadMultipart(bucket, key)).runToFuture
 </code></pre>
+<p>Note that the <code>chunksize</code> can be specified on the method call, in which the <em>default</em> and <em>minimum</em> value is <em>5MB</em> or <em>5242880 bytes</em>.
+It also accepts specific <em>aws configurations</em> such as <code>acl</code>, <code>requestPayer</code>, etc.</p>
 <h2><a class="anchor" aria-hidden="true" id="local-testing"></a><a href="#local-testing" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Local testing</h2>
-<p>There is actually a very good support on regards testing <code>AWS S3</code>, you could either spin up a docker image to just use a JVM library that emulates such service.</p>
-<p>The following sections describes different alternatives:</p>
+<p>There is actually a very good support on regards to testing <code>AWS S3</code> locally, the following sections describes different popular alternatives:</p>
 <h3><a class="anchor" aria-hidden="true" id="localstack"></a><a href="#localstack" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Localstack</h3>
 <p>A fully functional local <em>AWS</em> cloud stack available as a docker image.</p>
 <p>You would just need to define it as a service in your <code>docker-compose.yml</code>:</p>
 <pre><code class="hljs css language-yaml"><span class="hljs-attr">localstack:</span>
-   <span class="hljs-attr">image:</span> <span class="hljs-string">localstack/localstack:latest</span>
+   <span class="hljs-attr">image:</span> <span class="hljs-string">localstack/localstack:0.11.0</span>
    <span class="hljs-attr">hostname:</span> <span class="hljs-string">localstack</span>
    <span class="hljs-attr">container_name:</span> <span class="hljs-string">localstack</span>
    <span class="hljs-attr">ports:</span>
@@ -164,27 +334,35 @@ ob.fromIterable(chunks).consumeWith(multipartUploadConsumer)
      <span class="hljs-bullet">-</span> <span class="hljs-string">SERVICES=s3</span>
 <span class="hljs-comment"># very important to specify `s3` on `SERVICES` env var, it would prevent to spin up the rest of the AWS services.</span>
 </code></pre>
-<p>Then, run the following command to build and start the <em>S3</em> service:</p>
+<p>Then, execute the following command to build and run the <em>localstack</em> image:</p>
 <pre><code class="hljs css language-shell script">docker-compose -f ./docker-compose.yml up -d localstack
 </code></pre>
 <p>A good point on favor to using <em>localstack</em> is that it provides support for <em>AWS Anonymous Credentials</em>, meaning that you can easily connect to your
-local S3 service with no required authentication.</p>
-<p>See below an example on how create the async client:</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> software.amazon.awssdk.regions.<span class="hljs-type">Region</span>.<span class="hljs-type">AWS_GLOBAL</span>
+local <em>S3 service</em> with no required authentication.</p>
+<p>Below snippet is an example on how to set up the config to be used from <code>S3.create()</code>:</p>
+<pre><code class="hljs css language-hocon">{
+ monix-aws: {
+   <span class="hljs-class">credentials </span>{
+<span class="hljs-symbol">     provider:</span> <span class="hljs-string">"anonymous"</span>  
+   }
+<span class="hljs-symbol">   endpoint:</span> <span class="hljs-string">"http://localhost:9000"</span>
+<span class="hljs-symbol">   region:</span> <span class="hljs-string">"us-west-2"</span>
+ }
+}
+</code></pre>
+<p>On the other hand, if you prefer to create the client from your app:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.s3.<span class="hljs-type">S3</span>
+<span class="hljs-keyword">import</span> software.amazon.awssdk.regions.<span class="hljs-type">Region</span>
 <span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.<span class="hljs-type">S3AsyncClient</span>
 <span class="hljs-keyword">import</span> software.amazon.awssdk.auth.credentials.<span class="hljs-type">AnonymousCredentialsProvider</span>
 <span class="hljs-keyword">import</span> java.net.<span class="hljs-type">URI</span>
 
 <span class="hljs-keyword">val</span> localStackEndpoint = <span class="hljs-string">"http://localhost:4566"</span>
-<span class="hljs-keyword">implicit</span> <span class="hljs-keyword">val</span> s3AsyncClient: <span class="hljs-type">S3AsyncClient</span> = <span class="hljs-type">S3AsyncClient</span>
- .builder()
- .credentialsProvider(<span class="hljs-keyword">new</span> <span class="hljs-type">AnonymousCredentialsProvider</span>)
- .region(<span class="hljs-type">AWS_GLOBAL</span>)
- .endpointOverride(<span class="hljs-type">URI</span>.create(localStackEndpoint))
- .build
+
+<span class="hljs-keyword">val</span> s3: <span class="hljs-type">S3</span> = <span class="hljs-type">S3</span>.createUnsafe(<span class="hljs-keyword">new</span> <span class="hljs-type">AnonymousCredentialsProvider</span>, <span class="hljs-type">Region</span>.<span class="hljs-type">EU_WEST_1</span>, <span class="hljs-type">Some</span>(<span class="hljs-type">URI</span>.create(localStackEndpoint)))
 </code></pre>
-<p><em>Notice</em> that the the <em>client</em> was defined as <code>implicit</code> since it is how the api will expect it.</p>
-<p><strong>Important</strong> - Whenever you create a bucket on localstack, you would better set its <em>ACL (Access Control List)</em> as <code>public-read</code> since it might prevent you to encounter <a href="localstack/localstack#406">403 access denied</a> when reading.
+<p><em>Creating local buckets in localstack</em></p>
+<p>Whenever you create a bucket on <em>localstack</em>, you would better set its <em>ACL (Access Control List)</em> as <code>public-read</code> since it might prevent you to encounter <a href="https://github.com/localstack/localstack/issues/406">403 access denied</a> when reading it back.
 If you set the <code>container_name</code> field to <em>localstack</em> in <code>docker-compose.yaml</code> you can create the bucket and specify the right <em>ACL</em> like:</p>
 <pre><code class="hljs css language-shell script">docker exec localstack awslocal s3 mb s3://my-bucket
 docker exec localstack awslocal s3api put-bucket-acl --bucket my-bucket --acl public-read
@@ -195,15 +373,15 @@ docker exec localstack awslocal s3api put-bucket-acl --bucket my-bucket --acl pu
 
 <span class="hljs-keyword">override</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">beforeAll</span></span>() = {
   <span class="hljs-keyword">super</span>.beforeAll()
-  <span class="hljs-type">S3</span>.createBucket(<span class="hljs-string">"my-bucket"</span>, acl = <span class="hljs-type">Some</span>(<span class="hljs-string">"public-read"</span>)).runSyncUnsafe()
+  <span class="hljs-type">S3</span>.createUnsafe(s3AsyncClient).createBucket(<span class="hljs-string">"my-bucket"</span>, acl = <span class="hljs-type">Some</span>(<span class="hljs-string">"public-read"</span>)).runSyncUnsafe()
 }
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="minio"></a><a href="#minio" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Minio</h3>
 <p><a href="https://github.com/minio/minio">Minio</a> is another well known docker image that emulates <em>AWS S3</em>.</p>
-<p>The advantages of using <em>minio</em> over <em>localstack</em> is that it provides a beautiful <em>UI</em> that allows you to quickly visualize and manage the
-objects and buckets stored in the local S3.
-On the other hand, a disadvantage could be that it does not support <em>Anonymous Credentials</em>, so you have to specify <em>key</em> and <em>secret</em> to create the connection.</p>
-<p>The following service description to your <code>docker-compose.yaml</code> file:</p>
+<p>The advantages of using <em>minio</em> over <em>localstack</em> is that it provides a nice <em>UI</em> that allows you to quickly visualize and manage the
+objects and buckets stored in your local, instead of having to <em>exec</em> in your local image.</p>
+<p>On the other hand, a disadvantage could be that it does not support <em>Anonymous Credentials</em>, so you have to specify <em>key</em> and <em>secret</em> to create the connection.</p>
+<p>Add the following service description to your <code>docker-compose.yaml</code> file:</p>
 <pre><code class="hljs css language-yaml"><span class="hljs-attr">minio:</span>
   <span class="hljs-attr">image:</span> <span class="hljs-string">minio/minio</span>
   <span class="hljs-attr">ports:</span>
@@ -220,14 +398,29 @@ On the other hand, a disadvantage could be that it does not support <em>Anonymou
     <span class="hljs-attr">retries:</span> <span class="hljs-number">3</span>
   <span class="hljs-attr">command:</span> <span class="hljs-string">server</span> <span class="hljs-string">--compat</span> <span class="hljs-string">/data</span>
 </code></pre>
-<p>Then, run the following command to build and start the S3 service:</p>
+<p>Then, run the following command to build and start the <em>minio</em> image:</p>
 <pre><code class="hljs css language-shell script">docker-compose -f ./docker-compose.yml up -d minio
 </code></pre>
-<p>Check out that the service has started correctly, notice that a <em>healthcheck</em> has been defined on the description of the minio service,
-that's because it is a heavy image and sometimes it takes bit long to start or it even fails, so adding it will prevent that to happen.</p>
-<p>Finally you can already create the connection to <em>AWS S3</em>, <em>notice</em> that <em>minio</em> does not support <em>Anonymous credentials</em>, instead you'll have to use <em>Basic Credentials</em> and specify the <em>key</em> and <em>secret</em> corresponding respectively to the
+<p>Check out that the service has started correctly, notice that there is a <em>healthcheck</em> on the definition of the <em>minio service</em>,
+that's because it is a heavy image and sometimes it takes bit long to start or it even fails, so by adding it will prevent that to happen.</p>
+<p>Finally, now you can already create the connection to <em>AWS S3</em>, <em>notice</em> that <em>minio</em> does not support <em>Anonymous credentials</em>, instead you'll have to use the <em>Static Credentials Provider</em> and specify the <em>key</em> and <em>secret</em> corresponding respectively to the
 defined environment variables <code>MINIO_ACCESS_KEY</code> and <code>MINIO_SECRET_KEY</code>.</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> software.amazon.awssdk.regions.<span class="hljs-type">Region</span>.<span class="hljs-type">AWS_GLOBAL</span>
+<p>Below snippet represents the settings that would be needed to locally connect to <em>minio</em> using config file:</p>
+<pre><code class="hljs css language-hocon">{
+ <span class="hljs-attribute">monix-aws</span>: {
+   credentials {
+     <span class="hljs-attribute">provider</span>: <span class="hljs-string">"static"</span>  
+     <span class="hljs-attribute">access-key-id</span>: <span class="hljs-string">"TESTKEY"</span>
+     <span class="hljs-attribute">secret-access-key</span>: <span class="hljs-string">"TESTSECRET"</span>    
+   }
+   <span class="hljs-attribute">endpoint</span>: <span class="hljs-string">"http://localhost:9000"</span>
+   <span class="hljs-attribute">region</span>: <span class="hljs-string">"us-west-2"</span>
+ }
+}
+</code></pre>
+<p>Alternatively you can create connection like:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.s3.<span class="hljs-type">S3</span>
+<span class="hljs-keyword">import</span> software.amazon.awssdk.regions.<span class="hljs-type">Region</span>
 <span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.<span class="hljs-type">S3AsyncClient</span>
 <span class="hljs-keyword">import</span> software.amazon.awssdk.auth.credentials.{<span class="hljs-type">AwsBasicCredentials</span>, <span class="hljs-type">StaticCredentialsProvider</span>}
 <span class="hljs-keyword">import</span> java.net.<span class="hljs-type">URI</span>
@@ -238,13 +431,10 @@ defined environment variables <code>MINIO_ACCESS_KEY</code> and <code>MINIO_SECR
 <span class="hljs-keyword">val</span> s3SecretKey: <span class="hljs-type">String</span> = <span class="hljs-string">"TESTSECRET"</span> <span class="hljs-comment">//equal to the `env var `MINIO_SECRET_KEY`</span>
 
 <span class="hljs-keyword">val</span> basicAWSCredentials = <span class="hljs-type">AwsBasicCredentials</span>.create(s3AccessKey, s3SecretKey)
-<span class="hljs-keyword">implicit</span> <span class="hljs-keyword">val</span> s3AsyncClient: <span class="hljs-type">S3AsyncClient</span> = <span class="hljs-type">S3AsyncClient</span>
-  .builder()
-  .credentialsProvider(<span class="hljs-type">StaticCredentialsProvider</span>.create(basicAWSCredentials))
-  .region(<span class="hljs-type">AWS_GLOBAL</span>)
-  .endpointOverride(<span class="hljs-type">URI</span>.create(minioEndPoint))
-  .build
+<span class="hljs-keyword">val</span> staticCredentialsProvider = <span class="hljs-type">StaticCredentialsProvider</span>.create(basicAWSCredentials)
+
+<span class="hljs-keyword">val</span> s3: <span class="hljs-type">S3</span> = <span class="hljs-type">S3</span>.createUnsafe(basicAWSCredentials, <span class="hljs-type">Region</span>.<span class="hljs-type">EU_WEST_1</span>, <span class="hljs-type">Some</span>(<span class="hljs-type">URI</span>.create(minioEndPoint)))
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="jvm-s3-mock-library"></a><a href="#jvm-s3-mock-library" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>JVM S3 Mock library</h3>
 <p>In case you prefer to <em>start</em> and <em>stop</em> the <em>S3</em> service from from the code of same test and therefore not depending on <em>docker</em> but just on a <em>JVM library dependency</em>, you can refer to <a href="https://github.com/findify/s3mock">findify/s3Mock</a> to see more.</p>
-</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/docs/dynamodb"><span class="arrow-prev">← </span><span class="function-name-prevnext">AWS DynamoDB</span></a><a class="docs-next button" href="/docs/gcs"><span>Google Cloud Storage</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#introduction">Introduction</a></li><li><a href="#dependency">Dependency</a></li><li><a href="#getting-started">Getting started</a><ul class="toc-headings"><li><a href="#asyncclient">asyncClient</a></li><li><a href="#createbucket">createBucket</a></li><li><a href="#deletebucket">deleteBucket</a></li><li><a href="#putobject">putObject</a></li><li><a href="#deleteobject">deleteObject</a></li><li><a href="#listobject">listObject</a></li><li><a href="#getobject">getObject</a></li><li><a href="#multipartupload">multipartUpload</a></li></ul></li><li><a href="#local-testing">Local testing</a><ul class="toc-headings"><li><a href="#localstack">Localstack</a></li><li><a href="#minio">Minio</a></li><li><a href="#jvm-s3-mock-library">JVM S3 Mock library</a></li></ul></li></ul></nav></div><footer class="nav-footer" id="footer"><hr class="separator"/><section class="copyright">Copyright © 2020-2020 The Monix Connect Developers.</section></footer></div></body></html>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/docs/dynamodb"><span class="arrow-prev">← </span><span class="function-name-prevnext">AWS DynamoDB</span></a><a class="docs-next button" href="/docs/elasticsearch"><span>Next</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#introduction">Introduction</a></li><li><a href="#dependency">Dependency</a></li><li><a href="#async-client">Async Client</a><ul class="toc-headings"><li><a href="#from-config">From config</a></li></ul></li><li><a href="#create">Create</a></li><li><a href="#create-unsafe">Create Unsafe</a></li><li><a href="#create-bucket">Create bucket</a></li><li><a href="#delete-bucket">Delete bucket</a></li><li><a href="#delete-object">Delete object</a></li><li><a href="#exists-bucket">Exists bucket</a></li><li><a href="#exists-object">Exists object</a></li><li><a href="#list-objects">List objects</a></li><li><a href="#download">Download</a></li><li><a href="#download-multipart">Download multipart</a></li><li><a href="#upload">Upload</a></li><li><a href="#upload-multipart">Upload multipart</a></li><li><a href="#local-testing">Local testing</a><ul class="toc-headings"><li><a href="#localstack">Localstack</a></li><li><a href="#minio">Minio</a></li><li><a href="#jvm-s3-mock-library">JVM S3 Mock library</a></li></ul></li></ul></nav></div><footer class="nav-footer" id="footer"><hr class="separator"/><section class="copyright">Copyright © 2020-2020 The Monix Connect Developers.</section></footer></div></body></html>
