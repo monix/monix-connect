@@ -26,7 +26,7 @@ package object redis {
     def apply[A](m: Mono[A]): Task[A] =
       Task.fromReactivePublisher(m).flatMap { op =>
         if (op.nonEmpty) Task.now(op.get)
-        else Task.raiseError(new Exception("The result from the executed redis operation was empty."))
+        else Task.raiseError(new NoSuchElementException("The result from the executed redis operation was empty."))
       }
   }
 

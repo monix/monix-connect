@@ -1,18 +1,22 @@
 package monix.connect.redis
 
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Failed}
 import org.scalatest.matchers.should.Matchers
 import io.lettuce.core.{RedisClient, ScoredValue}
 import io.lettuce.core.api.StatefulRedisConnection
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
+import monix.execution.schedulers.TestScheduler
 import monix.reactive.Observable
 import org.scalacheck.Gen
+import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpec
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.util.Failure
 
-class RedisIntegrationTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach with BeforeAndAfterAll {
+class RedisIntegrationTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach with BeforeAndAfterAll with Eventually {
 
   val redisUrl = "redis://localhost:6379"
   type K = String
@@ -26,6 +30,26 @@ class RedisIntegrationTest extends AnyFlatSpec with Matchers with BeforeAndAfter
 
   implicit val connection: StatefulRedisConnection[String, String] = RedisClient.create(redisUrl).connect()
 
+  override implicit val patienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
+
+  s"${Redis}" should "access non existing key in redis and get None" in {
+    //given
+    val scheduler = TestScheduler()
+    val key: K = genRedisKey.sample.get
+    val field: K = genRedisKey.sample.get
+
+    //when
+    val f: Future[String] = RedisHash.hget(key, field).runToFuture(global)
+    scheduler.tick(1.second)
+
+    //then
+    eventually {
+      f.value.get.isFailure shouldBe true
+      f.value.get shouldBe a[Failure[NoSuchElementException]]
+    }
+  }
+
+  /*
   s"${RedisHash}" should "access non existing key in redis and get None" in {
     //given
     val key: K = genRedisKey.sample.get
@@ -239,6 +263,6 @@ class RedisIntegrationTest extends AnyFlatSpec with Matchers with BeforeAndAfter
     l should contain theSameElementsAs value :: values
     keys.size shouldBe 1
     keys.head shouldBe k3
-  }
+  }*/
 
 }
