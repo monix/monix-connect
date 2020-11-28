@@ -50,8 +50,8 @@ import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s._
 import monix.eval.Task
 
-val uri = "http://localhost:9200"
-val elasticProperties = ElasticProperties(uri) // here different options could be set
+val elasticsearchUrl = "http://localhost:9200"
+val elasticProperties = ElasticProperties(elasticsearchUrl) // here different options could be set
 val httpClient = JavaClient(elasticProperties)
 val elasticsearch: Elasticsearch = Elasticsearch.createUnsafe(ElasticClient(client = httpClient))
 ```
@@ -311,5 +311,5 @@ import monix.connect.elasticsearch.Elasticsearch
 import monix.eval.Task
 
 val elasticsearchUrl = "http://localhost:9200"
-val resource: Resource[Task, Elasticsearch] = Elasticsearch.create("http://localhost:9200")
+val resource: Resource[Task, Elasticsearch] = Elasticsearch.create(elasticsearchUrl)
 ```

@@ -1,6 +1,6 @@
 import sbt.Keys.version
 
-val monixConnectSeries = "0.4.0"
+val monixConnectSeries = "0.5.0"
 
 inThisBuild(List(
   organization := "io.monix",
@@ -151,7 +151,7 @@ def monixConnector(
     .settings(additionalSettings: _*)
     .configs(IntegrationTest, IT)
     .enablePlugins(AutomateHeaderPlugin)
-    //.settings(mimaSettings(s"monix-$connectorName"))
+    .settings(mimaSettings(s"monix-$connectorName"))
 
 //=> non published modules
 

@@ -28,7 +28,7 @@ escalate into larger problems.
    request. If you do have write access to the repository, never work
    directly on master.
    
-4. When the work is completed, verify that the unit tests are passing:
+4. When the work is completed, verify that the _unit tests_ are passing:
 
 ```sbtshell
 sbt test
@@ -41,14 +41,14 @@ You'll need to have docker installed and start the dependencies:
 sh start-dependencies.sh
 ```
 
-Then, to only run the _it_:
+Then, verify that _integration tests_ pass:
 ```sbtshell
-sbt it:test //triggers integration tests for each of the connectors
+sbt it:test 
 ```
 
 6. Make sure the code is formatted with: 
 ```sbtshell
-sbt scalafmtAll //it should be formatted on compile time
+sbt scalafmtAll
 ```
 
 5. To revise documentation changes, you can run the web page on localhost with:
