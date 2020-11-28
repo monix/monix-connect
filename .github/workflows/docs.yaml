@@ -7,7 +7,6 @@ on:
 jobs:
   publish:
     name: publish 
-    if: github.event_name == 'push' && github.ref == 'refs/heads/docs'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
