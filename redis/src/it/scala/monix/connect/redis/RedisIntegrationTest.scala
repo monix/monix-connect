@@ -29,36 +29,21 @@ class RedisIntegrationTest extends AnyFlatSpec with Matchers with BeforeAndAfter
   } yield values
 
   implicit val connection: StatefulRedisConnection[String, String] = RedisClient.create(redisUrl).connect()
-  
-  s"${Redis}" should "access non existing key in redis and get None" in {
-    //given
-    val scheduler = TestScheduler()
-    val key: K = genRedisKey.sample.get
-    val field: K = genRedisKey.sample.get
+  override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
 
-    //when
-    val f: Future[String] = RedisHash.hget(key, field).runToFuture(global)
-    scheduler.tick(1.second)
-
-    //then
-    eventually {
-      f.value.get.isFailure shouldBe true
-      f.value.get shouldBe a[Failure[NoSuchElementException]]
-    }
-  }
-
-  /*
   s"${RedisHash}" should "access non existing key in redis and get None" in {
     //given
     val key: K = genRedisKey.sample.get
     val field: K = genRedisKey.sample.get
 
     //when
-    val t: Task[Option[String]] = RedisHash.hget(key, field)
+    val f: Future[String] = RedisHash.hget(key, field).runToFuture(global)
 
     //then
-    val r: Option[String] = t.runSyncUnsafe()
-    r shouldBe None
+    eventually {
+      f.value.get.isFailure shouldBe true
+      f.value.get shouldBe a[Failure[NoSuchElementException]]
+    }
   }
 
   s"${RedisString} " should "insert a string into the given key and get its size from redis" in {
@@ -105,11 +90,11 @@ class RedisIntegrationTest extends AnyFlatSpec with Matchers with BeforeAndAfter
     RedisHash.hset(key, field, value).runSyncUnsafe()
 
     //and
-    val t: Task[Option[String]] = RedisHash.hget(key, field)
+    val t: Task[String] = RedisHash.hget(key, field)
 
     //then
-    val r: Option[String] = t.runSyncUnsafe()
-    r shouldBe Some(value)
+    val r: String = t.runSyncUnsafe()
+    r shouldBe value
   }
 
   s"${RedisKey}" should "handles ttl correctly" in {
@@ -261,6 +246,6 @@ class RedisIntegrationTest extends AnyFlatSpec with Matchers with BeforeAndAfter
     l should contain theSameElementsAs value :: values
     keys.size shouldBe 1
     keys.head shouldBe k3
-  }*/
+  }
 
 }
