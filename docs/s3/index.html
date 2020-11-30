@@ -61,7 +61,7 @@ It allows data storage of any amount of data, commonly used as a data lake for b
 since they use the power of reactive streams to deal with objects of any size in smaller parts (chunks).</p>
 <h2><a class="anchor" aria-hidden="true" id="dependency"></a><a href="#dependency" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Dependency</h2>
 <p>Add the following dependency in your <em>build.sbt</em>:</p>
-<pre><code class="hljs css language-scala">libraryDependencies += <span class="hljs-string">"io.monix"</span> %% <span class="hljs-string">"monix-s3"</span> % <span class="hljs-string">"0.5.0"</span>
+<pre><code class="hljs css language-scala">libraryDependencies += <span class="hljs-string">"io.monix"</span> %% <span class="hljs-string">"monix-s3"</span> % <span class="hljs-string">"0.5.1"</span>
 </code></pre>
 <h2><a class="anchor" aria-hidden="true" id="async-client"></a><a href="#async-client" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Async Client</h2>
 <p>This connector uses the <em>underlying</em> <code>S3AsyncClient</code> from the <a href="https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/package-summary.html">java aws sdk</a>,
@@ -312,7 +312,7 @@ When the emitted bytes are smallaller than the minimumb request chunk size, they
 
 <span class="hljs-keyword">val</span> bucket = <span class="hljs-string">"my-bucket"</span>
 <span class="hljs-keyword">val</span> key = <span class="hljs-string">"sample/upload/path/file.txt"</span>
-<span class="hljs-keyword">val</span> ob = <span class="hljs-type">Observable</span>[<span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>]] <span class="hljs-comment">// preasumably we have a byte array `Obserbable`</span>
+<span class="hljs-keyword">val</span> ob = <span class="hljs-type">Observable</span>[<span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>]] <span class="hljs-comment">// preasumably we have a byte array `Observable`</span>
 <span class="hljs-keyword">val</span> s3: <span class="hljs-type">S3</span>
 
 <span class="hljs-keyword">val</span> f = ob.consumeWith(s3.uploadMultipart(bucket, key)).runToFuture
