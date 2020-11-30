@@ -44,13 +44,10 @@ package object domain {
   @InternalApi private[mongodb] val DefaultReplaceOptions = new ReplaceOptions()
 
   // results
-  @InternalApi private[mongodb] case class DeleteResult(deleteCount: Long, wasAcknowledged: Boolean)
-  @InternalApi private[mongodb] case class InsertOneResult(insertedId: Option[String], wasAcknowledged: Boolean)
-  @InternalApi private[mongodb] case class InsertManyResult(insertedIds: Set[String], wasAcknowledged: Boolean)
-  @InternalApi private[mongodb] case class UpdateResult(
-    matchedCount: Long,
-    modifiedCount: Long,
-    wasAcknowledged: Boolean)
+  case class DeleteResult(deleteCount: Long, wasAcknowledged: Boolean)
+  case class InsertOneResult(insertedId: Option[String], wasAcknowledged: Boolean)
+  case class InsertManyResult(insertedIds: Set[String], wasAcknowledged: Boolean)
+  case class UpdateResult(matchedCount: Long, modifiedCount: Long, wasAcknowledged: Boolean)
 
   // default results
   @InternalApi private[mongodb] val DefaultDeleteResult = DeleteResult(deleteCount = 0L, wasAcknowledged = false)

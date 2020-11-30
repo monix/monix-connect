@@ -70,7 +70,7 @@ object Dependencies {
   ) ++ testDependencies(hasIt = false)
 
   val MongoDb = Seq(
-    "org.mongodb"                               % "mongodb-driver-reactivestreams" % Versions.MongoReactiveStreams,
+    "org.mongodb"       % "mongodb-driver-reactivestreams" % Versions.MongoReactiveStreams,
     "org.mongodb.scala" %% "mongo-scala-bson"   % Versions.MongoScala,
     "org.mongodb.scala" %% "mongo-scala-driver" % Versions.MongoScala
   ) ++ testDependencies(hasIt = true)
