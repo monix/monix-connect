@@ -1,6 +1,6 @@
 import sbt.Keys.version
 
-val monixConnectSeries = "0.5.0"
+val monixConnectSeries = "0.5.1"
 
 inThisBuild(List(
   organization := "io.monix",

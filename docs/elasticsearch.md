@@ -15,7 +15,7 @@ but also to _search_ or _upload_ in a reactive fashion with _Monix Reactive_.
  Add the following dependency:
  
  ```scala
- libraryDependencies += "io.monix" %% "monix-elasticsearch" % "0.5.0"
+ libraryDependencies += "io.monix" %% "monix-elasticsearch" % "0.5.1"
  ```
  
 ## Client

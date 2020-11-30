@@ -15,7 +15,7 @@ This connector has been built on top of [lettuce](https://lettuce.io/), the most
 Add the following dependency:
 
 ```scala
-libraryDependencies += "io.monix" %% "monix-redis" % "0.5.0"
+libraryDependencies += "io.monix" %% "monix-redis" % "0.5.1"
 ```
 
 ## Getting started

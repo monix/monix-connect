@@ -15,7 +15,7 @@ _Monix Connect_ is an initiative to implement stream integrations for [Monix](ht
  all of the connectors by adding the following dependency (find and fill your release [version](https://github.com/monix/monix-connect/releases)):
  
  ```scala   
- libraryDependencies += "io.monix" %% "monix-connect" % "0.5.0"
+ libraryDependencies += "io.monix" %% "monix-connect" % "0.5.1"
 ```
 
 But you would probably only want to add a specific connector to your library dependencies, see how to do so and how to get started with them in the next sections.  
