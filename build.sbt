@@ -119,7 +119,7 @@ lazy val monixConnect = (project in file("."))
   .settings(sharedSettings)
   .settings(name := "monix-connect")
   .aggregate(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, elasticsearch, awsAuth)
-  .dependsOn(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, elasticsearch)
+  .dependsOn(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, elasticsearch, awsAuth)
 
 
 lazy val akka = monixConnector("akka", Dependencies.Akka)
@@ -140,6 +140,9 @@ lazy val gcs = monixConnector("gcs", Dependencies.GCS)
 
 lazy val elasticsearch =  monixConnector("elasticsearch", Dependencies.Elasticsearch)
 
+//internal
+lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth, isMimaEnabled = false)
+
 def monixConnector(
   connectorName: String,
   projectDependencies: Seq[ModuleID],
@@ -155,9 +158,6 @@ def monixConnector(
 
 
 //=> non published modules
-
-lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth, isMimaEnabled = false)
-  .settings(skipOnPublishSettings)
 
 lazy val benchmarks = monixConnector("benchmarks", Dependencies.Benchmarks, isMimaEnabled = false)
   .enablePlugins(JmhPlugin)
