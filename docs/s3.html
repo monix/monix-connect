@@ -312,7 +312,7 @@ When the emitted bytes are smallaller than the minimumb request chunk size, they
 
 <span class="hljs-keyword">val</span> bucket = <span class="hljs-string">"my-bucket"</span>
 <span class="hljs-keyword">val</span> key = <span class="hljs-string">"sample/upload/path/file.txt"</span>
-<span class="hljs-keyword">val</span> ob = <span class="hljs-type">Observable</span>[<span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>]] <span class="hljs-comment">// preasumably we have a byte array `Observable`</span>
+<span class="hljs-keyword">val</span> ob = <span class="hljs-type">Observable</span>[<span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>]] <span class="hljs-comment">// preasumably we have a byte array `Obserbable`</span>
 <span class="hljs-keyword">val</span> s3: <span class="hljs-type">S3</span>
 
 <span class="hljs-keyword">val</span> f = ob.consumeWith(s3.uploadMultipart(bucket, key)).runToFuture
