@@ -1,34 +1,22 @@
 package monix.connect.redis
 
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Failed}
-import org.scalatest.matchers.should.Matchers
-import io.lettuce.core.{RedisClient, ScoredValue}
-import io.lettuce.core.api.StatefulRedisConnection
+import io.lettuce.core.ScoredValue
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
-import monix.execution.schedulers.TestScheduler
 import monix.reactive.Observable
 import org.scalacheck.Gen
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Failure
 
-class RedisIntegrationTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach with BeforeAndAfterAll with Eventually {
+class RedisIntegrationTest extends AnyFlatSpec
+  with RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll with Eventually {
 
-  val redisUrl = "redis://localhost:6379"
-  type K = String
-  type V = Int
-  val genRedisKey: Gen[K] = Gen.identifier
-  val genRedisValue: Gen[V] = Gen.choose(0, 10000)
-  val genRedisValues: Gen[List[V]] = for {
-    n      <- Gen.chooseNum(2, 10)
-    values <- Gen.listOfN(n, Gen.choose(0, 10000))
-  } yield values
-
-  implicit val connection: StatefulRedisConnection[String, String] = RedisClient.create(redisUrl).connect()
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
 
   s"${RedisHash}" should "access non existing key in redis and get None" in {
