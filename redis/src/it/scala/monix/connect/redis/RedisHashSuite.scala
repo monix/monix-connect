@@ -10,18 +10,8 @@ import org.scalatest.concurrent.Eventually
 
 import scala.util.Failure
 
-class RedisHashSuite extends AnyFlatSpec with Matchers with Eventually {
-  val redisUrl = "redis://localhost:6379"
-  type K = String
-  type V = Int
-  val genRedisKey: Gen[K] = Gen.identifier
-  val genRedisValue: Gen[V] = Gen.choose(0, 10000)
-  val genRedisValues: Gen[List[V]] = for {
-    n      <- Gen.chooseNum(2, 10)
-    values <- Gen.listOfN(n, Gen.choose(0, 10000))
-  } yield values
-
-  implicit val connection: StatefulRedisConnection[String, String] = RedisClient.create(redisUrl).connect()
+class RedisHashSuite extends AnyFlatSpec
+  with RedisIntegrationFixture with Matchers with Eventually {
 
   "hdel" should "return 0 when the hash does not exist at the key" in {
     // given
@@ -124,7 +114,7 @@ class RedisHashSuite extends AnyFlatSpec with Matchers with Eventually {
 
     eventually {
       f.value.get.isFailure shouldBe true
-      f.value.get shouldBe a[Failure[NoSuchElementException]]
+      f.value.get.failed.get shouldBe a[NoSuchElementException]
     }
   }
   it should "return a failed Task when the key does not exist" in {
@@ -140,10 +130,83 @@ class RedisHashSuite extends AnyFlatSpec with Matchers with Eventually {
 
     eventually {
       f.value.get.isFailure shouldBe true
-      f.value.get shouldBe a[Failure[NoSuchElementException]]
+      f.value.get.failed.get shouldBe a[NoSuchElementException]
     }
   }
 
+  "hincrby" should "start from 0, and increment the value" in {
+    // given
+    val key = genRedisKey.sample.get
+    val field = genRedisKey.sample.get
+    val increment = genLong.sample.get
 
+    // then
+    RedisHash.hincrby(key, field, increment).runSyncUnsafe() shouldEqual increment
+  }
+
+  "hincrbyfloat" should "start from 0, and increment the value" in {
+    // given
+    val key = genRedisKey.sample.get
+    val field = genRedisKey.sample.get
+    val increment = genDouble.sample.get
+
+    // then
+    RedisHash.hincrbyfloat(key, field, increment).runSyncUnsafe() shouldEqual increment
+  }
+  it should "increment an integer" in {
+    // given
+    val key = genRedisKey.sample.get
+    val field = genRedisKey.sample.get
+    val baseValue = genLong.sample.get
+    val increment = genDouble.sample.get
+
+    // when
+    RedisHash.hincrby(key, field, baseValue).runSyncUnsafe()
+
+    // then
+    RedisHash.hincrbyfloat(key, field, increment).runSyncUnsafe() shouldEqual baseValue.doubleValue() + increment
+  }
+
+  "hgetall" should "return all field-value pairs" in {
+    // given
+    val key = genRedisKey.sample.get
+    val fields = genRedisPairs.sample.get
+
+    assume(fields.nonEmpty)
+
+    // when
+    RedisHash.hmset(key, fields).runSyncUnsafe()
+
+    // then
+    RedisHash.hgetall(key).runSyncUnsafe() shouldEqual fields
+  }
+  it should "return an empty Map when the key does not exist" in {
+    // given
+    val key = genRedisKey.sample.get
+
+    // then
+    RedisHash.hgetall(key).runSyncUnsafe() shouldEqual Map.empty
+  }
+
+  "hkeys" should "return all the fields at a key" in {
+    // given
+    val key = genRedisKey.sample.get
+    val fields = genRedisPairs.sample.get
+
+    assume(fields.nonEmpty)
+
+    // when
+    RedisHash.hmset(key, fields).runSyncUnsafe()
+
+    // then
+    RedisHash.hkeys(key).toListL.runSyncUnsafe().sorted shouldEqual fields.keys.toList.sorted
+  }
+  it should "return an empty list when the key does not exist" in {
+    // given
+    val key = genRedisKey.sample.get
+
+    // then
+    RedisHash.hkeys(key).toListL.runSyncUnsafe() shouldEqual List.empty
+  }
 
 }

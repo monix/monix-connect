@@ -15,6 +15,17 @@ trait RedisIntegrationFixture {
     values <- Gen.listOfN(n, Gen.choose(0, 10000))
   } yield values.map(_.toString)
 
+  val genRedisPair: Gen[(K, V)] = for {
+    key <- genRedisKey
+    value <- genRedisValue
+  } yield (key, value)
+
+  def genRedisPairs: Gen[Map[K, V]] =
+    Gen.listOf(genRedisPair).map(_.toMap)
+
+  val genLong: Gen[Long] = Gen.choose[Long](min = -1000L, max = 1000L)
+  val genDouble: Gen[Double] = Gen.choose[Double](min = -1000L, max = 1000L)
+
   implicit val connection: StatefulRedisConnection[String, String] = RedisClient.create(redisUrl).connect()
 
 }
