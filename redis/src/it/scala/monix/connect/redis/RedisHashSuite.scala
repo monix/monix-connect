@@ -157,14 +157,16 @@ class RedisHashSuite extends AnyFlatSpec
     // given
     val key = genRedisKey.sample.get
     val field = genRedisKey.sample.get
-    val baseValue = genLong.sample.get
-    val increment = genDouble.sample.get
+    val baseValue: Long = genLong.sample.get
+    val increment: Double = genDouble.sample.get
 
     // when
     RedisHash.hincrby(key, field, baseValue).runSyncUnsafe()
 
     // then
-    RedisHash.hincrbyfloat(key, field, increment).runSyncUnsafe() shouldEqual baseValue.doubleValue() + increment
+    // NOTE: (de)serialization result in small precision errors with double precision
+    val expectedValue: Double = baseValue.doubleValue() + increment
+    RedisHash.hincrbyfloat(key, field, increment).runSyncUnsafe().floatValue() shouldEqual expectedValue.floatValue()
   }
 
   "hgetall" should "return all field-value pairs" in {
