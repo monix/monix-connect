@@ -1,13 +1,13 @@
 package monix.connect.redis
 
-import io.lettuce.core.RedisClient
+import io.lettuce.core.{RedisClient, RedisCommandExecutionException}
 import io.lettuce.core.api.StatefulRedisConnection
 import org.scalacheck.Gen
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import monix.execution.Scheduler.Implicits.global
 import org.scalatest.concurrent.Eventually
-
+import scala.jdk.CollectionConverters._
 import scala.util.Failure
 
 class RedisHashSuite extends AnyFlatSpec
@@ -172,9 +172,7 @@ class RedisHashSuite extends AnyFlatSpec
   "hgetall" should "return all field-value pairs" in {
     // given
     val key = genRedisKey.sample.get
-    val fields = genRedisPairs.sample.get
-
-    assume(fields.nonEmpty)
+    val fields = Gen.nonEmptyMap(genRedisPair).sample.get
 
     // when
     RedisHash.hmset(key, fields).runSyncUnsafe()
@@ -193,9 +191,7 @@ class RedisHashSuite extends AnyFlatSpec
   "hkeys" should "return all the fields at a key" in {
     // given
     val key = genRedisKey.sample.get
-    val fields = genRedisPairs.sample.get
-
-    assume(fields.nonEmpty)
+    val fields = Gen.nonEmptyMap(genRedisPair).sample.get
 
     // when
     RedisHash.hmset(key, fields).runSyncUnsafe()
@@ -210,5 +206,139 @@ class RedisHashSuite extends AnyFlatSpec
     // then
     RedisHash.hkeys(key).toListL.runSyncUnsafe() shouldEqual List.empty
   }
+
+  "hlen" should "return the number of fields at the key" in {
+    // given
+    val key = genRedisKey.sample.get
+    val fields = Gen.nonEmptyMap(genRedisPair).sample.get
+
+    // when
+    RedisHash.hmset(key, fields).runSyncUnsafe()
+
+    // then
+    RedisHash.hlen(key).runSyncUnsafe() shouldEqual fields.size
+  }
+  it should "return a failed Task the value is not a hash" in {
+    // given
+    val key = genRedisKey.sample.get
+    val value = genRedisValue.sample.get
+
+    // when
+    RedisString.set(key, value).runSyncUnsafe()
+
+    // then
+    val f = RedisHash.hlen(key).runToFuture
+
+    eventually {
+      f.value.get.failed.get shouldBe a[RedisCommandExecutionException]
+    }
+  }
+  it should "return 0 when the key does not exist" in {
+    // given
+    val key = genRedisKey.sample.get
+
+    // then
+    RedisHash.hlen(key).runSyncUnsafe() shouldEqual 0
+  }
+
+  "hmget" should "return all the specified fields" in {
+    // given
+    val key = genRedisKey.sample.get
+    val fields = Gen.nonEmptyMap(genRedisPair).sample.get
+    val fieldsToGet = fields.take(2)
+
+    // when
+    RedisHash.hmset(key, fields).runSyncUnsafe()
+
+    // then
+    val result = RedisHash.hmget(key, fieldsToGet.keys.toList:_*).toListL.runSyncUnsafe()
+    result.map(_.tuple).toMap shouldEqual fieldsToGet
+  }
+  it should "return an empty map when the requested fields don't exist" in {
+    // given
+    val key = genRedisKey.sample.get
+    val fields = Gen.nonEmptyMap(genRedisPair).sample.get
+    val fieldsToGet = Gen.listOfN(2, genRedisKey).sample.get
+
+    // when
+    RedisHash.hmset(key, fields).runSyncUnsafe()
+
+    // then
+    val result = RedisHash.hmget(key, fieldsToGet:_*).toListL.runSyncUnsafe()
+    result.map(_.tuple).toMap shouldEqual Map.empty
+  }
+  it should "return a failed Task when the key doesn't exist" in {
+    // given
+    val key = genRedisKey.sample.get
+    val fieldsToGet = Gen.listOfN(2, genRedisKey).sample.get
+
+    // then
+    val f = RedisHash.hmget(key, fieldsToGet:_*).toListL.runToFuture
+    eventually {
+      f.value.get.failed.get shouldBe a[NoSuchElementException]
+    }
+  }
+
+  "hscan" should "return a key value cursor containing the fields" in {
+    // given
+    val key = genRedisKey.sample.get
+    val fields = Gen.nonEmptyMap(genRedisPair).sample.get
+
+    // when
+    RedisHash.hmset(key, fields).runSyncUnsafe()
+
+    // then
+    val result = RedisHash.hscan(key).runSyncUnsafe().getMap
+    result.asScala.toList.sorted shouldEqual fields.toList.sorted
+  }
+  it should "return an empty map when the key does not exist" in {
+    // given
+    val key = genRedisKey.sample.get
+
+    // then
+    val result = RedisHash.hscan(key).runSyncUnsafe()
+    result.getMap.asScala shouldEqual Map.empty
+  }
+
+  "hset" should "set the string value" in {
+    // given
+    val key = genRedisKey.sample.get
+    val field = genRedisPair.sample.get
+
+    // then
+    val result = RedisHash.hset(key, field._1, field._2).runSyncUnsafe()
+    result shouldEqual true
+  }
+  it should "update an existing field" in {
+    // given
+    val key = genRedisKey.sample.get
+    val field = genRedisPair.sample.get
+    val newValue = genRedisValue.sample.get
+
+    // when
+    RedisHash.hset(key, field._1, field._2).runSyncUnsafe()
+
+    // then
+    val result = RedisHash.hset(key, field._1, newValue).runSyncUnsafe()
+    result shouldEqual false
+  }
+  it should "fail when trying to set a field on a string value" in {
+    // given
+    val key = genRedisKey.sample.get
+    val stringValue = genRedisValue.sample.get
+    val fieldPair = genRedisPair.sample.get
+
+    // when
+    RedisString.set(key, stringValue).runSyncUnsafe()
+
+    // then
+    val f = RedisHash.hset(key, fieldPair._1, fieldPair._2).runToFuture
+
+    eventually {
+      f.value.get.failed.get shouldBe a[RedisCommandExecutionException]
+    }
+  }
+
+
 
 }
