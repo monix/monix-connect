@@ -422,7 +422,4 @@ class RedisHashSuite extends AnyFlatSpec
     val result = RedisHash.hvals(key).toListL.runSyncUnsafe()
     result shouldEqual List.empty
   }
-
-
-
 }
