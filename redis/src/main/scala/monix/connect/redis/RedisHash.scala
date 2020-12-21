@@ -131,7 +131,7 @@ private[redis] trait RedisHash {
     * Set the value of a hash field, only if the field does not exist.
     *
     * @return True if field is a new field in the hash and value was set.
-    *         False if field already exists in the hash and the value was updated.
+    *         False if field already exists in the hash and the value was not updated.
     */
   def hsetnx[K, V](key: K, field: K, value: V)(implicit connection: StatefulRedisConnection[K, V]): Task[Boolean] =
     Task.from(connection.reactive().hsetnx(key, field, value)).map(_.booleanValue)

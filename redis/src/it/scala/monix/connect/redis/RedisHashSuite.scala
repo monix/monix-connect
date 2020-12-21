@@ -339,6 +339,90 @@ class RedisHashSuite extends AnyFlatSpec
     }
   }
 
+  "hsetnx" should "set the value when the field does not exist" in {
+    // given
+    val key = genRedisKey.sample.get
+    val (field, value) = genRedisPair.sample.get
+
+    // then
+    RedisHash.hsetnx(key, field, value).runSyncUnsafe() shouldBe true
+    RedisHash.hget(key, field).runSyncUnsafe() shouldEqual value
+  }
+  it should "not set the value when the field already exists" in {
+    // given
+    val key = genRedisKey.sample.get
+    val (field, value) = genRedisPair.sample.get
+    val secondValue = genRedisValue.sample.get
+
+    // when
+    RedisHash.hset(key, field, value).runSyncUnsafe()
+
+    // then
+    RedisHash.hsetnx(key, field, secondValue).runSyncUnsafe() shouldBe false
+    RedisHash.hget(key, field).runSyncUnsafe() shouldEqual value
+  }
+
+  "hstrlen" should "return the length of the string value" in {
+    // given
+    val key = genRedisKey.sample.get
+    val (field, value) = genRedisPair.sample.get
+
+    // when
+    RedisHash.hset(key, field, value).runSyncUnsafe()
+
+    // then
+    RedisHash.hstrlen(key, field).runSyncUnsafe() shouldBe value.length()
+  }
+  it should "return 0 when the value does not exist" in {
+    // given
+    val key = genRedisKey.sample.get
+    val (field, _) = genRedisPair.sample.get
+
+    // then
+    RedisHash.hstrlen(key, field).runSyncUnsafe() shouldBe 0
+  }
+  it should "cast the value to a string when the value is a number" in {
+    // given
+    val key = genRedisKey.sample.get
+    val field = genRedisKey.sample.get
+    val number = genLong.sample.get
+
+    // when
+    RedisHash.hincrby(key, field, number).runSyncUnsafe()
+
+    // then
+    RedisHash.hstrlen(key, field).runSyncUnsafe() shouldEqual number.toString.length
+  }
+  it should "return 0 when the key does not exist" in {
+    // given
+    val key = genRedisKey.sample.get
+    val field = genRedisKey.sample.get
+
+    // then
+    RedisHash.hstrlen(key, field).runSyncUnsafe() shouldBe 0
+  }
+
+  "hvals" should "return all the values in the hash" in {
+    // given
+    val key = genRedisKey.sample.get
+    val fields = Gen.nonEmptyMap(genRedisPair).sample.get
+
+    // when
+    RedisHash.hmset(key, fields).runSyncUnsafe()
+
+    // then
+    val result = RedisHash.hvals(key).toListL.runSyncUnsafe()
+    result.sorted shouldEqual fields.values.toList.sorted
+  }
+  it should "return an empty list when the hash does not exist" in {
+    // given
+    val key = genRedisKey.sample.get
+
+    // then
+    val result = RedisHash.hvals(key).toListL.runSyncUnsafe()
+    result shouldEqual List.empty
+  }
+
 
 
 }
