@@ -6,7 +6,7 @@ object Dependencies {
 
     //main
     val Monix = "3.3.0"
-    val AwsSdk = "2.15.53"
+    val AwsSdk = "2.15.56"
     val AkkaStreams = "2.6.9"
     val AWS = "1.11.749"
     val Cats_Effect = "2.1.3"
