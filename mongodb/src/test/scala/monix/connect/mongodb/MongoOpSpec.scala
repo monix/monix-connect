@@ -17,6 +17,8 @@
 
 package monix.connect.mongodb
 
+import com.mongodb.reactivestreams.client.MongoCollection
+import org.scalatest.flatspec.AnyFlatSpecLike
 import com.mongodb.client.model.{Filters, Updates}
 import com.mongodb.client.result.{
   DeleteResult => MongoDeleteResult,
@@ -24,29 +26,42 @@ import com.mongodb.client.result.{
   InsertOneResult => MongoInsertOneResult,
   UpdateResult => MongoUpdateResult
 }
-import com.mongodb.reactivestreams.client.MongoCollection
-import monix.connect.mongodb.domain._
+import monix.connect.mongodb.domain.{
+  DefaultDeleteOptions,
+  DefaultDeleteResult,
+  DefaultInsertManyOptions,
+  DefaultInsertManyResult,
+  DefaultInsertOneOptions,
+  DefaultInsertOneResult,
+  DefaultReplaceOptions,
+  DefaultUpdateOptions,
+  DefaultUpdateResult,
+  DeleteResult,
+  InsertManyResult,
+  InsertOneResult,
+  UpdateResult
+}
 import monix.eval.Task
-import monix.execution.Scheduler.Implicits.global
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.matchers.should.Matchers
+import org.mockito.MockitoSugar.{mock, times, verify, when}
 import monix.execution.exceptions.DummyException
-import monix.execution.schedulers.TestScheduler
 import monix.reactive.Observable
+import org.reactivestreams.Publisher
+import monix.execution.Scheduler.Implicits.global
+
+import scala.util.Failure
+import monix.execution.schedulers.TestScheduler
 import org.bson.BsonValue
 import org.mockito.IdiomaticMockito
-import org.mockito.MockitoSugar.{times, verify, when}
 import org.mongodb.scala.bson.BsonObjectId
-import org.reactivestreams.Publisher
 import org.scalacheck.Gen
-import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.flatspec.AnyFlatSpecLike
-import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
-import scala.util.Failure
 
-class MongoSingleSpec
+class MongoOpSpec
   extends AnyFlatSpecLike with TestFixture with ScalaFutures with Matchers with BeforeAndAfterEach
   with IdiomaticMockito {
 
@@ -59,14 +74,14 @@ class MongoSingleSpec
     super.beforeEach()
   }
 
-  "MongoSingle.deleteOne" should "delete one single element" in {
+  "MongoOp.deleteOne" should "delete one single element" in {
     //given
     val filter = Filters.gt("age", 50)
     val publisher: Publisher[MongoDeleteResult] = Task(MongoDeleteResult.acknowledged(1L)).toReactivePublisher(global)
     when(col.deleteOne(filter)).thenReturn(publisher)
 
     //when
-    val r = MongoSingle.deleteOne(col, filter).runSyncUnsafe()
+    val r = MongoOp.deleteOne(col, filter).runSyncUnsafe()
 
     //then
     verify(col).deleteOne(filter)
@@ -79,18 +94,19 @@ class MongoSingleSpec
     val s = TestScheduler()
     val filter = Filters.gt("age", 50)
     val failedPub = Task.raiseError[MongoDeleteResult](DummyException("Delete one failed")).toReactivePublisher(s)
+    val delayedPub = Task(MongoDeleteResult.acknowledged(0L)).delayResult(500.millis).toReactivePublisher(s)
     val publisher = Task(MongoDeleteResult.acknowledged(1L)).toReactivePublisher(s)
-    when(col.deleteOne(filter, DefaultDeleteOptions)).thenReturn(failedPub, publisher)
+    when(col.deleteOne(filter, DefaultDeleteOptions)).thenReturn(delayedPub, failedPub, publisher)
 
     //when
-    val f = MongoSingle
-      .deleteOne(col, filter, deleteOptions = DefaultDeleteOptions, DefaultRetryStrategy)
+    val f = MongoOp
+      .deleteOne(col, filter, deleteOptions = DefaultDeleteOptions, retries = 3, timeout = Some(150.millis))
       .runToFuture(s)
 
     //then
     s.tick(1.second)
     whenReady(f) { r =>
-      verify(col, times(2)).deleteOne(filter, DefaultDeleteOptions)
+      verify(col, times(3)).deleteOne(filter, DefaultDeleteOptions)
       r.deleteCount shouldBe 1L
       r.wasAcknowledged shouldBe true
     }
@@ -103,7 +119,7 @@ class MongoSingleSpec
     when(col.deleteOne(filter)).thenReturn(publisher)
 
     //when
-    val r = MongoSingle.deleteOne(col, filter).runSyncUnsafe()
+    val r = MongoOp.deleteOne(col, filter).runSyncUnsafe()
 
     //then
     verify(col).deleteOne(filter)
@@ -119,7 +135,7 @@ class MongoSingleSpec
     when(col.deleteOne(filter)).thenReturn(publisher)
 
     //when
-    val f = MongoSingle.deleteOne(col, filter).runToFuture(s)
+    val f = MongoOp.deleteOne(col, filter).runToFuture(s)
     s.tick(500.milliseconds)
 
     //then
@@ -127,7 +143,7 @@ class MongoSingleSpec
     f.value shouldBe Some(Failure(exception))
   }
 
-  "MongoSingle.deleteMany" should "delete many elements without delete options" in {
+  "MongoOp.deleteMany" should "delete many elements without delete options" in {
     //given
     val filter = Filters.gt("age", 50)
     val publisher: Publisher[MongoDeleteResult] =
@@ -135,7 +151,7 @@ class MongoSingleSpec
     when(col.deleteMany(filter)).thenReturn(publisher)
 
     //when
-    val r = MongoSingle.deleteMany(col, filter).runSyncUnsafe()
+    val r = MongoOp.deleteMany(col, filter).runSyncUnsafe()
 
     //then
     verify(col).deleteMany(filter)
@@ -148,17 +164,18 @@ class MongoSingleSpec
     val s = TestScheduler()
     val filter = Filters.gt("age", 50)
     val failedPub = Task.raiseError[MongoDeleteResult](DummyException("Delete many failed")).toReactivePublisher(s)
+    val delayedPub = Task(MongoDeleteResult.acknowledged(10L)).delayResult(500.millis).toReactivePublisher(s)
     val publisher: Publisher[MongoDeleteResult] = Task(MongoDeleteResult.acknowledged(1000L)).toReactivePublisher(s)
-    when(col.deleteMany(filter, DefaultDeleteOptions)).thenReturn(failedPub, publisher)
+    when(col.deleteMany(filter, DefaultDeleteOptions)).thenReturn(delayedPub, failedPub, publisher)
 
     //when
     val f =
-      MongoSingle.deleteMany(col, filter, DefaultDeleteOptions, DefaultRetryStrategy).runToFuture(s)
+      MongoOp.deleteMany(col, filter, DefaultDeleteOptions, retries = 3, timeout = Some(150.millis)).runToFuture(s)
 
     //then
     s.tick(1.second)
     whenReady(f) { r =>
-      verify(col, times(2)).deleteMany(filter, DefaultDeleteOptions)
+      verify(col, times(3)).deleteMany(filter, DefaultDeleteOptions)
       r.deleteCount shouldBe 1000L
       r.wasAcknowledged shouldBe true
     }
@@ -171,7 +188,7 @@ class MongoSingleSpec
     when(col.deleteMany(filter)).thenReturn(publisher)
 
     //when
-    val r = MongoSingle.deleteMany(col, filter).runSyncUnsafe()
+    val r = MongoOp.deleteMany(col, filter).runSyncUnsafe()
 
     //then
     verify(col).deleteMany(filter)
@@ -187,7 +204,7 @@ class MongoSingleSpec
     when(col.deleteMany(filter)).thenReturn(publisher)
 
     //when
-    val f = MongoSingle.deleteMany(col, filter).runToFuture(s)
+    val f = MongoOp.deleteMany(col, filter).runToFuture(s)
     s.tick(500.milliseconds)
 
     //then
@@ -197,16 +214,16 @@ class MongoSingleSpec
 
   s"insertOne" should "insert one single element" in {
     //given
-    val employee = genEmployee.sample.get
+    val e = genEmployee.sample.get
     val insertOneResult = MongoInsertOneResult.acknowledged(objectId)
     val publisher: Publisher[MongoInsertOneResult] = Task(insertOneResult).toReactivePublisher(global)
-    when(col.insertOne(employee)).thenReturn(publisher)
+    when(col.insertOne(e)).thenReturn(publisher)
 
     //when
-    val r = MongoSingle.insertOne(col, employee).runSyncUnsafe()
+    val r = MongoOp.insertOne(col, e).runSyncUnsafe()
 
     //then
-    verify(col).insertOne(employee)
+    verify(col).insertOne(e)
     r shouldBe InsertOneResult(Some(objectId.getValue.toString), true)
   }
 
@@ -214,34 +231,36 @@ class MongoSingleSpec
     //given
     val s = TestScheduler()
     val employee = genEmployee.sample.get
+    val insertOneResult = MongoInsertOneResult.acknowledged(objectId)
+    val delayedPub = Task(insertOneResult).delayResult(500.millis).toReactivePublisher(s)
     val failedPub = Task.raiseError[MongoInsertOneResult](DummyException("Insert one failed")).toReactivePublisher(s)
     val publisher: Publisher[MongoInsertOneResult] =
       Task(MongoInsertOneResult.acknowledged(objectId)).toReactivePublisher(s)
-    when(col.insertOne(employee, DefaultInsertOneOptions)).thenReturn(failedPub, publisher)
+    when(col.insertOne(employee, DefaultInsertOneOptions)).thenReturn(delayedPub, failedPub, publisher)
 
     //when
-    val f = MongoSingle
-      .insertOne(col, employee, DefaultInsertOneOptions, DefaultRetryStrategy)
+    val f = MongoOp
+      .insertOne(col, employee, insertOneOptions = DefaultInsertOneOptions, retries = 3, timeout = Some(150.millis))
       .runToFuture(s)
 
     //then
     s.tick(1.second)
     whenReady(f) { r =>
-      verify(col, times(2)).insertOne(employee, DefaultInsertOneOptions)
+      verify(col, times(3)).insertOne(employee, DefaultInsertOneOptions)
       r shouldBe InsertOneResult(Some(objectId.getValue.toString), true)
     }
   }
 
   it should "return false whenever the underlying publisher did not emitted any elements" in {
     //given
-    val employee = genEmployee.sample.get
-    when(col.insertOne(employee)).thenReturn(Observable.empty.toReactivePublisher(global))
+    val e = genEmployee.sample.get
+    when(col.insertOne(e)).thenReturn(Observable.empty.toReactivePublisher(global))
 
     //when
-    val f = MongoSingle.insertOne(col, employee).runToFuture(global)
+    val f = MongoOp.insertOne(col, e).runToFuture(global)
 
     //then
-    verify(col).insertOne(employee)
+    verify(col).insertOne(e)
     f.value.get shouldBe util.Success(InsertOneResult(None, false))
   }
 
@@ -254,7 +273,7 @@ class MongoSingleSpec
     when(col.insertOne(e)).thenReturn(publisher)
 
     //when
-    val f = MongoSingle.insertOne(col, e).runToFuture(s)
+    val f = MongoOp.insertOne(col, e).runToFuture(s)
 
     //then
     s.tick(1.second)
@@ -262,7 +281,7 @@ class MongoSingleSpec
     f.value shouldBe Some(Failure(exception))
   }
 
-  s"${MongoSingle}.insertMany" should "insert many elements" in {
+  s"${MongoOp}.insertMany" should "insert many elements" in {
     //given
     val s = TestScheduler()
     val l = Gen.listOfN(10, genEmployee).sample.get
@@ -271,7 +290,7 @@ class MongoSingleSpec
     when(col.insertMany(l.asJava)).thenReturn(publisher)
 
     //when
-    val f = MongoSingle.insertMany(col, l).runToFuture(s)
+    val f = MongoOp.insertMany(col, l).runToFuture(s)
 
     //then
     s.tick(1.second)
@@ -282,20 +301,23 @@ class MongoSingleSpec
   it should "insert many elements with options" in {
     //given
     val s = TestScheduler()
-    val l = Gen.listOfN(10, genEmployee).sample.get
+    val employees = Gen.listOfN(10, genEmployee).sample.get
+    val delayedPub = Task(MongoInsertManyResult.acknowledged(Map.empty[Integer, BsonValue].asJava))
+      .delayResult(500.millis)
+      .toReactivePublisher(s)
     val failedPub = Task.raiseError[MongoInsertManyResult](DummyException("Insert one failed")).toReactivePublisher(s)
     val successPub: Publisher[MongoInsertManyResult] =
       Task(MongoInsertManyResult.acknowledged(Map.empty[Integer, BsonValue].asJava)).toReactivePublisher(s)
-    when(col.insertMany(l.asJava, DefaultInsertManyOptions)).thenReturn(failedPub, successPub)
+    when(col.insertMany(employees.asJava, DefaultInsertManyOptions)).thenReturn(delayedPub, failedPub, successPub)
 
     //when
-    val f = MongoSingle
-      .insertMany(col, l, DefaultInsertManyOptions, DefaultRetryStrategy)
+    val f = MongoOp
+      .insertMany(col, employees, insertManyOptions = DefaultInsertManyOptions, retries = 3, timeout = Some(150.millis))
       .runToFuture(s)
 
     //then
     s.tick(1.second)
-    verify(col, times(2)).insertMany(l.asJava, DefaultInsertManyOptions)
+    verify(col, times(3)).insertMany(employees.asJava, DefaultInsertManyOptions)
     f.value.get shouldBe util.Success(InsertManyResult(Set(), true))
   }
 
@@ -305,7 +327,7 @@ class MongoSingleSpec
     when(col.insertMany(l.asJava)).thenReturn(Observable.empty.toReactivePublisher(global))
 
     //when
-    val f = MongoSingle.insertMany(col, l).runToFuture(global)
+    val f = MongoOp.insertMany(col, l).runToFuture(global)
 
     //then
     verify(col).insertMany(l.asJava)
@@ -321,7 +343,7 @@ class MongoSingleSpec
     when(col.insertMany(l.asJava)).thenReturn(publisher)
 
     //when
-    val f = MongoSingle.insertMany(col, l).runToFuture(s)
+    val f = MongoOp.insertMany(col, l).runToFuture(s)
 
     //then
     s.tick(1.second)
@@ -339,7 +361,7 @@ class MongoSingleSpec
     when(col.updateOne(filter, update)).thenReturn(publisher)
 
     //when
-    val f = MongoSingle.updateOne(col, filter, update).runToFuture(s)
+    val f = MongoOp.updateOne(col, filter, update).runToFuture(s)
 
     //then
     s.tick(1.second)
@@ -353,18 +375,19 @@ class MongoSingleSpec
     val filter = Filters.eq("city", "Liverpool")
     val update = Updates.set("city", "Geneva")
     val updateResult = MongoUpdateResult.acknowledged(1L, 1L, null)
+    val delayedPub = Task(updateResult).delayResult(500.millis).toReactivePublisher(s)
     val failedPub = Task.raiseError[MongoUpdateResult](DummyException("Insert one failed")).toReactivePublisher(s)
     val successPub: Publisher[MongoUpdateResult] = Task(updateResult).toReactivePublisher(s)
-    when(col.updateOne(filter, update, DefaultUpdateOptions)).thenReturn(failedPub, successPub)
+    when(col.updateOne(filter, update, DefaultUpdateOptions)).thenReturn(delayedPub, failedPub, successPub)
 
     //when
-    val f = MongoSingle
-      .updateOne(col, filter, update, DefaultUpdateOptions, DefaultRetryStrategy)
+    val f = MongoOp
+      .updateOne(col, filter, update, updateOptions = DefaultUpdateOptions, retries = 3, timeout = Some(150.millis))
       .runToFuture(s)
 
     //then
     s.tick(1.second)
-    verify(col, times(2)).updateOne(filter, update, DefaultUpdateOptions)
+    verify(col, times(3)).updateOne(filter, update, DefaultUpdateOptions)
     f.value.get shouldBe util.Success(UpdateResult(1L, 1L, true))
   }
 
@@ -377,7 +400,7 @@ class MongoSingleSpec
     when(col.updateOne(filter, update)).thenReturn(publisher)
 
     //when
-    val f = MongoSingle.updateOne(col, filter, update).runToFuture(s)
+    val f = MongoOp.updateOne(col, filter, update).runToFuture(s)
 
     //then
     s.tick(1.second)
@@ -396,7 +419,7 @@ class MongoSingleSpec
     when(col.updateOne(filter, update)).thenReturn(publisher)
 
     //when
-    val f = MongoSingle.updateOne(col, filter, update).runToFuture(s)
+    val f = MongoOp.updateOne(col, filter, update).runToFuture(s)
 
     //then
     s.tick(1.second)
@@ -414,7 +437,7 @@ class MongoSingleSpec
     when(col.updateMany(filter, update)).thenReturn(publisher)
 
     //when
-    val f = MongoSingle.updateMany(col, filter, update).runToFuture(s)
+    val f = MongoOp.updateMany(col, filter, update).runToFuture(s)
 
     //then
     s.tick(1.second)
@@ -428,18 +451,19 @@ class MongoSingleSpec
     val filter = Filters.eq("name", "A")
     val update = Updates.set("city", "B")
     val updateResult = MongoUpdateResult.acknowledged(10L, 10L, null)
+    val delayedPub = Task(updateResult).delayResult(500.millis).toReactivePublisher(s)
     val failedPub = Task.raiseError[MongoUpdateResult](DummyException("Insert one failed")).toReactivePublisher(s)
     val successPub: Publisher[MongoUpdateResult] = Task(updateResult).toReactivePublisher(s)
-    when(col.updateMany(filter, update, DefaultUpdateOptions)).thenReturn(failedPub, successPub)
+    when(col.updateMany(filter, update, DefaultUpdateOptions)).thenReturn(delayedPub, failedPub, successPub)
 
     //when
-    val f = MongoSingle
-      .updateMany(col, filter, update, DefaultUpdateOptions, DefaultRetryStrategy)
+    val f = MongoOp
+      .updateMany(col, filter, update, updateOptions = DefaultUpdateOptions, retries = 3, timeout = Some(150.millis))
       .runToFuture(s)
 
     //then
     s.tick(1.second)
-    verify(col, times(2)).updateMany(filter, update, DefaultUpdateOptions)
+    verify(col, times(3)).updateMany(filter, update, DefaultUpdateOptions)
     f.value.get shouldBe util.Success(UpdateResult(10L, 10L, true))
   }
 
@@ -452,7 +476,7 @@ class MongoSingleSpec
     when(col.updateMany(filter, update)).thenReturn(publisher)
 
     //when
-    val f = MongoSingle.updateMany(col, filter, update).runToFuture(s)
+    val f = MongoOp.updateMany(col, filter, update).runToFuture(s)
 
     //then
     s.tick(1.second)
@@ -470,7 +494,7 @@ class MongoSingleSpec
     when(col.updateMany(filter, update)).thenReturn(publisher)
 
     //when
-    val f = MongoSingle.updateMany(col, filter, update).runToFuture(s)
+    val f = MongoOp.updateMany(col, filter, update).runToFuture(s)
 
     //then
     s.tick(1.second)
@@ -488,7 +512,7 @@ class MongoSingleSpec
     when(col.replaceOne(filter, employee)).thenReturn(publisher)
 
     //when
-    val f = MongoSingle.replaceOne(col, filter, employee).runToFuture(s)
+    val f = MongoOp.replaceOne(col, filter, employee).runToFuture(s)
 
     //then
     s.tick(1.second)
@@ -502,19 +526,26 @@ class MongoSingleSpec
     val filter = Filters.eq("city", "Bucarest")
     val employee = genEmployee.sample.get
     val updateResult = MongoUpdateResult.acknowledged(1L, 1L, null)
+    val delayedPub = Task(updateResult).delayResult(500.millis).toReactivePublisher(s)
     val failedPub = Task.raiseError[MongoUpdateResult](DummyException("Replace one failed")).toReactivePublisher(s)
     val successPub: Publisher[MongoUpdateResult] = Task(updateResult).toReactivePublisher(s)
     when(col.replaceOne(filter, employee, DefaultReplaceOptions))
-      .thenReturn(failedPub, successPub)
+      .thenReturn(delayedPub, failedPub, successPub)
 
     //when
-    val f = MongoSingle
-      .replaceOne(col, filter, employee, DefaultReplaceOptions, DefaultRetryStrategy)
+    val f = MongoOp
+      .replaceOne(
+        col,
+        filter,
+        employee,
+        replaceOptions = DefaultReplaceOptions,
+        retries = 3,
+        timeout = Some(150.millis))
       .runToFuture(s)
 
     //then
     s.tick(1.second)
-    verify(col, times(2)).replaceOne(filter, employee, DefaultReplaceOptions)
+    verify(col, times(3)).replaceOne(filter, employee, DefaultReplaceOptions)
     f.value.get shouldBe util.Success(UpdateResult(1L, 1L, true))
   }
 
@@ -527,7 +558,7 @@ class MongoSingleSpec
     when(col.replaceOne(filter, e)).thenReturn(publisher)
 
     //when
-    val f = MongoSingle.replaceOne(col, filter, e).runToFuture(s)
+    val f = MongoOp.replaceOne(col, filter, e).runToFuture(s)
 
     //then
     s.tick(1.second)
@@ -545,7 +576,7 @@ class MongoSingleSpec
     when(col.replaceOne(filter, e)).thenReturn(publisher)
 
     //when
-    val f = MongoSingle.replaceOne(col, filter, e).runToFuture(s)
+    val f = MongoOp.replaceOne(col, filter, e).runToFuture(s)
 
     //then
     s.tick(1.second)

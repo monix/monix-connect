@@ -74,15 +74,13 @@ class MongoSourceSpec
 
   it should "perform a filtered count with filter and options" in {
     //given
-    val retryStrategy = RetryStrategy(retries = 3)
+    val retryStrategy = RetryStrategy(attempts = 1)
     val s = TestScheduler()
     val finalCount: java.lang.Long = 15L
     val filter = Filters.lte("age", 22)
     val failedPub = Task.raiseError[java.lang.Long](DummyException("Count one failed")).toReactivePublisher(s)
-    val emptyPub = Observable.empty[java.lang.Long].toReactivePublisher(s)
-    val delayedPub = Task(finalCount).delayResult(500.millis).toReactivePublisher(s)
     val successPub = Task(finalCount).toReactivePublisher(s)
-    when(col.countDocuments(filter, DefaultCountOptions)).thenReturn(delayedPub, emptyPub, failedPub, successPub)
+    when(col.countDocuments(filter, DefaultCountOptions)).thenReturn(failedPub, successPub)
 
     //when
     val f = MongoSource
@@ -92,7 +90,7 @@ class MongoSourceSpec
     //then
     s.tick(1.second)
     whenReady(f) { nElements =>
-      verify(col, times(4)).countDocuments(filter, DefaultCountOptions)
+      verify(col, times(2)).countDocuments(filter, DefaultCountOptions)
       nElements shouldBe finalCount
     }
   }
@@ -142,16 +140,14 @@ class MongoSourceSpec
 
   it should "find one and delete with options" in {
     //given
-    val retryStrategy = RetryStrategy(retries = 3)
+    val retryStrategy = RetryStrategy(attempts = 3)
     val s = TestScheduler()
     val filter = Filters.and(Filters.eq("city", "Cracow"), Filters.gt("age", 66))
     val employee = genEmployee.sample.get
-    val delayedPub = Task(employee).delayResult(500.millis).toReactivePublisher(s)
-    val emptyPub = Observable.empty[Employee].toReactivePublisher(s)
     val failedPub = Task.raiseError[Employee](DummyException("Find one and delete, failed")).toReactivePublisher(s)
     val successPub = Task(employee).toReactivePublisher(s)
     when(col.findOneAndDelete(filter, DefaultFindOneAndDeleteOptions))
-      .thenReturn(delayedPub, emptyPub, failedPub, successPub)
+      .thenReturn(failedPub, successPub)
 
     //when
     val f = MongoSource
@@ -164,7 +160,7 @@ class MongoSourceSpec
 
     //then
     s.tick(1.second)
-    verify(col, times(4)).findOneAndDelete(filter, DefaultFindOneAndDeleteOptions)
+    verify(col, times(2)).findOneAndDelete(filter, DefaultFindOneAndDeleteOptions)
     f.value.get shouldBe util.Success(Some(employee))
   }
 
@@ -221,21 +217,19 @@ class MongoSourceSpec
 
   it should "find one and replace with options" in {
     //given
-    val retryStrategy = RetryStrategy(retries = 3)
+    val retryStrategy = RetryStrategy(attempts = 1)
     val s = TestScheduler()
     val filter = Filters.eq("city", "Cape Town")
     val e = genEmployee.sample.get
     val replacement = genEmployee.sample.get
 
     //and
-    val delayedPub = Task(e).delayResult(500.millis).toReactivePublisher(s)
-    val emptyPub = Observable.empty[Employee].toReactivePublisher(s)
     val failedPub = Task.raiseError[Employee](DummyException("Find one and replace, failed")).toReactivePublisher(s)
     val successPub = Task(e).toReactivePublisher(s)
 
     //when
     when(col.findOneAndReplace(filter, replacement, DefaultFindOneAndReplaceOptions))
-      .thenReturn(delayedPub, emptyPub, failedPub, successPub)
+      .thenReturn(failedPub, successPub)
 
     //and
     val f = MongoSource
@@ -249,7 +243,7 @@ class MongoSourceSpec
 
     //then
     s.tick(1.second)
-    verify(col, times(4)).findOneAndReplace(filter, replacement, DefaultFindOneAndReplaceOptions)
+    verify(col, times(2)).findOneAndReplace(filter, replacement, DefaultFindOneAndReplaceOptions)
     f.value.get shouldBe util.Success(Some(e))
   }
 
@@ -308,21 +302,19 @@ class MongoSourceSpec
 
   it should "find one and update with options" in {
     //given
-    val retryStrategy = RetryStrategy(retries = 3)
+    val retryStrategy = RetryStrategy(attempts = 1)
     val s = TestScheduler()
     val filter = Filters.eq("city", "Moscou")
     val e = genEmployee.sample.get
     val update = Updates.inc("age", 1)
 
     //and
-    val delayedPub = Task(e).delayResult(500.millis).toReactivePublisher(s)
-    val emptyPub = Observable.empty[Employee].toReactivePublisher(s)
     val failedPub = Task.raiseError[Employee](DummyException("Find one and update, failed")).toReactivePublisher(s)
     val successPub = Task(e).toReactivePublisher(s)
 
     //when
     when(col.findOneAndUpdate(filter, update, DefaultFindOneAndUpdateOptions))
-      .thenReturn(delayedPub, emptyPub, failedPub, successPub)
+      .thenReturn(failedPub, successPub)
 
     //and
     val f = MongoSource
@@ -336,7 +328,7 @@ class MongoSourceSpec
 
     //then
     s.tick(1.second)
-    verify(col, times(4)).findOneAndUpdate(filter, update, DefaultFindOneAndUpdateOptions)
+    verify(col, times(2)).findOneAndUpdate(filter, update, DefaultFindOneAndUpdateOptions)
     f.value.get shouldBe util.Success(Some(e))
   }
 

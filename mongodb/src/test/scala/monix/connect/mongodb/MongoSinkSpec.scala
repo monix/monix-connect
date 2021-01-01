@@ -48,19 +48,17 @@ class MongoSinkSpec
 
   s"${MongoSink}" should "retry when the underlying publisher signaled error or timeout" in {
     //given
-    val retryStrategy@RetryStrategy(retries, backoffDelay) = RetryStrategy(3, 200.millis)
+    val retryStrategy@RetryStrategy(retries, _) = RetryStrategy(3, 200.millis)
     val s = TestScheduler()
     val e1 = genEmployee.sample.get
     val e2 = genEmployee.sample.get
     val objectId = BsonObjectId.apply()
     val insertOneResult = MongoInsertOneResult.acknowledged(objectId)
-    val delayedPub = Task(insertOneResult).delayResult(500.millis).toReactivePublisher(s)
-    val emptyPub = Observable.empty[MongoInsertOneResult].toReactivePublisher(s)
     val failedPub = Task.raiseError[MongoInsertOneResult](DummyException("Insert one failed")).toReactivePublisher(s)
     val successPub = Task(MongoInsertOneResult.unacknowledged()).toReactivePublisher(s)
 
     //when
-    when(col.insertOne(e1, DefaultInsertOneOptions)).thenReturn(delayedPub, emptyPub, failedPub, successPub)
+    when(col.insertOne(e1, DefaultInsertOneOptions)).thenReturn(failedPub, failedPub, failedPub, successPub)
     when(col.insertOne(e2, DefaultInsertOneOptions)).thenReturn(failedPub, successPub)
 
     //and
@@ -76,14 +74,12 @@ class MongoSinkSpec
 
   it should "signals on error when the failures exceeded the number of retries" in {
     //given
-    val retryStrategy@RetryStrategy(retries, backoffDelay) = RetryStrategy(3, 200.millis)
+    val retryStrategy@RetryStrategy(retries, _) = RetryStrategy(3, 200.millis)
     val s = TestScheduler()
     val e1 = genEmployee.sample.get
     val ex = DummyException("Insert one failed")
-    val delayedPub = Task(MongoInsertOneResult.unacknowledged()).delayResult(500.millis).toReactivePublisher(s)
-    val emptyPub = Observable.empty[MongoInsertOneResult].toReactivePublisher(s)
     val failedPub = Task.raiseError[MongoInsertOneResult](DummyException("Insert one failed")).toReactivePublisher(s)
-    when(col.insertOne(e1, DefaultInsertOneOptions)).thenReturn(delayedPub, emptyPub, failedPub)
+    when(col.insertOne(e1, DefaultInsertOneOptions)).thenReturn(failedPub, failedPub, failedPub)
 
     //when
 

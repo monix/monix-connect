@@ -20,7 +20,9 @@ package object mongodb {
     * @tparam T the type of the publisher
     * @return a [[Task]] with an optional [[T]] or a failed one if the failures exceeded the retries.
     */
-  @InternalApi private[mongodb] def retryOnFailure[T](
+  @deprecated
+  @InternalApi
+  private[mongodb] def retryOnFailure[T](
                                                        publisher: Coeval[Publisher[T]],
                                                        retries: Int,
                                                        timeout: Option[FiniteDuration],
@@ -40,12 +42,7 @@ package object mongodb {
               case None => retry
             }
           } else Task.raiseError(ex),
-        _ match {
-          case None =>
-            if (retries > 0) retryOnFailure(publisher, retries - 1, timeout, delayAfterFailure)
-            else Task(None)
-          case some: Some[T] => Task(some)
-        }
+        element => Task.now(element)
       )
   }
 
@@ -58,25 +55,21 @@ package object mongodb {
     * @tparam T the type of the publisher
     * @return a [[Task]] with an optional [[T]] or a failed one if the failures exceeded the retries.
     */
-  @InternalApi private[mongodb] def retryOnFailure[T](publisher: => Publisher[T],
+  @InternalApi
+  private[mongodb] def retryOnFailure[T](publisher: => Publisher[T],
                                                       retryStrategy: RetryStrategy): Task[Option[T]] = {
-    require(retryStrategy.retries >= 0, "Retries per operation must be higher or equal than 0.")
+    require(retryStrategy.attempts >= 0, "Retries per operation must be higher or equal than 0.")
     Task.fromReactivePublisher(publisher)
       .redeemWith(
         ex =>
-          if (retryStrategy.retries > 0) {
-            val retry = retryOnFailure(publisher, retryStrategy.copy(retries = retryStrategy.retries -1))
+          if (retryStrategy.attempts > 0) {
+            val retry = retryOnFailure(publisher, retryStrategy.copy(attempts = retryStrategy.attempts -1))
             retryStrategy.backoffDelay match {
               case Duration.Zero => retry
               case delay => retry.delayExecution(delay)
             }
           } else Task.raiseError(ex),
-        _ match {
-          case None =>
-            if (retryStrategy.retries > 0) retryOnFailure(publisher, retryStrategy.copy(retries = retryStrategy.retries -1))
-            else Task.now(None)
-          case some: Some[T] => Task.now(some)
-        }
+        element => Task.now(element)
       )
   }
 
