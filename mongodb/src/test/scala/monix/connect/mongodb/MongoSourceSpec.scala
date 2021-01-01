@@ -20,12 +20,7 @@ package monix.connect.mongodb
 import com.mongodb.client.model.{Filters, Updates}
 import com.mongodb.reactivestreams.client.MongoCollection
 import monix.eval.Task
-import monix.connect.mongodb.domain.{
-  DefaultCountOptions,
-  DefaultFindOneAndDeleteOptions,
-  DefaultFindOneAndReplaceOptions,
-  DefaultFindOneAndUpdateOptions
-}
+import monix.connect.mongodb.domain.{DefaultCountOptions, DefaultFindOneAndDeleteOptions, DefaultFindOneAndReplaceOptions, DefaultFindOneAndUpdateOptions, RetryStrategy}
 import monix.execution.Scheduler.Implicits.global
 import monix.execution.exceptions.DummyException
 import monix.execution.schedulers.TestScheduler
@@ -79,6 +74,7 @@ class MongoSourceSpec
 
   it should "perform a filtered count with filter and options" in {
     //given
+    val retryStrategy = RetryStrategy(retries = 3)
     val s = TestScheduler()
     val finalCount: java.lang.Long = 15L
     val filter = Filters.lte("age", 22)
@@ -90,7 +86,7 @@ class MongoSourceSpec
 
     //when
     val f = MongoSource
-      .count(col, filter, countOptions = DefaultCountOptions, retries = 3, timeout = Some(150.millis))
+      .count(col, filter, countOptions = DefaultCountOptions, retryStrategy)
       .runToFuture(s)
 
     //then
@@ -146,6 +142,7 @@ class MongoSourceSpec
 
   it should "find one and delete with options" in {
     //given
+    val retryStrategy = RetryStrategy(retries = 3)
     val s = TestScheduler()
     val filter = Filters.and(Filters.eq("city", "Cracow"), Filters.gt("age", 66))
     val employee = genEmployee.sample.get
@@ -162,8 +159,7 @@ class MongoSourceSpec
         col,
         filter,
         findOneAndDeleteOptions = DefaultFindOneAndDeleteOptions,
-        retries = 3,
-        timeout = Some(150.millis))
+        retryStrategy)
       .runToFuture(s)
 
     //then
@@ -225,26 +221,30 @@ class MongoSourceSpec
 
   it should "find one and replace with options" in {
     //given
+    val retryStrategy = RetryStrategy(retries = 3)
     val s = TestScheduler()
     val filter = Filters.eq("city", "Cape Town")
     val e = genEmployee.sample.get
     val replacement = genEmployee.sample.get
+
+    //and
     val delayedPub = Task(e).delayResult(500.millis).toReactivePublisher(s)
     val emptyPub = Observable.empty[Employee].toReactivePublisher(s)
     val failedPub = Task.raiseError[Employee](DummyException("Find one and replace, failed")).toReactivePublisher(s)
     val successPub = Task(e).toReactivePublisher(s)
+
+    //when
     when(col.findOneAndReplace(filter, replacement, DefaultFindOneAndReplaceOptions))
       .thenReturn(delayedPub, emptyPub, failedPub, successPub)
 
-    //when
+    //and
     val f = MongoSource
       .findOneAndReplace(
         col,
         filter,
         replacement,
         findOneAndReplaceOptions = DefaultFindOneAndReplaceOptions,
-        retries = 3,
-        timeout = Some(150.millis))
+        retryStrategy)
       .runToFuture(s)
 
     //then
@@ -308,26 +308,30 @@ class MongoSourceSpec
 
   it should "find one and update with options" in {
     //given
+    val retryStrategy = RetryStrategy(retries = 3)
     val s = TestScheduler()
     val filter = Filters.eq("city", "Moscou")
     val e = genEmployee.sample.get
     val update = Updates.inc("age", 1)
+
+    //and
     val delayedPub = Task(e).delayResult(500.millis).toReactivePublisher(s)
     val emptyPub = Observable.empty[Employee].toReactivePublisher(s)
     val failedPub = Task.raiseError[Employee](DummyException("Find one and update, failed")).toReactivePublisher(s)
     val successPub = Task(e).toReactivePublisher(s)
+
+    //when
     when(col.findOneAndUpdate(filter, update, DefaultFindOneAndUpdateOptions))
       .thenReturn(delayedPub, emptyPub, failedPub, successPub)
 
-    //when
+    //and
     val f = MongoSource
       .findOneAndUpdate(
         col,
         filter,
         update,
         findOneAndUpdateOptions = DefaultFindOneAndUpdateOptions,
-        retries = 3,
-        timeout = Some(150.millis))
+        retryStrategy)
       .runToFuture(s)
 
     //then

@@ -1,35 +1,18 @@
 package monix.connect.mongodb
 
-
-import com.mongodb.client.model.{DeleteOptions, InsertManyOptions, InsertOneOptions, ReplaceOptions, UpdateOptions}
-import monix.connect.mongodb.domain.{
-  DefaultDeleteOptions,
-  DefaultDeleteResult,
-  DefaultInsertManyOptions,
-  DefaultInsertManyResult,
-  DefaultInsertOneOptions,
-  DefaultInsertOneResult,
-  DefaultReplaceOptions,
-  DefaultUpdateOptions,
-  DefaultUpdateResult,
-  DeleteResult,
-  InsertManyResult,
-  InsertOneResult,
-  UpdateResult
-}
+import com.mongodb.client.model._
 import com.mongodb.reactivestreams.client.MongoCollection
-import monix.eval.{Coeval, Task}
+import monix.connect.mongodb.domain.{DefaultRetryStrategy, DefaultDeleteOptions, DefaultDeleteResult, DefaultInsertManyOptions, DefaultInsertManyResult, DefaultInsertOneOptions, DefaultInsertOneResult, DefaultReplaceOptions, DefaultUpdateOptions, DefaultUpdateResult, DeleteResult, InsertManyResult, InsertOneResult, RetryStrategy, UpdateResult}
+import monix.eval.Task
 import org.bson.conversions.Bson
 
-import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 
 /**
   * Provides an idiomatic api for performing single operations against MongoDb.
   * It only exposes methods for appending and modifying (delete, insert, replace and update).
   */
-@deprecated("moved to `MongoSingle`", "0.5.3")
-object MongoOp {
+object MongoSingle {
 
   /**
     * Removes at most one document from the collection that matches the given filter.  If no documents match, the collection is not
@@ -56,11 +39,7 @@ object MongoOp {
     *               @see [[com.mongodb.client.model.Filters]]
     * @param deleteOptions the options to apply to the delete operation, it will use default ones in case
     *                      it is not passed by the user.
-    * @param retries the number of times the operation will be retried in case of unexpected failure,
-    *                being zero retries by default.
-    * @param timeout expected timeout that the operation is expected to be executed or else return a failure.
-    * @param delayAfterFailure the delay set after the execution of a single operation failed,
-    *                          by default no delay is applied.
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
     * @tparam Doc the type of the collection
     * @return a [[Task]] with an optional [[DeleteResult]], being by default [[DefaultDeleteResult]],
     *         or a failed one with [[com.mongodb.MongoException]].
@@ -69,10 +48,8 @@ object MongoOp {
     collection: MongoCollection[Doc],
     filter: Bson,
     deleteOptions: DeleteOptions = DefaultDeleteOptions,
-    retries: Int = 0,
-    timeout: Option[FiniteDuration] = Option.empty,
-    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[DeleteResult] =
-    retryOnFailure(Coeval(collection.deleteOne(filter, deleteOptions)), retries, timeout, delayAfterFailure)
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[DeleteResult] =
+    retryOnFailure(collection.deleteOne(filter, deleteOptions), retryStrategy)
       .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultDeleteResult))
 
   /**
@@ -99,11 +76,7 @@ object MongoOp {
     *               @see [[com.mongodb.client.model.Filters]]
     * @param deleteOptions the options to apply to the delete operation, it will use default ones in case
     *                      it is not passed by the user.
-    * @param retries the number of times the operation will be retried in case of unexpected failure,
-    *                being zero retries by default.
-    * @param timeout expected timeout that the operation is expected to be executed or else return a failure.
-    * @param delayAfterFailure the delay set after the execution of a single operation failed,
-    *                          by default no delay is applied.
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
     * @tparam Doc the type of the collection
     * @return a [[Task]] with an optional of [[DeleteResult]], being by default [[DefaultDeleteResult]],
     *         or a failed one with [[com.mongodb.MongoException]].
@@ -112,10 +85,8 @@ object MongoOp {
     collection: MongoCollection[Doc],
     filter: Bson,
     deleteOptions: DeleteOptions = DefaultDeleteOptions,
-    retries: Int = 0,
-    timeout: Option[FiniteDuration] = Option.empty,
-    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[DeleteResult] =
-    retryOnFailure(Coeval(collection.deleteMany(filter, deleteOptions)), retries, timeout, delayAfterFailure)
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[DeleteResult] =
+    retryOnFailure(collection.deleteMany(filter, deleteOptions), retryStrategy)
       .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultDeleteResult))
 
   /**
@@ -141,11 +112,7 @@ object MongoOp {
     * @param collection the abstraction to work with the determined mongodb collection
     * @param document the document to be inserted
     * @param insertOneOptions the options to apply to the insert operation
-    * @param retries the number of times the operation will be retried in case of unexpected failure,
-    *                being zero retries by default
-    * @param timeout expected timeout that the operation is expected to be executed or else return a failure
-    * @param delayAfterFailure the delay set after the execution of a single operation failed,
-    *                          by default no delay is applied.
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
     * @tparam Doc the type of the collection
     * @return a [[Task]] with the [[InsertOneResult]] that will contain the inserted id in case
     *         the operation finished successfully, being by default [[DefaultInsertOneResult]],
@@ -155,10 +122,8 @@ object MongoOp {
     collection: MongoCollection[Doc],
     document: Doc,
     insertOneOptions: InsertOneOptions = DefaultInsertOneOptions,
-    retries: Int = 0,
-    timeout: Option[FiniteDuration] = Option.empty,
-    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[InsertOneResult] =
-    retryOnFailure(Coeval(collection.insertOne(document, insertOneOptions)), retries, timeout, delayAfterFailure)
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[InsertOneResult] =
+    retryOnFailure(collection.insertOne(document, insertOneOptions), retryStrategy)
       .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultInsertOneResult))
 
   /**
@@ -183,11 +148,7 @@ object MongoOp {
     * @param collection the abstraction to work with the determined mongodb collection
     * @param docs the documents to insert
     * @param insertManyOptions the options to apply to the insert operation
-    * @param retries the number of times the operation will be retried in case of unexpected failure,
-    *                being zero retries by default
-    * @param timeout expected timeout that the operation is expected to be executed or else return a failure
-    * @param delayAfterFailure the delay set after the execution of a single operation failed,
-    *                          by default no delay is applied.
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
     * @tparam Doc the type of the collection
     * @return a [[Task]] with the [[InsertManyResult]] that will contain the successful inserted ids,
     *         being by default [[DefaultInsertManyResult]],
@@ -197,10 +158,8 @@ object MongoOp {
     collection: MongoCollection[Doc],
     docs: Seq[Doc],
     insertManyOptions: InsertManyOptions = DefaultInsertManyOptions,
-    retries: Int = 0,
-    timeout: Option[FiniteDuration] = Option.empty,
-    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[InsertManyResult] =
-    retryOnFailure(Coeval(collection.insertMany(docs.asJava, insertManyOptions)), retries, timeout, delayAfterFailure)
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[InsertManyResult] =
+    retryOnFailure(collection.insertMany(docs.asJava, insertManyOptions), retryStrategy)
       .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultInsertManyResult))
 
   /**
@@ -227,11 +186,7 @@ object MongoOp {
     *               @see [[com.mongodb.client.model.Filters]]
     * @param replacement the replacement document
     * @param replaceOptions the options to apply to the replace operation
-    * @param retries the number of times the operation will be retried in case of unexpected failure,
-    *                being zero retries by default
-    * @param timeout expected timeout that the operation is expected to be executed or else return a failure
-    * @param delayAfterFailure the delay set after the execution of a single operation failed,
-    *                          by default no delay is applied.
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
     * @tparam Doc the type of the collection
     * @return a [[Task]] with a single [[UpdateResult]], being by default [[DefaultUpdateResult]],
     *         or a failed one.
@@ -241,14 +196,8 @@ object MongoOp {
     filter: Bson,
     replacement: Doc,
     replaceOptions: ReplaceOptions = DefaultReplaceOptions,
-    retries: Int = 0,
-    timeout: Option[FiniteDuration] = Option.empty,
-    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[UpdateResult] =
-    retryOnFailure(
-      Coeval(collection.replaceOne(filter, replacement, replaceOptions)),
-      retries,
-      timeout,
-      delayAfterFailure)
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[UpdateResult] =
+    retryOnFailure(collection.replaceOne(filter, replacement, replaceOptions), retryStrategy)
       .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultUpdateResult))
 
   /**
@@ -279,11 +228,7 @@ object MongoOp {
     *               the update to apply must include only update operators
     *               @see [[com.mongodb.client.model.Updates]]
     * @param updateOptions the options to apply to the update operation
-    * @param retries the number of times the operation will be retried in case of unexpected failure,
-    *                being zero retries by default.
-    * @param timeout expected timeout that the operation is expected to be executed or else return a failure.
-    * @param delayAfterFailure the delay set after the execution of a single operation failed,
-    *                          by default no delay is applied.
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
     * @tparam Doc the type of the collection
     * @return a [[Task]] with an optional [[UpdateResult]], being by default [[DefaultUpdateResult]],
     *         or a failed one.
@@ -293,10 +238,8 @@ object MongoOp {
     filter: Bson,
     update: Bson,
     updateOptions: UpdateOptions = DefaultUpdateOptions,
-    retries: Int = 0,
-    timeout: Option[FiniteDuration] = Option.empty,
-    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[UpdateResult] =
-    retryOnFailure(Coeval(collection.updateOne(filter, update, updateOptions)), retries, timeout, delayAfterFailure)
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[UpdateResult] =
+    retryOnFailure(collection.updateOne(filter, update, updateOptions), retryStrategy)
       .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultUpdateResult))
 
   /**
@@ -305,7 +248,9 @@ object MongoOp {
     * @param collection the abstraction to work with the determined mongodb Collection.
     * @param filter a document describing the query filter, which may not be null.
     *               @see [[com.mongodb.client.model.Filters]]
-    * @param update
+    * @param update a document describing the update, which may not be null,
+    *               the update to apply must include only update operators
+    *               @see [[com.mongodb.client.model.Updates]]
     * @tparam Doc the type of the collection
     * @return a [[Task]] with an optional [[UpdateResult]], being by default [[DefaultUpdateResult]],
     *         or a failed one.
@@ -325,10 +270,7 @@ object MongoOp {
     *               the update to apply must include only update operators
     *               @see [[com.mongodb.client.model.Updates]]
     * @param updateOptions the options to apply to the update operation
-    * @param retries the number of times the operation will be retried in case of unexpected failure,
-    *                being zero retries by default.
-    * @param timeout expected timeout that the operation is expected to be executed or else return a failure.
-    * @param delayAfterFailure the delay set after the execution of a single operation failed.
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
     * @tparam Doc the type of the collection
     * @return a [[Task]] with an optional [[UpdateResult]] being by default [[DefaultUpdateResult]],
     *         or a failed one.
@@ -338,10 +280,8 @@ object MongoOp {
     filter: Bson,
     update: Bson,
     updateOptions: UpdateOptions = DefaultUpdateOptions,
-    retries: Int = 0,
-    timeout: Option[FiniteDuration] = Option.empty,
-    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[UpdateResult] = {
-    retryOnFailure(Coeval(collection.updateMany(filter, update, updateOptions)), retries, timeout, delayAfterFailure)
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[UpdateResult] = {
+    retryOnFailure(collection.updateMany(filter, update, updateOptions), retryStrategy)
       .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultUpdateResult))
   }
 

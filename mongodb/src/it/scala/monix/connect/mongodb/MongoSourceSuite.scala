@@ -34,40 +34,45 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
   }
 
   s"${MongoSource}" should  "aggregate with a match aggregation" in {
+    //given
     val oldEmployees = genEmployeesWith(age = Some(55)).sample.get
     val youngEmployees = genEmployeesWith(age = Some(22)).sample.get
     MongoOp.insertMany(col, youngEmployees ++ oldEmployees).runSyncUnsafe()
 
+    //when
     val aggregation =  Aggregates.`match`(Filters.gt("age", 35))
-
     val aggregated: Seq[Employee] = MongoSource.aggregate[Employee, Employee](col, Seq(aggregation), classOf[Employee]).toListL.runSyncUnsafe()
 
+    //then
     aggregated.size shouldBe oldEmployees.size
   }
 
   it should "aggregate with group by" in {
+    //given
     val employees = Gen.nonEmptyListOf(genEmployee).sample.get
     MongoOp.insertMany(col, employees).runSyncUnsafe()
 
+    //when
     val aggregation =  Aggregates.group("group", Accumulators.avg("average", "$age"))
-
     val aggregated: List[Document] = MongoSource.aggregate[Employee](col, Seq(aggregation)).toListL.runSyncUnsafe()
 
+    //then
     aggregated.head.getDouble("average") shouldBe (employees.map(_.age).sum.toDouble / employees.size)
   }
 
   it should "pipes multiple aggregations" in {
+    //given
     val e1 = genEmployeeWith(age = Some(55)).sample.get
     val e2 = genEmployeeWith(age = Some(65)).sample.get
     val e3 = genEmployeeWith(age = Some(22)).sample.get
-
     MongoOp.insertMany(col, List(e1, e2, e3)).runSyncUnsafe()
 
+    //when
     val matchAgg = Aggregates.`match`(Filters.gt("age", 35))
     val groupAgg = Aggregates.group("group", Accumulators.avg("average", "$age"))
-
     val aggregated = MongoSource.aggregate[Employee](col, Seq(matchAgg, groupAgg)).toListL.runSyncUnsafe()
 
+    //then
     aggregated.head.getDouble("average") shouldBe 60
   }
 
@@ -117,7 +122,6 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
 
   it should  "count with countOptions" in {
     //given
-    val nationality = "Da"
     val senegalEmployees = genEmployeesWith(city = Some("Dakar")).sample.get
     val employees =  Gen.listOfN(10, genEmployee).map(l => l.++(senegalEmployees)).sample.get
     val countOptions = new CountOptions().limit(senegalEmployees.size -1)
@@ -146,6 +150,7 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
   }
 
   it should "findAll elements in a collection" in {
+    //given
     val employees = Gen.nonEmptyListOf(genEmployee).sample.get
     MongoOp.insertMany(col, employees).runSyncUnsafe()
 
@@ -157,6 +162,7 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
   }
 
   it should  "find all filtered elements" in {
+    //given
     val miamiEmployees = genEmployeesWith(city = Some("San Francisco")).sample.get
     val employees = Gen.nonEmptyListOf(genEmployee).map(_ ++ miamiEmployees).sample.get
     MongoOp.insertMany(col, employees).runSyncUnsafe()

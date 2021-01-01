@@ -22,7 +22,7 @@ import monix.eval.Task
 import monix.execution.exceptions.DummyException
 import monix.execution.schedulers.TestScheduler
 import monix.reactive.Observable
-import monix.connect.mongodb.domain.DefaultInsertOneOptions
+import monix.connect.mongodb.domain.{DefaultInsertOneOptions, RetryStrategy}
 import org.mockito.IdiomaticMockito
 import org.mockito.MockitoSugar.{times, verify, when}
 import org.scalatest.BeforeAndAfterEach
@@ -48,6 +48,7 @@ class MongoSinkSpec
 
   s"${MongoSink}" should "retry when the underlying publisher signaled error or timeout" in {
     //given
+    val retryStrategy@RetryStrategy(retries, backoffDelay) = RetryStrategy(3, 200.millis)
     val s = TestScheduler()
     val e1 = genEmployee.sample.get
     val e2 = genEmployee.sample.get
@@ -57,22 +58,25 @@ class MongoSinkSpec
     val emptyPub = Observable.empty[MongoInsertOneResult].toReactivePublisher(s)
     val failedPub = Task.raiseError[MongoInsertOneResult](DummyException("Insert one failed")).toReactivePublisher(s)
     val successPub = Task(MongoInsertOneResult.unacknowledged()).toReactivePublisher(s)
+
+    //when
     when(col.insertOne(e1, DefaultInsertOneOptions)).thenReturn(delayedPub, emptyPub, failedPub, successPub)
     when(col.insertOne(e2, DefaultInsertOneOptions)).thenReturn(failedPub, successPub)
 
-    //when
-    val sink = MongoSink.insertOne(col, DefaultInsertOneOptions, 3, Some(200.millis))
+    //and
+    val sink = MongoSink.insertOne(col, DefaultInsertOneOptions, retryStrategy)
     val f = Observable.from(List(e1, e2)).consumeWith(sink).runToFuture(s)
 
     //then
     s.tick(1.second)
     f.value.get shouldBe util.Success(())
-    verify(col, times(4)).insertOne(e1, DefaultInsertOneOptions)
+    verify(col, times(retries + 1)).insertOne(e1, DefaultInsertOneOptions)
     verify(col, times(2)).insertOne(e2, DefaultInsertOneOptions)
   }
 
   it should "signals on error when the failures exceeded the number of retries" in {
     //given
+    val retryStrategy@RetryStrategy(retries, backoffDelay) = RetryStrategy(3, 200.millis)
     val s = TestScheduler()
     val e1 = genEmployee.sample.get
     val ex = DummyException("Insert one failed")
@@ -83,13 +87,13 @@ class MongoSinkSpec
 
     //when
 
-    val sink = MongoSink.insertOne(col, DefaultInsertOneOptions, 3, Some(200.millis))
+    val sink = MongoSink.insertOne(col, DefaultInsertOneOptions, retryStrategy)
     val f = Observable.now(e1).consumeWith(sink).runToFuture(s)
 
     //then
     s.tick(1.second)
     f.value.get shouldBe util.Failure(ex)
-    verify(col, times(4)).insertOne(e1, DefaultInsertOneOptions)
+    verify(col, times(retries + 1)).insertOne(e1, DefaultInsertOneOptions)
   }
 
 }
