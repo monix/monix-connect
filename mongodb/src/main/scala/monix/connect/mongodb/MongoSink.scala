@@ -17,27 +17,20 @@
 
 package monix.connect.mongodb
 
-import com.mongodb.client.model.{DeleteOptions, InsertManyOptions, InsertOneOptions, ReplaceOptions, UpdateOptions}
-import monix.execution.{Ack, Callback, Scheduler}
-import monix.execution.cancelables.AssignableCancelable
-import monix.reactive.Consumer
-import monix.reactive.observers.Subscriber
+import com.mongodb.client.model._
 import com.mongodb.reactivestreams.client.MongoCollection
 import monix.eval.Coeval
+import monix.execution.cancelables.AssignableCancelable
 import monix.execution.internal.InternalApi
-import monix.connect.mongodb.domain.{
-  DefaultDeleteOptions,
-  DefaultInsertManyOptions,
-  DefaultInsertOneOptions,
-  DefaultReplaceOptions,
-  DefaultUpdateOptions
-}
+import monix.execution.{Ack, Callback, Scheduler}
+import monix.reactive.Consumer
+import monix.reactive.observers.Subscriber
 import org.bson.conversions.Bson
 import org.reactivestreams.Publisher
 
-import scala.jdk.CollectionConverters._
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
+import scala.jdk.CollectionConverters._
 
 /**
   * A pre-built Monix [[Consumer]] implementation representing a Sink that expects events
