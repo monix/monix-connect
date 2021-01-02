@@ -32,7 +32,7 @@ class MongoDbSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     MongoDb.dropCollection(db, collectionName).runSyncUnsafe()
   }
 
-  s"${MongoDb}" should "list database names" in {
+  s"$MongoDb" should "list database names" in {
     //given
     val dbNames = Gen.listOfN(5, genNonEmptyStr).sample.get
     val existedBefore = MongoDb.listDatabases(client).filter(dbNames.contains(_)).toListL.runSyncUnsafe().nonEmpty

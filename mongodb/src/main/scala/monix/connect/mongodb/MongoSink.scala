@@ -23,7 +23,6 @@ import monix.execution.cancelables.AssignableCancelable
 import monix.reactive.Consumer
 import monix.reactive.observers.Subscriber
 import com.mongodb.reactivestreams.client.MongoCollection
-import monix.eval.Coeval
 import monix.execution.internal.InternalApi
 import monix.connect.mongodb.domain.{DefaultDeleteOptions, DefaultInsertManyOptions, DefaultInsertOneOptions, DefaultReplaceOptions, DefaultRetryStrategy, DefaultUpdateOptions, RetryStrategy}
 import org.bson.conversions.Bson
@@ -31,7 +30,6 @@ import org.reactivestreams.Publisher
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.Future
-import scala.concurrent.duration.{Duration, FiniteDuration}
 
 /**
   * A pre-built Monix [[Consumer]] implementation representing a Sink that expects events
@@ -180,7 +178,7 @@ object MongoSink {
     collection: MongoCollection[Doc],
     replaceOptions: ReplaceOptions = DefaultReplaceOptions,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[(Bson, Doc), Unit] = {
-    val replaceOp = (t: Tuple2[Bson, Doc]) => collection.replaceOne(t._1, t._2, replaceOptions)
+    val replaceOp = (t: (Bson, Doc)) => collection.replaceOne(t._1, t._2, replaceOptions)
     new MongoSink[(Bson, Doc)](replaceOp, retryStrategy)
   }
 
@@ -201,7 +199,7 @@ object MongoSink {
     collection: MongoCollection[Doc],
     updateOptions: UpdateOptions = DefaultUpdateOptions,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[(Bson, Bson), Unit] = {
-    val updateOp = (t: Tuple2[Bson, Bson]) => collection.updateOne(t._1, t._2, updateOptions)
+    val updateOp = (t: (Bson, Bson)) => collection.updateOne(t._1, t._2, updateOptions)
     new MongoSink[(Bson, Bson)](updateOp, retryStrategy)
   }
 
@@ -222,7 +220,7 @@ object MongoSink {
     collection: MongoCollection[Doc],
     updateOptions: UpdateOptions = DefaultUpdateOptions,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[(Bson, Bson), Unit] = {
-    val updateOp = (t: Tuple2[Bson, Bson]) => collection.updateMany(t._1, t._2, updateOptions)
+    val updateOp = (t: (Bson, Bson)) => collection.updateMany(t._1, t._2, updateOptions)
     new MongoSink[(Bson, Bson)](updateOp, retryStrategy)
   }
 

@@ -17,8 +17,20 @@
 
 package monix.connect.mongodb
 
-import com.mongodb.client.model.{CountOptions, FindOneAndDeleteOptions, FindOneAndReplaceOptions, FindOneAndUpdateOptions}
-import monix.connect.mongodb.domain.{DefaultRetryStrategy, DefaultCountOptions, DefaultFindOneAndDeleteOptions, DefaultFindOneAndReplaceOptions, DefaultFindOneAndUpdateOptions, RetryStrategy}
+import com.mongodb.client.model.{
+  CountOptions,
+  FindOneAndDeleteOptions,
+  FindOneAndReplaceOptions,
+  FindOneAndUpdateOptions
+}
+import monix.connect.mongodb.domain.{
+  DefaultCountOptions,
+  DefaultFindOneAndDeleteOptions,
+  DefaultFindOneAndReplaceOptions,
+  DefaultFindOneAndUpdateOptions,
+  DefaultRetryStrategy,
+  RetryStrategy
+}
 import com.mongodb.reactivestreams.client.MongoCollection
 import monix.eval.{Coeval, Task}
 import monix.reactive.Observable
@@ -44,7 +56,7 @@ object MongoSource {
     * @param clazz the class to decode each document into
     * @tparam A the type that this collection will decode documents from
     * @tparam B the returned type result of the aggregation
-    * @return an [[Observable]] of type [[B]], containing the result of the aggregation operation
+    * @return an [[Observable]] of type [[B]], containing the result of the aggregation pipeline
     */
   def aggregate[A, B](collection: MongoCollection[A], pipeline: Seq[Bson], clazz: Class[B]): Observable[B] =
     Observable.fromReactivePublisher(collection.aggregate(pipeline.asJava, clazz))
@@ -55,7 +67,7 @@ object MongoSource {
     * @param collection the abstraction to work with a determined MongoDB Collection.
     * @param pipeline the aggregate pipeline.
     * @tparam Doc the type that this collection will decode documents from.
-    * @return
+    * @return an [[Observable]] of type [[Document]], containing the result of the aggregation pipeline
     */
   def aggregate[Doc](collection: MongoCollection[Doc], pipeline: Seq[Bson]): Observable[Document] =
     Observable.fromReactivePublisher(collection.aggregate(pipeline.asJava, classOf[Document]))
@@ -94,7 +106,8 @@ object MongoSource {
     *
     * @param collection the abstraction to work with the determined mongodb collection
     * @tparam Doc the type of the collection
-    * @return a [[Task]] with a long indicating the number of documents, the result can be -1 if the underlying publisher
+    * @return a [[Task]] with a long indicating the number of documents
+    *         the result will be -1 if the underlying publisher
     *         did not emitted any documents, or a failed one when emitted an error.
     */
   def countAll[Doc](collection: MongoCollection[Doc]): Task[Long] =
@@ -106,7 +119,8 @@ object MongoSource {
     * @param collection the abstraction to work with the determined mongodb collection
     * @tparam Doc the type of the collection
     * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
-    * @return a [[Task]] with a long indicating the number of documents, the result can be -1 if the underlying publisher
+    * @return a [[Task]] with a long indicating the number of documents
+    *         the result will be -1 if the underlying publisher
     *         did not emitted any documents, or a failed one when emitted an error.
     */
   def countAll[Doc](collection: MongoCollection[Doc], retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[Long] =
@@ -119,7 +133,8 @@ object MongoSource {
     * @param filter a document describing the query filter
     *               @see [[com.mongodb.client.model.Filters]]
     * @tparam Doc the type of the collection
-    * @return a [[Task]] with a long indicating the number of documents, the result can be -1 if the underlying publisher
+    * @return a [[Task]] with a long indicating the number of documents
+    *         the result will be -1 if the underlying publisher
     *         did not emitted any documents, or a failed one when emitted an error.
     */
   def count[Doc](collection: MongoCollection[Doc], filter: Bson): Task[Long] =
@@ -138,11 +153,12 @@ object MongoSource {
     *         did not emitted any documents, or a failed one when emitted an error.
     */
   def count[Doc](
-                  collection: MongoCollection[Doc],
-                  filter: Bson,
-                  countOptions: CountOptions = DefaultCountOptions,
-                  retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[Long] =
-    retryOnFailure(collection.countDocuments(filter, countOptions), retryStrategy).map(_.map(_.longValue).getOrElse(-1L))
+    collection: MongoCollection[Doc],
+    filter: Bson,
+    countOptions: CountOptions = DefaultCountOptions,
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[Long] =
+    retryOnFailure(collection.countDocuments(filter, countOptions), retryStrategy)
+      .map(_.map(_.longValue).getOrElse(-1L))
 
   /**
     * Finds all documents in the collection.
@@ -192,10 +208,10 @@ object MongoSource {
     *         if no documents matched the query filter it returns an empty option.
     */
   def findOneAndDelete[Doc](
-                             collection: MongoCollection[Doc],
-                             filter: Bson,
-                             findOneAndDeleteOptions: FindOneAndDeleteOptions = DefaultFindOneAndDeleteOptions,
-                             retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[Option[Doc]] =
+    collection: MongoCollection[Doc],
+    filter: Bson,
+    findOneAndDeleteOptions: FindOneAndDeleteOptions = DefaultFindOneAndDeleteOptions,
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[Option[Doc]] =
     retryOnFailure(collection.findOneAndDelete(filter, findOneAndDeleteOptions), retryStrategy)
 
   /**
@@ -226,11 +242,11 @@ object MongoSource {
     *         If no documents matched the query filter, then an empty option will be returned.
     */
   def findOneAndReplace[Doc](
-                              collection: MongoCollection[Doc],
-                              filter: Bson,
-                              replacement: Doc,
-                              findOneAndReplaceOptions: FindOneAndReplaceOptions = DefaultFindOneAndReplaceOptions,
-                              retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[Option[Doc]] =
+    collection: MongoCollection[Doc],
+    filter: Bson,
+    replacement: Doc,
+    findOneAndReplaceOptions: FindOneAndReplaceOptions = DefaultFindOneAndReplaceOptions,
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[Option[Doc]] =
     retryOnFailure(collection.findOneAndReplace(filter, replacement, findOneAndReplaceOptions), retryStrategy)
 
   /**
@@ -263,11 +279,11 @@ object MongoSource {
     *         If no documents matched the query filter, then an empty option will be returned.
     */
   def findOneAndUpdate[Doc](
-                             collection: MongoCollection[Doc],
-                             filter: Bson,
-                             update: Bson,
-                             findOneAndUpdateOptions: FindOneAndUpdateOptions = DefaultFindOneAndUpdateOptions,
-                             retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[Option[Doc]] =
+    collection: MongoCollection[Doc],
+    filter: Bson,
+    update: Bson,
+    findOneAndUpdateOptions: FindOneAndUpdateOptions = DefaultFindOneAndUpdateOptions,
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[Option[Doc]] =
     retryOnFailure(collection.findOneAndUpdate(filter, update, findOneAndUpdateOptions), retryStrategy)
 
 }

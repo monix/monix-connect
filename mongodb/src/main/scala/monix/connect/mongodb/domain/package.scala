@@ -51,11 +51,12 @@ package object domain {
     UpdateResult(matchedCount = 0L, modifiedCount = 0L, wasAcknowledged = false)
 
   /**
-    * A retry strategy is defined by the amount of retries and backoff delay.
+    * A retry strategy is defined by the amount of retries and backoff delay per operation.
     *
-    * @param attempts the number of times that an operation can be retried before actually returning a failed [[Task]].
-    *        it must be higher or equal than 0.
-    * @param backoffDelay delay after failure for the execution of a single [[DynamoDbOp]].
+    * @param attempts the number of times that an operation can be
+    *                 retried before actually returning a failed task.
+    *                 it must be higher or equal than 0.
+    * @param backoffDelay delay after failure for the execution of a single mongodb operation.
     */
   case class RetryStrategy(attempts: Int = 0, backoffDelay: FiniteDuration = Duration.Zero)
   final val DefaultRetryStrategy = RetryStrategy(1, Duration.Zero)

@@ -32,23 +32,9 @@ class MongoSingleSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     MongoDb.dropCollection(db, collectionName).runSyncUnsafe()
   }
 
-  s"${MongoSingle}" should "delete one single element by filtering" in {
-    //given
-    val exampleName = "deleteOneExample"
-    val employees = genEmployeesWith(name = Some(exampleName)).sample.get
-    MongoSingle.insertMany(col, employees).runSyncUnsafe()
 
-    //when
-    val r = MongoSingle.deleteOne(col, docNameFilter(exampleName)).runSyncUnsafe()
 
-    //then
-    val finalElements = MongoSource.count(col, docNameFilter(exampleName)).runSyncUnsafe()
-    r.deleteCount shouldBe 1L
-    r.wasAcknowledged shouldBe true
-    finalElements shouldBe employees.size - 1
-  }
-
-  it should "delete one single element when it does not exists" in {
+  it should "delete one single document when it does not exists" in {
     //given
     val filter = Filters.eq("name", "deleteWhenNoExists")
 
@@ -62,7 +48,7 @@ class MongoSingleSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     finalElements shouldBe 0
   }
 
-  it should "delete one single element with delete options" in {
+  it should "delete one single document with delete options" in {
     //given
     val uppercaseNat = "Japanese"
     val lowercaseNat = "japanese"
@@ -83,7 +69,7 @@ class MongoSingleSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     nUppercaseNat shouldBe 0L
   }
 
-  it should "delete many elements by filter" in { //todo
+  it should "delete many documents by filter" in {
     //given
     val exampleName = "deleteManyExample"
     val employees = genEmployeesWith(name = Some(exampleName)).sample.get
@@ -99,7 +85,21 @@ class MongoSingleSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     finalElements shouldBe 0L
   }
 
-  s"${MongoSingle}.insertOne"  should "insert one single element" in {
+  it should "delete 0 documents when delete filter didn't find matches" in {
+    //given
+    val initialElements = MongoSource.countAll(col).runSyncUnsafe()
+
+    //when
+    val r = MongoSingle.deleteMany(col, Filters.eq("name", "exampleName")).runSyncUnsafe()
+
+    //then
+    val finalElements = MongoSource.countAll(col).runSyncUnsafe()
+    r.deleteCount shouldBe 0
+    r.wasAcknowledged shouldBe true
+    finalElements shouldBe initialElements
+  }
+
+  it should "insert one single document" in {
     //given
     val e = genEmployee.sample.get
 
@@ -114,7 +114,7 @@ class MongoSingleSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     MongoSource.findAll(col).headL.runSyncUnsafe() shouldBe e
   }
 
-  it should "insert many elements" in {
+  it should "insert many documents" in {
     //given
     val nationality = "Vancouver"
     val employees = genEmployeesWith(city = Some(nationality)).sample.get
@@ -131,7 +131,7 @@ class MongoSingleSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     elements shouldBe employees
   }
 
-  it should "replace one single element" in {
+  it should "replace one single document" in {
     //given
     val employeeName = "Humberto"
     val e = genEmployeeWith(name = Option(employeeName)).sample.get
@@ -151,7 +151,22 @@ class MongoSingleSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     updated.age shouldBe e.age + 1
   }
 
-  it should "update one single element" in {
+  it should "not replace any document when filter didn't find matches" in {
+    //given
+    val employeeName = "John"
+    val employee = genEmployeeWith(name = Option(employeeName)).sample.get
+    val filter: Bson = Filters.eq("name", employeeName) //it does not exist
+
+    //when
+    val r = MongoSingle.replaceOne(col, filter, employee.copy(age = employee.age + 1)).runSyncUnsafe()
+
+    //then
+    r.matchedCount shouldBe 0L
+    r.modifiedCount shouldBe 0L
+    r.wasAcknowledged shouldBe true
+  }
+
+  it should "update one single document" in {
     //given
     val cambridge = "Cambridge"
     val oxford = "Oxford"
@@ -171,7 +186,7 @@ class MongoSingleSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     updateResult.wasAcknowledged shouldBe true
   }
 
-  it should  "update one single element list" in {
+  it should "update (push) to the list of a single document" in {
     //given
     val employee = genEmployeeWith(city = Some("Galway"), activities = List("Cricket")).sample.get
     MongoSingle.insertOne(col, employee).runSyncUnsafe()
@@ -187,6 +202,21 @@ class MongoSingleSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     updateResult.matchedCount shouldBe 1
     updateResult.modifiedCount shouldBe 1
     updateResult.wasAcknowledged shouldBe true
+  }
+
+  it should "no update document when filter didn't find matches" in {
+    //given
+    val employeeName = "Sebastian"
+
+    //when
+    val filter: Bson = Filters.eq("name", employeeName)
+    val update = Updates.push("activities", "Ping Pong")
+    val r = MongoSingle.updateOne(col, filter, update).runSyncUnsafe()
+
+    //then
+    r.matchedCount shouldBe 0L
+    r.modifiedCount shouldBe 0L
+    r.wasAcknowledged shouldBe true
   }
 
   it should "update many elements" in {
@@ -209,6 +239,21 @@ class MongoSingleSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     val brazilians = MongoSource.count(col, nationalityDocument(rio)).runSyncUnsafe()
     colombians shouldBe 0
     brazilians shouldBe employees.size
+  }
+
+  "it" should "updateMany returns zero modified count when matched count was also zero" in {
+    //given
+    val employeeName = "Bartolo"
+
+    //when
+    val filter: Bson = Filters.eq("name", employeeName)
+    val update = Updates.push("activities", "Ping Pong")
+    val r = MongoSingle.updateMany(col, filter, update).runSyncUnsafe()
+
+    //then
+    r.matchedCount shouldBe 0L
+    r.modifiedCount shouldBe 0L
+    r.wasAcknowledged shouldBe true
   }
 
 }

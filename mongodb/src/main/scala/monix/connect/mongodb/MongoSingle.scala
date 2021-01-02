@@ -28,7 +28,7 @@ object MongoSingle {
   def deleteOne[Doc](collection: MongoCollection[Doc], filter: Bson): Task[DeleteResult] =
     Task
       .fromReactivePublisher(collection.deleteOne(filter))
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultDeleteResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultDeleteResult))
 
   /**
     * Removes at most one document from the collection that matches the given filter with some delete options.
@@ -50,7 +50,7 @@ object MongoSingle {
     deleteOptions: DeleteOptions = DefaultDeleteOptions,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[DeleteResult] =
     retryOnFailure(collection.deleteOne(filter, deleteOptions), retryStrategy)
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultDeleteResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultDeleteResult))
 
   /**
     * Removes all documents from the collection that match the given query filter.
@@ -65,7 +65,7 @@ object MongoSingle {
   def deleteMany[Doc](collection: MongoCollection[Doc], filter: Bson): Task[DeleteResult] =
     Task
       .fromReactivePublisher(collection.deleteMany(filter))
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultDeleteResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultDeleteResult))
 
   /**
     * Removes all documents from the collection that match the given query filter.
@@ -87,7 +87,7 @@ object MongoSingle {
     deleteOptions: DeleteOptions = DefaultDeleteOptions,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[DeleteResult] =
     retryOnFailure(collection.deleteMany(filter, deleteOptions), retryStrategy)
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultDeleteResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultDeleteResult))
 
   /**
     * Inserts the provided document.
@@ -103,7 +103,7 @@ object MongoSingle {
   def insertOne[Doc](collection: MongoCollection[Doc], document: Doc): Task[InsertOneResult] =
     Task
       .fromReactivePublisher(collection.insertOne(document))
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultInsertOneResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultInsertOneResult))
 
   /**
     * Inserts the provided document.
@@ -124,7 +124,7 @@ object MongoSingle {
     insertOneOptions: InsertOneOptions = DefaultInsertOneOptions,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[InsertOneResult] =
     retryOnFailure(collection.insertOne(document, insertOneOptions), retryStrategy)
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultInsertOneResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultInsertOneResult))
 
   /**
     * Inserts a batch of documents.
@@ -139,7 +139,7 @@ object MongoSingle {
   def insertMany[Doc](collection: MongoCollection[Doc], docs: Seq[Doc]): Task[InsertManyResult] =
     Task
       .fromReactivePublisher(collection.insertMany(docs.asJava))
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultInsertManyResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultInsertManyResult))
 
   /**
     * Inserts a batch of documents.
@@ -160,7 +160,7 @@ object MongoSingle {
     insertManyOptions: InsertManyOptions = DefaultInsertManyOptions,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[InsertManyResult] =
     retryOnFailure(collection.insertMany(docs.asJava, insertManyOptions), retryStrategy)
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultInsertManyResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultInsertManyResult))
 
   /**
     * Replace a document in the collection according to the specified arguments.
@@ -176,7 +176,7 @@ object MongoSingle {
   def replaceOne[Doc](collection: MongoCollection[Doc], filter: Bson, replacement: Doc): Task[UpdateResult] =
     Task
       .fromReactivePublisher(collection.replaceOne(filter, replacement))
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultUpdateResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultUpdateResult))
 
   /**
     * Replace a document in the collection according to the specified arguments.
@@ -198,7 +198,7 @@ object MongoSingle {
     replaceOptions: ReplaceOptions = DefaultReplaceOptions,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[UpdateResult] =
     retryOnFailure(collection.replaceOne(filter, replacement, replaceOptions), retryStrategy)
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultUpdateResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultUpdateResult))
 
   /**
     * Update a single document in the collection according to the specified arguments.
@@ -216,7 +216,7 @@ object MongoSingle {
   def updateOne[Doc](collection: MongoCollection[Doc], filter: Bson, update: Bson): Task[UpdateResult] =
     Task
       .fromReactivePublisher(collection.updateOne(filter, update))
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultUpdateResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultUpdateResult))
 
   /**
     * Update a single document in the collection according to the specified arguments.
@@ -240,7 +240,7 @@ object MongoSingle {
     updateOptions: UpdateOptions = DefaultUpdateOptions,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[UpdateResult] =
     retryOnFailure(collection.updateOne(filter, update, updateOptions), retryStrategy)
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultUpdateResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultUpdateResult))
 
   /**
     * Update all documents in the collection according to the specified arguments.
@@ -258,7 +258,7 @@ object MongoSingle {
   def updateMany[Doc](collection: MongoCollection[Doc], filter: Bson, update: Bson): Task[UpdateResult] =
     Task
       .fromReactivePublisher(collection.updateMany(filter, update))
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultUpdateResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultUpdateResult))
 
   /**
     * Update all documents in the collection according to the specified arguments.
@@ -282,7 +282,7 @@ object MongoSingle {
     updateOptions: UpdateOptions = DefaultUpdateOptions,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[UpdateResult] = {
     retryOnFailure(collection.updateMany(filter, update, updateOptions), retryStrategy)
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultUpdateResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultUpdateResult))
   }
 
 }
