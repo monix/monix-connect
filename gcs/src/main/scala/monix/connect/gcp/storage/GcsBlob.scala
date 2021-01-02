@@ -29,7 +29,7 @@ import monix.connect.gcp.storage.configuration.GcsBlobInfo
 import monix.eval.Task
 import monix.reactive.Observable
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.FiniteDuration
 
 /**

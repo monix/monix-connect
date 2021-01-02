@@ -8,7 +8,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import software.amazon.awssdk.services.dynamodb.model._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 @deprecated
 class DynamoDbOpSuite

@@ -25,7 +25,6 @@ import software.amazon.awssdk.services.dynamodb.model.{DynamoDbRequest, DynamoDb
 import monix.reactive.observers.Subscriber
 
 import scala.concurrent.Future
-import scala.concurrent.duration.FiniteDuration
 
 /**
   * A pre-built [[Consumer]] implementation that expects incoming [[DynamoDbRequest]] and

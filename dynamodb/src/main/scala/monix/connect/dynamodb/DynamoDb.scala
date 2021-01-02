@@ -176,7 +176,7 @@ object DynamoDb { self =>
     self.createUnsafe(asyncClient)
   }
 
-  @deprecated("moved to the trait as `sink`")
+  @deprecated("moved to the companion trait as `sink`")
   def consumer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
     retries: Int = 0,
     delayAfterFailure: Option[FiniteDuration] = None)(
@@ -187,7 +187,7 @@ object DynamoDb { self =>
     DynamoDbSubscriber(DynamoDb.createUnsafe(client), retryStrategy)
   }
 
-  @deprecated("moved to the trait for safer usage")
+  @deprecated("moved to the companion trait for safer usage")
   def transformer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
     retries: Int = 0,
     delayAfterFailure: Option[FiniteDuration] = None)(

@@ -15,7 +15,7 @@ import DynamoDbOp.Implicits._
 import monix.reactive.Observable.Transformer
 
 import scala.concurrent.duration._
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.compat.java8.FutureConverters._
 
 class DynamoDbTransformerSuite

@@ -30,7 +30,7 @@ import monix.eval.Task
 import monix.execution.annotations.Unsafe
 import monix.reactive.Observable
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.control.NonFatal
 
 /**
