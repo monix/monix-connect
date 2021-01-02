@@ -59,7 +59,7 @@ class MongoSingleSpec
     super.beforeEach()
   }
 
-  "MongoSingle.deleteOne" should "delete one single element" in {
+  "deleteOne" should "delete one single element" in {
     //given
     val filter = Filters.gt("age", 50)
     val publisher: Publisher[MongoDeleteResult] = Task(MongoDeleteResult.acknowledged(1L)).toReactivePublisher(global)
@@ -127,7 +127,7 @@ class MongoSingleSpec
     f.value shouldBe Some(Failure(exception))
   }
 
-  "MongoSingle.deleteMany" should "delete many elements without delete options" in {
+  "deleteMany" should "delete many elements without delete options" in {
     //given
     val filter = Filters.gt("age", 50)
     val publisher: Publisher[MongoDeleteResult] =
@@ -195,7 +195,7 @@ class MongoSingleSpec
     f.value shouldBe Some(Failure(exception))
   }
 
-  s"insertOne" should "insert one single element" in {
+  "insertOne" should "insert one single element" in {
     //given
     val employee = genEmployee.sample.get
     val insertOneResult = MongoInsertOneResult.acknowledged(objectId)
@@ -262,7 +262,7 @@ class MongoSingleSpec
     f.value shouldBe Some(Failure(exception))
   }
 
-  s"${MongoSingle}.insertMany" should "insert many elements" in {
+  "insertMany" should "insert many elements" in {
     //given
     val s = TestScheduler()
     val l = Gen.listOfN(10, genEmployee).sample.get
@@ -404,7 +404,7 @@ class MongoSingleSpec
     f.value.get shouldBe util.Failure(ex)
   }
 
-  s"updateMany" should "update many elements" in {
+  "updateMany" should "update many elements" in {
     //given
     val s = TestScheduler()
     val filter = Filters.eq("city", "Tokyo")
@@ -478,7 +478,7 @@ class MongoSingleSpec
     f.value.get shouldBe util.Failure(ex)
   }
 
-  s"replaceOne" should "update one single element" in {
+  "replaceOne" should "update one single element" in {
     //given
     val s = TestScheduler()
     val filter = Filters.eq("name", "Alex")

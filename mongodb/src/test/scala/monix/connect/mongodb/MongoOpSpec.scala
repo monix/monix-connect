@@ -74,7 +74,7 @@ class MongoOpSpec
     super.beforeEach()
   }
 
-  "MongoOp.deleteOne" should "delete one single element" in {
+  s"deleteOne" should "delete one single element" in {
     //given
     val filter = Filters.gt("age", 50)
     val publisher: Publisher[MongoDeleteResult] = Task(MongoDeleteResult.acknowledged(1L)).toReactivePublisher(global)
@@ -143,7 +143,7 @@ class MongoOpSpec
     f.value shouldBe Some(Failure(exception))
   }
 
-  "MongoOp.deleteMany" should "delete many elements without delete options" in {
+  "deleteMany" should "delete many elements without delete options" in {
     //given
     val filter = Filters.gt("age", 50)
     val publisher: Publisher[MongoDeleteResult] =
@@ -281,7 +281,7 @@ class MongoOpSpec
     f.value shouldBe Some(Failure(exception))
   }
 
-  s"${MongoOp}.insertMany" should "insert many elements" in {
+  s"insertMany" should "insert many elements" in {
     //given
     val s = TestScheduler()
     val l = Gen.listOfN(10, genEmployee).sample.get
@@ -427,7 +427,7 @@ class MongoOpSpec
     f.value.get shouldBe util.Failure(ex)
   }
 
-  s"updateMany" should "update many elements" in {
+  "updateMany" should "update many elements" in {
     //given
     val s = TestScheduler()
     val filter = Filters.eq("city", "Tokyo")
