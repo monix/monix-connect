@@ -47,7 +47,6 @@ class ObjectPackageSpec
     super.beforeEach()
   }
 
-
   "deprecated retryOnFailure" should "accept a Coeval with a function that expects A and return reactivestreams publishers" in {
     //given
     val e = genEmployee.sample.get
@@ -181,7 +180,7 @@ class ObjectPackageSpec
 
     //when
     val f = retryOnFailure(col.insertOne(employee), retryStrategy)
-        .runToFuture(s)
+      .runToFuture(s)
 
     //then
     s.tick(1.second)
@@ -200,7 +199,7 @@ class ObjectPackageSpec
 
     //when
     val f = retryOnFailure(col.insertOne(employee), retryStrategy)
-        .runToFuture(s)
+      .runToFuture(s)
 
     //then
     s.tick(1.second)

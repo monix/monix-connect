@@ -23,10 +23,10 @@ package object mongodb {
   @deprecated
   @InternalApi
   private[mongodb] def retryOnFailure[T](
-                                                       publisher: Coeval[Publisher[T]],
-                                                       retries: Int,
-                                                       timeout: Option[FiniteDuration],
-                                                       delayAfterFailure: Option[FiniteDuration]): Task[Option[T]] = {
+    publisher: Coeval[Publisher[T]],
+    retries: Int,
+    timeout: Option[FiniteDuration],
+    delayAfterFailure: Option[FiniteDuration]): Task[Option[T]] = {
 
     require(retries >= 0, "Retries per operation must be higher or equal than 0.")
     val t = Task.fromReactivePublisher(publisher.value())
@@ -46,7 +46,6 @@ package object mongodb {
       )
   }
 
-
   /**
     * An internal method used by those operations that wants to implement a retry interface based on
     * a given limit and timeout.
@@ -56,14 +55,14 @@ package object mongodb {
     * @return a [[Task]] with an optional [[T]] or a failed one if the failures exceeded the retries.
     */
   @InternalApi
-  private[mongodb] def retryOnFailure[T](publisher: => Publisher[T],
-                                                      retryStrategy: RetryStrategy): Task[Option[T]] = {
+  private[mongodb] def retryOnFailure[T](publisher: => Publisher[T], retryStrategy: RetryStrategy): Task[Option[T]] = {
     require(retryStrategy.attempts >= 0, "Retries per operation must be higher or equal than 0.")
-    Task.fromReactivePublisher(publisher)
+    Task
+      .fromReactivePublisher(publisher)
       .redeemWith(
         ex =>
           if (retryStrategy.attempts > 0) {
-            val retry = retryOnFailure(publisher, retryStrategy.copy(attempts = retryStrategy.attempts -1))
+            val retry = retryOnFailure(publisher, retryStrategy.copy(attempts = retryStrategy.attempts - 1))
             retryStrategy.backoffDelay match {
               case Duration.Zero => retry
               case delay => retry.delayExecution(delay)
@@ -74,4 +73,3 @@ package object mongodb {
   }
 
 }
-

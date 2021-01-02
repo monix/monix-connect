@@ -20,7 +20,13 @@ package monix.connect.mongodb
 import com.mongodb.client.model.{Filters, Updates}
 import com.mongodb.reactivestreams.client.MongoCollection
 import monix.eval.Task
-import monix.connect.mongodb.domain.{DefaultCountOptions, DefaultFindOneAndDeleteOptions, DefaultFindOneAndReplaceOptions, DefaultFindOneAndUpdateOptions, RetryStrategy}
+import monix.connect.mongodb.domain.{
+  DefaultCountOptions,
+  DefaultFindOneAndDeleteOptions,
+  DefaultFindOneAndReplaceOptions,
+  DefaultFindOneAndUpdateOptions,
+  RetryStrategy
+}
 import monix.execution.Scheduler.Implicits.global
 import monix.execution.exceptions.DummyException
 import monix.execution.schedulers.TestScheduler
@@ -151,11 +157,7 @@ class MongoSourceSpec
 
     //when
     val f = MongoSource
-      .findOneAndDelete(
-        col,
-        filter,
-        findOneAndDeleteOptions = DefaultFindOneAndDeleteOptions,
-        retryStrategy)
+      .findOneAndDelete(col, filter, findOneAndDeleteOptions = DefaultFindOneAndDeleteOptions, retryStrategy)
       .runToFuture(s)
 
     //then
@@ -318,12 +320,7 @@ class MongoSourceSpec
 
     //and
     val f = MongoSource
-      .findOneAndUpdate(
-        col,
-        filter,
-        update,
-        findOneAndUpdateOptions = DefaultFindOneAndUpdateOptions,
-        retryStrategy)
+      .findOneAndUpdate(col, filter, update, findOneAndUpdateOptions = DefaultFindOneAndUpdateOptions, retryStrategy)
       .runToFuture(s)
 
     //then

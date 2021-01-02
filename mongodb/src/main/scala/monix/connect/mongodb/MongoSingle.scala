@@ -2,7 +2,23 @@ package monix.connect.mongodb
 
 import com.mongodb.client.model._
 import com.mongodb.reactivestreams.client.MongoCollection
-import monix.connect.mongodb.domain.{DefaultRetryStrategy, DefaultDeleteOptions, DefaultDeleteResult, DefaultInsertManyOptions, DefaultInsertManyResult, DefaultInsertOneOptions, DefaultInsertOneResult, DefaultReplaceOptions, DefaultUpdateOptions, DefaultUpdateResult, DeleteResult, InsertManyResult, InsertOneResult, RetryStrategy, UpdateResult}
+import monix.connect.mongodb.domain.{
+  DefaultDeleteOptions,
+  DefaultDeleteResult,
+  DefaultInsertManyOptions,
+  DefaultInsertManyResult,
+  DefaultInsertOneOptions,
+  DefaultInsertOneResult,
+  DefaultReplaceOptions,
+  DefaultRetryStrategy,
+  DefaultUpdateOptions,
+  DefaultUpdateResult,
+  DeleteResult,
+  InsertManyResult,
+  InsertOneResult,
+  RetryStrategy,
+  UpdateResult
+}
 import monix.eval.Task
 import org.bson.conversions.Bson
 

@@ -1,6 +1,5 @@
 package monix.connect.mongodb
 
-
 import com.mongodb.client.model.{DeleteOptions, InsertManyOptions, InsertOneOptions, ReplaceOptions, UpdateOptions}
 import monix.connect.mongodb.domain.{
   DefaultDeleteOptions,

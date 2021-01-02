@@ -48,7 +48,7 @@ class MongoSinkSpec
 
   s"${MongoSink}" should "retry when the underlying publisher signaled error or timeout" in {
     //given
-    val retryStrategy@RetryStrategy(retries, _) = RetryStrategy(3, 200.millis)
+    val retryStrategy @ RetryStrategy(retries, _) = RetryStrategy(3, 200.millis)
     val s = TestScheduler()
     val e1 = genEmployee.sample.get
     val e2 = genEmployee.sample.get
@@ -74,7 +74,7 @@ class MongoSinkSpec
 
   it should "signals on error when the failures exceeded the number of retries" in {
     //given
-    val retryStrategy@RetryStrategy(retries, _) = RetryStrategy(3, 200.millis)
+    val retryStrategy @ RetryStrategy(retries, _) = RetryStrategy(3, 200.millis)
     val s = TestScheduler()
     val e1 = genEmployee.sample.get
     val ex = DummyException("Insert one failed")

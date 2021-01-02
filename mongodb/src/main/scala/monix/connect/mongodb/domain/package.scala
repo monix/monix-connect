@@ -17,7 +17,17 @@
 
 package monix.connect.mongodb
 
-import com.mongodb.client.model.{CountOptions, DeleteOptions, FindOneAndDeleteOptions, FindOneAndReplaceOptions, FindOneAndUpdateOptions, InsertManyOptions, InsertOneOptions, ReplaceOptions, UpdateOptions}
+import com.mongodb.client.model.{
+  CountOptions,
+  DeleteOptions,
+  FindOneAndDeleteOptions,
+  FindOneAndReplaceOptions,
+  FindOneAndUpdateOptions,
+  InsertManyOptions,
+  InsertOneOptions,
+  ReplaceOptions,
+  UpdateOptions
+}
 import monix.execution.internal.InternalApi
 
 import scala.concurrent.duration.{Duration, FiniteDuration}

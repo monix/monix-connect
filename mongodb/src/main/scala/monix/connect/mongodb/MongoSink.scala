@@ -24,7 +24,15 @@ import monix.reactive.Consumer
 import monix.reactive.observers.Subscriber
 import com.mongodb.reactivestreams.client.MongoCollection
 import monix.execution.internal.InternalApi
-import monix.connect.mongodb.domain.{DefaultDeleteOptions, DefaultInsertManyOptions, DefaultInsertOneOptions, DefaultReplaceOptions, DefaultRetryStrategy, DefaultUpdateOptions, RetryStrategy}
+import monix.connect.mongodb.domain.{
+  DefaultDeleteOptions,
+  DefaultInsertManyOptions,
+  DefaultInsertOneOptions,
+  DefaultReplaceOptions,
+  DefaultRetryStrategy,
+  DefaultUpdateOptions,
+  RetryStrategy
+}
 import org.bson.conversions.Bson
 import org.reactivestreams.Publisher
 
@@ -40,9 +48,7 @@ import scala.concurrent.Future
   * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
   * @tparam A the type that the [[Consumer]] expects to receive
   */
-@InternalApi private[mongodb] class MongoSink[A](
-  op: A => Publisher[_],
-  retryStrategy: RetryStrategy)
+@InternalApi private[mongodb] class MongoSink[A](op: A => Publisher[_], retryStrategy: RetryStrategy)
   extends Consumer[A, Unit] {
 
   override def createSubscriber(cb: Callback[Throwable, Unit], s: Scheduler): (Subscriber[A], AssignableCancelable) = {
