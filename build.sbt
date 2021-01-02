@@ -128,7 +128,7 @@ lazy val dynamodb = monixConnector("dynamodb", Dependencies.DynamoDb).aggregate(
 
 lazy val hdfs = monixConnector("hdfs", Dependencies.Hdfs)
 
-lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb)
+lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb, isMimaEnabled = false)
 
 lazy val parquet = monixConnector("parquet", Dependencies.Parquet)
 
