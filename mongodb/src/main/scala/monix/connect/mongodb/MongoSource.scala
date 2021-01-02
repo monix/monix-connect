@@ -32,7 +32,7 @@ import monix.connect.mongodb.domain.{
   RetryStrategy
 }
 import com.mongodb.reactivestreams.client.MongoCollection
-import monix.eval.{Coeval, Task}
+import monix.eval.Task
 import monix.reactive.Observable
 import org.bson.Document
 import org.bson.conversions.Bson
@@ -40,11 +40,11 @@ import org.bson.conversions.Bson
 import scala.jdk.CollectionConverters._
 
 /**
-  * An object exposing those MongoDb signatures that basically aims to fetch data
-  * from the collections by performing different type of read queries available
-  * such like find, count, distinct or any type of aggregation.
-  * There are three exceptions in which the method alters the data apart of fetching it,
-  * which are the findOne and delete, replace or update.
+  * An object that exposes those MongoDb definitions for fetching data
+  * from collections by performing different type of read queries available
+  * such like find, count, distinct or aggregation.
+  * There are three exceptions in which the method also alters the data apart
+  * of reading it, which are the findOne and delete, replace or update.
   */
 object MongoSource {
 
@@ -107,8 +107,8 @@ object MongoSource {
     * @param collection the abstraction to work with the determined mongodb collection
     * @tparam Doc the type of the collection
     * @return a [[Task]] with a long indicating the number of documents
-    *         the result will be -1 if the underlying publisher
-    *         did not emitted any documents, or a failed one when emitted an error.
+    *         the result will be -1 if the underlying publisher did not emitted any documents,
+    *         or a failed one when emitted an error.
     */
   def countAll[Doc](collection: MongoCollection[Doc]): Task[Long] =
     Task.fromReactivePublisher(collection.countDocuments()).map(_.map(_.longValue).getOrElse(-1L))
@@ -120,8 +120,8 @@ object MongoSource {
     * @tparam Doc the type of the collection
     * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
     * @return a [[Task]] with a long indicating the number of documents
-    *         the result will be -1 if the underlying publisher
-    *         did not emitted any documents, or a failed one when emitted an error.
+    *         the result will be -1 if the underlying publisher did not emitted any documents,
+    *         or a failed one when emitted an error.
     */
   def countAll[Doc](collection: MongoCollection[Doc], retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[Long] =
     retryOnFailure(collection.countDocuments(), retryStrategy).map(_.map(_.longValue).getOrElse(-1L))
@@ -134,8 +134,8 @@ object MongoSource {
     *               @see [[com.mongodb.client.model.Filters]]
     * @tparam Doc the type of the collection
     * @return a [[Task]] with a long indicating the number of documents
-    *         the result will be -1 if the underlying publisher
-    *         did not emitted any documents, or a failed one when emitted an error.
+    *         the result will be -1 if the underlying publisher did not emitted any documents,
+    *         or a failed one when emitted an error.
     */
   def count[Doc](collection: MongoCollection[Doc], filter: Bson): Task[Long] =
     Task.fromReactivePublisher(collection.countDocuments(filter)).map(_.map(_.longValue).getOrElse(-1L))
@@ -149,8 +149,9 @@ object MongoSource {
     * @param countOptions the options to apply to the count operation
     * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
     * @tparam Doc the type of the collection
-    * @return a [[Task]] with a long indicating the number of documents, the result can be -1 if the underlying publisher
-    *         did not emitted any documents, or a failed one when emitted an error.
+    * @return a [[Task]] with a long indicating the number of documents,
+    *         the result can be -1 if the underlying publisher did not emitted any documents,
+    *         or a failed one when emitted an error.
     */
   def count[Doc](
     collection: MongoCollection[Doc],
@@ -258,8 +259,8 @@ object MongoSource {
     * @param update a document describing the update, which may not be null.
     *               The update to apply must include only update operators
     * @tparam Doc the type of the collection
-    * @return a [[Task]] with an optional of the document that was updated before the update was applied.
-    *         If no documents matched the query filter, then an empty option will be returned.
+    * @return a [[Task]] with an optional of the document that was updated before the update was applied,
+    *         if no documents matched the query filter, then an empty option will be returned.
     */
   def findOneAndUpdate[Doc](collection: MongoCollection[Doc], filter: Bson, update: Bson): Task[Option[Doc]] =
     Task.fromReactivePublisher(collection.findOneAndUpdate(filter, update))
@@ -275,8 +276,8 @@ object MongoSource {
     * @param findOneAndUpdateOptions the options to apply to the operation
     * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
     * @tparam Doc the type of the collection
-    * @return a [[Task]] with an optional of the document that was updated before the update was applied.
-    *         If no documents matched the query filter, then an empty option will be returned.
+    * @return a [[Task]] with an optional of the document that was updated before the update was applied,
+    *         if no documents matched the query filter, then an empty option will be returned.
     */
   def findOneAndUpdate[Doc](
     collection: MongoCollection[Doc],

@@ -65,7 +65,7 @@ package object domain {
     *
     * @param attempts the number of times that an operation can be
     *                 retried before actually returning a failed task.
-    *                 it must be higher or equal than 0.
+    *                 it must be higher or equal than 1.
     * @param backoffDelay delay after failure for the execution of a single mongodb operation.
     */
   case class RetryStrategy(attempts: Int = 0, backoffDelay: FiniteDuration = Duration.Zero)

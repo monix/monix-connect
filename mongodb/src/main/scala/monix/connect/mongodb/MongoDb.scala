@@ -20,7 +20,6 @@ package monix.connect.mongodb
 import com.mongodb.MongoNamespace
 import com.mongodb.reactivestreams.client.{MongoClient, MongoDatabase}
 import monix.eval.Task
-import monix.execution.internal.InternalApi
 import monix.reactive.Observable
 
 /** Object for managing the mongo databases and collections */
