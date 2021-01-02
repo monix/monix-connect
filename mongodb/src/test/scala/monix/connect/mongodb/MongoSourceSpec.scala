@@ -41,6 +41,7 @@ import org.scalatest.matchers.should.Matchers
 import scala.concurrent.duration._
 import scala.util.Failure
 
+//todo unit tests for count, aggregate and distinct
 class MongoSourceSpec
   extends AnyFlatSpecLike with TestFixture with ScalaFutures with Matchers with BeforeAndAfterEach
   with IdiomaticMockito {
@@ -53,7 +54,7 @@ class MongoSourceSpec
     super.beforeEach()
   }
 
-  s"${MongoSource}" should "count all" in {
+  "countAll" should "count all" in {
     //given
     val finalCount: java.lang.Long = 1L
     when(col.countDocuments()).thenReturn(Task(finalCount).toReactivePublisher(global))
@@ -127,7 +128,7 @@ class MongoSourceSpec
     f.value shouldBe Some(Failure(exception))
   }
 
-  s"findOneAndDelete" should "return the same element that was deleted" in {
+  "findOneAndDelete" should "return the same element that was deleted" in {
     //given
     val s = TestScheduler()
     val filter = Filters.eq("name", "Romanian")
@@ -199,7 +200,7 @@ class MongoSourceSpec
     f.value.get shouldBe util.Failure(ex)
   }
 
-  s"findOneAndReplace" should "return the same element that was replaced" in {
+  "findOneAndReplace" should "return the same element that was replaced" in {
     //given
     val s = TestScheduler()
     val filter = Filters.and(Filters.eq("city", "Cadiz"), Filters.eq("name", "Gustavo"))
@@ -284,7 +285,7 @@ class MongoSourceSpec
     f.value.get shouldBe util.Failure(ex)
   }
 
-  s"findOneAndUpdate" should "return the same element that was updated" in {
+  "findOneAndUpdate" should "return the same element that was updated" in {
     //given
     val s = TestScheduler()
     val filter = Filters.eq("name", "Salomon")

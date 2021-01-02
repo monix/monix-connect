@@ -32,7 +32,7 @@ class MongoSingleSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     MongoDb.dropCollection(db, collectionName).runSyncUnsafe()
   }
 
-  "MongoSingle" should "delete one single document when it does not exists" in {
+  "deleteOne" should "delete one single document when it does not exists" in {
     //given
     val filter = Filters.eq("name", "deleteWhenNoExists")
 
@@ -67,7 +67,7 @@ class MongoSingleSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     nUppercaseNat shouldBe 0L
   }
 
-  it should "delete many documents by filter" in {
+  "deleteMany" should "delete many documents by filter" in {
     //given
     val exampleName = "deleteManyExample"
     val employees = genEmployeesWith(name = Some(exampleName)).sample.get
@@ -97,7 +97,7 @@ class MongoSingleSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     finalElements shouldBe initialElements
   }
 
-  it should "insert one single document" in {
+  "insertOne" should "insert one single document" in {
     //given
     val e = genEmployee.sample.get
 
@@ -112,7 +112,7 @@ class MongoSingleSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     MongoSource.findAll(col).headL.runSyncUnsafe() shouldBe e
   }
 
-  it should "insert many documents" in {
+  "insertMany" should "insert many documents" in {
     //given
     val nationality = "Vancouver"
     val employees = genEmployeesWith(city = Some(nationality)).sample.get
@@ -129,7 +129,7 @@ class MongoSingleSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     elements shouldBe employees
   }
 
-  it should "replace one single document" in {
+  "replaceOne" should "replace one single document" in {
     //given
     val employeeName = "Humberto"
     val e = genEmployeeWith(name = Option(employeeName)).sample.get
@@ -164,7 +164,7 @@ class MongoSingleSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     r.wasAcknowledged shouldBe true
   }
 
-  it should "update one single document" in {
+  "updateOne" should "update one single document" in {
     //given
     val cambridge = "Cambridge"
     val oxford = "Oxford"
@@ -217,7 +217,7 @@ class MongoSingleSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     r.wasAcknowledged shouldBe true
   }
 
-  it should "update many elements" in {
+  "updateMany" should "update many elements" in {
     //given
     val bogota = "Bogota"
     val rio = "Rio"
@@ -239,7 +239,7 @@ class MongoSingleSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     brazilians shouldBe employees.size
   }
 
-  "it" should "updateMany returns zero modified count when matched count was also zero" in {
+  it should "updateMany returns zero modified count when matched count was also zero" in {
     //given
     val employeeName = "Bartolo"
 

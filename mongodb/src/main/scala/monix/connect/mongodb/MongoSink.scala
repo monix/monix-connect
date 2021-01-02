@@ -48,7 +48,7 @@ import scala.concurrent.Future
   * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
   * @tparam A the type that the [[Consumer]] expects to receive
   */
-@InternalApi private[mongodb] class MongoSink[A](op: A => Publisher[_], retryStrategy: RetryStrategy)
+@InternalApi private[mongodb] class MongoSink[A, B](op: A => Publisher[B], retryStrategy: RetryStrategy)
   extends Consumer[A, Unit] {
 
   override def createSubscriber(cb: Callback[Throwable, Unit], s: Scheduler): (Subscriber[A], AssignableCancelable) = {
@@ -106,7 +106,7 @@ object MongoSink {
     deleteOptions: DeleteOptions = DefaultDeleteOptions,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[Bson, Unit] = {
     val deleteOneOp = (filter: Bson) => collection.deleteOne(filter, deleteOptions)
-    new MongoSink[Bson](deleteOneOp, retryStrategy)
+    new MongoSink(deleteOneOp, retryStrategy)
   }
 
   /**
@@ -126,7 +126,7 @@ object MongoSink {
     deleteOptions: DeleteOptions = DefaultDeleteOptions,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[Bson, Unit] = {
     val deleteManyOnNext = (filter: Bson) => collection.deleteMany(filter, deleteOptions)
-    new MongoSink[Bson](deleteManyOnNext, retryStrategy)
+    new MongoSink(deleteManyOnNext, retryStrategy)
   }
 
   /**
@@ -145,7 +145,7 @@ object MongoSink {
     insertOneOptions: InsertOneOptions = DefaultInsertOneOptions,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[Doc, Unit] = {
     val insertOneOp = (document: Doc) => collection.insertOne(document, insertOneOptions)
-    new MongoSink[Doc](insertOneOp, retryStrategy)
+    new MongoSink(insertOneOp, retryStrategy)
   }
 
   /**
@@ -163,7 +163,7 @@ object MongoSink {
     insertManyOptions: InsertManyOptions = DefaultInsertManyOptions,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[Seq[Doc], Unit] = {
     val insertOneOp = (documents: Seq[Doc]) => collection.insertMany(documents.asJava, insertManyOptions)
-    new MongoSink[Seq[Doc]](insertOneOp, retryStrategy)
+    new MongoSink(insertOneOp, retryStrategy)
   }
 
   /**
@@ -185,7 +185,7 @@ object MongoSink {
     replaceOptions: ReplaceOptions = DefaultReplaceOptions,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[(Bson, Doc), Unit] = {
     val replaceOp = (t: (Bson, Doc)) => collection.replaceOne(t._1, t._2, replaceOptions)
-    new MongoSink[(Bson, Doc)](replaceOp, retryStrategy)
+    new MongoSink(replaceOp, retryStrategy)
   }
 
   /**
@@ -206,7 +206,7 @@ object MongoSink {
     updateOptions: UpdateOptions = DefaultUpdateOptions,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[(Bson, Bson), Unit] = {
     val updateOp = (t: (Bson, Bson)) => collection.updateOne(t._1, t._2, updateOptions)
-    new MongoSink[(Bson, Bson)](updateOp, retryStrategy)
+    new MongoSink(updateOp, retryStrategy)
   }
 
   /**
@@ -227,7 +227,7 @@ object MongoSink {
     updateOptions: UpdateOptions = DefaultUpdateOptions,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[(Bson, Bson), Unit] = {
     val updateOp = (t: (Bson, Bson)) => collection.updateMany(t._1, t._2, updateOptions)
-    new MongoSink[(Bson, Bson)](updateOp, retryStrategy)
+    new MongoSink(updateOp, retryStrategy)
   }
 
 }

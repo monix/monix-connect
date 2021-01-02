@@ -32,7 +32,7 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     MongoDb.dropCollection(db, collectionName).runSyncUnsafe()
   }
 
-  s"$MongoOp" should "delete one single element by filtering" in {
+  "deleteOne" should "delete one single element by filtering" in {
     //given
     val exampleName = "deleteOneExample"
     val employees = genEmployeesWith(name = Some(exampleName)).sample.get
@@ -83,7 +83,7 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     nUppercaseNat shouldBe 0L
   }
 
-  it should "delete many elements by filter" in { //todo
+  "deleteMany" should "delete many elements by filter" in { //todo
     //given
     val exampleName = "deleteManyExample"
     val employees = genEmployeesWith(name = Some(exampleName)).sample.get
@@ -99,7 +99,7 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     finalElements shouldBe 0L
   }
 
-  s"${MongoOp}.insertOne"  should "insert one single element" in {
+  "insertOne"  should "insert one single element" in {
     //given
     val e = genEmployee.sample.get
 
@@ -114,7 +114,7 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     MongoSource.findAll(col).headL.runSyncUnsafe() shouldBe e
   }
 
-  it should "insert many elements" in {
+  "insertMany" should "insert many elements" in {
     //given
     val nationality = "Vancouver"
     val employees = genEmployeesWith(city = Some(nationality)).sample.get
@@ -131,7 +131,7 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     elements shouldBe employees
   }
 
-  it should "replace one single element" in {
+  "replaceOne" should "replace one single element" in {
     //given
     val employeeName = "Humberto"
     val e = genEmployeeWith(name = Option(employeeName)).sample.get
@@ -151,7 +151,7 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     updated.age shouldBe e.age + 1
   }
 
-  it should "update one single element" in {
+  "updateOne" should "update one single element" in {
     //given
     val cambridge = "Cambridge"
     val oxford = "Oxford"
@@ -189,7 +189,7 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     updateResult.wasAcknowledged shouldBe true
   }
 
-  it should "update many elements" in {
+  "updateMany" should "update many elements" in {
     //given
     val bogota = "Bogota"
     val rio = "Rio"

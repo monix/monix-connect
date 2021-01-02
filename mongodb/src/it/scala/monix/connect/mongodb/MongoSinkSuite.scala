@@ -33,7 +33,7 @@ class MongoSinkSuite extends AnyFlatSpecLike with Fixture with Matchers with Bef
     MongoDb.dropCollection(db, collectionName).runSyncUnsafe()
   }
 
-  s"${MongoSink}" should "delete single elements by filters" in {
+  s"$MongoSink" should "delete single elements by filters" in {
     //given
     val e1 = Gen.nonEmptyListOf(genEmployee).sample.get
     val e2 = Gen.nonEmptyListOf(genEmployee).sample.get
@@ -196,6 +196,5 @@ class MongoSinkSuite extends AnyFlatSpecLike with Fixture with Matchers with Bef
     r.size shouldBe e.size
     r.filter(_.activities.contains("Table Tennis")) shouldBe empty
   }
-
 
 }

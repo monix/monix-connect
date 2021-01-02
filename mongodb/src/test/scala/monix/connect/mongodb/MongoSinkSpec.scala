@@ -46,7 +46,7 @@ class MongoSinkSpec
     super.beforeEach()
   }
 
-  s"${MongoSink}" should "retry when the underlying publisher signaled error or timeout" in {
+  s"$MongoSink" should "retry when the underlying publisher signaled error or timeout" in {
     //given
     val retryStrategy @ RetryStrategy(retries, _) = RetryStrategy(3, 200.millis)
     val s = TestScheduler()
@@ -82,7 +82,6 @@ class MongoSinkSpec
     when(col.insertOne(e1, DefaultInsertOneOptions)).thenReturn(failedPub, failedPub, failedPub)
 
     //when
-
     val sink = MongoSink.insertOne(col, DefaultInsertOneOptions, retryStrategy)
     val f = Observable.now(e1).consumeWith(sink).runToFuture(s)
 
