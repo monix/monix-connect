@@ -68,6 +68,6 @@ package object domain {
     *                 it must be higher or equal than 1.
     * @param backoffDelay delay after failure for the execution of a single mongodb operation.
     */
-  case class RetryStrategy(attempts: Int = 0, backoffDelay: FiniteDuration = Duration.Zero)
+  case class RetryStrategy(attempts: Int = 1, backoffDelay: FiniteDuration = Duration.Zero)
   final val DefaultRetryStrategy = RetryStrategy(1, Duration.Zero)
 }
