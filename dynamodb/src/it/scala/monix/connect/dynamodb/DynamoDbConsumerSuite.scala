@@ -13,7 +13,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import software.amazon.awssdk.services.dynamodb.model._
 
 import scala.concurrent.duration._
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.compat.java8.FutureConverters._
 
 class DynamoDbConsumerSuite

@@ -19,3 +19,5 @@ _Monix Connect_ is an initiative to implement stream integrations for [Monix](ht
 ```
 
 But you would probably only want to add a specific connector to your library dependencies, see how to do so and how to get started with them in the next sections.  
+
+⚠️ **Mind that the project isn't yet stable, so binary compatibility is not guaranteed.** ❗

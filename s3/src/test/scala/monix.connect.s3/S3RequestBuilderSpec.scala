@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,7 @@
 package monix.connect.s3
 
 /*
- * Copyright (c) 2014-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,7 +57,7 @@ import software.amazon.awssdk.services.s3.model.{
   UploadPartResponse
 }
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class S3RequestBuilderSpec
   extends AnyWordSpecLike with BeforeAndAfterEach with Matchers with BeforeAndAfterAll

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,8 @@ import monix.connect.mongodb.domain.{
   DefaultCountOptions,
   DefaultFindOneAndDeleteOptions,
   DefaultFindOneAndReplaceOptions,
-  DefaultFindOneAndUpdateOptions
+  DefaultFindOneAndUpdateOptions,
+  RetryStrategy
 }
 import monix.execution.Scheduler.Implicits.global
 import monix.execution.exceptions.DummyException
@@ -40,6 +41,7 @@ import org.scalatest.matchers.should.Matchers
 import scala.concurrent.duration._
 import scala.util.Failure
 
+//todo unit tests for count, aggregate and distinct
 class MongoSourceSpec
   extends AnyFlatSpecLike with TestFixture with ScalaFutures with Matchers with BeforeAndAfterEach
   with IdiomaticMockito {
@@ -52,7 +54,7 @@ class MongoSourceSpec
     super.beforeEach()
   }
 
-  s"${MongoSource}" should "count all" in {
+  "countAll" should "count all" in {
     //given
     val finalCount: java.lang.Long = 1L
     when(col.countDocuments()).thenReturn(Task(finalCount).toReactivePublisher(global))
@@ -79,24 +81,23 @@ class MongoSourceSpec
 
   it should "perform a filtered count with filter and options" in {
     //given
+    val retryStrategy = RetryStrategy(attempts = 1)
     val s = TestScheduler()
     val finalCount: java.lang.Long = 15L
     val filter = Filters.lte("age", 22)
     val failedPub = Task.raiseError[java.lang.Long](DummyException("Count one failed")).toReactivePublisher(s)
-    val emptyPub = Observable.empty[java.lang.Long].toReactivePublisher(s)
-    val delayedPub = Task(finalCount).delayResult(500.millis).toReactivePublisher(s)
     val successPub = Task(finalCount).toReactivePublisher(s)
-    when(col.countDocuments(filter, DefaultCountOptions)).thenReturn(delayedPub, emptyPub, failedPub, successPub)
+    when(col.countDocuments(filter, DefaultCountOptions)).thenReturn(failedPub, successPub)
 
     //when
     val f = MongoSource
-      .count(col, filter, countOptions = DefaultCountOptions, retries = 3, timeout = Some(150.millis))
+      .count(col, filter, countOptions = DefaultCountOptions, retryStrategy)
       .runToFuture(s)
 
     //then
     s.tick(1.second)
     whenReady(f) { nElements =>
-      verify(col, times(4)).countDocuments(filter, DefaultCountOptions)
+      verify(col, times(2)).countDocuments(filter, DefaultCountOptions)
       nElements shouldBe finalCount
     }
   }
@@ -127,7 +128,7 @@ class MongoSourceSpec
     f.value shouldBe Some(Failure(exception))
   }
 
-  s"findOneAndDelete" should "return the same element that was deleted" in {
+  "findOneAndDelete" should "return the same element that was deleted" in {
     //given
     val s = TestScheduler()
     val filter = Filters.eq("name", "Romanian")
@@ -146,29 +147,23 @@ class MongoSourceSpec
 
   it should "find one and delete with options" in {
     //given
+    val retryStrategy = RetryStrategy(attempts = 3)
     val s = TestScheduler()
     val filter = Filters.and(Filters.eq("city", "Cracow"), Filters.gt("age", 66))
     val employee = genEmployee.sample.get
-    val delayedPub = Task(employee).delayResult(500.millis).toReactivePublisher(s)
-    val emptyPub = Observable.empty[Employee].toReactivePublisher(s)
     val failedPub = Task.raiseError[Employee](DummyException("Find one and delete, failed")).toReactivePublisher(s)
     val successPub = Task(employee).toReactivePublisher(s)
     when(col.findOneAndDelete(filter, DefaultFindOneAndDeleteOptions))
-      .thenReturn(delayedPub, emptyPub, failedPub, successPub)
+      .thenReturn(failedPub, successPub)
 
     //when
     val f = MongoSource
-      .findOneAndDelete(
-        col,
-        filter,
-        findOneAndDeleteOptions = DefaultFindOneAndDeleteOptions,
-        retries = 3,
-        timeout = Some(150.millis))
+      .findOneAndDelete(col, filter, findOneAndDeleteOptions = DefaultFindOneAndDeleteOptions, retryStrategy)
       .runToFuture(s)
 
     //then
     s.tick(1.second)
-    verify(col, times(4)).findOneAndDelete(filter, DefaultFindOneAndDeleteOptions)
+    verify(col, times(2)).findOneAndDelete(filter, DefaultFindOneAndDeleteOptions)
     f.value.get shouldBe util.Success(Some(employee))
   }
 
@@ -205,7 +200,7 @@ class MongoSourceSpec
     f.value.get shouldBe util.Failure(ex)
   }
 
-  s"findOneAndReplace" should "return the same element that was replaced" in {
+  "findOneAndReplace" should "return the same element that was replaced" in {
     //given
     val s = TestScheduler()
     val filter = Filters.and(Filters.eq("city", "Cadiz"), Filters.eq("name", "Gustavo"))
@@ -225,31 +220,33 @@ class MongoSourceSpec
 
   it should "find one and replace with options" in {
     //given
+    val retryStrategy = RetryStrategy(attempts = 1)
     val s = TestScheduler()
     val filter = Filters.eq("city", "Cape Town")
     val e = genEmployee.sample.get
     val replacement = genEmployee.sample.get
-    val delayedPub = Task(e).delayResult(500.millis).toReactivePublisher(s)
-    val emptyPub = Observable.empty[Employee].toReactivePublisher(s)
+
+    //and
     val failedPub = Task.raiseError[Employee](DummyException("Find one and replace, failed")).toReactivePublisher(s)
     val successPub = Task(e).toReactivePublisher(s)
-    when(col.findOneAndReplace(filter, replacement, DefaultFindOneAndReplaceOptions))
-      .thenReturn(delayedPub, emptyPub, failedPub, successPub)
 
     //when
+    when(col.findOneAndReplace(filter, replacement, DefaultFindOneAndReplaceOptions))
+      .thenReturn(failedPub, successPub)
+
+    //and
     val f = MongoSource
       .findOneAndReplace(
         col,
         filter,
         replacement,
         findOneAndReplaceOptions = DefaultFindOneAndReplaceOptions,
-        retries = 3,
-        timeout = Some(150.millis))
+        retryStrategy)
       .runToFuture(s)
 
     //then
     s.tick(1.second)
-    verify(col, times(4)).findOneAndReplace(filter, replacement, DefaultFindOneAndReplaceOptions)
+    verify(col, times(2)).findOneAndReplace(filter, replacement, DefaultFindOneAndReplaceOptions)
     f.value.get shouldBe util.Success(Some(e))
   }
 
@@ -288,7 +285,7 @@ class MongoSourceSpec
     f.value.get shouldBe util.Failure(ex)
   }
 
-  s"findOneAndUpdate" should "return the same element that was updated" in {
+  "findOneAndUpdate" should "return the same element that was updated" in {
     //given
     val s = TestScheduler()
     val filter = Filters.eq("name", "Salomon")
@@ -308,31 +305,28 @@ class MongoSourceSpec
 
   it should "find one and update with options" in {
     //given
+    val retryStrategy = RetryStrategy(attempts = 1)
     val s = TestScheduler()
     val filter = Filters.eq("city", "Moscou")
     val e = genEmployee.sample.get
     val update = Updates.inc("age", 1)
-    val delayedPub = Task(e).delayResult(500.millis).toReactivePublisher(s)
-    val emptyPub = Observable.empty[Employee].toReactivePublisher(s)
+
+    //and
     val failedPub = Task.raiseError[Employee](DummyException("Find one and update, failed")).toReactivePublisher(s)
     val successPub = Task(e).toReactivePublisher(s)
-    when(col.findOneAndUpdate(filter, update, DefaultFindOneAndUpdateOptions))
-      .thenReturn(delayedPub, emptyPub, failedPub, successPub)
 
     //when
+    when(col.findOneAndUpdate(filter, update, DefaultFindOneAndUpdateOptions))
+      .thenReturn(failedPub, successPub)
+
+    //and
     val f = MongoSource
-      .findOneAndUpdate(
-        col,
-        filter,
-        update,
-        findOneAndUpdateOptions = DefaultFindOneAndUpdateOptions,
-        retries = 3,
-        timeout = Some(150.millis))
+      .findOneAndUpdate(col, filter, update, findOneAndUpdateOptions = DefaultFindOneAndUpdateOptions, retryStrategy)
       .runToFuture(s)
 
     //then
     s.tick(1.second)
-    verify(col, times(4)).findOneAndUpdate(filter, update, DefaultFindOneAndUpdateOptions)
+    verify(col, times(2)).findOneAndUpdate(filter, update, DefaultFindOneAndUpdateOptions)
     f.value.get shouldBe util.Success(Some(e))
   }
 

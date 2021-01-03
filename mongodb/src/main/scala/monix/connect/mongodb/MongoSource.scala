@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,23 +27,24 @@ import monix.connect.mongodb.domain.{
   DefaultCountOptions,
   DefaultFindOneAndDeleteOptions,
   DefaultFindOneAndReplaceOptions,
-  DefaultFindOneAndUpdateOptions
+  DefaultFindOneAndUpdateOptions,
+  DefaultRetryStrategy,
+  RetryStrategy
 }
 import com.mongodb.reactivestreams.client.MongoCollection
-import monix.eval.{Coeval, Task}
+import monix.eval.Task
 import monix.reactive.Observable
 import org.bson.Document
 import org.bson.conversions.Bson
 
-import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 
 /**
-  * An object exposing those MongoDb signatures that basically aims to fetch data
-  * from the collections by performing different type of read queries available
-  * such like find, count, distinct or any type of aggregation.
-  * There are three exceptions in which the method alters the data apart of fetching it,
-  * which are the findOne and delete, replace or update.
+  * An object that exposes those MongoDb definitions for fetching data
+  * from collections by performing different type of read queries available
+  * such like find, count, distinct or aggregation.
+  * There are three exceptions in which the method also alters the data apart
+  * of reading it, which are the findOne and delete, replace or update.
   */
 object MongoSource {
 
@@ -55,7 +56,7 @@ object MongoSource {
     * @param clazz the class to decode each document into
     * @tparam A the type that this collection will decode documents from
     * @tparam B the returned type result of the aggregation
-    * @return an [[Observable]] of type [[B]], containing the result of the aggregation operation
+    * @return an [[Observable]] of type [[B]], containing the result of the aggregation pipeline
     */
   def aggregate[A, B](collection: MongoCollection[A], pipeline: Seq[Bson], clazz: Class[B]): Observable[B] =
     Observable.fromReactivePublisher(collection.aggregate(pipeline.asJava, clazz))
@@ -66,7 +67,7 @@ object MongoSource {
     * @param collection the abstraction to work with a determined MongoDB Collection.
     * @param pipeline the aggregate pipeline.
     * @tparam Doc the type that this collection will decode documents from.
-    * @return
+    * @return an [[Observable]] of type [[Document]], containing the result of the aggregation pipeline
     */
   def aggregate[Doc](collection: MongoCollection[Doc], pipeline: Seq[Bson]): Observable[Document] =
     Observable.fromReactivePublisher(collection.aggregate(pipeline.asJava, classOf[Document]))
@@ -105,11 +106,25 @@ object MongoSource {
     *
     * @param collection the abstraction to work with the determined mongodb collection
     * @tparam Doc the type of the collection
-    * @return a [[Task]] with a long indicating the number of documents, the result can be -1 if the underlying publisher
-    *         did not emitted any documents, or a failed one when emitted an error.
+    * @return a [[Task]] with a long indicating the number of documents
+    *         the result will be -1 if the underlying publisher did not emitted any documents,
+    *         or a failed one when emitted an error.
     */
   def countAll[Doc](collection: MongoCollection[Doc]): Task[Long] =
     Task.fromReactivePublisher(collection.countDocuments()).map(_.map(_.longValue).getOrElse(-1L))
+
+  /**
+    * Counts all the documents in the collection.
+    *
+    * @param collection the abstraction to work with the determined mongodb collection
+    * @tparam Doc the type of the collection
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
+    * @return a [[Task]] with a long indicating the number of documents
+    *         the result will be -1 if the underlying publisher did not emitted any documents,
+    *         or a failed one when emitted an error.
+    */
+  def countAll[Doc](collection: MongoCollection[Doc], retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[Long] =
+    retryOnFailure(collection.countDocuments(), retryStrategy).map(_.map(_.longValue).getOrElse(-1L))
 
   /**
     * Counts the number of documents in the collection that matched the query filter.
@@ -118,8 +133,9 @@ object MongoSource {
     * @param filter a document describing the query filter
     *               @see [[com.mongodb.client.model.Filters]]
     * @tparam Doc the type of the collection
-    * @return a [[Task]] with a long indicating the number of documents, the result can be -1 if the underlying publisher
-    *         did not emitted any documents, or a failed one when emitted an error.
+    * @return a [[Task]] with a long indicating the number of documents
+    *         the result will be -1 if the underlying publisher did not emitted any documents,
+    *         or a failed one when emitted an error.
     */
   def count[Doc](collection: MongoCollection[Doc], filter: Bson): Task[Long] =
     Task.fromReactivePublisher(collection.countDocuments(filter)).map(_.map(_.longValue).getOrElse(-1L))
@@ -131,22 +147,18 @@ object MongoSource {
     * @param filter a document describing the query filter
     *               @see [[com.mongodb.client.model.Filters]]
     * @param countOptions the options to apply to the count operation
-    * @param retries the number of times the operation will be retried in case of unexpected failure,
-    *                being zero retries by default
-    * @param timeout expected timeout that the operation is expected to be executed or else return a failure
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
     * @tparam Doc the type of the collection
-    * @param delayAfterFailure the delay set after the execution of a single operation failed.
-    * @return a [[Task]] with a long indicating the number of documents, the result can be -1 if the underlying publisher
-    *         did not emitted any documents, or a failed one when emitted an error.
+    * @return a [[Task]] with a long indicating the number of documents,
+    *         the result can be -1 if the underlying publisher did not emitted any documents,
+    *         or a failed one when emitted an error.
     */
   def count[Doc](
     collection: MongoCollection[Doc],
     filter: Bson,
     countOptions: CountOptions = DefaultCountOptions,
-    retries: Int = 0,
-    timeout: Option[FiniteDuration] = Option.empty,
-    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[Long] =
-    retryOnFailure(Coeval(collection.countDocuments(filter, countOptions)), retries, timeout, delayAfterFailure)
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[Long] =
+    retryOnFailure(collection.countDocuments(filter, countOptions), retryStrategy)
       .map(_.map(_.longValue).getOrElse(-1L))
 
   /**
@@ -154,7 +166,7 @@ object MongoSource {
     *
     * @param collection the abstraction to work with a determined mongodb collection
     * @tparam Doc the type of the collection
-    * @return
+    * @return all documents of type [[Doc]] within the collection
     */
   def findAll[Doc](collection: MongoCollection[Doc]): Observable[Doc] =
     Observable.fromReactivePublisher(collection.find())
@@ -166,7 +178,7 @@ object MongoSource {
     * @param filter a document describing the query filter.
     *               @see [[com.mongodb.client.model.Filters]]
     * @tparam Doc the type of the collection
-    * @return
+    * @return the documents that matched with the given filter
     */
   def find[Doc](collection: MongoCollection[Doc], filter: Bson): Observable[Doc] =
     Observable.fromReactivePublisher(collection.find(filter))
@@ -191,10 +203,7 @@ object MongoSource {
     * @param filter the query filter to find the document with
     *               @see [[com.mongodb.client.model.Filters]]
     * @param findOneAndDeleteOptions the options to apply to the operation
-    * @param retries the number of times the operation will be retried in case of unexpected failure,
-    *                being zero retries by default
-    * @param timeout expected timeout that the operation is expected to be executed or else return a failure
-    * @param delayAfterFailure the delay set after the execution of a single operation failed.
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
     * @tparam Doc the type of the collection
     * @return a [[Task]] containing an optional of the document type that was removed
     *         if no documents matched the query filter it returns an empty option.
@@ -203,14 +212,8 @@ object MongoSource {
     collection: MongoCollection[Doc],
     filter: Bson,
     findOneAndDeleteOptions: FindOneAndDeleteOptions = DefaultFindOneAndDeleteOptions,
-    retries: Int = 0,
-    timeout: Option[FiniteDuration] = Option.empty,
-    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[Option[Doc]] =
-    retryOnFailure(
-      Coeval(collection.findOneAndDelete(filter, findOneAndDeleteOptions)),
-      retries,
-      timeout,
-      delayAfterFailure)
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[Option[Doc]] =
+    retryOnFailure(collection.findOneAndDelete(filter, findOneAndDeleteOptions), retryStrategy)
 
   /**
     * Atomically find a document and replace it.
@@ -234,10 +237,7 @@ object MongoSource {
     *               @see [[com.mongodb.client.model.Filters]]
     * @param replacement the replacement document
     * @param findOneAndReplaceOptions the options to apply to the operation
-    * @param retries the number of times the operation will be retried in case of unexpected failure,
-    *                being zero retries by default
-    * @param timeout expected timeout that the operation is expected to be executed or else return a failure
-    * @param delayAfterFailure the delay set after the execution of a single operation failed.
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
     * @tparam Doc the type of the collection
     * @return a [[Task]] with an optional of the document document that was replaced.
     *         If no documents matched the query filter, then an empty option will be returned.
@@ -247,14 +247,8 @@ object MongoSource {
     filter: Bson,
     replacement: Doc,
     findOneAndReplaceOptions: FindOneAndReplaceOptions = DefaultFindOneAndReplaceOptions,
-    retries: Int = 0,
-    timeout: Option[FiniteDuration] = Option.empty,
-    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[Option[Doc]] =
-    retryOnFailure(
-      Coeval(collection.findOneAndReplace(filter, replacement, findOneAndReplaceOptions)),
-      retries,
-      timeout,
-      delayAfterFailure)
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[Option[Doc]] =
+    retryOnFailure(collection.findOneAndReplace(filter, replacement, findOneAndReplaceOptions), retryStrategy)
 
   /**
     * Atomically find a document and update it.
@@ -265,8 +259,8 @@ object MongoSource {
     * @param update a document describing the update, which may not be null.
     *               The update to apply must include only update operators
     * @tparam Doc the type of the collection
-    * @return a [[Task]] with an optional of the document that was updated before the update was applied.
-    *         If no documents matched the query filter, then an empty option will be returned.
+    * @return a [[Task]] with an optional of the document that was updated before the update was applied,
+    *         if no documents matched the query filter, then an empty option will be returned.
     */
   def findOneAndUpdate[Doc](collection: MongoCollection[Doc], filter: Bson, update: Bson): Task[Option[Doc]] =
     Task.fromReactivePublisher(collection.findOneAndUpdate(filter, update))
@@ -280,25 +274,17 @@ object MongoSource {
     * @param update a document describing the update, which may not be null.
     *               The update to apply must include only update operators
     * @param findOneAndUpdateOptions the options to apply to the operation
-    * @param retries the number of times the operation will be retried in case of unexpected failure,
-    *                being zero retries by default
-    * @param timeout expected timeout that the operation is expected to be executed or else return a failure
-    * @param delayAfterFailure the delay set after the execution of a single operation failed.
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
     * @tparam Doc the type of the collection
-    * @return
+    * @return a [[Task]] with an optional of the document that was updated before the update was applied,
+    *         if no documents matched the query filter, then an empty option will be returned.
     */
   def findOneAndUpdate[Doc](
     collection: MongoCollection[Doc],
     filter: Bson,
     update: Bson,
     findOneAndUpdateOptions: FindOneAndUpdateOptions = DefaultFindOneAndUpdateOptions,
-    retries: Int = 0,
-    timeout: Option[FiniteDuration] = Option.empty,
-    delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[Option[Doc]] =
-    retryOnFailure(
-      Coeval(collection.findOneAndUpdate(filter, update, findOneAndUpdateOptions)),
-      retries,
-      timeout,
-      delayAfterFailure)
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[Option[Doc]] =
+    retryOnFailure(collection.findOneAndUpdate(filter, update, findOneAndUpdateOptions), retryStrategy)
 
 }
