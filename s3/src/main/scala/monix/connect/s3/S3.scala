@@ -555,8 +555,16 @@ trait S3 { self =>
     *
     * @note Once deleted, the object can only be restored if versioning was enabled when the object was deleted.
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/DeleteObjectRequest.html
-    * @param bucket        the bucket name of the object to be deleted.
-    * @param key           the key of the object to be deleted.
+    * @param bucket the bucket name of the object to be deleted.
+    * @param key    the key of the object to be deleted.
+    * @param bypassGovernanceRetention Indicates whether S3 Object Lock should bypass Governance-mode
+    *                                  restrictions to process this operation.
+    * @param mfa    the concatenation of the authentication device's serial number, a space,
+    *               and the value that is displayed on your authentication device.
+    *               Required to permanently delete a versioned object if versioning is configured
+    *               with MFA delete enabled.
+    * @param requestPayer sets the value of the RequestPayer property for this object.
+    * @param versionId  versionId used to reference a specific version of the object.
     * @return a [[Task]] with the delete object response [[DeleteObjectResponse]] .
     */
   def deleteObject(
@@ -568,7 +576,6 @@ trait S3 { self =>
     versionId: Option[String] = None)(implicit s3AsyncClient: S3AsyncClient): Task[DeleteObjectResponse] = {
     val request: DeleteObjectRequest =
       S3RequestBuilder.deleteObject(bucket, key, bypassGovernanceRetention, mfa, requestPayer, versionId)
-    S3RequestBuilder.deleteObject(bucket, key, bypassGovernanceRetention, mfa, requestPayer, versionId)
     deleteObject(request)
   }
 

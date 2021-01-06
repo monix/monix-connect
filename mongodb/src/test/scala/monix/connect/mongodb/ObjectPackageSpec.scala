@@ -23,6 +23,7 @@ import monix.eval.{Coeval, Task}
 import monix.execution.Scheduler.Implicits.global
 import monix.execution.exceptions.DummyException
 import monix.execution.schedulers.TestScheduler
+import monix.connect.mongodb.internal.retryOnFailure
 import monix.connect.mongodb.domain.{InsertOneResult, RetryStrategy}
 import org.mockito.IdiomaticMockito
 import org.mockito.MockitoSugar.{times, verify, when}
