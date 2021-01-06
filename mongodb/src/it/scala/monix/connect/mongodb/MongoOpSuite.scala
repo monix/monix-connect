@@ -100,7 +100,7 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     finalElements shouldBe 0L
   }
 
-    "insertOne"  should "insert one single element" in {
+  "insertOne"  should "insert one single element" in {
     //given
     val e = genEmployee.sample.get
 
