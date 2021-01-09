@@ -242,7 +242,7 @@ object MongoConnection {
     * ==Example==
     * {{{
     *   import monix.eval.Task
-    *   import monix.connect.mongodb.domain.{Collection, MongoConnector}
+    *   import monix.connect.mongodb.domain.{MongoCollection, MongoConnector}
     *   import monix.connect.mongodb.MongoConnection
     *   import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
     *
@@ -253,8 +253,8 @@ object MongoConnection {
     *   val employee2 = Employee("Laura", 41)
     *   val company = Company("Stephen", List(employee1, employee2))
     *
-    *   val employeesCol = Collection("business", "employees_collection", classOf[Employee], createCodecProvider[Employee]())
-    *   val companiesCol = Collection("business", "companies_collection", classOf[Company], createCodecProvider[Company](), createCodecProvider[Employee]())
+    *   val employeesCol = MongoCollection("business", "employees_collection", classOf[Employee], createCodecProvider[Employee]())
+    *   val companiesCol = MongoCollection("business", "companies_collection", classOf[Company], createCodecProvider[Company](), createCodecProvider[Employee]())
     *
     *   val connection = MongoConnection.create2("mongodb://localhost:27017", (employeesCol, companiesCol))
     *
@@ -303,8 +303,8 @@ object MongoConnection {
     *   val employee2 = Employee("Laura", 41)
     *   val company = Company("Stephen", List(employee1, employee2))
     *
-    *   val employeesCol = Collection("business", "employees_collection", classOf[Employee], createCodecProvider[Employee]())
-    *   val companiesCol = Collection("business", "companies_collection", classOf[Company], createCodecProvider[Company](), createCodecProvider[Employee]())
+    *   val employeesCol = MongoCollection("business", "employees_collection", classOf[Employee], createCodecProvider[Employee]())
+    *   val companiesCol = MongoCollection("business", "companies_collection", classOf[Company], createCodecProvider[Company](), createCodecProvider[Employee]())
     *
     *   val mongoClientSettings = MongoClientSettings.builder
     *       .applyToClusterSettings(builder => builder.hosts(List(new ServerAddress("localhost", 27017)).asJava))
