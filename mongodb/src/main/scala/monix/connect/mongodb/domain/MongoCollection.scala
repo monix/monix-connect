@@ -19,7 +19,7 @@ package monix.connect.mongodb.domain
 
 import org.bson.codecs.configuration.CodecProvider
 
-case class Collection[Doc](
+case class MongoCollection[Doc](
   databaseName: String,
   collectionName: String,
   clazz: Class[Doc],

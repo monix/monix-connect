@@ -18,7 +18,7 @@
 package monix.connect.mongodb
 
 import com.mongodb.reactivestreams.client.{MongoClient, MongoClients, MongoCollection, MongoDatabase}
-import monix.connect.mongodb.domain.Collection
+import monix.connect.mongodb.domain.{MongoCollection => MCollection}
 import org.bson.Document
 import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
@@ -55,9 +55,9 @@ trait Fixture {
   val investorsMongoCol: MongoCollection[Investor] = db.getCollection(investorsColName, classOf[Investor])
     .withCodecRegistry(codecRegistry)
 
-  val employeesCol = Collection(dbName, employeesColName, classOf[Employee], createCodecProvider[Employee]())
-  val companiesCol = Collection(dbName, companiesColName, classOf[Company], createCodecProvider[Company](), createCodecProvider[Employee]())
-  val investorsCol = Collection(dbName, companiesColName, classOf[Company], createCodecProvider[Investor](), createCodecProvider[Company](), createCodecProvider[Employee]())
+  val employeesCol = MCollection(dbName, employeesColName, classOf[Employee], createCodecProvider[Employee]())
+  val companiesCol = MCollection(dbName, companiesColName, classOf[Company], createCodecProvider[Company](), createCodecProvider[Employee]())
+  val investorsCol = MCollection(dbName, companiesColName, classOf[Company], createCodecProvider[Investor](), createCodecProvider[Company](), createCodecProvider[Employee]())
 
   protected val genNonEmptyStr = Gen.identifier.map(_.take(10))
 

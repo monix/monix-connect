@@ -20,7 +20,7 @@ package monix.connect.mongodb
 import org.scalatest.flatspec.AnyFlatSpecLike
 import monix.execution.Scheduler.Implicits.global
 import com.mongodb.client.model.{Collation, CollationCaseFirst, DeleteOptions, Filters, Updates}
-import monix.connect.mongodb.domain.Collection
+import monix.connect.mongodb.domain.MongoCollection
 import org.bson.conversions.Bson
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
