@@ -25,19 +25,13 @@ import monix.eval.Task
 import monix.execution.annotations.UnsafeBecauseImpure
 
 private[mongodb] class Connection4[T1, T2, T3, T4]
-  extends Connection[Tuple4F[Collection, T1, T2, T3, T4], Tuple4F[MongoConnector, T1, T2, T3, T4]] {
+  extends Connection[Tuple4F[Collection, T1, T2, T3, T4], Tuple4F[MongoConnector, T1, T2, T3, T4]] { self =>
 
   @UnsafeBecauseImpure
   override def createUnsafe(
     client: MongoClient,
     collections: Tuple4F[Collection, T1, T2, T3, T4]): Resource[Task, Tuple4F[MongoConnector, T1, T2, T3, T4]] = {
-    val (a, b, c, d) = collections
-    Resource.make(Connection4.createConnectors(client, a, (b, c, d)))(connector => Task(connector._1.db.client.close()))
-  }
-
-  override def close(
-    connectors: (MongoConnector[T1], MongoConnector[T2], MongoConnector[T3], MongoConnector[T4])): Task[Unit] = {
-    Task.map4(connectors._1.close, connectors._2.close, connectors._3.close, connectors._4.close)((_, _, _, _) => ())
+    Resource.make(Connection4.createConnectors(client, collections))(self.close)
   }
 
 }
@@ -45,11 +39,10 @@ private[mongodb] class Connection4[T1, T2, T3, T4]
 object Connection4 {
   def createConnectors[A, B, C, D](
     client: MongoClient,
-    current: Collection[A],
-    next: Tuple3F[Collection, B, C, D]): Task[Tuple4F[MongoConnector, A, B, C, D]] = {
+    collections: Tuple4F[Collection, A, B, C, D]): Task[Tuple4F[MongoConnector, A, B, C, D]] = {
     for {
-      a <- Connection.createConnector(client, current, fromCodecProvider(current.codecProvider: _*))
-      t <- Connection3.createConnectors(client, next._1, (next._2, next._3))
+      a <- Connection.createConnector(client, collections._1, fromCodecProvider(collections._1.codecProvider: _*))
+      t <- Connection3.createConnectors(client, (collections._2, collections._3, collections._4))
     } yield (a, t._1, t._2, t._3)
   }
 

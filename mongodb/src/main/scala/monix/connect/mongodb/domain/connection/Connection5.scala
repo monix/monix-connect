@@ -23,34 +23,27 @@ import monix.connect.mongodb.domain.connection.Connection.fromCodecProvider
 import monix.connect.mongodb.domain.{Collection, MongoConnector, Tuple4F, Tuple5F}
 import monix.eval.Task
 import monix.execution.annotations.UnsafeBecauseImpure
+import monix.reactive.Observable
 
 private[mongodb] class Connection5[T1, T2, T3, T4, T5]
-  extends Connection[Tuple5F[Collection, T1, T2, T3, T4, T5], Tuple5F[MongoConnector, T1, T2, T3, T4, T5]] {
+  extends Connection[Tuple5F[Collection, T1, T2, T3, T4, T5], Tuple5F[MongoConnector, T1, T2, T3, T4, T5]] { self =>
 
   @UnsafeBecauseImpure
   override def createUnsafe(client: MongoClient, collections: Tuple5F[Collection, T1, T2, T3, T4, T5])
     : Resource[Task, Tuple5F[MongoConnector, T1, T2, T3, T4, T5]] = {
     val (a, b, c, d, e) = collections
-    Resource.make(Connection5.createConnectors(client, a, (b, c, d, e)))(connector =>
-      Task(connector._1.db.client.close()))
+    Resource.make(Connection5.createConnectors(client, collections))(self.close)
   }
-
-  override def close(
-    connectors: (MongoConnector[T1], MongoConnector[T2], MongoConnector[T3], MongoConnector[T4], MongoConnector[T5]))
-    : Task[Unit] =
-    Task.map5(connectors._1.close, connectors._2.close, connectors._3.close, connectors._4.close, connectors._5.close)(
-      (_, _, _, _, _) => ())
 
 }
 
 private[mongodb] object Connection5 {
   def createConnectors[A, B, C, D, E](
     client: MongoClient,
-    current: Collection[A],
-    next: Tuple4F[Collection, B, C, D, E]): Task[Tuple5F[MongoConnector, A, B, C, D, E]] = {
+    collections: Tuple5F[Collection, A, B, C, D, E]): Task[Tuple5F[MongoConnector, A, B, C, D, E]] = {
     for {
-      a <- Connection.createConnector(client, current, fromCodecProvider(current.codecProvider: _*))
-      t <- Connection4.createConnectors(client, next._1, (next._2, next._3, next._4))
+      a <- Connection.createConnector(client, collections._1, fromCodecProvider(collections._1.codecProvider: _*))
+      t <- Connection4.createConnectors(client, (collections._2, collections._3, collections._4, collections._5))
     } yield (a, t._1, t._2, t._3, t._4)
   }
 

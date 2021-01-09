@@ -78,6 +78,5 @@ package object domain {
   type Tuple6F[T[_], A, B, C, D, E, F] = Tuple6[T[A], T[B], T[C], T[D], T[E], T[F]]
   type Tuple7F[T[_], A, B, C, D, E, F, G] = Tuple7[T[A], T[B], T[C], T[D], T[E], T[F], T[G]]
   type Tuple8F[T[_], A, B, C, D, E, F, G, H] = Tuple8[T[A], T[B], T[C], T[D], T[E], T[F], T[G], T[H]]
-  type Tuple9F[T[_], A, B, C, D, E, F, G, H, I] = Tuple9[T[A], T[B], T[C], T[D], T[E], T[F], T[G], T[H], T[I]]
 
 }

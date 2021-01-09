@@ -24,35 +24,42 @@ import monix.connect.mongodb.domain.{Collection, MongoConnector}
 import monix.connect.mongodb.{MongoDb, MongoSingle, MongoSink, MongoSource}
 import monix.eval.Task
 import monix.execution.annotations.UnsafeBecauseImpure
+import monix.reactive.Observable
 import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
 import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
 
-private[mongodb] trait Connection[A <: Product, B <: Product] {
+private[mongodb] trait Connection[A <: Product, T2 <: Product] {
 
-  def create(url: String, collectionInfo: A): Resource[Task, B] =
+  def create(url: String, collectionInfo: A): Resource[Task, T2] =
     Resource.make(Task.now(MongoClients.create(url)))(_ => Task.unit).flatMap(createUnsafe(_, collectionInfo))
 
-  def create(clientSettings: MongoClientSettings, collections: A): Resource[Task, B] =
+  def create(clientSettings: MongoClientSettings, collections: A): Resource[Task, T2] =
     Resource
       .make(Task.now(MongoClients.create(clientSettings)))(_ => Task.unit)
       .flatMap(createUnsafe(_, collections))
 
   @UnsafeBecauseImpure
-  def createUnsafe(client: MongoClient, collections: A): Resource[Task, B]
+  def createUnsafe(client: MongoClient, collections: A): Resource[Task, T2]
 
-  def close(connectors: B): Task[Unit]
+  def close(connectors: T2): Task[Unit] = {
+    Observable.fromIterable(connectors.productIterator.toList)
+      .map(_.asInstanceOf[MongoConnector].close)
+      .completedL
+  }
 
 }
 
 private[mongodb] object Connection {
 
-  private[mongodb] def apply[A]: Connection1[A] = new Connection1[A]
-  private[mongodb] def apply[A, B]: Connection2[A, B] = new Connection2[A, B]
-  private[mongodb] def apply[A, B, C]: Connection3[A, B, C] = new Connection3[A, B, C]
-  private[mongodb] def apply[A, B, C, D]: Connection4[A, B, C, D] = new Connection4[A, B, C, D]
-  private[mongodb] def apply[A, B, C, D, E]: Connection5[A, B, C, D, E] = new Connection5[A, B, C, D, E]
-  private[mongodb] def apply[A, B, C, D, E, F]: Connection6[A, B, C, D, E, F] = new Connection6[A, B, C, D, E, F]
+  private[mongodb] def apply[T1]: Connection1[T1] = new Connection1[T1]
+  private[mongodb] def apply[T1, T2]: Connection2[T1, T2] = new Connection2[T1, T2]
+  private[mongodb] def apply[T1, T2, T3]: Connection3[T1, T2, T3] = new Connection3[T1, T2, T3]
+  private[mongodb] def apply[T1, T2, T3, T4]: Connection4[T1, T2, T3, T4] = new Connection4[T1, T2, T3, T4]
+  private[mongodb] def apply[T1, T2, T3, T4, T5]: Connection5[T1, T2, T3, T4, T5] = new Connection5[T1, T2, T3, T4, T5]
+  private[mongodb] def apply[T1, T2, T3, T4, T5, T6]: Connection6[T1, T2, T3, T4, T5, T6] = new Connection6[T1, T2, T3, T4, T5, T6]
+  private[mongodb] def apply[T1, T2, T3, T4, T5, T6, T7]: Connection7[T1, T2, T3, T4, T5, T6, T7] = new Connection7[T1, T2, T3, T4, T5, T6, T7]
+  private[mongodb] def apply[T1, T2, T3, T4, T5, T6, T7, T8]: Connection8[T1, T2, T3, T4, T5, T6, T7, T8] = new Connection8[T1, T2, T3, T4, T5, T6, T7, T8]
 
   private[mongodb] def fromCodecProvider(codecRegistry: CodecProvider*): CodecRegistry =
     fromRegistries(fromProviders(codecRegistry: _*), DEFAULT_CODEC_REGISTRY)

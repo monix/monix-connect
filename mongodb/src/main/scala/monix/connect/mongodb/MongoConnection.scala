@@ -19,7 +19,7 @@ package monix.connect.mongodb
 
 import cats.effect.Resource
 import com.mongodb.MongoClientSettings
-import monix.connect.mongodb.domain.{Collection, MongoConnector, Tuple2F, Tuple3F, Tuple4F, Tuple5F, Tuple6F}
+import monix.connect.mongodb.domain.{Collection, MongoConnector, Tuple2F, Tuple3F, Tuple4F, Tuple5F, Tuple6F, Tuple7F}
 import monix.eval.Task
 import com.mongodb.reactivestreams.client.MongoClient
 import monix.connect.mongodb.domain.connection.Connection
@@ -292,16 +292,16 @@ object MongoConnection {
     *
     *   val updateResult: Task[UpdateResult] = connection.use {
     *     case (
-    *         MongoConnector(_, companySource, companySingle, companySink),
-    *         MongoConnector(_, employeeSource, employeeSingle, employeeSink),
-    *         MongoConnector(_, investorSource, investorSingle, _)) =>
+    *         companyConnector,
+    *         employeeConnector,
+    *         investorConnector) =>
     *       for {
     *         // creates the new company
-    *         _ <- companySingle.insertOne(Company("NewCompany", employees = List.empty, investment = 0)).delayResult(1.second)
-    *
+    *         _ <- companyConnector.single.insertOne(Company("NewCompany", employees = List.empty, investment = 0)).delayResult(1.second)
     *         //read employees from old company and pushes them into the new one
     *         _ <- {
-    *           employeeSource
+    *           employeeConnector
+    *             .source
     *             .find(Filters.eq("companyName", "OldCompany"))
     *             .bufferTimedAndCounted(2.seconds, 15)
     *             .map { employees =>
@@ -309,11 +309,11 @@ object MongoConnection {
     *               (Filters.eq("name", "NewCompany"),
     *                 Updates.pushEach("employees", employees.asJava))
     *             }
-    *             .consumeWith(companySink.updateOne())
+    *             .consumeWith(companyConnector.sink.updateOne())
     *         }
     *         // sums all the investment funds of the old company and updates the total company's investment
-    *         investment <- investorSource.find(Filters.in("companies.name", "OldCompany")).map(_.funds).sumL
-    *         updateResult <- companySingle.updateMany(
+    *         investment <- investorConnector.source.find(Filters.in("companies.name", "OldCompany")).map(_.funds).sumL
+    *         updateResult <- companyConnector.single.updateMany(
     *           Filters.eq("name", "NewCompany"),
     *           Updates.set("investment", investment))
     *       } yield updateResult
@@ -347,11 +347,11 @@ object MongoConnection {
 
   /**
     * Unsafely creates a connection to mongodb and provides a [[MongoConnector]]
-    * to each of the *TWO* provided [[Collection]]s.
+    * to each of the *THREE* provided [[Collection]]s.
     *
     * WARN: It is unsafe because it directly expects an instance of [[MongoClient]],
     * which will be released and closed towards the usage of the resource task.
-    * Always prefer to use [[create2]].
+    * Always prefer to use [[create3]].
     *
     * @param client an instance of [[MongoClient]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
@@ -367,7 +367,7 @@ object MongoConnection {
     * to each of the *FOUR* provided [[Collection]]s.
     *
     * @see an example of usage could be extrapolated from the scaladoc
-    *      example for [[create1]], [[create2]] and [[create3]].
+    *      example of [[create1]], [[create2]] and [[create3]].
     *
     * @param connectionString describes the hosts, ports and options to be used.
     *                         @see for more information on how to configure it:
@@ -386,7 +386,7 @@ object MongoConnection {
     * to each of the *FOUR* provided [[Collection]]s.
     *
     * @see an example of usage could be extrapolated from the scaladoc
-    *      example for [[create1]], [[create2]] and [[create3]].
+    *      example of [[create1]], [[create2]] and [[create3]].
     *
     * @param clientSettings various settings to control the behavior of the created [[MongoConnector]]s.
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
@@ -403,7 +403,7 @@ object MongoConnection {
     *
     * WARN: It is unsafe because it directly expects an instance of [[MongoClient]],
     * which will be released and closed towards the usage of the resource task.
-    * Always prefer to use [[create2]].
+    * Always prefer to use [[create4]].
     *
     * @param client an instance of [[MongoClient]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
@@ -419,7 +419,7 @@ object MongoConnection {
     * to each of the *FIVE* provided [[Collection]]s.
     *
     * @see an example of usage could be extrapolated from the scaladoc
-    *      example for [[create1]], [[create2]] and [[create3]].
+    *      example of [[create1]], [[create2]] and [[create3]].
     *
     * @param connectionString describes the hosts, ports and options to be used.
     *                         @see for more information on how to configure it:
@@ -438,7 +438,7 @@ object MongoConnection {
     * to each of the *FIVE* provided [[Collection]]s.
     *
     * @see an example of usage could be extrapolated from the scaladoc
-    *      example for [[create1]], [[create2]] and [[create3]].
+    *      example of [[create1]], [[create2]] and [[create3]].
     *
     * @param clientSettings various settings to control the behavior of the created [[MongoConnector]]s.
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
@@ -455,7 +455,7 @@ object MongoConnection {
     *
     * WARN: It is unsafe because it directly expects an instance of [[MongoClient]],
     * which will be released and closed towards the usage of the resource task.
-    * Always prefer to use [[create2]].
+    * Always prefer to use [[create5]].
     *
     * @param client an instance of [[MongoClient]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
@@ -471,7 +471,7 @@ object MongoConnection {
     * to each of the *SIX* provided [[Collection]]s.
     *
     * @see an example of usage could be extrapolated from the scaladoc
-    *      example for [[create1]], [[create2]] and [[create3]].
+    *      example of [[create1]], [[create2]] and [[create3]].
     *
     * @param connectionString describes the hosts, ports and options to be used.
     *                         @see for more information on how to configure it:
@@ -491,7 +491,7 @@ object MongoConnection {
     * to each of the *SIX* provided [[Collection]]s.
     *
     * @see an example of usage could be extrapolated from the scaladoc
-    *      example for [[create1]], [[create2]] and [[create3]].
+    *      example of [[create1]], [[create2]] and [[create3]].
     *
     * @param clientSettings various settings to control the behavior of the created [[MongoConnector]]s.
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
@@ -505,11 +505,11 @@ object MongoConnection {
 
   /**
     * Unsafely creates a connection to mongodb and provides a [[MongoConnector]]
-    * to each of the *FOUR* provided [[Collection]]s.
+    * to each of the *SIX* provided [[Collection]]s.
     *
     * WARN: It is unsafe because it directly expects an instance of [[MongoClient]],
     * which will be released and closed towards the usage of the resource task.
-    * Always prefer to use [[create2]].
+    * Always prefer to use [[create6]].
     *
     * @param client an instance of [[MongoClient]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
@@ -520,5 +520,60 @@ object MongoConnection {
     collections: Tuple6F[Collection, T1, T2, T3, T4, T5, T6])
     : Resource[Task, Tuple6F[MongoConnector, T1, T2, T3, T4, T5, T6]] =
     Connection[T1, T2, T3, T4, T5, T6].createUnsafe(client, collections)
+
+  /**
+    * Creates a connection to mongodb and provides a [[MongoConnector]]
+    * to each of the *SIX* provided [[Collection]]s.
+    *
+    * @see an example of usage could be extrapolated from the scaladoc
+    *      example of [[create1]], [[create2]] and [[create3]].
+    *
+    * @param connectionString describes the hosts, ports and options to be used.
+    *                         @see for more information on how to configure it:
+    *                         https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html
+    *                         https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/
+    * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
+    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[Collection]]s.
+    */
+  def create7[T1, T2, T3, T4, T5, T6](
+                                       connectionString: String,
+                                       collections: Tuple6F[Collection, T1, T2, T3, T4, T5, T6])
+  : Resource[Task, Tuple6F[MongoConnector, T1, T2, T3, T4, T5, T6]] =
+    Connection[T1, T2, T3, T4, T5, T6].create(connectionString, collections)
+
+  /**
+    * Creates a connection to mongodb and provides a [[MongoConnector]]
+    * to each of the *SEVEN* provided [[Collection]]s.
+    *
+    * @see an example of usage could be extrapolated from the scaladoc
+    *      example of [[create1]], [[create2]] and [[create3]].
+    *
+    * @param clientSettings various settings to control the behavior of the created [[MongoConnector]]s.
+    * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
+    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[Collection]].
+    */
+  def create7[T1, T2, T3, T4, T5, T6, T7](
+                                       clientSettings: MongoClientSettings,
+                                       collections: Tuple7F[Collection, T1, T2, T3, T4, T5, T6, T7])
+  : Resource[Task, Tuple7F[MongoConnector, T1, T2, T3, T4, T5, T6, T7]] =
+    Connection[T1, T2, T3, T4, T5, T6, T7].create(clientSettings, collections)
+
+  /**
+    * Unsafely creates a connection to mongodb and provides a [[MongoConnector]]
+    * to each of the *SEVEN* provided [[Collection]]s.
+    *
+    * WARN: It is unsafe because it directly expects an instance of [[MongoClient]],
+    * which will be released and closed towards the usage of the resource task.
+    * Always prefer to use [[create7]].
+    *
+    * @param client an instance of [[MongoClient]]
+    * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
+    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[Collection]]
+    */
+  def createUnsafe7[T1, T2, T3, T4, T5, T6, T7](
+                                             client: MongoClient,
+                                             collections: Tuple7F[Collection, T1, T2, T3, T4, T5, T6, T7])
+  : Resource[Task, Tuple7F[MongoConnector, T1, T2, T3, T4, T5, T6, T7]] =
+    Connection[T1, T2, T3, T4, T5, T6, T7].createUnsafe(client, collections)
 
 }

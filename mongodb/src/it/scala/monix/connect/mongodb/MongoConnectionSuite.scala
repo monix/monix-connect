@@ -285,7 +285,7 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
       val col1 = Collection(dbName, Gen.identifier.sample.get, classOf[Employee], createCodecProvider[Employee]())
       val col2 = Collection(dbName, Gen.identifier.sample.get, classOf[Employee], createCodecProvider[Employee]())
       val col3 = Collection(dbName, Gen.identifier.sample.get, classOf[Employee], createCodecProvider[Employee]())
-      val col4 = Collection(dbName, Gen.identifier.sample.get, classOf[Company], createCodecProvider[Company]())
+      val col4 = Collection(dbName, Gen.identifier.sample.get, classOf[Company], createCodecProvider[Company](), createCodecProvider[Employee]())
       val connection = makeResource(col1, col2, col3, col4)
 
       //when
@@ -314,4 +314,6 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
       r4 shouldBe company
     }
   }
+
+
 }

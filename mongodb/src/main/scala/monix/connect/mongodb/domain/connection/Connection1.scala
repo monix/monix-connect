@@ -24,13 +24,11 @@ import monix.connect.mongodb.domain.{Collection, MongoConnector}
 import monix.eval.Task
 import monix.execution.annotations.UnsafeBecauseImpure
 
-private[mongodb] class Connection1[A] extends Connection[Collection[A], MongoConnector[A]] {
+private[mongodb] class Connection1[A] extends Connection[Collection[A], MongoConnector[A]] { self =>
   @UnsafeBecauseImpure
   override def createUnsafe(client: MongoClient, collectionInfo: Collection[A]): Resource[Task, MongoConnector[A]] = {
     val codecRegistry = fromCodecProvider(collectionInfo.codecProvider: _*)
-    Resource.make { Connection.createConnector(client, collectionInfo, codecRegistry) } { connector =>
-      Task(connector.db.client.close())
-    }
+    Resource.make { Connection.createConnector(client, collectionInfo, codecRegistry) }(self.close)
   }
 
   override def close(connectors: MongoConnector[A]): Task[Unit] = connectors.close
