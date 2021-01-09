@@ -46,18 +46,18 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
   "A single collection" should "be created given the url endpoint" in {
     //given
     val collectionName = Gen.identifier.sample.get
-    val employee = genEmployee.sample.get
+    val investor = genInvestor.sample.get
     val connection = MongoConnection
-      .create1(mongoEndpoint, Collection(dbName, collectionName, classOf[Employee], createCodecProvider[Employee]()))
+      .create1(mongoEndpoint, Collection(dbName, collectionName, classOf[Investor], createCodecProvider[Employee](), createCodecProvider[Company](), createCodecProvider[Investor]()))
 
     //when
     val r = connection.use {
       case MongoConnector(_, source, single, _) =>
-        single.insertOne(employee).flatMap(_ => source.find(Filters.eq("name", employee.name)).headL)
+        single.insertOne(investor).flatMap(_ => source.find(Filters.eq("name", investor.name)).headL)
     }.runSyncUnsafe()
 
     //then
-    r shouldBe employee
+    r shouldBe investor
   }
 
   it should "be created given the mongo client settings" in new MongoConnectionFixture {
@@ -231,7 +231,9 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
         investorsColName,
         classOf[Investor],
         createCodecProvider[Investor](),
-        createCodecProvider[Company]())
+        createCodecProvider[Company](),
+        createCodecProvider[Employee]())
+
       val connection = makeResource(companiesCol, employeesCol, investorsCol)
 
       //when

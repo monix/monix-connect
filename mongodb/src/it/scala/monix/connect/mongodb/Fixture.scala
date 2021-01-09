@@ -57,8 +57,16 @@ trait Fixture {
 
   val employeesCol = Collection(dbName, employeesColName, classOf[Employee], createCodecProvider[Employee]())
   val companiesCol = Collection(dbName, companiesColName, classOf[Company], createCodecProvider[Company](), createCodecProvider[Employee]())
+  val investorsCol = Collection(dbName, companiesColName, classOf[Company], createCodecProvider[Investor](), createCodecProvider[Company](), createCodecProvider[Employee]())
 
   protected val genNonEmptyStr = Gen.identifier.map(_.take(10))
+
+  val genInvestor = for {
+    name <- Gen.identifier
+    funds <- Gen.chooseNum(1, 100000)
+    companies <- Gen.listOf(genCompany)
+  } yield Investor(name.mkString.take(8), funds, companies)
+
 
   val genEmployee = for {
     name <- Gen.identifier
