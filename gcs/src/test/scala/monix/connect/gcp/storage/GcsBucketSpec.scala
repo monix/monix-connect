@@ -37,7 +37,7 @@ class GcsBucketSpec
   val underlying: Bucket = mock[Bucket]
   val bucket: GcsBucket = GcsBucket(underlying)
 
-  override def beforeEach: Unit = {
+  override def beforeEach(): Unit = {
     super.beforeEach()
     reset(underlying)
   }

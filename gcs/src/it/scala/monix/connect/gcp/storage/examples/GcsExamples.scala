@@ -52,7 +52,6 @@ class GcsExamples extends AnyWordSpecLike with IdiomaticMockito with Matchers wi
 
     "blob donwload" in {
       import monix.connect.gcp.storage.GcsBlob
-      import monix.eval.Task
       import monix.reactive.Observable
 
       val storage = GcsStorage.create()
@@ -143,7 +142,6 @@ class GcsExamples extends AnyWordSpecLike with IdiomaticMockito with Matchers wi
     }
 
     "blob upload" in {
-      import monix.connect.gcp.storage.GcsBlob
       import monix.eval.Task
       import monix.execution.Scheduler.Implicits.global
 

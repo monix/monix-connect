@@ -12,7 +12,6 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.Failure
 
 class RedisIntegrationTest extends AnyFlatSpec
   with RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll with Eventually {
@@ -30,7 +29,7 @@ class RedisIntegrationTest extends AnyFlatSpec
     //then
     eventually {
       f.value.get.isFailure shouldBe true
-      f.value.get shouldBe a[Failure[NoSuchElementException]]
+      f.value.get.failed.get shouldBe a[NoSuchElementException]
     }
   }
 

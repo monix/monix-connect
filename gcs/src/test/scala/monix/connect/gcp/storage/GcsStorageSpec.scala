@@ -44,7 +44,7 @@ class GcsStorageSpec
   val bucket: GoogleBucket = mock[GoogleBucket]
   val storage: GcsStorage = GcsStorage(underlying)
 
-  override def beforeEach: Unit = {
+  override def beforeEach(): Unit = {
     super.beforeEach()
     reset(underlying)
   }
@@ -103,8 +103,8 @@ class GcsStorageSpec
       val maybeBuckets: List[GcsBucket] = storage.listBuckets(bucketListOption).toListL.runSyncUnsafe()
 
       //then
-      maybeBuckets shouldBe a[List[GcsBucket]]
       maybeBuckets.length shouldBe 3
+      maybeBuckets.head shouldBe a[GcsBucket]
       verify(underlying, times(1)).list(bucketListOption)
     }
 
@@ -121,8 +121,8 @@ class GcsStorageSpec
       val maybeBuckets: List[GcsBlob] = storage.listBlobs(bucketName, blobListOption).toListL.runSyncUnsafe()
 
       //then
-      maybeBuckets shouldBe a[List[GcsBucket]]
       maybeBuckets.length shouldBe 3
+      maybeBuckets.head shouldBe a[GcsBlob]
       verify(underlying, times(1)).list(bucketName, blobListOption)
     }
 

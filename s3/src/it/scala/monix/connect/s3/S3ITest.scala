@@ -107,7 +107,6 @@ class S3ITest
       //then
       whenReady(t.runToFuture) { actualContent: Array[Byte] =>
         S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe true
-        actualContent shouldBe a[Array[Byte]]
         actualContent shouldBe content.getBytes()
       }
     }
@@ -128,7 +127,6 @@ class S3ITest
       whenReady(t.runToFuture) { actualContent: Array[Byte] =>
         val expectedArrayByte = ob.foldLeftL(Array.emptyByteArray)((acc, bytes) => acc ++ bytes).runSyncUnsafe()
         S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe true
-        actualContent shouldBe a[Array[Byte]]
         actualContent.size shouldBe expectedArrayByte.size
         actualContent shouldBe expectedArrayByte
       }
@@ -147,7 +145,6 @@ class S3ITest
       //then
       whenReady(t.runToFuture) { partialContent: Array[Byte] =>
         S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe true
-        partialContent shouldBe a[Array[Byte]]
         partialContent shouldBe content.getBytes().take(n)
       }
     }
@@ -173,7 +170,8 @@ class S3ITest
       sleep(400)
 
       //then
-      f.value.get shouldBe a[Failure[NoSuchKeyException]]
+      f.value.get.isFailure shouldBe true
+      f.value.get.failed.get shouldBe a[NoSuchKeyException]
     }
 
     "downloadMultipart of small chunk size" in {
@@ -188,7 +186,6 @@ class S3ITest
 
       //then
       S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe true
-      actualContent shouldBe a[Array[Byte]]
       actualContent shouldBe content.getBytes()
     }
 
@@ -355,7 +352,8 @@ class S3ITest
       sleep(400)
 
       //then
-      f.value.get shouldBe a[Failure[NoSuchBucketException]]
+      f.value.get.isFailure shouldBe true
+      f.value.get.failed.get shouldBe a[NoSuchBucketException]
       val existsAfterDeletion = S3.existsBucket(bucket).runSyncUnsafe()
       existedBefore shouldBe false
       existsAfterDeletion shouldBe false

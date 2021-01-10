@@ -30,8 +30,6 @@ import com.mongodb.client.model.{
 }
 import monix.execution.internal.InternalApi
 
-import scala.concurrent.duration.{Duration, FiniteDuration}
-
 package object domain {
 
   //default option instances
@@ -45,12 +43,6 @@ package object domain {
   @InternalApi private[mongodb] val DefaultUpdateOptions = new UpdateOptions()
   @InternalApi private[mongodb] val DefaultReplaceOptions = new ReplaceOptions()
 
-  //results
-  case class DeleteResult(deleteCount: Long, wasAcknowledged: Boolean)
-  case class InsertOneResult(insertedId: Option[String], wasAcknowledged: Boolean)
-  case class InsertManyResult(insertedIds: Set[String], wasAcknowledged: Boolean)
-  case class UpdateResult(matchedCount: Long, modifiedCount: Long, wasAcknowledged: Boolean)
-
   //default result instances
   @InternalApi private[mongodb] val DefaultDeleteResult = DeleteResult(deleteCount = 0L, wasAcknowledged = false)
   @InternalApi private[mongodb] val DefaultInsertOneResult =
@@ -60,16 +52,8 @@ package object domain {
   @InternalApi private[mongodb] val DefaultUpdateResult =
     UpdateResult(matchedCount = 0L, modifiedCount = 0L, wasAcknowledged = false)
 
-  /**
-    * A retry strategy is defined by the amount of retries and backoff delay per operation.
-    *
-    * @param attempts the number of times that an operation can be
-    *                 retried before actually returning a failed task.
-    *                 it must be higher or equal than 1.
-    * @param backoffDelay delay after failure for the execution of a single mongodb operation.
-    */
-  case class RetryStrategy(attempts: Int = 0, backoffDelay: FiniteDuration = Duration.Zero)
-  final val DefaultRetryStrategy = RetryStrategy(1, Duration.Zero)
+  //default strategy instance
+  final val DefaultRetryStrategy = RetryStrategy()
 
   type Tuple2F[T[_], A, B] = (T[A], T[B])
   type Tuple3F[T[_], A, B, C] = (T[A], T[B], T[C])

@@ -405,7 +405,7 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
       //given
       val company = genCompany.sample.get
       val (employee1, employee2, employee3) = (genEmployee.sample.get, genEmployee.sample.get, genEmployee.sample.get)
-      val connection = makeResource(employeesCol, employeesCol, employeesCol, companiesCol)
+      val connection = makeResource((employeesCol, employeesCol, employeesCol, companiesCol))
 
       //when
       val (r1, r2, r3, r4) = connection.use {
@@ -442,7 +442,7 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
     val company = genCompany.sample.get
     val (employee1, employee2, employee3, employee4) =
       (genEmployee.sample.get, genEmployee.sample.get, genEmployee.sample.get, genEmployee.sample.get)
-    val connection = makeResource(employeesCol, employeesCol, employeesCol, employeesCol, companiesCol)
+    val connection = makeResource((employeesCol, employeesCol, employeesCol, employeesCol, companiesCol))
 
     //when
     val (r1, r2, r3, r4, r5) = connection.use {
@@ -487,7 +487,7 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
         genEmployee.sample.get,
         genEmployee.sample.get,
         genEmployee.sample.get)
-    val connection = makeResource(employeesCol, employeesCol, employeesCol, employeesCol, employeesCol, companiesCol)
+    val connection = makeResource((employeesCol, employeesCol, employeesCol, employeesCol, employeesCol, companiesCol))
 
     //when
     val (r1, r2, r3, r4, r5, r6) = connection.use {
@@ -545,7 +545,7 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
         genEmployee.sample.get,
         genEmployee.sample.get)
     val connection =
-      makeResource(employeesCol, employeesCol, employeesCol, employeesCol, employeesCol, employeesCol, companiesCol)
+      makeResource((employeesCol, employeesCol, employeesCol, employeesCol, employeesCol, employeesCol, companiesCol))
 
     //when
     val (r1, r2, r3, r4, r5, r6, r7) = connection.use {
@@ -610,7 +610,7 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
         genEmployee.sample.get,
         genEmployee.sample.get,
         genEmployee.sample.get)
-    val connection = makeResource(
+    val connection = makeResource((
       employeesCol,
       employeesCol,
       employeesCol,
@@ -618,7 +618,7 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
       employeesCol,
       employeesCol,
       employeesCol,
-      companiesCol)
+      companiesCol))
 
     //when
     val (r1, r2, r3, r4, r5, r6, r7, r8) = connection.use {

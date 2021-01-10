@@ -34,7 +34,6 @@ class DynamoDbSuite extends AnyFlatSpec with Matchers with DynamoDbFixture with 
 
   it can "be safely created from the parameter configurations" in {
     //given
-    import monix.connect.dynamodb.DynamoDbOp.Implicits.putItemOp
     val listRequest = ListTablesRequest.builder.build
 
     //when

@@ -291,7 +291,6 @@ object MongoConnection {
     *   import monix.eval.Task
     *   import monix.connect.mongodb.domain.{MongoCollection, MongoConnector}
     *   import monix.connect.mongodb.MongoConnection
-    *   import monix.connect.mongodb.domain.MongoConnector
     *   import com.mongodb.{MongoClientSettings, ServerAddress}
     *   import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
     *   import scala.jdk.CollectionConverters._
@@ -359,9 +358,8 @@ object MongoConnection {
     * {{{
     *   import com.mongodb.client.model.{Filters, Updates}
     *   import monix.eval.Task
-    *   import monix.connect.mongodb.domain.{MongoCollection, MongoConnector}
+    *   import monix.connect.mongodb.domain.{MongoCollection, UpdateResult}
     *   import monix.connect.mongodb.MongoConnection
-    *   import monix.connect.mongodb.domain.{MongoConnector, UpdateResult}
     *   import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
     *
     *   import scala.concurrent.duration._

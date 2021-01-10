@@ -426,7 +426,6 @@ trait S3 { self =>
     * Creates a bucket.
     *
     * ==Example==
-    *
     * {{{
     *   import monix.eval.Task
     *   import monix.connect.s3.S3
@@ -484,11 +483,7 @@ trait S3 { self =>
     * Creates a copy of from an already stored object.
     *
     * ==Example==
-    *
     * {{{
-    *   import monix.eval.Task
-    *   import monix.connect.s3.S3
-    *
     *   val sourceBucket = "source-bucket"
     *   val sourceKey = "source/key.json"
     *   val targetBucket = "target-bucket"
@@ -895,9 +890,7 @@ trait S3 { self =>
     * Uploads a new object to the specified Amazon S3 bucket.
     *
     * ==Example==
-    *
     * {{{
-    *   import monix.reactive.Observable
     *   import monix.eval.Task
     *   import cats.effect.Resource
     *
@@ -914,11 +907,9 @@ trait S3 { self =>
     * {{{
     *   import monix.eval.Task
     *   import monix.connect.s3.S3
-    *   import software.amazon.awssdk.services.s3.model.PutObjectResponse
     *   import software.amazon.awssdk.services.s3.S3AsyncClient
     *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
     *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
-    *   import software.amazon.awssdk.services.s3.model.S3Object
     *
     *   // must be properly configured
     *   val s3AsyncClient = S3AsyncClient.builder
@@ -962,10 +953,9 @@ trait S3 { self =>
     * Uploads an S3 object by making multiple http requests (parts) of the received chunks of bytes.
     *
     * ==Example==
-    *
     * {{{
+    *   import monix.reactive.Observable
     *   import monix.eval.Task
-    *   import monix.reactive.{Observable, Consumer}
     *   import cats.effect.Resource
     *
     *   val s3Resource: Resource[Task, S3] = S3.fromConfig
@@ -979,13 +969,10 @@ trait S3 { self =>
     * }}}
     *
     * ==Unsafe Example==
-    *
     * {{{
-    *   import monix.eval.Task
-    *   import monix.reactive.{Observable, Consumer}
+    *   import monix.reactive.Observable
     *   import monix.connect.s3.S3
     *   import software.amazon.awssdk.services.s3.S3AsyncClient
-    *   import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadResponse
     *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
     *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
     *

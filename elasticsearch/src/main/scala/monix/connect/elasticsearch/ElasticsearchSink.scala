@@ -59,7 +59,7 @@ private[elasticsearch] class ElasticsearchSink(elasticsearch: Elasticsearch)
       }
 
       override def onComplete(): Unit = {
-        cb.onSuccess()
+        cb.onSuccess(())
       }
     }
     (subscriber, AssignableCancelable.single())

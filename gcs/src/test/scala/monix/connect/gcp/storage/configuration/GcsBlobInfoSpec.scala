@@ -17,9 +17,6 @@
 
 package monix.connect.gcp.storage.configuration
 
-import java.nio.charset.StandardCharsets
-import java.util.Base64
-
 import com.google.cloud.ReadChannel
 import com.google.cloud.storage.{BlobInfo, Storage, Blob => GoogleBlob, Option => _}
 import monix.connect.gcp.storage.GscFixture
@@ -38,7 +35,7 @@ class GcsBlobInfoSpec
   val mockStorage: Storage = mock[Storage]
   val readChannel: ReadChannel = mock[ReadChannel]
 
-  override def beforeEach: Unit = {
+  override def beforeEach(): Unit = {
     super.beforeEach()
     reset(underlying)
   }

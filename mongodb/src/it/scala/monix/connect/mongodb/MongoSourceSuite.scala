@@ -39,7 +39,7 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     //given
     val oldEmployees = genEmployeesWith(age = Some(55)).sample.get
     val youngEmployees = genEmployeesWith(age = Some(22)).sample.get
-    MongoOp.insertMany(employeesMongoCol, youngEmployees ++ oldEmployees).runSyncUnsafe()
+    MongoSingle.insertMany(employeesMongoCol, youngEmployees ++ oldEmployees).runSyncUnsafe()
 
     //when
     val aggregation =  Aggregates.`match`(Filters.gt("age", 35))
@@ -52,7 +52,7 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
   it should "aggregate with group by" in {
     //given
     val employees = Gen.nonEmptyListOf(genEmployee).sample.get
-    MongoOp.insertMany(employeesMongoCol, employees).runSyncUnsafe()
+    MongoSingle.insertMany(employeesMongoCol, employees).runSyncUnsafe()
 
     //when
     val aggregation =  Aggregates.group("group", Accumulators.avg("average", "$age"))
@@ -67,7 +67,7 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     val e1 = genEmployeeWith(age = Some(55)).sample.get
     val e2 = genEmployeeWith(age = Some(65)).sample.get
     val e3 = genEmployeeWith(age = Some(22)).sample.get
-    MongoOp.insertMany(employeesMongoCol, List(e1, e2, e3)).runSyncUnsafe()
+    MongoSingle.insertMany(employeesMongoCol, List(e1, e2, e3)).runSyncUnsafe()
 
     //when
     val matchAgg = Aggregates.`match`(Filters.gt("age", 35))
@@ -123,12 +123,12 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
   }
 
 
-    it should  "count with countOptions" in {
+  it should  "count with countOptions" in {
     //given
     val senegalEmployees = genEmployeesWith(city = Some("Dakar")).sample.get
     val employees =  Gen.listOfN(10, genEmployee).map(l => l.++(senegalEmployees)).sample.get
     val countOptions = new CountOptions().limit(senegalEmployees.size -1)
-    MongoOp.insertMany(employeesMongoCol, employees).runSyncUnsafe()
+    MongoSingle.insertMany(employeesMongoCol, employees).runSyncUnsafe()
 
     //when
     val filer: Bson = Filters.eq("city", "Dakar")
@@ -150,7 +150,7 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     //given
     val chineseEmployees = genEmployeesWith(city = Some("Shanghai")).sample.get
     val employees = Gen.nonEmptyListOf(genEmployee).map(_ ++ chineseEmployees).sample.get
-    MongoOp.insertMany(employeesMongoCol, employees).runSyncUnsafe()
+    MongoSingle.insertMany(employeesMongoCol, employees).runSyncUnsafe()
 
     //when
     val distinct: List[String] = MongoSource.distinct(employeesMongoCol, "city", classOf[String]).toListL.runSyncUnsafe()

@@ -15,21 +15,16 @@
  * limitations under the License.
  */
 
-package monix.connect.s3
+package monix.connect.mongodb.domain
 
-package object domain {
+import scala.concurrent.duration.{Duration, FiniteDuration}
 
-  /**
-    * The minimum allowable part size for a multipart upload is 5 MB.
-    * @see [[https://docs.aws.amazon.com/AmazonS3/latest/dev/qfacts.html]]
-    * For more information about multipart upload limits.
-    */
-  val awsMinChunkSize: Int = 5 * 1024 * 1024 //5242880 bytes
-  val awsDefaultMaxKeysList = 1000 //represents the default max keys per list keys request
-
-  //default setting instances
-  private[s3] val DefaultDownloadSettings = DownloadSettings()
-  private[s3] val DefaultCopyObjectSettings = CopyObjectSettings()
-  private[s3] val DefaultUploadSettings = UploadSettings()
-
-}
+/**
+  * A retry strategy is defined by the amount of retries and backoff delay per operation.
+  *
+  * @param attempts the number of times that an operation can be
+  *                 retried before actually returning a failed task.
+  *                 it must be higher or equal than 1.
+  * @param backoffDelay delay after failure for the execution of a single mongodb operation.
+  */
+case class RetryStrategy(attempts: Int = 1, backoffDelay: FiniteDuration = Duration.Zero)

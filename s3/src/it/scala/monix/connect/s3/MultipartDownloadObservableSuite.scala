@@ -60,7 +60,6 @@ class MultipartDownloadObservableSuite
 
       //then
       s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe() shouldBe true
-      actualContent shouldBe a[Array[Byte]]
       actualContent shouldBe content.getBytes()
     }
 
@@ -76,7 +75,6 @@ class MultipartDownloadObservableSuite
 
       //then
       s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe() shouldBe true
-      actualContent shouldBe a[Array[Byte]]
       actualContent shouldBe content.getBytes()
     }
 
@@ -108,7 +106,8 @@ class MultipartDownloadObservableSuite
 
       //then
       Await.ready(f, 1.seconds)
-      f.value.get shouldBe a[Failure[NoSuchBucketException]]
+      f.value.get.isFailure shouldBe true
+      f.value.get.failed.get shouldBe a[NoSuchBucketException]
       s3Resource.use(_.existsObject(bucket, key)).runSyncUnsafe() shouldBe false
     }
 

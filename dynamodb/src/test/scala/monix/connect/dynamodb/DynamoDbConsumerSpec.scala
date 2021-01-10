@@ -17,6 +17,7 @@
 
 package monix.connect.dynamodb
 
+import monix.connect.dynamodb.domain.RetryStrategy
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.execution.exceptions.DummyException
@@ -34,7 +35,7 @@ class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers with IdiomaticM
 
   implicit val client: DynamoDbAsyncClient = mock[DynamoDbAsyncClient]
 
-  s"A ${DynamoDb} Consumer" when {
+  s"A $DynamoDb Consumer" when {
 
     s"three operations are passed" must {
 
@@ -49,7 +50,7 @@ class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers with IdiomaticM
         when(op.apply(req)(client)).thenReturn(Task(resp))
         Observable
           .fromIterable(List.fill(n)(req))
-          .consumeWith(DynamoDb.consumer(retries = 1)(op, client))
+          .consumeWith(DynamoDb.createUnsafe(client).sink()(op))
           .runSyncUnsafe()
 
         //when
@@ -58,7 +59,6 @@ class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers with IdiomaticM
 
       "supports an empty observable" in {
         //given
-        val n = 3
         val req = mock[DynamoDbRequest]
         val resp = mock[DynamoDbResponse]
         val op = mock[DynamoDbOp[DynamoDbRequest, DynamoDbResponse]]
@@ -66,7 +66,7 @@ class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers with IdiomaticM
         //when
         when(op.apply(req)(client)).thenReturn(Task(resp))
         val t: Task[Unit] =
-          Observable.empty.consumeWith(DynamoDb.consumer(retries = 1)(op, client))
+          Observable.empty.consumeWith(DynamoDb.createUnsafe(client).sink()(op))
 
         //when
         t.runToFuture.value shouldBe Some(Success(()))
@@ -85,7 +85,7 @@ class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers with IdiomaticM
         val f =
           Observable
             .fromIterable(List.fill(n)(req))
-            .consumeWith(DynamoDb.consumer(retries = 0)(op, client))
+            .consumeWith(DynamoDb.createUnsafe(client).sink(RetryStrategy(retries = 0))(op))
             .runToFuture
 
         //then
@@ -106,7 +106,7 @@ class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers with IdiomaticM
         val f =
           Observable
             .fromIterable(List.fill(n)(req))
-            .consumeWith(DynamoDb.consumer(retries = 1)(op, client))
+            .consumeWith(DynamoDb.createUnsafe(client).sink(RetryStrategy(retries = 1))(op))
             .runToFuture
 
         //then
@@ -127,7 +127,7 @@ class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers with IdiomaticM
         val f =
           Observable
             .fromIterable(List.fill(n)(req))
-            .consumeWith(DynamoDb.consumer(retries = 1)(op, client))
+            .consumeWith(DynamoDb.createUnsafe(client).sink(RetryStrategy(retries = 1))(op))
             .runToFuture
 
         //then

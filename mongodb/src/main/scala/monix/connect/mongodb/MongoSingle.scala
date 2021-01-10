@@ -21,15 +21,11 @@ import com.mongodb.client.model._
 import com.mongodb.reactivestreams.client.MongoCollection
 import monix.connect.mongodb.domain.{
   DefaultDeleteOptions,
-  DefaultDeleteResult,
   DefaultInsertManyOptions,
-  DefaultInsertManyResult,
   DefaultInsertOneOptions,
-  DefaultInsertOneResult,
   DefaultReplaceOptions,
   DefaultRetryStrategy,
   DefaultUpdateOptions,
-  DefaultUpdateResult,
   DeleteResult,
   InsertManyResult,
   InsertOneResult,

@@ -35,7 +35,7 @@ class GcsBucketInfoSpec
   val mockStorage: Storage = mock[Storage]
   val readChannel: ReadChannel = mock[ReadChannel]
 
-  override def beforeEach: Unit = {
+  override def beforeEach(): Unit = {
     super.beforeEach()
     reset(underlying)
   }

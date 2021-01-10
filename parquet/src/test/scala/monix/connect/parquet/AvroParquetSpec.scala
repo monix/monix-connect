@@ -27,6 +27,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import monix.execution.Scheduler.Implicits.global
 import org.scalatest.BeforeAndAfterAll
 
+@deprecated("", "0.5.0")
 class AvroParquetSpec extends AnyWordSpecLike with Matchers with AvroParquetFixture with BeforeAndAfterAll {
 
   override def afterAll(): Unit = {
@@ -35,7 +36,7 @@ class AvroParquetSpec extends AnyWordSpecLike with Matchers with AvroParquetFixt
     directory.deleteRecursively()
   }
 
-  s"${Parquet}" should {
+  s"$Parquet" should {
 
     "write avro records in parquet" in {
       //given

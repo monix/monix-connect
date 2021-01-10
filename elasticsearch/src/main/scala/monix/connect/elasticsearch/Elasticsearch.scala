@@ -38,16 +38,14 @@ import monix.reactive.{Consumer, Observable}
 object Elasticsearch {
 
   /**
+    * Creates an instance of [[Elasticsearch]] from the passed http client factory.
     *
     * ==Example==
-    *
     *{{{
     * import cats.effect.Resource
     * import monix.connect.elasticsearch.Elasticsearch
     * import com.sksamuel.elastic4s.http.JavaClient
-    * import com.sksamuel.elastic4s.{ElasticProperties, HttpClient}
-    * import com.sksamuel.elastic4s.ElasticDsl._
-    * import com.sksamuel.elastic4s._
+    * import com.sksamuel.elastic4s.ElasticProperties
     * import monix.eval.Task
     *
     * val uri = "http://localhost:9200"
@@ -56,7 +54,6 @@ object Elasticsearch {
     * }}}
     *
     * @param httpClientFactory
-    * @return
     */
   def create(httpClientFactory: => HttpClient): Resource[Task, Elasticsearch] = {
     Resource.make {
@@ -68,14 +65,11 @@ object Elasticsearch {
   }
 
   /**
-    * Creates [[Elasticsearch]] from a string URI
+    * Creates [[Elasticsearch]] from a string URI.
     *
     * ==Example==
-    *
     *{{{
     * import com.sksamuel.elastic4s.ElasticDsl._
-    * import com.sksamuel.elastic4s._
-    * import monix.eval.Task
     *
     * val esResource = Elasticsearch.create("http://localhost:9200")
     *
@@ -87,20 +81,16 @@ object Elasticsearch {
     * }}}
     *
     * @param uri an URI for creating es client. format: http(s)://host:port,host:port(/prefix)?querystring
-    * @return a [[Elasticsearch]] object
     */
   def create(uri: String): Resource[Task, Elasticsearch] = create(JavaClient(ElasticProperties(uri)))
 
   /**
-    * ==Example==
+    * Creates unsafely an instance of [[Elasticsearch]].
     *
+    * ==Example==
     *{{{
-    * import monix.connect.elasticsearch.Elasticsearch
     * import com.sksamuel.elastic4s.http.JavaClient
-    * import com.sksamuel.elastic4s.{ElasticProperties, HttpClient}
-    * import com.sksamuel.elastic4s.ElasticDsl._
-    * import com.sksamuel.elastic4s._
-    * import monix.eval.Task
+    * import com.sksamuel.elastic4s.{ElasticProperties, ElasticClient}
     *
     * val uri = "http://localhost:9200"
     * val elasticProperties = ElasticProperties(uri) // here different options could be set
@@ -109,7 +99,6 @@ object Elasticsearch {
     * }}}
     *
     * @param esClient
-    * @return
     */
   @UnsafeBecauseImpure
   def createUnsafe(esClient: ElasticClient): Elasticsearch = {

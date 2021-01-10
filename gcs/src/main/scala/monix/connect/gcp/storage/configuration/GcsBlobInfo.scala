@@ -71,7 +71,7 @@ object GcsBlobInfo {
         List.empty[Acl]
       },
       owner = Option(blobInfo.getOwner),
-      size = Option(blobInfo.getSize()),
+      size = Option(blobInfo.getSize.toLong),
       contentType = Option(blobInfo.getContentType),
       contentEncoding = Option(blobInfo.getContentEncoding),
       contentDisposition = Option(blobInfo.getContentDisposition),

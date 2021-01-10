@@ -30,13 +30,9 @@ import monix.connect.mongodb.domain.{
   DefaultDeleteOptions,
   DefaultDeleteResult,
   DefaultInsertManyOptions,
-  DefaultInsertManyResult,
   DefaultInsertOneOptions,
-  DefaultInsertOneResult,
   DefaultReplaceOptions,
   DefaultUpdateOptions,
-  DefaultUpdateResult,
-  DeleteResult,
   InsertManyResult,
   InsertOneResult,
   UpdateResult
@@ -44,7 +40,7 @@ import monix.connect.mongodb.domain.{
 import monix.eval.Task
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
-import org.mockito.MockitoSugar.{mock, times, verify, when}
+import org.mockito.MockitoSugar.{times, verify, when}
 import monix.execution.exceptions.DummyException
 import monix.reactive.Observable
 import org.reactivestreams.Publisher
@@ -61,6 +57,7 @@ import org.scalatest.concurrent.ScalaFutures
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 
+@deprecated("0.5.3")
 class MongoOpSpec
   extends AnyFlatSpecLike with TestFixture with ScalaFutures with Matchers with BeforeAndAfterEach
   with IdiomaticMockito {

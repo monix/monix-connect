@@ -103,7 +103,7 @@ private[hdfs] class HdfsSubscriber(
 
     }
 
-    (sub, AssignableCancelable.single)
+    (sub, AssignableCancelable.single())
   }
 
   /** A builder for creating an instance of [[FSDataOutputStream]]. */

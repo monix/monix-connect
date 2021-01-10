@@ -51,7 +51,7 @@ private[elasticsearch] class ElasticsearchSource(request: SearchRequest)(implici
   private def fastLoop(buffer: mutable.Queue[SearchHit], sub: Subscriber[SearchHit]): Task[Unit] = {
     fetch(buffer, sub).flatMap { _ =>
       if (buffer.nonEmpty)
-        Task.deferFuture(sub.onNext(buffer.dequeue))
+        Task.deferFuture(sub.onNext(buffer.dequeue()))
       else
         Task.now(Ack.Stop)
     }.flatMap {

@@ -200,7 +200,7 @@ class MongoSinkSuite extends AnyFlatSpecLike with Fixture with Matchers with Bef
     val lisbon = "Lisbon"
     val age = 45
     val employees = genEmployeesWith(city = Some(porto), age = Some(age), n = 10).sample.get
-    MongoOp.insertMany(employeesMongoCol, employees).runSyncUnsafe()
+    MongoSingle.insertMany(employeesMongoCol, employees).runSyncUnsafe()
 
     //and
     val filter = Filters.eq("city", porto)
@@ -223,7 +223,7 @@ class MongoSinkSuite extends AnyFlatSpecLike with Fixture with Matchers with Bef
     val lisbon = "Lisbon"
     val age = 45
     val employees = genEmployeesWith(city = Some(porto), age = Some(age), n = 10).sample.get
-    MongoOp.insertMany(employeesMongoCol, employees).runSyncUnsafe()
+    MongoSingle.insertMany(employeesMongoCol, employees).runSyncUnsafe()
 
     //and
     val filter = Filters.eq("city", porto)
@@ -250,7 +250,7 @@ class MongoSinkSuite extends AnyFlatSpecLike with Fixture with Matchers with Bef
     //given
     val e1 = Employee("Employee1", 45, "Rio")
     val e2 = Employee("Employee2", 34, "Rio")
-    MongoOp.insertMany(employeesMongoCol, List(e1, e2)).runSyncUnsafe()
+    MongoSingle.insertMany(employeesMongoCol, List(e1, e2)).runSyncUnsafe()
 
     //and
     val t1 = (Filters.eq("name", "Employee1"), Employee("Employee3", 43, "Rio"))
@@ -300,7 +300,7 @@ class MongoSinkSuite extends AnyFlatSpecLike with Fixture with Matchers with Bef
     val e1 = genEmployeesWith(name = Some(name1), n = 10).sample.get
     val e2 = genEmployeesWith(name = Some(name2), age = Some(31), n = 20).sample.get
     val e3 = genEmployeesWith(name = Some(name3), n = 30).sample.get
-    MongoOp.insertMany(employeesMongoCol, e1 ++ e2 ++ e3).runSyncUnsafe()
+    MongoSingle.insertMany(employeesMongoCol, e1 ++ e2 ++ e3).runSyncUnsafe()
 
     //and two update elements
     val u1 = (Filters.eq("name", name1), Updates.set("name", name3))
@@ -353,7 +353,7 @@ class MongoSinkSuite extends AnyFlatSpecLike with Fixture with Matchers with Bef
       } yield e1 ++ e2
     }.sample.get
     val cities: Set[String] = e.map(_.city).distinct.toSet
-    MongoOp.insertMany(employeesMongoCol, e).runSyncUnsafe()
+    MongoSingle.insertMany(employeesMongoCol, e).runSyncUnsafe()
 
     //when
     MongoConnection

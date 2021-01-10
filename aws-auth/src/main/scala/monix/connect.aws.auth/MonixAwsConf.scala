@@ -24,8 +24,6 @@ import pureconfig.generic.auto._
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
 import java.net.URI
 
-import scala.language.implicitConversions
-
 @InternalApi
 private[connect] final case class MonixAwsConf(
   region: Region,

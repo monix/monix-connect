@@ -161,7 +161,8 @@ class ListObjectsObservableSuite
     sleep(200)
 
     //then
-    f.value.get shouldBe a[Failure[NoSuchBucketException]]
+    f.value.get.isFailure shouldBe true
+    f.value.get.failed.get shouldBe a[NoSuchBucketException]
   }
 
 }
