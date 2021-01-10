@@ -107,6 +107,7 @@ lazy val sharedSettings = Seq(
 
 def mimaSettings(projectName: String) = Seq(
   mimaPreviousArtifacts := Set("io.monix" %% projectName % monixConnectSeries),
+  mimaBinaryIssueFilters ++= MimaFilters.changesFor_0_5_3
 )
 
 mimaFailOnNoPrevious in ThisBuild := false
