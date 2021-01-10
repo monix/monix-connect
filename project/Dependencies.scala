@@ -19,6 +19,7 @@ object Dependencies {
     val Parquet = "1.11.1"
     val Pureconfig = "0.14.0"
     val Elastic4s = "7.10.2"
+    val ScalaCompat = "2.3.2"
 
     //test
     val Scalatest = "3.2.3"
@@ -27,17 +28,13 @@ object Dependencies {
     val GCNio = "0.122.4"
   }
 
-  private def testDependencies(hasIt: Boolean = false): Seq[sbt.ModuleID] = {
+  private def commonDependencies(hasIt: Boolean = false): Seq[sbt.ModuleID] = {
     val common: Seq[ModuleID] = MonixDependency ++ CommonTestDependencies.map(_ % Test)
     if (hasIt) common ++ CommonTestDependencies.map(_                           % IntegrationTest)
     else common
   }
 
-  private val MonixDependency = Seq(
-    "io.monix" %% "monix-reactive"                        % Versions.Monix,
-    "org.scala-lang.modules" %% "scala-collection-compat" % "2.3.2",
-    "org.scala-lang.modules" %% "scala-java8-compat"      % "0.9.0"
-  )
+  private val MonixDependency = Seq("io.monix" %% "monix-reactive" % Versions.Monix)
 
   private val CommonTestDependencies = Seq(
     "org.scalatest" %% "scalatest"   % Versions.Scalatest,
@@ -45,12 +42,11 @@ object Dependencies {
     "org.mockito" %% "mockito-scala" % Versions.Mockito
   )
 
-  val Akka = Seq("com.typesafe.akka" %% "akka-stream" % Versions.AkkaStreams) ++ testDependencies(hasIt = false)
+  val Akka = Seq("com.typesafe.akka" %% "akka-stream" % Versions.AkkaStreams) ++ commonDependencies(hasIt = false)
 
   val AwsAuth = Seq(
-    "io.monix" %% "monix-reactive" % Versions.Monix,
     "software.amazon.awssdk" % "auth" % Versions.AwsSdk,
-    "com.github.pureconfig" %% "pureconfig" % Versions.Pureconfig) ++ testDependencies(hasIt = false)
+    "com.github.pureconfig" %% "pureconfig" % Versions.Pureconfig) ++ commonDependencies(hasIt = false)
 
   val Benchmarks = Seq(
    "com.lightbend.akka" %% "akka-stream-alpakka-s3" % "2.0.2",
@@ -58,47 +54,49 @@ object Dependencies {
     "dev.profunktor"    %% "redis4cats-effects" % "0.10.3",
     "io.chrisdavenport" %% "rediculous"         % "0.0.8",
     "io.laserdisc"      %% "laserdisc-fs2"      % "0.4.1"
-  )++ testDependencies(hasIt = false)
+  )++ commonDependencies(hasIt = false)
 
-  val DynamoDb = Seq("software.amazon.awssdk" % "dynamodb" % Versions.AwsSdk) ++ testDependencies(hasIt = true)
+  val DynamoDb = Seq("software.amazon.awssdk" % "dynamodb" % Versions.AwsSdk) ++ commonDependencies(hasIt = true)
 
   val Hdfs = Seq(
     "org.apache.hadoop" % "hadoop-client"      % Versions.Hadoop,
     "org.apache.hadoop" % "hadoop-common"      % Versions.Hadoop,
     "org.apache.hadoop" % "hadoop-hdfs"        % Versions.Hadoop,
     "org.apache.hadoop" % "hadoop-minicluster" % Versions.Hadoop % Test
-  ) ++ testDependencies(hasIt = false)
+  ) ++ commonDependencies(hasIt = false)
 
   val MongoDb = Seq(
     "org.mongodb"       % "mongodb-driver-reactivestreams" % Versions.MongoReactiveStreams,
     "org.mongodb.scala" %% "mongo-scala-bson"   % Versions.MongoScala,
     "org.mongodb.scala" %% "mongo-scala-driver" % Versions.MongoScala
-  ) ++ testDependencies(hasIt = true)
+  ) ++ commonDependencies(hasIt = true)
 
   val Parquet = Seq(
     "org.apache.parquet" % "parquet-avro"     % Versions.Parquet,
     "org.apache.parquet" % "parquet-hadoop"   % Versions.Parquet,
     "org.apache.hadoop" % "hadoop-client" % Versions.Hadoop,
     "org.apache.hadoop" % "hadoop-common" % Versions.Hadoop % Test
-  ) ++ testDependencies(hasIt = false)
+  ) ++ commonDependencies(hasIt = false)
 
   val S3 = Seq(
     "software.amazon.awssdk" % "s3" % Versions.AwsSdk,
-    "org.scalatestplus" %% "scalacheck-1-14" % "3.1.4.0" % Test
-  ) ++ testDependencies(hasIt = true)
+    "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat,
+  "org.scalatestplus" %% "scalacheck-1-14" % "3.1.4.0" % Test
+  ) ++ commonDependencies(hasIt = true)
 
   val Redis = Seq(
-    "io.lettuce" % "lettuce-core" % "5.1.8.RELEASE"
-  ) ++ testDependencies(hasIt = true)
+    "io.lettuce" % "lettuce-core" % "5.1.8.RELEASE",
+    "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat
+  ) ++ commonDependencies(hasIt = true)
 
   val GCS = Seq(
     "com.google.cloud"               % "google-cloud-storage" % Versions.GCS,
     "org.typelevel" %% "cats-effect" % Versions.Cats_Effect,
     "com.google.cloud"               % "google-cloud-nio" % Versions.GCNio % IntegrationTest,
     "commons-io"                     % "commons-io" % "2.6" % Test
-  ) ++ testDependencies(hasIt = true)
+  ) ++ commonDependencies(hasIt = true)
 
   val Elasticsearch = Seq(
     "com.sksamuel.elastic4s" %% "elastic4s-client-esjava" % Versions.Elastic4s
-  ) ++ testDependencies(hasIt = true)
+  ) ++ commonDependencies(hasIt = true)
 }

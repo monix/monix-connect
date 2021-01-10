@@ -33,14 +33,13 @@ lazy val sharedSettings = Seq(
     "-language:experimental.macros"
   ),
   //warnUnusedImports
-  scalacOptions in (Compile, console) --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports"),
-  scalacOptions in Test --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports"),
-  // Linter
+  scalacOptions in (Compile, console) ++= Seq("-Ywarn-unused-import", "-deprecation"),
+    // Linter
   scalacOptions ++= Seq(
     "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
     "-Ywarn-dead-code", // Warn when dead code is identified.
     // Turns all warnings into errors ;-)
-    //"-Xfatal-warnings", //Turning of fatal warnings for the moment
+    "-Xfatal-warnings", //Turning of fatal warnings for the moment
     // Enables linter options
     "-Xlint:adapted-args", // warn if an argument list is modified to match the receiver
     "-Xlint:infer-any", // warn when a type argument is inferred to be `Any`
@@ -51,7 +50,8 @@ lazy val sharedSettings = Seq(
     "-Xlint:poly-implicit-overload", // parameterized overloaded implicit methods are not visible as view bounds
     "-Xlint:option-implicit", // Option.apply used implicit view
     "-Xlint:delayedinit-select", // Selecting member of DelayedInit
-    "-Xlint:package-object-classes" // Class or object defined in package object
+    //"-Xlint:package-object-classes" // Class or object defined in package object
+    "-Wconf:msg=While parsing annotations in:silent"
   ),
 
   // ScalaDoc settings

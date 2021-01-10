@@ -15,21 +15,6 @@
  * limitations under the License.
  */
 
-package monix.connect.s3
+package monix.connect.mongodb.domain
 
-package object domain {
-
-  /**
-    * The minimum allowable part size for a multipart upload is 5 MB.
-    * @see [[https://docs.aws.amazon.com/AmazonS3/latest/dev/qfacts.html]]
-    * For more information about multipart upload limits.
-    */
-  val awsMinChunkSize: Int = 5 * 1024 * 1024 //5242880 bytes
-  val awsDefaultMaxKeysList = 1000 //represents the default max keys per list keys request
-
-  //default setting instances
-  private[s3] val DefaultDownloadSettings = DownloadSettings()
-  private[s3] val DefaultCopyObjectSettings = CopyObjectSettings()
-  private[s3] val DefaultUploadSettings = UploadSettings()
-
-}
+case class InsertManyResult(insertedIds: Set[String], wasAcknowledged: Boolean)

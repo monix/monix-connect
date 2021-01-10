@@ -69,7 +69,6 @@ object DynamoDb { self =>
     * AWS configurations to acquire and release a Monix [[DynamoDb]] client.
     *
     * ==Example==
-    *
     * {{{
     *   import cats.effect.Resource
     *   import monix.eval.Task
@@ -113,9 +112,7 @@ object DynamoDb { self =>
     * resources and guarantee that the client was not previously closed.
     *
     * ==Example==
-    *
     * {{{
-    *   import java.time.Duration
     *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
     *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
     *   import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
@@ -148,7 +145,6 @@ object DynamoDb { self =>
     * Thus, it is the user's responsability to close the connection.
     *
     * ==Example==
-    *
     * {{{
     *   import monix.execution.Scheduler.Implicits.global
     *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider

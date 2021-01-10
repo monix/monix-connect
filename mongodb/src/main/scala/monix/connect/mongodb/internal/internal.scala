@@ -30,6 +30,8 @@ package object internal {
     * An internal method used by those operations that wants to implement a retry interface based on
     * a given limit and timeout.
     *
+    * @deprecated  this method it's been deprecated, instead use [[retryOnFailure()]] with [[RetryStrategy]].
+    *
     * @param publisher a reactivestreams publisher that represents the generic mongodb operation.
     * @param retries   the number of times the operation will be retried in case of unexpected failure,
     *                  being zero retries by default.
@@ -37,7 +39,7 @@ package object internal {
     * @tparam T the type of the publisher
     * @return a [[Task]] with an optional [[T]] or a failed one if the failures exceeded the retries.
     */
-  @deprecated
+  @deprecated("use with RetryStrategy", "0.5.3")
   @InternalApi
   private[mongodb] def retryOnFailure[T](
     publisher: Coeval[Publisher[T]],

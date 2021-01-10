@@ -104,7 +104,7 @@ class ParquetSinkUnsafeSpec
 
       //then
       testScheduler.tick(1.second)
-      f.value.get shouldBe a[Failure[NullPointerException]]
+      f.value.get shouldBe a[Failure[_]]
 
       //and
       val file = new File(filePath)

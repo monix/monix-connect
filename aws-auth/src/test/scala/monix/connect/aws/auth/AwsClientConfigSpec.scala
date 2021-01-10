@@ -18,10 +18,8 @@
 package monix.connect.aws.auth
 
 import java.net.URI
-
 import org.scalatest.flatspec.AnyFlatSpec
 import pureconfig.ConfigSource
-import pureconfig._
 import pureconfig.generic.auto._
 import MonixAwsConf.Implicits._
 import org.scalatest.matchers.should.Matchers
@@ -29,7 +27,7 @@ import pureconfig.error.ConfigReaderException
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.regions.Region
 
-import scala.util.{Failure, Try}
+import scala.util.Try
 
 class AwsClientConfigSpec extends AnyFlatSpec with Matchers {
 
@@ -111,7 +109,8 @@ class AwsClientConfigSpec extends AnyFlatSpec with Matchers {
 
     //then
     awsClientConf.isFailure shouldBe true
-    awsClientConf shouldBe a[Failure[ConfigReaderException[AppConf]]]
+    awsClientConf.failed.get shouldBe a[ConfigReaderException[_]]
+    awsClientConf.failed.get.getMessage should include("Key not found: 'credentials'")
   }
 
   it should "fail when credentials region is not present" in {
@@ -133,7 +132,8 @@ class AwsClientConfigSpec extends AnyFlatSpec with Matchers {
 
     //then
     awsClientConf.isFailure shouldBe true
-    awsClientConf shouldBe a[Failure[ConfigReaderException[AppConf]]]
+    awsClientConf.failed.get shouldBe a[ConfigReaderException[_]]
+    awsClientConf.failed.get.getMessage should include("Key not found: 'region'")
   }
 
 }

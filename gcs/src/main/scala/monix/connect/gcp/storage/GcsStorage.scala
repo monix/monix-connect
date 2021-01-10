@@ -21,7 +21,6 @@ import java.io.FileInputStream
 import java.nio.file.Path
 
 import com.google.auth.oauth2.GoogleCredentials
-import com.google.cloud.WriteChannel
 import com.google.cloud.storage.Storage._
 import com.google.cloud.storage.{BlobId, BlobInfo, Storage, StorageOptions}
 import monix.connect.gcp.storage.components.Paging

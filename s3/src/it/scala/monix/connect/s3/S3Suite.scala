@@ -42,8 +42,9 @@ class S3Suite
     s3FromConf.use(s3 => s3.upload(bucketName, k2, k2.getBytes())).runSyncUnsafe()
 
     //then
-    val f = s3FromConf.use(s3 => Task.parZip2(s3.existsObject(bucketName, k1), s3.existsObject(bucketName, k2))).runToFuture
-    Await.result(f, 1.seconds) shouldBe (true, true)
+    val (exists1, exists2) = s3FromConf.use(s3 => Task.parZip2(s3.existsObject(bucketName, k1), s3.existsObject(bucketName, k2))).runSyncUnsafe()
+    exists1 shouldBe true
+    exists2 shouldBe true
   }
 
   it should "implement upload method" in {
@@ -110,7 +111,6 @@ class S3Suite
     //then
     whenReady(t.runToFuture) { actualContent: Array[Byte] =>
       s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe() shouldBe true
-      actualContent shouldBe a[Array[Byte]]
       actualContent shouldBe content.getBytes()
     }
   }
@@ -133,7 +133,6 @@ class S3Suite
     whenReady(t.runToFuture) { actualContent: Array[Byte] =>
       val expectedArrayByte = ob.foldLeftL(Array.emptyByteArray)((acc, bytes) => acc ++ bytes).runSyncUnsafe()
       s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe() shouldBe true
-      actualContent shouldBe a[Array[Byte]]
       actualContent.size shouldBe expectedArrayByte.size
       actualContent shouldBe expectedArrayByte
     }
@@ -152,7 +151,6 @@ class S3Suite
     //then
     whenReady(t.runToFuture) { partialContent: Array[Byte] =>
       s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe() shouldBe true
-      partialContent shouldBe a[Array[Byte]]
       partialContent shouldBe content.getBytes().take(n)
     }
   }
@@ -192,7 +190,8 @@ class S3Suite
     sleep(400)
 
     //then
-    f.value.get shouldBe a[Failure[NoSuchKeyException]]
+    f.value.get.isFailure shouldBe true
+    f.value.get.failed.get shouldBe a[NoSuchKeyException]
   }
 
   it can "download in multipart" in {
@@ -207,7 +206,6 @@ class S3Suite
 
     //then
     s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe() shouldBe true
-    actualContent shouldBe a[Array[Byte]]
     actualContent shouldBe content.getBytes()
   }
 
@@ -274,7 +272,8 @@ class S3Suite
     sleep(400)
 
     //then
-    f.value.get shouldBe a[Failure[NoSuchBucketException]]
+    f.value.get.isFailure shouldBe true
+    f.value.get.failed.get shouldBe a[NoSuchBucketException]
     val existsAfterDeletion = s3Resource.use(_.existsBucket(bucket)).runSyncUnsafe()
     existedBefore shouldBe false
     existsAfterDeletion shouldBe false

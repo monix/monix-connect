@@ -19,7 +19,7 @@ package monix.connect.gcp.storage
 
 import com.google.cloud.storage.{Acl, BlobId, BlobInfo, Cors, StorageClass}
 import com.google.cloud.storage.Acl.{Entity, Group, Project, Role, User}
-import com.google.cloud.storage.BucketInfo.LifecycleRule.{DeleteLifecycleAction, LifecycleAction, LifecycleCondition}
+import com.google.cloud.storage.BucketInfo.LifecycleRule.{LifecycleAction, LifecycleCondition}
 import com.google.cloud.storage.BucketInfo.{IamConfiguration, LifecycleRule, Logging}
 import monix.connect.gcp.storage.configuration.{GcsBlobInfo, GcsBucketInfo}
 import org.scalacheck.Gen

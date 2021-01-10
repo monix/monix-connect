@@ -10,7 +10,7 @@ import software.amazon.awssdk.services.dynamodb.model._
 
 import scala.jdk.CollectionConverters._
 
-@deprecated
+@deprecated("0.5.0")
 class DynamoDbOpSuite
   extends AnyWordSpecLike with Matchers with DynamoDbFixture with BeforeAndAfterAll {
 

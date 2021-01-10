@@ -71,7 +71,7 @@ class MongoSingleSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     //given
     val exampleName = "deleteOneExample"
     val employees = genEmployeesWith(name = Some(exampleName)).sample.get
-    MongoOp.insertMany(employeesMongoCol, employees).runSyncUnsafe()
+    MongoSingle.insertMany(employeesMongoCol, employees).runSyncUnsafe()
 
     //when
     val r = MongoConnection
@@ -120,7 +120,7 @@ class MongoSingleSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     //given
     val exampleName = "deleteManyExample"
     val employees = genEmployeesWith(name = Some(exampleName)).sample.get
-    MongoOp.insertMany(employeesMongoCol, employees).runSyncUnsafe()
+    MongoSingle.insertMany(employeesMongoCol, employees).runSyncUnsafe()
     val filter = Filters.eq("name", exampleName)
 
     //when

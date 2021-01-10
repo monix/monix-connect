@@ -56,7 +56,7 @@ import scala.concurrent.Future
       }
 
       def onComplete(): Unit = {
-        cb.onSuccess()
+        cb.onSuccess(())
       }
 
       def onError(ex: Throwable): Unit = {

@@ -31,7 +31,6 @@ import monix.execution.annotations.Unsafe
 import monix.reactive.Observable
 
 import scala.jdk.CollectionConverters._
-import scala.util.control.NonFatal
 
 /**
   * This class wraps the [[com.google.cloud.storage.Bucket]] class, providing an idiomatic scala API
@@ -81,7 +80,7 @@ class GcsBucket private (underlying: Bucket) extends GcsDownloader with FileIO w
     * {{{
     *   import java.io.File
     *
-    *   import monix.connect.gcp.storage.{GcsStorage, GcsBucket}
+    *   import monix.connect.gcp.storage.GcsStorage
     *   import monix.eval.Task
     *
     *   val storage = GcsStorage.create()
@@ -114,7 +113,7 @@ class GcsBucket private (underlying: Bucket) extends GcsDownloader with FileIO w
     *
     * {{{
     *   import monix.execution.Scheduler.Implicits.global
-    *   import monix.connect.gcp.storage.{GcsStorage, GcsBucket}
+    *   import monix.connect.gcp.storage.GcsStorage
     *   import monix.connect.gcp.storage.configuration.GcsBucketInfo
     *   import monix.eval.Task
     *   import monix.reactive.Observable
@@ -150,7 +149,7 @@ class GcsBucket private (underlying: Bucket) extends GcsDownloader with FileIO w
     *   import java.io.File
     *
     *   import monix.execution.Scheduler.Implicits.global
-    *   import monix.connect.gcp.storage.{GcsStorage, GcsBucket}
+    *   import monix.connect.gcp.storage.GcsStorage
     *   import monix.connect.gcp.storage.configuration.GcsBucketInfo
     *   import monix.eval.Task
     *

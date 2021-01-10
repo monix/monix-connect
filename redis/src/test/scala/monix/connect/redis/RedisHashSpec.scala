@@ -17,7 +17,7 @@
 
 package monix.connect.redis
 
-import io.lettuce.core.{KeyValue, MapScanCursor, RedisFuture, ScanArgs, ScanCursor}
+import io.lettuce.core.{KeyValue, MapScanCursor, ScanCursor}
 import io.lettuce.core.api.StatefulRedisConnection
 import monix.eval.Task
 import monix.reactive.Observable
@@ -28,7 +28,7 @@ import org.mockito.MockitoSugar.when
 import org.mockito.IdiomaticMockito
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
-import collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class RedisHashSpec
   extends AnyFlatSpec with Matchers with IdiomaticMockito with BeforeAndAfterEach with BeforeAndAfterAll
@@ -70,7 +70,7 @@ class RedisHashSpec
     when(reactiveRedisCommands.hget(k, field)).thenReturn(mockMono[V])
 
     //when
-    val _: Task[Option[V]] = RedisHash.hget(k, field)
+    val _: Task[V] = RedisHash.hget(k, field)
 
     //then
     verify(reactiveRedisCommands).hget(k, field)

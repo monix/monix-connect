@@ -32,7 +32,7 @@ class ElasticsearchSuite extends AnyFlatSpecLike with Fixture with Matchers with
   it should "execute many delete requests" in {
     // given
     val updateRequests = Gen.listOfN(10, genUpdateRequest).sample.get
-    val deleteRequests = updateRequests.take(5).map(r => deleteById(r.index, r.id))
+    val deleteRequests = updateRequests.map(r => deleteById(r.index, r.id))
 
     // when
     esResource.use { es =>

@@ -51,7 +51,6 @@ private[storage] final class GcsBlob(val underlying: Blob) extends GcsDownloader
     *
     * {{{
     *   import monix.connect.gcp.storage.{GcsStorage, GcsBlob}
-    *   import monix.eval.Task
     *   import monix.reactive.Observable
     *
     *    val storage = GcsStorage.create()
@@ -84,7 +83,6 @@ private[storage] final class GcsBlob(val underlying: Blob) extends GcsDownloader
     * {{{
     *   import java.io.File
     *
-    *   import monix.execution.Scheduler.Implicits.global
     *   import monix.connect.gcp.storage.{GcsStorage, GcsBlob}
     *   import monix.eval.Task
     *

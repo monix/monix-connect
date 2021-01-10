@@ -18,8 +18,6 @@
 package monix.connect.aws.auth
 
 import monix.execution.internal.InternalApi
-import software.amazon.awssdk.http.async.SdkAsyncHttpClient
-
 import scala.concurrent.duration.FiniteDuration
 
 @InternalApi

@@ -1,12 +1,10 @@
 package monix.connect.dynamodb
 
-import java.lang.Thread.sleep
-
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
 import org.scalacheck.Gen
-import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -16,14 +14,14 @@ import monix.reactive.Observable.Transformer
 
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
-import scala.compat.java8.FutureConverters._
 
+@deprecated("0.5.0")
 class DynamoDbTransformerSuite
-  extends AnyWordSpecLike with Matchers with ScalaFutures with DynamoDbFixture with BeforeAndAfterAll {
+  extends AnyWordSpecLike with Matchers with ScalaFutures with DynamoDbFixture with BeforeAndAfterAll with Eventually {
 
   implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 300.milliseconds)
 
-  s"${DynamoDb}.transformer() creates a transformer operator" that {
+  s"$DynamoDb.transformer() creates a transformer operator" that {
 
     s"given an implicit instance of ${DynamoDbOp.Implicits.createTableOp} in the scope" must {
 
@@ -55,52 +53,57 @@ class DynamoDbTransformerSuite
         }
       }
     }
-      s"given an implicit instance of ${DynamoDbOp.Implicits.putItemOp} in the scope" must {
+    s"given an implicit instance of ${DynamoDbOp.Implicits.putItemOp} in the scope" must {
 
-        s"transform a single`PutItemRequest` to `PutItemResponse` " in {
-          //given
-          val transformer: Transformer[PutItemRequest, PutItemResponse] =
-            DynamoDb.transformer[PutItemRequest, PutItemResponse]()
-          val city = Gen.identifier.sample.get
-          val citizenId = Gen.identifier.sample.get
-          val debt = Gen.choose(0, 10000).sample.get
-          val request: PutItemRequest = putItemRequest(tableName, citizenId, city, debt)
+      s"transform a single`PutItemRequest` to `PutItemResponse` " in {
+        //given
+        val transformer: Transformer[PutItemRequest, PutItemResponse] =
+          DynamoDb.transformer[PutItemRequest, PutItemResponse]()
+        val city = Gen.identifier.sample.get
+        val citizenId = Gen.identifier.sample.get
+        val debt = Gen.choose(0, 10000).sample.get
+        val request: PutItemRequest = putItemRequest(tableName, citizenId, city, debt)
 
-          //when
-          val t: Task[PutItemResponse] = Observable.fromIterable(Iterable(request)).transform(transformer).lastL
+        //when
+        val t: Task[PutItemResponse] = Observable.fromIterable(Iterable(request)).transform(transformer).lastL
 
-          //then
-          whenReady(t.runToFuture) { r =>
-            r shouldBe a[PutItemResponse]
-            val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, citizenId, city))).futureValue
-            getResponse.item().values().asScala.head.n().toDouble shouldBe debt
-          }
+        //then
+        whenReady(t.runToFuture) { r =>
+          r shouldBe a[PutItemResponse]
+          val getResponse: GetItemResponse =
+            Task.from(client.getItem(getItemRequest(tableName, citizenId, city))).runSyncUnsafe()
+          getResponse.item().values().asScala.head.n().toDouble shouldBe debt
+        }
+      }
+
+      s"transform `PutItemRequests` to `PutItemResponses` " in {
+        //given
+        val transformer: Transformer[PutItemRequest, PutItemResponse] =
+          DynamoDb.transformer[PutItemRequest, PutItemResponse]()
+        val requestAttr: List[Citizen] = Gen.nonEmptyListOf(genCitizen).sample.get
+        val requests: List[PutItemRequest] = requestAttr.map { citizen =>
+          putItemRequest(tableName, citizen.citizenId, citizen.city, citizen.age)
         }
 
-        s"transform `PutItemRequests` to `PutItemResponses` " in {
-          //given
-          val transformer: Transformer[PutItemRequest, PutItemResponse] =
-            DynamoDb.transformer[PutItemRequest, PutItemResponse]()
-          val requestAttr: List[Citizen] = Gen.nonEmptyListOf(genCitizen).sample.get
-          val requests: List[PutItemRequest] = requestAttr.map { citizen => putItemRequest(tableName, citizen.citizenId, citizen.city, citizen.age) }
+        //when
+        val r =
+          Observable
+            .fromIterable(requests)
+            .transform(transformer)
+            .lastL
+            .runSyncUnsafe()
 
-          //when
-          val t =
-            Observable
-              .fromIterable(requests)
-              .transform(transformer)
-              .lastL
-
-          //then
-          whenReady(t.runToFuture) { r =>
-            r shouldBe a[PutItemResponse]
-            requestAttr.map { citizen =>
-              val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, citizen.citizenId, citizen.city))).futureValue
-              getResponse.item().values().asScala.head.n().toDouble shouldBe citizen.age
-            }
+        //then
+        r shouldBe a[PutItemResponse]
+        eventually {
+          requestAttr.map { citizen =>
+            val getResponse =
+              Task.from(client.getItem(getItemRequest(tableName, citizen.citizenId, citizen.city))).runSyncUnsafe()
+            getResponse.item().values().asScala.head.n().toDouble shouldBe citizen.age
           }
         }
       }
+    }
 
     s"given an implicit instance of ${DynamoDbOp.Implicits.getItemOp} in the scope" must {
 
@@ -109,7 +112,7 @@ class DynamoDbTransformerSuite
         val city = "London"
         val citizenId = Gen.identifier.sample.get
         val age: Int = 34
-        toScala(client.putItem(putItemRequest(tableName,citizenId, city, age))).futureValue
+        Task.from(client.putItem(putItemRequest(tableName, citizenId, city, age))).runSyncUnsafe()
         val request: GetItemRequest = getItemRequest(tableName, citizenId, city)
         val transformer: Transformer[GetItemRequest, GetItemResponse] = DynamoDb.transformer()
 

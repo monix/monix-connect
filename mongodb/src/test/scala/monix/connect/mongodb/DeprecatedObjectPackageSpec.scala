@@ -19,12 +19,12 @@ package monix.connect.mongodb
 
 import com.mongodb.client.result.{InsertOneResult => MongoInsertOneResult}
 import com.mongodb.reactivestreams.client.MongoCollection
-import monix.eval.Task
+import monix.connect.mongodb.domain.InsertOneResult
+import monix.connect.mongodb.internal.retryOnFailure
+import monix.eval.{Coeval, Task}
 import monix.execution.Scheduler.Implicits.global
 import monix.execution.exceptions.DummyException
 import monix.execution.schedulers.TestScheduler
-import monix.connect.mongodb.internal.retryOnFailure
-import monix.connect.mongodb.domain.{InsertOneResult, RetryStrategy}
 import org.mockito.IdiomaticMockito
 import org.mockito.MockitoSugar.{times, verify, when}
 import org.mongodb.scala.bson.BsonObjectId
@@ -35,7 +35,8 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
 
-class ObjectPackageSpec
+@deprecated("use with RetryStrategy", "0.5.3")
+class DeprecatedObjectPackageSpec
   extends AnyFlatSpecLike with TestFixture with ScalaFutures with Matchers with BeforeAndAfterEach
   with IdiomaticMockito {
 
@@ -48,15 +49,19 @@ class ObjectPackageSpec
     super.beforeEach()
   }
 
-  "new retryOnFailure" should "expect a non-strict function from `A` to `Publisher`" in {
+  "deprecated retryOnFailure" should "accept a Coeval with a function that expects A and return reactivestreams publishers" in {
     //given
-    val retryStrategy = RetryStrategy(1, 100.millis)
-    val employee = genEmployee.sample.get
+    val e = genEmployee.sample.get
+    val objectId = BsonObjectId.apply()
     val publisher = Task(MongoInsertOneResult.acknowledged(objectId)).toReactivePublisher(global)
-    when(col.insertOne(employee)).thenReturn(publisher)
+    when(col.insertOne(e)).thenReturn(publisher)
 
     //when
-    val t = retryOnFailure(MongoSingle.insertOne(col, employee).toReactivePublisher(global), retryStrategy)
+    val t = retryOnFailure[InsertOneResult](
+      Coeval(MongoOp.insertOne(col, e).toReactivePublisher(global)),
+      retries = 1,
+      timeout = None,
+      delayAfterFailure = None)
 
     //then
     t.runSyncUnsafe() shouldBe Some(InsertOneResult(Some(objectId.getValue.toString), true))
@@ -64,64 +69,68 @@ class ObjectPackageSpec
 
   it should "recover from failures as many times as indicated" in {
     //given
-    val retryStrategy = RetryStrategy(2, 100.millis)
     val s = TestScheduler()
-    val employee = genEmployee.sample.get
+    val attempts = 2
+    val e = genEmployee.sample.get
     val ex = DummyException("Kaboom!")
     val failedPub = Task.raiseError[MongoInsertOneResult](ex).toReactivePublisher(s)
     val insertOneResult = MongoInsertOneResult.acknowledged(objectId)
     val successPub = Task(insertOneResult).toReactivePublisher(s)
+    when(col.insertOne(e)).thenReturn(failedPub, failedPub, successPub)
 
     //when
-    when(col.insertOne(employee)).thenReturn(failedPub, failedPub, successPub)
-
-    //and
-    val f = retryOnFailure(MongoSingle.insertOne(col, employee).toReactivePublisher(s), retryStrategy).runToFuture(s)
+    val f = retryOnFailure[InsertOneResult](
+      Coeval(MongoOp.insertOne(col, e).toReactivePublisher(s)),
+      attempts,
+      timeout = None,
+      delayAfterFailure = None).runToFuture(s)
 
     //then
     s.tick(1.second)
     f.value.get shouldBe util.Success(Some(InsertOneResult(Some(objectId.getValue.toString), true)))
-    verify(col, times(retryStrategy.attempts + 1)).insertOne(employee)
+    verify(col, times(attempts + 1)).insertOne(e)
   }
 
   it should "recovers from a failure" in {
     //given
-    val retryStrategy = RetryStrategy(1, 100.millis)
     val s = TestScheduler()
-    val employee = genEmployee.sample.get
+    val attempts = 1
+    val e = genEmployee.sample.get
     val ex = DummyException("Kaboom!")
     val failedPub = Task.raiseError[MongoInsertOneResult](ex).toReactivePublisher(s)
     val insertOneResult = MongoInsertOneResult.acknowledged(objectId)
     val successPub = Task(insertOneResult).toReactivePublisher(s)
-    when(col.insertOne(employee)).thenReturn(failedPub, successPub)
+    when(col.insertOne(e)).thenReturn(failedPub, successPub)
 
     //when
-    val f = retryOnFailure(col.insertOne(employee), retryStrategy)
-      .runToFuture(s)
+    val f =
+      retryOnFailure[MongoInsertOneResult](Coeval(col.insertOne(e)), attempts, timeout = None, delayAfterFailure = None)
+        .runToFuture(s)
 
     //then
     s.tick(1.second)
     f.value.get shouldBe util.Success(Some(insertOneResult))
-    verify(col, times(retryStrategy.attempts + 1)).insertOne(employee)
+    verify(col, times(attempts + 1)).insertOne(e)
   }
 
   it should "fail when the failures exceeds the number of retries" in {
     //given
-    val retryStrategy = RetryStrategy(3, 100.millis)
     val s = TestScheduler()
-    val employee = genEmployee.sample.get
+    val attempts = 3
+    val e = genEmployee.sample.get
     val ex = DummyException("Kaboom!")
     val failedPub = Task.raiseError[MongoInsertOneResult](ex).toReactivePublisher(s)
-    when(col.insertOne(employee)).thenReturn(failedPub)
+    when(col.insertOne(e)).thenReturn(failedPub)
 
     //when
-    val f = retryOnFailure(col.insertOne(employee), retryStrategy)
-      .runToFuture(s)
+    val f =
+      retryOnFailure[MongoInsertOneResult](Coeval(col.insertOne(e)), attempts, timeout = None, delayAfterFailure = None)
+        .runToFuture(s)
 
     //then
     s.tick(1.second)
     f.value.get.isFailure shouldBe true
-    verify(col, times(retryStrategy.attempts + 1)).insertOne(employee)
+    verify(col, times(attempts + 1)).insertOne(e)
   }
 
 }

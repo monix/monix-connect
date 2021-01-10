@@ -106,7 +106,6 @@ import software.amazon.awssdk.services.dynamodb.model.{
 }
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 
-import scala.language.implicitConversions
 import scala.concurrent.duration.FiniteDuration
 
 /**

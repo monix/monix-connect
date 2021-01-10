@@ -38,8 +38,6 @@ import monix.reactive.Observable
 import org.bson.Document
 import org.bson.conversions.Bson
 
-import scala.jdk.CollectionConverters._
-
 /**
   * An object that exposes those MongoDb definitions for fetching data
   * from collections by performing different type of read queries available

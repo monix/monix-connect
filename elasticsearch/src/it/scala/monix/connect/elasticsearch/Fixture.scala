@@ -12,6 +12,7 @@ import org.scalacheck.Gen
 trait Fixture {
   import com.sksamuel.elastic4s.ElasticDsl._
   protected val esResource: Resource[Task, Elasticsearch] = Elasticsearch.create("http://localhost:9200")
+
   def genIndex: Gen[String] = Gen.listOfN(8, Gen.alphaLowerChar).map(_.mkString)
   def getDocString(a: String, b: String) = s"""{"a":"$a","b":"$b"}"""
   def genDoc: Gen[String] =

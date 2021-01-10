@@ -20,10 +20,9 @@ package monix.connect.aws.auth
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import pureconfig.ConfigSource
-import pureconfig._
+import pureconfig.error.ConfigReaderException
 import pureconfig.generic.auto._
 import MonixAwsConf.Implicits._
-import pureconfig.error.ConfigReaderException
 import software.amazon.awssdk.auth.credentials.{
   AnonymousCredentialsProvider,
   AwsSessionCredentials,
@@ -35,7 +34,7 @@ import software.amazon.awssdk.auth.credentials.{
   SystemPropertyCredentialsProvider
 }
 
-import scala.util.{Failure, Try}
+import scala.util.Try
 
 class AwsCredentialsConfSpec extends AnyFlatSpec with Matchers {
 
@@ -255,7 +254,7 @@ class AwsCredentialsConfSpec extends AnyFlatSpec with Matchers {
 
     //then
     credentialsConf.isFailure shouldBe true
-    credentialsConf shouldBe a[Failure[ConfigReaderException[AwsCredentialsConf]]]
-
+    credentialsConf.failed.get shouldBe a[ConfigReaderException[_]]
+    credentialsConf.failed.get.getMessage should include("Key not found: 'provider'.")
   }
 }

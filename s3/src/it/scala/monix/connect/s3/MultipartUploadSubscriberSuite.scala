@@ -181,7 +181,8 @@ class MultipartUploadSubscriberSuite
     }.runToFuture
 
     //then
-    f.value.get shouldBe a[Failure[IllegalArgumentException]]
+    f.value.get.isFailure shouldBe true
+    f.value.get.failed.get shouldBe a[IllegalArgumentException]
   }
 
 }

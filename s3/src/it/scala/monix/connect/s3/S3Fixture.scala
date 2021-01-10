@@ -4,7 +4,7 @@ import java.io.{File, FileInputStream}
 import java.net.URI
 import java.time.Duration
 
-import monix.eval.{Coeval, Task}
+import monix.eval.Task
 import monix.execution.Scheduler
 import monix.reactive.Observable
 import org.scalacheck.Gen
