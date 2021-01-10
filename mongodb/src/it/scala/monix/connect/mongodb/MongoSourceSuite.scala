@@ -18,6 +18,7 @@
 package monix.connect.mongodb
 
 import com.mongodb.client.model.{Accumulators, Aggregates, CountOptions, Filters, Updates}
+import monix.connect.mongodb.domain.MongoConnector
 import monix.execution.Scheduler.Implicits.global
 import org.bson.Document
 import org.bson.conversions.Bson
@@ -30,18 +31,19 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
 
   override def beforeEach() = {
     super.beforeEach()
-    MongoDb.dropCollection(db, collectionName).runSyncUnsafe()
+    MongoDb.dropCollection(db, employeesColName).runSyncUnsafe()
+    MongoDb.dropCollection(db, companiesColName).runSyncUnsafe()
   }
 
-  s"${MongoSource}" should  "aggregate with a match aggregation" in {
+  s"aggregate" should  "aggregate with a match aggregation" in {
     //given
     val oldEmployees = genEmployeesWith(age = Some(55)).sample.get
     val youngEmployees = genEmployeesWith(age = Some(22)).sample.get
-    MongoOp.insertMany(col, youngEmployees ++ oldEmployees).runSyncUnsafe()
+    MongoOp.insertMany(employeesMongoCol, youngEmployees ++ oldEmployees).runSyncUnsafe()
 
     //when
     val aggregation =  Aggregates.`match`(Filters.gt("age", 35))
-    val aggregated: Seq[Employee] = MongoSource.aggregate[Employee, Employee](col, Seq(aggregation), classOf[Employee]).toListL.runSyncUnsafe()
+    val aggregated: Seq[Employee] = MongoSource.aggregate[Employee, Employee](employeesMongoCol, Seq(aggregation), classOf[Employee]).toListL.runSyncUnsafe()
 
     //then
     aggregated.size shouldBe oldEmployees.size
@@ -50,11 +52,11 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
   it should "aggregate with group by" in {
     //given
     val employees = Gen.nonEmptyListOf(genEmployee).sample.get
-    MongoOp.insertMany(col, employees).runSyncUnsafe()
+    MongoOp.insertMany(employeesMongoCol, employees).runSyncUnsafe()
 
     //when
     val aggregation =  Aggregates.group("group", Accumulators.avg("average", "$age"))
-    val aggregated: List[Document] = MongoSource.aggregate[Employee](col, Seq(aggregation)).toListL.runSyncUnsafe()
+    val aggregated: List[Document] = MongoSource.aggregate[Employee](employeesMongoCol, Seq(aggregation)).toListL.runSyncUnsafe()
 
     //then
     aggregated.head.getDouble("average") shouldBe (employees.map(_.age).sum.toDouble / employees.size)
@@ -65,12 +67,12 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     val e1 = genEmployeeWith(age = Some(55)).sample.get
     val e2 = genEmployeeWith(age = Some(65)).sample.get
     val e3 = genEmployeeWith(age = Some(22)).sample.get
-    MongoOp.insertMany(col, List(e1, e2, e3)).runSyncUnsafe()
+    MongoOp.insertMany(employeesMongoCol, List(e1, e2, e3)).runSyncUnsafe()
 
     //when
     val matchAgg = Aggregates.`match`(Filters.gt("age", 35))
     val groupAgg = Aggregates.group("group", Accumulators.avg("average", "$age"))
-    val aggregated = MongoSource.aggregate[Employee](col, Seq(matchAgg, groupAgg)).toListL.runSyncUnsafe()
+    val aggregated = MongoSource.aggregate[Employee](employeesMongoCol, Seq(matchAgg, groupAgg)).toListL.runSyncUnsafe()
 
     //then
     aggregated.head.getDouble("average") shouldBe 60
@@ -79,12 +81,12 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
   it should "aggregate by unwind" in {
     val hobbies = List("reading", "running", "programming")
     val employee: Employee = genEmployeeWith(city = Some("Toronto"), activities = hobbies).sample.get
-    MongoOp.insertOne(col, employee).runSyncUnsafe()
+    MongoSingle.insertOne(employeesMongoCol, employee).runSyncUnsafe()
 
     val filter = Aggregates.`match`(Filters.eq("city", "Toronto"))
     val unwind = Aggregates.unwind("$activities")
 
-    val unwinded: Seq[UnwoundEmployee] = MongoSource.aggregate[Employee, UnwoundEmployee](col, Seq(filter, unwind), classOf[UnwoundEmployee])
+    val unwinded: Seq[UnwoundEmployee] = MongoSource.aggregate[Employee, UnwoundEmployee](employeesMongoCol, Seq(filter, unwind), classOf[UnwoundEmployee])
       .toListL
       .runSyncUnsafe()
 
@@ -92,14 +94,14 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     unwinded.map(_.activities) should contain theSameElementsAs hobbies
   }
 
-  it should  "count all" in {
+  "count" should  "count all" in {
     //given
     val n = 10
     val employees = Gen.listOfN(n, genEmployee).sample.get
-    MongoSingle.insertMany(col, employees).runSyncUnsafe()
+    MongoSingle.insertMany(employeesMongoCol, employees).runSyncUnsafe()
 
     //when
-    val collectionSize = MongoSource.countAll(col).runSyncUnsafe()
+    val collectionSize = MongoSource.countAll(employeesMongoCol).runSyncUnsafe()
 
     //then
     collectionSize shouldBe n
@@ -110,26 +112,27 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     val n = 6
     val scottishEmployees = genEmployeesWith(city = Some("Edinburgh"), n = n).sample.get
     val employees =  Gen.listOfN(10, genEmployee).map(l => l.++(scottishEmployees)).sample.get
-    MongoSingle.insertMany(col, employees).runSyncUnsafe()
+    MongoSingle.insertMany(employeesMongoCol, employees).runSyncUnsafe()
 
     //when
     val filer: Bson = Filters.eq("city", "Edinburgh")
-    val nElements = MongoSource.count(col, filer).runSyncUnsafe()
+    val nElements = MongoSource.count(employeesMongoCol, filer).runSyncUnsafe()
 
     //then
     nElements shouldBe scottishEmployees.size
   }
 
-  it should  "count with countOptions" in {
+
+    it should  "count with countOptions" in {
     //given
     val senegalEmployees = genEmployeesWith(city = Some("Dakar")).sample.get
     val employees =  Gen.listOfN(10, genEmployee).map(l => l.++(senegalEmployees)).sample.get
     val countOptions = new CountOptions().limit(senegalEmployees.size -1)
-    MongoOp.insertMany(col, employees).runSyncUnsafe()
+    MongoOp.insertMany(employeesMongoCol, employees).runSyncUnsafe()
 
     //when
     val filer: Bson = Filters.eq("city", "Dakar")
-    val nElements = MongoSource.count(col, filer, countOptions).runSyncUnsafe()
+    val nElements = MongoSource.count(employeesMongoCol, filer, countOptions).runSyncUnsafe()
 
     //then
     nElements shouldBe senegalEmployees.size - 1
@@ -137,20 +140,20 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
 
   it should  "count 0 documents when on empty collections" in {
     //given/when
-    val collectionSize = MongoSource.countAll(col).runSyncUnsafe()
+    val collectionSize = MongoSource.countAll(employeesMongoCol).runSyncUnsafe()
 
     //then
     collectionSize shouldBe 0L
   }
 
-  it should  "distinct" in {
+  "distinct" should  "distinguish unique fields" in {
     //given
     val chineseEmployees = genEmployeesWith(city = Some("Shanghai")).sample.get
     val employees = Gen.nonEmptyListOf(genEmployee).map(_ ++ chineseEmployees).sample.get
-    MongoOp.insertMany(col, employees).runSyncUnsafe()
+    MongoOp.insertMany(employeesMongoCol, employees).runSyncUnsafe()
 
     //when
-    val distinct: List[String] = MongoSource.distinct(col, "city", classOf[String]).toListL.runSyncUnsafe()
+    val distinct: List[String] = MongoSource.distinct(employeesMongoCol, "city", classOf[String]).toListL.runSyncUnsafe()
 
     //then
     assert(distinct.size < employees.size)
@@ -160,10 +163,10 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
   it should "findAll elements in a collection" in {
     //given
     val employees = Gen.nonEmptyListOf(genEmployee).sample.get
-    MongoSingle.insertMany(col, employees).runSyncUnsafe()
+    MongoSingle.insertMany(employeesMongoCol, employees).runSyncUnsafe()
 
     //when
-    val l = MongoSource.findAll[Employee](col).toListL.runSyncUnsafe()
+    val l = MongoSource.findAll[Employee](employeesMongoCol).toListL.runSyncUnsafe()
 
     //then
     l should contain theSameElementsAs employees
@@ -171,70 +174,109 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
 
   it should  "find no elements" in {
     //given/when
-    val l = MongoSource.findAll[Employee](col).toListL.runSyncUnsafe()
+    val l = MongoSource.findAll[Employee](employeesMongoCol).toListL.runSyncUnsafe()
 
     //then
     l shouldBe empty
   }
 
-  it should  "find all filtered elements" in {
+  it should  "find filtered elements" in {
     //given
     val miamiEmployees = genEmployeesWith(city = Some("San Francisco")).sample.get
     val employees = Gen.nonEmptyListOf(genEmployee).map(_ ++ miamiEmployees).sample.get
-    MongoSingle.insertMany(col, employees).runSyncUnsafe()
+    MongoSingle.insertMany(employeesMongoCol, employees).runSyncUnsafe()
 
     //when
-    val l = MongoSource.find[Employee](col, Filters.eq("city", "San Francisco")).toListL.runSyncUnsafe()
+    val l = MongoSource.find[Employee](employeesMongoCol, Filters.eq("city", "San Francisco")).toListL.runSyncUnsafe()
 
     //then
     l should contain theSameElementsAs miamiEmployees
   }
 
-  it should  "find one and delete" in {
+  it should "be likewise available from within the resource usage" in {
+    //given
+    val employee = genEmployeeWith(name = Some("Pablo")).sample.get
+    val employees =  Gen.listOfN(10, genEmployee).map(l => l.:+(employee)).sample.get
+    val company = Company("myCompany", employees, 1000)
+
+    //when
+    val exists = MongoConnection.create1(mongoEndpoint, companiesCol).use{ case MongoConnector(_, source, single, _) =>
+      for{
+        _ <- single.insertOne(company)
+        //two different ways to filter the same thing
+        exists1 <- source.find(Filters.in("employees", employee)).nonEmptyL
+        exists2 <- source.findAll().filter(_.name == company.name).map(_.employees.contains(employee)).headOrElseL(false)
+      } yield (exists1 && exists2)
+    }.runSyncUnsafe()
+
+    //then
+    exists shouldBe true
+  }
+
+  "findOneAndDelete" should  "find one document by a given filter, delete it and return it" in {
     //given
     val n = 10
-    val elderlyEmployees = genEmployeesWith(n = n, city = Some("Cracow")).sample.get
-    MongoSingle.insertMany(col, elderlyEmployees).runSyncUnsafe()
+    val employees = genEmployeesWith(n = n, city = Some("Cracow")).sample.get
+    MongoSingle.insertMany(employeesMongoCol, employees).runSyncUnsafe()
 
     //when
     val filter = Filters.eq("city", "Cracow")
-    val f = MongoSource.findOneAndDelete[Employee](col, filter).runSyncUnsafe()
+    val f = MongoSource.findOneAndDelete[Employee](employeesMongoCol, filter).runSyncUnsafe()
 
     //then
     f.isDefined shouldBe true
     f.get.city shouldBe "Cracow"
 
     //and
-    val l = MongoSource.findAll[Employee](col).toListL.runSyncUnsafe()
+    val l = MongoSource.findAll[Employee](employeesMongoCol).toListL.runSyncUnsafe()
     l.size shouldBe n - 1
   }
 
   it should  "not find nor delete when filter didn't find matches" in {
     //given/when
     val filter = Filters.eq("city", "Cairo")
-    val f = MongoSource.findOneAndDelete[Employee](col, filter).runSyncUnsafe()
+    val f = MongoSource.findOneAndDelete[Employee](employeesMongoCol, filter).runSyncUnsafe()
 
     //then
     f.isDefined shouldBe false
   }
 
-  it should "find and replace one single document" in {
+  it should "be likewise available from within the resource usage" in {
+    //given
+    val n = 10
+    val employees = genEmployeesWith(n = n, city = Some("Zurich")).sample.get
+    MongoSingle.insertMany(employeesMongoCol, employees).runSyncUnsafe()
+
+    //when
+    val filter = Filters.eq("city", "Zurich")
+    val r = MongoConnection.create1(mongoEndpoint, employeesCol).use(_.source.findOneAndDelete(filter)).runSyncUnsafe()
+
+    //then
+    r.isDefined shouldBe true
+    r.get.city shouldBe "Zurich"
+
+    //and
+    val l = MongoSource.findAll(employeesMongoCol).toListL.runSyncUnsafe()
+    l.size shouldBe n - 1
+  }
+
+    "replaceOne" should "find and replace one single document" in {
     //given
     val employeeA = genEmployeeWith(name = Some("Beth")).sample.get
     val employeeB = genEmployeeWith(name = Some("Samantha")).sample.get
 
     //and
-    MongoSingle.insertOne(col, employeeA).runSyncUnsafe()
+    MongoSingle.insertOne(employeesMongoCol, employeeA).runSyncUnsafe()
 
     //when
-    val r = MongoSource.findOneAndReplace(col, Filters.eq("name", employeeA.name), employeeB).runSyncUnsafe()
+    val r = MongoSource.findOneAndReplace(employeesMongoCol, Filters.eq("name", employeeA.name), employeeB).runSyncUnsafe()
 
     //then
     r.isDefined shouldBe true
     r.get shouldBe employeeA
 
     //and
-    val replacement = MongoSource.find(col, Filters.eq("name", employeeB.name)).headL.runSyncUnsafe()
+    val replacement = MongoSource.find(employeesMongoCol, Filters.eq("name", employeeB.name)).headL.runSyncUnsafe()
     replacement shouldBe employeeB
   }
 
@@ -244,34 +286,55 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     val filter: Bson = Filters.eq("name", "Whatever") //it does not exist
 
     //when
-    val r = MongoSource.findOneAndReplace(col, filter, employee).runSyncUnsafe()
+    val r = MongoSource.findOneAndReplace(employeesMongoCol, filter, employee).runSyncUnsafe()
 
     //then
     r.isDefined shouldBe false
 
     //and
-    val count = MongoSource.count(col, Filters.eq("name", "Alice")).runSyncUnsafe()
+    val count = MongoSource.count(employeesMongoCol, Filters.eq("name", "Alice")).runSyncUnsafe()
     count shouldBe 0L
   }
 
-  it should "find and update one single document" in {
+  it should "be likewise available from within the resource usage" in {
+    //given
+    val employeeA = genEmployeeWith(name = Some("Beth")).sample.get
+    val employeeB = genEmployeeWith(name = Some("Samantha")).sample.get
+
+    //and
+    MongoSingle.insertOne(employeesMongoCol, employeeA).runSyncUnsafe()
+
+    //when
+    val r = MongoConnection.create1(mongoEndpoint, employeesCol)
+      .use(_.source.findOneAndReplace(Filters.eq("name", employeeA.name), employeeB)).runSyncUnsafe()
+
+    //then
+    r.isDefined shouldBe true
+    r.get shouldBe employeeA
+
+    //and
+    val replacement = MongoSource.find(employeesMongoCol, Filters.eq("name", employeeB.name)).headL.runSyncUnsafe()
+    replacement shouldBe employeeB
+  }
+
+    "findOneAndUpdate" should "find a single document by a filter, update and return it" in {
     //given
     val employee = genEmployeeWith(name = Some("Glen")).sample.get
     val filter = Filters.eq("name", employee.name)
 
     //and
-    MongoSingle.insertOne(col, employee).runSyncUnsafe()
+    MongoSingle.insertOne(employeesMongoCol, employee).runSyncUnsafe()
 
     //when
     val update = Updates.inc("age", 1)
-    val r = MongoSource.findOneAndUpdate(col,filter, update).runSyncUnsafe()
+    val r = MongoSource.findOneAndUpdate(employeesMongoCol,filter, update).runSyncUnsafe()
 
     //then
     r.isDefined shouldBe true
     r.get shouldBe employee
 
     //and
-    val updated = MongoSource.find(col, filter).headL.runSyncUnsafe()
+    val updated = MongoSource.find(employeesMongoCol, filter).headL.runSyncUnsafe()
     updated.age shouldBe employee.age + 1
   }
 
@@ -281,10 +344,33 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     val update = Updates.inc("age", 1)
 
     //when
-    val r = MongoSource.findOneAndUpdate(col, filter, update).runSyncUnsafe()
+    val r = MongoSource.findOneAndUpdate(employeesMongoCol, filter, update).runSyncUnsafe()
 
     //then
     r.isDefined shouldBe false
   }
 
-}
+  it should "be likewise available from within the resource usage" in {
+    //given
+    val employee = genEmployeeWith(name = Some("Jack")).sample.get
+    val filter = Filters.eq("name", employee.name)
+
+    //and
+    MongoSingle.insertOne(employeesMongoCol, employee).runSyncUnsafe()
+
+    //when
+    val update = Updates.inc("age", 1)
+    val r = MongoConnection.create1(mongoEndpoint, employeesCol)
+      .use(_.source.findOneAndUpdate(filter, update))
+      .runSyncUnsafe()
+
+    //then
+    r.isDefined shouldBe true
+    r.get shouldBe employee
+
+    //and
+    val updated = MongoSource.find(employeesMongoCol, filter).headL.runSyncUnsafe()
+    updated.age shouldBe employee.age + 1
+  }
+
+  }

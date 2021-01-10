@@ -29,7 +29,7 @@ class MongoDbSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
   override def beforeEach() = {
     super.beforeEach()
     MongoDb.dropDatabase(db).runSyncUnsafe()
-    MongoDb.dropCollection(db, collectionName).runSyncUnsafe()
+    MongoDb.dropCollection(db, employeesColName).runSyncUnsafe()
   }
 
   s"$MongoDb" should "list database names" in {
@@ -73,7 +73,7 @@ class MongoDbSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     val r = MongoDb.dropDatabase(db).runSyncUnsafe()
 
     //then
-    val exists = MongoDb.existsCollection(db, collectionName).runSyncUnsafe()
+    val exists = MongoDb.existsCollection(db, employeesColName).runSyncUnsafe()
     r shouldBe a[Unit]
     existedBefore shouldBe true
     exists shouldBe false
@@ -91,7 +91,7 @@ class MongoDbSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     val r = MongoDb.dropCollection(db, collection).runSyncUnsafe()
 
     //then
-    val exists = MongoDb.existsCollection(db, collectionName).runSyncUnsafe()
+    val exists = MongoDb.existsCollection(db, employeesColName).runSyncUnsafe()
     r shouldBe a[Unit]
     existedBefore shouldBe true
     exists shouldBe false

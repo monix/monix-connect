@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-package monix.connect.mongodb
+package monix.connect.mongodb.internal
 
 import monix.connect.mongodb.domain.{DeleteResult, InsertManyResult, InsertOneResult, UpdateResult}
 import monix.execution.internal.InternalApi
 
-import scala.util.Try
 import scala.jdk.CollectionConverters._
+import scala.util.Try
 
 /** Contains the methods for converting unsafe java mongodb results to scala safe ones. */
 @InternalApi private[mongodb] object ResultConverter {

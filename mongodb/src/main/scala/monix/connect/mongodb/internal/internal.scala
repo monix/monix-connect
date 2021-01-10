@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package monix.connect
+package monix.connect.mongodb
 
 import monix.connect.mongodb.domain.RetryStrategy
 import monix.eval.{Coeval, Task}
@@ -24,7 +24,7 @@ import org.reactivestreams.Publisher
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
-package object mongodb {
+package object internal {
 
   /**
     * An internal method used by those operations that wants to implement a retry interface based on

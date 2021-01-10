@@ -53,7 +53,6 @@ class MongoSinkSpec
     val e1 = genEmployee.sample.get
     val e2 = genEmployee.sample.get
     val objectId = BsonObjectId.apply()
-    val insertOneResult = MongoInsertOneResult.acknowledged(objectId)
     val failedPub = Task.raiseError[MongoInsertOneResult](DummyException("Insert one failed")).toReactivePublisher(s)
     val successPub = Task(MongoInsertOneResult.unacknowledged()).toReactivePublisher(s)
 

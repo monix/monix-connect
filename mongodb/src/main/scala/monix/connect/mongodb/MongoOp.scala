@@ -18,6 +18,7 @@
 package monix.connect.mongodb
 
 import com.mongodb.client.model.{DeleteOptions, InsertManyOptions, InsertOneOptions, ReplaceOptions, UpdateOptions}
+import com.mongodb.reactivestreams.client.MongoCollection
 import monix.connect.mongodb.domain.{
   DefaultDeleteOptions,
   DefaultDeleteResult,
@@ -33,7 +34,7 @@ import monix.connect.mongodb.domain.{
   InsertOneResult,
   UpdateResult
 }
-import com.mongodb.reactivestreams.client.MongoCollection
+import monix.connect.mongodb.internal.{retryOnFailure, ResultConverter}
 import monix.eval.{Coeval, Task}
 import org.bson.conversions.Bson
 

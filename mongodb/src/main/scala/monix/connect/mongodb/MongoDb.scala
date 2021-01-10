@@ -18,12 +18,16 @@
 package monix.connect.mongodb
 
 import com.mongodb.MongoNamespace
-import com.mongodb.reactivestreams.client.{MongoClient, MongoDatabase}
+import com.mongodb.reactivestreams.client.{MongoClient, MongoCollection, MongoDatabase}
+import monix.connect.mongodb.internal.MongoDbImpl
 import monix.eval.Task
+import monix.execution.internal.InternalApi
 import monix.reactive.Observable
 
 /** Object for managing the mongo databases and collections */
-object MongoDb {
+object MongoDb extends MongoDbImpl {
+
+  def apply(client: MongoClient, db: MongoDatabase): MongoDb = new MongoDb(client, db)
 
   /**
     * Create a new collection with the given name.
@@ -33,8 +37,8 @@ object MongoDb {
     * @return a unit that signals on completion.
     *
     */
-  def createCollection(db: MongoDatabase, collectionName: String): Task[Unit] =
-    Task.fromReactivePublisher(db.createCollection(collectionName)).map(_ => ())
+  override def createCollection(db: MongoDatabase, collectionName: String): Task[Unit] =
+    super.createCollection(db, collectionName)
 
   /**
     * Drops a database.
@@ -42,8 +46,8 @@ object MongoDb {
     * @param db the database to be dropped
     * @return a unit that signals on completion.
     */
-  def dropDatabase(db: MongoDatabase): Task[Unit] =
-    Task.fromReactivePublisher(db.drop()).map(_ => ())
+  override def dropDatabase(db: MongoDatabase): Task[Unit] =
+    super.dropDatabase(db)
 
   /**
     * Drops a collection from the database.
@@ -52,8 +56,8 @@ object MongoDb {
     * @param collectionName the name of the collection to drop
     * @return a unit that signals on completion
     */
-  def dropCollection(db: MongoDatabase, collectionName: String): Task[Unit] =
-    Task.fromReactivePublisher(db.getCollection(collectionName).drop()).map((_ => ()))
+  override def dropCollection(db: MongoDatabase, collectionName: String): Task[Unit] =
+    super.dropCollection(db, collectionName)
 
   /**
     * Check whether a collection exists or not.
@@ -62,8 +66,8 @@ object MongoDb {
     * @param collectionName the name of the collection
     * @return a boolean [[Task]] indicating whether the collection exists or not.
     */
-  def existsCollection(db: MongoDatabase, collectionName: String): Task[Boolean] =
-    MongoDb.listCollections(db).filter(_ == collectionName).map(_ => true).headOrElseL(false)
+  override def existsCollection(db: MongoDatabase, collectionName: String): Task[Boolean] =
+    super.existsCollection(db, collectionName)
 
   /**
     * Checks whether a database exists or not.
@@ -72,8 +76,8 @@ object MongoDb {
     * @param dbName the name of the database
     * @return a boolean [[Task]] indicating whether the database exists or not.
     */
-  def existsDatabase(client: MongoClient, dbName: String): Task[Boolean] =
-    MongoDb.listDatabases(client).filter(_ == dbName).map(_ => true).headOrElseL(false)
+  override def existsDatabase(client: MongoClient, dbName: String): Task[Boolean] =
+    super.existsDatabase(client, dbName)
 
   /**
     * Rename the collection with oldCollectionName to the newCollectionName.
@@ -83,10 +87,11 @@ object MongoDb {
     * @param newCollectionName the name (new) which the collection will be renamed to
     * @return a boolean [[Task]] indicating whether the collection was successfully renamed or not.
     */
-  def renameCollection(db: MongoDatabase, oldCollectionName: String, newCollectionName: String): Task[Boolean] = {
-    val namespace = new MongoNamespace(newCollectionName)
-    Task.fromReactivePublisher(db.getCollection(oldCollectionName).renameCollection(namespace)).map(_.isDefined)
-  }
+  override def renameCollection(
+    db: MongoDatabase,
+    oldCollectionName: String,
+    newCollectionName: String): Task[Boolean] =
+    super.renameCollection(db, oldCollectionName, newCollectionName)
 
   /**
     * Lists all the collections in the given database.
@@ -94,8 +99,8 @@ object MongoDb {
     * @param db the database
     * @return an [[Observable]] that emits the names of all the existing collections.
     */
-  def listCollections(db: MongoDatabase): Observable[String] =
-    Observable.fromReactivePublisher(db.listCollectionNames())
+  override def listCollections(db: MongoDatabase): Observable[String] =
+    super.listCollections(db)
 
   /**
     * Get a list of the database names
@@ -103,7 +108,81 @@ object MongoDb {
     * @param client the client-side representation of a MongoDB cluster.
     * @return an [[Observable]] that emits the names of all the existing databases.
     */
-  def listDatabases(client: MongoClient): Observable[String] =
-    Observable.fromReactivePublisher(client.listDatabaseNames())
+  override def listDatabases(client: MongoClient): Observable[String] =
+    super.listDatabases(client)
 
+}
+
+class MongoDb(private[mongodb] val client: MongoClient, private[mongodb] val db: MongoDatabase) extends MongoDbImpl {
+
+  /**
+    * Create a new collection with the given name.
+    *
+    * @param collectionName the name for the new collection to create
+    * @return a unit that signals on completion.
+    *
+    */
+  def createCollection(collectionName: String): Task[Unit] =
+    super.createCollection(db, collectionName)
+
+  /**
+    * Drops a database.
+    *
+    * @return a unit that signals on completion.
+    */
+  def dropDatabase(): Task[Unit] =
+    super.dropDatabase(db)
+
+  /**
+    * Drops a collection from the database.
+    *
+    * @param collectionName the name of the collection to drop
+    * @return a unit that signals on completion
+    */
+  def dropCollection(collectionName: String): Task[Unit] =
+    super.dropCollection(db, collectionName)
+
+  /**
+    * Check whether a collection exists or not.
+    *
+    * @param collectionName the name of the collection
+    * @return a boolean [[Task]] indicating whether the collection exists or not.
+    */
+  def existsCollection(collectionName: String): Task[Boolean] =
+    super.existsCollection(db, collectionName)
+
+  /**
+    * Checks whether a database exists or not.
+    *
+    * @param dbName the name of the database
+    * @return a boolean [[Task]] indicating whether the database exists or not.
+    */
+  def existsDatabase(dbName: String): Task[Boolean] =
+    super.existsDatabase(client, dbName)
+
+  /**
+    * Rename the collection with oldCollectionName to the newCollectionName.
+    *
+    * @param oldCollectionName the current (old) name of the collection
+    * @param newCollectionName the name (new) which the collection will be renamed to
+    * @return a boolean [[Task]] indicating whether the collection was successfully renamed or not.
+    */
+  def renameCollection(oldCollectionName: String, newCollectionName: String): Task[Boolean] =
+    super.renameCollection(db, oldCollectionName, newCollectionName)
+
+  /**
+    * Lists all the collections in the given database.
+    *
+    * @return an [[Observable]] that emits the names of all the existing collections.
+    */
+  def listCollections(): Observable[String] =
+    super.listCollections(db)
+
+  /**
+    * Get the list of the all database names.
+    *
+    * @return an [[Observable]] that emits the names of all the existing databases.
+    */
+  def listAllDatabases(): Observable[String] =
+    super.listDatabases(client)
 }
