@@ -1,23 +1,22 @@
 package monix.connect.dynamodb
 
-
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.{Consumer, Observable}
 import monix.connect.dynamodb.DynamoDbOp.Implicits._
 import org.scalacheck.Gen
-import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.BeforeAndAfterAll
+import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import software.amazon.awssdk.services.dynamodb.model._
 
 import scala.concurrent.duration._
-import scala.collection.JavaConverters._
-import scala.compat.java8.FutureConverters._
+import scala.jdk.CollectionConverters._
 
+@deprecated("0.5.0")
 class DynamoDbConsumerSuite
-  extends AnyWordSpecLike with Matchers with ScalaFutures with DynamoDbFixture with BeforeAndAfterAll {
+  extends AnyWordSpecLike with Matchers with ScalaFutures with DynamoDbFixture with BeforeAndAfterAll with Eventually {
 
   implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 300.milliseconds)
 
@@ -27,7 +26,7 @@ class DynamoDbConsumerSuite
 
       s"consume a single `CreateTableRequest` and materializes to `CreateTableResponse`" in {
         //given
-        val randomTableName: String = Gen.identifier.sample.get
+        val randomTableName: String = genTableName.sample.get //a table must be between 3 and 255 characters
         val consumer: Consumer[CreateTableRequest, Unit] =
           DynamoDb.consumer[CreateTableRequest, CreateTableResponse]()
         val request =
@@ -52,8 +51,8 @@ class DynamoDbConsumerSuite
         //given
         val consumer: Consumer[PutItemRequest, Unit] =
           DynamoDb.consumer[PutItemRequest, PutItemResponse]()
-        val city = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-        val citizenId = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+        val city = Gen.identifier.sample.get
+        val citizenId = Gen.identifier.sample.get
         val age = Gen.choose(0, 100).sample.get
         val request: PutItemRequest = putItemRequest(tableName, city, citizenId, age)
 
@@ -63,7 +62,8 @@ class DynamoDbConsumerSuite
         //then
         whenReady(t.runToFuture) { r =>
           r shouldBe a[Unit]
-          val getResponse: GetItemResponse = Task.from(client.getItem(getItemRequest(tableName, city, citizenId))).runSyncUnsafe()
+          val getResponse: GetItemResponse =
+            Task.from(client.getItem(getItemRequest(tableName, city, citizenId))).runSyncUnsafe()
           getResponse.item().values().asScala.head.n().toDouble shouldBe age
         }
       }
@@ -73,18 +73,21 @@ class DynamoDbConsumerSuite
         val consumer: Consumer[PutItemRequest, Unit] =
           DynamoDb.consumer[PutItemRequest, PutItemResponse]()
         val requestAttr: List[Citizen] = Gen.nonEmptyListOf(genCitizen).sample.get
-        val requests: List[PutItemRequest] = requestAttr.map { citizen => putItemRequest(tableName, citizen.citizenId, citizen.city, citizen.age) }
+        val requests: List[PutItemRequest] = requestAttr.map { citizen =>
+          putItemRequest(tableName, citizen.citizenId, citizen.city, citizen.age)
+        }
 
         //when
-        val t: Task[Unit] = Observable.fromIterable(requests).consumeWith(consumer)
+        Observable.fromIterable(requests).consumeWith(consumer).runSyncUnsafe()
 
         //then
-        whenReady(t.runToFuture) { r =>
-          r shouldBe a[Unit]
-          requestAttr.map { citizen =>
-            val getResponse: GetItemResponse = toScala(client.getItem(getItemRequest(tableName, citizen.citizenId, citizen.city))).futureValue
+        requestAttr.map { citizen =>
+          eventually {
+            val getItem = client.getItem(getItemRequest(tableName, citizen.citizenId, citizen.city))
+            val getResponse = Task.from(getItem).runSyncUnsafe()
             getResponse.item().values().asScala.head.n().toDouble shouldBe citizen.age
           }
+
         }
       }
     }
@@ -95,7 +98,7 @@ class DynamoDbConsumerSuite
       s"consume a single `GetItemRequest` and materialize it to `GetItemResponse` " in {
         //given
         val city = "Barcelona"
-        val citizenId = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+        val citizenId = Gen.identifier.sample.get
         val age: Int = 1015
         Task.from(client.putItem(putItemRequest(tableName, city, citizenId, age))).runSyncUnsafe()
         val request: GetItemRequest = getItemRequest(tableName, city, citizenId)
@@ -105,9 +108,7 @@ class DynamoDbConsumerSuite
           Observable.pure(request).consumeWith(DynamoDb.consumer())
 
         //then
-        whenReady(t.runToFuture) { response =>
-          response shouldBe a[Unit]
-        }
+        whenReady(t.runToFuture) { response => response shouldBe a[Unit] }
       }
     }
 

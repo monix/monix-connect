@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,6 @@ import software.amazon.awssdk.services.dynamodb.model.{DynamoDbRequest, DynamoDb
 import monix.reactive.observers.Subscriber
 
 import scala.concurrent.Future
-import scala.concurrent.duration.FiniteDuration
 
 /**
   * A pre-built [[Consumer]] implementation that expects incoming [[DynamoDbRequest]] and

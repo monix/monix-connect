@@ -1,6 +1,6 @@
 import sbt.Keys.version
 
-val monixConnectSeries = "0.4.0"
+val monixConnectSeries = "0.5.1"
 
 inThisBuild(List(
   organization := "io.monix",
@@ -33,14 +33,13 @@ lazy val sharedSettings = Seq(
     "-language:experimental.macros"
   ),
   //warnUnusedImports
-  scalacOptions in (Compile, console) --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports"),
-  scalacOptions in Test --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports"),
-  // Linter
+  scalacOptions in (Compile, console) ++= Seq("-Ywarn-unused-import", "-deprecation"),
+    // Linter
   scalacOptions ++= Seq(
     "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
     "-Ywarn-dead-code", // Warn when dead code is identified.
     // Turns all warnings into errors ;-)
-    //"-Xfatal-warnings", //Turning of fatal warnings for the moment
+    "-Xfatal-warnings", //Turning of fatal warnings for the moment
     // Enables linter options
     "-Xlint:adapted-args", // warn if an argument list is modified to match the receiver
     "-Xlint:infer-any", // warn when a type argument is inferred to be `Any`
@@ -51,7 +50,8 @@ lazy val sharedSettings = Seq(
     "-Xlint:poly-implicit-overload", // parameterized overloaded implicit methods are not visible as view bounds
     "-Xlint:option-implicit", // Option.apply used implicit view
     "-Xlint:delayedinit-select", // Selecting member of DelayedInit
-    "-Xlint:package-object-classes" // Class or object defined in package object
+    //"-Xlint:package-object-classes" // Class or object defined in package object
+    "-Wconf:msg=While parsing annotations in:silent"
   ),
 
   // ScalaDoc settings
@@ -84,7 +84,7 @@ lazy val sharedSettings = Seq(
   apiURL := Some(url("https://monix.github.io/monix-connect/api/")),
 
   headerLicense := Some(HeaderLicense.Custom(
-    """|Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+    """|Copyright (c) 2020-2021 by The Monix Connect Project Developers.
        |See the project homepage at: https://connect.monix.io
        |
        |Licensed under the Apache License, Version 2.0 (the "License");
@@ -107,6 +107,7 @@ lazy val sharedSettings = Seq(
 
 def mimaSettings(projectName: String) = Seq(
   mimaPreviousArtifacts := Set("io.monix" %% projectName % monixConnectSeries),
+  mimaBinaryIssueFilters ++= MimaFilters.changesFor_0_5_3
 )
 
 mimaFailOnNoPrevious in ThisBuild := false
@@ -119,7 +120,7 @@ lazy val monixConnect = (project in file("."))
   .settings(sharedSettings)
   .settings(name := "monix-connect")
   .aggregate(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, elasticsearch, awsAuth)
-  .dependsOn(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, elasticsearch)
+  .dependsOn(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, elasticsearch, awsAuth)
 
 
 lazy val akka = monixConnector("akka", Dependencies.Akka)
@@ -128,7 +129,7 @@ lazy val dynamodb = monixConnector("dynamodb", Dependencies.DynamoDb).aggregate(
 
 lazy val hdfs = monixConnector("hdfs", Dependencies.Hdfs)
 
-lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb)
+lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb, isMimaEnabled = false)
 
 lazy val parquet = monixConnector("parquet", Dependencies.Parquet)
 
@@ -140,25 +141,26 @@ lazy val gcs = monixConnector("gcs", Dependencies.GCS)
 
 lazy val elasticsearch =  monixConnector("elasticsearch", Dependencies.Elasticsearch)
 
+//internal
+lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth, isMimaEnabled = false)
+
 def monixConnector(
   connectorName: String,
   projectDependencies: Seq[ModuleID],
-  additionalSettings: sbt.Def.SettingsDefinition*): Project =
+  isMimaEnabled: Boolean = true): Project = {
   Project(id = connectorName, base = file(connectorName))
     .enablePlugins(AutomateHeaderPlugin)
     .settings(name := s"monix-$connectorName", libraryDependencies ++= projectDependencies, Defaults.itSettings)
     .settings(sharedSettings)
-    .settings(additionalSettings: _*)
     .configs(IntegrationTest, IT)
     .enablePlugins(AutomateHeaderPlugin)
-    //.settings(mimaSettings(s"monix-$connectorName"))
+    .settings(if(isMimaEnabled) mimaSettings(s"monix-$connectorName") else Seq.empty)
+}
+
 
 //=> non published modules
 
-lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth)
-  .settings(skipOnPublishSettings)
-
-lazy val benchmarks = monixConnector("benchmarks", Dependencies.Benchmarks)
+lazy val benchmarks = monixConnector("benchmarks", Dependencies.Benchmarks, isMimaEnabled = false)
   .enablePlugins(JmhPlugin)
   .settings(skipOnPublishSettings)
   .dependsOn(parquet % "compile->compile;test->test", redis % "compile->compile;test->test", s3 % "compile->compile;test->test")

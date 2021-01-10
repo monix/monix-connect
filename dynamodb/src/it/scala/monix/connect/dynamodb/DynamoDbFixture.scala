@@ -11,7 +11,7 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.{AttributeDefinition, AttributeValue, BillingMode, CreateTableRequest, CreateTableResponse, DeleteTableRequest, DeleteTableResponse, GetItemRequest, KeySchemaElement, KeyType, ProvisionedThroughput, PutItemRequest, ScalarAttributeType}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 
 trait DynamoDbFixture {
@@ -31,7 +31,7 @@ trait DynamoDbFixture {
     .region(Region.AWS_GLOBAL)
     .build
 
-  val genTableName: Gen[String] =  Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "test-" + chars.mkString.take(200))  //table name max size is 255
+  val genTableName: Gen[String] =  Gen.identifier.map("test-" + _.take(200))  //table name max size is 255
 
   val keyMap = (citizenId: String, city: String) => Map("citizenId" -> strAttr(citizenId), "city" -> strAttr(city))
 

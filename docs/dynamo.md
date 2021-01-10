@@ -23,7 +23,7 @@ Therefore, the connector provides three generic methods __single__, __transforme
 
 Add the following dependency to get started:
 ```scala 
-libraryDependencies += "io.monix" %% "monix-dynamodb" % "0.5.0"
+libraryDependencies += "io.monix" %% "monix-dynamodb" % "0.5.1"
 ```
 
 ## Async Client

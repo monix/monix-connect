@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,11 +28,10 @@ import monix.reactive.observers.Subscriber
 import scala.concurrent.Future
 
 /**
-  *  A pre-built [[Consumer]] implementation that expects incoming [[BulkCompatibleRequest]]
-  *
-  * @param es an instance of a [[Elasticsearch]]
+  * A pre-built [[Consumer]] implementation that expects incoming [[BulkCompatibleRequest]].
   */
-@InternalApi private[elasticsearch] class ElasticsearchSink(es: Elasticsearch)
+@InternalApi
+private[elasticsearch] class ElasticsearchSink(elasticsearch: Elasticsearch)
   extends Consumer[Seq[BulkCompatibleRequest], Unit] {
   override def createSubscriber(
     cb: Callback[Throwable, Unit],
@@ -43,7 +42,8 @@ import scala.concurrent.Future
       override implicit def scheduler: Scheduler = s
 
       override def onNext(elem: Seq[BulkCompatibleRequest]): Future[Ack] = {
-        es.bulkExecuteRequest(elem)
+        elasticsearch
+          .bulkExecuteRequest(elem)
           .map {
             case RequestSuccess(_, _, _, _) =>
               Ack.Continue
@@ -59,7 +59,7 @@ import scala.concurrent.Future
       }
 
       override def onComplete(): Unit = {
-        cb.onSuccess()
+        cb.onSuccess(())
       }
     }
     (subscriber, AssignableCancelable.single())

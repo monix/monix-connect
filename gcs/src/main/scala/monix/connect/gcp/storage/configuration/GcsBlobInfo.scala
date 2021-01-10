@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -71,7 +71,7 @@ object GcsBlobInfo {
         List.empty[Acl]
       },
       owner = Option(blobInfo.getOwner),
-      size = Option(blobInfo.getSize()),
+      size = Option(blobInfo.getSize.toLong),
       contentType = Option(blobInfo.getContentType),
       contentEncoding = Option(blobInfo.getContentEncoding),
       contentDisposition = Option(blobInfo.getContentDisposition),

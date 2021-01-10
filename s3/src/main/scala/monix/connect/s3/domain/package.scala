@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,11 +21,11 @@ package object domain {
 
   /**
     * The minimum allowable part size for a multipart upload is 5 MB.
-    * @see https://docs.aws.amazon.com/AmazonS3/latest/dev/qfacts.html
+    * @see [[https://docs.aws.amazon.com/AmazonS3/latest/dev/qfacts.html]]
     * For more information about multipart upload limits.
     */
   val awsMinChunkSize: Int = 5 * 1024 * 1024 //5242880 bytes
-  val awsDefaulMaxKeysList = 1000 // represents the default max keys request
+  val awsDefaultMaxKeysList = 1000 //represents the default max keys per list keys request
 
   //default setting instances
   private[s3] val DefaultDownloadSettings = DownloadSettings()

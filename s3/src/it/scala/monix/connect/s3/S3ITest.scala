@@ -42,7 +42,7 @@ class S3ITest
 
         "contentLength and contentType are not defined and therefore infered by the method" in {
           //given
-          val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+          val key: String = genKey.sample.get
           val content: String = Gen.alphaUpperStr.sample.get
 
           //when
@@ -58,7 +58,7 @@ class S3ITest
 
         "contentLength and contentType are defined respectively as the array length and 'application/json'" in {
           //given
-          val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+          val key: String = genKey.sample.get
           val content: String = Gen.alphaUpperStr.sample.get
 
           //when
@@ -74,7 +74,7 @@ class S3ITest
 
         "the chunk is empty" in {
           //given
-          val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+          val key: String = genKey.sample.get
           val content: Array[Byte] = Array.emptyByteArray
 
           //when
@@ -97,7 +97,7 @@ class S3ITest
 
     "download a s3 object as byte array" in {
       //given
-      val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+      val key: String = genKey.sample.get
       val content: String = Gen.alphaUpperStr.sample.get
       S3.upload(bucketName, key, content.getBytes).runSyncUnsafe()
 
@@ -107,14 +107,13 @@ class S3ITest
       //then
       whenReady(t.runToFuture) { actualContent: Array[Byte] =>
         S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe true
-        actualContent shouldBe a[Array[Byte]]
         actualContent shouldBe content.getBytes()
       }
     }
 
     "download a s3 object bigger than 1MB as byte array" in {
       //given
-      val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+      val key: String = genKey.sample.get
       val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
       val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
       val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
@@ -128,7 +127,6 @@ class S3ITest
       whenReady(t.runToFuture) { actualContent: Array[Byte] =>
         val expectedArrayByte = ob.foldLeftL(Array.emptyByteArray)((acc, bytes) => acc ++ bytes).runSyncUnsafe()
         S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe true
-        actualContent shouldBe a[Array[Byte]]
         actualContent.size shouldBe expectedArrayByte.size
         actualContent shouldBe expectedArrayByte
       }
@@ -137,8 +135,8 @@ class S3ITest
     "download the first n bytes form an object" in {
       //given
       val n = 5
-      val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-      val content: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+      val key: String = genKey.sample.get
+      val content: String = Gen.identifier.sample.get
       S3.upload(bucketName, key, content.getBytes).runSyncUnsafe()
 
       //when
@@ -147,7 +145,6 @@ class S3ITest
       //then
       whenReady(t.runToFuture) { partialContent: Array[Byte] =>
         S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe true
-        partialContent shouldBe a[Array[Byte]]
         partialContent shouldBe content.getBytes().take(n)
       }
     }
@@ -155,7 +152,7 @@ class S3ITest
     "download fails if the numberOfBytes is negative" in {
       //given
       val negativeNum = Gen.chooseNum(-10, 0).sample.get
-      val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+      val key: String = genKey.sample.get
 
       //when
       val t: Try[Task[Array[Byte]]] = Try(S3.download(bucketName, key, Some(negativeNum)))
@@ -173,13 +170,14 @@ class S3ITest
       sleep(400)
 
       //then
-      f.value.get shouldBe a[Failure[NoSuchKeyException]]
+      f.value.get.isFailure shouldBe true
+      f.value.get.failed.get shouldBe a[NoSuchKeyException]
     }
 
     "downloadMultipart of small chunk size" in {
       //given
-      val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-      val content: String = nonEmptyString.value()
+      val key: String = genKey.sample.get
+      val content: String = Gen.identifier.sample.get
       S3.upload(bucketName, key, content.getBytes).runSyncUnsafe()
 
       //when
@@ -188,7 +186,6 @@ class S3ITest
 
       //then
       S3.existsObject(bucketName, key).runSyncUnsafe() shouldBe true
-      actualContent shouldBe a[Array[Byte]]
       actualContent shouldBe content.getBytes()
     }
 
@@ -198,12 +195,12 @@ class S3ITest
 
     "copy an object to a different location within the same bucket" in {
       //given
-      val sourceKey = nonEmptyString.value()
-      val content = nonEmptyString.value().getBytes()
+      val sourceKey = genKey.sample.get
+      val content = Gen.identifier.sample.get.getBytes()
       S3.upload(bucketName, sourceKey, content).runSyncUnsafe()
 
       //and
-      val destinationKey = nonEmptyString.value()
+      val destinationKey = Gen.identifier.sample.get
 
       //when
       val copyObjectResponse = S3.copyObject(bucketName, sourceKey, bucketName, destinationKey).runSyncUnsafe()
@@ -215,13 +212,13 @@ class S3ITest
 
     "copy an object to a different location in a different bucket" in {
       //given
-      val sourceKey = nonEmptyString.value()
-      val content = nonEmptyString.value().getBytes()
+      val sourceKey = genKey.sample.get
+      val content = Gen.identifier.sample.get.getBytes()
       S3.upload(bucketName, sourceKey, content).runSyncUnsafe()
 
       //and
-      val destinationBucket = nonEmptyString.value()
-      val destinationKey = nonEmptyString.value()
+      val destinationBucket = genBucketName.sample.get
+      val destinationKey = genKey.sample.get
       S3.createBucket(destinationBucket).runSyncUnsafe()
 
       //when
@@ -240,8 +237,8 @@ class S3ITest
 
       "a single chunk is passed to the consumer" in {
         //given
-        val key = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-        val content: Array[Byte] = Gen.alphaUpperStr.sample.get.getBytes
+        val key = genKey.sample.get
+        val content: Array[Byte] = Gen.identifier.sample.get.getBytes
         val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
           S3.uploadMultipart(bucketName, key)
         val ob = Observable.pure(content)
@@ -260,8 +257,8 @@ class S3ITest
 
       "multiple chunks (of less than minimum size) are passed" in {
         //given
-        val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-        val chunks: List[Array[Byte]] = Gen.listOfN(10, Gen.alphaUpperStr).map(_.map(_.getBytes)).sample.get
+        val key: String = genKey.sample.get
+        val chunks: List[Array[Byte]] = Gen.listOfN(10, Gen.identifier.map(_.getBytes)).sample.get
         val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
           S3.uploadMultipart(bucketName, key)
         val ob: Observable[Array[Byte]] = Observable.fromIterable(chunks)
@@ -282,7 +279,7 @@ class S3ITest
 
       "a single chunk of size (1MB)" in {
         //given
-        val key = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+        val key = genKey.sample.get
         val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
         val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
         val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
@@ -303,7 +300,7 @@ class S3ITest
 
       "multiple chunks bigger than minimum size (5MB)" in {
         //given
-        val key = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+        val key = genKey.sample.get
         val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
         val ob: Observable[Array[Byte]] = Observable
           .fromInputStream(inputStream)
@@ -332,7 +329,7 @@ class S3ITest
 
     "create and delete a bucket" in {
       //given
-      val bucket = nonEmptyString.value()
+      val bucket = genBucketName.sample.get
       S3.createBucket(bucket).runSyncUnsafe()
       val existedBefore = S3.existsBucket(bucket).runSyncUnsafe()
 
@@ -347,7 +344,7 @@ class S3ITest
 
     "delete returns NoSuchBucketException when the bucket did not exist" in {
       //given
-      val bucket = nonEmptyString.value()
+      val bucket = Gen.identifier.sample.get
       val existedBefore = S3.existsBucket(bucket).runSyncUnsafe()
 
       //when
@@ -355,7 +352,8 @@ class S3ITest
       sleep(400)
 
       //then
-      f.value.get shouldBe a[Failure[NoSuchBucketException]]
+      f.value.get.isFailure shouldBe true
+      f.value.get.failed.get shouldBe a[NoSuchBucketException]
       val existsAfterDeletion = S3.existsBucket(bucket).runSyncUnsafe()
       existedBefore shouldBe false
       existsAfterDeletion shouldBe false
@@ -363,8 +361,8 @@ class S3ITest
 
     "delete a object" in {
       //given
-      val key = nonEmptyString.value()
-      val content = nonEmptyString.value().getBytes()
+      val key = Gen.identifier.sample.get
+      val content = Gen.identifier.sample.get.getBytes()
       S3.upload(bucketName, key, content).runSyncUnsafe()
       val existedBefore = S3.existsObject(bucketName, key).runSyncUnsafe()
 
@@ -379,8 +377,8 @@ class S3ITest
 
     "check if a bucket exists" in {
       //given
-      val bucketNameA = nonEmptyString.value()
-      val bucketNameB = nonEmptyString.value()
+      val bucketNameA = genBucketName.sample.get
+      val bucketNameB = genBucketName.sample.get
 
       //and
       S3.createBucket(bucketNameA).runSyncUnsafe()
@@ -396,9 +394,8 @@ class S3ITest
 
     "list existing buckets" in {
       //given
-      val bucketNameA = nonEmptyString.value()
-      val _ = nonEmptyString.value()
-      val bucketNameC = nonEmptyString.value()
+      val bucketNameA = genBucketName.sample.get
+      val bucketNameC = genBucketName.sample.get
 
       //and
       val initialBuckets = S3.listBuckets().toListL.runSyncUnsafe()
@@ -415,8 +412,8 @@ class S3ITest
 
     "check if an object exists" in {
       //given
-      val prefix = s"test-exists-object/${nonEmptyString.value()}/"
-      val key: String = prefix + nonEmptyString.value()
+      val prefix = s"test-exists-object/${Gen.identifier.sample.get}/"
+      val key: String = prefix + Gen.identifier.sample.get
 
       //and
       S3.upload(bucketName, key, "dummy content".getBytes()).runSyncUnsafe()
@@ -433,10 +430,10 @@ class S3ITest
     "list all objects" in {
       //given
       val n = 1000
-      val prefix = s"test-list-all-truncated/${nonEmptyString.value()}/"
+      val prefix = s"test-list-all-truncated/${genKey.sample.get}/"
       val keys: List[String] =
-        Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + nonEmptyString.value() + str)).sample.get
-      val contents: List[String] = List.fill(n)(nonEmptyString.value())
+        Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + genKey.sample.get + str)).sample.get
+      val contents: List[String] = List.fill(n)(genKey.sample.get)
       Task
         .sequence(keys.zip(contents).map { case (key, content) => S3.upload(bucketName, key, content.getBytes()) })
         .runSyncUnsafe()

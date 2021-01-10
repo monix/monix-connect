@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,8 @@ import org.mockito.ArgumentMatchers.any
 import org.scalatest.{BeforeAndAfterEach, Ignore}
 import org.scalatest.wordspec.AnyWordSpecLike
 
+import java.nio.ByteBuffer
+
 @Ignore
 class GcsDownloaderSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers with BeforeAndAfterEach {
 
@@ -35,7 +37,7 @@ class GcsDownloaderSpec extends AnyWordSpecLike with IdiomaticMockito with Match
   val mockStorage: Storage = mock[Storage]
   val readChannel: ReadChannel = mock[ReadChannel]
 
-  override def beforeEach: Unit = {
+  override def beforeEach(): Unit = {
     super.beforeEach()
     reset(underlying)
   }
@@ -55,7 +57,7 @@ class GcsDownloaderSpec extends AnyWordSpecLike with IdiomaticMockito with Match
 
       //then
       verify(mockStorage, times(1)).reader(bucket, blobName)
-      verify(readChannel, times(1)).read(any())
+      verify(readChannel, times(1)).read(any[ByteBuffer]())
       verify(readChannel, times(1)).close()
     }
 

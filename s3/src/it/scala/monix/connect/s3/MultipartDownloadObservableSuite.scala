@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,8 +50,8 @@ class MultipartDownloadObservableSuite
 
   "MultipartDownloadObservable" should "downloadMultipart of small chunk size" in {
       //given
-      val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-      val content: String = nonEmptyString.value()
+      val key: String = genKey.sample.get
+      val content: String = Gen.identifier.sample.get
       s3Resource.use(_.upload(bucketName, key, content.getBytes)).runSyncUnsafe()
 
       //when
@@ -60,14 +60,13 @@ class MultipartDownloadObservableSuite
 
       //then
       s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe() shouldBe true
-      actualContent shouldBe a[Array[Byte]]
       actualContent shouldBe content.getBytes()
     }
 
   it should "download 'multipart' in a single part" in {
       //given
-      val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-      val content: String = nonEmptyString.value()
+      val key: String = genKey.sample.get
+      val content: String = Gen.identifier.sample.get
       s3Resource.use(_.upload(bucketName, key, content.getBytes)).runSyncUnsafe()
 
       //when
@@ -76,13 +75,12 @@ class MultipartDownloadObservableSuite
 
       //then
       s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe() shouldBe true
-      actualContent shouldBe a[Array[Byte]]
       actualContent shouldBe content.getBytes()
     }
 
   it should "download a big object in multiparts" in {
       //given
-      val key: String = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
+      val key: String = genKey.sample.get
       val inputStream = Task(new FileInputStream(resourceFile("244KB.csv")))
       val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
       s3Resource.use(s3 => ob.consumeWith(s3.uploadMultipart(bucketName, key))).runSyncUnsafe()
@@ -108,7 +106,8 @@ class MultipartDownloadObservableSuite
 
       //then
       Await.ready(f, 1.seconds)
-      f.value.get shouldBe a[Failure[NoSuchBucketException]]
+      f.value.get.isFailure shouldBe true
+      f.value.get.failed.get shouldBe a[NoSuchBucketException]
       s3Resource.use(_.existsObject(bucket, key)).runSyncUnsafe() shouldBe false
     }
 

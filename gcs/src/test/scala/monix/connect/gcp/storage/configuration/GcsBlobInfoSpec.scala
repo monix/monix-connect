@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,9 +16,6 @@
  */
 
 package monix.connect.gcp.storage.configuration
-
-import java.nio.charset.StandardCharsets
-import java.util.Base64
 
 import com.google.cloud.ReadChannel
 import com.google.cloud.storage.{BlobInfo, Storage, Blob => GoogleBlob, Option => _}
@@ -38,7 +35,7 @@ class GcsBlobInfoSpec
   val mockStorage: Storage = mock[Storage]
   val readChannel: ReadChannel = mock[ReadChannel]
 
-  override def beforeEach: Unit = {
+  override def beforeEach(): Unit = {
     super.beforeEach()
     reset(underlying)
   }

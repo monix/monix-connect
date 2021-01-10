@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,6 @@ import java.io.FileInputStream
 import java.nio.file.Path
 
 import com.google.auth.oauth2.GoogleCredentials
-import com.google.cloud.WriteChannel
 import com.google.cloud.storage.Storage._
 import com.google.cloud.storage.{BlobId, BlobInfo, Storage, StorageOptions}
 import monix.connect.gcp.storage.components.Paging

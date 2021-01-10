@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,8 +30,8 @@ import scala.concurrent.{Future, Promise}
 
 object Converters {
 
-  implicit class ExtendedAkkaSink[-In, +R <: Future[_]](sink: Sink[In, R]) {
-    def asConsumer[Out](implicit materializer: Materializer, scheduler: Scheduler): Consumer[In, Out] = {
+  implicit class ExtendedAkkaSink[-In, +R <: Future[_], +Out](sink: Sink[In, R]) {
+    def asConsumer(implicit materializer: Materializer, scheduler: Scheduler): Consumer[In, Out] = {
       val (sub: Subscriber[In], mat: Future[Out]) = Source.asSubscriber[In].toMat(sink)(Keep.both).run()
       val observer: Observer[In] = Observer.fromReactiveSubscriber[In](sub, SingleAssignCancelable())
       val consumer: Consumer[In, Out] =
@@ -41,7 +41,7 @@ object Converters {
   }
 
   implicit class ExtendedAkkaFlow[-In, +Out, +Mat](flow: Flow[In, Out, Mat])
-    extends ExtendedAkkaSink[In, Future[Out]](flow.toMat(Sink.last)(Keep.right))
+    extends ExtendedAkkaSink[In, Future[Out], Out](flow.toMat(Sink.last)(Keep.right))
 
   implicit class ExtendedAkkaSource[+In, +Mat](source: Source[In, Mat]) {
     def asObservable(implicit materializer: Materializer, scheduler: Scheduler): Observable[In] = {

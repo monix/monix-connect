@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -69,7 +69,6 @@ object DynamoDb { self =>
     * AWS configurations to acquire and release a Monix [[DynamoDb]] client.
     *
     * ==Example==
-    *
     * {{{
     *   import cats.effect.Resource
     *   import monix.eval.Task
@@ -113,9 +112,7 @@ object DynamoDb { self =>
     * resources and guarantee that the client was not previously closed.
     *
     * ==Example==
-    *
     * {{{
-    *   import java.time.Duration
     *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
     *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
     *   import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
@@ -148,7 +145,6 @@ object DynamoDb { self =>
     * Thus, it is the user's responsability to close the connection.
     *
     * ==Example==
-    *
     * {{{
     *   import monix.execution.Scheduler.Implicits.global
     *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
@@ -176,7 +172,7 @@ object DynamoDb { self =>
     self.createUnsafe(asyncClient)
   }
 
-  @deprecated("moved to the trait as `sink`")
+  @deprecated("moved to the companion trait as `sink`")
   def consumer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
     retries: Int = 0,
     delayAfterFailure: Option[FiniteDuration] = None)(
@@ -187,7 +183,7 @@ object DynamoDb { self =>
     DynamoDbSubscriber(DynamoDb.createUnsafe(client), retryStrategy)
   }
 
-  @deprecated("moved to the trait for safer usage")
+  @deprecated("moved to the companion trait for safer usage")
   def transformer[In <: DynamoDbRequest, Out <: DynamoDbResponse](
     retries: Int = 0,
     delayAfterFailure: Option[FiniteDuration] = None)(
@@ -199,6 +195,10 @@ object DynamoDb { self =>
 
 }
 
+/**
+  * Represents the Monix DynamoDb client which can
+  * be created using the builders from its companion object.
+  */
 trait DynamoDb { self =>
 
   private[dynamodb] implicit val asyncClient: DynamoDbAsyncClient

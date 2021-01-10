@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,7 +34,8 @@ import scala.collection.mutable
   * @param request [[SearchRequest]]
   * @param client an implicit instance of a [[ElasticClient]]
   */
-@InternalApi private[elasticsearch] class ElasticsearchSource(request: SearchRequest)(implicit client: ElasticClient)
+@InternalApi
+private[elasticsearch] class ElasticsearchSource(request: SearchRequest)(implicit client: ElasticClient)
   extends Observable[SearchHit] {
 
   import com.sksamuel.elastic4s.ElasticDsl._
@@ -50,7 +51,7 @@ import scala.collection.mutable
   private def fastLoop(buffer: mutable.Queue[SearchHit], sub: Subscriber[SearchHit]): Task[Unit] = {
     fetch(buffer, sub).flatMap { _ =>
       if (buffer.nonEmpty)
-        Task.deferFuture(sub.onNext(buffer.dequeue))
+        Task.deferFuture(sub.onNext(buffer.dequeue()))
       else
         Task.now(Ack.Stop)
     }.flatMap {

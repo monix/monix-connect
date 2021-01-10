@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,9 +49,9 @@ class ListObjectsObservableSuite
   s"${ListObjectsObservable}" can "use a small limit of maximum number of objects listed" in {
     //given
     val n = 10
-    val prefix = s"test-list-all-truncated/${nonEmptyString.value()}/"
+    val prefix = s"test-list-all-truncated/${genKey.sample.get}/"
     val keys: List[String] =
-      Gen.listOfN(n, Gen.nonEmptyListOf(Gen.alphaChar).map(l => prefix + l.mkString)).sample.get
+      Gen.listOfN(n, genKey.map(str => prefix + str)).sample.get
     val contents: List[String] = Gen.listOfN(n, Gen.alphaUpperStr).sample.get
 
     s3Resource.use { s3 =>
@@ -75,10 +75,10 @@ class ListObjectsObservableSuite
   it should "return nextContinuationToken when set" in {
     //given
     val n = 120
-    val prefix = s"test-list-continuation/${nonEmptyString.value()}/"
+    val prefix = s"test-list-continuation/${genKey.sample.get}/"
     val keys: List[String] =
-      Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + nonEmptyString.value() + str)).sample.get
-    val contents: List[String] = List.fill(n)(nonEmptyString.value())
+      Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + genKey.sample.get + str)).sample.get
+    val contents: List[String] = List.fill(n)(genKey.sample.get)
     s3Resource.use { s3 =>
       Task
         .sequence(keys.zip(contents).map { case (key, content) => s3.upload(bucketName, key, content.getBytes()) })
@@ -100,10 +100,10 @@ class ListObjectsObservableSuite
   it should "list all objects" in {
     //given
     val n = 2020
-    val prefix = s"test-list-all-truncated/${nonEmptyString.value()}/"
+    val prefix = s"test-list-all-truncated/${genKey.sample.get}/"
     val keys: List[String] =
-      Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + nonEmptyString.value() + str)).sample.get
-    val contents: List[String] = List.fill(n)(nonEmptyString.value())
+      Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + genKey.sample.get + str)).sample.get
+    val contents: List[String] = List.fill(n)(genKey.sample.get)
 
     (s3Resource.use { s3 =>
       for {
@@ -119,10 +119,10 @@ class ListObjectsObservableSuite
     //given
     val n = 1600
     val limit = 1300
-    val prefix = s"test-list-limit-truncated/${nonEmptyString.value()}/"
+    val prefix = s"test-list-limit-truncated/${genKey.sample.get}/"
     val keys: List[String] =
-      Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + nonEmptyString.value() + str)).sample.get
-    val contents: List[String] = List.fill(n)(nonEmptyString.value())
+      Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + genKey.sample.get + str)).sample.get
+    val contents: List[String] = List.fill(n)(genKey.sample.get)
 
     s3Resource.use { s3 =>
       Task
@@ -137,6 +137,7 @@ class ListObjectsObservableSuite
     //then
     s3Objects.size shouldBe limit
   }
+
 
   it must "require a positive max total keys" in {
     //given/when
@@ -160,7 +161,8 @@ class ListObjectsObservableSuite
     sleep(200)
 
     //then
-    f.value.get shouldBe a[Failure[NoSuchBucketException]]
+    f.value.get.isFailure shouldBe true
+    f.value.get.failed.get shouldBe a[NoSuchBucketException]
   }
 
 }

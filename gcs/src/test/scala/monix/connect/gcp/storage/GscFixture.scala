@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@ package monix.connect.gcp.storage
 
 import com.google.cloud.storage.{Acl, BlobId, BlobInfo, Cors, StorageClass}
 import com.google.cloud.storage.Acl.{Entity, Group, Project, Role, User}
-import com.google.cloud.storage.BucketInfo.LifecycleRule.{DeleteLifecycleAction, LifecycleAction, LifecycleCondition}
+import com.google.cloud.storage.BucketInfo.LifecycleRule.{LifecycleAction, LifecycleCondition}
 import com.google.cloud.storage.BucketInfo.{IamConfiguration, LifecycleRule, Logging}
 import monix.connect.gcp.storage.configuration.{GcsBlobInfo, GcsBucketInfo}
 import org.scalacheck.Gen
@@ -30,7 +30,7 @@ import scala.concurrent.duration._
 trait GscFixture {
 
   val genBool: Gen[Boolean] = Gen.oneOf(true, false)
-  val genNonEmtyStr: Gen[String] = Gen.nonEmptyListOf(Gen.alphaChar).map(_.mkString)
+  val genNonEmtyStr: Gen[String] = Gen.identifier.sample.get
   val genAcl: Gen[Acl] = for {
     entity <- Gen
       .oneOf[Entity](User.ofAllUsers(), new Group("sample@email.com"), new Project(Project.ProjectRole.OWNERS, "id"))

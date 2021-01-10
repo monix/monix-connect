@@ -21,7 +21,7 @@ _MongoDB_ is a _document database_ which means that stores data in _JSON-like do
 
 Add the following dependency to get started:
 ```scala
-libraryDependencies += "io.monix" %% "monix-mongodb" % "0.5.0"
+libraryDependencies += "io.monix" %% "monix-mongodb" % "0.5.1"
 ```
 
 ## Database
@@ -208,7 +208,7 @@ import monix.connect.mongodb.domain.DeleteResult
 import monix.connect.mongodb.MongoOp
 
 val filter = Filters.eq("name", "Bob") 
-// it would return an empty option when for example the filter did not find any match 
+// returns an empty option when for example the filter did not find any match 
 val t: Task[DeleteResult] = MongoOp.deleteOne(col, filter)
 ```
 
@@ -234,7 +234,7 @@ import com.mongodb.client.model.Filters
 import monix.connect.mongodb.domain.DeleteResult
 import monix.connect.mongodb.MongoOp
 
-// it would delete all employees older than 65 y.o
+// delete all employees older than 65 y.o
 val t: Task[DeleteResult] = MongoOp.deleteMany(col, Filters.gt("age", 65))
 ```
 
@@ -243,7 +243,7 @@ _Sink_:
 import com.mongodb.client.model.Filters
 import monix.connect.mongodb.MongoSink
 
-// this example all employees from `Germany`, `Italy` or `Turkey` would be deleted (fired)  
+// all employees from `Germany`, `Italy` or `Turkey` would be deleted (fired)  
 Observable.from(List("Germany", "Italy", "Turkey")) // Observable[List[String]]
    .map(location => Filters.eq("location", location)) // Observable[List[Bson]]
    .consumeWith(MongoSink.deleteMany(col))
@@ -260,14 +260,14 @@ import com.mongodb.client.model.Filters
 import monix.connect.mongodb.domain.UpdateResult
 import monix.connect.mongodb.MongoOp
 
-// assuming that in the collection e
+// assuming that `Bob` exists in the collection
 val bob = Employee(name = "Bob", location = "France", age = 65)
 
 val alice = Employee(name = "Alice", location = "France", age = 43)
 val filter: Bson = Filters.eq("name", "Bob")
 
 // Bob retires and is replaced by Alice
-val t: Task[UpdateResult] = MongoOp.replaceOne(col, filter, e.copy(age = e.age + 1))
+val t: Task[UpdateResult] = MongoOp.replaceOne(col, filter, alice)
 ```
 
 _Sink_:

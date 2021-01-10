@@ -23,9 +23,8 @@ class GcsExamples extends AnyWordSpecLike with IdiomaticMockito with Matchers wi
 
   val underlying = LocalStorageHelper.getOptions.getService
   val dir = new File("gcs/tmp").toPath
-  val nonEmptyString: Gen[String] = Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "test-" + chars.mkString.take(20))
-  val genLocalPath = nonEmptyString.map(s => dir.toAbsolutePath.toString + "/" + s)
-  val testBucketName = nonEmptyString.sample.get
+  val genLocalPath = Gen.identifier.map(s => dir.toAbsolutePath.toString + "/" + s).sample.get
+  val testBucketName = Gen.identifier.sample.get
 
   override def beforeAll(): Unit = {
     FileUtils.deleteDirectory(dir.toFile)
@@ -53,7 +52,6 @@ class GcsExamples extends AnyWordSpecLike with IdiomaticMockito with Matchers wi
 
     "blob donwload" in {
       import monix.connect.gcp.storage.GcsBlob
-      import monix.eval.Task
       import monix.reactive.Observable
 
       val storage = GcsStorage.create()
@@ -144,7 +142,6 @@ class GcsExamples extends AnyWordSpecLike with IdiomaticMockito with Matchers wi
     }
 
     "blob upload" in {
-      import monix.connect.gcp.storage.GcsBlob
       import monix.eval.Task
       import monix.execution.Scheduler.Implicits.global
 

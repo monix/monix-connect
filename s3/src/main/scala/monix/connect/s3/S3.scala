@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -414,7 +414,11 @@ object S3 { self =>
     new MultipartUploadSubscriber(bucket, key, minChunkSize, uploadSettings, s3AsyncClient)
 }
 
-private[s3] trait S3 { self =>
+/**
+  * Represents the Monix S3 client which can
+  * be created using the builders from its companion object.
+  */
+trait S3 { self =>
 
   private[s3] val s3Client: S3AsyncClient
 
@@ -422,7 +426,6 @@ private[s3] trait S3 { self =>
     * Creates a bucket.
     *
     * ==Example==
-    *
     * {{{
     *   import monix.eval.Task
     *   import monix.connect.s3.S3
@@ -480,11 +483,7 @@ private[s3] trait S3 { self =>
     * Creates a copy of from an already stored object.
     *
     * ==Example==
-    *
     * {{{
-    *   import monix.eval.Task
-    *   import monix.connect.s3.S3
-    *
     *   val sourceBucket = "source-bucket"
     *   val sourceKey = "source/key.json"
     *   val targetBucket = "target-bucket"
@@ -551,8 +550,16 @@ private[s3] trait S3 { self =>
     *
     * @note Once deleted, the object can only be restored if versioning was enabled when the object was deleted.
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/DeleteObjectRequest.html
-    * @param bucket        the bucket name of the object to be deleted.
-    * @param key           the key of the object to be deleted.
+    * @param bucket the bucket name of the object to be deleted.
+    * @param key    the key of the object to be deleted.
+    * @param bypassGovernanceRetention Indicates whether S3 Object Lock should bypass Governance-mode
+    *                                  restrictions to process this operation.
+    * @param mfa    the concatenation of the authentication device's serial number, a space,
+    *               and the value that is displayed on your authentication device.
+    *               Required to permanently delete a versioned object if versioning is configured
+    *               with MFA delete enabled.
+    * @param requestPayer sets the value of the RequestPayer property for this object.
+    * @param versionId  versionId used to reference a specific version of the object.
     * @return a [[Task]] with the delete object response [[DeleteObjectResponse]] .
     */
   def deleteObject(
@@ -564,7 +571,6 @@ private[s3] trait S3 { self =>
     versionId: Option[String] = None)(implicit s3AsyncClient: S3AsyncClient): Task[DeleteObjectResponse] = {
     val request: DeleteObjectRequest =
       S3RequestBuilder.deleteObject(bucket, key, bypassGovernanceRetention, mfa, requestPayer, versionId)
-    S3RequestBuilder.deleteObject(bucket, key, bypassGovernanceRetention, mfa, requestPayer, versionId)
     deleteObject(request)
   }
 
@@ -884,9 +890,7 @@ private[s3] trait S3 { self =>
     * Uploads a new object to the specified Amazon S3 bucket.
     *
     * ==Example==
-    *
     * {{{
-    *   import monix.reactive.Observable
     *   import monix.eval.Task
     *   import cats.effect.Resource
     *
@@ -903,11 +907,9 @@ private[s3] trait S3 { self =>
     * {{{
     *   import monix.eval.Task
     *   import monix.connect.s3.S3
-    *   import software.amazon.awssdk.services.s3.model.PutObjectResponse
     *   import software.amazon.awssdk.services.s3.S3AsyncClient
     *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
     *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
-    *   import software.amazon.awssdk.services.s3.model.S3Object
     *
     *   // must be properly configured
     *   val s3AsyncClient = S3AsyncClient.builder
@@ -951,10 +953,9 @@ private[s3] trait S3 { self =>
     * Uploads an S3 object by making multiple http requests (parts) of the received chunks of bytes.
     *
     * ==Example==
-    *
     * {{{
+    *   import monix.reactive.Observable
     *   import monix.eval.Task
-    *   import monix.reactive.{Observable, Consumer}
     *   import cats.effect.Resource
     *
     *   val s3Resource: Resource[Task, S3] = S3.fromConfig
@@ -968,13 +969,10 @@ private[s3] trait S3 { self =>
     * }}}
     *
     * ==Unsafe Example==
-    *
     * {{{
-    *   import monix.eval.Task
-    *   import monix.reactive.{Observable, Consumer}
+    *   import monix.reactive.Observable
     *   import monix.connect.s3.S3
     *   import software.amazon.awssdk.services.s3.S3AsyncClient
-    *   import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadResponse
     *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
     *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
     *
