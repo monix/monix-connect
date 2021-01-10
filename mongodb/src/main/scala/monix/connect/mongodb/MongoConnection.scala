@@ -361,7 +361,7 @@ object MongoConnection {
     * {{{
     *   import com.mongodb.client.model.{Filters, Updates}
     *   import monix.eval.Task
-    *   import monix.connect.mongodb.domain.{Collection, MongoConnector}
+    *   import monix.connect.mongodb.domain.{MongoCollection, MongoConnector}
     *   import monix.connect.mongodb.MongoConnection
     *   import monix.connect.mongodb.domain.{MongoConnector, UpdateResult}
     *   import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
