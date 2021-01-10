@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,7 @@ import monix.execution.internal.InternalApi
 
 package object domain {
 
-  // default options
+  //default option instances
   @InternalApi private[mongodb] val DefaultDeleteOptions = new DeleteOptions()
   @InternalApi private[mongodb] val DefaultCountOptions = new CountOptions()
   @InternalApi private[mongodb] val DefaultFindOneAndDeleteOptions = new FindOneAndDeleteOptions()
@@ -43,16 +43,7 @@ package object domain {
   @InternalApi private[mongodb] val DefaultUpdateOptions = new UpdateOptions()
   @InternalApi private[mongodb] val DefaultReplaceOptions = new ReplaceOptions()
 
-  // results
-  @InternalApi private[mongodb] case class DeleteResult(deleteCount: Long, wasAcknowledged: Boolean)
-  @InternalApi private[mongodb] case class InsertOneResult(insertedId: Option[String], wasAcknowledged: Boolean)
-  @InternalApi private[mongodb] case class InsertManyResult(insertedIds: Set[String], wasAcknowledged: Boolean)
-  @InternalApi private[mongodb] case class UpdateResult(
-    matchedCount: Long,
-    modifiedCount: Long,
-    wasAcknowledged: Boolean)
-
-  // default results
+  //default result instances
   @InternalApi private[mongodb] val DefaultDeleteResult = DeleteResult(deleteCount = 0L, wasAcknowledged = false)
   @InternalApi private[mongodb] val DefaultInsertOneResult =
     InsertOneResult(insertedId = Option.empty[String], wasAcknowledged = false)
@@ -60,4 +51,16 @@ package object domain {
     InsertManyResult(insertedIds = Set.empty[String], wasAcknowledged = false)
   @InternalApi private[mongodb] val DefaultUpdateResult =
     UpdateResult(matchedCount = 0L, modifiedCount = 0L, wasAcknowledged = false)
+
+  //default strategy instance
+  final val DefaultRetryStrategy = RetryStrategy()
+
+  type Tuple2F[T[_], A, B] = (T[A], T[B])
+  type Tuple3F[T[_], A, B, C] = (T[A], T[B], T[C])
+  type Tuple4F[T[_], A, B, C, D] = (T[A], T[B], T[C], T[D])
+  type Tuple5F[T[_], A, B, C, D, E] = (T[A], T[B], T[C], T[D], T[E])
+  type Tuple6F[T[_], A, B, C, D, E, F] = (T[A], T[B], T[C], T[D], T[E], T[F])
+  type Tuple7F[T[_], A, B, C, D, E, F, G] = (T[A], T[B], T[C], T[D], T[E], T[F], T[G])
+  type Tuple8F[T[_], A, B, C, D, E, F, G, H] = (T[A], T[B], T[C], T[D], T[E], T[F], T[G], T[H])
+
 }

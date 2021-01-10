@@ -152,10 +152,14 @@ const index = `
              image: `${baseUrl}img/redis.png`,
              imageAlign: 'left'
             },
-              {
-              image: `${baseUrl}img/akka.png`,
-              imageAlign: 'right'
-              }
+            {
+            image: `${baseUrl}img/elasticsearch.png`,
+            imageAlign: 'right'
+            },
+            {
+            image: `${baseUrl}img/akka.png`,
+            imageAlign: 'right'
+            }
             ]}
           </Block>
         );

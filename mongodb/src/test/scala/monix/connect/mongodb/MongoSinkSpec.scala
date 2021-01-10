@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,7 @@ import monix.eval.Task
 import monix.execution.exceptions.DummyException
 import monix.execution.schedulers.TestScheduler
 import monix.reactive.Observable
-import monix.connect.mongodb.domain.DefaultInsertOneOptions
+import monix.connect.mongodb.domain.{DefaultInsertOneOptions, RetryStrategy}
 import org.mockito.IdiomaticMockito
 import org.mockito.MockitoSugar.{times, verify, when}
 import org.scalatest.BeforeAndAfterEach
@@ -46,50 +46,48 @@ class MongoSinkSpec
     super.beforeEach()
   }
 
-  s"${MongoSink}" should "retry when the underlying publisher signaled error or timeout" in {
+  s"$MongoSink" should "retry when the underlying publisher signaled error or timeout" in {
     //given
+    val retryStrategy @ RetryStrategy(retries, _) = RetryStrategy(3, 200.millis)
     val s = TestScheduler()
     val e1 = genEmployee.sample.get
     val e2 = genEmployee.sample.get
     val objectId = BsonObjectId.apply()
-    val insertOneResult = MongoInsertOneResult.acknowledged(objectId)
-    val delayedPub = Task(insertOneResult).delayResult(500.millis).toReactivePublisher(s)
-    val emptyPub = Observable.empty[MongoInsertOneResult].toReactivePublisher(s)
     val failedPub = Task.raiseError[MongoInsertOneResult](DummyException("Insert one failed")).toReactivePublisher(s)
     val successPub = Task(MongoInsertOneResult.unacknowledged()).toReactivePublisher(s)
-    when(col.insertOne(e1, DefaultInsertOneOptions)).thenReturn(delayedPub, emptyPub, failedPub, successPub)
-    when(col.insertOne(e2, DefaultInsertOneOptions)).thenReturn(failedPub, successPub)
 
     //when
-    val sink = MongoSink.insertOne(col, DefaultInsertOneOptions, 3, Some(200.millis))
+    when(col.insertOne(e1, DefaultInsertOneOptions)).thenReturn(failedPub, failedPub, failedPub, successPub)
+    when(col.insertOne(e2, DefaultInsertOneOptions)).thenReturn(failedPub, successPub)
+
+    //and
+    val sink = MongoSink.insertOne(col, DefaultInsertOneOptions, retryStrategy)
     val f = Observable.from(List(e1, e2)).consumeWith(sink).runToFuture(s)
 
     //then
     s.tick(1.second)
     f.value.get shouldBe util.Success(())
-    verify(col, times(4)).insertOne(e1, DefaultInsertOneOptions)
+    verify(col, times(retries + 1)).insertOne(e1, DefaultInsertOneOptions)
     verify(col, times(2)).insertOne(e2, DefaultInsertOneOptions)
   }
 
   it should "signals on error when the failures exceeded the number of retries" in {
     //given
+    val retryStrategy @ RetryStrategy(retries, _) = RetryStrategy(3, 200.millis)
     val s = TestScheduler()
     val e1 = genEmployee.sample.get
     val ex = DummyException("Insert one failed")
-    val delayedPub = Task(MongoInsertOneResult.unacknowledged()).delayResult(500.millis).toReactivePublisher(s)
-    val emptyPub = Observable.empty[MongoInsertOneResult].toReactivePublisher(s)
     val failedPub = Task.raiseError[MongoInsertOneResult](DummyException("Insert one failed")).toReactivePublisher(s)
-    when(col.insertOne(e1, DefaultInsertOneOptions)).thenReturn(delayedPub, emptyPub, failedPub)
+    when(col.insertOne(e1, DefaultInsertOneOptions)).thenReturn(failedPub, failedPub, failedPub)
 
     //when
-
-    val sink = MongoSink.insertOne(col, DefaultInsertOneOptions, 3, Some(200.millis))
+    val sink = MongoSink.insertOne(col, DefaultInsertOneOptions, retryStrategy)
     val f = Observable.now(e1).consumeWith(sink).runToFuture(s)
 
     //then
     s.tick(1.second)
     f.value.get shouldBe util.Failure(ex)
-    verify(col, times(4)).insertOne(e1, DefaultInsertOneOptions)
+    verify(col, times(retries + 1)).insertOne(e1, DefaultInsertOneOptions)
   }
 
 }

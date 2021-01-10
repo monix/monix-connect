@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,7 @@ import io.lettuce.core.{KeyValue, MapScanCursor, ScanCursor}
 import monix.eval.Task
 import monix.reactive.Observable
 
-import collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 private[redis] trait RedisHash {
 
@@ -45,9 +45,12 @@ private[redis] trait RedisHash {
   /**
     * Get the value of a hash field.
     * @return The value associated with field, or null when field is not present in the hash or key does not exist.
+    *         A failed task with [[NoSuchElementException]] will be returned when the underlying api
+    *         returns an empty publisher. i.e: when the key did not exist.
     */
-  def hget[K, V](key: K, field: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Option[V]] =
-    Task.fromReactivePublisher(connection.reactive().hget(key, field))
+  def hget[K, V](key: K, field: K)(implicit connection: StatefulRedisConnection[K, V]): Task[V] = {
+    Task.from(connection.reactive().hget(key, field))
+  }
 
   /**
     * Increment the integer value of a hash field by the given number.

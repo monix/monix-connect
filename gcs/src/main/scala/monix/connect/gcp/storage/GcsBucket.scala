@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,8 +30,7 @@ import monix.eval.Task
 import monix.execution.annotations.Unsafe
 import monix.reactive.Observable
 
-import scala.collection.JavaConverters._
-import scala.util.control.NonFatal
+import scala.jdk.CollectionConverters._
 
 /**
   * This class wraps the [[com.google.cloud.storage.Bucket]] class, providing an idiomatic scala API
@@ -81,7 +80,7 @@ class GcsBucket private (underlying: Bucket) extends GcsDownloader with FileIO w
     * {{{
     *   import java.io.File
     *
-    *   import monix.connect.gcp.storage.{GcsStorage, GcsBucket}
+    *   import monix.connect.gcp.storage.GcsStorage
     *   import monix.eval.Task
     *
     *   val storage = GcsStorage.create()
@@ -114,7 +113,7 @@ class GcsBucket private (underlying: Bucket) extends GcsDownloader with FileIO w
     *
     * {{{
     *   import monix.execution.Scheduler.Implicits.global
-    *   import monix.connect.gcp.storage.{GcsStorage, GcsBucket}
+    *   import monix.connect.gcp.storage.GcsStorage
     *   import monix.connect.gcp.storage.configuration.GcsBucketInfo
     *   import monix.eval.Task
     *   import monix.reactive.Observable
@@ -150,7 +149,7 @@ class GcsBucket private (underlying: Bucket) extends GcsDownloader with FileIO w
     *   import java.io.File
     *
     *   import monix.execution.Scheduler.Implicits.global
-    *   import monix.connect.gcp.storage.{GcsStorage, GcsBucket}
+    *   import monix.connect.gcp.storage.GcsStorage
     *   import monix.connect.gcp.storage.configuration.GcsBucketInfo
     *   import monix.eval.Task
     *

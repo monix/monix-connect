@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,10 +29,10 @@ class MongoDbSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
   override def beforeEach() = {
     super.beforeEach()
     MongoDb.dropDatabase(db).runSyncUnsafe()
-    MongoDb.dropCollection(db, collectionName).runSyncUnsafe()
+    MongoDb.dropCollection(db, employeesColName).runSyncUnsafe()
   }
 
-  s"${MongoDb}" should "list database names" in {
+  s"$MongoDb" should "list database names" in {
     //given
     val dbNames = Gen.listOfN(5, genNonEmptyStr).sample.get
     val existedBefore = MongoDb.listDatabases(client).filter(dbNames.contains(_)).toListL.runSyncUnsafe().nonEmpty
@@ -73,7 +73,7 @@ class MongoDbSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     val r = MongoDb.dropDatabase(db).runSyncUnsafe()
 
     //then
-    val exists = MongoDb.existsCollection(db, collectionName).runSyncUnsafe()
+    val exists = MongoDb.existsCollection(db, employeesColName).runSyncUnsafe()
     r shouldBe a[Unit]
     existedBefore shouldBe true
     exists shouldBe false
@@ -91,7 +91,7 @@ class MongoDbSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     val r = MongoDb.dropCollection(db, collection).runSyncUnsafe()
 
     //then
-    val exists = MongoDb.existsCollection(db, collectionName).runSyncUnsafe()
+    val exists = MongoDb.existsCollection(db, employeesColName).runSyncUnsafe()
     r shouldBe a[Unit]
     existedBefore shouldBe true
     exists shouldBe false
@@ -138,7 +138,7 @@ class MongoDbSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
 
   it should "list collections" in {
     //given
-    val collectionNames: Seq[String] = Gen.listOfN(10, Gen.alphaLowerStr).map(_.map("test-" + _.take(5))).sample.get
+    val collectionNames: Seq[String] = Gen.listOfN(10, Gen.identifier.map("test-" + _.take(20))).sample.get
     Task.sequence(collectionNames.map(MongoDb.createCollection(db, _))).runSyncUnsafe()
 
     //when

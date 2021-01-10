@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,14 +18,16 @@
 package monix.connect
 
 import monix.eval.{Task, TaskLike}
-import monix.reactive.Observable
 import reactor.core.publisher.Mono
 
 package object redis {
 
   private[redis] implicit val fromMono: TaskLike[Mono] = new TaskLike[Mono] {
     def apply[A](m: Mono[A]): Task[A] =
-      Observable.fromReactivePublisher(m).headL
+      Task.fromReactivePublisher(m).flatMap { op =>
+        if (op.nonEmpty) Task.now(op.get)
+        else Task.raiseError(new NoSuchElementException("The result from the executed redis operation was empty."))
+      }
   }
 
 }

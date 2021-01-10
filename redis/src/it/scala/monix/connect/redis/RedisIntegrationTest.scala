@@ -1,30 +1,22 @@
 package monix.connect.redis
 
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
-import org.scalatest.matchers.should.Matchers
-import io.lettuce.core.{RedisClient, ScoredValue}
-import io.lettuce.core.api.StatefulRedisConnection
+import io.lettuce.core.ScoredValue
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
 import org.scalacheck.Gen
+import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class RedisIntegrationTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach with BeforeAndAfterAll {
+class RedisIntegrationTest extends AnyFlatSpec
+  with RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll with Eventually {
 
-  val redisUrl = "redis://localhost:6379"
-  type K = String
-  type V = Int
-  val genRedisKey: Gen[K] = Gen.alphaStr
-  val genRedisValue: Gen[V] = Gen.choose(0, 10000)
-  val genRedisValues: Gen[List[V]] = for {
-    n      <- Gen.chooseNum(2, 10)
-    values <- Gen.listOfN(n, Gen.choose(0, 10000))
-  } yield values
-
-  implicit val connection: StatefulRedisConnection[String, String] = RedisClient.create(redisUrl).connect()
+  override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
 
   s"${RedisHash}" should "access non existing key in redis and get None" in {
     //given
@@ -32,11 +24,13 @@ class RedisIntegrationTest extends AnyFlatSpec with Matchers with BeforeAndAfter
     val field: K = genRedisKey.sample.get
 
     //when
-    val t: Task[Option[String]] = RedisHash.hget(key, field)
+    val f: Future[String] = RedisHash.hget(key, field).runToFuture(global)
 
     //then
-    val r: Option[String] = t.runSyncUnsafe()
-    r shouldBe None
+    eventually {
+      f.value.get.isFailure shouldBe true
+      f.value.get.failed.get shouldBe a[NoSuchElementException]
+    }
   }
 
   s"${RedisString} " should "insert a string into the given key and get its size from redis" in {
@@ -83,11 +77,11 @@ class RedisIntegrationTest extends AnyFlatSpec with Matchers with BeforeAndAfter
     RedisHash.hset(key, field, value).runSyncUnsafe()
 
     //and
-    val t: Task[Option[String]] = RedisHash.hget(key, field)
+    val t: Task[String] = RedisHash.hget(key, field)
 
     //then
-    val r: Option[String] = t.runSyncUnsafe()
-    r shouldBe Some(value)
+    val r: String = t.runSyncUnsafe()
+    r shouldBe value
   }
 
   s"${RedisKey}" should "handles ttl correctly" in {

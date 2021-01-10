@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,9 @@
 package monix.connect.s3.domain
 
 import software.amazon.awssdk.services.s3.model.{ObjectCannedACL, RequestPayer}
+
+import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 
 /**
   * @param grantFullControl        Gives the grantee READ, READ_ACP, and WRITE_ACP permissions on the object.
@@ -45,4 +48,5 @@ case class UploadSettings(
   sseCustomerKeyMD5: Option[String] = None,
   ssekmsEncryptionContext: Option[String] = None,
   ssekmsKeyId: Option[String] = None,
-  requestPayer: Option[RequestPayer] = None)
+  requestPayer: Option[RequestPayer] = None,
+  lastUploadTimeout: FiniteDuration = 1.minute)

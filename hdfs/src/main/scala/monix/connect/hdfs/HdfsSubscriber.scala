@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,12 +47,8 @@ private[hdfs] class HdfsSubscriber(
   bufferSize: Int = 4096,
   replication: Short = 3,
   blockSize: Int = 134217728,
-  appendEnabled: Boolean = false,
-  lineSeparator: Option[String])
+  appendEnabled: Boolean = false)
   extends Consumer.Sync[Array[Byte], Long] {
-
-  private val maybeLineBreak: Array[Byte] =
-    if (lineSeparator.isDefined) lineSeparator.get.getBytes() else Array.emptyByteArray
 
   def createSubscriber(
     callback: Callback[Throwable, Long],
@@ -66,10 +62,9 @@ private[hdfs] class HdfsSubscriber(
       private[this] var offset: Long = 0
 
       def onNext(chunk: Array[Byte]): Ack = {
-        val chunkWithSeparator: Array[Byte] = chunk ++ maybeLineBreak
-        val len: Int = chunkWithSeparator.size
+        val len: Int = chunk.size
         try {
-          out.write(chunkWithSeparator)
+          out.write(chunk)
         } catch {
           case NonFatal(e) =>
             callback.onError(e)
@@ -108,13 +103,10 @@ private[hdfs] class HdfsSubscriber(
 
     }
 
-    (sub, AssignableCancelable.single)
+    (sub, AssignableCancelable.single())
   }
 
-  /**
-    * A builder for creating an instance of [[FSDataOutputStream]] that
-    * @return
-    */
+  /** A builder for creating an instance of [[FSDataOutputStream]]. */
   protected def createOrAppendFS(
     fs: FileSystem,
     path: Path,

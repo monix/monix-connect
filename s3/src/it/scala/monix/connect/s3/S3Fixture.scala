@@ -4,7 +4,7 @@ import java.io.{File, FileInputStream}
 import java.net.URI
 import java.time.Duration
 
-import monix.eval.{Coeval, Task}
+import monix.eval.Task
 import monix.execution.Scheduler
 import monix.reactive.Observable
 import org.scalacheck.Gen
@@ -14,12 +14,13 @@ import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
+import software.amazon.awssdk.regions.Region
 
 trait S3Fixture {
   this: TestSuite =>
 
-  val nonEmptyString = Coeval("test" + Gen.nonEmptyListOf(Gen.alphaLowerChar).sample.get.mkString.take(50))
-
+  val genBucketName = Gen.identifier.map("test-"+ _.take(15).toLowerCase) //buckets have to be in a range of 3-63 chars long
+  val genKey = Gen.identifier.map("test-"+ _.take(10).toLowerCase) //buckets have to be in a range of 3-63 chars long
   val resourceFile = (fileName: String) => s"s3/src/it/resources/${fileName}"
 
   val minioEndPoint: String = "http://localhost:9000"
@@ -35,13 +36,16 @@ trait S3Fixture {
     .build();
 
   val basicAWSCredentials = AwsBasicCredentials.create(s3AccessKey, s3SecretKey)
+  val staticCredProvider = StaticCredentialsProvider.create(basicAWSCredentials)
   implicit val s3AsyncClient: S3AsyncClient = S3AsyncClient
     .builder()
     .httpClient(httpClient)
-    .credentialsProvider(StaticCredentialsProvider.create(basicAWSCredentials))
+    .credentialsProvider(staticCredProvider)
     .region(AWS_GLOBAL)
     .endpointOverride(URI.create(minioEndPoint))
     .build
+
+  protected val s3Resource = S3.create(staticCredProvider, Region.AWS_GLOBAL, Some(minioEndPoint), Some(httpClient))
 
   def getRequest(bucket: String, key: String): GetObjectRequest =
     GetObjectRequest.builder().bucket(bucket).key(key).build()

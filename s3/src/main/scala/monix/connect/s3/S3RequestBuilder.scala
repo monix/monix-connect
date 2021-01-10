@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,34 +19,11 @@ package monix.connect.s3
 
 import java.time.Instant
 
-import monix.connect.s3.domain.{
-  CopyObjectSettings,
-  DefaultDownloadSettings,
-  DefaultUploadSettings,
-  DownloadSettings,
-  UploadSettings
-}
+import monix.connect.s3.domain._
 import monix.execution.internal.InternalApi
-import software.amazon.awssdk.services.s3.model.{
-  BucketCannedACL,
-  CompleteMultipartUploadRequest,
-  CompletedMultipartUpload,
-  CompletedPart,
-  CopyObjectRequest,
-  CreateBucketRequest,
-  CreateMultipartUploadRequest,
-  DeleteBucketRequest,
-  DeleteObjectRequest,
-  GetObjectRequest,
-  HeadObjectRequest,
-  ListObjectsV2Request,
-  PutObjectRequest,
-  RequestPayer,
-  UploadPartRequest,
-  UploadPartResponse
-}
+import software.amazon.awssdk.services.s3.model._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
   * A class that provides converter methods that given the required set of parameters for that

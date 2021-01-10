@@ -1,22 +1,18 @@
 package monix.connect.dynamodb
 
-import java.lang.Thread.sleep
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model._
 
-import scala.collection.JavaConverters._
-import scala.compat.java8.FutureConverters._
+import scala.jdk.CollectionConverters._
 
+@deprecated("0.5.0")
 class DynamoDbOpSuite
   extends AnyWordSpecLike with Matchers with DynamoDbFixture with BeforeAndAfterAll {
-
-  implicit val client: DynamoDbAsyncClient = DynamoDbClient()
 
   s"${DynamoDbOp} exposes a create method" that {
 
@@ -24,25 +20,24 @@ class DynamoDbOpSuite
 
     "defines the execution of any DynamoDb request" in {
       //given
-      val city = Gen.nonEmptyListOf(Gen.alphaChar).sample.get.mkString
-      val citizenId = genCitizenId.sample.get
-      val debt = Gen.choose(0, 10000).sample.get
-      val request: PutItemRequest = putItemRequest(tableName, city, citizenId, debt)
+      val city = Gen.identifier.sample.get
+      val citizenId = Gen.identifier.sample.get
+      val age = Gen.choose(0, 10000).sample.get
+      val request: PutItemRequest = putItemRequest(tableName, city, citizenId, age)
 
       //when
       val t: Task[PutItemResponse] = DynamoDbOp.create(request)
 
       //then
       t.runSyncUnsafe() shouldBe a[PutItemResponse]
-      val getResponse: GetItemResponse = Task.from(toScala(client.getItem(getItemRequest(tableName, city, citizenId)))).runSyncUnsafe()
-      getResponse.item().values().asScala.head.n().toDouble shouldBe debt
+      val getResponse: GetItemResponse = Task.from(client.getItem(getItemRequest(tableName, city, citizenId))).runSyncUnsafe()
+      getResponse.item().values().asScala.head.n().toDouble shouldBe age
     }
 
   }
 
   override def beforeAll(): Unit = {
-    createTable(tableName)
-    sleep(3000)
+    createTable(tableName).runSyncUnsafe()
     super.beforeAll()
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,8 +17,7 @@
 
 package monix.connect.dynamodb
 
-import java.lang.Thread.sleep
-
+import monix.connect.dynamodb.domain.RetryStrategy
 import monix.eval.Task
 import monix.execution.exceptions.DummyException
 import monix.execution.schedulers.TestScheduler
@@ -38,13 +37,13 @@ class DynamoDbOpSpec extends AnyWordSpecLike with Matchers with IdiomaticMockito
 
   implicit val s = TestScheduler()
 
-  s"${DynamoDbOp}" should {
+  s"$DynamoDbOp" should {
 
     "create the description of the operation's execution as a recursive function" that {
 
-      val retries = 3
       val req = mock[DynamoDbRequest]
       val resp = mock[DynamoDbResponse]
+      val retryStrategy = RetryStrategy(retries = 3)
 
       "retries on failure as many times as configured" in {
         //given
@@ -56,10 +55,10 @@ class DynamoDbOpSpec extends AnyWordSpecLike with Matchers with IdiomaticMockito
           .thenReturn(Task.raiseError(ex), Task.raiseError(ex), Task.raiseError(ex), Task(resp))
 
         //when
-        val f = DynamoDbOp.create(req, retries, None)(op, client).runToFuture
+        val f = DynamoDb.createUnsafe(client).single(req, retryStrategy)(op).runToFuture
 
         //then
-        verify(op, times(retries + 1)).apply(req)
+        verify(op, times(retryStrategy.retries + 1)).apply(req)
         f.value shouldBe Some(Success(resp))
       }
 
@@ -73,10 +72,10 @@ class DynamoDbOpSpec extends AnyWordSpecLike with Matchers with IdiomaticMockito
           .thenReturn(Task.raiseError(ex), Task.raiseError(ex), Task.raiseError(ex), Task.raiseError(lastEx))
 
         //when
-        val f = DynamoDbOp.create(req, retries, None)(op, client).runToFuture
+        val f = DynamoDb.createUnsafe(client).single(req, retryStrategy)(op).runToFuture
 
         //then
-        verify(op, times(retries + 1)).apply(req)
+        verify(op, times(retryStrategy.retries + 1)).apply(req)
         f.value shouldBe Some(Failure(lastEx))
       }
 
@@ -89,7 +88,7 @@ class DynamoDbOpSpec extends AnyWordSpecLike with Matchers with IdiomaticMockito
           .thenReturn(Task.raiseError(ex), Task(resp))
 
         //when
-        val f = DynamoDbOp.create(req, retries, Some(delay))(op, client).runToFuture(s)
+        val f = DynamoDb.createUnsafe(client).single(req, retryStrategy.copy(backoffDelay = delay))(op).runToFuture(s)
 
         //then
         s.tick(1.second)
@@ -110,7 +109,7 @@ class DynamoDbOpSpec extends AnyWordSpecLike with Matchers with IdiomaticMockito
           .thenReturn(Task.raiseError(ex), Task.raiseError(ex), Task.raiseError(ex), Task(resp))
 
         //when
-        val f = DynamoDbOp.create(req, retries, Some(delay))(op, client).runToFuture(s)
+        val f = DynamoDb.createUnsafe(client).single(req, retryStrategy.copy(backoffDelay = delay))(op).runToFuture(s)
 
         //then
         s.tick(1.second)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +37,6 @@ trait ParquetBenchFixture {
     "{\"type\":\"record\",\"name\":\"Person\",\"fields\":[{\"name\":\"id\",\"type\":\"int\"},{\"name\":\"name\",\"type\":\"string\"}]}")
 
   val folder: String = "./data/parquet"
-  val genNonEmptyString = Gen.nonEmptyListOf(Gen.alphaChar).map(_.mkString)
   val genFilePath = Coeval(folder + "/" + UUID.randomUUID() + ".parquet")
 
   val conf = new Configuration()

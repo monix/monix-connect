@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,12 +19,12 @@ package monix.connect.mongodb
 
 import com.mongodb.client.result.{InsertOneResult => MongoInsertOneResult}
 import com.mongodb.reactivestreams.client.MongoCollection
-import monix.eval.{Coeval, Task}
+import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.execution.exceptions.DummyException
 import monix.execution.schedulers.TestScheduler
-import monix.reactive.Observable
-import monix.connect.mongodb.domain.InsertOneResult
+import monix.connect.mongodb.internal.retryOnFailure
+import monix.connect.mongodb.domain.{InsertOneResult, RetryStrategy}
 import org.mockito.IdiomaticMockito
 import org.mockito.MockitoSugar.{times, verify, when}
 import org.mongodb.scala.bson.BsonObjectId
@@ -39,221 +39,89 @@ class ObjectPackageSpec
   extends AnyFlatSpecLike with TestFixture with ScalaFutures with Matchers with BeforeAndAfterEach
   with IdiomaticMockito {
 
-  implicit val col: MongoCollection[Employee] = mock[MongoCollection[Employee]]
-  implicit val defaultConfig: PatienceConfig = PatienceConfig(5.seconds, 300.milliseconds)
+  private[this] implicit val col: MongoCollection[Employee] = mock[MongoCollection[Employee]]
+  private[this] implicit val defaultConfig: PatienceConfig = PatienceConfig(5.seconds, 300.milliseconds)
+  private[this] val objectId = BsonObjectId.apply()
 
   override def beforeEach() = {
     reset(col)
     super.beforeEach()
   }
 
-  "retryOnFailure" should "accept a Coeval with a function that expects A and return reactivestreams publishers" in {
+  "new retryOnFailure" should "expect a non-strict function from `A` to `Publisher`" in {
     //given
-    val e = genEmployee.sample.get
-    val objectId = BsonObjectId.apply()
+    val retryStrategy = RetryStrategy(1, 100.millis)
+    val employee = genEmployee.sample.get
     val publisher = Task(MongoInsertOneResult.acknowledged(objectId)).toReactivePublisher(global)
-    when(col.insertOne(e)).thenReturn(publisher)
+    when(col.insertOne(employee)).thenReturn(publisher)
 
     //when
-    val t = retryOnFailure[InsertOneResult](
-      Coeval(MongoOp.insertOne(col, e).toReactivePublisher(global)),
-      retries = 1,
-      timeout = None,
-      delayAfterFailure = None)
+    val t = retryOnFailure(MongoSingle.insertOne(col, employee).toReactivePublisher(global), retryStrategy)
 
     //then
     t.runSyncUnsafe() shouldBe Some(InsertOneResult(Some(objectId.getValue.toString), true))
   }
 
-  it should "recover from empty publisher as many times as passed" in {
-    //given
-    val s = TestScheduler()
-    val attempts = 2
-    val e = genEmployee.sample.get
-    val emptyPub = Observable.empty[MongoInsertOneResult].toReactivePublisher(s)
-    val objectId = BsonObjectId.apply()
-    val insertOneResult = MongoInsertOneResult.acknowledged(objectId)
-    val successPub = Task(insertOneResult).toReactivePublisher(s)
-    when(col.insertOne(e)).thenReturn(emptyPub, emptyPub, successPub)
-
-    //when
-    val f =
-      retryOnFailure[MongoInsertOneResult](Coeval(col.insertOne(e)), attempts, timeout = None, delayAfterFailure = None)
-        .runToFuture(s)
-    /**
-      * in this case we couldn't perform the test with MongoOp since it already handles empty publishers
-      * so in that case it would not retry.
-      */
-
-    //then
-    s.tick(1.second)
-    f.value.get shouldBe util.Success(Some(insertOneResult))
-    verify(col, times(attempts + 1)).insertOne(e)
-  }
-
   it should "recover from failures as many times as indicated" in {
     //given
+    val retryStrategy = RetryStrategy(2, 100.millis)
     val s = TestScheduler()
-    val attempts = 2
-    val e = genEmployee.sample.get
+    val employee = genEmployee.sample.get
     val ex = DummyException("Kaboom!")
     val failedPub = Task.raiseError[MongoInsertOneResult](ex).toReactivePublisher(s)
-    val objectId = BsonObjectId.apply()
     val insertOneResult = MongoInsertOneResult.acknowledged(objectId)
     val successPub = Task(insertOneResult).toReactivePublisher(s)
-    when(col.insertOne(e)).thenReturn(failedPub, failedPub, successPub)
 
     //when
-    val f = retryOnFailure[InsertOneResult](
-      Coeval(MongoOp.insertOne(col, e).toReactivePublisher(s)),
-      attempts,
-      timeout = None,
-      delayAfterFailure = None).runToFuture(s)
+    when(col.insertOne(employee)).thenReturn(failedPub, failedPub, successPub)
+
+    //and
+    val f = retryOnFailure(MongoSingle.insertOne(col, employee).toReactivePublisher(s), retryStrategy).runToFuture(s)
 
     //then
     s.tick(1.second)
     f.value.get shouldBe util.Success(Some(InsertOneResult(Some(objectId.getValue.toString), true)))
-    verify(col, times(attempts + 1)).insertOne(e)
+    verify(col, times(retryStrategy.attempts + 1)).insertOne(employee)
   }
 
-  it should "recover from either an empty publisher or a failed one" in {
+  it should "recovers from a failure" in {
     //given
+    val retryStrategy = RetryStrategy(1, 100.millis)
     val s = TestScheduler()
-    val attempts = 2
-    val e = genEmployee.sample.get
+    val employee = genEmployee.sample.get
     val ex = DummyException("Kaboom!")
-    val emptyPub = Observable.empty[MongoInsertOneResult].toReactivePublisher(s)
     val failedPub = Task.raiseError[MongoInsertOneResult](ex).toReactivePublisher(s)
-    val objectId = BsonObjectId.apply()
     val insertOneResult = MongoInsertOneResult.acknowledged(objectId)
     val successPub = Task(insertOneResult).toReactivePublisher(s)
-    when(col.insertOne(e)).thenReturn(emptyPub, failedPub, successPub)
+    when(col.insertOne(employee)).thenReturn(failedPub, successPub)
 
     //when
-    val f =
-      retryOnFailure[MongoInsertOneResult](Coeval(col.insertOne(e)), attempts, timeout = None, delayAfterFailure = None)
-        .runToFuture(s)
+    val f = retryOnFailure(col.insertOne(employee), retryStrategy)
+      .runToFuture(s)
 
     //then
     s.tick(1.second)
     f.value.get shouldBe util.Success(Some(insertOneResult))
-    verify(col, times(attempts + 1)).insertOne(e)
+    verify(col, times(retryStrategy.attempts + 1)).insertOne(employee)
   }
 
-  it should "fail when the failures exceeded the number of retries" in {
+  it should "fail when the failures exceeds the number of retries" in {
     //given
+    val retryStrategy = RetryStrategy(3, 100.millis)
     val s = TestScheduler()
-    val attempts = 3
-    val e = genEmployee.sample.get
+    val employee = genEmployee.sample.get
     val ex = DummyException("Kaboom!")
     val failedPub = Task.raiseError[MongoInsertOneResult](ex).toReactivePublisher(s)
-    when(col.insertOne(e)).thenReturn(failedPub)
+    when(col.insertOne(employee)).thenReturn(failedPub)
 
     //when
-    val f =
-      retryOnFailure[MongoInsertOneResult](Coeval(col.insertOne(e)), attempts, timeout = None, delayAfterFailure = None)
-        .runToFuture(s)
-
-    //then
-    s.tick(1.second)
-    f.value.get.isFailure shouldBe true
-    verify(col, times(attempts + 1)).insertOne(e)
-  }
-
-  it should "fail when empty operations exceeded the number of retries" in {
-    //given
-    val s = TestScheduler()
-    val attempts = 3
-    val e = genEmployee.sample.get
-    val ex = DummyException("Kaboom!")
-    val emptyPub = Observable.empty[MongoInsertOneResult].toReactivePublisher(s)
-    val failedPub = Task.raiseError[MongoInsertOneResult](ex).toReactivePublisher(s)
-    when(col.insertOne(e)).thenReturn(emptyPub, emptyPub)
-
-    //when
-    val f =
-      retryOnFailure[MongoInsertOneResult](Coeval(col.insertOne(e)), attempts, timeout = None, delayAfterFailure = None)
-        .runToFuture(s)
-
-    //then
-    s.tick(1.second)
-    f.value.get shouldBe util.Success(None)
-    verify(col, times(attempts + 1)).insertOne(e)
-  }
-
-  it should "fail when the failures and empty operations exceeded the number of retries" in {
-    //given
-    val s = TestScheduler()
-    val attempts = 5
-    val e = genEmployee.sample.get
-    val ex = DummyException("Kaboom!")
-    val emptyPub = Observable.empty[MongoInsertOneResult].toReactivePublisher(s)
-    val failedPub = Task.raiseError[MongoInsertOneResult](ex).toReactivePublisher(s)
-    when(col.insertOne(e)).thenReturn(emptyPub, failedPub)
-
-    //when
-    val f =
-      retryOnFailure[MongoInsertOneResult](Coeval(col.insertOne(e)), attempts, timeout = None, delayAfterFailure = None)
-        .runToFuture(s)
-
-    //then
-    s.tick(1.second)
-    f.value.get.isFailure shouldBe true
-    verify(col, times(attempts + 1)).insertOne(e)
-  }
-
-  it should "fail when the operation exceeded the specified timeout" in {
-    //given
-    val s = TestScheduler()
-    val e = genEmployee.sample.get
-    val objectId = BsonObjectId.apply()
-    val insertOneResult = MongoInsertOneResult.acknowledged(objectId)
-    val pub = Task(insertOneResult).delayResult(150.milliseconds).toReactivePublisher(s)
-    when(col.insertOne(e)).thenReturn(pub)
-
-    //when
-    val f = retryOnFailure[InsertOneResult](
-      Coeval(
-        MongoOp
-          .insertOne(col, e)
-          .toReactivePublisher(s)),
-      0,
-      timeout = Some(50.milliseconds),
-      delayAfterFailure = None)
+    val f = retryOnFailure(col.insertOne(employee), retryStrategy)
       .runToFuture(s)
 
     //then
     s.tick(1.second)
     f.value.get.isFailure shouldBe true
-    verify(col).insertOne(e)
-  }
-
-  it should "retry by timeout n times and succeed" in {
-    //given
-    val s = TestScheduler()
-    val n = 2
-    val e = genEmployee.sample.get
-    val objectId = BsonObjectId.apply()
-    val insertOneResult = MongoInsertOneResult.acknowledged(objectId)
-    val delayedPub = Task(insertOneResult).delayExecution(100.milliseconds).toReactivePublisher(s)
-    val nonDelayedPub = Task(insertOneResult).toReactivePublisher(s)
-    when(col.insertOne(e)).thenReturn(delayedPub, delayedPub, nonDelayedPub)
-
-    //when
-    val f = retryOnFailure[InsertOneResult](
-      Coeval(
-        MongoOp
-          .insertOne(col, e)
-          .toReactivePublisher(s)),
-      n,
-      timeout = Some(50.milliseconds),
-      delayAfterFailure = Option.empty)
-      .runToFuture(s)
-
-    //then
-    s.tick(1.second)
-    f.value.get shouldBe util.Success(Some(InsertOneResult(Some(objectId.getValue.toString), true)))
-    verify(col, times(n + 1)).insertOne(e)
+    verify(col, times(retryStrategy.attempts + 1)).insertOne(employee)
   }
 
 }

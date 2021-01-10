@@ -14,7 +14,7 @@ object will be returned to any _get request_, globally.
 
 Add the following dependency to get started:
 ```scala
-libraryDependencies += "io.monix" %% "monix-gcs" % "0.5.0"
+libraryDependencies += "io.monix" %% "monix-gcs" % "0.5.1"
 ```
 
 ## Getting Started

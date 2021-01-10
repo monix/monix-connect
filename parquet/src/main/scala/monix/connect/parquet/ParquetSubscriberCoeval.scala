@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,6 @@ import monix.reactive.observers.Subscriber
 import org.apache.parquet.hadoop.ParquetWriter
 
 import scala.concurrent.Future
-import scala.util.control.NonFatal
 
 /**
   * A [[Consumer]] that writes each emitted element into the same parquet file.
