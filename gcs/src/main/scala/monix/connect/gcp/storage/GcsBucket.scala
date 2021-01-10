@@ -31,7 +31,6 @@ import monix.execution.annotations.Unsafe
 import monix.reactive.Observable
 
 import scala.jdk.CollectionConverters._
-import scala.util.control.NonFatal
 
 /**
   * This class wraps the [[com.google.cloud.storage.Bucket]] class, providing an idiomatic scala API
