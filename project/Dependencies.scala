@@ -9,7 +9,6 @@ object Dependencies {
     val AwsSdk = "2.15.61"
     val AkkaStreams = "2.6.9"
     val AWS = "1.11.749"
-    val Cats_Effect = "2.1.3"
     val DynamoDb = "2.10.60"
     val GCS = "1.107.0"
     val Hadoop = "3.1.4"
@@ -91,7 +90,6 @@ object Dependencies {
 
   val GCS = Seq(
     "com.google.cloud"               % "google-cloud-storage" % Versions.GCS,
-    "org.typelevel" %% "cats-effect" % Versions.Cats_Effect,
     "com.google.cloud"               % "google-cloud-nio" % Versions.GCNio % IntegrationTest,
     "commons-io"                     % "commons-io" % "2.6" % Test
   ) ++ commonDependencies(hasIt = true)
