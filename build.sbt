@@ -51,7 +51,6 @@ lazy val sharedSettings = Seq(
     "-Xlint:option-implicit", // Option.apply used implicit view
     "-Xlint:delayedinit-select", // Selecting member of DelayedInit
     //"-Xlint:package-object-classes" // Class or object defined in package object
-    "-Wconf:msg=While parsing annotations in:silent"
   ),
 
   // ScalaDoc settings
