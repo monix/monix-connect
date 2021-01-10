@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +37,7 @@ class GcsBucketSpec
   val underlying: Bucket = mock[Bucket]
   val bucket: GcsBucket = GcsBucket(underlying)
 
-  override def beforeEach: Unit = {
+  override def beforeEach(): Unit = {
     super.beforeEach()
     reset(underlying)
   }

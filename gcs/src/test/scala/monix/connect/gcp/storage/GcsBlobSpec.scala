@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,13 +17,9 @@
 
 package monix.connect.gcp.storage
 
-import java.net.URL
-import java.util
-import java.util.concurrent.TimeUnit
-
 import com.google.cloud.storage.Blob.BlobSourceOption
-import com.google.cloud.storage.Storage.{BlobTargetOption, SignUrlOption}
-import com.google.cloud.storage.{Acl, BlobId, CopyWriter, Blob => GoogleBlob, Option => _}
+import com.google.cloud.storage.Storage.BlobTargetOption
+import com.google.cloud.storage.{Acl, CopyWriter, Blob => GoogleBlob, Option => _}
 import monix.execution.Scheduler.Implicits.global
 import org.mockito.IdiomaticMockito
 import org.mockito.MockitoSugar.when
@@ -40,7 +36,7 @@ class GcsBlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers wi
   val underlying: GoogleBlob = mock[GoogleBlob]
   val blob: GcsBlob = GcsBlob(underlying)
 
-  override def beforeEach: Unit = {
+  override def beforeEach(): Unit = {
     super.beforeEach()
     reset(underlying)
   }

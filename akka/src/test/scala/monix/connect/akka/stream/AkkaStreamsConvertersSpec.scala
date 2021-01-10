@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,7 +46,7 @@ class AkkaStreamsConvertersSpec extends AnyWordSpecLike with ScalaFutures with M
         val foldSumSink: Sink[Int, Future[Int]] = Sink.fold[Int, Int](0)((acc, num) => acc + num)
 
         //when
-        val (consumer: Consumer[Int, Int]) = foldSumSink.asConsumer[Int] //extended generic sink
+        val (consumer: Consumer[Int, Int]) = foldSumSink.asConsumer //extended generic sink
         val t: Task[Int] = Observable.fromIterable(Seq(1, 2, 3)).consumeWith(consumer)
 
         //then
@@ -97,7 +97,7 @@ class AkkaStreamsConvertersSpec extends AnyWordSpecLike with ScalaFutures with M
         val sink: Sink[Int, Future[String]] = Sink.fold[String, Int]("")((s, i) => s + i.toString)
 
         //when
-        val t: Task[String] = Observable.fromIterable(1 until 10).consumeWith(sink.asConsumer[String])
+        val t: Task[String] = Observable.fromIterable(1 until 10).consumeWith(sink.asConsumer)
 
         //then
         t.runSyncUnsafe() shouldBe "123456789"

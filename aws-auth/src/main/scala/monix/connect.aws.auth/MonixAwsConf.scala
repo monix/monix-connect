@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,8 +23,6 @@ import pureconfig._
 import pureconfig.generic.auto._
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
 import java.net.URI
-
-import scala.language.implicitConversions
 
 @InternalApi
 private[connect] final case class MonixAwsConf(

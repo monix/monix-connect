@@ -11,7 +11,7 @@
  [release]:                 https://search.maven.org/search?q=a:monix-connect*
  [release-badge]:           https://img.shields.io/github/v/tag/monix/monix-connect.svg
  
- ⚠️   _Mind that the project isn't yet stable, so binary compatibility is not guaranteed._
+ ⚠️ _Mind that the project isn't yet stable, so **binary compatibility is not guaranteed**._❗
   
 Monix Connect is an initiative to implement stream integrations for [Monix](https://monix.io/).
 
@@ -22,14 +22,15 @@ Please, drop a ⭐ to support this project if you found it interesting!
 ### Connectors
 
 The below list comprehends the current set of available connectors:
-1. [Akka](https://connect.monix.io/docs/akka)
+1. [Akka Streams](https://connect.monix.io/docs/akka)
 2. [Apache Parquet](https://connect.monix.io/docs/parquet)
 3. [AWS DynamoDB](https://connect.monix.io/docs/dynamodb)
 4. [AWS S3](https://connect.monix.io/docs/s3)
-5. [Google Cloud Storage](https://connect.monix.io/docs/gcs)
-6. [Hdfs](https://connect.monix.io/docs/hdfs)
-7. [MongoDB](https://connect.monix.io/docs/mongodb)
-8. [Redis](https://connect.monix.io/docs/redis)
+5. [Elasticsearch](https://connect.monix.io/docs/elasticsearch)
+6. [Google Cloud Storage](https://connect.monix.io/docs/gcs)
+7. [Hdfs](https://connect.monix.io/docs/hdfs)
+8. [MongoDB](https://connect.monix.io/docs/mongodb)
+9. [Redis](https://connect.monix.io/docs/redis)
 
 ### Contributing
 

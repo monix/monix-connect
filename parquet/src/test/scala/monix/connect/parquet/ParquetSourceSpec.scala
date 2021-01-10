@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,14 +17,14 @@
 
 package monix.connect.parquet
 
-import java.io.{File, FileNotFoundException}
+import java.io.{File}
 
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.execution.schedulers.TestScheduler
 import monix.reactive.Observable
 import org.apache.avro.generic.GenericRecord
-import org.apache.parquet.hadoop.{ParquetReader}
+import org.apache.parquet.hadoop.ParquetReader
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -91,7 +91,7 @@ class ParquetSourceSpec extends AnyWordSpecLike with Matchers with AvroParquetFi
 
       //then
       testScheduler.tick(1.second)
-      cancelable.value.get shouldBe a[Failure[FileNotFoundException]]
+      cancelable.value.get shouldBe a[Failure[_]]
     }
 
     "signals failure when reading from a malformed reader" in {
@@ -105,8 +105,9 @@ class ParquetSourceSpec extends AnyWordSpecLike with Matchers with AvroParquetFi
 
       //then
       testScheduler.tick(1.second)
-      cancelable1.value.get shouldBe a[Failure[NullPointerException]]
-      cancelable2.value.get shouldBe a[Failure[NullPointerException]]
+      cancelable1.value.get shouldBe a[Failure[_]]
+      cancelable2.value.get shouldBe a[Failure[_]]
+      cancelable1.value.get.failed.get shouldBe a[NullPointerException]
     }
 
   }

@@ -4,7 +4,7 @@ import java.io.{File, FileInputStream}
 import java.net.URI
 import java.time.Duration
 
-import monix.eval.{Coeval, Task}
+import monix.eval.Task
 import monix.execution.Scheduler
 import monix.reactive.Observable
 import org.scalacheck.Gen
@@ -19,8 +19,8 @@ import software.amazon.awssdk.regions.Region
 trait S3Fixture {
   this: TestSuite =>
 
-  val nonEmptyString = Coeval("test" + Gen.nonEmptyListOf(Gen.alphaLowerChar).sample.get.mkString.take(50))
-
+  val genBucketName = Gen.identifier.map("test-"+ _.take(15).toLowerCase) //buckets have to be in a range of 3-63 chars long
+  val genKey = Gen.identifier.map("test-"+ _.take(10).toLowerCase) //buckets have to be in a range of 3-63 chars long
   val resourceFile = (fileName: String) => s"s3/src/it/resources/${fileName}"
 
   val minioEndPoint: String = "http://localhost:9000"

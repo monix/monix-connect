@@ -12,15 +12,14 @@ import org.scalatest.wordspec.AnyWordSpecLike
 class GcsStorageSuite extends AnyWordSpecLike with IdiomaticMockito with Matchers with ArgumentMatchersSugar with BeforeAndAfterAll {
 
   val storage = LocalStorageHelper.getOptions.getService
-  val nonEmptyString: Gen[String] = Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "test-" + chars.mkString.take(20))
-  val testBucketName = nonEmptyString.sample.get
+  val testBucketName = Gen.identifier.sample.get
 
 
   s"${GcsStorage}" should {
 
     "create a blob" in {
       //given two not and existing blobs
-      val blobName = nonEmptyString.sample.get
+      val blobName = Gen.identifier.sample.get
       val gcsStorage = GcsStorage(storage)
 
       //when
@@ -34,9 +33,9 @@ class GcsStorageSuite extends AnyWordSpecLike with IdiomaticMockito with Matcher
 
     "get existing blob from its id " in {
       //given
-      val blobName = nonEmptyString.sample.get
+      val blobName = Gen.identifier.sample.get
       val blobInfo: BlobInfo = BlobInfo.newBuilder(BlobId.of(testBucketName, blobName)).build
-      val content: Array[Byte] = nonEmptyString.sample.get.getBytes()
+      val content: Array[Byte] = Gen.identifier.sample.get.getBytes()
       storage.create(blobInfo, content)
       val gcsStorage = GcsStorage(storage)
 
@@ -50,7 +49,7 @@ class GcsStorageSuite extends AnyWordSpecLike with IdiomaticMockito with Matcher
 
     "return empty when getting non existing blob from its id" in {
       //given
-      val blobName = nonEmptyString.sample.get
+      val blobName = Gen.identifier.sample.get
       val gcsStorage = GcsStorage(storage)
 
       //when
@@ -63,10 +62,10 @@ class GcsStorageSuite extends AnyWordSpecLike with IdiomaticMockito with Matcher
 
     "get exhaustively the list of existing blobs from the the given blob ids" in {
       //given two not and existing blobs
-      val blob1 = BlobInfo.newBuilder(BlobId.of(testBucketName, nonEmptyString.sample.get)).build
-      val blob2 = BlobInfo.newBuilder(BlobId.of(testBucketName, nonEmptyString.sample.get)).build
-      val nonExistingBlob = BlobInfo.newBuilder(BlobId.of(testBucketName, nonEmptyString.sample.get)).build
-      val content: Array[Byte] = nonEmptyString.sample.get.getBytes()
+      val blob1 = BlobInfo.newBuilder(BlobId.of(testBucketName, Gen.identifier.sample.get)).build
+      val blob2 = BlobInfo.newBuilder(BlobId.of(testBucketName, Gen.identifier.sample.get)).build
+      val nonExistingBlob = BlobInfo.newBuilder(BlobId.of(testBucketName, Gen.identifier.sample.get)).build
+      val content: Array[Byte] = Gen.identifier.sample.get.getBytes()
       storage.create(blob1, content)
       storage.create(blob2, content)
       val gcsStorage = GcsStorage(storage)
@@ -81,10 +80,10 @@ class GcsStorageSuite extends AnyWordSpecLike with IdiomaticMockito with Matcher
 
     "list all the blobs under the given bucketName" in {
       //given
-      val bucketName = nonEmptyString.sample.get
-      val blob1 = BlobInfo.newBuilder(BlobId.of(bucketName, nonEmptyString.sample.get)).build
-      val blob2 = BlobInfo.newBuilder(BlobId.of(bucketName, nonEmptyString.sample.get)).build
-      val content: Array[Byte] = nonEmptyString.sample.get.getBytes()
+      val bucketName = Gen.identifier.sample.get
+      val blob1 = BlobInfo.newBuilder(BlobId.of(bucketName, Gen.identifier.sample.get)).build
+      val blob2 = BlobInfo.newBuilder(BlobId.of(bucketName, Gen.identifier.sample.get)).build
+      val content: Array[Byte] = Gen.identifier.sample.get.getBytes()
       val storage = LocalStorageHelper.getOptions.getService //todo check [[LocalStorageHelper]] since removing storage should work equally, but it does not
       storage.create(blob1, content)
       storage.create(blob2, content)

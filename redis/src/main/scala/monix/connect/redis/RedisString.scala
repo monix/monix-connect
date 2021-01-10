@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,7 @@ import io.lettuce.core._
 import monix.eval.Task
 import monix.reactive.Observable
 
-import collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
   * @see The reference to lettuce api [[io.lettuce.core.api.reactive.RedisStringReactiveCommands]]

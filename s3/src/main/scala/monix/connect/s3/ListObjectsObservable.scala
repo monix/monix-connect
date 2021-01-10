@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,7 +35,8 @@ private[s3] class ListObjectsObservable(
   extends Observable[ListObjectsV2Response] {
 
   require(maxTotalKeys.getOrElse(1) > 0, "The max number of keys, if defined, needs to be higher or equal than 1.")
-  private[this] val firstRequestSize = maxTotalKeys.map(maxKeys => math.min(maxKeys, domain.awsDefaulMaxKeysList))
+  //if the max num. of keys is empty, it lets the aws library to default it, otherwise it will be maximum 1000
+  private[this] val firstRequestSize = maxTotalKeys.map(maxKeys => math.min(maxKeys, domain.awsDefaultMaxKeysList))
   private[this] val initialRequest: ListObjectsV2Request =
     S3RequestBuilder.listObjectsV2(bucket, prefix = prefix, maxKeys = firstRequestSize, requestPayer = requestPayer)
 
@@ -47,9 +48,9 @@ private[s3] class ListObjectsObservable(
   private[this] def prepareNextRequest(continuationToken: String, pendingKeys: Option[Int]): ListObjectsV2Request = {
     val requestBuilder = initialRequest.toBuilder.continuationToken(continuationToken)
     pendingKeys.map { n =>
-      val nextMaxkeys = math.min(n, domain.awsDefaulMaxKeysList)
-      requestBuilder.maxKeys(nextMaxkeys)
-    }.getOrElse(domain.awsDefaulMaxKeysList)
+      val nextMaxKeys = math.min(n, domain.awsDefaultMaxKeysList)
+      requestBuilder.maxKeys(nextMaxKeys)
+    }
     requestBuilder.build()
   }
 

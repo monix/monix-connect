@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,7 @@ package monix.connect.hdfs
 import org.scalacheck.Gen
 
 trait HdfsFixture {
-  val genFileName: Gen[String] = Gen.nonEmptyListOf(Gen.alphaChar).map(_.mkString)
-  val genChunk: Gen[Array[Byte]] = Gen.alphaLowerStr.map(_.getBytes)
+  val genFileName: Gen[String] = Gen.identifier
+  val genChunk: Gen[Array[Byte]] = Gen.identifier.map(_.getBytes)
   val genChunks: Gen[List[Array[Byte]]] = Gen.listOfN(10, genChunk)
 }

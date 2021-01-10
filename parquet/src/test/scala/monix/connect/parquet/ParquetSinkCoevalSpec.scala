@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -105,7 +105,7 @@ class ParquetSinkCoevalSpec
 
       //then
       testScheduler.tick(1.second)
-      f.value.get shouldBe a[Failure[NullPointerException]]
+      f.value.get shouldBe a[Failure[_]]
 
       //and
       val file = new File(filePath)

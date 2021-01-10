@@ -7,12 +7,10 @@ on:
 jobs:
   publish:
     name: publish 
-    if: github.event_name == 'push' && github.ref == 'refs/heads/docs'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - uses: olafurpg/setup-scala@v2
-      - uses: olafurpg/setup-gpg@v2
+      - uses: olafurpg/setup-scala@v10
       - name: Publish documentation web page
         run: |
           ./.github/scripts/create-web-site.sh

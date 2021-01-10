@@ -1,8 +1,0 @@
-syntax = "proto3";
-
-package monix.connect.parquet.test;
-
-message ProtoDoc {
-    int32 id = 1;
-    string name = 2;
-}

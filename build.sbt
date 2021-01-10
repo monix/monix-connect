@@ -1,6 +1,6 @@
 import sbt.Keys.version
 
-val monixConnectSeries = "0.4.0"
+val monixConnectSeries = "0.5.1"
 
 inThisBuild(List(
   organization := "io.monix",
@@ -19,8 +19,8 @@ inThisBuild(List(
 skip in publish := true //requered by sbt-ci-release
 
 lazy val sharedSettings = Seq(
-  scalaVersion       := "2.12.8",
-  crossScalaVersions := Seq("2.12.10", "2.13.1"),
+  scalaVersion       := "2.13.4",
+  crossScalaVersions := Seq("2.12.10", "2.13.4"),
   scalafmtOnCompile  := true,
   scalacOptions ++= Seq(
     // warnings
@@ -33,18 +33,15 @@ lazy val sharedSettings = Seq(
     "-language:experimental.macros"
   ),
   //warnUnusedImports
-  scalacOptions in (Compile, console) --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports"),
-  scalacOptions in Test --= Seq("-Ywarn-unused-import", "-Ywarn-unused:imports"),
-  // Linter
+  scalacOptions in (Compile, console) ++= Seq("-Ywarn-unused-import", "-deprecation"),
+    // Linter
   scalacOptions ++= Seq(
     "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
     "-Ywarn-dead-code", // Warn when dead code is identified.
     // Turns all warnings into errors ;-)
-    //"-Xfatal-warnings", //Turning of fatal warnings for the moment
+    "-Xfatal-warnings", //Turning of fatal warnings for the moment
     // Enables linter options
     "-Xlint:adapted-args", // warn if an argument list is modified to match the receiver
-    "-Xlint:nullary-unit", // warn when nullary methods return Unit
-    "-Xlint:nullary-override", // warn when non-nullary `def f()' overrides nullary `def f'
     "-Xlint:infer-any", // warn when a type argument is inferred to be `Any`
     "-Xlint:missing-interpolator", // a string literal appears to be missing an interpolator id
     "-Xlint:doc-detached", // a ScalaDoc comment appears to be detached from its element
@@ -53,7 +50,8 @@ lazy val sharedSettings = Seq(
     "-Xlint:poly-implicit-overload", // parameterized overloaded implicit methods are not visible as view bounds
     "-Xlint:option-implicit", // Option.apply used implicit view
     "-Xlint:delayedinit-select", // Selecting member of DelayedInit
-    "-Xlint:package-object-classes" // Class or object defined in package object
+    //"-Xlint:package-object-classes" // Class or object defined in package object
+    "-Wconf:msg=While parsing annotations in:silent"
   ),
 
   // ScalaDoc settings
@@ -86,7 +84,7 @@ lazy val sharedSettings = Seq(
   apiURL := Some(url("https://monix.github.io/monix-connect/api/")),
 
   headerLicense := Some(HeaderLicense.Custom(
-    """|Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+    """|Copyright (c) 2020-2021 by The Monix Connect Project Developers.
        |See the project homepage at: https://connect.monix.io
        |
        |Licensed under the Apache License, Version 2.0 (the "License");
@@ -109,6 +107,7 @@ lazy val sharedSettings = Seq(
 
 def mimaSettings(projectName: String) = Seq(
   mimaPreviousArtifacts := Set("io.monix" %% projectName % monixConnectSeries),
+  mimaBinaryIssueFilters ++= MimaFilters.changesFor_0_5_3
 )
 
 mimaFailOnNoPrevious in ThisBuild := false
@@ -120,30 +119,19 @@ lazy val monixConnect = (project in file("."))
   .configs(IntegrationTest, IT)
   .settings(sharedSettings)
   .settings(name := "monix-connect")
-  .aggregate(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, awsAuth)
-  .dependsOn(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3)
+  .aggregate(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, elasticsearch, awsAuth)
+  .dependsOn(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, elasticsearch, awsAuth)
 
 
 lazy val akka = monixConnector("akka", Dependencies.Akka)
 
-lazy val dynamodb = monixConnector("dynamodb", Dependencies.DynamoDb)
+lazy val dynamodb = monixConnector("dynamodb", Dependencies.DynamoDb).aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
 
 lazy val hdfs = monixConnector("hdfs", Dependencies.Hdfs)
 
-val scalaPBSettings = Seq(
-  PB.targets in Compile := Seq(
-    scalapb.gen() -> (sourceManaged in Compile).value
-  ),
-  PB.targets in Compile := Seq(
-    scalapb.gen(javaConversions = true) -> (sourceManaged in Compile).value,
-    PB.gens.java -> (sourceManaged in Compile).value
-  ),
-  PB.protoSources in Compile := Seq(new File("parquet/src/test/protobuf")),
-)
+lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb, isMimaEnabled = false)
 
-lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb)
-
-lazy val parquet = monixConnector("parquet", Dependencies.Parquet, scalaPBSettings)
+lazy val parquet = monixConnector("parquet", Dependencies.Parquet)
 
 lazy val redis = monixConnector("redis", Dependencies.Redis)
 
@@ -151,25 +139,28 @@ lazy val s3 = monixConnector("s3", Dependencies.S3).aggregate(awsAuth).dependsOn
 
 lazy val gcs = monixConnector("gcs", Dependencies.GCS)
 
+lazy val elasticsearch =  monixConnector("elasticsearch", Dependencies.Elasticsearch)
+
+//internal
+lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth, isMimaEnabled = false)
+
 def monixConnector(
   connectorName: String,
   projectDependencies: Seq[ModuleID],
-  additionalSettings: sbt.Def.SettingsDefinition*): Project =
+  isMimaEnabled: Boolean = true): Project = {
   Project(id = connectorName, base = file(connectorName))
     .enablePlugins(AutomateHeaderPlugin)
     .settings(name := s"monix-$connectorName", libraryDependencies ++= projectDependencies, Defaults.itSettings)
     .settings(sharedSettings)
-    .settings(additionalSettings: _*)
     .configs(IntegrationTest, IT)
     .enablePlugins(AutomateHeaderPlugin)
-    //.settings(mimaSettings(s"monix-$connectorName"))
+    .settings(if(isMimaEnabled) mimaSettings(s"monix-$connectorName") else Seq.empty)
+}
+
 
 //=> non published modules
 
-lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth)
-  .settings(skipOnPublishSettings)
-
-lazy val benchmarks = monixConnector("benchmarks", Dependencies.Benchmarks)
+lazy val benchmarks = monixConnector("benchmarks", Dependencies.Benchmarks, isMimaEnabled = false)
   .enablePlugins(JmhPlugin)
   .settings(skipOnPublishSettings)
   .dependsOn(parquet % "compile->compile;test->test", redis % "compile->compile;test->test", s3 % "compile->compile;test->test")
@@ -194,7 +185,7 @@ lazy val skipOnPublishSettings = Seq(
 lazy val mdocSettings = Seq(
   scalacOptions --= Seq("-Xfatal-warnings", "-Ywarn-unused"),
   crossScalaVersions := Seq(scalaVersion.value),
-  unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(akka, parquet, dynamodb, s3, gcs, hdfs, mongodb, redis),
+  unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(akka, parquet, dynamodb, s3, elasticsearch, gcs, hdfs, mongodb, redis),
   target in (ScalaUnidoc, unidoc) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",
   cleanFiles += (target in (ScalaUnidoc, unidoc)).value,
   docusaurusCreateSite := docusaurusCreateSite

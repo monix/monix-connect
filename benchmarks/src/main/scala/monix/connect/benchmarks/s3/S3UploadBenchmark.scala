@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +37,7 @@ import akka.stream.alpakka.s3.scaladsl.{S3 => AkkaS3}
 import akka.stream.scaladsl.{Keep, Source}
 import akka.util.ByteString
 import monix.connect.s3.S3
+import org.scalacheck.Gen
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -53,7 +54,7 @@ class S3UploadBenchmark extends S3MonixFixture {
   var size: Int = 20
   implicit val s = Scheduler.io("s3-upload-benchmark")
   val bucketName = "s3-upload-benchmarks"
-  var contents: Array[Array[Byte]] = Array.fill(size)(nonEmptyString.value().getBytes())
+  var contents: Array[Array[Byte]] = Array.fill(size)(Gen.identifier.sample.get.getBytes())
 
   @Setup
   def setup(): Unit = {
@@ -68,7 +69,7 @@ class S3UploadBenchmark extends S3MonixFixture {
 
   @Benchmark
   def monixUpload(): Unit = {
-    val newKey = nonEmptyString.value()
+    val newKey = Gen.identifier.sample.get
     val t = s3Resource.use(_.upload(bucketName, newKey, contents.flatten))
 
     Await.result(t.runToFuture(s), Duration.Inf)
@@ -76,7 +77,7 @@ class S3UploadBenchmark extends S3MonixFixture {
 
   @Benchmark
   def monixConfigUpload(): Unit = {
-    val newKey = nonEmptyString.value()
+    val newKey = Gen.identifier.sample.get
     val t = S3.fromConfig.use(_.upload(bucketName, newKey, contents.flatten))
 
     Await.result(t.runToFuture(s), Duration.Inf)
@@ -84,7 +85,7 @@ class S3UploadBenchmark extends S3MonixFixture {
 
   @Benchmark
   def monixUnsafeUpload(): Unit = {
-    val newKey = nonEmptyString.value()
+    val newKey = Gen.identifier.sample.get
     val t = S3.createUnsafe(s3AsyncClient).upload(bucketName, newKey, contents.flatten)
 
     Await.result(t.runToFuture(s), Duration.Inf)
@@ -92,7 +93,7 @@ class S3UploadBenchmark extends S3MonixFixture {
 
   @Benchmark
   def monixUploadMultipart(): Unit = {
-    val newKey = nonEmptyString.value()
+    val newKey = Gen.identifier.sample.get
     val t = s3Resource.use(s3 => Observable.fromIterable(contents).consumeWith(s3.uploadMultipart(bucketName, newKey)))
 
     Await.result(t.runToFuture(s), Duration.Inf)
@@ -100,15 +101,16 @@ class S3UploadBenchmark extends S3MonixFixture {
 
   @Benchmark
   def monixConfigUploadMultipart(): Unit = {
-    val newKey = nonEmptyString.value()
-    val t = S3.fromConfig.use(s3 => Observable.fromIterable(contents).consumeWith(s3.uploadMultipart(bucketName, newKey)))
+    val newKey = Gen.identifier.sample.get
+    val t =
+      S3.fromConfig.use(s3 => Observable.fromIterable(contents).consumeWith(s3.uploadMultipart(bucketName, newKey)))
 
     Await.result(t.runToFuture(s), Duration.Inf)
   }
 
   @Benchmark
   def monixUnsafeUploadMultipart(): Unit = {
-    val newKey = nonEmptyString.value()
+    val newKey = Gen.identifier.sample.get
 
     val t =
       Observable
@@ -120,7 +122,7 @@ class S3UploadBenchmark extends S3MonixFixture {
 
   @Benchmark
   def akkaUploadMultipart(): Unit = {
-    val newKey = nonEmptyString.value()
+    val newKey = Gen.identifier.sample.get
 
     val f = Source
       .fromIterator(() => contents.map(ByteString.fromArray).iterator)

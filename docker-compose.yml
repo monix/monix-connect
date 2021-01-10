@@ -39,3 +39,15 @@ services:
     image: redis
     ports:
       - 6379:6379
+
+  elasticsearch:
+    image: elasticsearch:7.10.1
+    environment:
+      discovery.type: single-node
+    ports:
+      - 9200:9200
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9200" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
