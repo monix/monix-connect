@@ -39,12 +39,13 @@ import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistr
 import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
 
 /**
-  * Exposes the signatures to create a connection to the desired mongo collection,
-  * the connection to such collection is returned in form of [[MongoConnector]],
-  * which is based of three different components, the db, source, single and sink.
+  * Singleton object that exposes signatures to create a connection to the desired
+  * specified mongo collections, the abstraction to operate with collections is
+  * returned in form of [[MongoConnector]], which is based of three different
+  * components, the db, source, single and sink.
   *
-  * The aim is to provide a idiomatic interface for the different operations that
-  * can be run against the collection, for either read with [[MongoSource]] or to
+  * The aim is to provide a idiomatic interface for different operations that
+  * can be run against a collection, for either read with [[MongoSource]] or to
   * write/delete one by one with [[MongoSingle]] or in streaming fashion
   * with the [[MongoSink]].
   *
@@ -121,7 +122,7 @@ object MongoConnection {
       } yield (a, b._1, b._2, b._3, b._4, b._5)
     }
 
-  def connection7[T1, T2, T3, T4, T5, T6, T7]: MongoConnection[
+  private[mongodb] def connection7[T1, T2, T3, T4, T5, T6, T7]: MongoConnection[
     Tuple7F[MongoCollection, T1, T2, T3, T4, T5, T6, T7],
     Tuple7F[MongoConnector, T1, T2, T3, T4, T5, T6, T7]] =
     (client: MongoClient, collections: Tuple7F[MongoCollection, T1, T2, T3, T4, T5, T6, T7]) => {
@@ -132,7 +133,7 @@ object MongoConnection {
       } yield (a, b._1, b._2, b._3, b._4, b._5, b._6)
     }
 
-  def connection8[T1, T2, T3, T4, T5, T6, T7, T8]: MongoConnection[
+  private[mongodb] def connection8[T1, T2, T3, T4, T5, T6, T7, T8]: MongoConnection[
     Tuple8F[MongoCollection, T1, T2, T3, T4, T5, T6, T7, T8],
     Tuple8F[MongoConnector, T1, T2, T3, T4, T5, T6, T7, T8]] =
     (client: MongoClient, collections: Tuple8F[MongoCollection, T1, T2, T3, T4, T5, T6, T7, T8]) => {
@@ -169,9 +170,9 @@ object MongoConnection {
     * }}}
     *
     * @param connectionString describes the hosts, ports and options to be used.
-    *                         @see for more information on how to configure it:
-    *                         https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html
-    *                         https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/
+    *                         @see for more information to configure the connection string
+    *                         [[https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html]]
+    *                         and [[https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/]]
     * @param collection describes the collection that wants to be used (db, collectionName, codecs...)
     * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]].
     */
@@ -270,9 +271,9 @@ object MongoConnection {
     * }}}
     *
     * @param connectionString describes the hosts, ports and options to be used.
-    *                         @see for more information on how to configure it:
-    *                         https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html
-    *                         https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/
+    *                         @see for more information to configure the connection string
+    *                         [[https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html]]
+    *                         and [[https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
     * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]s.
     */
@@ -286,7 +287,6 @@ object MongoConnection {
     * for each of the *TWO* provided [[MongoCollection]]s.
     *
     * ==Example==
-    *
     * {{{
     *   import monix.eval.Task
     *   import monix.connect.mongodb.domain.{MongoCollection, MongoConnector}
@@ -350,8 +350,6 @@ object MongoConnection {
     client: MongoClient,
     collections: Tuple2F[MongoCollection, T1, T2]): Resource[Task, Tuple2F[MongoConnector, T1, T2]] =
     connection2.createUnsafe(client, collections)
-
-  //3
 
   /**
     * Creates a connection to mongodb and provides a [[MongoConnector]]
@@ -426,9 +424,9 @@ object MongoConnection {
     * }}}
     *
     * @param connectionString describes the hosts, ports and options to be used.
-    *                         @see for more information on how to configure it:
-    *                         https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html
-    *                         https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/
+    *                         @see for more information to configure the connection string
+    *                         [[https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html]]
+    *                         and [[https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
     * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]s.
     */
@@ -474,9 +472,9 @@ object MongoConnection {
     * @see an example of usage could be extrapolated from the scaladoc
     *      example of [[create1]], [[create2]] and [[create3]].
     * @param connectionString describes the hosts, ports and options to be used.
-    *                         @see for more information on how to configure it:
-    *                         https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html
-    *                         https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/
+    *                         @see for more information on how to configure it
+    *                         [[https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html]]
+    *                         and [[https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
     * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]s.
     */
@@ -524,9 +522,9 @@ object MongoConnection {
     * @see an example of usage could be extrapolated from the scaladoc
     *      example of [[create1]], [[create2]] and [[create3]].
     * @param connectionString describes the hosts, ports and options to be used.
-    *                         @see for more information on how to configure it:
-    *                         https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html
-    *                         https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/
+    *                         @see for more information to configure the connection string
+    *                         [[https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html]]
+    *                         and [[https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
     * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]s.
     */
@@ -573,9 +571,9 @@ object MongoConnection {
     * @see an example of usage could be extrapolated from the scaladoc
     *      example of [[create1]], [[create2]] and [[create3]].
     * @param connectionString describes the hosts, ports and options to be used.
-    *                         @see for more information on how to configure it:
-    *                         https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html
-    *                         https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/
+    *                         @see for more information to configure the connection string
+    *                         [[https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html]]
+    *                         and [[https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
     * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]s.
     */
@@ -626,9 +624,9 @@ object MongoConnection {
     * @see an example of usage could be extrapolated from the scaladoc
     *      example of [[create1]], [[create2]] and [[create3]].
     * @param connectionString describes the hosts, ports and options to be used.
-    *                         @see for more information on how to configure it:
-    *                         https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html
-    *                         https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/
+    *                         @see for more information to configure the connection string
+    *                         [[https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html]]
+    *                         and [[https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
     * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]s.
     */
@@ -679,9 +677,9 @@ object MongoConnection {
     * @see an example of usage could be extrapolated from the scaladoc
     *      example of [[create1]], [[create2]] and [[create3]].
     * @param connectionString describes the hosts, ports and options to be used.
-    *                         @see for more information on how to configure it:
-    *                         https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html
-    *                         https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/
+    *                         @see for more information to configure the connection string
+    *                         [[https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html]]
+    *                         and [[https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
     * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]s.
     */
@@ -745,6 +743,10 @@ private[mongodb] trait MongoConnection[A <: Product, T2 <: Product] { self =>
     Resource.make(createConnectors(client, collections))(self.close)
   }
 
+  /** Has to be overwritten for instances of Connection where [[T2]] is
+    * not a tuple/iterable [[Product]]. I.E in: [[MongoConnection.connection1]].
+    */
+  @UnsafeBecauseImpure
   def close(connectors: T2): Task[Unit] = {
     Observable
       .fromIterable(connectors.productIterator.toList)

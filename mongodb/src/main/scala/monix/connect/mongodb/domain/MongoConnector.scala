@@ -21,5 +21,5 @@ import monix.connect.mongodb.{MongoDb, MongoSingle, MongoSink, MongoSource}
 import monix.eval.Task
 
 case class MongoConnector[Doc](db: MongoDb, source: MongoSource[Doc], single: MongoSingle[Doc], sink: MongoSink[Doc]) {
-  def close = Task(db.client.close())
+  def close: Task[Unit] = Task(db.client.close())
 }
