@@ -84,7 +84,7 @@ object Dependencies {
   ) ++ commonDependencies(hasIt = true)
 
   val Redis = Seq(
-    "io.lettuce" % "lettuce-core" % "5.1.8.RELEASE",
+    "io.lettuce" % "lettuce-core" % "5.3.6.RELEASE",
     "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat
   ) ++ commonDependencies(hasIt = true)
 
