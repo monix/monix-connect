@@ -33,7 +33,7 @@ lazy val sharedSettings = Seq(
     "-language:experimental.macros"
   ),
   //warnUnusedImports
-  scalacOptions in (Compile, console) ++= Seq("-Ywarn-unused-import", "-deprecation"),
+  scalacOptions in (Compile, console) ++= Seq("-Ywarn-unused-import"),
     // Linter
   scalacOptions ++= Seq(
     "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
@@ -54,6 +54,7 @@ lazy val sharedSettings = Seq(
   ),
 
   // ScalaDoc settings
+  scalacOptions in (Compile, doc) ++= Seq("-no-link-warnings"),
   autoAPIMappings := true,
   scalacOptions in ThisBuild ++= Seq(
     // Note, this is used by the doc-source-url feature to determine the
@@ -111,6 +112,14 @@ def mimaSettings(projectName: String) = Seq(
 
 mimaFailOnNoPrevious in ThisBuild := false
 
+//ignores scaladoc link warnings (which are
+scalacOptions in (Compile, doc) ++= Seq("-no-link-warnings")
+scalacOptions += "-P:silencer:globalFilters=While parsing annotations in:silent"
+ThisBuild / libraryDependencies ++= Seq(
+  compilerPlugin("com.github.ghik" %% "silencer-plugin" % "1.7.1" cross CrossVersion.full),
+  "com.github.ghik" %% "silencer-lib" % "1.7.1" % Provided cross CrossVersion.full
+)
+
 val IT = config("it") extend Test
 
 //=> published modules
@@ -120,7 +129,6 @@ lazy val monixConnect = (project in file("."))
   .settings(name := "monix-connect")
   .aggregate(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, elasticsearch, awsAuth)
   .dependsOn(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, elasticsearch, awsAuth)
-
 
 lazy val akka = monixConnector("akka", Dependencies.Akka)
 
