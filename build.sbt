@@ -39,7 +39,8 @@ lazy val sharedSettings = Seq(
     "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
     "-Ywarn-dead-code", // Warn when dead code is identified.
     // Turns all warnings into errors ;-)
-    "-Xfatal-warnings", //Turning of fatal warnings for the moment
+    //temporary disabled for mongodb warn, -YWarn (2.13) and Silencer (2.12) should fix it...
+    //"-Xfatal-warnings", //Turning of fatal warnings for the moment
     // Enables linter options
     "-Xlint:adapted-args", // warn if an argument list is modified to match the receiver
     "-Xlint:infer-any", // warn when a type argument is inferred to be `Any`
@@ -114,11 +115,6 @@ mimaFailOnNoPrevious in ThisBuild := false
 
 //ignores scaladoc link warnings (which are
 scalacOptions in (Compile, doc) ++= Seq("-no-link-warnings")
-scalacOptions += "-P:silencer:globalFilters=While parsing annotations in:silent"
-ThisBuild / libraryDependencies ++= Seq(
-  compilerPlugin("com.github.ghik" %% "silencer-plugin" % "1.7.1" cross CrossVersion.full),
-  "com.github.ghik" %% "silencer-lib" % "1.7.1" % Provided cross CrossVersion.full
-)
 
 val IT = config("it") extend Test
 
