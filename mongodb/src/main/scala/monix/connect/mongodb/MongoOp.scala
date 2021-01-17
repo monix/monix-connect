@@ -87,7 +87,7 @@ object MongoOp {
     filter: Bson,
     deleteOptions: DeleteOptions = DefaultDeleteOptions,
     retries: Int = 0,
-    @deprecated timeout: Option[FiniteDuration] = Option.empty,
+    timeout: Option[FiniteDuration] = Option.empty,
     delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[DeleteResult] =
     retryOnFailure(Coeval(collection.deleteOne(filter, deleteOptions)), retries, timeout, delayAfterFailure)
       .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultDeleteResult))
@@ -130,7 +130,7 @@ object MongoOp {
     filter: Bson,
     deleteOptions: DeleteOptions = DefaultDeleteOptions,
     retries: Int = 0,
-    @deprecated timeout: Option[FiniteDuration] = Option.empty,
+    timeout: Option[FiniteDuration] = Option.empty,
     delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[DeleteResult] =
     retryOnFailure(Coeval(collection.deleteMany(filter, deleteOptions)), retries, timeout, delayAfterFailure)
       .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultDeleteResult))
@@ -173,7 +173,7 @@ object MongoOp {
     document: Doc,
     insertOneOptions: InsertOneOptions = DefaultInsertOneOptions,
     retries: Int = 0,
-    @deprecated timeout: Option[FiniteDuration] = Option.empty,
+    timeout: Option[FiniteDuration] = Option.empty,
     delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[InsertOneResult] =
     retryOnFailure(Coeval(collection.insertOne(document, insertOneOptions)), retries, timeout, delayAfterFailure)
       .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultInsertOneResult))
@@ -259,7 +259,7 @@ object MongoOp {
     replacement: Doc,
     replaceOptions: ReplaceOptions = DefaultReplaceOptions,
     retries: Int = 0,
-    @deprecated timeout: Option[FiniteDuration] = Option.empty,
+    timeout: Option[FiniteDuration] = Option.empty,
     delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[UpdateResult] =
     retryOnFailure(
       Coeval(collection.replaceOne(filter, replacement, replaceOptions)),
@@ -311,7 +311,7 @@ object MongoOp {
     update: Bson,
     updateOptions: UpdateOptions = DefaultUpdateOptions,
     retries: Int = 0,
-    @deprecated timeout: Option[FiniteDuration] = Option.empty,
+    timeout: Option[FiniteDuration] = Option.empty,
     delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[UpdateResult] =
     retryOnFailure(Coeval(collection.updateOne(filter, update, updateOptions)), retries, timeout, delayAfterFailure)
       .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultUpdateResult))
@@ -356,7 +356,7 @@ object MongoOp {
     update: Bson,
     updateOptions: UpdateOptions = DefaultUpdateOptions,
     retries: Int = 0,
-    @deprecated timeout: Option[FiniteDuration] = Option.empty,
+    timeout: Option[FiniteDuration] = Option.empty,
     delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[UpdateResult] = {
     retryOnFailure(Coeval(collection.updateMany(filter, update, updateOptions)), retries, timeout, delayAfterFailure)
       .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultUpdateResult))
