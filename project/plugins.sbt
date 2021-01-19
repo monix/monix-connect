@@ -1,7 +1,7 @@
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.3.2")
 addSbtPlugin("org.scalameta"       % "sbt-mdoc"        % "2.2.15")
 addSbtPlugin("com.thesamet" % "sbt-protoc" % "0.99.25")
-addSbtPlugin("com.github.tkawachi"  % "sbt-doctest"     % "0.9.8")
+addSbtPlugin("com.github.tkawachi"  % "sbt-doctest"     % "0.9.9")
 addSbtPlugin("com.eed3si9n"         % "sbt-unidoc"      % "0.4.3")
 addSbtPlugin("com.typesafe"         % "sbt-mima-plugin" % "0.8.1")
 addSbtPlugin("de.heikoseeberger"    % "sbt-header"      % "5.4.0")
