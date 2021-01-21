@@ -51,10 +51,9 @@ object GcsBlobInfo {
 
   /** Converter from the google's java [[BlobInfo]] to monix-conect's scala [[GcsBlobInfo]]  */
   def fromJava(blobInfo: BlobInfo): GcsBlobInfo = {
-    /**
-      * These fields can't be initialized directly below when creating other fields since
-      * the default value of the option type would be applied, thus the option would not be `None`.
-      */
+
+    //These fields can't be initialized directly below when creating other fields since
+    //the default value of the option type would be applied, thus the option would not be `None`.
     val cacheControl = Option(blobInfo.getCacheControl)
     val componentCount = Option(blobInfo.getComponentCount).map(_.intValue())
     val generation = Option(blobInfo.getGeneration).map(_.longValue)

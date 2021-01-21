@@ -33,13 +33,14 @@ lazy val sharedSettings = Seq(
     "-language:experimental.macros"
   ),
   //warnUnusedImports
-  scalacOptions in (Compile, console) ++= Seq("-Ywarn-unused-import", "-deprecation"),
+  scalacOptions in (Compile, console) ++= Seq("-Ywarn-unused-import"),
     // Linter
   scalacOptions ++= Seq(
     "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
     "-Ywarn-dead-code", // Warn when dead code is identified.
     // Turns all warnings into errors ;-)
-    "-Xfatal-warnings", //Turning of fatal warnings for the moment
+    //temporary disabled for mongodb warn, -YWarn (2.13) and Silencer (2.12) should fix it...
+    //"-Xfatal-warnings", //Turning of fatal warnings for the moment
     // Enables linter options
     "-Xlint:adapted-args", // warn if an argument list is modified to match the receiver
     "-Xlint:infer-any", // warn when a type argument is inferred to be `Any`
@@ -54,6 +55,7 @@ lazy val sharedSettings = Seq(
   ),
 
   // ScalaDoc settings
+  scalacOptions in (Compile, doc) ++= Seq("-no-link-warnings"),
   autoAPIMappings := true,
   scalacOptions in ThisBuild ++= Seq(
     // Note, this is used by the doc-source-url feature to determine the
@@ -111,6 +113,9 @@ def mimaSettings(projectName: String) = Seq(
 
 mimaFailOnNoPrevious in ThisBuild := false
 
+//ignores scaladoc link warnings (which are
+scalacOptions in (Compile, doc) ++= Seq("-no-link-warnings")
+
 val IT = config("it") extend Test
 
 //=> published modules
@@ -120,7 +125,6 @@ lazy val monixConnect = (project in file("."))
   .settings(name := "monix-connect")
   .aggregate(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, elasticsearch, awsAuth)
   .dependsOn(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, elasticsearch, awsAuth)
-
 
 lazy val akka = monixConnector("akka", Dependencies.Akka)
 
