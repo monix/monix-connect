@@ -6,7 +6,7 @@ object Dependencies {
 
     //main
     val Monix = "3.3.0"
-    val AwsSdk = "2.15.67"
+    val AwsSdk = "2.15.72"
     val AkkaStreams = "2.6.9"
     val AWS = "1.11.749"
     val DynamoDb = "2.10.60"
