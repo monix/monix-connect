@@ -20,7 +20,7 @@ package monix.connect.benchmarks.redis
 import io.chrisdavenport.rediculous.RedisCommands
 import laserdisc.fs2._
 import laserdisc.{Key, all => cmd}
-import monix.connect.redis.{Redis, KeyCommands}
+import monix.connect.redis.{$Commands, KeyCommands}
 import monix.execution.Scheduler.Implicits.global
 import org.openjdk.jmh.annotations._
 
@@ -45,7 +45,7 @@ class RedisKeysBenchmark extends RedisBenchFixture {
 
     (1 to maxKey).foreach { key =>
       val value = key.toString
-      val f = Redis.set(key.toString, value).runToFuture
+      val f = $Commands.set(key.toString, value).runToFuture
       Await.ready(f, 1.seconds)
     }
   }

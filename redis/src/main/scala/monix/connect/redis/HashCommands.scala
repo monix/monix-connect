@@ -17,30 +17,35 @@
 
 package monix.connect.redis
 
-import io.lettuce.core.api.StatefulRedisConnection
-import io.lettuce.core.{KeyValue, MapScanCursor, ScanCursor}
+import io.lettuce.core.api.async.RedisHashAsyncCommands
+import io.lettuce.core.api.reactive.RedisHashReactiveCommands
+import io.lettuce.core.{MapScanCursor, ScanCursor}
 import monix.eval.Task
+import monix.execution.internal.InternalApi
 import monix.reactive.Observable
 
 import scala.jdk.CollectionConverters._
 
-private[redis] trait RedisHash {
+private[redis] trait HashCommands[K, V] {
+
+  val asyncCmd: RedisHashAsyncCommands[K, V]
+  val reactiveCmd: RedisHashReactiveCommands[K, V]
 
   /**
     * Delete one or more hash fields.
     * @return Number of fields that were removed from the hash, not including specified but non existing
     *         fields.
     */
-  def hdel[K, V](key: K, fields: K*)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.reactive().hdel(key, fields: _*)).map(_.longValue)
+  def hDel(key: K, fields: K*): Task[Long] =
+    Task.from(asyncCmd.hdel(key, fields: _*).toCompletableFuture).map(_.longValue)
 
   /**
     * Determine if a hash field exists.
     * @return True if the hash contains the field.
     *         False if the hash does not contain the field, or key does not exist.                                                                                                                  .
     */
-  def hexists[K, V](key: K, field: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-    Task.from(connection.reactive().hexists(key, field)).map(_.booleanValue)
+  def hExists(key: K, field: K): Task[Boolean] =
+    Task.from(asyncCmd.hexists(key, field).toCompletableFuture).map(_.booleanValue)
 
   /**
     * Get the value of a hash field.
@@ -48,27 +53,22 @@ private[redis] trait RedisHash {
     *         A failed task with [[NoSuchElementException]] will be returned when the underlying api
     *         returns an empty publisher. i.e: when the key did not exist.
     */
-  def hget[K, V](key: K, field: K)(implicit connection: StatefulRedisConnection[K, V]): Task[V] = {
-    Task.from(connection.reactive().hget(key, field))
-  }
+  def hGet(key: K, field: K): Task[V] =
+    Task.from(asyncCmd.hget(key, field).toCompletableFuture)
 
   /**
     * Increment the integer value of a hash field by the given number.
     * @return The value at field after the increment operation.
     */
-  def hincrby[K, V](key: K, field: K, amount: Long)(
-    implicit
-    connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.reactive().hincrby(key, field, amount)).map(_.longValue)
+  def hIncrBy(key: K, field: K, amount: Long): Task[Long] =
+    Task.from(asyncCmd.hincrby(key, field, amount).toCompletableFuture).map(_.longValue)
 
   /**
     * Increment the float value of a hash field by the given amount.
     * @return The value of field after the increment.
     */
-  def hincrbyfloat[K, V](key: K, field: K, amount: Double)(
-    implicit
-    connection: StatefulRedisConnection[K, V]): Task[Double] =
-    Task.from(connection.reactive().hincrbyfloat(key, field, amount)).map(_.doubleValue)
+  def hIncrBy(key: K, field: K, amount: Double): Task[Double] =
+    Task.from(asyncCmd.hincrbyfloat(key, field, amount).toCompletableFuture).map(_.doubleValue)
 
   /**
     * Get all the fields and values in a hash.
@@ -76,56 +76,54 @@ private[redis] trait RedisHash {
     * @param key the key
     * @return Map of the fields and their values stored in the hash, or an empty list when key does not exist.
     */
-  def hgetall[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Map[K, V]] =
-    Task.from(connection.reactive().hgetall(key)).map(_.asScala.toMap)
+  def hGetAll(key: K): Task[Map[K, V]] =
+    Task.from(asyncCmd.hgetall(key).toCompletableFuture).map(_.asScala.toMap)
 
   /**
     * Get all the fields in a hash.
     * @return The fields in the hash.
     */
-  def hkeys[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Observable[K] =
-    Observable.fromReactivePublisher(connection.reactive().hkeys(key))
+  def hKeys(key: K): Observable[K] =
+    Observable.fromReactivePublisher(reactiveCmd.hkeys(key))
 
   /**
     * Get the number of fields in a hash.
     * @return Number of fields in the hash, or 0 when key does not exist.
     */
-  def hlen[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.reactive().hlen(key)).map(_.longValue)
+  def hLen(key: K): Task[Long] =
+    Task.from(asyncCmd.hlen(key).toCompletableFuture).map(_.longValue)
 
   /**
     * Get the values of all the given hash fields.
     * @return Values associated with the given fields.
     */
-  def hmget[K, V](key: K, fields: K*)(implicit connection: StatefulRedisConnection[K, V]): Observable[KeyValue[K, V]] =
-    Observable.fromReactivePublisher(connection.reactive().hmget(key, fields: _*))
+  def hmGet(key: K, fields: K*): Observable[(K, Option[V])] =
+    Observable.fromReactivePublisher(reactiveCmd.hmget(key, fields: _*)).map(kvToTuple)
 
   /**
     * Set multiple hash fields to multiple values.
     * @return Simple string reply.
     */
-  def hmset[K, V](key: K, map: Map[K, V])(implicit connection: StatefulRedisConnection[K, V]): Task[String] =
-    Task.from(connection.reactive().hmset(key, map.asJava))
+  def hmSet(key: K, map: Map[K, V]): Task[String] =
+    Task.from(asyncCmd.hmset(key, map.asJava).toCompletableFuture)
 
-  /**
+  /** todo!! create observable
     * Incrementally iterate hash fields and associated values.
     * @return Map scan cursor.
     */
-  def hscan[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[MapScanCursor[K, V]] =
-    Task.from(connection.reactive().hscan(key))
+  def hScan(key: K): Task[MapScanCursor[K, V]] =
+    Task.from(asyncCmd.hscan(key).toCompletableFuture)
 
-  def hscan[K, V](key: K, scanCursor: ScanCursor)(
-    implicit
-    connection: StatefulRedisConnection[K, V]): Task[MapScanCursor[K, V]] =
-    Task.from(connection.reactive().hscan(key, scanCursor))
+  def hScan(key: K, scanCursor: ScanCursor): Task[MapScanCursor[K, V]] =
+    Task.from(asyncCmd.hscan(key, scanCursor).toCompletableFuture)
 
   /**
     * Set the string value of a hash field.
     * @return True if field is a new field in the hash and value was set.
     *         False if field already exists in the hash and the value was updated.
     */
-  def hset[K, V](key: K, field: K, value: V)(implicit connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-    Task.from(connection.reactive().hset(key, field, value)).map(_.booleanValue)
+  def hSet(key: K, field: K, value: V): Task[Boolean] =
+    Task.from(asyncCmd.hset(key, field, value).toCompletableFuture).map(_.booleanValue)
 
   /**
     * Set the value of a hash field, only if the field does not exist.
@@ -133,23 +131,31 @@ private[redis] trait RedisHash {
     * @return True if field is a new field in the hash and value was set.
     *         False if field already exists in the hash and the value was updated.
     */
-  def hsetnx[K, V](key: K, field: K, value: V)(implicit connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-    Task.from(connection.reactive().hsetnx(key, field, value)).map(_.booleanValue)
+  def hSetNx(key: K, field: K, value: V): Task[Boolean] =
+    Task.from(asyncCmd.hsetnx(key, field, value).toCompletableFuture).map(_.booleanValue)
 
   /**
     * Get the string length of the field value in a hash.
     * @return Length of the field value, or 0 when field is not present in the hash
     *         or key does not exist at all.
     */
-  def hstrlen[K, V](key: K, field: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Long] =
-    Task.from(connection.reactive().hstrlen(key, field)).map(_.longValue)
+  def hStrLen(key: K, field: K): Task[Long] =
+    Task.from(asyncCmd.hstrlen(key, field).toCompletableFuture).map(_.longValue)
 
   /**
     * Get all the values in a hash.
     * @return Values in the hash, or an empty list when key does not exist.
     */
-  def hvals[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Observable[V] =
-    Observable.fromReactivePublisher(connection.reactive().hvals(key))
+  def hVals(key: K): Observable[V] = Observable.fromReactivePublisher(reactiveCmd.hvals(key))
 }
 
-object RedisHash extends RedisHash
+@InternalApi
+private[redis] object HashCommands {
+  def apply[K, V](
+    asyncCmd: RedisHashAsyncCommands[K, V],
+    reactiveCmd: RedisHashReactiveCommands[K, V]): HashCommands[K, V] =
+    new HashCommands[K, V] {
+      override val asyncCmd: RedisHashAsyncCommands[K, V] = asyncCmd
+      override val reactiveCmd: RedisHashReactiveCommands[K, V] = reactiveCmd
+    }
+}

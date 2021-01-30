@@ -111,12 +111,12 @@ Coming soon.
 
 ### __Server__
 
-The following code shows how to remove all keys from all dbs in redis using the server api `RedisServer` a very basic but also common use case: 
+The following code shows how to remove all keys from all dbs in redis using the server api `RedisServer` a very basic but also common use case:
 
 ```scala
-import monix.connect.redis.RedisServer
- 
-val t: Task[String] = RedisServer.flushall() //returns a simple string reply
+import monix.connect.redis.ServerCommands
+
+val t: Task[String] = ServerCommands.flushall() //returns a simple string reply
 ```
 
 ### __Sets__
@@ -228,7 +228,7 @@ ts.runToFuture() //eventually will return a failure if there was a redis server 
  modules in the same for comprehension:
 
 ```scala
-import monix.connect.redis.Redis
+import monix.connect.redis.$Commands
 import io.lettuce.core.RedisClient
 import io.lettuce.core.api.StatefulRedisConnection
 
@@ -237,22 +237,22 @@ implicit val connection: StatefulRedisConnection[String, String] = redisClient.c
 val k1: K
 val value: V
 val k2: K
-val values: List[V] 
+val values: List[V]
 val k3: K
 
 val t: Task[String, Long, List[V], List[K]] = {
   for {
-    _ <- Redis.flushallAsync()            //removes all keys
-    _ <- Redis.touch(k1)                  //creates the `k1`
-    _ <- Redis.set(k1, value)             //insert the single `value` to `k2`
-    _ <- Redis.rename(k1, k2)             //rename `k1` to `k2`
-    _ <- Redis.lpush(k3, values: _*)      //push all the elements of the list to `k3`
-    v <- Redis.get(k2)                    //get the element in `k2`
-    _ <- Redis.lpushx(k3, v)              //pre-append v to the list in `k3`
-    _ <- Redis.del(k2)                    //delete key `k2`
-    len <- Redis.llen(k3)                 //lenght of the list
-    l <- Redis.lrange(k3, 0, len).toListL //this is not safe unless you have a reasonable limit
-    keys <- Redis.keys("*").toListL       //get all the keys
+    _ <- $Commands.flushallAsync() //removes all keys
+    _ <- $Commands.touch(k1) //creates the `k1`
+    _ <- $Commands.set(k1, value) //insert the single `value` to `k2`
+    _ <- $Commands.rename(k1, k2) //rename `k1` to `k2`
+    _ <- $Commands.lpush(k3, values: _*) //push all the elements of the list to `k3`
+    v <- $Commands.get(k2) //get the element in `k2`
+    _ <- $Commands.lpushx(k3, v) //pre-append v to the list in `k3`
+    _ <- $Commands.del(k2) //delete key `k2`
+    len <- $Commands.llen(k3) //lenght of the list
+    l <- $Commands.lrange(k3, 0, len).toListL //this is not safe unless you have a reasonable limit
+    keys <- $Commands.keys("*").toListL //get all the keys
   } yield (v, len, l, keys)
 }
 

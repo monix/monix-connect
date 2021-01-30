@@ -1,28 +1,77 @@
+/*
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
+ * See the project homepage at: https://connect.monix.io
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package monix.connect.redis.client
 
 import cats.effect.Resource
-import io.lettuce.core.api.StatefulRedisConnection
+import io.lettuce.core.api.{StatefulConnection, StatefulRedisConnection}
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection
-import monix.connect.redis.{AllCommands, KeyCommands}
+import monix.connect.redis.{
+  HashCommands,
+  KeyCommands,
+  ListCommands,
+  ServerCommands,
+  SetCommands,
+  SortedSetCommands,
+  StringCommands
+}
 import monix.eval.Task
+import monix.execution.internal.InternalApi
 
-case class RedisCmd[K, V](all: AllCommands[K, V, _], key: KeyCommands[K, V])
+case class RedisCmd[K, V](
+  hash: HashCommands[K, V],
+  key: KeyCommands[K, V],
+  list: ListCommands[K, V],
+  server: ServerCommands[K, V],
+  set: SetCommands[K, V],
+  sortedSet: SortedSetCommands[K, V],
+  string: StringCommands[K, V])
 
-object RedisCmd {
+@InternalApi
+private[redis] object RedisCmd { self =>
 
-  def single[K, V](connection: StatefulRedisConnection[K, V]): RedisCmd[K, V] = {
-    val allCmd = new AllCommands(connection, connection.reactive)
-    val keyCmd = new KeyCommands[K, V](connection.reactive)
-    RedisCmd(allCmd, keyCmd)
+  private[redis] def single[K, V](conn: StatefulRedisConnection[K, V]): Task[RedisCmd[K, V]] = self.makeCmd(conn)
+
+  private[redis] def cluster[K, V](conn: StatefulRedisClusterConnection[K, V]): Task[RedisCmd[K, V]] =
+    self.makeCmd(conn)
+
+  private[this] def makeCmd[K, V](conn: StatefulConnection[K, V]): Task[RedisCmd[K, V]] = {
+    {
+      conn match {
+        case serverConn: StatefulRedisConnection[K, V] => Task((serverConn.async, serverConn.reactive))
+        case serverConn: StatefulRedisClusterConnection[K, V] => Task((serverConn.async, serverConn.reactive))
+        case _ => Task.raiseError(new NotImplementedError("Redis configuration yet supported."))
+      }
+    }.map {
+      case (asyncCmd, reactiveCmd) =>
+        RedisCmd(
+          hash = HashCommands(asyncCmd, reactiveCmd),
+          key = KeyCommands(asyncCmd, reactiveCmd),
+          list = ListCommands(asyncCmd, reactiveCmd),
+          server = ServerCommands(asyncCmd, reactiveCmd),
+          set = SetCommands(asyncCmd, reactiveCmd),
+          sortedSet = SortedSetCommands(asyncCmd, reactiveCmd),
+          string = StringCommands(asyncCmd, reactiveCmd)
+        )
+    }
   }
 
-  def cluster[K, V](connection: StatefulRedisClusterConnection[K, V]): RedisCmd[K, V] = {
-    val allCmd = new AllCommands(connection, connection.reactive)
-    val keyCmd = new KeyCommands[K, V](connection.reactive)
-    RedisCmd(allCmd, keyCmd)
-  }
-
-  private[redis] def acquireResource[K, V](createCmd: => Task[RedisCmd[K, V]]): Resource[Task, RedisCmd[K, V]] = {
-    Resource.make(createCmd)(cmd => Task.evalAsync(cmd.all.close))
+  private[redis] def connectResource[K, V, RedisConnection <: StatefulConnection[K, V]](
+    connect: Task[RedisConnection]): Resource[Task, RedisConnection] = {
+    Resource.make(connect)(connection => Task.evalAsync(connection.close()))
   }
 }

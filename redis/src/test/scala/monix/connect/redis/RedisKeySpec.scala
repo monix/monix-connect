@@ -46,7 +46,7 @@ class RedisKeySpec
     reset(reactiveRedisCommands)
     reset(reactiveRedisCommands)
   }
-
+  /*
   s"${KeyCommands} " should "extend the RedisKey trait" in {
     KeyCommands shouldBe a[KeyCommands]
   }
@@ -378,5 +378,6 @@ class RedisKeySpec
     r2.isInstanceOf[Task[KeyScanCursor[String]]] shouldBe true
     verify(reactiveRedisCommands).scan()
     verify(reactiveRedisCommands).scan(scanCursor)
-  }
+  }*/
+
 }

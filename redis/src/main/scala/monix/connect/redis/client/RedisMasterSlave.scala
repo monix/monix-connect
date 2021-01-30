@@ -17,15 +17,11 @@
 
 package monix.connect.redis.client
 
-import cats.data.NonEmptyList
 import cats.effect.Resource
-import io.lettuce.core.cluster.RedisClusterClient
 import io.lettuce.core.codec.{RedisCodec, Utf8StringCodec}
 import io.lettuce.core.masterslave.{MasterSlave, StatefulRedisMasterSlaveConnection}
-import io.lettuce.core.resource.ClientResources
 import io.lettuce.core.{ReadFrom, RedisClient, RedisURI}
 import monix.eval.Task
-import monix.execution.Scheduler
 
 import scala.jdk.CollectionConverters._
 /**
@@ -33,10 +29,9 @@ import scala.jdk.CollectionConverters._
   * They can be equally accessed independently or from this object.
   */
 object RedisMasterSlave {
-
+  /*
   def masterSlaveUtf(uri: String, readFrom: ReadFrom, redisUris: RedisURI*): StatefulRedisMasterSlaveConnection[String, String] = {
-    val client = RedisClient.create()
-    val connection = MasterSlave.connect(client, new Utf8StringCodec(), redisUris.asJava)
+    ???
   }
 
   def create[K, V](uri: String, readFrom: ReadFrom, codec: RedisCodec[K, V], redisURI: RedisURI*): StatefulRedisMasterSlaveConnection[K, V] = {
@@ -44,33 +39,17 @@ object RedisMasterSlave {
     MasterSlave.connect(client, codec, redisURI.asJava)
   }
 
-  def create[K, V](redisURI: RedisURI, readNode: ReadFrom, codec: RedisCodec[K, V]): Resource[Task, RedisCmd[String, String]] =
-    RedisCmd.acquireResource {
+  def create[K, V](redisURIs: List[RedisURI], readNode: ReadFrom, codec: RedisCodec[K, V]): Resource[Task, RedisCmd[K, V]] =
+    RedisCmd.connectResource {
       for {
         client <-Task.evalAsync(RedisClient.create())
-        connection <- Task.from(MasterSlave.connectAsync(client, codec, redisURI))
-      } yield {
-        connection.setReadFrom(readNode)
-        RedisCmd.single(connection)
-      }
+        connection <- Task.from(MasterSlave.connectAsync(client, codec, redisURIs.asJava))
+        cmd <- {
+          connection.setReadFrom(readNode)
+          RedisCmd.single(connection)
+        }
+      } yield cmd
     }
 
-  def masterSlave(uri: RedisURI): RedisClient = {
-    RedisClient.create(uri)
-  }
-
-  def masterSlave(clientResources: ClientResources): RedisClient = {
-    ClientResources.builder().eventExecutorGroup()
-    RedisClient.create(clientResources)
-  }
-
-  def masterSlave(clientResources: ClientResources, uri: String): RedisClient = {
-    RedisClient.create(clientResources, uri)
-  }
-
-  def masterSlave(clientResources: ClientResources, uri: RedisURI): RedisClient = {
-    RedisClient.create(clientResources, uri)
-  }
-
-
+ */
 }

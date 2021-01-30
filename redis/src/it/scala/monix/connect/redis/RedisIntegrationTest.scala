@@ -1,11 +1,13 @@
 package monix.connect.redis
 
 import io.lettuce.core.ScoredValue
+import monix.connect.redis.client.{Redis, RedisCmd}
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
 import org.scalacheck.Gen
 import org.scalatest.concurrent.Eventually
+import org.scalatest.concurrent.Eventually.eventually
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
@@ -18,13 +20,13 @@ class RedisIntegrationTest extends AnyFlatSpec
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
 
-  s"${RedisHash}" should "access non existing key in redis and get None" in {
+  s"${HashCommands}" should "access non existing key in redis and get None" in {
     //given
     val key: K = genRedisKey.sample.get
     val field: K = genRedisKey.sample.get
 
     //when
-    val f: Future[String] = RedisHash.hget(key, field).runToFuture(global)
+    val f: Future[String] = Redis.connect(redisUrl).use(_.hash.hGet(key, field)).runToFuture(global)
 
     //then
     eventually {
@@ -33,55 +35,54 @@ class RedisIntegrationTest extends AnyFlatSpec
     }
   }
 
-  s"${RedisString} " should "insert a string into the given key and get its size from redis" in {
+  it should "insert a single element into a hash and read it back" in {
     //given
     val key: K = genRedisKey.sample.get
-    val value: String = genRedisValue.sample.get.toString
+    val field: K = genRedisKey.sample.get
+    val value: String = genRedisValue.sample.get
 
     //when
-    RedisString.set(key, value).runSyncUnsafe()
+    Redis.connect(redisUrl).use(_.hash.hSet(key, field, value)).runSyncUnsafe()
 
     //and
-    val t: Task[Long] = RedisString.strlen(key)
+    val r: String = Redis.connect(redisUrl).use(_.hash.hGet(key, field)).runSyncUnsafe()
+
+    //then
+    r shouldBe value
+  }
+
+  s"$StringCommands" should "insert a string into the given key and get its size from redis" in {
+    //given
+    val key: K = genRedisKey.sample.get
+    val value: String = genRedisValue.sample.get
+
+    //when
+    Redis.connect(redisUrl).use(_.string.set(key, value)).runSyncUnsafe()
+
+    //and
+    val t: Task[Long] = Redis.connect(redisUrl).use(_.string.strLen(key))
 
     //then
     val lenght: Long = t.runSyncUnsafe()
     lenght shouldBe value.length
   }
 
-  s"${RedisServer} " should "insert a string into key and get its size from redis" in {
+  s"${ServerCommands} " should "insert a string into key and get its size from redis" in {
     //given
     val key: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get.toString
 
     //when
-    RedisString.set(key, value).runSyncUnsafe()
-    val beforeFlush: Long = Redis.exists(key).runSyncUnsafe()
+    Redis.connect(redisUrl).use(_.string.set(key, value)).runSyncUnsafe()
+    val beforeFlush: Long = Redis.connect(redisUrl).use(_.key.exists(key)).runSyncUnsafe()
 
     //and
-    RedisServer.flushallAsync().runSyncUnsafe()
-    val afterFlush: Task[Long] = Redis.exists(key)
+    Redis.connect(redisUrl).use(_.server.flushAll()).runSyncUnsafe()
+    val afterFlush: Long = Redis.connect(redisUrl).use(_.key.exists(key)).runSyncUnsafe()
 
     //then
     beforeFlush shouldEqual 1L
-    afterFlush.runSyncUnsafe() shouldEqual 0L
-  }
-
-  s"${RedisHash}" should "insert a single element into a hash and read it back" in {
-    //given
-    val key: K = genRedisKey.sample.get
-    val field: K = genRedisKey.sample.get
-    val value: String = genRedisValue.sample.get.toString
-
-    //when
-    RedisHash.hset(key, field, value).runSyncUnsafe()
-
-    //and
-    val t: Task[String] = RedisHash.hget(key, field)
-
-    //then
-    val r: String = t.runSyncUnsafe()
-    r shouldBe value
+    afterFlush shouldEqual 0L
   }
 
   s"${KeyCommands}" should "handles ttl correctly" in {
@@ -89,20 +90,22 @@ class RedisIntegrationTest extends AnyFlatSpec
     val key1: K = genRedisKey.sample.get
     val key2: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get.toString
-    RedisString.set(key1, value).runSyncUnsafe()
+    Redis.connect(redisUrl).use(_.string.set(key1, value)).runSyncUnsafe()
 
     //when
     val (initialTtl, expire, finalTtl, existsWithinTtl, existsRenamed, existsAfterFiveSeconds) = {
-      for {
-        initialTtl             <- KeyCommands.ttl(key1)
-        expire                 <- KeyCommands.expire(key1, 2)
-        finalTtl               <- KeyCommands.ttl(key1)
-        existsWithinTtl        <- KeyCommands.exists(key1)
-        _                      <- KeyCommands.rename(key1, key2)
-        existsRenamed          <- KeyCommands.exists(key2)
-        _                      <- Task.sleep(3.seconds)
-        existsAfterFiveSeconds <- KeyCommands.exists(key2)
-      } yield (initialTtl, expire, finalTtl, existsWithinTtl, existsRenamed, existsAfterFiveSeconds)
+      Redis.connect(redisUrl).use { case RedisCmd(_, keys, _, _, _ ,_, _) =>
+        for {
+          initialTtl <- keys.ttl(key1)
+          expire <- keys.expire(key1, 2)
+          finalTtl <- keys.ttl(key1)
+          existsWithinTtl <- keys.exists(key1)
+          _ <- keys.rename(key1, key2)
+          existsRenamed <- keys.exists(key2)
+          _ <- Task.sleep(3.seconds)
+          existsAfterFiveSeconds <- keys.exists(key2)
+        } yield (initialTtl, expire, finalTtl, existsWithinTtl, existsRenamed, existsAfterFiveSeconds)
+      }
     }.runSyncUnsafe()
 
     //then
@@ -114,23 +117,22 @@ class RedisIntegrationTest extends AnyFlatSpec
     existsAfterFiveSeconds shouldBe 0L
   }
 
-  s"${RedisList}" should "insert elements into a list and reading back the same elements" in {
+  s"${ListCommands}" should "insert elements into a list and reading back the same elements" in {
     //given
     val key: K = genRedisKey.sample.get
     val values: List[String] = genRedisValues.sample.get.map(_.toString)
 
     //when
-    RedisList.lpush(key, values: _*).runSyncUnsafe()
+    Redis.connect(redisUrl).use(_.list.lPush(key, values: _*)).runSyncUnsafe()
 
     //and
-    val ob: Observable[String] = RedisList.lrange(key, 0, values.size)
+    val l: List[String] = Redis.connect(redisUrl).use(_.list.lRange(key, 0, values.size).toListL).runSyncUnsafe()
 
     //then
-    val result: List[String] = ob.toListL.runSyncUnsafe()
-    result should contain theSameElementsAs values
+    l should contain theSameElementsAs values
   }
 
-  s"${RedisSet}" should "allow to compose nice for comprehensions" in {
+  s"${SetCommands}" should "allow to compose nice for comprehensions" in {
     //given
     val k1: K = genRedisKey.sample.get
     val m1: List[String] = genRedisValues.sample.get.map(_.toString)
@@ -140,25 +142,29 @@ class RedisIntegrationTest extends AnyFlatSpec
 
     //when
     val (size1, size2, moved) = {
-      for {
-        size1 <- RedisSet.sadd(k1, m1: _*)
-        size2 <- RedisSet.sadd(k2, m2: _*)
-        _     <- RedisSet.sadd(k3, m1: _*)
-        moved <- RedisSet.smove(k1, k2, m1.head)
-      } yield {
-        (size1, size2, moved)
+      Redis.connect(redisUrl).use { case RedisCmd(_, _, _, _, set ,_, _)  =>
+        for {
+          size1 <- set.sAdd(k1, m1: _*)
+          size2 <- set.sAdd(k2, m2: _*)
+          _ <- set.sAdd(k3, m1: _*)
+          moved <- set.sMove(k1, k2, m1.head)
+        } yield {
+          (size1, size2, moved)
+        }
       }
     }.runSyncUnsafe()
 
     //and
     val (s1, s2, union, diff) = {
-      for {
-        s1    <- RedisSet.smembers(k1).toListL
-        s2    <- RedisSet.smembers(k2).toListL
-        union <- RedisSet.sunion(k1, k2).toListL
-        diff  <- RedisSet.sdiff(k3, k1).toListL
-      } yield (s1, s2, union, diff)
-    }.runSyncUnsafe()
+      Redis.connect(redisUrl).use { case RedisCmd(_, _, _, _, set ,_, _)  =>
+        for {
+          s1    <- set.sMembers(k1).toListL
+          s2    <- set.sMembers(k2).toListL
+          union <- set.sUnion(k1, k2).toListL
+          diff  <- set.sDiff(k3, k1).toListL
+        } yield (s1, s2, union, diff)
+      }.runSyncUnsafe()
+    }
 
     //then
     size1 shouldBe m1.size
@@ -174,7 +180,7 @@ class RedisIntegrationTest extends AnyFlatSpec
     //the difference between the k3 and k1 is equal to the element that was moved
   }
 
-  s"${RedisSortedSet}" should "insert elements into a with no order and reading back sorted" in {
+  s"${SortedSetCommands}" should "insert elements into a with no order and reading back sorted" in {
     //given
     val k: K = genRedisKey.sample.get
     val v0: String = Gen.alphaLowerStr.sample.get
@@ -186,15 +192,17 @@ class RedisIntegrationTest extends AnyFlatSpec
     val incrby: Double = 2
 
     //when
-    RedisSortedSet.zadd(k, minScore, v0)
-    val t: Task[(ScoredValue[String], ScoredValue[String])] = for {
-      _   <- RedisSortedSet.zadd(k, minScore, v0)
-      _   <- RedisSortedSet.zadd(k, middleScore, v1)
-      _   <- RedisSortedSet.zadd(k, maxScore, v2)
-      _   <- RedisSortedSet.zincrby(k, incrby, v1)
-      min <- RedisSortedSet.zpopmin(k)
-      max <- RedisSortedSet.zpopmax(k)
-    } yield (min, max)
+    val t: Task[(ScoredValue[String], ScoredValue[String])] =
+      Redis.connect(redisUrl).use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+        for {
+          _ <- sortedSet.zAdd(k, minScore, v0)
+          _ <- sortedSet.zAdd(k, middleScore, v1)
+          _ <- sortedSet.zAdd(k, maxScore, v2)
+          _ <- sortedSet.zIncrBy(k, incrby, v1)
+          min <- sortedSet.zPopMin(k)
+          max <- sortedSet.zPopMax(k)
+        } yield (min, max)
+      }
 
     //then
     val (min, max) = t.runSyncUnsafe()
@@ -204,7 +212,7 @@ class RedisIntegrationTest extends AnyFlatSpec
     max.getValue shouldBe v1
   }
 
-  s"${Redis}" should "allow to composition of different Redis submodules" in {
+  s"$Redis" should "allow to composition of different Redis submodules" in {
     //given
     val k1: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get.toString
@@ -213,19 +221,21 @@ class RedisIntegrationTest extends AnyFlatSpec
     val k3: K = genRedisKey.sample.get
 
     val (v: String, len: Long, l: List[String], keys: List[String]) = {
-      for {
-        _    <- Redis.flushallAsync()
-        _    <- KeyCommands.touch(k1)
-        _    <- RedisString.set(k1, value)
-        _    <- KeyCommands.rename(k1, k2)
-        _    <- RedisList.lpush(k3, values: _*)
-        v    <- RedisString.get(k2): Task[String]
-        _    <- RedisList.lpushx(k3, v)
-        _    <- KeyCommands.del(k2)
-        len  <- RedisList.llen(k3): Task[Long]
-        l    <- RedisList.lrange(k3, 0, len).toListL
-        keys <- Redis.keys("*").toListL
-      } yield (v, len, l, keys)
+      Redis.connect(redisUrl).use { case RedisCmd(_, keys, list, server, _, _, string) =>
+        for {
+          _ <- server.flushAll()
+          _ <- keys.touch(k1)
+          _ <- string.set(k1, value)
+          _ <- keys.rename(k1, k2)
+          _ <- list.lPush(k3, values: _*)
+          v <- string.get(k2): Task[String]
+          _ <- list.lPushX(k3, v)
+          _ <- keys.del(k2)
+          len <- list.lLen(k3): Task[Long]
+          l <- list.lRange(k3, 0, len).toListL
+          keys <- keys.keys("*").toListL
+        } yield (v, len, l, keys)
+      }
     }.runSyncUnsafe()
 
     v shouldBe value

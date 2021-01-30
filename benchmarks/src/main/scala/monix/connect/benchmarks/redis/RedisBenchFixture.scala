@@ -55,5 +55,5 @@ trait RedisBenchFixture {
 
   val maxKey: Int = 5000
 
-  def flushdb = redis.Redis.flushdbAsync().runSyncUnsafe()
+  def flushdb = redis.$Commands.flushdbAsync().runSyncUnsafe()
 }

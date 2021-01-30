@@ -40,31 +40,32 @@ class RedisSpec
     reset(reactiveRedisCommands)
   }
 
-  s"${Redis} " should {
+  /*
+  s"${$Commands} " should {
     " implement RedisKey" in {
-      Redis shouldBe a[KeyCommands]
+      $Commands shouldBe a[KeyCommands]
     }
     "implement RedisHash" in {
-      Redis shouldBe a[RedisHash]
+      $Commands shouldBe a[HashCommands]
     }
     "implement RedisList" in {
-      Redis shouldBe a[RedisList]
+      $Commands shouldBe a[ListCommands]
     }
     "implement RedisPubSub" in {
-      Redis shouldBe a[RedisPubSub]
+      $Commands shouldBe a[RedisPubSub]
     }
     "implement RedisSet" in {
-      Redis shouldBe a[RedisSet]
+      $Commands shouldBe a[SetCommands]
     }
     "implement RedisSortedSet" in {
-      Redis shouldBe a[RedisSortedSet]
+      $Commands shouldBe a[SortedSetCommands]
     }
     "implement RedisStream" in {
-      Redis shouldBe a[RedisStream]
+      $Commands shouldBe a[RedisStream]
     }
     "implement RedisString" in {
-      Redis shouldBe a[RedisString]
+      $Commands shouldBe a[StringCommands]
     }
   }
-
+*/
 }
