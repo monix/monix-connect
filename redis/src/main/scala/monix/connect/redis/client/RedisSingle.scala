@@ -15,23 +15,35 @@
  * limitations under the License.
  */
 
-package monix.connect.redis
+package monix.connect.redis.client
 
+import cats.effect.Resource
 import io.lettuce.core.cluster.RedisClusterClient
 import io.lettuce.core.codec.RedisCodec
 import io.lettuce.core.masterslave.MasterSlave
-import io.lettuce.core.{RedisClient, RedisURI}
 import io.lettuce.core.resource.ClientResources
+import io.lettuce.core.{RedisClient, RedisURI}
+import monix.eval.Task
 
 /**
   * An object that provides an aggregation of all the different Redis Apis.
   * They can be equally accessed independently or from this object.
   */
-object Redis
-  extends RedisHash with RedisList with RedisPubSub with RedisSet with RedisSortedSet with RedisStream
-  with RedisString with RedisServer {
+object RedisSingle {
 
+  def create(uri: String): Resource[Task, RedisCmd[String, String]] =
+    RedisCmd.acquireResource {
+      Task.evalAsync(RedisClient.create(uri).connect).map(RedisCmd.single)
+    }
 
+  def create(uri: RedisURI): Resource[Task, RedisCmd[String, String]] =
+    RedisCmd.acquireResource {
+      Task.evalAsync(RedisClient.create(uri).connect).map(RedisCmd.single)
+    }
 
+  def create[K, V](uri: RedisURI, codec: RedisCodec[K, V]): Resource[Task, RedisCmd[K, V]] =
+    RedisCmd.acquireResource {
+      Task.evalAsync(RedisClient.create(uri).connect(codec)).map(RedisCmd.single)
+    }
 
 }

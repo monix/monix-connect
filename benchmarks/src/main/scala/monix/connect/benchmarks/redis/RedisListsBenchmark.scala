@@ -23,7 +23,8 @@ import laserdisc.{Index, Key, all => cmd}
 import monix.connect.redis.RedisList
 import monix.execution.Scheduler.Implicits.global
 import org.openjdk.jmh.annotations._
-
+import dev.profunktor.redis4cats.data.RedisCodec
+import dev.profunktor.redis4cats.codecs.splits.stringDoubleEpi
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
@@ -178,7 +179,7 @@ class RedisListsBenchmark extends RedisBenchFixture {
 
   @Benchmark
   def redis4catsListRangeReader(): Unit = {
-    val f = redis4catsConn.use(c => c.lRange(keysCycle.next, lowerBoundary, upperBoundary)).unsafeToFuture
+    val f = redis4catsConn.use(c => c.lRaange(keysCycle.next, lowerBoundary, upperBoundary)).unsafeToFuture
     Await.ready(f, 1.seconds)
   }
 }

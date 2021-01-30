@@ -84,7 +84,7 @@ class RedisIntegrationTest extends AnyFlatSpec
     r shouldBe value
   }
 
-  s"${RedisKey}" should "handles ttl correctly" in {
+  s"${KeyCommands}" should "handles ttl correctly" in {
     //given
     val key1: K = genRedisKey.sample.get
     val key2: K = genRedisKey.sample.get
@@ -94,14 +94,14 @@ class RedisIntegrationTest extends AnyFlatSpec
     //when
     val (initialTtl, expire, finalTtl, existsWithinTtl, existsRenamed, existsAfterFiveSeconds) = {
       for {
-        initialTtl             <- RedisKey.ttl(key1)
-        expire                 <- RedisKey.expire(key1, 2)
-        finalTtl               <- RedisKey.ttl(key1)
-        existsWithinTtl        <- RedisKey.exists(key1)
-        _                      <- RedisKey.rename(key1, key2)
-        existsRenamed          <- RedisKey.exists(key2)
+        initialTtl             <- KeyCommands.ttl(key1)
+        expire                 <- KeyCommands.expire(key1, 2)
+        finalTtl               <- KeyCommands.ttl(key1)
+        existsWithinTtl        <- KeyCommands.exists(key1)
+        _                      <- KeyCommands.rename(key1, key2)
+        existsRenamed          <- KeyCommands.exists(key2)
         _                      <- Task.sleep(3.seconds)
-        existsAfterFiveSeconds <- RedisKey.exists(key2)
+        existsAfterFiveSeconds <- KeyCommands.exists(key2)
       } yield (initialTtl, expire, finalTtl, existsWithinTtl, existsRenamed, existsAfterFiveSeconds)
     }.runSyncUnsafe()
 
@@ -215,13 +215,13 @@ class RedisIntegrationTest extends AnyFlatSpec
     val (v: String, len: Long, l: List[String], keys: List[String]) = {
       for {
         _    <- Redis.flushallAsync()
-        _    <- RedisKey.touch(k1)
+        _    <- KeyCommands.touch(k1)
         _    <- RedisString.set(k1, value)
-        _    <- RedisKey.rename(k1, k2)
+        _    <- KeyCommands.rename(k1, k2)
         _    <- RedisList.lpush(k3, values: _*)
         v    <- RedisString.get(k2): Task[String]
         _    <- RedisList.lpushx(k3, v)
-        _    <- RedisKey.del(k2)
+        _    <- KeyCommands.del(k2)
         len  <- RedisList.llen(k3): Task[Long]
         l    <- RedisList.lrange(k3, 0, len).toListL
         keys <- Redis.keys("*").toListL

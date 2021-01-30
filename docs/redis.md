@@ -33,7 +33,7 @@ On continuation let's show an example for each of the redis data group:
 The following example uses the redis keys api `RedisKey` to show a little example on working with some basic key operations.
 
 ```scala
-import monix.connect.redis.RedisKey
+import monix.connect.redis.KeyCommands
 
 //given two keys and a value
 val key1: K // assuming that k1 initially exists
@@ -43,14 +43,14 @@ val value: String
 //when
 val t: Task[Long, Boolean, Long, Long, Long, Long] = {
   for {
-    initialTtl <- RedisKey.ttl(key1)          //checks the ttl when it hasn't been set yet
-    expire <-  RedisKey.expire(key1, 5)       //sets the ttl to 5 seconds
-    finalTtl <- RedisKey.ttl(key1)            //checks the ttl again
-    existsWithinTtl <- RedisKey.exists(key1)  //checks whether k1 exists or not
-    _ <- RedisKey.rename(key1, key2)          //renames k1 to k2
-    existsRenamed <- RedisKey.exists(key2)    //checks that it exists after being renamed
+    initialTtl <- KeyCommands.ttl(key1) //checks the ttl when it hasn't been set yet
+    expire <- KeyCommands.expire(key1, 5) //sets the ttl to 5 seconds
+    finalTtl <- KeyCommands.ttl(key1) //checks the ttl again
+    existsWithinTtl <- KeyCommands.exists(key1) //checks whether k1 exists or not
+    _ <- KeyCommands.rename(key1, key2) //renames k1 to k2
+    existsRenamed <- KeyCommands.exists(key2) //checks that it exists after being renamed
     _ <- Task.sleep(6.seconds)
-    existsAfterFiveSeconds <- RedisKey.exists(key2) //after 6 seconds checks ttl again
+    existsAfterFiveSeconds <- KeyCommands.exists(key2) //after 6 seconds checks ttl again
   } yield (initialTtl, expire, finalTtl, existsWithinTtl, existsRenamed, existsAfterFiveSeconds)
 }
 

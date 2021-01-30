@@ -42,7 +42,7 @@ class RedisSpec
 
   s"${Redis} " should {
     " implement RedisKey" in {
-      Redis shouldBe a[RedisKey]
+      Redis shouldBe a[KeyCommands]
     }
     "implement RedisHash" in {
       Redis shouldBe a[RedisHash]

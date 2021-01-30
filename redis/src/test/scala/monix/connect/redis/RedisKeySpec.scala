@@ -47,8 +47,8 @@ class RedisKeySpec
     reset(reactiveRedisCommands)
   }
 
-  s"${RedisKey} " should "extend the RedisKey trait" in {
-    RedisKey shouldBe a[RedisKey]
+  s"${KeyCommands} " should "extend the RedisKey trait" in {
+    KeyCommands shouldBe a[KeyCommands]
   }
 
   it should "implement del operation" in {
@@ -57,7 +57,7 @@ class RedisKeySpec
     when(reactiveRedisCommands.del(k: _*)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val _: Task[Long] = RedisKey.del(k: _*)
+    val _: Task[Long] = KeyCommands.del(k: _*)
 
     //then
     verify(reactiveRedisCommands).del(k: _*)
@@ -69,7 +69,7 @@ class RedisKeySpec
     when(reactiveRedisCommands.unlink(k: _*)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val _: Task[Long] = RedisKey.unlink(k: _*)
+    val _: Task[Long] = KeyCommands.unlink(k: _*)
 
     //then
     verify(reactiveRedisCommands).unlink(k: _*)
@@ -81,7 +81,7 @@ class RedisKeySpec
     when(reactiveRedisCommands.dump(k)).thenReturn(mockMono[Array[Byte]])
 
     //when
-    val _: Task[Array[Byte]] = RedisKey.dump(k)
+    val _: Task[Array[Byte]] = KeyCommands.dump(k)
 
     //then
     verify(reactiveRedisCommands).dump(k)
@@ -93,7 +93,7 @@ class RedisKeySpec
     when(reactiveRedisCommands.exists(keys: _*)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val _: Task[Long] = RedisKey.exists(keys: _*)
+    val _: Task[Long] = KeyCommands.exists(keys: _*)
 
     //then
     verify(reactiveRedisCommands).exists(keys: _*)
@@ -106,7 +106,7 @@ class RedisKeySpec
     when(reactiveRedisCommands.expire(k, seconds)).thenReturn(mockMono[java.lang.Boolean])
 
     //when
-    val _: Task[Boolean] = RedisKey.expire(k, seconds)
+    val _: Task[Boolean] = KeyCommands.expire(k, seconds)
 
     //then
     verify(reactiveRedisCommands).expire(k, seconds)
@@ -121,8 +121,8 @@ class RedisKeySpec
     when(reactiveRedisCommands.expireat(k, timestamp)).thenReturn(mockMono[java.lang.Boolean])
 
     //when
-    val r1: Task[Boolean] = RedisKey.expireat(k, date)
-    val r2: Task[Boolean] = RedisKey.expireat(k, timestamp)
+    val r1: Task[Boolean] = KeyCommands.expireat(k, date)
+    val r2: Task[Boolean] = KeyCommands.expireat(k, timestamp)
 
     //then
     r1.isInstanceOf[Task[Boolean]] shouldBe true
@@ -137,7 +137,7 @@ class RedisKeySpec
     when(reactiveRedisCommands.keys(k)).thenReturn(mockFlux[K])
 
     //when
-    val _: Observable[K] = RedisKey.keys(k)
+    val _: Observable[K] = KeyCommands.keys(k)
 
     //then
     verify(reactiveRedisCommands).keys(k)
@@ -153,7 +153,7 @@ class RedisKeySpec
     when(reactiveRedisCommands.migrate(host, port, k, db, timestamp)).thenReturn(mockMono[String])
 
     //when
-    val _: Task[String] = RedisKey.migrate(host, port, k, db, timestamp)
+    val _: Task[String] = KeyCommands.migrate(host, port, k, db, timestamp)
 
     //then
     verify(reactiveRedisCommands).migrate(host, port, k, db, timestamp)
@@ -166,7 +166,7 @@ class RedisKeySpec
     when(reactiveRedisCommands.move(k, db)).thenReturn(mockMono[java.lang.Boolean])
 
     //when
-    val _: Task[Boolean] = RedisKey.move(k, db)
+    val _: Task[Boolean] = KeyCommands.move(k, db)
 
     //then
     verify(reactiveRedisCommands).move(k, db)
@@ -178,7 +178,7 @@ class RedisKeySpec
     when(reactiveRedisCommands.objectEncoding(k)).thenReturn(mockMono[String])
 
     //when
-    val _: Task[String] = RedisKey.objectEncoding(k)
+    val _: Task[String] = KeyCommands.objectEncoding(k)
 
     //then
     verify(reactiveRedisCommands).objectEncoding(k)
@@ -190,7 +190,7 @@ class RedisKeySpec
     when(reactiveRedisCommands.objectIdletime(k)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val _: Task[Long] = RedisKey.objectIdletime(k)
+    val _: Task[Long] = KeyCommands.objectIdletime(k)
 
     //then
     verify(reactiveRedisCommands).objectIdletime(k)
@@ -202,7 +202,7 @@ class RedisKeySpec
     when(reactiveRedisCommands.objectRefcount(k)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val _: Task[Long] = RedisKey.objectRefcount(k)
+    val _: Task[Long] = KeyCommands.objectRefcount(k)
 
     //then
     verify(reactiveRedisCommands).objectRefcount(k)
@@ -214,7 +214,7 @@ class RedisKeySpec
     when(reactiveRedisCommands.persist(k)).thenReturn(mockMono[java.lang.Boolean])
 
     //when
-    val _: Task[Boolean] = RedisKey.persist(k)
+    val _: Task[Boolean] = KeyCommands.persist(k)
 
     //then
     verify(reactiveRedisCommands).persist(k)
@@ -227,7 +227,7 @@ class RedisKeySpec
     when(reactiveRedisCommands.pexpire(k, milliseconds)).thenReturn(mockMono[java.lang.Boolean])
 
     //when
-    val _: Task[Boolean] = RedisKey.pexpire(k, milliseconds)
+    val _: Task[Boolean] = KeyCommands.pexpire(k, milliseconds)
 
     //then
     verify(reactiveRedisCommands).pexpire(k, milliseconds)
@@ -242,8 +242,8 @@ class RedisKeySpec
     when(reactiveRedisCommands.pexpireat(k, timestamp)).thenReturn(mockMono[java.lang.Boolean])
 
     //when
-    val r1: Task[Boolean] = RedisKey.pexpireat(k, date)
-    val r2: Task[Boolean] = RedisKey.pexpireat(k, timestamp)
+    val r1: Task[Boolean] = KeyCommands.pexpireat(k, date)
+    val r2: Task[Boolean] = KeyCommands.pexpireat(k, timestamp)
 
     //then
     r1.isInstanceOf[Task[Boolean]] shouldBe true
@@ -258,7 +258,7 @@ class RedisKeySpec
     when(reactiveRedisCommands.pttl(k)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val _: Task[Long] = RedisKey.pttl(k)
+    val _: Task[Long] = KeyCommands.pttl(k)
 
     //then
     verify(reactiveRedisCommands).pttl(k)
@@ -269,7 +269,7 @@ class RedisKeySpec
     when(reactiveRedisCommands.randomkey()).thenReturn(mockMono[Int])
 
     //when
-    val _: Task[V] = RedisKey.randomkey()
+    val _: Task[V] = KeyCommands.randomkey()
 
     //then
     verify(reactiveRedisCommands).randomkey()
@@ -282,7 +282,7 @@ class RedisKeySpec
     when(reactiveRedisCommands.rename(k, newKey)).thenReturn(mockMono[String])
 
     //when
-    val _: Task[String] = RedisKey.rename(k, newKey)
+    val _: Task[String] = KeyCommands.rename(k, newKey)
 
     //then
     verify(reactiveRedisCommands).rename(k, newKey)
@@ -295,7 +295,7 @@ class RedisKeySpec
     when(reactiveRedisCommands.renamenx(k, newKey)).thenReturn(mockMono[java.lang.Boolean])
 
     //when
-    val _: Task[Boolean] = RedisKey.renamenx(k, newKey)
+    val _: Task[Boolean] = KeyCommands.renamenx(k, newKey)
 
     //then
     verify(reactiveRedisCommands).renamenx(k, newKey)
@@ -309,7 +309,7 @@ class RedisKeySpec
     when(reactiveRedisCommands.restore(k, ttl, v)).thenReturn(mockMono[String])
 
     //when
-    val _: Task[String] = RedisKey.restore(k, ttl, v)
+    val _: Task[String] = KeyCommands.restore(k, ttl, v)
 
     //then
     verify(reactiveRedisCommands).restore(k, ttl, v)
@@ -321,7 +321,7 @@ class RedisKeySpec
     when(reactiveRedisCommands.sort(k)).thenReturn(mockFlux[V])
 
     //when
-    val _: Observable[V] = RedisKey.sort(k)
+    val _: Observable[V] = KeyCommands.sort(k)
 
     //then
     verify(reactiveRedisCommands).sort(k)
@@ -333,7 +333,7 @@ class RedisKeySpec
     when(reactiveRedisCommands.touch(k: _*)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val _: Task[Long] = RedisKey.touch(k: _*)
+    val _: Task[Long] = KeyCommands.touch(k: _*)
 
     //then
     verify(reactiveRedisCommands).touch(k: _*)
@@ -345,7 +345,7 @@ class RedisKeySpec
     when(reactiveRedisCommands.ttl(k)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val _: Task[Long] = RedisKey.ttl(k)
+    val _: Task[Long] = KeyCommands.ttl(k)
 
     //then
     verify(reactiveRedisCommands).ttl(k)
@@ -357,7 +357,7 @@ class RedisKeySpec
     when(reactiveRedisCommands.`type`(k)).thenReturn(mockMono[String])
 
     //when
-    val _: Task[String] = RedisKey.`type`(k)
+    val _: Task[String] = KeyCommands.`type`(k)
 
     //then
     verify(reactiveRedisCommands).`type`(k)
@@ -370,8 +370,8 @@ class RedisKeySpec
     when(reactiveRedisCommands.scan(scanCursor)).thenReturn(mockMono[KeyScanCursor[K]])
 
     //when
-    val r1: Task[KeyScanCursor[String]] = RedisKey.scan()
-    val r2: Task[KeyScanCursor[String]] = RedisKey.scan(scanCursor)
+    val r1: Task[KeyScanCursor[String]] = KeyCommands.scan()
+    val r2: Task[KeyScanCursor[String]] = KeyCommands.scan(scanCursor)
 
     //then
     r1.isInstanceOf[Task[KeyScanCursor[String]]] shouldBe true
