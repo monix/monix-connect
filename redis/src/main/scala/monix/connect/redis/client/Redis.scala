@@ -39,9 +39,16 @@ object Redis {
        Task.evalAsync(RedisClient.create(uri.toJava).connect)
      }.evalMap(RedisCmd.single)
 
-  //def connect[K, V](uri: RedisURI, codec: RedisCodec[K, V]): Resource[Task, RedisCmd[K, V]] =
-  //  RedisCmd.connectResource {
-  //    Task.evalAsync(RedisClient.create(uri).connect(codec))
-  //  }.evalMap(RedisCmd.single(_))
+
+  def connectWithCodec[K, V](uri: String)(implicit keyCodec: KeyCodec[K], valueCodec: ValueCodec[V]): Resource[Task, RedisCmd[K, V]] =
+    RedisCmd.connectResource {
+      Task.evalAsync(RedisClient.create(uri).connect(Codec(keyCodec, valueCodec)))
+    }.evalMap(RedisCmd.single(_))
+
+
+  def connectWithCodec[K, V](uri: RedisURI)(implicit keyCodec: KeyCodec[K], valueCodec: ValueCodec[V]): Resource[Task, RedisCmd[K, V]] =
+     RedisCmd.connectResource {
+       Task.evalAsync(RedisClient.create(uri).connect(Codec(keyCodec, valueCodec)))
+     }.evalMap(RedisCmd.single(_))
 
 }

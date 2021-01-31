@@ -15,6 +15,4 @@ trait RedisIntegrationFixture {
     values <- Gen.listOfN(n, Gen.choose(0, 10000))
   } yield values.map(_.toString)
 
-  implicit val connection: StatefulRedisConnection[String, String] = RedisClient.create(redisUrl).connect()
-
 }
