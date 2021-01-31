@@ -20,16 +20,8 @@ package monix.connect.redis.client
 import cats.effect.Resource
 import io.lettuce.core.api.{StatefulConnection, StatefulRedisConnection}
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection
-import monix.connect.redis.{
-  HashCommands,
-  KeyCommands,
-  ListCommands,
-  ServerCommands,
-  SetCommands,
-  SortedSetCommands,
-  StringCommands
-}
-import monix.eval.Task
+import monix.connect.redis.{HashCommands, KeyCommands, ListCommands, ServerCommands, SetCommands, SortedSetCommands, StringCommands}
+import monix.eval.{Coeval, Task}
 import monix.execution.internal.InternalApi
 
 case class RedisCmd[K, V](
@@ -52,20 +44,19 @@ private[redis] object RedisCmd { self =>
   private[this] def makeCmd[K, V](conn: StatefulConnection[K, V]): Task[RedisCmd[K, V]] = {
     {
       conn match {
-        case serverConn: StatefulRedisConnection[K, V] => Task((serverConn.async, serverConn.reactive))
-        case serverConn: StatefulRedisClusterConnection[K, V] => Task((serverConn.async, serverConn.reactive))
+        case serverConn: StatefulRedisConnection[K, V] => Task(serverConn.reactive)
+        case serverConn: StatefulRedisClusterConnection[K, V] => Task(serverConn.reactive)
         case _ => Task.raiseError(new NotImplementedError("Redis configuration yet supported."))
       }
-    }.map {
-      case (asyncCmd, reactiveCmd) =>
+    }.map { cmd =>
         RedisCmd(
-          hash = HashCommands(asyncCmd, reactiveCmd),
-          key = KeyCommands(asyncCmd, reactiveCmd),
-          list = ListCommands(asyncCmd, reactiveCmd),
-          server = ServerCommands(asyncCmd, reactiveCmd),
-          set = SetCommands(asyncCmd, reactiveCmd),
-          sortedSet = SortedSetCommands(asyncCmd, reactiveCmd),
-          string = StringCommands(asyncCmd, reactiveCmd)
+          hash = HashCommands(cmd),
+          key = KeyCommands(cmd),
+          list = ListCommands(cmd),
+          server = ServerCommands(cmd),
+          set = SetCommands(cmd),
+          sortedSet = SortedSetCommands(cmd),
+          string = StringCommands(cmd)
         )
     }
   }

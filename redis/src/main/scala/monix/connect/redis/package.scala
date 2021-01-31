@@ -28,5 +28,11 @@ package object redis {
   def kvToTuple[K, V](kv: KeyValue[K, V]): (K, Option[V]) = {
     (kv.getKey, Try(kv.getValue).toOption)
   }
-
+  private[redis] implicit val fromMono: TaskLike[Mono] = new TaskLike[Mono] {
+    def apply[A](m: Mono[A]): Task[A] =
+      Task.fromReactivePublisher(m).flatMap { op =>
+        if (op.nonEmpty) Task.now(op.get)
+        else Task.raiseError(new NoSuchElementException("The result from the executed redis operation was empty."))
+      }
+  }
 }

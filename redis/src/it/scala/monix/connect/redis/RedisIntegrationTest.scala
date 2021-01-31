@@ -14,6 +14,7 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.util.Success
 
 class RedisIntegrationTest extends AnyFlatSpec
   with RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll with Eventually {
@@ -132,7 +133,7 @@ class RedisIntegrationTest extends AnyFlatSpec
     l should contain theSameElementsAs values
   }
 
-  s"${SetCommands}" should "allow to compose nice for comprehensions" in {
+  s"$SetCommands" should "allow to compose nice for comprehensions" in {
     //given
     val k1: K = genRedisKey.sample.get
     val m1: List[String] = genRedisValues.sample.get.map(_.toString)

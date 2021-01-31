@@ -27,10 +27,7 @@ import monix.reactive.Observable
 /**
   * @see The reference to lettuce api [[io.lettuce.core.api.reactive.RedisSetReactiveCommands]]
   */
-private[redis] trait SetCommands[K, V] {
-
-  protected val asyncCmd: RedisSetAsyncCommands[K, V]
-  protected val reactiveCmd: RedisSetReactiveCommands[K, V]
+private[redis] class SetCommands[K, V](reactiveCmd: RedisSetReactiveCommands[K, V]) {
 
   /**
     * Add one or more members to a set.
@@ -38,14 +35,14 @@ private[redis] trait SetCommands[K, V] {
     *         present into the set.
     */
   def sAdd(key: K, members: V*): Task[Long] =
-    Task.from(asyncCmd.sadd(key, members: _*).toCompletableFuture).map(_.longValue)
+    Task.from(reactiveCmd.sadd(key, members: _*)).map(_.longValue)
 
   /** todo - false if the key does not exist?
     * Get the number of members in a set.
     * @return The cardinality (number of elements) of the set, or false if the key does not exist.
     */
   def sCard(key: K): Task[Long] =
-    Task.from(asyncCmd.scard(key).toCompletableFuture).map(_.longValue)
+    Task.from(reactiveCmd.scard(key)).map(_.longValue)
 
   /**
     * Subtract multiple sets.
@@ -59,7 +56,7 @@ private[redis] trait SetCommands[K, V] {
     * @return The number of elements in the resulting set.
     */
   def sDiffStore(destination: K, keys: K*): Task[Long] =
-    Task.from(asyncCmd.sdiffstore(destination, keys: _*).toCompletableFuture).map(_.longValue)
+    Task.from(reactiveCmd.sdiffstore(destination, keys: _*)).map(_.longValue)
 
   /**
     * Intersect multiple sets.
@@ -73,7 +70,7 @@ private[redis] trait SetCommands[K, V] {
     * @return The number of elements in the resulting set.
     */
   def sInterStore(destination: K, keys: K*): Task[java.lang.Long] =
-    Task.from(asyncCmd.sinterstore(destination, keys: _*).toCompletableFuture)
+    Task.from(reactiveCmd.sinterstore(destination, keys: _*))
 
   /**
     * Determine if a given value is a member of a set.
@@ -81,7 +78,7 @@ private[redis] trait SetCommands[K, V] {
     *         False if the element is not a member of the set, or if key does not exist.
     */
   def sIsMember(key: K, member: V): Task[Boolean] =
-    Task.from(asyncCmd.sismember(key, member).toCompletableFuture).map(_.booleanValue)
+    Task.from(reactiveCmd.sismember(key, member)).map(_.booleanValue)
 
   /**
     * Move a member from one set to another.
@@ -89,7 +86,7 @@ private[redis] trait SetCommands[K, V] {
     *         False if the element is not a member of source and no operation was performed.
     */
   def sMove(source: K, destination: K, member: V): Task[Boolean] =
-    Task.from(asyncCmd.smove(source, destination, member).toCompletableFuture).map(_.booleanValue)
+    Task.from(reactiveCmd.smove(source, destination, member)).map(_.booleanValue)
 
   /**
     * Get all the members in a set.
@@ -103,7 +100,7 @@ private[redis] trait SetCommands[K, V] {
     * @return The removed element, or null when key does not exist.
     */
   def sPop(key: K): Task[V] =
-    Task.from(asyncCmd.spop(key).toCompletableFuture)
+    Task.from(reactiveCmd.spop(key))
 
   /**
     * Remove and return one or multiple random members from a set.
@@ -118,7 +115,7 @@ private[redis] trait SetCommands[K, V] {
     *         randomly selected element, or null when key does not exist.
     */
   def sRandMember(key: K): Task[V] =
-    Task.from(asyncCmd.srandmember(key).toCompletableFuture)
+    Task.from(reactiveCmd.srandmember(key))
 
   /**
     * Get one or multiple random members from a set.
@@ -133,7 +130,7 @@ private[redis] trait SetCommands[K, V] {
     * @return Long hat represents the number of members that were removed from the set, not including non existing members.
     */
   def sRem(key: K, members: V*): Task[Long] =
-    Task.from(asyncCmd.srem(key, members: _*).toCompletableFuture).map(_.longValue)
+    Task.from(reactiveCmd.srem(key, members: _*)).map(_.longValue)
 
   /**
     * Add multiple sets.
@@ -147,23 +144,19 @@ private[redis] trait SetCommands[K, V] {
     * @return Long that represents the number of elements in the resulting set.
     */
   def sUnionStore(destination: K, keys: K*): Task[Long] =
-    Task.from(asyncCmd.sunionstore(destination, keys: _*).toCompletableFuture).map(_.longValue)
+    Task.from(reactiveCmd.sunionstore(destination, keys: _*)).map(_.longValue)
 
   /**
     * Incrementally iterate Set elements.
     * @return Scan cursor.
     */
   def sScan(key: K): Task[ValueScanCursor[V]] =
-    Task.from(asyncCmd.sscan(key).toCompletableFuture)
+    Task.from(reactiveCmd.sscan(key))
 
 }
 
 object SetCommands {
-  def apply[K, V](
-    asyncCmd: RedisSetAsyncCommands[K, V],
-    reactiveCmd: RedisSetReactiveCommands[K, V]): SetCommands[K, V] =
-    new SetCommands[K, V] {
-      override val asyncCmd: RedisSetAsyncCommands[K, V] = asyncCmd
-      override val reactiveCmd: RedisSetReactiveCommands[K, V] = reactiveCmd
-    }
+  def apply[K, V](reactiveCmd: RedisSetReactiveCommands[K, V]): SetCommands[K, V] =
+    new SetCommands[K, V](reactiveCmd)
+
 }

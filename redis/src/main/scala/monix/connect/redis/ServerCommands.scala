@@ -29,17 +29,14 @@ import scala.jdk.CollectionConverters._
   * @see The reference Lettuce Api at:
   *      [[io.lettuce.core.api.reactive.RedisServerReactiveCommands]]
   */
-private[redis] trait ServerCommands[K, V] {
-
-  protected val asyncCmd: RedisServerAsyncCommands[K, V]
-  protected val reactiveCmd: RedisServerReactiveCommands[K, V]
+private[redis] class ServerCommands[K, V](reactiveCmd: RedisServerReactiveCommands[K, V]) {
 
   /**
     * Asynchronously rewrite the append-only file.
     * @return Always OK.
     */
   def bgRewriteAOF: Task[String] =
-    Task.from(asyncCmd.bgrewriteaof().toCompletableFuture)
+    Task.from(reactiveCmd.bgrewriteaof())
 
   /**
     * Asynchronously save the dataset to disk.
@@ -47,14 +44,14 @@ private[redis] trait ServerCommands[K, V] {
     * @return Simple string reply
     */
   def bgSave: Task[String] =
-    Task.from(asyncCmd.bgsave().toCompletableFuture)
+    Task.from(reactiveCmd.bgsave())
 
   /**
     * Get the current connection name.
     * @return The connection name, or a null bulk reply if no name is set.
     */
   def clientGetName: Task[String] =
-    Task.from(asyncCmd.bgsave().toCompletableFuture)
+    Task.from(reactiveCmd.bgsave())
 
   /**
     * Set the current connection name.
@@ -62,14 +59,14 @@ private[redis] trait ServerCommands[K, V] {
     * @return OK if the connection name was successfully set.
     */
   def clientSetName(name: K): Task[String] =
-    Task.from(asyncCmd.bgsave().toCompletableFuture)
+    Task.from(reactiveCmd.bgsave())
 
   /**
     * Kill the connection of a client identified by ip:port.
     * @return OK if the connection exists and has been closed.
     */
   def clientKill(addr: String): Task[String] =
-    Task.from(asyncCmd.clientKill(addr).toCompletableFuture)
+    Task.from(reactiveCmd.clientKill(addr))
 
   /**
     * Get the list of client connections.
@@ -78,51 +75,46 @@ private[redis] trait ServerCommands[K, V] {
     *         each line is composed of a succession of property=value fields separated by a space character.
     */
   def clientList: Task[String] =
-    Task.from(asyncCmd.clientList().toCompletableFuture)
+    Task.from(reactiveCmd.clientList())
 
   /**
     * Get total number of Redis commands.
     * @return Number of total commands in this Redis server.
     */
   def commandCount: Task[Long] =
-    Task.from(asyncCmd.commandCount().toCompletableFuture).map(_.longValue)
+    Task.from(reactiveCmd.commandCount()).map(_.longValue)
 
   /**
     * Get the value of a configuration parameter.
     * @return Bulk string reply
     */
   def configGet(parameter: String): Task[Map[String, String]] =
-    Task.from(asyncCmd.configGet(parameter).toCompletableFuture).map(_.asScala.toMap)
+    Task.from(reactiveCmd.configGet(parameter)).map(_.asScala.toMap)
 
   /**
     * Reset the stats returned by INFO.
     * @return Always OK.
     */
   def configResetStat: Task[String] =
-    Task.from(asyncCmd.configResetstat().toCompletableFuture)
+    Task.from(reactiveCmd.configResetstat())
 
   /**
     * Remove all keys from all databases.
     * @return Simple string reply
     */
   def flushAll(): Task[String] =
-    Task.from(asyncCmd.flushallAsync().toCompletableFuture)
+    Task.from(reactiveCmd.flushallAsync())
 
   /**
     * Remove all keys from the current database.
     * @return Single string reply
     */
   def flushDb(): Task[String] =
-    Task.from(asyncCmd.flushdbAsync().toCompletableFuture)
+    Task.from(reactiveCmd.flushdbAsync())
 
 }
 
 object ServerCommands {
-  def apply[K, V](
-    asyncCmd: RedisServerAsyncCommands[K, V],
-    reactiveCmd: RedisServerReactiveCommands[K, V]): ServerCommands[K, V] =
-    new ServerCommands[K, V] {
-      override val asyncCmd: RedisServerAsyncCommands[K, V] = asyncCmd
-      override val reactiveCmd: RedisServerReactiveCommands[K, V] = reactiveCmd
-    }
+  def apply[K, V](reactiveCmd: RedisServerReactiveCommands[K, V]): ServerCommands[K, V] =
+    new ServerCommands[K, V](reactiveCmd)
 }
