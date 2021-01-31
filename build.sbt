@@ -1,27 +1,47 @@
-import sbt.Keys.version
+import sbt.Keys.{scalacOptions, version}
 
 val monixConnectSeries = "0.5.1"
 
-inThisBuild(List(
-  organization := "io.monix",
-  homepage := Some(url("https://connect.monix.io")),
-  licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
-  developers := List(
-    Developer(
-      "paualarco",
-      "Pau Alarcón Cerdan",
-      "pau.alarcon.b@gmail.com",
-      url("https://connect.monix.io")
+inThisBuild(
+  List(
+    organization := "io.monix",
+    homepage     := Some(url("https://connect.monix.io")),
+    licenses     := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
+    developers := List(
+      Developer(
+        "paualarco",
+        "Pau Alarcón Cerdan",
+        "pau.alarcon.b@gmail.com",
+        url("https://connect.monix.io")
+      )
     )
-  )
-))
+  ))
 
-skip in publish := true //requered by sbt-ci-release
+skip in publish := true //required by sbt-ci-release
+
+lazy val silencerOptions = Seq(
+  libraryDependencies ++= {
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 12)) => Seq.empty
+      case _ => Seq(compilerPlugin("com.github.ghik" %% "silencer-plugin" % "1.7.1" cross CrossVersion.full))
+
+    }
+  },
+  scalacOptions ++= {
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 13)) => Seq("-Wconf:msg=While parsing annotations in:silent")
+      //case _ => Seq("-P:silencer:globalFilters=While parsing annotations in:silent")
+    }
+  }
+)
 
 lazy val sharedSettings = Seq(
-  scalaVersion       := "2.13.4",
-  crossScalaVersions := Seq("2.12.10", "2.13.4"),
+  scalaVersion       := "2.12.10",
+  crossScalaVersions := Seq("2.12.10"),
   scalafmtOnCompile  := true,
+  libraryDependencies ++= Seq("com.github.ghik" % "silencer-plugin_2.12.10" % "1.6.0",
+    "com.github.ghik" % "silencer-lib_2.12.10" % "1.6.0"),
+
   scalacOptions ++= Seq(
     // warnings
     "-unchecked", // able additional warnings where generated code depends on assumptions
@@ -34,7 +54,7 @@ lazy val sharedSettings = Seq(
   ),
   //warnUnusedImports
   scalacOptions in (Compile, console) ++= Seq("-Ywarn-unused-import"),
-    // Linter
+  // Linter
   scalacOptions ++= Seq(
     "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
     "-Ywarn-dead-code", // Warn when dead code is identified.
@@ -51,9 +71,9 @@ lazy val sharedSettings = Seq(
     "-Xlint:poly-implicit-overload", // parameterized overloaded implicit methods are not visible as view bounds
     "-Xlint:option-implicit", // Option.apply used implicit view
     "-Xlint:delayedinit-select", // Selecting member of DelayedInit
-    //"-Xlint:package-object-classes" // Class or object defined in package object
+    //"-Xlint:package-object-classes", // Class or object defined in package object
+    //q"-P:silencer:globalFilters=While parsing annotations in:silent"
   ),
-
   // ScalaDoc settings
   scalacOptions in (Compile, doc) ++= Seq("-no-link-warnings"),
   autoAPIMappings := true,
@@ -77,30 +97,26 @@ lazy val sharedSettings = Seq(
   logBuffered in IntegrationTest := false,
   //dependencyClasspath in IntegrationTest := (dependencyClasspath in IntegrationTest).value ++ (exportedProducts in Test).value,
   // https://github.com/sbt/sbt/issues/2654
-  incOptions := incOptions.value.withLogRecompileOnMacro(false),
-  pomIncludeRepository    := { _ => false }, // removes optional dependencies
+  incOptions           := incOptions.value.withLogRecompileOnMacro(false),
+  pomIncludeRepository := { _ => false }, // removes optional dependencies
 
   // ScalaDoc settings
-  autoAPIMappings := true,
-  apiURL := Some(url("https://monix.github.io/monix-connect/api/")),
-
-  headerLicense := Some(HeaderLicense.Custom(
-    """|Copyright (c) 2020-2021 by The Monix Connect Project Developers.
-       |See the project homepage at: https://connect.monix.io
-       |
-       |Licensed under the Apache License, Version 2.0 (the "License");
-       |you may not use this file except in compliance with the License.
-       |You may obtain a copy of the License at
-       |
-       |    http://www.apache.org/licenses/LICENSE-2.0
-       |
-       |Unless required by applicable law or agreed to in writing, software
-       |distributed under the License is distributed on an "AS IS" BASIS,
-       |WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-       |See the License for the specific language governing permissions and
-       |limitations under the License."""
-      .stripMargin)),
-
+  autoAPIMappings           := true,
+  apiURL                    := Some(url("https://monix.github.io/monix-connect/api/")),
+  headerLicense             := Some(HeaderLicense.Custom("""|Copyright (c) 2020-2021 by The Monix Connect Project Developers.
+                                                            |See the project homepage at: https://connect.monix.io
+                                                            |
+                                                            |Licensed under the Apache License, Version 2.0 (the "License");
+                                                            |you may not use this file except in compliance with the License.
+                                                            |You may obtain a copy of the License at
+                                                            |
+                                                            |    http://www.apache.org/licenses/LICENSE-2.0
+                                                            |
+                                                            |Unless required by applicable law or agreed to in writing, software
+                                                            |distributed under the License is distributed on an "AS IS" BASIS,
+                                                            |WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+                                                            |See the License for the specific language governing permissions and
+                                                            |limitations under the License.""".stripMargin)),
   doctestTestFramework      := DoctestTestFramework.ScalaTest,
   doctestTestFramework      := DoctestTestFramework.ScalaCheck,
   doctestOnlyCodeBlocksMode := true
@@ -128,7 +144,9 @@ lazy val monixConnect = (project in file("."))
 
 lazy val akka = monixConnector("akka", Dependencies.Akka)
 
-lazy val dynamodb = monixConnector("dynamodb", Dependencies.DynamoDb).aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
+lazy val dynamodb = monixConnector("dynamodb", Dependencies.DynamoDb)
+  .aggregate(awsAuth)
+  .dependsOn(awsAuth % "compile->compile;test->test")
 
 lazy val hdfs = monixConnector("hdfs", Dependencies.Hdfs)
 
@@ -138,11 +156,12 @@ lazy val parquet = monixConnector("parquet", Dependencies.Parquet)
 
 lazy val redis = monixConnector("redis", Dependencies.Redis)
 
-lazy val s3 = monixConnector("s3", Dependencies.S3).aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
+lazy val s3 =
+  monixConnector("s3", Dependencies.S3).aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
 
 lazy val gcs = monixConnector("gcs", Dependencies.GCS)
 
-lazy val elasticsearch =  monixConnector("elasticsearch", Dependencies.Elasticsearch)
+lazy val elasticsearch = monixConnector("elasticsearch", Dependencies.Elasticsearch)
 
 //internal
 lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth, isMimaEnabled = false)
@@ -157,23 +176,25 @@ def monixConnector(
     .settings(sharedSettings)
     .configs(IntegrationTest, IT)
     .enablePlugins(AutomateHeaderPlugin)
-    .settings(if(isMimaEnabled) mimaSettings(s"monix-$connectorName") else Seq.empty)
+    .settings(if (isMimaEnabled) mimaSettings(s"monix-$connectorName") else Seq.empty)
 }
-
 
 //=> non published modules
 
 lazy val benchmarks = monixConnector("benchmarks", Dependencies.Benchmarks, isMimaEnabled = false)
   .enablePlugins(JmhPlugin)
   .settings(skipOnPublishSettings)
-  .dependsOn(parquet % "compile->compile;test->test", redis % "compile->compile;test->test", s3 % "compile->compile;test->test")
+  .dependsOn(
+    parquet % "compile->compile;test->test",
+    redis   % "compile->compile;test->test",
+    s3      % "compile->compile;test->test")
   .aggregate(parquet, redis, s3)
 
 lazy val docs = project
   .in(file("monix-connect-docs"))
   .settings(
     moduleName := "monix-connect-docs",
-    name := moduleName.value,
+    name       := moduleName.value,
     sharedSettings,
     skipOnPublishSettings,
     mdocSettings
@@ -182,13 +203,22 @@ lazy val docs = project
 
 lazy val skipOnPublishSettings = Seq(
   skip in publish := true,
-  publishArtifact := false,
+  publishArtifact := false
 )
 
 lazy val mdocSettings = Seq(
   scalacOptions --= Seq("-Xfatal-warnings", "-Ywarn-unused"),
   crossScalaVersions := Seq(scalaVersion.value),
-  unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(akka, parquet, dynamodb, s3, elasticsearch, gcs, hdfs, mongodb, redis),
+  unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(
+    akka,
+    parquet,
+    dynamodb,
+    s3,
+    elasticsearch,
+    gcs,
+    hdfs,
+    mongodb,
+    redis),
   target in (ScalaUnidoc, unidoc) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",
   cleanFiles += (target in (ScalaUnidoc, unidoc)).value,
   docusaurusCreateSite := docusaurusCreateSite
@@ -201,17 +231,21 @@ lazy val mdocSettings = Seq(
       .dependsOn(updateSiteVariables in ThisBuild)
       .value,
   scalacOptions in (ScalaUnidoc, unidoc) ++= Seq(
-    "-doc-source-url", s"https://github.com/monix/monix-connect/tree/v${version.value}€{FILE_PATH}.scala",
-    "-sourcepath", baseDirectory.in(LocalRootProject).value.getAbsolutePath,
-    "-doc-title", "Monix Connect",
-    "-doc-version", s"v${version.value}",
+    "-doc-source-url",
+    s"https://github.com/monix/monix-connect/tree/v${version.value}€{FILE_PATH}.scala",
+    "-sourcepath",
+    baseDirectory.in(LocalRootProject).value.getAbsolutePath,
+    "-doc-title",
+    "Monix Connect",
+    "-doc-version",
+    s"v${version.value}",
     "-groups"
   ),
   // Exclude monix.*.internal from ScalaDoc
   sources in (ScalaUnidoc, unidoc) ~= (_ filterNot { file =>
     // Exclude protobuf generated files
     file.getCanonicalPath.contains("/src_managed/main/monix/connect/")
-  }),
+  })
 )
 
 def minorVersion(version: String): String = {
@@ -241,9 +275,7 @@ updateSiteVariables in ThisBuild := {
     "// Generated by sbt. Do not edit directly."
 
   val fileContents =
-    variables.toList
-      .sortBy { case (key, _) => key }
-      .map { case (key, value) => s"  $key: '$value'" }
+    variables.toList.sortBy { case (key, _) => key }.map { case (key, value) => s"  $key: '$value'" }
       .mkString(s"$fileHeader\nmodule.exports = {\n", ",\n", "\n};\n")
 
   IO.write(file, fileContents)
