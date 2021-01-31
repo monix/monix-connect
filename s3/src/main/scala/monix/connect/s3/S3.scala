@@ -19,15 +19,7 @@ package monix.connect.s3
 
 import cats.effect.Resource
 import monix.connect.aws.auth.AppConf
-import monix.connect.s3.domain.{
-  awsMinChunkSize,
-  CopyObjectSettings,
-  DefaultCopyObjectSettings,
-  DefaultDownloadSettings,
-  DefaultUploadSettings,
-  DownloadSettings,
-  UploadSettings
-}
+import monix.connect.s3.domain.{CopyObjectSettings, DefaultCopyObjectSettings, DefaultDownloadSettings, DefaultUploadSettings, DownloadSettings, UploadSettings, awsMinChunkSize}
 import monix.reactive.{Consumer, Observable}
 import monix.eval.Task
 import monix.execution.annotations.{Unsafe, UnsafeBecauseImpure}
@@ -36,26 +28,7 @@ import software.amazon.awssdk.core.async.{AsyncRequestBody, AsyncResponseTransfo
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient
-import software.amazon.awssdk.services.s3.model.{
-  Bucket,
-  BucketCannedACL,
-  CompleteMultipartUploadResponse,
-  CopyObjectRequest,
-  CopyObjectResponse,
-  CreateBucketRequest,
-  CreateBucketResponse,
-  DeleteBucketRequest,
-  DeleteBucketResponse,
-  DeleteObjectRequest,
-  DeleteObjectResponse,
-  GetObjectRequest,
-  GetObjectResponse,
-  NoSuchKeyException,
-  PutObjectRequest,
-  PutObjectResponse,
-  RequestPayer,
-  S3Object
-}
+import software.amazon.awssdk.services.s3.model.{Bucket, BucketCannedACL, CompleteMultipartUploadResponse, CopyObjectRequest, CopyObjectResponse, CreateBucketRequest, CreateBucketResponse, DeleteBucketRequest, DeleteBucketResponse, DeleteObjectRequest, DeleteObjectResponse, GetObjectRequest, GetObjectResponse, NoSuchKeyException, PutObjectRequest, PutObjectResponse, RequestPayer, S3Object}
 
 import scala.jdk.CollectionConverters._
 
@@ -524,11 +497,10 @@ trait S3 { self =>
     * @note When attempting to delete a bucket that does not exist, Amazon S3 returns a success message, not an error message.
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/DeleteBucketRequest.html
     * @param bucket        the bucket name to be deleted.
-    * @param s3AsyncClient an implicit instance of a [[S3AsyncClient]].
     * @return a [[Task]] with the delete bucket response [[DeleteBucketResponse]] .
     */
-  def deleteBucket(bucket: String)(implicit s3AsyncClient: S3AsyncClient): Task[DeleteBucketResponse] = {
-    Task.from(s3AsyncClient.deleteBucket(S3RequestBuilder.deleteBucket(bucket)))
+  def deleteBucket(bucket: String): Task[DeleteBucketResponse] = {
+    Task.from(s3Client.deleteBucket(S3RequestBuilder.deleteBucket(bucket)))
   }
 
   /**
@@ -537,11 +509,10 @@ trait S3 { self =>
     * @note When attempting to delete a bucket that does not exist, Amazon S3 returns a success message, not an error message.
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/DeleteBucketRequest.html
     * @param request       the AWS delete bucket request of type [[DeleteBucketRequest]]
-    * @param s3AsyncClient an implicit instance of a [[S3AsyncClient]].
     * @return a [[Task]] with the delete bucket response [[DeleteBucketResponse]] .
     */
-  def deleteBucket(request: DeleteBucketRequest)(implicit s3AsyncClient: S3AsyncClient): Task[DeleteBucketResponse] = {
-    Task.from(s3AsyncClient.deleteBucket(request))
+  def deleteBucket(request: DeleteBucketRequest): Task[DeleteBucketResponse] = {
+    Task.from(s3Client.deleteBucket(request))
   }
 
   /**
@@ -568,7 +539,7 @@ trait S3 { self =>
     bypassGovernanceRetention: Option[Boolean] = None,
     mfa: Option[String] = None,
     requestPayer: Option[String] = None,
-    versionId: Option[String] = None)(implicit s3AsyncClient: S3AsyncClient): Task[DeleteObjectResponse] = {
+    versionId: Option[String] = None): Task[DeleteObjectResponse] = {
     val request: DeleteObjectRequest =
       S3RequestBuilder.deleteObject(bucket, key, bypassGovernanceRetention, mfa, requestPayer, versionId)
     deleteObject(request)
@@ -704,6 +675,7 @@ trait S3 { self =>
     * @param request     the AWS get object request of type [[GetObjectRequest]].
     * @return A [[Task]] that contains the downloaded object as a byte array.
     */
+  @Unsafe("OOM risk, use `downloadMultipart` for big downloads.")
   def download(request: GetObjectRequest): Task[Array[Byte]] = {
     Task
       .from(s3Client.getObject(request, AsyncResponseTransformer.toBytes[GetObjectResponse]))
