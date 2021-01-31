@@ -524,11 +524,10 @@ trait S3 { self =>
     * @note When attempting to delete a bucket that does not exist, Amazon S3 returns a success message, not an error message.
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/DeleteBucketRequest.html
     * @param bucket        the bucket name to be deleted.
-    * @param s3AsyncClient an implicit instance of a [[S3AsyncClient]].
     * @return a [[Task]] with the delete bucket response [[DeleteBucketResponse]] .
     */
-  def deleteBucket(bucket: String)(implicit s3AsyncClient: S3AsyncClient): Task[DeleteBucketResponse] = {
-    Task.from(s3AsyncClient.deleteBucket(S3RequestBuilder.deleteBucket(bucket)))
+  def deleteBucket(bucket: String): Task[DeleteBucketResponse] = {
+    Task.from(s3Client.deleteBucket(S3RequestBuilder.deleteBucket(bucket)))
   }
 
   /**
@@ -537,11 +536,10 @@ trait S3 { self =>
     * @note When attempting to delete a bucket that does not exist, Amazon S3 returns a success message, not an error message.
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/DeleteBucketRequest.html
     * @param request       the AWS delete bucket request of type [[DeleteBucketRequest]]
-    * @param s3AsyncClient an implicit instance of a [[S3AsyncClient]].
     * @return a [[Task]] with the delete bucket response [[DeleteBucketResponse]] .
     */
-  def deleteBucket(request: DeleteBucketRequest)(implicit s3AsyncClient: S3AsyncClient): Task[DeleteBucketResponse] = {
-    Task.from(s3AsyncClient.deleteBucket(request))
+  def deleteBucket(request: DeleteBucketRequest): Task[DeleteBucketResponse] = {
+    Task.from(s3Client.deleteBucket(request))
   }
 
   /**
@@ -568,7 +566,7 @@ trait S3 { self =>
     bypassGovernanceRetention: Option[Boolean] = None,
     mfa: Option[String] = None,
     requestPayer: Option[String] = None,
-    versionId: Option[String] = None)(implicit s3AsyncClient: S3AsyncClient): Task[DeleteObjectResponse] = {
+    versionId: Option[String] = None): Task[DeleteObjectResponse] = {
     val request: DeleteObjectRequest =
       S3RequestBuilder.deleteObject(bucket, key, bypassGovernanceRetention, mfa, requestPayer, versionId)
     deleteObject(request)
@@ -704,6 +702,7 @@ trait S3 { self =>
     * @param request     the AWS get object request of type [[GetObjectRequest]].
     * @return A [[Task]] that contains the downloaded object as a byte array.
     */
+  @Unsafe("OOM risk, use `downloadMultipart` for big downloads.")
   def download(request: GetObjectRequest): Task[Array[Byte]] = {
     Task
       .from(s3Client.getObject(request, AsyncResponseTransformer.toBytes[GetObjectResponse]))
