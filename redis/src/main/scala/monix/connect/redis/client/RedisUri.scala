@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
+ * See the project homepage at: https://connect.monix.io
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package monix.connect.redis.client
 
 import io.lettuce.core.RedisURI
@@ -5,11 +22,19 @@ import io.lettuce.core.RedisURI
 import java.time.Duration
 import scala.concurrent.duration.FiniteDuration
 
-case class RedisUri private[redis] (host: String, port: Int, database: Option[Int] = None,
-                     password: Option[String] = None, ssl: Option[Boolean] = None, verifyPeer: Option[Boolean] = None, startTls: Option[Boolean] = None,
-                     timeout: Option[FiniteDuration], sentinels: List[String] = List.empty,
-                     socket: Option[String] = None, sentinelMasterId: Option[String] = None,
-                     clientName: Option[String] = None) {
+case class RedisUri private[redis] (
+  host: String,
+  port: Int,
+  database: Option[Int] = None,
+  password: Option[String] = None,
+  ssl: Option[Boolean] = None,
+  verifyPeer: Option[Boolean] = None,
+  startTls: Option[Boolean] = None,
+  timeout: Option[FiniteDuration],
+  sentinels: List[String] = List.empty,
+  socket: Option[String] = None,
+  sentinelMasterId: Option[String] = None,
+  clientName: Option[String] = None) {
 
   def withDatabase(database: Int): RedisUri = copy(database = Some(database))
   def withPassword(password: String): RedisUri = copy(password = Some(password))
@@ -37,7 +62,6 @@ case class RedisUri private[redis] (host: String, port: Int, database: Option[In
     builder.build()
   }
 }
-
 
 object RedisUri {
 

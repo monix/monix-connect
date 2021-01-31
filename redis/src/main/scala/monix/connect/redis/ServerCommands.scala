@@ -35,38 +35,38 @@ private[redis] class ServerCommands[K, V](reactiveCmd: RedisServerReactiveComman
     * Asynchronously rewrite the append-only file.
     * @return Always OK.
     */
-  def bgRewriteAOF: Task[String] =
-    Task.from(reactiveCmd.bgrewriteaof())
+  def bgRewriteAOF: Task[Unit] =
+    Task.from(reactiveCmd.bgrewriteaof()).void
 
   /**
     * Asynchronously save the dataset to disk.
     * @note `bg` as it is performed in the background
     * @return Simple string reply
     */
-  def bgSave: Task[String] =
-    Task.from(reactiveCmd.bgsave())
+  def bgSave: Task[Unit] =
+    Task.from(reactiveCmd.bgsave()).void
 
   /**
     * Get the current connection name.
     * @return The connection name, or a null bulk reply if no name is set.
     */
-  def clientGetName: Task[String] =
-    Task.from(reactiveCmd.bgsave())
+  def clientGetName: Task[Unit] =
+    Task.from(reactiveCmd.bgsave()).void
 
   /**
     * Set the current connection name.
     *
     * @return OK if the connection name was successfully set.
     */
-  def clientSetName(name: K): Task[String] =
-    Task.from(reactiveCmd.bgsave())
+  def clientSetName(name: K): Task[Unit] =
+    Task.from(reactiveCmd.bgsave()).void
 
   /**
     * Kill the connection of a client identified by ip:port.
     * @return OK if the connection exists and has been closed.
     */
-  def clientKill(addr: String): Task[String] =
-    Task.from(reactiveCmd.clientKill(addr))
+  def clientKill(addr: String): Task[Unit] =
+    Task.from(reactiveCmd.clientKill(addr)).void
 
   /**
     * Get the list of client connections.
@@ -95,22 +95,22 @@ private[redis] class ServerCommands[K, V](reactiveCmd: RedisServerReactiveComman
     * Reset the stats returned by INFO.
     * @return Always OK.
     */
-  def configResetStat: Task[String] =
-    Task.from(reactiveCmd.configResetstat())
+  def configResetStat: Task[Unit] =
+    Task.from(reactiveCmd.configResetstat()).void
 
   /**
     * Remove all keys from all databases.
     * @return Simple string reply
     */
-  def flushAll(): Task[String] =
-    Task.from(reactiveCmd.flushallAsync())
+  def flushAll(): Task[Unit] =
+    Task.from(reactiveCmd.flushallAsync()).void
 
   /**
     * Remove all keys from the current database.
     * @return Single string reply
     */
-  def flushDb(): Task[String] =
-    Task.from(reactiveCmd.flushdbAsync())
+  def flushDb(): Task[Unit] =
+    Task.from(reactiveCmd.flushdbAsync()).void
 
 }
 

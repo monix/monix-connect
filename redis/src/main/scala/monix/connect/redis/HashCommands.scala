@@ -27,7 +27,7 @@ import monix.reactive.Observable
 import scala.jdk.CollectionConverters._
 
 private[redis] class HashCommands[K, V](reactiveCmd: RedisHashReactiveCommands[K, V]) {
-  
+
   /**
     * Delete one or more hash fields.
     * @return Number of fields that were removed from the hash, not including specified but non existing
@@ -101,8 +101,8 @@ private[redis] class HashCommands[K, V](reactiveCmd: RedisHashReactiveCommands[K
     * Set multiple hash fields to multiple values.
     * @return Simple string reply.
     */
-  def hmSet(key: K, map: Map[K, V]): Task[String] =
-    Task.from(reactiveCmd.hmset(key, map.asJava))
+  def hmSet(key: K, map: Map[K, V]): Task[Unit] =
+    Task.from(reactiveCmd.hmset(key, map.asJava)).void
 
   /** todo!! create observable
     * Incrementally iterate hash fields and associated values.

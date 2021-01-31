@@ -163,8 +163,8 @@ private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, 
     * Rename a key.
     * @return String simple-string-reply
     */
-  def rename(key: K, newKey: K): Task[String] =
-    Task.from(reactiveCmd.rename(key, newKey))
+  def rename(key: K, newKey: K): Task[Unit] =
+    Task.from(reactiveCmd.rename(key, newKey)).void
 
   /**
     * Rename a key, only if the new key does not exist.

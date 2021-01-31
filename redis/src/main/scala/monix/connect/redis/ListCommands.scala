@@ -21,7 +21,6 @@ import io.lettuce.core.api.reactive.RedisListReactiveCommands
 import monix.eval.Task
 import monix.reactive.Observable
 
-
 private[redis] class ListCommands[K, V](reactiveCmd: RedisListReactiveCommands[K, V]) {
 
   /**
@@ -107,17 +106,17 @@ private[redis] class ListCommands[K, V](reactiveCmd: RedisListReactiveCommands[K
 
   /**
     * Set the value of an element in a list by its index.
-    * @return The same inserted value
+    * @return string reply
     */
-  def lSet(key: K, index: Long, value: V): Task[String] =
-    Task.from(reactiveCmd.lset(key, index, value))
+  def lSet(key: K, index: Long, value: V): Task[Unit] =
+    Task.from(reactiveCmd.lset(key, index, value)).void
 
   /**
     * Trim a list to the specified range.
     * @return Simple string reply
     */
-  def lTrim(key: K, start: Long, stop: Long): Task[String] =
-    Task.from(reactiveCmd.ltrim(key, start, stop))
+  def lTrim(key: K, start: Long, stop: Long): Task[Unit] =
+    Task.from(reactiveCmd.ltrim(key, start, stop)).void
 
   /**
     * Remove and get the last element in a list.

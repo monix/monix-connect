@@ -20,7 +20,15 @@ package monix.connect.redis.client
 import cats.effect.Resource
 import io.lettuce.core.api.{StatefulConnection, StatefulRedisConnection}
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection
-import monix.connect.redis.{HashCommands, KeyCommands, ListCommands, ServerCommands, SetCommands, SortedSetCommands, StringCommands}
+import monix.connect.redis.{
+  HashCommands,
+  KeyCommands,
+  ListCommands,
+  ServerCommands,
+  SetCommands,
+  SortedSetCommands,
+  StringCommands
+}
 import monix.eval.{Coeval, Task}
 import monix.execution.internal.InternalApi
 
@@ -49,15 +57,15 @@ private[redis] object RedisCmd { self =>
         case _ => Task.raiseError(new NotImplementedError("Redis configuration yet supported."))
       }
     }.map { cmd =>
-        RedisCmd(
-          hash = HashCommands(cmd),
-          key = KeyCommands(cmd),
-          list = ListCommands(cmd),
-          server = ServerCommands(cmd),
-          set = SetCommands(cmd),
-          sortedSet = SortedSetCommands(cmd),
-          string = StringCommands(cmd)
-        )
+      RedisCmd(
+        hash = HashCommands(cmd),
+        key = KeyCommands(cmd),
+        list = ListCommands(cmd),
+        server = ServerCommands(cmd),
+        set = SetCommands(cmd),
+        sortedSet = SortedSetCommands(cmd),
+        string = StringCommands(cmd)
+      )
     }
   }
 

@@ -136,7 +136,13 @@ lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb, isMimaEnabled
 
 lazy val parquet = monixConnector("parquet", Dependencies.Parquet)
 
-lazy val redis = monixConnector("redis", Dependencies.Redis)
+val protoTestSettings = Seq(
+    Compile / PB.targets := Seq(
+      scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
+    )
+      //Compile / PB.protoSources := Seq(new File("src/test/protobuf"))
+  )
+lazy val redis = monixConnector("redis", Dependencies.Redis).settings(protoTestSettings)
 
 lazy val s3 = monixConnector("s3", Dependencies.S3).aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
 
@@ -145,6 +151,7 @@ lazy val gcs = monixConnector("gcs", Dependencies.GCS)
 lazy val elasticsearch =  monixConnector("elasticsearch", Dependencies.Elasticsearch)
 
 //internal
+
 lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth, isMimaEnabled = false)
 
 def monixConnector(

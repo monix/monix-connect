@@ -18,8 +18,7 @@
 package monix.connect.redis.client
 
 import cats.effect.Resource
-import io.lettuce.core.api.StatefulRedisConnection
-import io.lettuce.core.codec.RedisCodec
+import io.lettuce.core.api.{StatefulRedisConnection => RedisConnection}
 import io.lettuce.core.{RedisClient, RedisURI}
 import monix.eval.Task
 
@@ -30,25 +29,36 @@ import monix.eval.Task
 object Redis {
 
   def connect(uri: String): Resource[Task, RedisCmd[String, String]] =
-    RedisCmd.connectResource[String, String, StatefulRedisConnection[String, String]] {
-      Task.evalAsync(RedisClient.create(uri).connect)
-    }.evalMap(RedisCmd.single)
+    RedisCmd
+      .connectResource[String, String, RedisConnection[String, String]] {
+        Task.evalAsync(RedisClient.create(uri).connect)
+      }
+      .evalMap(RedisCmd.single)
 
-   def connect(uri: RedisUri): Resource[Task, RedisCmd[String, String]] =
-     RedisCmd.connectResource {
-       Task.evalAsync(RedisClient.create(uri.toJava).connect)
-     }.evalMap(RedisCmd.single)
+  def connect(uri: RedisUri): Resource[Task, RedisCmd[String, String]] =
+    RedisCmd
+      .connectResource[String, String, RedisConnection[String, String]] {
+        Task.evalAsync(RedisClient.create(uri.toJava).connect)
+      }
+      .evalMap(RedisCmd.single)
 
+  def connectWithCodec[K, V](
+    uri: String)(implicit keyCodec: Codec[K, String], valueCodec: Codec[V, String]): Resource[Task, RedisCmd[K, V]] =
+    RedisCmd
+      .connectResource[K, V, RedisConnection[K, V]] {
+        Task.evalAsync(RedisClient.create(uri).connect(Codec(keyCodec, valueCodec)))
+      }
+      .evalMap(RedisCmd.single)
 
-  def connectWithCodec[K, V](uri: String)(implicit keyCodec: KeyCodec[K], valueCodec: ValueCodec[V]): Resource[Task, RedisCmd[K, V]] =
-    RedisCmd.connectResource {
-      Task.evalAsync(RedisClient.create(uri).connect(Codec(keyCodec, valueCodec)))
-    }.evalMap(RedisCmd.single(_))
-
-
-  def connectWithCodec[K, V](uri: RedisURI)(implicit keyCodec: KeyCodec[K], valueCodec: ValueCodec[V]): Resource[Task, RedisCmd[K, V]] =
-     RedisCmd.connectResource {
-       Task.evalAsync(RedisClient.create(uri).connect(Codec(keyCodec, valueCodec)))
-     }.evalMap(RedisCmd.single(_))
+  def connectWithByteArrayCodec[K, V](uri: String)(implicit keyCodec: Codec[K, Array[Byte]], valueCodec: Codec[V, Array[Byte]]): Resource[Task, RedisCmd[K, V]] =
+    RedisCmd
+      .connectResource[K, V, RedisConnection[K, V]] {
+        Task.evalAsync(RedisClient.create(uri).connect(Codec.byteArray(keyCodec, valueCodec)))
+      }
+      .evalMap(RedisCmd.single)
+  //def connectWithCodec[K, V](uri: RedisURI)(implicit keyCodec: Codec[K, Array[Byte]], valueCodec: Codec[V]): Resource[Task, RedisCmd[K, V]] =
+  //   RedisCmd.connectResource[K, V, RedisConnection[K, V]] {
+  //     Task.evalAsync(RedisClient.create(uri).connect(Codec(keyCodec, valueCodec)))
+  //   }.evalMap(RedisCmd.single)
 
 }

@@ -31,23 +31,31 @@ import monix.eval.Task
 object RedisCluster {
 
   def create(uri: String): Resource[Task, RedisCmd[String, String]] =
-    RedisCmd.connectResource[String, String, ClusterConnection[String, String]] {
-      Task.evalAsync(RedisClusterClient.create(uri).connect)
-    }.evalMap(RedisCmd.cluster)
+    RedisCmd
+      .connectResource[String, String, ClusterConnection[String, String]] {
+        Task.evalAsync(RedisClusterClient.create(uri).connect)
+      }
+      .evalMap(RedisCmd.cluster)
 
   def create[K, V](uri: String, codec: RedisCodec[K, V]): Resource[Task, RedisCmd[K, V]] =
-    RedisCmd.connectResource[K, V, ClusterConnection[K, V]] {
-      Task.evalAsync(RedisClusterClient.create(uri).connect(codec))
-    }.evalMap(RedisCmd.cluster)
+    RedisCmd
+      .connectResource[K, V, ClusterConnection[K, V]] {
+        Task.evalAsync(RedisClusterClient.create(uri).connect(codec))
+      }
+      .evalMap(RedisCmd.cluster)
 
   def create(uri: RedisURI): Resource[Task, RedisCmd[String, String]] =
-    RedisCmd.connectResource[String, String, ClusterConnection[String, String]] {
-      Task.evalAsync(RedisClusterClient.create(uri).connect)
-    }.evalMap(RedisCmd.cluster)
+    RedisCmd
+      .connectResource[String, String, ClusterConnection[String, String]] {
+        Task.evalAsync(RedisClusterClient.create(uri).connect)
+      }
+      .evalMap(RedisCmd.cluster)
 
   def create[K, V](uri: RedisURI, codec: RedisCodec[K, V]): Resource[Task, RedisCmd[K, V]] =
-    RedisCmd.connectResource[K, V, ClusterConnection[K, V]] {
-      Task.evalAsync(RedisClusterClient.create(uri).connect(codec))
-    }.evalMap(RedisCmd.cluster)
+    RedisCmd
+      .connectResource[K, V, ClusterConnection[K, V]] {
+        Task.evalAsync(RedisClusterClient.create(uri).connect(codec))
+      }
+      .evalMap(RedisCmd.cluster)
 
 }

@@ -191,8 +191,8 @@ private[redis] class StringCommands[K, V](reactiveCmd: RedisStringReactiveComman
     * Set the string value of a key.
     * @return OK if SET was executed correctly.
     */
-  def set(key: K, value: V): Task[String] =
-    Task.from(reactiveCmd.set(key, value))
+  def set(key: K, value: V): Task[Unit] =
+    Task.from(reactiveCmd.set(key, value)).void
 
   /**
     * Sets or clears the bit at offset in the string value stored at key.
@@ -205,15 +205,15 @@ private[redis] class StringCommands[K, V](reactiveCmd: RedisStringReactiveComman
     * Set the value and expiration of a key.
     * @return Simple string reply.
     */
-  def setEx(key: K, seconds: Long, value: V): Task[String] =
-    Task.from(reactiveCmd.setex(key, seconds, value))
+  def setEx(key: K, seconds: Long, value: V): Task[Unit] =
+    Task.from(reactiveCmd.setex(key, seconds, value)).void
 
   /**
     * Set the value and expiration in milliseconds of a key.
     * @return String simple-string-reply
     */
-  def pSetEx(key: K, milliseconds: Long, value: V): Task[String] =
-    Task.from(reactiveCmd.psetex(key, milliseconds, value))
+  def pSetEx(key: K, milliseconds: Long, value: V): Task[Unit] =
+    Task.from(reactiveCmd.psetex(key, milliseconds, value)).void
 
   /**
     * Set the value of a key, only if the key does not exist.

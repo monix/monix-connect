@@ -85,7 +85,9 @@ object Dependencies {
 
   val Redis = Seq(
     "io.lettuce" % "lettuce-core" % "5.1.8.RELEASE",
-    "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat
+    "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat,
+    "com.thesamet.scalapb"      %% "scalapb-runtime-grpc"  % scalapb.compiler.Version.scalapbVersion % IntegrationTest,
+    "com.thesamet.scalapb"      %% "scalapb-runtime"       % scalapb.compiler.Version.scalapbVersion % IntegrationTest
   ) ++ commonDependencies(hasIt = true)
 
   val GCS = Seq(

@@ -1,8 +1,7 @@
 package monix.connect.redis
 
-import io.lettuce.core.RedisClient
-import io.lettuce.core.api.StatefulRedisConnection
 import org.scalacheck.Gen
+import monix.connect.redis.test.protobuf.{Person, PersonPk}
 
 trait RedisIntegrationFixture {
   val redisUrl = "redis://localhost:6379"
@@ -14,5 +13,19 @@ trait RedisIntegrationFixture {
     n      <- Gen.chooseNum(2, 10)
     values <- Gen.listOfN(n, Gen.choose(0, 10000))
   } yield values.map(_.toString)
+
+  val genPerson: Gen[Person] = {
+    for {
+      age <- Gen.chooseNum(1, 100)
+      name <- Gen.identifier
+      hobbies <- Gen.listOfN(10, Gen.identifier)
+    } yield Person( name, age, hobbies)
+  }
+
+  val genPersonPk: Gen[PersonPk] = {
+    for {
+      id <- Gen.identifier
+    } yield PersonPk(id)
+  }
 
 }
