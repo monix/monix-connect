@@ -4,17 +4,13 @@ import io.lettuce.core.ScoredValue
 import monix.connect.redis.client.{Redis, RedisCmd}
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
-import monix.reactive.Observable
 import org.scalacheck.Gen
 import org.scalatest.concurrent.Eventually
-import org.scalatest.concurrent.Eventually.eventually
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
-import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.Success
 
 class RedisIntegrationTest extends AnyFlatSpec
   with RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll with Eventually {
@@ -27,13 +23,10 @@ class RedisIntegrationTest extends AnyFlatSpec
     val field: K = genRedisKey.sample.get
 
     //when
-    val f: Future[String] = Redis.connect(redisUrl).use(_.hash.hGet(key, field)).runToFuture(global)
+    val r: Option[String] = Redis.connect(redisUrl).use(_.hash.hGet(key, field)).runSyncUnsafe()
 
     //then
-    eventually {
-      f.value.get.isFailure shouldBe true
-      f.value.get.failed.get shouldBe a[NoSuchElementException]
-    }
+    r shouldBe None
   }
 
   it should "insert a single element into a hash and read it back" in {
@@ -46,10 +39,10 @@ class RedisIntegrationTest extends AnyFlatSpec
     Redis.connect(redisUrl).use(_.hash.hSet(key, field, value)).runSyncUnsafe()
 
     //and
-    val r: String = Redis.connect(redisUrl).use(_.hash.hGet(key, field)).runSyncUnsafe()
+    val r: Option[String] = Redis.connect(redisUrl).use(_.hash.hGet(key, field)).runSyncUnsafe()
 
     //then
-    r shouldBe value
+    r shouldBe Some(value)
   }
 
   s"$StringCommands" should "insert a string into the given key and get its size from redis" in {
@@ -193,7 +186,7 @@ class RedisIntegrationTest extends AnyFlatSpec
     val incrby: Double = 2
 
     //when
-    val t: Task[(ScoredValue[String], ScoredValue[String])] =
+    val t: Task[(Option[ScoredValue[String]], Option[ScoredValue[String]])] =
       Redis.connect(redisUrl).use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
         for {
           _ <- sortedSet.zAdd(k, minScore, v0)
@@ -207,10 +200,10 @@ class RedisIntegrationTest extends AnyFlatSpec
 
     //then
     val (min, max) = t.runSyncUnsafe()
-    min.getScore shouldBe minScore
-    min.getValue shouldBe v0
-    max.getScore shouldBe middleScore + incrby
-    max.getValue shouldBe v1
+    min.map(_.getScore) shouldBe Some(minScore)
+    min.map(_.getValue) shouldBe v0
+    max.map(_.getScore) shouldBe middleScore + incrby
+    max.map(_.getValue) shouldBe v1
   }
 
   s"$Redis" should "allow to composition of different Redis submodules" in {

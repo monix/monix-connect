@@ -35,14 +35,14 @@ private[redis] class SetCommands[K, V](reactiveCmd: RedisSetReactiveCommands[K, 
     *         present into the set.
     */
   def sAdd(key: K, members: V*): Task[Long] =
-    Task.from(reactiveCmd.sadd(key, members: _*)).map(_.longValue)
+    Task.fromReactivePublisher(reactiveCmd.sadd(key, members: _*)).map(_.map(_.longValue).getOrElse(0L))
 
-  /** todo - false if the key does not exist?
+  /**
     * Get the number of members in a set.
-    * @return The cardinality (number of elements) of the set, or false if the key does not exist.
+    * @return The cardinality (number of elements) of the set, 0 if the key does not exist.
     */
   def sCard(key: K): Task[Long] =
-    Task.from(reactiveCmd.scard(key)).map(_.longValue)
+    Task.fromReactivePublisher(reactiveCmd.scard(key)).map(_.map(_.longValue).getOrElse(0L))
 
   /**
     * Subtract multiple sets.
@@ -56,7 +56,7 @@ private[redis] class SetCommands[K, V](reactiveCmd: RedisSetReactiveCommands[K, 
     * @return The number of elements in the resulting set.
     */
   def sDiffStore(destination: K, keys: K*): Task[Long] =
-    Task.from(reactiveCmd.sdiffstore(destination, keys: _*)).map(_.longValue)
+    Task.fromReactivePublisher(reactiveCmd.sdiffstore(destination, keys: _*)).map(_.map(_.longValue).getOrElse(0L))
 
   /**
     * Intersect multiple sets.
@@ -69,8 +69,8 @@ private[redis] class SetCommands[K, V](reactiveCmd: RedisSetReactiveCommands[K, 
     * Intersect multiple sets and store the resulting set in a key.
     * @return The number of elements in the resulting set.
     */
-  def sInterStore(destination: K, keys: K*): Task[java.lang.Long] =
-    Task.from(reactiveCmd.sinterstore(destination, keys: _*))
+  def sInterStore(destination: K, keys: K*): Task[Long] =
+    Task.fromReactivePublisher(reactiveCmd.sinterstore(destination, keys: _*)).map(_.map(_.longValue).getOrElse(0L))
 
   /**
     * Determine if a given value is a member of a set.
@@ -78,7 +78,7 @@ private[redis] class SetCommands[K, V](reactiveCmd: RedisSetReactiveCommands[K, 
     *         False if the element is not a member of the set, or if key does not exist.
     */
   def sIsMember(key: K, member: V): Task[Boolean] =
-    Task.from(reactiveCmd.sismember(key, member)).map(_.booleanValue)
+    Task.fromReactivePublisher(reactiveCmd.sismember(key, member)).map(_.exists(_.booleanValue))
 
   /**
     * Move a member from one set to another.
@@ -86,7 +86,7 @@ private[redis] class SetCommands[K, V](reactiveCmd: RedisSetReactiveCommands[K, 
     *         False if the element is not a member of source and no operation was performed.
     */
   def sMove(source: K, destination: K, member: V): Task[Boolean] =
-    Task.from(reactiveCmd.smove(source, destination, member)).map(_.booleanValue)
+    Task.fromReactivePublisher(reactiveCmd.smove(source, destination, member)).map(_.exists(_.booleanValue))
 
   /**
     * Get all the members in a set.
@@ -97,10 +97,10 @@ private[redis] class SetCommands[K, V](reactiveCmd: RedisSetReactiveCommands[K, 
 
   /**
     * Remove and return a random member from a set.
-    * @return The removed element, or null when key does not exist.
+    * @return The removed element, or ``None when key does not exist.
     */
-  def sPop(key: K): Task[V] =
-    Task.from(reactiveCmd.spop(key))
+  def sPop(key: K): Task[Option[V]] =
+    Task.fromReactivePublisher(reactiveCmd.spop(key))
 
   /**
     * Remove and return one or multiple random members from a set.
@@ -114,8 +114,8 @@ private[redis] class SetCommands[K, V](reactiveCmd: RedisSetReactiveCommands[K, 
     * @return Without the additional count argument the command returns a Bulk Reply with the
     *         randomly selected element, or null when key does not exist.
     */
-  def sRandMember(key: K): Task[V] =
-    Task.from(reactiveCmd.srandmember(key))
+  def sRandMember(key: K): Task[Option[V]] =
+    Task.fromReactivePublisher(reactiveCmd.srandmember(key))
 
   /**
     * Get one or multiple random members from a set.
@@ -130,7 +130,7 @@ private[redis] class SetCommands[K, V](reactiveCmd: RedisSetReactiveCommands[K, 
     * @return Long hat represents the number of members that were removed from the set, not including non existing members.
     */
   def sRem(key: K, members: V*): Task[Long] =
-    Task.from(reactiveCmd.srem(key, members: _*)).map(_.longValue)
+    Task.fromReactivePublisher(reactiveCmd.srem(key, members: _*)).map(_.map(_.longValue).getOrElse(0L))
 
   /**
     * Add multiple sets.
@@ -144,14 +144,14 @@ private[redis] class SetCommands[K, V](reactiveCmd: RedisSetReactiveCommands[K, 
     * @return Long that represents the number of elements in the resulting set.
     */
   def sUnionStore(destination: K, keys: K*): Task[Long] =
-    Task.from(reactiveCmd.sunionstore(destination, keys: _*)).map(_.longValue)
+    Task.fromReactivePublisher(reactiveCmd.sunionstore(destination, keys: _*)).map(_.map(_.longValue).getOrElse(0L))
 
-  /**
-    * Incrementally iterate Set elements.
-    * @return Scan cursor.
-    */
-  def sScan(key: K): Task[ValueScanCursor[V]] =
-    Task.from(reactiveCmd.sscan(key))
+ ///**
+ //  * Incrementally iterate Set elements.
+ //  * @return Scan cursor.
+ //  */
+ //def sScan(key: K): Task[ValueScanCursor[V]] =
+ //  Task.fromRea(reactiveCmd.sscan(key))
 
 }
 

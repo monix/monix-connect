@@ -59,6 +59,8 @@ object Codec {
   private[redis] def apply[K, V](keyCodec: Codec[K, String], valueCodec: Codec[V, String]): RedisCodec[K, V] =
     apply(keyCodec, valueCodec, new Utf8StringCodec())
 
-  private[redis] def byteArray[K, V](keyCodec: Codec[K, Array[Byte]], valueCodec: Codec[V, Array[Byte]]): RedisCodec[K, V] =
+  private[redis] def byteArray[K, V](
+    keyCodec: Codec[K, Array[Byte]],
+    valueCodec: Codec[V, Array[Byte]]): RedisCodec[K, V] =
     apply(keyCodec, valueCodec, new ByteArrayCodec())
 }

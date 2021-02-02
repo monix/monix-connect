@@ -30,14 +30,6 @@ package object redis {
     (kv.getKey, Try(kv.getValue).toOption)
   }
 
-  private[redis] implicit val fromMono: TaskLike[Mono] = new TaskLike[Mono] {
-    def apply[A](m: Mono[A]): Task[A] =
-      Task.fromReactivePublisher(m).flatMap { op =>
-        if (op.nonEmpty) Task.now(op.get)
-        else Task.raiseError(new NoSuchElementException("The result from the executed redis operation was empty."))
-      }
-  }
-
   implicit val intUtfCodec: Codec[Int, String] = Codec.utf(_.toString, str => Try(str.toInt).getOrElse(0))
   //implicit val doubleUtfCodec: Codec[Double, String] = Codec.utf(_.toString, str => Try(str.toDouble).getOrElse(0.0))
   //implicit val floatUtfCodec: Codec[Float, String] = Codec.utf(_.toString, str => Try(str.toFloat).getOrElse(0L))

@@ -29,8 +29,8 @@ private[redis] class ListCommands[K, V](reactiveCmd: RedisListReactiveCommands[K
     *         A two-element multi-bulk with the first element being the name of the key
     *         where an element was popped and the second element being the value of the popped element.
     */
-  def bLPop(timeout: Long, keys: K*): Task[(K, Option[V])] =
-    Task.from(reactiveCmd.blpop(timeout, keys: _*)).map(kvToTuple)
+  def bLPop(timeout: Long, keys: K*): Task[Option[(K, Option[V])]] =
+    Task.fromReactivePublisher(reactiveCmd.blpop(timeout, keys: _*)).map(_.map(kvToTuple))
 
   /**
     * Remove and get the last element in a list, or block until one is available.
@@ -38,57 +38,57 @@ private[redis] class ListCommands[K, V](reactiveCmd: RedisListReactiveCommands[K
     *          A two-element multi-bulk with the first element being the name of the key
     *          where an element was popped and the second element being the value of the popped element.
     */
-  def bRPop(timeout: Long, keys: K*): Task[(K, Option[V])] =
-    Task.from(reactiveCmd.brpop(timeout, keys: _*)).map(kvToTuple)
+  def bRPop(timeout: Long, keys: K*): Task[Option[(K, Option[V])]] =
+    Task.fromReactivePublisher(reactiveCmd.brpop(timeout, keys: _*)).map(_.map(kvToTuple))
 
   /**
     * Pop a value from a list, push it to another list and return it; or block until one is available.
     * @return The element being popped from source and pushed to destination.
     */
-  def bRPopLPush(timeout: Long, source: K, destination: K): Task[V] =
-    Task.from(reactiveCmd.brpoplpush(timeout, source, destination))
+  def bRPopLPush(timeout: Long, source: K, destination: K): Task[Option[V]] =
+    Task.fromReactivePublisher(reactiveCmd.brpoplpush(timeout, source, destination))
 
   /**
     * Get an element from a list by its index.
     * @return The requested element, or null when index is out of range.
     */
-  def lIndex(key: K, index: Long): Task[V] =
-    Task.from(reactiveCmd.lindex(key, index))
+  def lIndex(key: K, index: Long): Task[Option[V]] =
+    Task.fromReactivePublisher(reactiveCmd.lindex(key, index))
 
   /**
     * Insert an element before or after another element in a list.
     * @return The length of the list after the insert operation, or -1 when the value pivot was not found.
     */
   def lInsert(key: K, before: Boolean, pivot: V, value: V): Task[Long] =
-    Task.from(reactiveCmd.linsert(key, before, pivot, value)).map(_.longValue)
+    Task.fromReactivePublisher(reactiveCmd.linsert(key, before, pivot, value)).map(_.map(_.longValue()) getOrElse (-1L))
 
   /**
     * Get the length of a list.
     * @return Long integer-reply the length of the list at { @code key}.
     */
   def lLen(key: K): Task[Long] =
-    Task.from(reactiveCmd.llen(key)).map(_.longValue)
+    Task.fromReactivePublisher(reactiveCmd.llen(key)).map(_.map(_.longValue).getOrElse(-1L))
 
   /**
     * Remove and get the first element in a list.
     * @return The value of the first element, or null when key does not exist.
     */
-  def lPop(key: K): Task[V] =
-    Task.from(reactiveCmd.lpop(key))
+  def lPop(key: K): Task[Option[V]] =
+    Task.fromReactivePublisher(reactiveCmd.lpop(key))
 
   /**
     * Prepend one or multiple values to a list.
     * @return The length of the list after the push operations.
     */
   def lPush(key: K, values: V*): Task[Long] =
-    Task.from(reactiveCmd.lpush(key, values: _*)).map(_.longValue)
+    Task.fromReactivePublisher(reactiveCmd.lpush(key, values: _*)).map(_.map(_.longValue).getOrElse(-1L))
 
   /**
     * Prepend values to a list, only if the list exists.
     * @return The length of the list after the push operation.
     */
   def lPushX(key: K, values: V*): Task[Long] =
-    Task.from(reactiveCmd.lpushx(key, values: _*)).map(_.longValue)
+    Task.fromReactivePublisher(reactiveCmd.lpushx(key, values: _*)).map(_.map(_.longValue()).getOrElse(-1L))
 
   /**
     * Get a range of elements from a list.
@@ -102,49 +102,49 @@ private[redis] class ListCommands[K, V](reactiveCmd: RedisListReactiveCommands[K
     * @return The number of removed elements.
     */
   def lRem(key: K, count: Long, value: V): Task[Long] =
-    Task.from(reactiveCmd.lrem(key, count, value)).map(_.longValue)
+    Task.fromReactivePublisher(reactiveCmd.lrem(key, count, value)).map(_.map(_.longValue).getOrElse(0L))
 
   /**
     * Set the value of an element in a list by its index.
     * @return string reply
     */
   def lSet(key: K, index: Long, value: V): Task[Unit] =
-    Task.from(reactiveCmd.lset(key, index, value)).void
+    Task.fromReactivePublisher(reactiveCmd.lset(key, index, value)).void
 
   /**
     * Trim a list to the specified range.
     * @return Simple string reply
     */
   def lTrim(key: K, start: Long, stop: Long): Task[Unit] =
-    Task.from(reactiveCmd.ltrim(key, start, stop)).void
+    Task.fromReactivePublisher(reactiveCmd.ltrim(key, start, stop)).void
 
   /**
     * Remove and get the last element in a list.
     * @return The value of the last element, or null when key does not exist.
     */
-  def rPop(key: K): Task[V] =
-    Task.from(reactiveCmd.rpop(key))
+  def rPop(key: K): Task[Option[V]] =
+    Task.fromReactivePublisher(reactiveCmd.rpop(key))
 
   /**
     * Remove the last element in a list, append it to another list and return it.
     * @return The element being popped and pushed.
     */
-  def rPopLPush(source: K, destination: K): Task[V] =
-    Task.from(reactiveCmd.rpoplpush(source, destination))
+  def rPopLPush(source: K, destination: K): Task[Option[V]] =
+    Task.fromReactivePublisher(reactiveCmd.rpoplpush(source, destination))
 
   /**
     * Append one or multiple values to a list.
     * @return The length of the list after the push operation.
     */
   def rPush(key: K, values: V*): Task[Long] =
-    Task.from(reactiveCmd.rpush(key, values: _*)).map(_.longValue)
+    Task.fromReactivePublisher(reactiveCmd.rpush(key, values: _*)).map(_.map(_.longValue).getOrElse(-1L))
 
   /**
     * Append values to a list, only if the list exists.
     * @return The length of the list after the push operation.
     */
   def rPushX(key: K, values: V*): Task[Long] =
-    Task.from(reactiveCmd.rpushx(key, values: _*)).map(_.longValue)
+    Task.fromReactivePublisher(reactiveCmd.rpushx(key, values: _*)).map(_.map(_.longValue).getOrElse(0L))
 }
 
 object ListCommands {

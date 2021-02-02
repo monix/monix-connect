@@ -17,12 +17,9 @@
 
 package monix.connect.redis
 
-import io.lettuce.core.api.StatefulRedisConnection
-import io.lettuce.core.api.async.{RedisKeyAsyncCommands, RedisListAsyncCommands, RedisServerAsyncCommands}
 import io.lettuce.core.api.reactive.RedisServerReactiveCommands
 import monix.eval.Task
 
-import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 
 /**
@@ -36,7 +33,7 @@ private[redis] class ServerCommands[K, V](reactiveCmd: RedisServerReactiveComman
     * @return Always OK.
     */
   def bgRewriteAOF: Task[Unit] =
-    Task.from(reactiveCmd.bgrewriteaof()).void
+    Task.fromReactivePublisher(reactiveCmd.bgrewriteaof()).void
 
   /**
     * Asynchronously save the dataset to disk.
@@ -44,14 +41,14 @@ private[redis] class ServerCommands[K, V](reactiveCmd: RedisServerReactiveComman
     * @return Simple string reply
     */
   def bgSave: Task[Unit] =
-    Task.from(reactiveCmd.bgsave()).void
+    Task.fromReactivePublisher(reactiveCmd.bgsave()).void
 
   /**
     * Get the current connection name.
     * @return The connection name, or a null bulk reply if no name is set.
     */
   def clientGetName: Task[Unit] =
-    Task.from(reactiveCmd.bgsave()).void
+    Task.fromReactivePublisher(reactiveCmd.bgsave()).void
 
   /**
     * Set the current connection name.
@@ -59,14 +56,14 @@ private[redis] class ServerCommands[K, V](reactiveCmd: RedisServerReactiveComman
     * @return OK if the connection name was successfully set.
     */
   def clientSetName(name: K): Task[Unit] =
-    Task.from(reactiveCmd.bgsave()).void
+    Task.fromReactivePublisher(reactiveCmd.bgsave()).void
 
   /**
     * Kill the connection of a client identified by ip:port.
     * @return OK if the connection exists and has been closed.
     */
   def clientKill(addr: String): Task[Unit] =
-    Task.from(reactiveCmd.clientKill(addr)).void
+    Task.fromReactivePublisher(reactiveCmd.clientKill(addr)).void
 
   /**
     * Get the list of client connections.
@@ -74,43 +71,44 @@ private[redis] class ServerCommands[K, V](reactiveCmd: RedisServerReactiveComman
     * @return A unique string, formatted as follows: One client connection per line (separated by LF),
     *         each line is composed of a succession of property=value fields separated by a space character.
     */
-  def clientList: Task[String] =
-    Task.from(reactiveCmd.clientList())
+  def clientList: Task[Option[String]] =
+    Task.fromReactivePublisher(reactiveCmd.clientList())
 
   /**
     * Get total number of Redis commands.
-    * @return Number of total commands in this Redis server.
+    * @return Number of total commands in this Redis server,
+    *         0 if the underlying response was empty.
     */
   def commandCount: Task[Long] =
-    Task.from(reactiveCmd.commandCount()).map(_.longValue)
+    Task.fromReactivePublisher(reactiveCmd.commandCount()).map(_.map(_.longValue).getOrElse(0L))
 
   /**
     * Get the value of a configuration parameter.
     * @return Bulk string reply
     */
   def configGet(parameter: String): Task[Map[String, String]] =
-    Task.from(reactiveCmd.configGet(parameter)).map(_.asScala.toMap)
+    Task.fromReactivePublisher(reactiveCmd.configGet(parameter)).map(_.map(_.asScala.toMap).getOrElse(Map.empty))
 
   /**
     * Reset the stats returned by INFO.
     * @return Always OK.
     */
   def configResetStat: Task[Unit] =
-    Task.from(reactiveCmd.configResetstat()).void
+    Task.fromReactivePublisher(reactiveCmd.configResetstat()).void
 
   /**
     * Remove all keys from all databases.
     * @return Simple string reply
     */
   def flushAll(): Task[Unit] =
-    Task.from(reactiveCmd.flushallAsync()).void
+    Task.fromReactivePublisher(reactiveCmd.flushallAsync()).void
 
   /**
     * Remove all keys from the current database.
     * @return Single string reply
     */
   def flushDb(): Task[Unit] =
-    Task.from(reactiveCmd.flushdbAsync()).void
+    Task.fromReactivePublisher(reactiveCmd.flushdbAsync()).void
 
 }
 
