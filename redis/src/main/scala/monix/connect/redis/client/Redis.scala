@@ -19,7 +19,7 @@ package monix.connect.redis.client
 
 import cats.effect.Resource
 import io.lettuce.core.api.{StatefulRedisConnection => RedisConnection}
-import io.lettuce.core.{RedisClient, RedisURI}
+import io.lettuce.core.RedisClient
 import monix.eval.Task
 
 /**

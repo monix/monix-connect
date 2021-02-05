@@ -44,7 +44,7 @@ class RedisSetSpec
     reset(reactiveRedisCommands)
     reset(reactiveRedisCommands)
   }
-/*
+  /*
   s"${RedisSet} " should " implement RedisSet trait" in {
     RedisSet shouldBe a[SetCommands]
   }

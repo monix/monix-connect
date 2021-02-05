@@ -146,12 +146,12 @@ private[redis] class SetCommands[K, V](reactiveCmd: RedisSetReactiveCommands[K, 
   def sUnionStore(destination: K, keys: K*): Task[Long] =
     Task.fromReactivePublisher(reactiveCmd.sunionstore(destination, keys: _*)).map(_.map(_.longValue).getOrElse(0L))
 
- ///**
- //  * Incrementally iterate Set elements.
- //  * @return Scan cursor.
- //  */
- //def sScan(key: K): Task[ValueScanCursor[V]] =
- //  Task.fromRea(reactiveCmd.sscan(key))
+  ///**
+  //  * Incrementally iterate Set elements.
+  //  * @return Scan cursor.
+  //  */
+  //def sScan(key: K): Task[ValueScanCursor[V]] =
+  //  Task.fromRea(reactiveCmd.sscan(key))
 
 }
 

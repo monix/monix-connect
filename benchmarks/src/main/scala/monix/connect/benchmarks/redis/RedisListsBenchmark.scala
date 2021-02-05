@@ -20,7 +20,6 @@ package monix.connect.benchmarks.redis
 import io.chrisdavenport.rediculous.RedisCommands
 import laserdisc.fs2._
 import laserdisc.{Index, Key, all => cmd}
-import monix.connect.redis.RedisList
 import monix.execution.Scheduler.Implicits.global
 import org.openjdk.jmh.annotations._
 import dev.profunktor.redis4cats.data.RedisCodec
@@ -48,7 +47,7 @@ class RedisListsBenchmark extends RedisBenchFixture {
 
     (1 to maxKey).foreach { key =>
       val value = key.toString
-      val f = RedisList.rpush(key.toString, value).runToFuture
+      val f = monixRedis.use(_.list.rPush(key.toString, value)).runToFuture
       Await.ready(f, 1.seconds)
     }
   }
@@ -62,28 +61,28 @@ class RedisListsBenchmark extends RedisBenchFixture {
   def listWriter(): Unit = {
     val key = keysCycle.next
     val value = key
-    val f = RedisList.rpush(key, value).runToFuture
+    val f = monixRedis.use(_.list.rPush(key, value)).runToFuture
     Await.ready(f, 1.seconds)
   }
 
   @Benchmark
   def listLengthReader(): Unit = {
-    val f = RedisList.llen(keysCycle.next).runToFuture
+    val f = monixRedis.use(_.list.lLen(keysCycle.next)).runToFuture
     Await.ready(f, 1.seconds)
   }
 
   @Benchmark
   def listByIndexReader(): Unit = {
-    val f = RedisList.lindex(keysCycle.next, 0).runToFuture
+    val f = monixRedis.use(_.list.lIndex(keysCycle.next, 0)).runToFuture
     Await.ready(f, 1.seconds)
   }
 
   @Benchmark
   def listRangeReader(): Unit = {
-    val f = RedisList.lrange(keysCycle.next, lowerBoundary, upperBoundary).toListL.runToFuture
+    val f = monixRedis.use(_.list.lRange(keysCycle.next, lowerBoundary, upperBoundary).toListL).runToFuture
     Await.ready(f, 1.seconds)
   }
-
+  /*
   @Benchmark
   def laserdiscListWriter(): Unit = {
     val key = keysCycle.next
@@ -179,7 +178,7 @@ class RedisListsBenchmark extends RedisBenchFixture {
 
   @Benchmark
   def redis4catsListRangeReader(): Unit = {
-    val f = redis4catsConn.use(c => c.lRaange(keysCycle.next, lowerBoundary, upperBoundary)).unsafeToFuture
+    val f = redis4catsConn.use(c => c.lRange(keysCycle.next, lowerBoundary, upperBoundary)).unsafeToFuture
     Await.ready(f, 1.seconds)
-  }
+  } */
 }

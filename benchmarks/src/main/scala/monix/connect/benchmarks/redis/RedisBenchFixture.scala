@@ -40,7 +40,9 @@ trait RedisBenchFixture {
   implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
   implicit val timer: Timer[IO] = IO.timer(ExecutionContext.global)
 
-  implicit val connection: StatefulRedisConnection[String, String] = RedisClient.create(redisUrl).connect()
+  val connection: StatefulRedisConnection[String, String] = RedisClient.create(redisUrl).connect()
+
+  val monixRedis = monix.connect.redis.client.Redis.connect(redisUrl)
 
   val redis4catsConn = redis4cats.Redis[IO].utf8(redisUrl)
 
@@ -55,5 +57,5 @@ trait RedisBenchFixture {
 
   val maxKey: Int = 5000
 
-  def flushdb = redis.$Commands.flushdbAsync().runSyncUnsafe()
+  def flushdb = monixRedis.use(_.server.flushAll()).runSyncUnsafe()
 }

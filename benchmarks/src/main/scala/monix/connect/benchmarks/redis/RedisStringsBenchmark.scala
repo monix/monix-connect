@@ -20,7 +20,6 @@ package monix.connect.benchmarks.redis
 import io.chrisdavenport.rediculous.RedisCommands
 import laserdisc.fs2._
 import laserdisc.{Key, all => cmd}
-import monix.connect.redis.RedisString
 import monix.execution.Scheduler.Implicits.global
 import org.openjdk.jmh.annotations._
 
@@ -45,7 +44,7 @@ class RedisStringsBenchmark extends RedisBenchFixture {
 
     (1 to maxKey).foreach { key =>
       val value = key.toString
-      val f = RedisString.set(key.toString, value).runToFuture
+      val f = monixRedis.use(_.string.set(key.toString, value)).runToFuture
       Await.ready(f, 1.seconds)
     }
   }
@@ -59,7 +58,7 @@ class RedisStringsBenchmark extends RedisBenchFixture {
   def stringWriter(): Unit = {
     val key = keysCycle.next
     val value = key.toString
-    val f = RedisString.set(key, value).runToFuture
+    val f = monixRedis.use(_.string.set(key, value)).runToFuture
     Await.ready(f, 1.seconds)
   }
 
@@ -67,16 +66,16 @@ class RedisStringsBenchmark extends RedisBenchFixture {
   def stringAppender(): Unit = {
     val key = keysCycle.next
     val value = key.toString
-    val f = RedisString.append(key, value).runToFuture
+    val f = monixRedis.use(_.string.append(key, value)).runToFuture
     Await.ready(f, 1.seconds)
   }
 
   @Benchmark
   def stringReader(): Unit = {
-    val f = RedisString.get(keysCycle.next).runToFuture
+    val f = monixRedis.use(_.string.get(keysCycle.next)).runToFuture
     Await.ready(f, 1.seconds)
   }
-
+  /*
   @Benchmark
   def laserdiscStringWriter(): Unit = {
     val key = keysCycle.next
@@ -153,5 +152,5 @@ class RedisStringsBenchmark extends RedisBenchFixture {
   def redis4catsStringReader(): Unit = {
     val f = redis4catsConn.use(c => c.get(keysCycle.next)).unsafeToFuture
     Await.ready(f, 1.seconds)
-  }
+  }*/
 }

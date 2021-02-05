@@ -30,7 +30,7 @@ class CodecSuite extends AnyFlatSpec with RedisIntegrationFixture with Matchers 
 
     //then
     val r = Redis.connectWithByteArrayCodec[PersonPk, Person](redisUrl).use(_.list.lPop(personPk)).runSyncUnsafe()
-    person shouldBe r
+    Some(person) shouldBe r
   }
 
   s"An Int Codec" should "encode and decode int values" in {
@@ -44,7 +44,7 @@ class CodecSuite extends AnyFlatSpec with RedisIntegrationFixture with Matchers 
 
     //then
     val r = Redis.connectWithCodec(redisUrl).use(_.list.lPop(key)).runSyncUnsafe()
-    value shouldBe r
+    Some(value) shouldBe r
   }
 
   it should "encode and decode int keys with strings api" in {
@@ -62,7 +62,7 @@ class CodecSuite extends AnyFlatSpec with RedisIntegrationFixture with Matchers 
     ).runSyncUnsafe()
 
     //then
-    r shouldBe s"$n$n$n".toInt
+    r shouldBe Some(s"$n$n$n".toInt)
   }
 
 

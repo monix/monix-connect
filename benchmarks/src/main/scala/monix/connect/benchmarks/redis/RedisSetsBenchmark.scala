@@ -20,7 +20,6 @@ package monix.connect.benchmarks.redis
 import io.chrisdavenport.rediculous.RedisCommands
 import laserdisc.fs2._
 import laserdisc.{Key, OneOrMore, all => cmd}
-import monix.connect.redis.RedisSet
 import monix.execution.Scheduler.Implicits.global
 import org.openjdk.jmh.annotations._
 
@@ -45,7 +44,7 @@ class RedisSetsBenchmark extends RedisBenchFixture {
 
     (1 to maxKey).foreach { key =>
       val values = (1 to 3).map(i => (key + i).toString)
-      val f = RedisSet.sadd(key.toString, values: _*).runToFuture
+      val f = monixRedis.use(_.set.sAdd(key.toString, values: _*)).runToFuture
       Await.ready(f, 1.seconds)
     }
   }
@@ -59,7 +58,7 @@ class RedisSetsBenchmark extends RedisBenchFixture {
   def setWriter(): Unit = {
     val key = keysCycle.next
     val values = (1 to 3).map(i => (key + i).toString)
-    val f = RedisSet.sadd(key, values: _*).runToFuture
+    val f = monixRedis.use(_.set.sAdd(key, values: _*)).runToFuture
     Await.ready(f, 1.seconds)
   }
 
@@ -68,19 +67,19 @@ class RedisSetsBenchmark extends RedisBenchFixture {
     val key1 = keysCycle.next
     val key2 = keysCycle.next
     val keyDest = keysCycle.next
-    val f = RedisSet.sinterstore(keyDest, key1, key2).runToFuture
+    val f = monixRedis.use(_.set.sInterStore(keyDest, key1, key2)).runToFuture
     Await.ready(f, 1.seconds)
   }
 
   @Benchmark
   def setCardReader(): Unit = {
-    val f = RedisSet.scard(keysCycle.next).runToFuture
+    val f = monixRedis.use(_.set.sCard(keysCycle.next)).runToFuture
     Await.ready(f, 1.seconds)
   }
-
+  /*
   @Benchmark
   def setMembersReader(): Unit = {
-    val f = RedisSet.smembers(keysCycle.next).toListL.runToFuture
+    val f = monixRedis.use(_.set.sMembers(keysCycle.next)).toListL.runToFuture
     Await.ready(f, 1.seconds)
   }
 
@@ -186,5 +185,5 @@ class RedisSetsBenchmark extends RedisBenchFixture {
   def redis4catsSetMembersReader(): Unit = {
     val f = redis4catsConn.use(c => c.sMembers(keysCycle.next)).unsafeToFuture
     Await.ready(f, 1.seconds)
-  }
+  } */
 }

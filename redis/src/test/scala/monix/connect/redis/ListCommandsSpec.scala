@@ -273,5 +273,5 @@ class ListCommandsSpec
     //then
     verify(reactiveRedisCommands).rpushx(key, values: _*)
   }
-  */
+ */
 }

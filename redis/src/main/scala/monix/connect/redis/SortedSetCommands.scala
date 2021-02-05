@@ -194,7 +194,8 @@ private[redis] class SortedSetCommands[K, V](reactiveCmd: RedisSortedSetReactive
     * @return The rank of member. A [[None]] if the member does not exist in the sorted set or key does not exist.
     */
   def zRank(key: K, member: V): Task[Option[Long]] =
-    Task.fromReactivePublisher(reactiveCmd.zrank(key, member))
+    Task
+      .fromReactivePublisher(reactiveCmd.zrank(key, member))
       .map(_.map(_.longValue))
 
   /**
@@ -202,7 +203,8 @@ private[redis] class SortedSetCommands[K, V](reactiveCmd: RedisSortedSetReactive
     * @return The number of members removed from the sorted set, not including non existing members.
     */
   def zRem(key: K, members: V*): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.zrem(key, members: _*))
+    Task
+      .fromReactivePublisher(reactiveCmd.zrem(key, members: _*))
       .map(_.map(_.longValue).getOrElse(0L))
 
   /**
@@ -210,7 +212,8 @@ private[redis] class SortedSetCommands[K, V](reactiveCmd: RedisSortedSetReactive
     * @return The number of elements removed.
     */
   def zRemRangeByLex(key: K, range: Range[_ <: V]): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.zremrangebylex(key, range))
+    Task
+      .fromReactivePublisher(reactiveCmd.zremrangebylex(key, range))
       .map(_.map(_.longValue).getOrElse(0L))
 
   /**
@@ -218,7 +221,8 @@ private[redis] class SortedSetCommands[K, V](reactiveCmd: RedisSortedSetReactive
     * @return The number of elements removed.
     */
   def zRemRangeByRank(key: K, start: Long, stop: Long): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.zremrangebyrank(key, start, stop))
+    Task
+      .fromReactivePublisher(reactiveCmd.zremrangebyrank(key, start, stop))
       .map(_.map(_.longValue).getOrElse(0L))
 
   /**
@@ -226,7 +230,8 @@ private[redis] class SortedSetCommands[K, V](reactiveCmd: RedisSortedSetReactive
     *  @return The number of elements removed.
     */
   def zRemRangeByScore(key: K, range: Range[_ <: Number]): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.zremrangebyscore(key, range))
+    Task
+      .fromReactivePublisher(reactiveCmd.zremrangebyscore(key, range))
       .map(_.map(_.longValue).getOrElse(0L))
 
   /**
@@ -290,22 +295,23 @@ private[redis] class SortedSetCommands[K, V](reactiveCmd: RedisSortedSetReactive
     * @return The rank of member. [[None]] if member or the key does not exist.
     */
   def zRevRank(key: K, member: V): Task[Option[Long]] =
-    Task.fromReactivePublisher(reactiveCmd.zrevrank(key, member))
+    Task
+      .fromReactivePublisher(reactiveCmd.zrevrank(key, member))
       .map(_.map(_.longValue))
 
- // /**
- //   * Incrementally iterate sorted sets elements and associated scores.
- //   * @return Scan cursor.
- //   */
- // def zScan(key: K): Task[ScoredValueScanCursor[V]] =
- //   Task.fromReactivePublisher(reactiveCmd.zscan(key))
+  // /**
+  //   * Incrementally iterate sorted sets elements and associated scores.
+  //   * @return Scan cursor.
+  //   */
+  // def zScan(key: K): Task[ScoredValueScanCursor[V]] =
+  //   Task.fromReactivePublisher(reactiveCmd.zscan(key))
 //
- // /**
- //   * Get the score associated with the given member in a sorted set.
- //   * @return The score of member represented as string.
- //   */
- // def zScore(key: K, member: V): Task[Double] =
- //   Task.fromReactivePublisher(reactiveCmd.zscore(key, member)).map(_.doubleValue)
+  // /**
+  //   * Get the score associated with the given member in a sorted set.
+  //   * @return The score of member represented as string.
+  //   */
+  // def zScore(key: K, member: V): Task[Double] =
+  //   Task.fromReactivePublisher(reactiveCmd.zscore(key, member)).map(_.doubleValue)
 
   /**
     * Add multiple sorted sets and store the resulting sorted set in a new key.

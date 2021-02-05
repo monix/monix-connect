@@ -67,5 +67,5 @@ class RedisSpec
       $Commands shouldBe a[StringCommands]
     }
   }
-*/
+ */
 }

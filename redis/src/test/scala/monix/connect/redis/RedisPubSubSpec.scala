@@ -181,5 +181,5 @@ class RedisPubSubSpec
     verify(reactiveRedisCommands).waitForReplication(replicas, timeout)
   }
   //dispatch not supported
-*/
+ */
 }

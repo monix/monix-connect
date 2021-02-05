@@ -19,7 +19,6 @@ package monix.connect.redis
 
 import java.util.Date
 import io.lettuce.core.api.reactive.RedisKeyReactiveCommands
-import io.lettuce.core.{KeyScanCursor, ScanCursor}
 import monix.eval.Task
 import monix.reactive.Observable
 
@@ -232,7 +231,9 @@ private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, 
 
 private[redis] object KeyCommands {
 
-  def apply[K, V](reactiveCmd: RedisKeyReactiveCommands[K, V]) =
+  def apply[K, V](reactiveCmd: RedisKeyReactiveCommands[K, V]) = {
+
     new KeyCommands[K, V](reactiveCmd)
+  }
 
 }

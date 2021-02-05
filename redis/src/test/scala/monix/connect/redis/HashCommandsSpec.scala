@@ -248,5 +248,5 @@ class HashCommandsSpec
     //then
     verify(reactiveRedisCommands).hincrby(k, field, v)
   }
-  */
+ */
 }

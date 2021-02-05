@@ -20,7 +20,7 @@ package monix.connect.benchmarks.redis
 import io.chrisdavenport.rediculous.RedisCommands
 import laserdisc.fs2._
 import laserdisc.{Key, all => cmd}
-import monix.connect.redis.{$Commands, KeyCommands}
+import monix.connect.redis.KeyCommands
 import monix.execution.Scheduler.Implicits.global
 import org.openjdk.jmh.annotations._
 
@@ -41,11 +41,11 @@ class RedisKeysBenchmark extends RedisBenchFixture {
     flushdb
 
     val keys = (0 to maxKey).toList.map(_.toString)
-    keysCycle = scala.Stream.continually(keys).flatten.iterator
+    keysCycle = LazyList.continually(keys).flatten.iterator
 
     (1 to maxKey).foreach { key =>
       val value = key.toString
-      val f = $Commands.set(key.toString, value).runToFuture
+      val f = monixRedis.use(_.string.set(key.toString, value)).runToFuture
       Await.ready(f, 1.seconds)
     }
   }
@@ -57,16 +57,17 @@ class RedisKeysBenchmark extends RedisBenchFixture {
 
   @Benchmark
   def keyExistsReader(): Unit = {
-    val f = KeyCommands.exists(keysCycle.next).runToFuture
+    val f = monixRedis.use(_.key.exists(keysCycle.next)).runToFuture
     Await.ready(f, 1.seconds)
   }
 
   @Benchmark
   def keyPttlReader(): Unit = {
-    val f = KeyCommands.pttl(keysCycle.next).runToFuture
+    val f = monixRedis.use(_.key.pTtl(keysCycle.next)).runToFuture
     Await.ready(f, 1.seconds)
   }
 
+  /*
   @Benchmark
   def laserDiscKeyExistsReader(): Unit = {
     val f = laserdConn
@@ -82,6 +83,7 @@ class RedisKeysBenchmark extends RedisBenchFixture {
       .unsafeToFuture
     Await.ready(f, 1.seconds)
   }
+
 
   @Benchmark
   def redicolousKeyExistsReader(): Unit = {
@@ -109,5 +111,5 @@ class RedisKeysBenchmark extends RedisBenchFixture {
   def redis4catsKeyPttlReader(): Unit = {
     val f = redis4catsConn.use(c => c.pttl(keysCycle.next)).unsafeToFuture
     Await.ready(f, 1.seconds)
-  }
+  }   */
 }

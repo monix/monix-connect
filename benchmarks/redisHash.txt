@@ -1,0 +1,693 @@
+# JMH version: 1.25
+# VM version: JDK 1.8.0_221, Java HotSpot(TM) 64-Bit Server VM, 25.221-b11
+# VM invoker: /Library/Java/JavaVirtualMachines/jdk1.8.0_221.jdk/Contents/Home/jre/bin/java
+# VM options: <none>
+# Warmup: 1 iterations, 10 s each
+# Measurement: 5 iterations, 10 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: monix.connect.benchmarks.redis.RedisHashesBenchmark.hashAllReader
+
+# Run progress: 0.00% complete, ETA 00:15:00
+# Fork: 1 of 1
+# Warmup Iteration   1: <failure>
+
+java.util.concurrent.TimeoutException: Future timed out after [1 second]
+	at scala.concurrent.impl.Promise$DefaultPromise.tryAwait0(Promise.scala:212)
+	at scala.concurrent.impl.Promise$DefaultPromise.result(Promise.scala:225)
+	at monix.execution.CancelableFuture$Async.result(CancelableFuture.scala:373)
+	at scala.concurrent.Await$.$anonfun$result$1(package.scala:201)
+	at scala.concurrent.BlockContext$DefaultBlockContext$.blockOn(BlockContext.scala:62)
+	at scala.concurrent.Await$.result(package.scala:124)
+	at monix.connect.benchmarks.redis.RedisHashesBenchmark.$anonfun$setup$3(RedisHashesBenchmark.scala:49)
+	at scala.runtime.java8.JFunction1$mcZI$sp.apply(JFunction1$mcZI$sp.scala:17)
+	at scala.collection.immutable.Range.foreach(Range.scala:190)
+	at monix.connect.benchmarks.redis.RedisHashesBenchmark.setup(RedisHashesBenchmark.scala:45)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisHashesBenchmark_hashAllReader_jmhTest._jmh_tryInit_f_redishashesbenchmark0_0(RedisHashesBenchmark_hashAllReader_jmhTest.java:338)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisHashesBenchmark_hashAllReader_jmhTest.hashAllReader_Throughput(RedisHashesBenchmark_hashAllReader_jmhTest.java:71)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:453)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:437)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+
+
+
+# JMH version: 1.25
+# VM version: JDK 1.8.0_221, Java HotSpot(TM) 64-Bit Server VM, 25.221-b11
+# VM invoker: /Library/Java/JavaVirtualMachines/jdk1.8.0_221.jdk/Contents/Home/jre/bin/java
+# VM options: <none>
+# Warmup: 1 iterations, 10 s each
+# Measurement: 5 iterations, 10 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: monix.connect.benchmarks.redis.RedisHashesBenchmark.hashFieldValueReader
+
+# Run progress: 6.67% complete, ETA 00:01:19
+# Fork: 1 of 1
+# Warmup Iteration   1: <failure>
+
+java.util.concurrent.TimeoutException: Future timed out after [1 second]
+	at scala.concurrent.impl.Promise$DefaultPromise.tryAwait0(Promise.scala:212)
+	at scala.concurrent.impl.Promise$DefaultPromise.result(Promise.scala:225)
+	at monix.execution.CancelableFuture$Async.result(CancelableFuture.scala:373)
+	at scala.concurrent.Await$.$anonfun$result$1(package.scala:201)
+	at scala.concurrent.BlockContext$DefaultBlockContext$.blockOn(BlockContext.scala:62)
+	at scala.concurrent.Await$.result(package.scala:124)
+	at monix.connect.benchmarks.redis.RedisHashesBenchmark.$anonfun$setup$3(RedisHashesBenchmark.scala:49)
+	at scala.runtime.java8.JFunction1$mcZI$sp.apply(JFunction1$mcZI$sp.scala:17)
+	at scala.collection.immutable.Range.foreach(Range.scala:190)
+	at monix.connect.benchmarks.redis.RedisHashesBenchmark.setup(RedisHashesBenchmark.scala:45)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisHashesBenchmark_hashFieldValueReader_jmhTest._jmh_tryInit_f_redishashesbenchmark0_0(RedisHashesBenchmark_hashFieldValueReader_jmhTest.java:338)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisHashesBenchmark_hashFieldValueReader_jmhTest.hashFieldValueReader_Throughput(RedisHashesBenchmark_hashFieldValueReader_jmhTest.java:71)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:453)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:437)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+
+
+
+# JMH version: 1.25
+# VM version: JDK 1.8.0_221, Java HotSpot(TM) 64-Bit Server VM, 25.221-b11
+# VM invoker: /Library/Java/JavaVirtualMachines/jdk1.8.0_221.jdk/Contents/Home/jre/bin/java
+# VM options: <none>
+# Warmup: 1 iterations, 10 s each
+# Measurement: 5 iterations, 10 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: monix.connect.benchmarks.redis.RedisHashesBenchmark.hashWriter
+
+# Run progress: 13.33% complete, ETA 00:01:10
+# Fork: 1 of 1
+# Warmup Iteration   1: <failure>
+
+java.util.concurrent.TimeoutException: Future timed out after [1 second]
+	at scala.concurrent.impl.Promise$DefaultPromise.tryAwait0(Promise.scala:212)
+	at scala.concurrent.impl.Promise$DefaultPromise.result(Promise.scala:225)
+	at monix.execution.CancelableFuture$Async.result(CancelableFuture.scala:373)
+	at scala.concurrent.Await$.$anonfun$result$1(package.scala:201)
+	at scala.concurrent.BlockContext$DefaultBlockContext$.blockOn(BlockContext.scala:62)
+	at scala.concurrent.Await$.result(package.scala:124)
+	at monix.connect.benchmarks.redis.RedisHashesBenchmark.$anonfun$setup$3(RedisHashesBenchmark.scala:49)
+	at scala.runtime.java8.JFunction1$mcZI$sp.apply(JFunction1$mcZI$sp.scala:17)
+	at scala.collection.immutable.Range.foreach(Range.scala:190)
+	at monix.connect.benchmarks.redis.RedisHashesBenchmark.setup(RedisHashesBenchmark.scala:45)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisHashesBenchmark_hashWriter_jmhTest._jmh_tryInit_f_redishashesbenchmark0_0(RedisHashesBenchmark_hashWriter_jmhTest.java:338)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisHashesBenchmark_hashWriter_jmhTest.hashWriter_Throughput(RedisHashesBenchmark_hashWriter_jmhTest.java:71)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:453)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:437)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+
+
+
+# JMH version: 1.25
+# VM version: JDK 1.8.0_221, Java HotSpot(TM) 64-Bit Server VM, 25.221-b11
+# VM invoker: /Library/Java/JavaVirtualMachines/jdk1.8.0_221.jdk/Contents/Home/jre/bin/java
+# VM options: <none>
+# Warmup: 1 iterations, 10 s each
+# Measurement: 5 iterations, 10 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: monix.connect.benchmarks.redis.RedisKeysBenchmark.keyExistsReader
+
+# Run progress: 20.00% complete, ETA 00:01:02
+# Fork: 1 of 1
+# Warmup Iteration   1: <failure>
+
+java.util.concurrent.TimeoutException: Future timed out after [1 second]
+	at scala.concurrent.impl.Promise$DefaultPromise.tryAwait0(Promise.scala:212)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:219)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:104)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:378)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:360)
+	at scala.concurrent.Await$.$anonfun$ready$1(package.scala:174)
+	at scala.concurrent.BlockContext$DefaultBlockContext$.blockOn(BlockContext.scala:62)
+	at scala.concurrent.Await$.ready(package.scala:124)
+	at monix.connect.benchmarks.redis.RedisKeysBenchmark.$anonfun$setup$3(RedisKeysBenchmark.scala:49)
+	at monix.connect.benchmarks.redis.RedisKeysBenchmark.$anonfun$setup$3$adapted(RedisKeysBenchmark.scala:46)
+	at scala.collection.immutable.Range.foreach(Range.scala:190)
+	at monix.connect.benchmarks.redis.RedisKeysBenchmark.setup(RedisKeysBenchmark.scala:46)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisKeysBenchmark_keyExistsReader_jmhTest._jmh_tryInit_f_rediskeysbenchmark0_0(RedisKeysBenchmark_keyExistsReader_jmhTest.java:338)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisKeysBenchmark_keyExistsReader_jmhTest.keyExistsReader_Throughput(RedisKeysBenchmark_keyExistsReader_jmhTest.java:71)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:453)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:437)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+
+
+
+# JMH version: 1.25
+# VM version: JDK 1.8.0_221, Java HotSpot(TM) 64-Bit Server VM, 25.221-b11
+# VM invoker: /Library/Java/JavaVirtualMachines/jdk1.8.0_221.jdk/Contents/Home/jre/bin/java
+# VM options: <none>
+# Warmup: 1 iterations, 10 s each
+# Measurement: 5 iterations, 10 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: monix.connect.benchmarks.redis.RedisKeysBenchmark.keyPttlReader
+
+# Run progress: 26.67% complete, ETA 00:00:56
+# Fork: 1 of 1
+# Warmup Iteration   1: <failure>
+
+java.util.concurrent.TimeoutException: Future timed out after [1 second]
+	at scala.concurrent.impl.Promise$DefaultPromise.tryAwait0(Promise.scala:212)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:219)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:104)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:378)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:360)
+	at scala.concurrent.Await$.$anonfun$ready$1(package.scala:174)
+	at scala.concurrent.BlockContext$DefaultBlockContext$.blockOn(BlockContext.scala:62)
+	at scala.concurrent.Await$.ready(package.scala:124)
+	at monix.connect.benchmarks.redis.RedisKeysBenchmark.$anonfun$setup$3(RedisKeysBenchmark.scala:49)
+	at monix.connect.benchmarks.redis.RedisKeysBenchmark.$anonfun$setup$3$adapted(RedisKeysBenchmark.scala:46)
+	at scala.collection.immutable.Range.foreach(Range.scala:190)
+	at monix.connect.benchmarks.redis.RedisKeysBenchmark.setup(RedisKeysBenchmark.scala:46)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisKeysBenchmark_keyPttlReader_jmhTest._jmh_tryInit_f_rediskeysbenchmark0_0(RedisKeysBenchmark_keyPttlReader_jmhTest.java:338)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisKeysBenchmark_keyPttlReader_jmhTest.keyPttlReader_Throughput(RedisKeysBenchmark_keyPttlReader_jmhTest.java:71)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:453)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:437)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+
+
+
+# JMH version: 1.25
+# VM version: JDK 1.8.0_221, Java HotSpot(TM) 64-Bit Server VM, 25.221-b11
+# VM invoker: /Library/Java/JavaVirtualMachines/jdk1.8.0_221.jdk/Contents/Home/jre/bin/java
+# VM options: <none>
+# Warmup: 1 iterations, 10 s each
+# Measurement: 5 iterations, 10 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: monix.connect.benchmarks.redis.RedisListsBenchmark.listByIndexReader
+
+# Run progress: 33.33% complete, ETA 00:00:50
+# Fork: 1 of 1
+# Warmup Iteration   1: <failure>
+
+java.util.concurrent.TimeoutException: Future timed out after [1 second]
+	at scala.concurrent.impl.Promise$DefaultPromise.tryAwait0(Promise.scala:212)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:219)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:104)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:378)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:360)
+	at scala.concurrent.Await$.$anonfun$ready$1(package.scala:174)
+	at scala.concurrent.BlockContext$DefaultBlockContext$.blockOn(BlockContext.scala:62)
+	at scala.concurrent.Await$.ready(package.scala:124)
+	at monix.connect.benchmarks.redis.RedisListsBenchmark.$anonfun$setup$3(RedisListsBenchmark.scala:51)
+	at monix.connect.benchmarks.redis.RedisListsBenchmark.$anonfun$setup$3$adapted(RedisListsBenchmark.scala:48)
+	at scala.collection.immutable.Range.foreach(Range.scala:190)
+	at monix.connect.benchmarks.redis.RedisListsBenchmark.setup(RedisListsBenchmark.scala:48)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisListsBenchmark_listByIndexReader_jmhTest._jmh_tryInit_f_redislistsbenchmark0_0(RedisListsBenchmark_listByIndexReader_jmhTest.java:338)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisListsBenchmark_listByIndexReader_jmhTest.listByIndexReader_Throughput(RedisListsBenchmark_listByIndexReader_jmhTest.java:71)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:453)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:437)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+
+
+
+# JMH version: 1.25
+# VM version: JDK 1.8.0_221, Java HotSpot(TM) 64-Bit Server VM, 25.221-b11
+# VM invoker: /Library/Java/JavaVirtualMachines/jdk1.8.0_221.jdk/Contents/Home/jre/bin/java
+# VM options: <none>
+# Warmup: 1 iterations, 10 s each
+# Measurement: 5 iterations, 10 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: monix.connect.benchmarks.redis.RedisListsBenchmark.listLengthReader
+
+# Run progress: 40.00% complete, ETA 00:00:43
+# Fork: 1 of 1
+# Warmup Iteration   1: <failure>
+
+java.util.concurrent.TimeoutException: Future timed out after [1 second]
+	at scala.concurrent.impl.Promise$DefaultPromise.tryAwait0(Promise.scala:212)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:219)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:104)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:378)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:360)
+	at scala.concurrent.Await$.$anonfun$ready$1(package.scala:174)
+	at scala.concurrent.BlockContext$DefaultBlockContext$.blockOn(BlockContext.scala:62)
+	at scala.concurrent.Await$.ready(package.scala:124)
+	at monix.connect.benchmarks.redis.RedisListsBenchmark.$anonfun$setup$3(RedisListsBenchmark.scala:51)
+	at monix.connect.benchmarks.redis.RedisListsBenchmark.$anonfun$setup$3$adapted(RedisListsBenchmark.scala:48)
+	at scala.collection.immutable.Range.foreach(Range.scala:190)
+	at monix.connect.benchmarks.redis.RedisListsBenchmark.setup(RedisListsBenchmark.scala:48)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisListsBenchmark_listLengthReader_jmhTest._jmh_tryInit_f_redislistsbenchmark0_0(RedisListsBenchmark_listLengthReader_jmhTest.java:338)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisListsBenchmark_listLengthReader_jmhTest.listLengthReader_Throughput(RedisListsBenchmark_listLengthReader_jmhTest.java:71)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:453)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:437)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+
+
+
+# JMH version: 1.25
+# VM version: JDK 1.8.0_221, Java HotSpot(TM) 64-Bit Server VM, 25.221-b11
+# VM invoker: /Library/Java/JavaVirtualMachines/jdk1.8.0_221.jdk/Contents/Home/jre/bin/java
+# VM options: <none>
+# Warmup: 1 iterations, 10 s each
+# Measurement: 5 iterations, 10 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: monix.connect.benchmarks.redis.RedisListsBenchmark.listRangeReader
+
+# Run progress: 46.67% complete, ETA 00:00:37
+# Fork: 1 of 1
+# Warmup Iteration   1: <failure>
+
+java.util.concurrent.TimeoutException: Future timed out after [1 second]
+	at scala.concurrent.impl.Promise$DefaultPromise.tryAwait0(Promise.scala:212)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:219)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:104)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:378)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:360)
+	at scala.concurrent.Await$.$anonfun$ready$1(package.scala:174)
+	at scala.concurrent.BlockContext$DefaultBlockContext$.blockOn(BlockContext.scala:62)
+	at scala.concurrent.Await$.ready(package.scala:124)
+	at monix.connect.benchmarks.redis.RedisListsBenchmark.$anonfun$setup$3(RedisListsBenchmark.scala:51)
+	at monix.connect.benchmarks.redis.RedisListsBenchmark.$anonfun$setup$3$adapted(RedisListsBenchmark.scala:48)
+	at scala.collection.immutable.Range.foreach(Range.scala:190)
+	at monix.connect.benchmarks.redis.RedisListsBenchmark.setup(RedisListsBenchmark.scala:48)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisListsBenchmark_listRangeReader_jmhTest._jmh_tryInit_f_redislistsbenchmark0_0(RedisListsBenchmark_listRangeReader_jmhTest.java:338)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisListsBenchmark_listRangeReader_jmhTest.listRangeReader_Throughput(RedisListsBenchmark_listRangeReader_jmhTest.java:71)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:453)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:437)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+
+
+
+# JMH version: 1.25
+# VM version: JDK 1.8.0_221, Java HotSpot(TM) 64-Bit Server VM, 25.221-b11
+# VM invoker: /Library/Java/JavaVirtualMachines/jdk1.8.0_221.jdk/Contents/Home/jre/bin/java
+# VM options: <none>
+# Warmup: 1 iterations, 10 s each
+# Measurement: 5 iterations, 10 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: monix.connect.benchmarks.redis.RedisListsBenchmark.listWriter
+
+# Run progress: 53.33% complete, ETA 00:00:33
+# Fork: 1 of 1
+# Warmup Iteration   1: <failure>
+
+java.util.concurrent.TimeoutException: Future timed out after [1 second]
+	at scala.concurrent.impl.Promise$DefaultPromise.tryAwait0(Promise.scala:212)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:219)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:104)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:378)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:360)
+	at scala.concurrent.Await$.$anonfun$ready$1(package.scala:174)
+	at scala.concurrent.BlockContext$DefaultBlockContext$.blockOn(BlockContext.scala:62)
+	at scala.concurrent.Await$.ready(package.scala:124)
+	at monix.connect.benchmarks.redis.RedisListsBenchmark.$anonfun$setup$3(RedisListsBenchmark.scala:51)
+	at monix.connect.benchmarks.redis.RedisListsBenchmark.$anonfun$setup$3$adapted(RedisListsBenchmark.scala:48)
+	at scala.collection.immutable.Range.foreach(Range.scala:190)
+	at monix.connect.benchmarks.redis.RedisListsBenchmark.setup(RedisListsBenchmark.scala:48)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisListsBenchmark_listWriter_jmhTest._jmh_tryInit_f_redislistsbenchmark0_0(RedisListsBenchmark_listWriter_jmhTest.java:338)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisListsBenchmark_listWriter_jmhTest.listWriter_Throughput(RedisListsBenchmark_listWriter_jmhTest.java:71)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:453)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:437)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+
+
+
+# JMH version: 1.25
+# VM version: JDK 1.8.0_221, Java HotSpot(TM) 64-Bit Server VM, 25.221-b11
+# VM invoker: /Library/Java/JavaVirtualMachines/jdk1.8.0_221.jdk/Contents/Home/jre/bin/java
+# VM options: <none>
+# Warmup: 1 iterations, 10 s each
+# Measurement: 5 iterations, 10 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: monix.connect.benchmarks.redis.RedisSetsBenchmark.setCardReader
+
+# Run progress: 60.00% complete, ETA 00:00:27
+# Fork: 1 of 1
+# Warmup Iteration   1: <failure>
+
+java.util.concurrent.TimeoutException: Future timed out after [1 second]
+	at scala.concurrent.impl.Promise$DefaultPromise.tryAwait0(Promise.scala:212)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:219)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:104)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:378)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:360)
+	at scala.concurrent.Await$.$anonfun$ready$1(package.scala:174)
+	at scala.concurrent.BlockContext$DefaultBlockContext$.blockOn(BlockContext.scala:62)
+	at scala.concurrent.Await$.ready(package.scala:124)
+	at monix.connect.benchmarks.redis.RedisSetsBenchmark.$anonfun$setup$3(RedisSetsBenchmark.scala:48)
+	at monix.connect.benchmarks.redis.RedisSetsBenchmark.$anonfun$setup$3$adapted(RedisSetsBenchmark.scala:45)
+	at scala.collection.immutable.Range.foreach(Range.scala:190)
+	at monix.connect.benchmarks.redis.RedisSetsBenchmark.setup(RedisSetsBenchmark.scala:45)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisSetsBenchmark_setCardReader_jmhTest._jmh_tryInit_f_redissetsbenchmark0_0(RedisSetsBenchmark_setCardReader_jmhTest.java:338)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisSetsBenchmark_setCardReader_jmhTest.setCardReader_Throughput(RedisSetsBenchmark_setCardReader_jmhTest.java:71)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:453)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:437)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+
+
+
+# JMH version: 1.25
+# VM version: JDK 1.8.0_221, Java HotSpot(TM) 64-Bit Server VM, 25.221-b11
+# VM invoker: /Library/Java/JavaVirtualMachines/jdk1.8.0_221.jdk/Contents/Home/jre/bin/java
+# VM options: <none>
+# Warmup: 1 iterations, 10 s each
+# Measurement: 5 iterations, 10 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: monix.connect.benchmarks.redis.RedisSetsBenchmark.setDiffWriter
+
+# Run progress: 66.67% complete, ETA 00:00:22
+# Fork: 1 of 1
+# Warmup Iteration   1: <failure>
+
+java.util.concurrent.TimeoutException: Future timed out after [1 second]
+	at scala.concurrent.impl.Promise$DefaultPromise.tryAwait0(Promise.scala:212)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:219)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:104)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:378)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:360)
+	at scala.concurrent.Await$.$anonfun$ready$1(package.scala:174)
+	at scala.concurrent.BlockContext$DefaultBlockContext$.blockOn(BlockContext.scala:62)
+	at scala.concurrent.Await$.ready(package.scala:124)
+	at monix.connect.benchmarks.redis.RedisSetsBenchmark.$anonfun$setup$3(RedisSetsBenchmark.scala:48)
+	at monix.connect.benchmarks.redis.RedisSetsBenchmark.$anonfun$setup$3$adapted(RedisSetsBenchmark.scala:45)
+	at scala.collection.immutable.Range.foreach(Range.scala:190)
+	at monix.connect.benchmarks.redis.RedisSetsBenchmark.setup(RedisSetsBenchmark.scala:45)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisSetsBenchmark_setDiffWriter_jmhTest._jmh_tryInit_f_redissetsbenchmark0_0(RedisSetsBenchmark_setDiffWriter_jmhTest.java:338)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisSetsBenchmark_setDiffWriter_jmhTest.setDiffWriter_Throughput(RedisSetsBenchmark_setDiffWriter_jmhTest.java:71)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:453)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:437)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+
+
+
+# JMH version: 1.25
+# VM version: JDK 1.8.0_221, Java HotSpot(TM) 64-Bit Server VM, 25.221-b11
+# VM invoker: /Library/Java/JavaVirtualMachines/jdk1.8.0_221.jdk/Contents/Home/jre/bin/java
+# VM options: <none>
+# Warmup: 1 iterations, 10 s each
+# Measurement: 5 iterations, 10 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: monix.connect.benchmarks.redis.RedisSetsBenchmark.setWriter
+
+# Run progress: 73.33% complete, ETA 00:00:18
+# Fork: 1 of 1
+# Warmup Iteration   1: <failure>
+
+java.util.concurrent.TimeoutException: Future timed out after [1 second]
+	at scala.concurrent.impl.Promise$DefaultPromise.tryAwait0(Promise.scala:212)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:219)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:104)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:378)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:360)
+	at scala.concurrent.Await$.$anonfun$ready$1(package.scala:174)
+	at scala.concurrent.BlockContext$DefaultBlockContext$.blockOn(BlockContext.scala:62)
+	at scala.concurrent.Await$.ready(package.scala:124)
+	at monix.connect.benchmarks.redis.RedisSetsBenchmark.$anonfun$setup$3(RedisSetsBenchmark.scala:48)
+	at monix.connect.benchmarks.redis.RedisSetsBenchmark.$anonfun$setup$3$adapted(RedisSetsBenchmark.scala:45)
+	at scala.collection.immutable.Range.foreach(Range.scala:190)
+	at monix.connect.benchmarks.redis.RedisSetsBenchmark.setup(RedisSetsBenchmark.scala:45)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisSetsBenchmark_setWriter_jmhTest._jmh_tryInit_f_redissetsbenchmark0_0(RedisSetsBenchmark_setWriter_jmhTest.java:338)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisSetsBenchmark_setWriter_jmhTest.setWriter_Throughput(RedisSetsBenchmark_setWriter_jmhTest.java:71)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:453)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:437)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+
+
+
+# JMH version: 1.25
+# VM version: JDK 1.8.0_221, Java HotSpot(TM) 64-Bit Server VM, 25.221-b11
+# VM invoker: /Library/Java/JavaVirtualMachines/jdk1.8.0_221.jdk/Contents/Home/jre/bin/java
+# VM options: <none>
+# Warmup: 1 iterations, 10 s each
+# Measurement: 5 iterations, 10 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: monix.connect.benchmarks.redis.RedisStringsBenchmark.stringAppender
+
+# Run progress: 80.00% complete, ETA 00:00:13
+# Fork: 1 of 1
+# Warmup Iteration   1: <failure>
+
+java.util.concurrent.TimeoutException: Future timed out after [1 second]
+	at scala.concurrent.impl.Promise$DefaultPromise.tryAwait0(Promise.scala:212)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:219)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:104)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:378)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:360)
+	at scala.concurrent.Await$.$anonfun$ready$1(package.scala:174)
+	at scala.concurrent.BlockContext$DefaultBlockContext$.blockOn(BlockContext.scala:62)
+	at scala.concurrent.Await$.ready(package.scala:124)
+	at monix.connect.benchmarks.redis.RedisStringsBenchmark.$anonfun$setup$3(RedisStringsBenchmark.scala:48)
+	at monix.connect.benchmarks.redis.RedisStringsBenchmark.$anonfun$setup$3$adapted(RedisStringsBenchmark.scala:45)
+	at scala.collection.immutable.Range.foreach(Range.scala:190)
+	at monix.connect.benchmarks.redis.RedisStringsBenchmark.setup(RedisStringsBenchmark.scala:45)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisStringsBenchmark_stringAppender_jmhTest._jmh_tryInit_f_redisstringsbenchmark0_0(RedisStringsBenchmark_stringAppender_jmhTest.java:338)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisStringsBenchmark_stringAppender_jmhTest.stringAppender_Throughput(RedisStringsBenchmark_stringAppender_jmhTest.java:71)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:453)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:437)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+
+
+
+# JMH version: 1.25
+# VM version: JDK 1.8.0_221, Java HotSpot(TM) 64-Bit Server VM, 25.221-b11
+# VM invoker: /Library/Java/JavaVirtualMachines/jdk1.8.0_221.jdk/Contents/Home/jre/bin/java
+# VM options: <none>
+# Warmup: 1 iterations, 10 s each
+# Measurement: 5 iterations, 10 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: monix.connect.benchmarks.redis.RedisStringsBenchmark.stringReader
+
+# Run progress: 86.67% complete, ETA 00:00:09
+# Fork: 1 of 1
+# Warmup Iteration   1: <failure>
+
+java.util.concurrent.TimeoutException: Future timed out after [1 second]
+	at scala.concurrent.impl.Promise$DefaultPromise.tryAwait0(Promise.scala:212)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:219)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:104)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:378)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:360)
+	at scala.concurrent.Await$.$anonfun$ready$1(package.scala:174)
+	at scala.concurrent.BlockContext$DefaultBlockContext$.blockOn(BlockContext.scala:62)
+	at scala.concurrent.Await$.ready(package.scala:124)
+	at monix.connect.benchmarks.redis.RedisStringsBenchmark.$anonfun$setup$3(RedisStringsBenchmark.scala:48)
+	at monix.connect.benchmarks.redis.RedisStringsBenchmark.$anonfun$setup$3$adapted(RedisStringsBenchmark.scala:45)
+	at scala.collection.immutable.Range.foreach(Range.scala:190)
+	at monix.connect.benchmarks.redis.RedisStringsBenchmark.setup(RedisStringsBenchmark.scala:45)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisStringsBenchmark_stringReader_jmhTest._jmh_tryInit_f_redisstringsbenchmark0_0(RedisStringsBenchmark_stringReader_jmhTest.java:338)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisStringsBenchmark_stringReader_jmhTest.stringReader_Throughput(RedisStringsBenchmark_stringReader_jmhTest.java:71)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:453)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:437)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+
+
+
+# JMH version: 1.25
+# VM version: JDK 1.8.0_221, Java HotSpot(TM) 64-Bit Server VM, 25.221-b11
+# VM invoker: /Library/Java/JavaVirtualMachines/jdk1.8.0_221.jdk/Contents/Home/jre/bin/java
+# VM options: <none>
+# Warmup: 1 iterations, 10 s each
+# Measurement: 5 iterations, 10 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: monix.connect.benchmarks.redis.RedisStringsBenchmark.stringWriter
+
+# Run progress: 93.33% complete, ETA 00:00:04
+# Fork: 1 of 1
+# Warmup Iteration   1: <failure>
+
+java.util.concurrent.TimeoutException: Future timed out after [1 second]
+	at scala.concurrent.impl.Promise$DefaultPromise.tryAwait0(Promise.scala:212)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:219)
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:104)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:378)
+	at monix.execution.CancelableFuture$Async.ready(CancelableFuture.scala:360)
+	at scala.concurrent.Await$.$anonfun$ready$1(package.scala:174)
+	at scala.concurrent.BlockContext$DefaultBlockContext$.blockOn(BlockContext.scala:62)
+	at scala.concurrent.Await$.ready(package.scala:124)
+	at monix.connect.benchmarks.redis.RedisStringsBenchmark.$anonfun$setup$3(RedisStringsBenchmark.scala:48)
+	at monix.connect.benchmarks.redis.RedisStringsBenchmark.$anonfun$setup$3$adapted(RedisStringsBenchmark.scala:45)
+	at scala.collection.immutable.Range.foreach(Range.scala:190)
+	at monix.connect.benchmarks.redis.RedisStringsBenchmark.setup(RedisStringsBenchmark.scala:45)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisStringsBenchmark_stringWriter_jmhTest._jmh_tryInit_f_redisstringsbenchmark0_0(RedisStringsBenchmark_stringWriter_jmhTest.java:338)
+	at monix.connect.benchmarks.redis.jmh_generated.RedisStringsBenchmark_stringWriter_jmhTest.stringWriter_Throughput(RedisStringsBenchmark_stringWriter_jmhTest.java:71)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:453)
+	at org.openjdk.jmh.runner.BenchmarkHandler$BenchmarkTask.call(BenchmarkHandler.java:437)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+
+
+
+# Run complete. Total time: 00:01:08
+
+REMEMBER: The numbers below are just data. To gain reusable insights, you need to follow up on
+why the numbers are the way they are. Use profilers (see -prof, -lprof), design factorial
+experiments, perform baseline and negative tests that provide experimental control, make sure
+the benchmarking environment is safe on JVM/OS/HW level, ask for reviews from the domain experts.
+Do not assume the numbers tell you what you want them to tell.
+
+Benchmark  Mode  Cnt  Score   Error  Units

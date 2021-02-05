@@ -40,7 +40,7 @@ class RedisServerSpec
     reset(reactiveRedisCommands)
     reset(reactiveRedisCommands)
   }
-/*
+  /*
   s"${ServerCommands}" should "extend the RedisServer trait" in {
     ServerCommands shouldBe a[ServerCommands]
   }
@@ -66,5 +66,5 @@ class RedisServerSpec
     //then
     verify(reactiveRedisCommands).flushdbAsync()
   }
-*/
+ */
 }

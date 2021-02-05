@@ -45,8 +45,8 @@ class S3ListBenchmark extends S3MonixFixture {
   var size: Int = 20
   implicit val s = Scheduler.io("s3-list-benchmark")
   val bucketName = "list-benchmark"
-  var content: Array[Byte] = nonEmptyString.value().getBytes()
-  val prefix = s"list-benchmark/${nonEmptyString.value()}/"
+  var content: Array[Byte] = Gen.identifier.sample.get.getBytes()
+  val prefix = s"list-benchmark/${Gen.identifier.sample.get}/"
   val keys: List[String] = Gen.listOfN(size, Gen.nonEmptyListOf(Gen.alphaChar).map(l => prefix + l.mkString)).sample.get
 
   @Setup

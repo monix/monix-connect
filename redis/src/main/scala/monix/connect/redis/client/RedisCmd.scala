@@ -29,7 +29,7 @@ import monix.connect.redis.{
   SortedSetCommands,
   StringCommands
 }
-import monix.eval.{Coeval, Task}
+import monix.eval.Task
 import monix.execution.internal.InternalApi
 
 case class RedisCmd[K, V](

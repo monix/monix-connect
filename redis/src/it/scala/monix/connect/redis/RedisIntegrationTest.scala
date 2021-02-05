@@ -214,7 +214,7 @@ class RedisIntegrationTest extends AnyFlatSpec
     val values: List[String] = genRedisValues.sample.get.map(_.toString)
     val k3: K = genRedisKey.sample.get
 
-    val (v: String, len: Long, l: List[String], keys: List[String]) = {
+    val (v: Option[String], len: Long, list, keys: List[String]) = {
       Redis.connect(redisUrl).use { case RedisCmd(_, keys, list, server, _, _, string) =>
         for {
           _ <- server.flushAll()
@@ -222,19 +222,22 @@ class RedisIntegrationTest extends AnyFlatSpec
           _ <- string.set(k1, value)
           _ <- keys.rename(k1, k2)
           _ <- list.lPush(k3, values: _*)
-          v <- string.get(k2): Task[String]
-          _ <- list.lPushX(k3, v)
+          v <- string.get(k2)
+          _ <- v match {
+            case Some(value) => list.lPushX(k3, value)
+            case None => Task.unit
+          }
           _ <- keys.del(k2)
-          len <- list.lLen(k3): Task[Long]
-          l <- list.lRange(k3, 0, len).toListL
-          keys <- keys.keys("*").toListL
+          len <- list.lLen(k3)
+          l <- list.lRange(k3, 0, -1).toListL
+          keys <- keys.keys("*").toListL // unsafe operation
         } yield (v, len, l, keys)
       }
     }.runSyncUnsafe()
 
-    v shouldBe value
+    v shouldBe Some(value)
     len shouldBe values.size + 1
-    l should contain theSameElementsAs value :: values
+    list should contain theSameElementsAs value :: values
     keys.size shouldBe 1
     keys.head shouldBe k3
   }
