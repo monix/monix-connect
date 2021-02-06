@@ -56,7 +56,7 @@ import software.amazon.awssdk.services.s3.model.{
   RequestPayer,
   S3Object
 }
-
+import scala.collection.mutable.Buffer
 import scala.jdk.CollectionConverters._
 
 /**
@@ -882,6 +882,108 @@ trait S3 { self =>
     for {
       listResponse <- ListObjectsObservable(bucket, prefix, maxTotalKeys, requestPayer, this.s3Client)
       s3Object     <- Observable.fromIterable(listResponse.contents.asScala)
+    } yield s3Object
+  }
+
+   /**
+    * Returns the most recently uploaded object in a bucket.
+    *
+    * ==Example==
+    *
+    * {{{
+    * import cats.effect.Resource
+    * import monix.connect.s3.S3
+    * import monix.eval.Task
+    * import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+    * import software.amazon.awssdk.regions.Region
+    * import monix.execution.Scheduler.Implicits.global
+    *
+    * val bucket = "my-bucket"
+    * val prefix = "prefix/to/list/keys"
+    * val s3AccessKey: String = "TESTKEY"
+    * val s3SecretKey: String = "TESTSECRET"
+    * val basicAWSCredentials = AwsBasicCredentials.create(s3AccessKey, s3SecretKey)
+    * val staticCredProvider = StaticCredentialsProvider.create(basicAWSCredentials)
+    *
+    * val s3: Resource[Task, S3] = S3.create(staticCredProvider, Region.AWS_GLOBAL)
+    *
+    * s3.listLaestObject(bucket, prefix = Some(prefix)).toListL.runToFuture
+    * }}}
+    *
+    * To use this operation in an AWS (IAM) policy, you must have permissions to perform
+    * the `ListBucket` action. The bucket owner has this permission by default and can grant it.
+    *
+    * @param bucket        target S3 bucket name of the object to be downloaded.
+    * @param prefix        limits the response to keys that begin with the specified prefix.
+    * @param requestPayer  confirms that the requester knows that she or he will be charged for
+    *                      the list objects request in V2 style.
+    *                      Bucket owners need not specify this parameter in their requests.
+    * @return an [[Observable]] that emits the [[S3Object]]s.
+    */
+  private def listingHelp[A](
+    bucket: String,
+    sort: (S3Object, S3Object) => Boolean,
+    prefix: Option[String] = None,
+    requestPayer: Option[RequestPayer] = None): Observable[Buffer[S3Object]] = {
+      Observable
+        .fromTask(Task.from{this.s3Client.listObjectsV2(S3RequestBuilder.listObjectsV2(bucket, prefix = prefix, requestPayer = requestPayer))}
+        .map(x => x.contents().asScala.sortWith(sort))
+        .onErrorHandleWith{ex => Task.raiseError(ex)}
+      )
+  }
+
+  def listLatestObject(
+    bucket: String,
+    prefix: Option[String] = None,
+    requestPayer: Option[RequestPayer] = None): Observable[S3Object] = {
+      val sort: (S3Object, S3Object) => Boolean = (a,b) => if(a.lastModified().compareTo(b.lastModified()) >= 0) true else false
+      listingHelp(bucket, sort, prefix = prefix, requestPayer = requestPayer).map(_.head)
+  }
+
+  /** Returns oldest N objects in bucket.
+    *
+    * ==Example==
+    *
+    * {{{
+    * import cats.effect.Resource
+    * import monix.connect.s3.S3
+    * import monix.eval.Task
+    * import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+    * import software.amazon.awssdk.regions.Region
+    * import monix.execution.Scheduler.Implicits.global
+    *
+    * val bucket = "my-bucket"
+    * val prefix = "prefix/to/list/keys"
+    * val s3AccessKey: String = "TESTKEY"
+    * val s3SecretKey: String = "TESTSECRET"
+    * val basicAWSCredentials = AwsBasicCredentials.create(s3AccessKey, s3SecretKey)
+    * val staticCredProvider = StaticCredentialsProvider.create(basicAWSCredentials)
+    *
+    * val s3: Resource[Task, S3] = S3.create(staticCredProvider, Region.AWS_GLOBAL)
+    *
+    * s3.listOldestNObjects(bucket, 6, prefix = Some(prefix)).toListL.runToFuture
+    * }}}
+    *
+    * To use this operation in an AWS (IAM) policy, you must have permissions to perform
+    * the `ListBucket` action. The bucket owner has this permission by default and can grant it.
+    *
+    * @param bucket        target S3 bucket name of the object to be downloaded.
+    * @param amount        the number of objects you would like to return
+    * @param prefix        limits the response to keys that begin with the specified prefix.
+    * @param requestPayer  confirms that the requester knows that she or he will be charged for
+    *                      the list objects request in V2 style.
+    *                      Bucket owners need not specify this parameter in their requests.
+    * @return an [[Observable]] that emits the [[S3Object]]s.
+    */
+  def listOldestNObjects(
+    bucket: String,
+    amount: Int,
+    prefix: Option[String] = None,
+    requestPayer: Option[RequestPayer] = None): Observable[S3Object] = {
+    val sort: (S3Object, S3Object) => Boolean = (a,b) => if(a.lastModified().compareTo(b.lastModified()) <= 0) true else false
+    for{
+      listResponse <- listingHelp(bucket, sort, prefix = prefix, requestPayer = requestPayer).map(x => x.take(amount))
+      s3Object     <- Observable.fromIterable(listResponse)
     } yield s3Object
   }
 
