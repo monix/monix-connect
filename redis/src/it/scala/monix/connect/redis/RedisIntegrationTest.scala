@@ -64,26 +64,26 @@ class RedisIntegrationTest extends AnyFlatSpec
   s"${ServerCommands} " should "insert a string into key and get its size from redis" in {
     //given
     val key: K = genRedisKey.sample.get
-    val value: String = genRedisValue.sample.get.toString
+    val value: String = genRedisValue.sample.get
 
     //when
     Redis.connect(redisUrl).use(_.string.set(key, value)).runSyncUnsafe()
-    val beforeFlush: Long = Redis.connect(redisUrl).use(_.key.exists(key)).runSyncUnsafe()
+    val beforeFlush: Boolean = Redis.connect(redisUrl).use(_.key.exists(key)).runSyncUnsafe()
 
     //and
     Redis.connect(redisUrl).use(_.server.flushAll()).runSyncUnsafe()
-    val afterFlush: Long = Redis.connect(redisUrl).use(_.key.exists(key)).runSyncUnsafe()
+    val afterFlush: Boolean = Redis.connect(redisUrl).use(_.key.exists(key)).runSyncUnsafe()
 
     //then
-    beforeFlush shouldEqual 1L
-    afterFlush shouldEqual 0L
+    beforeFlush shouldEqual true
+    afterFlush shouldEqual false
   }
 
   s"${KeyCommands}" should "handles ttl correctly" in {
     //given
     val key1: K = genRedisKey.sample.get
     val key2: K = genRedisKey.sample.get
-    val value: String = genRedisValue.sample.get.toString
+    val value: String = genRedisValue.sample.get
     Redis.connect(redisUrl).use(_.string.set(key1, value)).runSyncUnsafe()
 
     //when
@@ -91,7 +91,7 @@ class RedisIntegrationTest extends AnyFlatSpec
       Redis.connect(redisUrl).use { case RedisCmd(_, keys, _, _, _ ,_, _) =>
         for {
           initialTtl <- keys.ttl(key1)
-          expire <- keys.expire(key1, 2)
+          expire <- keys.pExpire(key1, 2.seconds)
           finalTtl <- keys.ttl(key1)
           existsWithinTtl <- keys.exists(key1)
           _ <- keys.rename(key1, key2)
@@ -103,8 +103,8 @@ class RedisIntegrationTest extends AnyFlatSpec
     }.runSyncUnsafe()
 
     //then
-    initialTtl should be < 0L
-    finalTtl should be > 0L
+    (initialTtl.toMillis < 0L) shouldBe true
+    (finalTtl.toMillis > 0L) shouldBe true
     expire shouldBe true
     existsWithinTtl shouldBe 1L
     existsRenamed shouldBe 1L

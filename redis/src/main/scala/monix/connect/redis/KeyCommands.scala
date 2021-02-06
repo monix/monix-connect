@@ -25,6 +25,12 @@ import monix.reactive.Observable
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
+/**
+  * not Supported - scan, use `keys` instead, expire and expireAt, use pexpire and pExpireAt
+  * @param reactiveCmd
+  * @tparam K
+  * @tparam V
+  */
 private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, V]) {
 
   /**
@@ -53,9 +59,11 @@ private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, 
     * Determine how many keys exist.
     * @return Number of existing keys
     */
-  def exists(keys: K*): Task[Long] =
+  def exists(keys: List[K]): Task[Long] =
     Task.fromReactivePublisher(reactiveCmd.exists(keys: _*)).map(_.map(_.longValue).getOrElse(0L))
 
+  def exists(key: K): Task[Boolean] =
+    Task.fromReactivePublisher(reactiveCmd.exists(key)).map(_.exists(_.longValue >= 1))
   /**
     * Set a key's time to live with a precision of milliseconds.
     *
@@ -67,7 +75,7 @@ private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, 
     Task.fromReactivePublisher(reactiveCmd.expire(key, timeout.toSeconds)).map(_.exists(_.booleanValue))
 
   /**
-    * Set the expiration date timeout for a key.
+    * Set the expiration date timeout for a key as UNIX timestamp with a precision of milliseconds.
     *
     * @note calling `EXPIRE/PEXPIRE` with a non-positive timeout or `EXPIREAT/PEXPIREAT` with a time
     *       in the past will result in the key being deleted rather than expired.
@@ -75,6 +83,17 @@ private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, 
     *         `false` if key does not exist or the timeout could not be set.
     */
   def pExpireAt(key: K, timestamp: Date): Task[Boolean] =
+    Task.fromReactivePublisher(reactiveCmd.expireat(key, timestamp)).map(_.exists(_.booleanValue))
+
+  /**
+    * Set the expiration date timeout for a key as UNIX timestamp.
+    *
+    * @note calling `EXPIRE/PEXPIRE` with a non-positive timeout or `EXPIREAT/PEXPIREAT` with a time
+    *       in the past will result in the key being deleted rather than expired.
+    * @return `true` if the timeout was set.
+    *         `false` if key does not exist or the timeout could not be set.
+    */
+  def pExpireAt(key: K, timestamp: Long): Task[Boolean] =
     Task.fromReactivePublisher(reactiveCmd.expireat(key, timestamp)).map(_.exists(_.booleanValue))
 
   /**
@@ -116,7 +135,7 @@ private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, 
       .fromReactivePublisher(reactiveCmd.objectIdletime(key))
       .map(_.map(seconds => Duration(seconds, TimeUnit.SECONDS)))
 
-  /**
+  /** todo test
     * Number of references of the value associated with the specified key.
     */
   def objectRefCount(key: K): Task[Long] =
@@ -138,30 +157,22 @@ private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, 
   def randomKey(): Task[Option[V]] =
     Task.fromReactivePublisher(reactiveCmd.randomkey())
 
-  def randomKey(default: V): Task[V] =
-    Task.fromReactivePublisher(reactiveCmd.randomkey()).map(_.getOrElse(default))
-
-  /**
-    * Rename a key.
-    * @return String simple-string-reply
-    */
+  /** Rename a key. */
   def rename(key: K, newKey: K): Task[Unit] =
     Task.fromReactivePublisher(reactiveCmd.rename(key, newKey)).void
 
   /**
     * Rename a key, only if the new key does not exist.
-    * @return True if key was renamed to newkey.
-    *         False if newkey already exists.
+    *
+    * @return `true` if key was renamed to newkey.
+    *         `false` if newkey already exists.
     */
   def renameNx(key: K, newKey: K): Task[Boolean] =
     Task.fromReactivePublisher(reactiveCmd.renamenx(key, newKey)).map(_.exists(_.booleanValue))
 
-  /**
-    * Create a key using the provided serialized value, previously obtained using DUMP.
-    * @return The command returns OK on success.
-    */
-  def restore(key: K, ttl: Long, value: Array[Byte]): Task[Unit] =
-    Task.fromReactivePublisher(reactiveCmd.restore(key, ttl, value)).void
+  /** Create a key using the provided serialized value, previously obtained using DUMP. */
+  def restore(key: K, ttl: FiniteDuration, value: Array[Byte]): Task[Unit] =
+    Task.fromReactivePublisher(reactiveCmd.restore(key, ttl.toMillis, value)).void
 
   /**
     * Sort the elements in a list, set or sorted set.
@@ -184,25 +195,14 @@ private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, 
     */
   def ttl(key: K): Task[FiniteDuration] =
     Task.fromReactivePublisher(reactiveCmd.pttl(key))
-      .map(_.map(seconds => Duration(seconds, TimeUnit.MILLISECONDS)).getOrElse(Duration.Undefined))
+      .map(_.map(seconds => Duration(seconds, TimeUnit.MILLISECONDS)).getOrElse(Duration.Zero))
 
   /**
     * Determine the type stored at key.
     * @return Type of key, or none when key does not exist.
     */
-  def `type`(key: K): Task[Option[String]] =
+  def keyType(key: K): Task[Option[String]] =
     Task.fromReactivePublisher(reactiveCmd.`type`(key))
-
-  /** todo!! create an observable that iterates over the scanCursor
-    * Incrementally iterate the keys space.
-    * @return Scan cursor.
-    */
-  //def scan(): Task[KeyScanCursor[K]] =
-  //  Task.from(reactiveCmd.scan()).flatMap(s => scan(s))
-
-  //def scan(scanCursor: ScanCursor): Task[KeyScanCursor[K]] = {
-  //  Task.from(reactiveCmd.scan(scanCursor))
-  //}
 
 }
 
