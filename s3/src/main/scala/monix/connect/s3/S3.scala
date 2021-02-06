@@ -885,7 +885,7 @@ trait S3 { self =>
     } yield s3Object
   }
 
-   /**
+  /**
     * Returns the most recently uploaded object in a bucket.
     *
     * ==Example==
@@ -907,7 +907,7 @@ trait S3 { self =>
     *
     * val s3: Resource[Task, S3] = S3.create(staticCredProvider, Region.AWS_GLOBAL)
     *
-    * s3.listLaestObject(bucket, prefix = Some(prefix)).toListL.runToFuture
+    * s3.use{s3 => s3.listLatestObject(bucket, prefix = Some(prefix)).toListL}.runToFuture
     * }}}
     *
     * To use this operation in an AWS (IAM) policy, you must have permissions to perform
@@ -925,19 +925,20 @@ trait S3 { self =>
     sort: (S3Object, S3Object) => Boolean,
     prefix: Option[String] = None,
     requestPayer: Option[RequestPayer] = None): Observable[Buffer[S3Object]] = {
-      Observable
-        .fromTask(Task.from{this.s3Client.listObjectsV2(S3RequestBuilder.listObjectsV2(bucket, prefix = prefix, requestPayer = requestPayer))}
-        .map(x => x.contents().asScala.sortWith(sort))
-        .onErrorHandleWith{ex => Task.raiseError(ex)}
-      )
+    Observable
+      .fromTask(Task.from {
+        this.s3Client.listObjectsV2(
+          S3RequestBuilder.listObjectsV2(bucket, prefix = prefix, requestPayer = requestPayer))
+      }.map(x => x.contents().asScala.sortWith(sort)).onErrorHandleWith { ex => Task.raiseError(ex) })
   }
 
   def listLatestObject(
     bucket: String,
     prefix: Option[String] = None,
     requestPayer: Option[RequestPayer] = None): Observable[S3Object] = {
-      val sort: (S3Object, S3Object) => Boolean = (a,b) => if(a.lastModified().compareTo(b.lastModified()) >= 0) true else false
-      listingHelp(bucket, sort, prefix = prefix, requestPayer = requestPayer).map(_.head)
+    val sort: (S3Object, S3Object) => Boolean = (a, b) =>
+      if (a.lastModified().compareTo(b.lastModified()) >= 0) true else false
+    listingHelp(bucket, sort, prefix = prefix, requestPayer = requestPayer).map(_.head)
   }
 
   /** Returns oldest N objects in bucket.
@@ -961,7 +962,7 @@ trait S3 { self =>
     *
     * val s3: Resource[Task, S3] = S3.create(staticCredProvider, Region.AWS_GLOBAL)
     *
-    * s3.listOldestNObjects(bucket, 6, prefix = Some(prefix)).toListL.runToFuture
+    * s3.use{s3 => s3.listOldestNObjects(bucket, 6, prefix = Some(prefix)).toListL}.runToFuture
     * }}}
     *
     * To use this operation in an AWS (IAM) policy, you must have permissions to perform
@@ -980,8 +981,9 @@ trait S3 { self =>
     amount: Int,
     prefix: Option[String] = None,
     requestPayer: Option[RequestPayer] = None): Observable[S3Object] = {
-    val sort: (S3Object, S3Object) => Boolean = (a,b) => if(a.lastModified().compareTo(b.lastModified()) <= 0) true else false
-    for{
+    val sort: (S3Object, S3Object) => Boolean = (a, b) =>
+      if (a.lastModified().compareTo(b.lastModified()) <= 0) true else false
+    for {
       listResponse <- listingHelp(bucket, sort, prefix = prefix, requestPayer = requestPayer).map(x => x.take(amount))
       s3Object     <- Observable.fromIterable(listResponse)
     } yield s3Object

@@ -366,6 +366,45 @@ class S3Suite
     count shouldBe n
   }
 
+  it should "return with latest" in {
+    //given
+    val n = 1000
+    val prefix = s"test-latest/${genKey.sample.get}"
+    val keys: List[String] =
+      Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + genKey.sample.get + str)).sample.get
+    val contents: List[String] = List.fill(n)(genKey.sample.get)
+    Task
+      .traverse(keys.zip(contents)){ case (key, content) => S3.fromConfig.use(_.upload(bucketName, key, content.getBytes())) }
+      .runSyncUnsafe()
+
+    //when
+    val latestList = S3.fromConfig.use(s3 => s3.listLatestObject(bucketName, prefix = Some(prefix)).toListL).runSyncUnsafe()
+    val latest = latestList.head.key().split("/").last
+    
+    //then
+    latest shouldBe keys.last.split("/").last
+  }
+
+  it should "return with oldest" in {
+    //given
+    val n = 1000
+    val prefix = s"test-latest/${genKey.sample.get}"
+    val keys: List[String] =
+      Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + genKey.sample.get + str)).sample.get
+    val contents: List[String] = List.fill(n)(genKey.sample.get)
+    Task
+      .traverse(keys.zip(contents)){ case (key, content) => S3.fromConfig.use(_.upload(bucketName, key, content.getBytes())) }
+      .runSyncUnsafe()
+
+    //when
+    val oldestList = S3.fromConfig.use(s3 => s3.listOldestNObjects(bucketName, 1, prefix = Some(prefix)).toListL).runSyncUnsafe()
+    val oldest = oldestList.head.key().split("/").last
+
+    //then
+    oldest shouldBe keys.head.split("/").last
+  }
+
+
   "A good real example" should "reuse the resource evaluation" in {
 
     val bucket = genBucketName.sample.get
@@ -389,4 +428,6 @@ class S3Suite
     val result = Await.result(f, 3.seconds)
     result shouldBe content.getBytes
   }
+
+
 }
