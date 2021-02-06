@@ -22,7 +22,7 @@ import laserdisc.fs2._
 import laserdisc.{Index, Key, all => cmd}
 import monix.execution.Scheduler.Implicits.global
 import org.openjdk.jmh.annotations._
-import dev.profunktor.redis4cats.data.RedisCodec
+import dev.profunktor.redis4cats.Redis.apply
 import dev.profunktor.redis4cats.codecs.splits.stringDoubleEpi
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt

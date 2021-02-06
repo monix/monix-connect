@@ -38,7 +38,7 @@ private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, 
     * Unlink one or more keys (non blocking DEL).
     * @return The number of keys that were removed.
     */
-  def unlink(keys: K*): Task[Long] =
+  def unLink(keys: K*): Task[Long] =
     Task.fromReactivePublisher(reactiveCmd.unlink(keys: _*)).map(_.map(_.longValue).getOrElse(0L))
 
   /**
@@ -48,6 +48,7 @@ private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, 
   def dump(key: K): Task[Array[Byte]] =
     Task.fromReactivePublisher(reactiveCmd.dump(key)).map(_.getOrElse(Array.emptyByteArray))
 
+
   /**
     * Determine how many keys exist.
     * @return Number of existing keys
@@ -56,24 +57,24 @@ private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, 
     Task.fromReactivePublisher(reactiveCmd.exists(keys: _*)).map(_.map(_.longValue).getOrElse(0L))
 
   /**
-    * Set a key's time to live in seconds.
-    * @return True if the timeout was set. false if key does not exist or the timeout could not be set.
+    * Set a key's time to live with a precision of milliseconds.
+    *
+    * @return `true` if the timeout was set.
+    *         `false`` if key does not exist or the timeout could not be set.
     *
     */
-  def expire(key: K, seconds: Long): Task[Boolean] =
-    Task.fromReactivePublisher(reactiveCmd.expire(key, seconds)).map(_.exists(_.booleanValue))
-
-  def expire(key: K, timeout: FiniteDuration): Task[Boolean] =
+  def pExpire(key: K, timeout: FiniteDuration): Task[Boolean] =
     Task.fromReactivePublisher(reactiveCmd.expire(key, timeout.toSeconds)).map(_.exists(_.booleanValue))
 
   /**
-    * Set the expiration for a key as a UNIX timestamp.
-    * @return True if the timeout was set. False if key does not exist or the timeout could not be set.
+    * Set the expiration date timeout for a key.
+    *
+    * @note calling `EXPIRE/PEXPIRE` with a non-positive timeout or `EXPIREAT/PEXPIREAT` with a time
+    *       in the past will result in the key being deleted rather than expired.
+    * @return `true` if the timeout was set.
+    *         `false` if key does not exist or the timeout could not be set.
     */
-  def expireAt(key: K, timestamp: Date): Task[Boolean] =
-    Task.fromReactivePublisher(reactiveCmd.expireat(key, timestamp)).map(_.exists(_.booleanValue))
-
-  def expireAt(key: K, timestamp: Long): Task[Boolean] =
+  def pExpireAt(key: K, timestamp: Date): Task[Boolean] =
     Task.fromReactivePublisher(reactiveCmd.expireat(key, timestamp)).map(_.exists(_.booleanValue))
 
   /**
@@ -85,7 +86,7 @@ private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, 
 
   /**
     * Atomically transfer a key from a Redis instance to another one.
-    * @return The command returns OK on success.
+    * @return The command returns [[Unit]] on success.
     */
   def migrate(host: String, port: Int, key: K, db: Int, timeout: Long): Task[Unit] =
     Task.fromReactivePublisher(reactiveCmd.migrate(host, port, key, db, timeout)).void
@@ -98,16 +99,17 @@ private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, 
     Task.fromReactivePublisher(reactiveCmd.move(key, db)).map(_.exists(_.booleanValue))
 
   /**
-    * returns the kind of internal representation used in order to store the value associated with a key.
-    * @return String
+    * Shows the kind of internal representation used in order
+    * to store the value associated with a key.
+    *
+    * @return if exists, returns a [[String]] representing the object encoding.
     */
   def objectEncoding(key: K): Task[Option[String]] =
     Task.fromReactivePublisher(reactiveCmd.objectEncoding(key))
 
-  /** todo
-    * Returns the number of seconds since the object stored at the specified key is idle (not requested by read or write
-    * operations).
-    * @return Number of seconds since the object stored at the specified key is idle.
+  /**
+    * Time since the object stored at the specified key
+    * is idle (not requested by read or write operations).
     */
   def objectIdleTime(key: K): Task[Option[FiniteDuration]] =
     Task
@@ -115,46 +117,19 @@ private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, 
       .map(_.map(seconds => Duration(seconds, TimeUnit.SECONDS)))
 
   /**
-    * Returns the number of references of the value associated with the specified key.
-    * @return Long
+    * Number of references of the value associated with the specified key.
     */
   def objectRefCount(key: K): Task[Long] =
     Task.fromReactivePublisher(reactiveCmd.objectRefcount(key)).map(_.map(_.longValue).getOrElse(0L))
 
   /**
-    * Remove the expiration from a key.
-    * @return True if the timeout was removed. false if key does not exist or does not have an associated timeout.
+    * Removes the expiration from a key.
+    *
+    * @return `true` if the timeout was removed.
+    *         `false` if key does not exist or does not have an associated timeout.
     */
   def persist(key: K): Task[Boolean] =
     Task.fromReactivePublisher(reactiveCmd.persist(key)).map(_.exists(_.booleanValue))
-
-  /**
-    * Set a key's time to live in milliseconds.
-    * @return True if the timeout was set. False if key does not exist or the timeout could not be set.
-    *
-    */
-  def pExpire(key: K, milliseconds: Long): Task[Boolean] =
-    Task.fromReactivePublisher(reactiveCmd.pexpire(key, milliseconds)).map(_.exists(_.booleanValue))
-
-  /**
-    * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
-    * @return Boolean integer-reply specifically:
-    *         { @literal true} if the timeout was set. { @literal false} if { @code key} does not exist or the timeout could not
-    *                                                                               be set (see: { @code EXPIRE}).
-    */
-  def pExpireAt(key: K, timestamp: Date): Task[Boolean] =
-    Task.fromReactivePublisher(reactiveCmd.pexpireat(key, timestamp)).map(_.exists(_.booleanValue))
-
-  def pExpireAt(key: K, timestamp: Long): Task[Boolean] =
-    Task.fromReactivePublisher(reactiveCmd.pexpireat(key, timestamp)).map(_.exists(_.booleanValue))
-
-  /** todo return finite duration, duplicated!!
-    * Get the time to live for a key in milliseconds.
-    * @return Long integer-reply TTL in milliseconds, or a negative value in order to signal an error (see the description
-    *         above).
-    */
-  def pTtl(key: K): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.pttl(key)).map(_.map(_.longValue) getOrElse (-1L))
 
   /**
     * Return a random key from the keyspace.
@@ -202,12 +177,14 @@ private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, 
   def touch(keys: K*): Task[Long] =
     Task.fromReactivePublisher(reactiveCmd.touch(keys: _*)).map(_.map(_.longValue).getOrElse(0))
 
-  /** todo
-    * Get the time to live for a key.
-    * @return TTL in seconds, or a negative value in order to signal an error (see the description above).
+  /** Get the time to live for a key.
+    *
+    * @return the [[FiniteDuration]] in precision of milliseconds,
+    *         or [[Duration.Undefined]] if the key does not exists.
     */
-  def ttl(key: K): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.ttl(key)).map(_.map(_.longValue).getOrElse(-1))
+  def ttl(key: K): Task[FiniteDuration] =
+    Task.fromReactivePublisher(reactiveCmd.pttl(key))
+      .map(_.map(seconds => Duration(seconds, TimeUnit.MILLISECONDS)).getOrElse(Duration.Undefined))
 
   /**
     * Determine the type stored at key.

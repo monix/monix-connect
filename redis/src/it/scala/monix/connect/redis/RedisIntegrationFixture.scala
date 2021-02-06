@@ -1,5 +1,6 @@
 package monix.connect.redis
 
+import monix.connect.redis.client.Redis
 import org.scalacheck.Gen
 import monix.connect.redis.test.protobuf.{Person, PersonPk}
 
@@ -7,6 +8,8 @@ trait RedisIntegrationFixture {
   val redisUrl = "redis://localhost:6379"
   type K = String
   type V = String
+
+  val redisClient = Redis.connect(redisUrl)
   val genRedisKey: Gen[K] = Gen.alphaStr
   val genRedisValue: Gen[V] = Gen.choose(0, 10000).map(_.toString)
   val genRedisValues: Gen[List[V]] = for {
