@@ -368,7 +368,7 @@ class S3Suite
 
   it should "return with latest" in {
     //given
-    val n = 1000
+    val n = 1010
     val prefix = s"test-latest/${genKey.sample.get}"
     val keys: List[String] =
       Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + genKey.sample.get + str)).sample.get
@@ -387,7 +387,7 @@ class S3Suite
 
   it should "return with oldest" in {
     //given
-    val n = 1000
+    val n = 1010
     val prefix = s"test-latest/${genKey.sample.get}"
     val keys: List[String] =
       Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + genKey.sample.get + str)).sample.get

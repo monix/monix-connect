@@ -862,9 +862,8 @@ trait S3 { self =>
     *   val s3Objects: Observable[S3Object] = s3.listObjects(bucket, maxTotalKeys = Some(1011), prefix = Some(prefix))
     * }}}
     *
-    * To use this operation in an AWS (IAM) policy, you must have permissions to perform
-    * the `ListBucket` action. The bucket owner has this permission by default and can grant it.
-    *
+    * @note                To use this operation in an AWS (IAM) policy, you must have permissions to perform
+    *                      the `ListBucket` action. The bucket owner has this permission by default and can grant it.
     * @param bucket        target S3 bucket name of the object to be downloaded.
     * @param maxTotalKeys  sets the maximum number of keys to be list,
     *                      it must be a positive number.
@@ -910,9 +909,8 @@ trait S3 { self =>
     * s3.use{s3 => s3.listLatestObject(bucket, prefix = Some(prefix)).toListL}.runToFuture
     * }}}
     *
-    * To use this operation in an AWS (IAM) policy, you must have permissions to perform
-    * the `ListBucket` action. The bucket owner has this permission by default and can grant it.
-    *
+    * @note                To use this operation in an AWS (IAM) policy, you must have permissions to perform
+    *                      the `ListBucket` action. The bucket owner has this permission by default and can grant it.
     * @param bucket        target S3 bucket name of the object to be downloaded.
     * @param prefix        limits the response to keys that begin with the specified prefix.
     * @param requestPayer  confirms that the requester knows that she or he will be charged for
@@ -920,25 +918,17 @@ trait S3 { self =>
     *                      Bucket owners need not specify this parameter in their requests.
     * @return an [[Observable]] that emits the [[S3Object]]s.
     */
-  private def listingHelp[A](
-    bucket: String,
-    sort: (S3Object, S3Object) => Boolean,
-    prefix: Option[String] = None,
-    requestPayer: Option[RequestPayer] = None): Observable[Buffer[S3Object]] = {
-    Observable
-      .fromTask(Task.from {
-        this.s3Client.listObjectsV2(
-          S3RequestBuilder.listObjectsV2(bucket, prefix = prefix, requestPayer = requestPayer))
-      }.map(x => x.contents().asScala.sortWith(sort)).onErrorHandleWith { ex => Task.raiseError(ex) })
-  }
 
   def listLatestObject(
     bucket: String,
     prefix: Option[String] = None,
     requestPayer: Option[RequestPayer] = None): Observable[S3Object] = {
-    val sort: (S3Object, S3Object) => Boolean = (a, b) =>
-      if (a.lastModified().compareTo(b.lastModified()) >= 0) true else false
-    listingHelp(bucket, sort, prefix = prefix, requestPayer = requestPayer).map(_.head)
+    val sort: (S3Object, S3Object) => S3Object = (a, b) =>
+      if (a.lastModified().compareTo(b.lastModified()) >= 0) a else b
+    for {
+      listResponse <- ListObjectsObservable(bucket, prefix, None, requestPayer, this.s3Client)
+      s3Object     <- Observable.fromIterable(listResponse.contents.asScala).reduce(sort)
+    } yield s3Object
   }
 
   /** Returns oldest N objects in bucket.
@@ -976,16 +966,26 @@ trait S3 { self =>
     *                      Bucket owners need not specify this parameter in their requests.
     * @return an [[Observable]] that emits the [[S3Object]]s.
     */
+
   def listOldestNObjects(
     bucket: String,
-    amount: Int,
+    n: Int,
     prefix: Option[String] = None,
     requestPayer: Option[RequestPayer] = None): Observable[S3Object] = {
-    val sort: (S3Object, S3Object) => Boolean = (a, b) =>
-      if (a.lastModified().compareTo(b.lastModified()) <= 0) true else false
+    val sorted: (S3Object, S3Object) => Boolean = (x, y) =>
+      if (x.lastModified().compareTo(y.lastModified()) < 0) true else false
     for {
-      listResponse <- listingHelp(bucket, sort, prefix = prefix, requestPayer = requestPayer).map(x => x.take(amount))
-      s3Object     <- Observable.fromIterable(listResponse)
+      listResponse <- ListObjectsObservable(bucket, prefix, None, None, this.s3Client)
+      s3Object <- Observable.fromIterable(listResponse.contents.asScala.foldLeft(List.empty[S3Object])((prev, curr) => {
+        prev.size match {
+          case x if (x < n) => (prev :+ curr).sortWith(sorted)
+          case _ =>
+            prev.map(y => if (curr.lastModified().compareTo(y.lastModified()) < 0) -1 else 1).contains(-1) match {
+              case true => (prev.init :+ curr).sortWith(sorted)
+              case _ => prev
+            }
+        }
+      }))
     } yield s3Object
   }
 
