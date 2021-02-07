@@ -10,7 +10,7 @@ trait RedisIntegrationFixture {
   type V = String
 
   val redisClient = Redis.connect(redisUrl)
-  val genRedisKey: Gen[K] = Gen.alphaStr
+  val genRedisKey: Gen[K] = Gen.identifier.map(_.take(10))
   val genRedisValue: Gen[V] = Gen.choose(0, 10000).map(_.toString)
   val genRedisValues: Gen[List[V]] = for {
     n      <- Gen.chooseNum(2, 10)

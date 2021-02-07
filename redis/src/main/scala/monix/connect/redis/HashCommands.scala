@@ -17,9 +17,7 @@
 
 package monix.connect.redis
 
-import io.lettuce.core.api.async.RedisHashAsyncCommands
 import io.lettuce.core.api.reactive.RedisHashReactiveCommands
-import io.lettuce.core.{MapScanCursor, ScanCursor}
 import monix.eval.Task
 import monix.execution.internal.InternalApi
 import monix.reactive.Observable
@@ -33,8 +31,11 @@ private[redis] class HashCommands[K, V](reactiveCmd: RedisHashReactiveCommands[K
     * @return Number of fields that were removed from the hash, not including specified but non existing
     *         fields.
     */
-  def hDel(key: K, fields: K*): Task[Long] =
+  def hDel(key: K, fields: List[K]): Task[Long] =
     Task.fromReactivePublisher(reactiveCmd.hdel(key, fields: _*)).map(_.map(_.longValue).getOrElse(0L))
+
+  def hDel(key: K, field: K): Task[Boolean] =
+    Task.fromReactivePublisher(reactiveCmd.hdel(key, field)).map(_.map(_.longValue).getOrElse(0L) > 0L)
 
   /**
     * Determine if a hash field exists.
@@ -94,17 +95,14 @@ private[redis] class HashCommands[K, V](reactiveCmd: RedisHashReactiveCommands[K
     * Get the values of all the given hash fields.
     * @return Values associated with the given fields.
     */
-  def hmGet(key: K, fields: K*): Observable[(K, Option[V])] =
+  def hMGet(key: K, fields: K*): Observable[(K, Option[V])] =
     Observable.fromReactivePublisher(reactiveCmd.hmget(key, fields: _*)).map(kvToTuple)
 
-  /**
-    * Set multiple hash fields to multiple values.
-    * @return Simple string reply.
-    */
-  def hmSet(key: K, map: Map[K, V]): Task[Unit] =
+  /** Set multiple hash fields to multiple values. */
+  def hMSet(key: K, map: Map[K, V]): Task[Unit] =
     Task.fromReactivePublisher(reactiveCmd.hmset(key, map.asJava)).void
 
-  ///** todo!! create observable
+  /// todo - create observable that iterates over
   //  * Incrementally iterate hash fields and associated values.
   //  * @return Map scan cursor.
   //  */
@@ -144,6 +142,7 @@ private[redis] class HashCommands[K, V](reactiveCmd: RedisHashReactiveCommands[K
     * @return Values in the hash, or an empty list when key does not exist.
     */
   def hVals(key: K): Observable[V] = Observable.fromReactivePublisher(reactiveCmd.hvals(key))
+
 }
 
 @InternalApi
