@@ -1,0 +1,10 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/inserts-stream"
+  },
+  "response": {
+    "status": 200,
+    "bodyFileName": "push-execution.json"
+  }
+}

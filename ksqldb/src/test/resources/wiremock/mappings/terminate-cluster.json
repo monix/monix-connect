@@ -1,0 +1,10 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/ksql/terminate"
+  },
+  "response": {
+    "status": 200,
+    "bodyFileName": "terminate-cluster.json"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/status/stream/PAGEVIEWS/create"
+  },
+  "response": {
+    "status": 200,
+    "bodyFileName": "query-status.json"
+  }
+}

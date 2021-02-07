@@ -1,0 +1,10 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/query"
+  },
+  "response": {
+    "status": 200,
+    "bodyFileName": "query-execution.json"
+  }
+}

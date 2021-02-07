@@ -1,0 +1,27 @@
+{
+  "sourceDescription": {
+    "name": "test",
+    "readQueries": ["test", "test"],
+    "writeQueries": ["test", "test"],
+    "fields": [
+      {
+        "name": "test",
+        "schema": {
+          "type": "STRING",
+          "memberSchema": null,
+          "fields": null
+        }
+      }
+    ],
+    "type": "STREAM",
+    "key": "time",
+    "timestamp": "time",
+    "format": "AVRO",
+    "topic": "test",
+    "extended": false,
+    "statistics": null,
+    "errorStats": null,
+    "replication": null,
+    "partitions": null
+  }
+}

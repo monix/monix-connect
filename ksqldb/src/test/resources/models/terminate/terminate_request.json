@@ -1,0 +1,3 @@
+{
+  "deleteTopicList": ["FOO", "bar.*"]
+}
