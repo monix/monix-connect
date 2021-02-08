@@ -56,7 +56,7 @@ import software.amazon.awssdk.services.s3.model.{
   RequestPayer,
   S3Object
 }
-import scala.collection.mutable.Buffer
+
 import scala.jdk.CollectionConverters._
 
 /**
