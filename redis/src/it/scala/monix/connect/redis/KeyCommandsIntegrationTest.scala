@@ -1,13 +1,8 @@
 package monix.connect.redis
 
-import cats.data.NonEmptyList
-import io.lettuce.core.ScoredValue
-import monix.connect.redis.client.{Codec, Redis, RedisCmd}
-import monix.connect.redis.test.protobuf.{Person, PersonPk}
+import monix.connect.redis.client.RedisConnection
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
-import monix.reactive.Observable
-import org.scalacheck.Gen
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -34,7 +29,7 @@ class KeyCommandsIntegrationTest
     val k2: K = genRedisKey.sample.get
     val k3: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get
-    Redis.connect(redisUrl).use(cmd => cmd.string.set(k1, value) *> cmd.string.set(k2, value)).runSyncUnsafe()
+    redisClient.use(cmd => cmd.string.set(k1, value) *> cmd.string.set(k2, value)).runSyncUnsafe()
 
     redisClient.use { cmd =>
       //when
@@ -141,7 +136,7 @@ class KeyCommandsIntegrationTest
     val k1: K = genRedisKey.sample.get
     val k2: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get
-    Redis.connect(redisUrl).use(cmd => cmd.string.set(k1, value)).runSyncUnsafe()
+    redisClient.use(cmd => cmd.string.set(k1, value)).runSyncUnsafe()
 
     redisClient.use { cmd =>
       //when
@@ -244,7 +239,7 @@ class KeyCommandsIntegrationTest
     val k1: K = genRedisKey.sample.get
     val k2: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get
-    Redis.connect(redisUrl).use { cmd => cmd.string.set(k1, value) }.runSyncUnsafe()
+    redisClient.use { cmd => cmd.string.set(k1, value) }.runSyncUnsafe()
 
     //when
     val (moved1, moved2) =
@@ -263,7 +258,7 @@ class KeyCommandsIntegrationTest
     val v1: V = genRedisValue.sample.get
     val v2: String = "Sample String"
 
-    Redis.connect(redisUrl).use(cmd => cmd.string.set(k1, v1) >> cmd.string.set(k2, v2)).runSyncUnsafe()
+    redisClient.use(cmd => cmd.string.set(k1, v1) >> cmd.string.set(k2, v2)).runSyncUnsafe()
 
     val (r1, r2, r3) = redisClient
       .use(cmd => Task.parZip3(cmd.key.objectEncoding(k1), cmd.key.objectEncoding(k2), cmd.key.objectEncoding(k3)))

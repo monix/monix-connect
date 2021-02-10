@@ -1,7 +1,7 @@
 package monix.connect.redis
 
 import io.lettuce.core.ScoredValue
-import monix.connect.redis.client.{Redis, RedisCmd}
+import monix.connect.redis.client.{RedisConnection, RedisCmd}
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import org.scalacheck.Gen
@@ -12,7 +12,7 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 import scala.concurrent.duration._
 
-class RedisIntegrationTest extends AnyFlatSpec
+class RedisConnectionIntegrationTest extends AnyFlatSpec
   with RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll with Eventually {
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
@@ -23,7 +23,7 @@ class RedisIntegrationTest extends AnyFlatSpec
     val field: K = genRedisKey.sample.get
 
     //when
-    val r: Option[String] = Redis.connect(redisUrl).use(_.hash.hGet(key, field)).runSyncUnsafe()
+    val r: Option[String] = redisClient.use(_.hash.hGet(key, field)).runSyncUnsafe()
 
     //then
     r shouldBe None
@@ -36,10 +36,10 @@ class RedisIntegrationTest extends AnyFlatSpec
     val value: String = genRedisValue.sample.get
 
     //when
-    Redis.connect(redisUrl).use(_.hash.hSet(key, field, value)).runSyncUnsafe()
+    redisClient.use(_.hash.hSet(key, field, value)).runSyncUnsafe()
 
     //and
-    val r: Option[String] = Redis.connect(redisUrl).use(_.hash.hGet(key, field)).runSyncUnsafe()
+    val r: Option[String] = redisClient.use(_.hash.hGet(key, field)).runSyncUnsafe()
 
     //then
     r shouldBe Some(value)
@@ -51,10 +51,10 @@ class RedisIntegrationTest extends AnyFlatSpec
     val value: String = genRedisValue.sample.get
 
     //when
-    Redis.connect(redisUrl).use(_.string.set(key, value)).runSyncUnsafe()
+    redisClient.use(_.string.set(key, value)).runSyncUnsafe()
 
     //and
-    val t: Task[Long] = Redis.connect(redisUrl).use(_.string.strLen(key))
+    val t: Task[Long] = redisClient.use(_.string.strLen(key))
 
     //then
     val lenght: Long = t.runSyncUnsafe()
@@ -67,12 +67,12 @@ class RedisIntegrationTest extends AnyFlatSpec
     val value: String = genRedisValue.sample.get
 
     //when
-    Redis.connect(redisUrl).use(_.string.set(key, value)).runSyncUnsafe()
-    val beforeFlush: Boolean = Redis.connect(redisUrl).use(_.key.exists(key)).runSyncUnsafe()
+    redisClient.use(_.string.set(key, value)).runSyncUnsafe()
+    val beforeFlush: Boolean = redisClient.use(_.key.exists(key)).runSyncUnsafe()
 
     //and
-    Redis.connect(redisUrl).use(_.server.flushAll()).runSyncUnsafe()
-    val afterFlush: Boolean = Redis.connect(redisUrl).use(_.key.exists(key)).runSyncUnsafe()
+    redisClient.use(_.server.flushAll()).runSyncUnsafe()
+    val afterFlush: Boolean = redisClient.use(_.key.exists(key)).runSyncUnsafe()
 
     //then
     beforeFlush shouldEqual true
@@ -84,11 +84,11 @@ class RedisIntegrationTest extends AnyFlatSpec
     val key1: K = genRedisKey.sample.get
     val key2: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get
-    Redis.connect(redisUrl).use(_.string.set(key1, value)).runSyncUnsafe()
+    redisClient.use(_.string.set(key1, value)).runSyncUnsafe()
 
     //when
     val (initialTtl, expire, finalTtl, existsWithinTtl, existsRenamed, existsAfterFiveSeconds) = {
-      Redis.connect(redisUrl).use { case RedisCmd(_, keys, _, _, _ ,_, _) =>
+      redisClient.use { case RedisCmd(_, keys, _, _, _ ,_, _) =>
         for {
           initialTtl <- keys.ttl(key1)
           expire <- keys.pExpire(key1, 2.seconds)
@@ -117,10 +117,10 @@ class RedisIntegrationTest extends AnyFlatSpec
     val values: List[String] = genRedisValues.sample.get.map(_.toString)
 
     //when
-    Redis.connect(redisUrl).use(_.list.lPush(key, values: _*)).runSyncUnsafe()
+    redisClient.use(_.list.lPush(key, values: _*)).runSyncUnsafe()
 
     //and
-    val l: List[String] = Redis.connect(redisUrl).use(_.list.lRange(key, 0, values.size).toListL).runSyncUnsafe()
+    val l: List[String] = redisClient.use(_.list.lRange(key, 0, values.size).toListL).runSyncUnsafe()
 
     //then
     l should contain theSameElementsAs values
@@ -136,7 +136,7 @@ class RedisIntegrationTest extends AnyFlatSpec
 
     //when
     val (size1, size2, moved) = {
-      Redis.connect(redisUrl).use { case RedisCmd(_, _, _, _, set ,_, _)  =>
+      redisClient.use { case RedisCmd(_, _, _, _, set ,_, _)  =>
         for {
           size1 <- set.sAdd(k1, m1: _*)
           size2 <- set.sAdd(k2, m2: _*)
@@ -150,7 +150,7 @@ class RedisIntegrationTest extends AnyFlatSpec
 
     //and
     val (s1, s2, union, diff) = {
-      Redis.connect(redisUrl).use { case RedisCmd(_, _, _, _, set ,_, _)  =>
+      redisClient.use { case RedisCmd(_, _, _, _, set ,_, _)  =>
         for {
           s1    <- set.sMembers(k1).toListL
           s2    <- set.sMembers(k2).toListL
@@ -187,7 +187,7 @@ class RedisIntegrationTest extends AnyFlatSpec
 
     //when
     val t: Task[(Option[ScoredValue[String]], Option[ScoredValue[String]])] =
-      Redis.connect(redisUrl).use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+      redisClient.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
         for {
           _ <- sortedSet.zAdd(k, minScore, v0)
           _ <- sortedSet.zAdd(k, middleScore, v1)
@@ -206,7 +206,7 @@ class RedisIntegrationTest extends AnyFlatSpec
     max.map(_.getValue) shouldBe v1
   }
 
-  s"$Redis" should "allow to composition of different Redis submodules" in {
+  s"$RedisConnection" should "allow to composition of different Redis submodules" in {
     //given
     val k1: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get.toString
@@ -215,7 +215,7 @@ class RedisIntegrationTest extends AnyFlatSpec
     val k3: K = genRedisKey.sample.get
 
     val (v: Option[String], len: Long, list, keys: List[String]) = {
-      Redis.connect(redisUrl).use { case RedisCmd(_, keys, list, server, _, _, string) =>
+      redisClient.use { case RedisCmd(_, keys, list, server, _, _, string) =>
         for {
           _ <- server.flushAll()
           _ <- keys.touch(k1)

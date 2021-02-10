@@ -54,7 +54,6 @@ private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, 
   def dump(key: K): Task[Array[Byte]] =
     Task.fromReactivePublisher(reactiveCmd.dump(key)).map(_.getOrElse(Array.emptyByteArray))
 
-
   /**
     * Determine how many keys exist.
     * @return Number of existing keys
@@ -194,7 +193,8 @@ private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, 
     *         or [[Duration.Undefined]] if the key does not exists.
     */
   def ttl(key: K): Task[FiniteDuration] =
-    Task.fromReactivePublisher(reactiveCmd.pttl(key))
+    Task
+      .fromReactivePublisher(reactiveCmd.pttl(key))
       .map(_.map(seconds => Duration(seconds, TimeUnit.MILLISECONDS)).getOrElse(Duration.Zero))
 
   /**

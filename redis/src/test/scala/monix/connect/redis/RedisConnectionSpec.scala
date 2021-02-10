@@ -18,15 +18,14 @@
 package monix.connect.redis
 
 import io.lettuce.core.api.StatefulRedisConnection
-import monix.eval.Task
 import org.mockito.IdiomaticMockito
-import org.mockito.MockitoSugar.{verify, when}
-import org.scalatest.flatspec.AnyFlatSpec
+import org.mockito.MockitoSugar.when
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
-class RedisServerSpec
-  extends AnyFlatSpec with Matchers with IdiomaticMockito with BeforeAndAfterEach with BeforeAndAfterAll
+class RedisConnectionSpec
+  extends AnyWordSpecLike with Matchers with IdiomaticMockito with BeforeAndAfterEach with BeforeAndAfterAll
   with RedisFixture {
 
   implicit val connection: StatefulRedisConnection[String, Int] = mock[StatefulRedisConnection[String, Int]]
@@ -36,35 +35,37 @@ class RedisServerSpec
     super.beforeAll()
   }
 
-  override def beforeEach() = {
+  override def beforeEach(): Unit = {
     reset(reactiveRedisCommands)
     reset(reactiveRedisCommands)
   }
+
   /*
-  s"${ServerCommands}" should "extend the RedisServer trait" in {
-    ServerCommands shouldBe a[ServerCommands]
-  }
-
-  it should "implement flushall operation" in {
-    //given
-    when(reactiveRedisCommands.flushallAsync()).thenReturn(mockMono[String])
-
-    //when
-    val _: Task[String] = ServerCommands.flushallAsync()
-
-    //then
-    verify(reactiveRedisCommands).flushallAsync()
-  }
-
-  it should "implement flushdb operation" in {
-    //given
-    when(reactiveRedisCommands.flushdbAsync()).thenReturn(mockMono[String])
-
-    //when
-    val _: Task[String] = ServerCommands.flushdbAsync()
-
-    //then
-    verify(reactiveRedisCommands).flushdbAsync()
+  s"${$Commands} " should {
+    " implement RedisKey" in {
+      $Commands shouldBe a[KeyCommands]
+    }
+    "implement RedisHash" in {
+      $Commands shouldBe a[HashCommands]
+    }
+    "implement RedisList" in {
+      $Commands shouldBe a[ListCommands]
+    }
+    "implement RedisPubSub" in {
+      $Commands shouldBe a[RedisPubSub]
+    }
+    "implement RedisSet" in {
+      $Commands shouldBe a[SetCommands]
+    }
+    "implement RedisSortedSet" in {
+      $Commands shouldBe a[SortedSetCommands]
+    }
+    "implement RedisStream" in {
+      $Commands shouldBe a[RedisStream]
+    }
+    "implement RedisString" in {
+      $Commands shouldBe a[StringCommands]
+    }
   }
  */
 }

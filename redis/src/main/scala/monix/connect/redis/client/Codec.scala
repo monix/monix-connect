@@ -17,9 +17,10 @@
 
 package monix.connect.redis.client
 
-import io.lettuce.core.codec.{ByteArrayCodec, RedisCodec, Utf8StringCodec}
+import io.lettuce.core.codec.{ByteArrayCodec, RedisCodec, ToByteBufEncoder, Utf8StringCodec}
 
 import java.nio.ByteBuffer
+import scala.reflect.ClassTag
 
 sealed trait Codec[T, R] {
   def encode(dec: T): R
@@ -30,6 +31,7 @@ trait UtfCodec[T] extends Codec[T, String]
 trait BytesCodec[T] extends Codec[T, Array[Byte]]
 
 object Codec {
+
   def utf[T](encoder: T => String, decoder: String => T): UtfCodec[T] = {
     new UtfCodec[T] {
       override def encode(dec: T): String = encoder(dec)
@@ -56,11 +58,4 @@ object Codec {
     }
   }
 
-  private[redis] def apply[K, V](keyCodec: Codec[K, String], valueCodec: Codec[V, String]): RedisCodec[K, V] =
-    apply(keyCodec, valueCodec, new Utf8StringCodec())
-
-  private[redis] def byteArray[K, V](
-    keyCodec: Codec[K, Array[Byte]],
-    valueCodec: Codec[V, Array[Byte]]): RedisCodec[K, V] =
-    apply(keyCodec, valueCodec, new ByteArrayCodec())
 }

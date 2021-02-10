@@ -15,23 +15,6 @@
  * limitations under the License.
  */
 
-package monix.connect
+package monix.connect.redis
 
-import io.lettuce.core.KeyValue
-import monix.connect.redis.client.Codec
-import monix.eval.{Task, TaskLike}
-import reactor.core.publisher.Mono
-
-import scala.util.Try
-
-package object redis {
-
-  private[redis] def kvToTuple[K, V](kv: KeyValue[K, V]): (K, Option[V]) = {
-    (kv.getKey, Try(kv.getValue).toOption)
-  }
-
-  implicit val intUtfCodec: Codec[Int, String] = Codec.utf(_.toString, str => Try(str.toInt).getOrElse(0))
-  implicit val doubleUtfCodec: Codec[Double, String] = Codec.utf(_.toString, str => Try(str.toDouble).getOrElse(0.0))
-  implicit val floatUtfCodec: Codec[Float, String] = Codec.utf(_.toString, str => Try(str.toFloat).getOrElse(0L))
-
-}
+class VScore {}

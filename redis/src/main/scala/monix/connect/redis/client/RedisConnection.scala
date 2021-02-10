@@ -50,12 +50,12 @@ object Redis {
       }
       .evalMap(RedisCmd.single)
 
-  def connectWithByteArrayCodec[K, V](uri: String)(
+  def connectWithCodec[K, V](uri: String)(
     implicit keyCodec: Codec[K, Array[Byte]],
     valueCodec: Codec[V, Array[Byte]]): Resource[Task, RedisCmd[K, V]] =
     RedisCmd
       .connectResource[K, V, RedisConnection[K, V]] {
-        Task.evalAsync(RedisClient.create(uri).connect(Codec.byteArray(keyCodec, valueCodec)))
+        Task.evalAsync(RedisClient.create(uri).connect(Codec(keyCodec, valueCodec)))
       }
       .evalMap(RedisCmd.single)
   //def connectWithCodec[K, V](uri: RedisURI)(implicit keyCodec: Codec[K, Array[Byte]], valueCodec: Codec[V]): Resource[Task, RedisCmd[K, V]] =

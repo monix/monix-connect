@@ -27,7 +27,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import monix.reactive.Observable
 
-class RedisSortedSetSpec
+class RedisConnectionSortedSetSpec
   extends AnyFlatSpec with Matchers with IdiomaticMockito with BeforeAndAfterEach with BeforeAndAfterAll
   with RedisFixture {
 

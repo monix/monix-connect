@@ -30,7 +30,7 @@ case class RedisUri private[redis] (
   ssl: Option[Boolean] = None,
   verifyPeer: Option[Boolean] = None,
   startTls: Option[Boolean] = None,
-  timeout: Option[FiniteDuration],
+  timeout: Option[FiniteDuration] = None,
   sentinels: List[String] = List.empty,
   socket: Option[String] = None,
   sentinelMasterId: Option[String] = None,
@@ -61,10 +61,4 @@ case class RedisUri private[redis] (
     clientName.map(builder.withClientName)
     builder.build()
   }
-}
-
-object RedisUri {
-
-  def apply(host: String, port: Int): RedisUri = RedisUri(host, port)
-
 }

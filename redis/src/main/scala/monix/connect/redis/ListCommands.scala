@@ -57,17 +57,17 @@ private[redis] class ListCommands[K, V](reactiveCmd: RedisListReactiveCommands[K
 
   /**
     * Insert an element before or after another element in a list.
-    * @return The length of the list after the insert operation, or -1 when the value pivot was not found.
+    * @return The length of the list after the insert operation, or 0 when the value pivot was not found.
     */
   def lInsert(key: K, before: Boolean, pivot: V, value: V): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.linsert(key, before, pivot, value)).map(_.map(_.longValue()) getOrElse (-1L))
+    Task.fromReactivePublisher(reactiveCmd.linsert(key, before, pivot, value)).map(_.map(_.longValue()) getOrElse (0L))
 
   /**
     * Get the length of a list.
     * @return Long integer-reply the length of the list at { @code key}.
     */
   def lLen(key: K): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.llen(key)).map(_.map(_.longValue).getOrElse(-1L))
+    Task.fromReactivePublisher(reactiveCmd.llen(key)).map(_.map(_.longValue) getOrElse (0L))
 
   /**
     * Remove and get the first element in a list.
@@ -81,14 +81,14 @@ private[redis] class ListCommands[K, V](reactiveCmd: RedisListReactiveCommands[K
     * @return The length of the list after the push operations.
     */
   def lPush(key: K, values: V*): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.lpush(key, values: _*)).map(_.map(_.longValue).getOrElse(-1L))
+    Task.fromReactivePublisher(reactiveCmd.lpush(key, values: _*)).map(_.map(_.longValue).getOrElse(0L))
 
   /**
     * Prepend values to a list, only if the list exists.
     * @return The length of the list after the push operation.
     */
   def lPushX(key: K, values: V*): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.lpushx(key, values: _*)).map(_.map(_.longValue()).getOrElse(-1L))
+    Task.fromReactivePublisher(reactiveCmd.lpushx(key, values: _*)).map(_.map(_.longValue()).getOrElse(0L))
 
   /**
     * Get a range of elements from a list.
@@ -137,7 +137,7 @@ private[redis] class ListCommands[K, V](reactiveCmd: RedisListReactiveCommands[K
     * @return The length of the list after the push operation.
     */
   def rPush(key: K, values: V*): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.rpush(key, values: _*)).map(_.map(_.longValue).getOrElse(-1L))
+    Task.fromReactivePublisher(reactiveCmd.rpush(key, values: _*)).map(_.map(_.longValue).getOrElse(0L))
 
   /**
     * Append values to a list, only if the list exists.
