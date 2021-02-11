@@ -1,6 +1,6 @@
 package monix.connect.redis
 
-import monix.connect.redis.client.{Codec, RedisConnection}
+import monix.connect.redis.client.{Codec, Redis}
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpec
@@ -26,10 +26,10 @@ class CodecSuite extends AnyFlatSpec with RedisIntegrationFixture with Matchers 
     val person = genPerson.sample.get
 
     //when
-    RedisConnection.byteArrayCodec[PersonPk, Person](redisUrl).use(_.list.lPush(personPk, person)).runSyncUnsafe()
+    Redis.byteArrayCodec[PersonPk, Person](redisUrl).use(_.list.lPush(personPk, person)).runSyncUnsafe()
 
     //then
-    val r = RedisConnection.byteArrayCodec[PersonPk, Person](redisUrl).use(_.list.lPop(personPk)).runSyncUnsafe()
+    val r = Redis.byteArrayCodec[PersonPk, Person](redisUrl).use(_.list.lPop(personPk)).runSyncUnsafe()
     Some(person) shouldBe r
   }
 
@@ -40,10 +40,10 @@ class CodecSuite extends AnyFlatSpec with RedisIntegrationFixture with Matchers 
     implicitly(intUtfCodec) // used implicitly
 
     //when
-    RedisConnection.utfCodec[Int, Int](redisUrl).use(_.list.lPush(key, value)).runSyncUnsafe()
+    Redis.utfCodec[Int, Int](redisUrl).use(_.list.lPush(key, value)).runSyncUnsafe()
 
     //then
-    val r = RedisConnection.utfCodec[Int, Int](redisUrl).use(_.list.lPop(key)).runSyncUnsafe()
+    val r = Redis.utfCodec[Int, Int](redisUrl).use(_.list.lPop(key)).runSyncUnsafe()
     Some(value) shouldBe r
   }
 
@@ -54,7 +54,7 @@ class CodecSuite extends AnyFlatSpec with RedisIntegrationFixture with Matchers 
     implicitly(intUtfCodec) // used implicitly
 
     //when
-    val r = RedisConnection.utfCodec[Int, Int](redisUrl).use(cmd =>
+    val r = Redis.utfCodec[Int, Int](redisUrl).use(cmd =>
       for {
         _ <- Observable(n, n, n).mapEval(cmd.string.append(key, _)).completedL
         r <- cmd.string.get(key)

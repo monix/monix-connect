@@ -20,15 +20,18 @@ package monix.connect.redis.client
 import cats.effect.Resource
 import io.lettuce.core.api.{StatefulRedisConnection => RedisConnection}
 import io.lettuce.core.RedisClient
+import io.lettuce.core.cluster.RedisClusterClient
 import io.lettuce.core.codec.{ByteArrayCodec, Utf8StringCodec}
 import monix.eval.Task
 import monix.reactive.Observable
+
+import scala.jdk.CollectionConverters._
 
 /**
   * An object that provides an aggregation of all the different Redis Apis.
   * They can be equally accessed independently or from this object.
   */
-object RedisConnection {
+object Redis {
 
   def apply(uri: String): Resource[Task, RedisCmd[String, String]] =
     RedisCmd
@@ -64,5 +67,9 @@ object RedisConnection {
   //   RedisCmd.connectResource[K, V, RedisConnection[K, V]] {
   //     Task.evalAsync(RedisClient.create(uri).connect(Codec(keyCodec, valueCodec)))
   //   }.evalMap(RedisCmd.single)
+
+  def cluster[K, V](uris: List[RedisUri]): ClusterConnection =
+    ClusterConnection(uris)
+
 
 }

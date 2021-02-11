@@ -30,41 +30,34 @@ import scala.jdk.CollectionConverters._
   * An object that provides an aggregation of all the different Redis Apis.
   * They can be equally accessed independently or from this object.
   */
-object RedisClusterConnection {
-
-  def create(uri: String): Resource[Task, RedisCmd[String, String]] =
+object RedisCluster {
+/*
+  def apply(uri: String): Resource[Task, RedisCmd[String, String]] =
     RedisCmd
       .connectResource[String, String, ClusterConnection[String, String]] {
         Task.evalAsync(RedisClusterClient.create(uri).connect)
       }
       .evalMap(RedisCmd.cluster)
 
-  def create(uris: List[RedisUri]): Resource[Task, RedisCmd[String, String]] =
+  def apply[K, V](uri: RedisURI): Resource[Task, RedisCmd[String, String]] =
+    RedisCmd
+      .connectResource[K, V, ClusterConnection[String, String]] {
+        Task.evalAsync(RedisClusterClient.create(uri).connect)
+      }
+      .evalMap(RedisCmd.cluster)
+
+  def withCodec(uris: List[RedisUri]): Resource[Task, RedisCmd[String, String]] =
     RedisCmd
       .connectResource[String, String, ClusterConnection[String, String]] {
         Task.evalAsync(RedisClusterClient.create(uris.map(_.toJava).asJava).connect)
       }
       .evalMap(RedisCmd.cluster)
 
-  def create[K, V](uri: String, codec: RedisCodec[K, V]): Resource[Task, RedisCmd[K, V]] =
+  def create[K, V](uri: RedisURI)(implicit keyCodec: Codec[K, V], valueCodec: Codec[K, V]): Resource[Task, RedisCmd[K, V]] =
     RedisCmd
       .connectResource[K, V, ClusterConnection[K, V]] {
         Task.evalAsync(RedisClusterClient.create(uri).connect(codec))
       }
       .evalMap(RedisCmd.cluster)
-
-  def create(uri: RedisURI): Resource[Task, RedisCmd[String, String]] =
-    RedisCmd
-      .connectResource[String, String, ClusterConnection[String, String]] {
-        Task.evalAsync(RedisClusterClient.create(uri).connect)
-      }
-      .evalMap(RedisCmd.cluster)
-
-  def create[K, V](uri: RedisURI, codec: RedisCodec[K, V]): Resource[Task, RedisCmd[K, V]] =
-    RedisCmd
-      .connectResource[K, V, ClusterConnection[K, V]] {
-        Task.evalAsync(RedisClusterClient.create(uri).connect(codec))
-      }
-      .evalMap(RedisCmd.cluster)
-
+*/
 }

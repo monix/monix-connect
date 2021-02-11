@@ -1,7 +1,7 @@
 package monix.connect.redis
 
 import io.lettuce.core.ScoredValue
-import monix.connect.redis.client.{RedisConnection, RedisCmd}
+import monix.connect.redis.client.{Redis, RedisCmd}
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import org.scalacheck.Gen
@@ -206,7 +206,7 @@ class RedisConnectionIntegrationTest extends AnyFlatSpec
     max.map(_.getValue) shouldBe v1
   }
 
-  s"$RedisConnection" should "allow to composition of different Redis submodules" in {
+  s"$Redis" should "allow to composition of different Redis submodules" in {
     //given
     val k1: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get.toString
