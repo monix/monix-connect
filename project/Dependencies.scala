@@ -17,7 +17,7 @@ object Dependencies {
     val S3 = "2.14.21"
     val Parquet = "1.11.1"
     val Pureconfig = "0.14.0"
-    val Elastic4s = "7.10.2"
+    val Elastic4s = "7.10.3"
     val ScalaCompat = "2.3.2"
 
     //test
