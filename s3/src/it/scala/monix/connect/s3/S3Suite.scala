@@ -378,30 +378,47 @@ class S3Suite
       .runSyncUnsafe()
 
     //when
-    val latestList = S3.fromConfig.use(s3 => s3.listLatestObject(bucketName, prefix = Some(prefix)).toListL).runSyncUnsafe()
-    val latest = latestList.head.key().split("/").last
+    val latest = S3.fromConfig.use(s3 => s3.listLatestObject(bucketName, prefix = Some(prefix))).runSyncUnsafe()
+    val latestList = S3.fromConfig.use(s3 => s3.listObjects(bucketName, prefix = Some(prefix)).toListL).runSyncUnsafe() 
     
     //then
-    latest shouldBe keys.last.split("/").last
+    Some(latestList.sortBy(_.lastModified()).reverse.head) shouldBe latest
   }
 
   it should "return with oldest" in {
     //given
-    val n = 1010
-    val prefix = s"test-latest/${genKey.sample.get}"
-    val keys: List[String] =
-      Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + genKey.sample.get + str)).sample.get
-    val contents: List[String] = List.fill(n)(genKey.sample.get)
-    Task
-      .traverse(keys.zip(contents)){ case (key, content) => S3.fromConfig.use(_.upload(bucketName, key, content.getBytes())) }
-      .runSyncUnsafe()
-
+    val prefix = s"test-latest/"
+ 
     //when
-    val oldestList = S3.fromConfig.use(s3 => s3.listOldestNObjects(bucketName, 1, prefix = Some(prefix)).toListL).runSyncUnsafe()
-    val oldest = oldestList.head.key().split("/").last
+    val oldest = S3.fromConfig.use(s3 => s3.listOldestObject(bucketName, prefix = Some(prefix))).runSyncUnsafe()
+    val oldestList = S3.fromConfig.use(s3 => s3.listObjects(bucketName, prefix = Some(prefix)).toListL).runSyncUnsafe()
 
     //then
-    oldest shouldBe keys.head.split("/").last
+    Some(oldestList.sortBy(_.lastModified()).head) shouldBe oldest
+  }
+
+  it should "return with latest five" in {
+    //given
+    val prefix = s"test-latest/"
+
+    //when
+    val latest = S3.fromConfig.use(s3 => s3.listLatestNObjects(bucketName, 5,prefix = Some(prefix)).toListL).runSyncUnsafe()
+    val latestList = S3.fromConfig.use(s3 => s3.listObjects(bucketName, prefix = Some(prefix)).toListL).runSyncUnsafe()
+
+    //then
+    latestList.sortBy(_.lastModified()).reverse.take(5) shouldBe latest
+  }
+
+  it should "return with oldest five" in {
+    //given
+    val prefix = s"test-latest/"
+
+    //when
+    val oldest = S3.fromConfig.use(s3 => s3.listOldestNObjects(bucketName, 5,prefix = Some(prefix)).toListL).runSyncUnsafe()
+    val oldestList = S3.fromConfig.use(s3 => s3.listObjects(bucketName, prefix = Some(prefix)).toListL).runSyncUnsafe()
+
+    //then
+    oldestList.sortBy(_.lastModified()).take(5) shouldBe oldest
   }
 
 
