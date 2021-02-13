@@ -888,21 +888,14 @@ trait S3 { self =>
     bucket: String,
     n: Int,
     sort: (S3Object, S3Object) => Boolean,
-    sortCheck: Boolean,
     prefix: Option[String] = None,
     requestPayer: Option[RequestPayer] = None): Observable[S3Object] = {
     for {
-      s3ObjectsList <- listObjects(bucket, prefix, None, None).foldLeft(List.empty[S3Object])((prev, curr) => {
-        prev.size match {
-          case x if (x < n) => (prev :+ curr).sortWith(sort)
-          case _ =>
-            prev.map(y => curr.lastModified().compareTo(y.lastModified()) < 0).contains(sortCheck) match {
-              case true => (prev.init :+ curr).sortWith(sort)
-              case _ => prev
-            }
-        }
-      })
-      s3Object <- Observable.fromIterable(s3ObjectsList)
+      listResponse <- ListObjectsObservable(bucket, prefix, None, None, this.s3Client).foldLeft(List.empty[S3Object])(
+        (prev, curr) => {
+          (prev ++ curr.contents.asScala).sortWith(sort).take(n)
+        })
+      s3Object <- Observable.fromIterable(listResponse)
     } yield s3Object
   }
 
@@ -948,7 +941,7 @@ trait S3 { self =>
     requestPayer: Option[RequestPayer] = None): Observable[S3Object] = {
     val sorted: (S3Object, S3Object) => Boolean = (x, y) =>
       if (x.lastModified().compareTo(y.lastModified()) < 0) true else false
-    listNHelper(bucket, n, sorted, true, prefix, requestPayer)
+    listNHelper(bucket, n, sorted, prefix, requestPayer)
   }
 
   /** Returns latest N objects in bucket.
@@ -993,7 +986,7 @@ trait S3 { self =>
     requestPayer: Option[RequestPayer] = None): Observable[S3Object] = {
     val sorted: (S3Object, S3Object) => Boolean = (x, y) =>
       if (x.lastModified().compareTo(y.lastModified()) < 0) false else true
-    listNHelper(bucket, n, sorted, false, prefix, requestPayer)
+    listNHelper(bucket, n, sorted, prefix, requestPayer)
   }
 
   /**
