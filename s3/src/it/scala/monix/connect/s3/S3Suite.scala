@@ -421,6 +421,16 @@ class S3Suite
     oldestList.sortBy(_.lastModified()).take(5) shouldBe oldest
   }
 
+  it should "return with less than asked for" in {
+
+  val prefix = s"test-latest/"
+
+  val actual = S3.fromConfig.use(s3 => s3.listObjects(bucketName, prefix = Some(prefix)).toListL).runSyncUnsafe()
+  val wanted = S3.fromConfig.use(s3 => s3.listOldestNObjects(bucketName, actual.size + 10, prefix = Some(prefix)).toListL).runSyncUnsafe()
+
+  wanted.size shouldBe actual.size
+  
+  }
 
   "A good real example" should "reuse the resource evaluation" in {
 

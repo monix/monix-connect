@@ -884,21 +884,6 @@ trait S3 { self =>
     } yield s3Object
   }
 
-  private def listNHelper(
-    bucket: String,
-    n: Int,
-    sort: (S3Object, S3Object) => Boolean,
-    prefix: Option[String] = None,
-    requestPayer: Option[RequestPayer] = None): Observable[S3Object] = {
-    for {
-      listResponse <- ListObjectsObservable(bucket, prefix, None, None, this.s3Client).foldLeft(List.empty[S3Object])(
-        (prev, curr) => {
-          (prev ++ curr.contents.asScala).sortWith(sort).take(n)
-        })
-      s3Object <- Observable.fromIterable(listResponse)
-    } yield s3Object
-  }
-
   /** Returns oldest N objects in bucket.
     *
     * ==Example==
@@ -939,9 +924,8 @@ trait S3 { self =>
     n: Int,
     prefix: Option[String] = None,
     requestPayer: Option[RequestPayer] = None): Observable[S3Object] = {
-    val sorted: (S3Object, S3Object) => Boolean = (x, y) =>
-      if (x.lastModified().compareTo(y.lastModified()) < 0) true else false
-    listNHelper(bucket, n, sorted, prefix, requestPayer)
+    val sorted: (S3Object, S3Object) => Boolean = (x, y) => x.lastModified().compareTo(y.lastModified()) < 0
+    ListObjectsObservable.listNHelper(bucket, n, sorted, prefix, requestPayer, this.s3Client)
   }
 
   /** Returns latest N objects in bucket.
@@ -984,9 +968,8 @@ trait S3 { self =>
     n: Int,
     prefix: Option[String] = None,
     requestPayer: Option[RequestPayer] = None): Observable[S3Object] = {
-    val sorted: (S3Object, S3Object) => Boolean = (x, y) =>
-      if (x.lastModified().compareTo(y.lastModified()) < 0) false else true
-    listNHelper(bucket, n, sorted, prefix, requestPayer)
+    val sorted: (S3Object, S3Object) => Boolean = (x, y) => x.lastModified().compareTo(y.lastModified()) > 0
+    ListObjectsObservable.listNHelper(bucket, n, sorted, prefix, requestPayer, this.s3Client)
   }
 
   /**
