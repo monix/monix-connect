@@ -1,0 +1,10 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/ksql"
+  },
+  "response": {
+    "status": 200,
+    "bodyFileName": "ddl-execution.json"
+  }
+}

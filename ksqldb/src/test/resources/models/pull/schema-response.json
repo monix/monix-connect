@@ -1,0 +1,5 @@
+{
+  "queryId":"xyz123",
+  "columnNames":["col", "col2", "col3"],
+  "columnTypes":["BIGINT", "STRING", "BOOLEAN"]
+}

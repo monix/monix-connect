@@ -1,0 +1,11 @@
+{
+    "statementText": "LIST STREAMS",
+    "streams": [
+        {
+            "name": "test_stream",
+            "topic": "test_topic",
+            "format": "JSON",
+            "type": "STREAM"
+        }
+    ]
+}

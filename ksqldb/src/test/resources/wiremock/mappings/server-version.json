@@ -1,0 +1,10 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/info"
+  },
+  "response": {
+    "status": 200,
+    "bodyFileName": "server-version.json"
+  }
+}

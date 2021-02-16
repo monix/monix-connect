@@ -1,0 +1,9 @@
+{
+  "statementText": "CREATE STREAM pageviews_home AS SELECT * FROM pageviews_original WHERE pageid='home';",
+  "commandId": "stream/PAGEVIEWS_HOME/create",
+  "commandStatus": {
+    "status": "SUCCESS",
+    "message": "Stream created and running"
+  },
+  "commandSequenceNumber": 1
+}

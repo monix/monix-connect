@@ -1,0 +1,4 @@
+{"queryId": "xyz123","columnNames":["col", "col2", "col3"],"columnTypes":["BIGINT", "STRING", "BOOLEAN"]}
+[123,"blah",true]
+[432,"foo",true]
+[765,"whatever",false]

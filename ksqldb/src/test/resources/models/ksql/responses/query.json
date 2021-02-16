@@ -1,0 +1,10 @@
+{
+    "statementText": "LIST QUERIES",
+    "queries": [
+        {
+            "queryString": "LIST QUERIES",
+            "sinks": "test, test",
+            "id": "test_id"
+        }
+    ]
+}

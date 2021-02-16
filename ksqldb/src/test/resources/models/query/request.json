@@ -1,0 +1,6 @@
+{
+    "ksql": "SELECT * FROM pageviews",
+    "streamsProperties": {
+        "ksql.streams.auto.offset.reset": "earliest"
+    }
+}

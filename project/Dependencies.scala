@@ -19,12 +19,16 @@ object Dependencies {
     val Pureconfig = "0.14.0"
     val Elastic4s = "7.10.2"
     val ScalaCompat = "2.3.2"
+    val Tethys = "0.11.0"
+    val Json4s = "3.6.7"
+    val Sttp = "2.2.9"
 
     //test
     val Scalatest = "3.2.3"
     val Scalacheck = "1.14.0"
     val Mockito = "1.15.0"
     val GCNio = "0.122.4"
+    val WireMock = "2.27.2"
   }
 
   private def commonDependencies(hasIt: Boolean = false): Seq[sbt.ModuleID] = {
@@ -97,4 +101,16 @@ object Dependencies {
   val Elasticsearch = Seq(
     "com.sksamuel.elastic4s" %% "elastic4s-client-esjava" % Versions.Elastic4s
   ) ++ commonDependencies(hasIt = true)
+
+  val KSQLDB = Seq(
+    "io.monix" %% "monix-nio" % "0.0.9",
+    "com.github.tomakehurst" % "wiremock" % Versions.WireMock % Test,
+    "com.tethys-json" %% "tethys-core" % Versions.Tethys,
+    "com.tethys-json" %% "tethys-jackson" % Versions.Tethys,
+    "com.tethys-json" %% "tethys-derivation" % Versions.Tethys,
+    "com.tethys-json" %% "tethys-json4s" % Versions.Tethys,
+    "org.json4s" %% "json4s-jackson" % Versions.Json4s,
+    "com.softwaremill.sttp.client" %% "core" % Versions.Sttp,
+    "com.softwaremill.sttp.client" %% "okhttp-backend-monix" % Versions.Sttp
+  )++ commonDependencies(hasIt = false)
 }
