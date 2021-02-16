@@ -366,6 +366,72 @@ class S3Suite
     count shouldBe n
   }
 
+  it should "return with latest" in {
+    //given
+    val n = 1010
+    val prefix = s"test-latest/${genKey.sample.get}"
+    val keys: List[String] =
+      Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + genKey.sample.get + str)).sample.get
+    val contents: List[String] = List.fill(n)(genKey.sample.get)
+    Task
+      .traverse(keys.zip(contents)){ case (key, content) => S3.fromConfig.use(_.upload(bucketName, key, content.getBytes())) }
+      .runSyncUnsafe()
+
+    //when
+    val latest = S3.fromConfig.use(s3 => s3.listLatestObject(bucketName, prefix = Some(prefix))).runSyncUnsafe()
+    val latestList = S3.fromConfig.use(s3 => s3.listObjects(bucketName, prefix = Some(prefix)).toListL).runSyncUnsafe() 
+    
+    //then
+    Some(latestList.sortBy(_.lastModified()).reverse.head) shouldBe latest
+  }
+
+  it should "return with oldest" in {
+    //given
+    val prefix = s"test-latest/"
+ 
+    //when
+    val oldest = S3.fromConfig.use(s3 => s3.listOldestObject(bucketName, prefix = Some(prefix))).runSyncUnsafe()
+    val oldestList = S3.fromConfig.use(s3 => s3.listObjects(bucketName, prefix = Some(prefix)).toListL).runSyncUnsafe()
+
+    //then
+    Some(oldestList.sortBy(_.lastModified()).head) shouldBe oldest
+  }
+
+  it should "return with latest five" in {
+    //given
+    val prefix = s"test-latest/"
+
+    //when
+    val latest = S3.fromConfig.use(s3 => s3.listLatestNObjects(bucketName, 5,prefix = Some(prefix)).toListL).runSyncUnsafe()
+    val latestList = S3.fromConfig.use(s3 => s3.listObjects(bucketName, prefix = Some(prefix)).toListL).runSyncUnsafe()
+
+    //then
+    latestList.sortBy(_.lastModified()).reverse.take(5) shouldBe latest
+  }
+
+  it should "return with oldest five" in {
+    //given
+    val prefix = s"test-latest/"
+
+    //when
+    val oldest = S3.fromConfig.use(s3 => s3.listOldestNObjects(bucketName, 5,prefix = Some(prefix)).toListL).runSyncUnsafe()
+    val oldestList = S3.fromConfig.use(s3 => s3.listObjects(bucketName, prefix = Some(prefix)).toListL).runSyncUnsafe()
+
+    //then
+    oldestList.sortBy(_.lastModified()).take(5) shouldBe oldest
+  }
+
+  it should "return with less than asked for" in {
+
+  val prefix = s"test-latest/"
+
+  val actual = S3.fromConfig.use(s3 => s3.listObjects(bucketName, prefix = Some(prefix)).toListL).runSyncUnsafe()
+  val wanted = S3.fromConfig.use(s3 => s3.listOldestNObjects(bucketName, actual.size + 10, prefix = Some(prefix)).toListL).runSyncUnsafe()
+
+  wanted.size shouldBe actual.size
+  
+  }
+
   "A good real example" should "reuse the resource evaluation" in {
 
     val bucket = genBucketName.sample.get
@@ -389,4 +455,6 @@ class S3Suite
     val result = Await.result(f, 3.seconds)
     result shouldBe content.getBytes
   }
+
+
 }
