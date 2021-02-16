@@ -22,7 +22,7 @@ case class ClusterConnection(uris: List[RedisUri]) {
       .evalMap(RedisCmd.cluster)
   }
 
-  def utf[K, V, C](keyCodec: Codec[K, String], valueCodec: Codec[V, String]): Resource[Task, RedisCmd[K, V]] = {
+  def utf[K, V](implicit keyCodec: Codec[K, String], valueCodec: Codec[V, String]): Resource[Task, RedisCmd[K, V]] = {
     RedisCmd
       .connectResource[K, V, StatefulRedisClusterConnection[K, V]] {
         Task.evalAsync {
@@ -34,7 +34,7 @@ case class ClusterConnection(uris: List[RedisUri]) {
       .evalMap(RedisCmd.cluster)
   }
 
-  def byteArray[K, V, C](implicit keyCodec: Codec[K, Array[Byte]], valueCodec: Codec[V, Array[Byte]]): Resource[Task, RedisCmd[K, V]] = {
+  def byteArray[K, V](implicit keyCodec: Codec[K, Array[Byte]], valueCodec: Codec[V, Array[Byte]]): Resource[Task, RedisCmd[K, V]] = {
     RedisCmd
       .connectResource[K, V, StatefulRedisClusterConnection[K, V]] {
         Task.evalAsync {

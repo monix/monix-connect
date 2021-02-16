@@ -29,6 +29,7 @@ import scala.jdk.CollectionConverters._
   * They can be equally accessed independently or from this object.
   */
 object RedisMasterSlave {
+
   /*
   def masterSlaveUtf(uri: String, readFrom: ReadFrom, redisUris: RedisURI*): StatefulRedisMasterSlaveConnection[String, String] = {
     ???

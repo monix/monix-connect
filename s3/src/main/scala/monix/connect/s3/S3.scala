@@ -381,10 +381,11 @@ object S3 { self =>
     prefix: Option[String] = None,
     maxTotalKeys: Option[Int] = None,
     requestPayer: Option[RequestPayer] = None)(implicit s3AsyncClient: S3AsyncClient): Observable[S3Object] = {
-    for {
-      listResponse <- ListObjectsObservable(bucket, prefix, maxTotalKeys, requestPayer, s3AsyncClient)
-      s3Object     <- Observable.fromIterable(listResponse.contents.asScala)
-    } yield s3Object
+    val n = 1
+    ListObjectsObservable(bucket,prefix,None,None, s3AsyncClient).foldLeft(List.empty[S3Object])((prev, curr) => {
+      (prev ++ curr.contents.asScala).sortWith(sorted).take(n)
+      })
+    }
   }
 
   @deprecated("Use one of the builders like `S3.create`", "0.5.0")

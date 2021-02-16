@@ -9,7 +9,7 @@ export REDIS_CLUSTER_IP=0.0.0.0
 
 docker-compose -f ./docker-compose.yml stop minio
 docker-compose -f ./docker-compose.yml rm -f minio
-docker-compose -f docker-compose.yml up -d minio localstack redis mongo elasticsearch
+docker-compose -f docker-compose.yml up -d minio localstack redis mongo elasticsearch redisCluster
 
 sleep 50
 

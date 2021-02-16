@@ -208,7 +208,7 @@ private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, 
 
 private[redis] object KeyCommands {
 
-  def apply[K, V](reactiveCmd: RedisKeyReactiveCommands[K, V]) = {
+  def apply[K, V](reactiveCmd: RedisKeyReactiveCommands[K, V]): KeyCommands[K, V] = {
 
     new KeyCommands[K, V](reactiveCmd)
   }

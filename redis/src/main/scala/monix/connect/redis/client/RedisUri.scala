@@ -22,7 +22,7 @@ import io.lettuce.core.RedisURI
 import java.time.Duration
 import scala.concurrent.duration.FiniteDuration
 
-case class RedisUri private[redis] (
+private[redis] case class RedisUri (
   host: String,
   port: Int,
   database: Option[Int] = None,
@@ -38,7 +38,7 @@ case class RedisUri private[redis] (
 
   def withDatabase(database: Int): RedisUri = copy(database = Some(database))
   def withPassword(password: String): RedisUri = copy(password = Some(password))
-  def withSsl(ssl: Boolean): RedisUri = copy(ssl = Some(ssl))
+  def ssl(ssl: Boolean): RedisUri = copy(ssl = Some(ssl))
   def withVerifyPeer(verifyPeer: Boolean): RedisUri = copy(verifyPeer = Some(verifyPeer))
   def withStartTls(startTls: Boolean): RedisUri = copy(startTls = Some(startTls))
   def withTimeout(timeout: FiniteDuration): RedisUri = copy(timeout = Some(timeout))
@@ -61,4 +61,10 @@ case class RedisUri private[redis] (
     clientName.map(builder.withClientName)
     builder.build()
   }
+}
+
+object RedisUri {
+
+  def apply(host: String, port: Int): RedisUri = RedisUri(host, port)
+
 }

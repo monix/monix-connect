@@ -11,21 +11,15 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 import scala.concurrent.duration._
 
-class ClusterIntegrationTest extends AnyFlatSpec with RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll with Eventually {
+class ClusterConnectionIntegrationTest extends AnyFlatSpec with RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll with Eventually {
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
 
   val clusterRedisUri = List("redis://localhost:7001", "redis://localhost:7002", "redis://localhost:7003")
-  val clusterRedisUris = List(RedisUri("127.0.0.1", 7000),
-    RedisUri("127.0.0.1", 7001),
-    RedisUri("127.0.0.1", 7002),
-    RedisUri("127.0.0.1", 7003),
-    RedisUri("127.0.0.1", 7004),
-    RedisUri("127.0.0.1", 7005))
+  val clusterRedisUris = List(7000, 7001, 7002, 7003, 7004, 7005).map(port => RedisUri("127.0.0.1", port))
 
   "ClusterConnection" should "can connect to multiple uri" in {
     //given
-
     val key = genRedisKey.sample.get
     val value = genRedisValue.sample.get
     val clusterCmd = Redis.cluster(clusterRedisUris).utf
@@ -85,7 +79,7 @@ class ClusterIntegrationTest extends AnyFlatSpec with RedisIntegrationFixture wi
 
   it should "support byte array codecs " in {
     //given
-     val personPkCodec: Codec[PersonPk, Array[Byte]] = Codec.byteArray[PersonPk](pk => PersonPk.toByteArray(pk), str => PersonPk.parseFrom(str))
+    implicit val personPkCodec: Codec[PersonPk, Array[Byte]] = Codec.byteArray[PersonPk](pk => PersonPk.toByteArray(pk), str => PersonPk.parseFrom(str))
     implicit val personCodec: Codec[Person, Array[Byte]] = Codec.byteArray[Person](person => Person.toByteArray(person), str => Person.parseFrom(str))
 
     //given

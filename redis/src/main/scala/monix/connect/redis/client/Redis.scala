@@ -68,6 +68,9 @@ object Redis {
   //     Task.evalAsync(RedisClient.create(uri).connect(Codec(keyCodec, valueCodec)))
   //   }.evalMap(RedisCmd.single)
 
+  def single[K, V](uris: RedisUri): SingleConnection =
+    SingleConnection(uris)
+
   def cluster[K, V](uris: List[RedisUri]): ClusterConnection =
     ClusterConnection(uris)
 
