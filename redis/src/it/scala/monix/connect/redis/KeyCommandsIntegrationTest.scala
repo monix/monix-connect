@@ -20,7 +20,7 @@ class KeyCommandsIntegrationTest
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    redisClient.use(cmd => cmd.server.flushAll()).runSyncUnsafe()
+    utfConnection.use(cmd => cmd.server.flushAll()).runSyncUnsafe()
   }
 
   s"${KeyCommands}" should "deletes key" in {
@@ -29,9 +29,9 @@ class KeyCommandsIntegrationTest
     val k2: K = genRedisKey.sample.get
     val k3: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get
-    redisClient.use(cmd => cmd.string.set(k1, value) *> cmd.string.set(k2, value)).runSyncUnsafe()
+    utfConnection.use(cmd => cmd.string.set(k1, value) *> cmd.string.set(k2, value)).runSyncUnsafe()
 
-    redisClient.use { cmd =>
+    utfConnection.use { cmd =>
       //when
       for {
         d1 <- cmd.key.del(k1, k2)
@@ -53,7 +53,7 @@ class KeyCommandsIntegrationTest
     val value: String = genRedisValue.sample.get
 
     //when
-    redisClient.use { cmd =>
+    utfConnection.use { cmd =>
       for {
         _  <- cmd.string.set(k1, value) *> cmd.string.set(k2, value)
         r1 <- cmd.key.unLink(k1, k2)
@@ -74,7 +74,7 @@ class KeyCommandsIntegrationTest
     val value: String = genRedisValue.sample.get
 
     //when
-    redisClient.use { cmd =>
+    utfConnection.use { cmd =>
       for {
         _  <- cmd.string.set(k1, value)
         d1 <- cmd.key.dump(k1)
@@ -96,7 +96,7 @@ class KeyCommandsIntegrationTest
     val value: String = genRedisValue.sample.get
 
     //when
-    redisClient.use { cmd =>
+    utfConnection.use { cmd =>
       for {
         _  <- cmd.string.set(k1, value) *> cmd.string.set(k2, value)
         r1 <- cmd.key.exists(List(k1, k2))
@@ -117,7 +117,7 @@ class KeyCommandsIntegrationTest
     val value: String = genRedisValue.sample.get
 
     //when
-    redisClient.use { cmd =>
+    utfConnection.use { cmd =>
       for {
         _  <- cmd.string.set(k1, value)
         r1 <- cmd.key.exists(k1)
@@ -136,9 +136,9 @@ class KeyCommandsIntegrationTest
     val k1: K = genRedisKey.sample.get
     val k2: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get
-    redisClient.use(cmd => cmd.string.set(k1, value)).runSyncUnsafe()
+    utfConnection.use(cmd => cmd.string.set(k1, value)).runSyncUnsafe()
 
-    redisClient.use { cmd =>
+    utfConnection.use { cmd =>
       //when
       for {
         r1 <- cmd.key.pExpire(k1, 100.seconds)
@@ -159,7 +159,7 @@ class KeyCommandsIntegrationTest
     val k3: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get
 
-    redisClient.use { cmd =>
+    utfConnection.use { cmd =>
       for {
         //when
         _ <- cmd.string.set(k1, value) >> cmd.string.set(k2, value)
@@ -199,7 +199,7 @@ class KeyCommandsIntegrationTest
     val k3: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get
 
-    redisClient.use { cmd =>
+    utfConnection.use { cmd =>
       for {
         //when
         _ <- cmd.string.set(k1, value) *> cmd.string.set(k2, value) *> cmd.string.set(k3, value)
@@ -239,11 +239,11 @@ class KeyCommandsIntegrationTest
     val k1: K = genRedisKey.sample.get
     val k2: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get
-    redisClient.use { cmd => cmd.string.set(k1, value) }.runSyncUnsafe()
+    utfConnection.use { cmd => cmd.string.set(k1, value) }.runSyncUnsafe()
 
     //when
     val (moved1, moved2) =
-      redisClient.use(cmd => Task.parZip2(cmd.key.move(k1, 2), cmd.key.move(k2, 2))).runSyncUnsafe()
+      utfConnection.use(cmd => Task.parZip2(cmd.key.move(k1, 2), cmd.key.move(k2, 2))).runSyncUnsafe()
 
     //then
     moved1 shouldBe true
@@ -258,9 +258,9 @@ class KeyCommandsIntegrationTest
     val v1: V = genRedisValue.sample.get
     val v2: String = "Sample String"
 
-    redisClient.use(cmd => cmd.string.set(k1, v1) >> cmd.string.set(k2, v2)).runSyncUnsafe()
+    utfConnection.use(cmd => cmd.string.set(k1, v1) >> cmd.string.set(k2, v2)).runSyncUnsafe()
 
-    val (r1, r2, r3) = redisClient
+    val (r1, r2, r3) = utfConnection
       .use(cmd => Task.parZip3(cmd.key.objectEncoding(k1), cmd.key.objectEncoding(k2), cmd.key.objectEncoding(k3)))
       .runSyncUnsafe()
 
@@ -276,7 +276,7 @@ class KeyCommandsIntegrationTest
     val k2: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get
 
-    redisClient
+    utfConnection
       .use(cmd =>
         for {
           //when
@@ -306,7 +306,7 @@ class KeyCommandsIntegrationTest
     val k3: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get
 
-    redisClient
+    utfConnection
       .use(cmd =>
         //when
         for {
@@ -331,7 +331,7 @@ class KeyCommandsIntegrationTest
     val value: String = genRedisValue.sample.get
 
     //when
-    redisClient
+    utfConnection
       .use(cmd =>
         for {
           _  <- cmd.server.flushAll()
@@ -354,7 +354,7 @@ class KeyCommandsIntegrationTest
     val k3: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get
 
-    redisClient
+    utfConnection
       .use(cmd =>
         //when
         for {
@@ -381,7 +381,7 @@ class KeyCommandsIntegrationTest
     val k3: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get
 
-    redisClient
+    utfConnection
       .use(cmd =>
         //when
         for {
@@ -411,7 +411,7 @@ class KeyCommandsIntegrationTest
     val value: String = genRedisValue.sample.get
 
     //when
-    redisClient
+    utfConnection
       .use(cmd =>
         for {
           _  <- cmd.string.set(k1, value)
@@ -437,7 +437,7 @@ class KeyCommandsIntegrationTest
     val v5: String = "5"
 
     //when
-    redisClient
+    utfConnection
       .use(cmd =>
         for {
           _  <- cmd.list.lPush(k1, v2, v5, v3, v4, v1)
@@ -459,7 +459,7 @@ class KeyCommandsIntegrationTest
     val v2: V = genRedisValue.sample.get
 
     //when
-    val (strType, listType) = redisClient
+    val (strType, listType) = utfConnection
       .use(cmd =>
         for {
           _ <- cmd.string.set(k1, v1)

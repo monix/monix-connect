@@ -66,5 +66,7 @@ private[redis] case class RedisUri (
 object RedisUri {
 
   def apply(host: String, port: Int): RedisUri = RedisUri(host, port)
+  def apply(host: String): RedisUri = RedisUri(host, 6379)
+
 
 }

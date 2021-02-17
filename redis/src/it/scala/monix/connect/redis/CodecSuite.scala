@@ -16,6 +16,8 @@ class CodecSuite extends AnyFlatSpec with RedisIntegrationFixture with Matchers 
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
 
+  val connection = Redis.single(redisUri)
+
   "A byte array codec" should "encode and decode protobuf keys and values" in {
 
     implicit val personPkCodec: Codec[PersonPk, Array[Byte]] = Codec.byteArray[PersonPk](pk => PersonPk.toByteArray(pk), str => PersonPk.parseFrom(str))
@@ -26,10 +28,10 @@ class CodecSuite extends AnyFlatSpec with RedisIntegrationFixture with Matchers 
     val person = genPerson.sample.get
 
     //when
-    Redis.byteArrayCodec[PersonPk, Person](redisUrl).use(_.list.lPush(personPk, person)).runSyncUnsafe()
+    connection.byteArray[PersonPk, Person].use(_.list.lPush(personPk, person)).runSyncUnsafe()
 
     //then
-    val r = Redis.byteArrayCodec[PersonPk, Person](redisUrl).use(_.list.lPop(personPk)).runSyncUnsafe()
+    val r = connection.byteArray[PersonPk, Person].use(_.list.lPop(personPk)).runSyncUnsafe()
     Some(person) shouldBe r
   }
 
@@ -40,10 +42,10 @@ class CodecSuite extends AnyFlatSpec with RedisIntegrationFixture with Matchers 
     implicitly(intUtfCodec) // used implicitly
 
     //when
-    Redis.utfCodec[Int, Int](redisUrl).use(_.list.lPush(key, value)).runSyncUnsafe()
+    connection.utf[Int, Int].use(_.list.lPush(key, value)).runSyncUnsafe()
 
     //then
-    val r = Redis.utfCodec[Int, Int](redisUrl).use(_.list.lPop(key)).runSyncUnsafe()
+    val r = connection.utf[Int, Int].use(_.list.lPop(key)).runSyncUnsafe()
     Some(value) shouldBe r
   }
 
@@ -54,7 +56,7 @@ class CodecSuite extends AnyFlatSpec with RedisIntegrationFixture with Matchers 
     implicitly(intUtfCodec) // used implicitly
 
     //when
-    val r = Redis.utfCodec[Int, Int](redisUrl).use(cmd =>
+    val r = connection.utf[Int, Int].use(cmd =>
       for {
         _ <- Observable(n, n, n).mapEval(cmd.string.append(key, _)).completedL
         r <- cmd.string.get(key)

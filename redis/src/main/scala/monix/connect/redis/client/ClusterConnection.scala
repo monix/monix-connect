@@ -8,7 +8,7 @@ import io.lettuce.core.cluster.api.{StatefulRedisClusterConnection}
 
 import scala.jdk.CollectionConverters._
 
-case class ClusterConnection(uris: List[RedisUri]) {
+case class ClusterConnection(uris: List[RedisUri]) extends RedisConnection {
 
   def utf: Resource[Task, RedisCmd[String, String]] = {
     RedisCmd
@@ -45,4 +45,5 @@ case class ClusterConnection(uris: List[RedisUri]) {
       }
       .evalMap(RedisCmd.cluster)
   }
+
 }

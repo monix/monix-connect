@@ -23,7 +23,7 @@ class RedisConnectionIntegrationTest extends AnyFlatSpec
     val field: K = genRedisKey.sample.get
 
     //when
-    val r: Option[String] = redisClient.use(_.hash.hGet(key, field)).runSyncUnsafe()
+    val r: Option[String] = utfConnection.use(_.hash.hGet(key, field)).runSyncUnsafe()
 
     //then
     r shouldBe None
@@ -36,10 +36,10 @@ class RedisConnectionIntegrationTest extends AnyFlatSpec
     val value: String = genRedisValue.sample.get
 
     //when
-    redisClient.use(_.hash.hSet(key, field, value)).runSyncUnsafe()
+    utfConnection.use(_.hash.hSet(key, field, value)).runSyncUnsafe()
 
     //and
-    val r: Option[String] = redisClient.use(_.hash.hGet(key, field)).runSyncUnsafe()
+    val r: Option[String] = utfConnection.use(_.hash.hGet(key, field)).runSyncUnsafe()
 
     //then
     r shouldBe Some(value)
@@ -51,10 +51,10 @@ class RedisConnectionIntegrationTest extends AnyFlatSpec
     val value: String = genRedisValue.sample.get
 
     //when
-    redisClient.use(_.string.set(key, value)).runSyncUnsafe()
+    utfConnection.use(_.string.set(key, value)).runSyncUnsafe()
 
     //and
-    val t: Task[Long] = redisClient.use(_.string.strLen(key))
+    val t: Task[Long] = utfConnection.use(_.string.strLen(key))
 
     //then
     val lenght: Long = t.runSyncUnsafe()
@@ -67,12 +67,12 @@ class RedisConnectionIntegrationTest extends AnyFlatSpec
     val value: String = genRedisValue.sample.get
 
     //when
-    redisClient.use(_.string.set(key, value)).runSyncUnsafe()
-    val beforeFlush: Boolean = redisClient.use(_.key.exists(key)).runSyncUnsafe()
+    utfConnection.use(_.string.set(key, value)).runSyncUnsafe()
+    val beforeFlush: Boolean = utfConnection.use(_.key.exists(key)).runSyncUnsafe()
 
     //and
-    redisClient.use(_.server.flushAll()).runSyncUnsafe()
-    val afterFlush: Boolean = redisClient.use(_.key.exists(key)).runSyncUnsafe()
+    utfConnection.use(_.server.flushAll()).runSyncUnsafe()
+    val afterFlush: Boolean = utfConnection.use(_.key.exists(key)).runSyncUnsafe()
 
     //then
     beforeFlush shouldEqual true
@@ -84,11 +84,11 @@ class RedisConnectionIntegrationTest extends AnyFlatSpec
     val key1: K = genRedisKey.sample.get
     val key2: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get
-    redisClient.use(_.string.set(key1, value)).runSyncUnsafe()
+    utfConnection.use(_.string.set(key1, value)).runSyncUnsafe()
 
     //when
     val (initialTtl, expire, finalTtl, existsWithinTtl, existsRenamed, existsAfterFiveSeconds) = {
-      redisClient.use { case RedisCmd(_, keys, _, _, _ ,_, _) =>
+      utfConnection.use { case RedisCmd(_, keys, _, _, _ ,_, _) =>
         for {
           initialTtl <- keys.ttl(key1)
           expire <- keys.pExpire(key1, 2.seconds)
@@ -117,10 +117,10 @@ class RedisConnectionIntegrationTest extends AnyFlatSpec
     val values: List[String] = genRedisValues.sample.get.map(_.toString)
 
     //when
-    redisClient.use(_.list.lPush(key, values: _*)).runSyncUnsafe()
+    utfConnection.use(_.list.lPush(key, values: _*)).runSyncUnsafe()
 
     //and
-    val l: List[String] = redisClient.use(_.list.lRange(key, 0, values.size).toListL).runSyncUnsafe()
+    val l: List[String] = utfConnection.use(_.list.lRange(key, 0, values.size).toListL).runSyncUnsafe()
 
     //then
     l should contain theSameElementsAs values
@@ -136,7 +136,7 @@ class RedisConnectionIntegrationTest extends AnyFlatSpec
 
     //when
     val (size1, size2, moved) = {
-      redisClient.use { case RedisCmd(_, _, _, _, set ,_, _)  =>
+      utfConnection.use { case RedisCmd(_, _, _, _, set ,_, _)  =>
         for {
           size1 <- set.sAdd(k1, m1: _*)
           size2 <- set.sAdd(k2, m2: _*)
@@ -150,7 +150,7 @@ class RedisConnectionIntegrationTest extends AnyFlatSpec
 
     //and
     val (s1, s2, union, diff) = {
-      redisClient.use { case RedisCmd(_, _, _, _, set ,_, _)  =>
+      utfConnection.use { case RedisCmd(_, _, _, _, set ,_, _)  =>
         for {
           s1    <- set.sMembers(k1).toListL
           s2    <- set.sMembers(k2).toListL
@@ -187,7 +187,7 @@ class RedisConnectionIntegrationTest extends AnyFlatSpec
 
     //when
     val t: Task[(Option[ScoredValue[String]], Option[ScoredValue[String]])] =
-      redisClient.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+      utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
         for {
           _ <- sortedSet.zAdd(k, minScore, v0)
           _ <- sortedSet.zAdd(k, middleScore, v1)
@@ -215,7 +215,7 @@ class RedisConnectionIntegrationTest extends AnyFlatSpec
     val k3: K = genRedisKey.sample.get
 
     val (v: Option[String], len: Long, list, keys: List[String]) = {
-      redisClient.use { case RedisCmd(_, keys, list, server, _, _, string) =>
+      utfConnection.use { case RedisCmd(_, keys, list, server, _, _, string) =>
         for {
           _ <- server.flushAll()
           _ <- keys.touch(k1)

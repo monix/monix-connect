@@ -20,7 +20,7 @@ class HashCommandsIntegrationTest
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    redisClient.use(cmd => cmd.server.flushAll()).runSyncUnsafe()
+    utfConnection.use(cmd => cmd.server.flushAll()).runSyncUnsafe()
   }
 
   "hDel" should "deletes single hash field" in {
@@ -31,7 +31,7 @@ class HashCommandsIntegrationTest
     val v: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get
 
-    redisClient.use { cmd =>
+    utfConnection.use { cmd =>
       //when
       for {
         _ <- cmd.hash.hSet(k1, f1, v)
@@ -58,7 +58,7 @@ class HashCommandsIntegrationTest
     val f3: K = genRedisKey.sample.get
     val v: K = genRedisKey.sample.get
 
-    redisClient.use { cmd =>
+    utfConnection.use { cmd =>
       //when
       for {
         _ <- cmd.hash.hMSet(k1, Map(f1 -> v, f2 -> v, f3 -> v))
@@ -110,7 +110,7 @@ class HashCommandsIntegrationTest
     val f3: K = genRedisKey.sample.get
     val v: K = genRedisKey.sample.get
 
-    redisClient.use { cmd =>
+    utfConnection.use { cmd =>
       //when
       for {
         _ <- cmd.hash.hMSet(k1, Map(f1 -> v, f2 -> v, f3 -> v))
@@ -135,7 +135,7 @@ class HashCommandsIntegrationTest
     val f3: K = genRedisKey.sample.get
     val v: K = genRedisKey.sample.get
 
-    redisClient.use { cmd =>
+     utfConnection.use { cmd =>
       //when
       for {
         _ <- cmd.hash.hMSet(k1, Map(f1 -> v, f2 -> v))
@@ -171,7 +171,7 @@ class HashCommandsIntegrationTest
       val f2: K = genRedisKey.sample.get
       val v: K = genRedisKey.sample.get
 
-      redisClient.use { cmd =>
+    utfConnection.use { cmd =>
         //when
         for {
           _ <- cmd.hash.hSet(k1, f1 , v)
@@ -200,7 +200,7 @@ class HashCommandsIntegrationTest
     val v2: K = genRedisKey.sample.get
     val v3: K = genRedisKey.sample.get
 
-    redisClient.use { cmd =>
+    utfConnection.use { cmd =>
       //when
       for {
         _ <- cmd.hash.hMSet(k1, Map(f1 -> v1, f2 -> v2, f3 -> v3))

@@ -16,7 +16,6 @@ class ConnectionIntegrationTest extends AnyFlatSpec with RedisIntegrationFixture
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
   "redis://localhost:6379"
-  val redisUri = RedisUri("localhost", 6379)
   val singleConnection = Redis.single(redisUri)
 
   "ClusterConnection" should "connect with default utf codecs" in {
