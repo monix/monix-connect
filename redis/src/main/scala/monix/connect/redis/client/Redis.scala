@@ -38,5 +38,4 @@ object Redis {
   def cluster[K, V](uris: List[RedisUri]): RedisConnection =
     ClusterConnection(uris)
 
-
 }

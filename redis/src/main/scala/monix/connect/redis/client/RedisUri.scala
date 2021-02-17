@@ -22,7 +22,7 @@ import io.lettuce.core.RedisURI
 import java.time.Duration
 import scala.concurrent.duration.FiniteDuration
 
-private[redis] case class RedisUri (
+private[redis] case class RedisUri(
   host: String,
   port: Int,
   database: Option[Int] = None,
@@ -67,6 +67,5 @@ object RedisUri {
 
   def apply(host: String, port: Int): RedisUri = RedisUri(host, port)
   def apply(host: String): RedisUri = RedisUri(host, 6379)
-
 
 }

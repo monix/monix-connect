@@ -31,7 +31,7 @@ import scala.jdk.CollectionConverters._
   * They can be equally accessed independently or from this object.
   */
 object RedisCluster {
-/*
+  /*
   def apply(uri: String): Resource[Task, RedisCmd[String, String]] =
     RedisCmd
       .connectResource[String, String, ClusterConnection[String, String]] {
@@ -59,5 +59,5 @@ object RedisCluster {
         Task.evalAsync(RedisClusterClient.create(uri).connect(codec))
       }
       .evalMap(RedisCmd.cluster)
-*/
+ */
 }
