@@ -38,4 +38,6 @@ object Redis {
   def cluster[K, V](uris: List[RedisUri]): RedisConnection =
     ClusterConnection(uris)
 
+  def masterSlave[K, V](uris: List[RedisUri]): RedisConnection =
+    ClusterConnection(uris)
 }

@@ -28,10 +28,10 @@ class CodecSuite extends AnyFlatSpec with RedisIntegrationFixture with Matchers 
     val person = genPerson.sample.get
 
     //when
-    connection.byteArray[PersonPk, Person].use(_.list.lPush(personPk, person)).runSyncUnsafe()
+    connection.connectByteArray[PersonPk, Person].use(_.list.lPush(personPk, person)).runSyncUnsafe()
 
     //then
-    val r = connection.byteArray[PersonPk, Person].use(_.list.lPop(personPk)).runSyncUnsafe()
+    val r = connection.connectByteArray[PersonPk, Person].use(_.list.lPop(personPk)).runSyncUnsafe()
     Some(person) shouldBe r
   }
 
@@ -42,10 +42,10 @@ class CodecSuite extends AnyFlatSpec with RedisIntegrationFixture with Matchers 
     implicitly(intUtfCodec) // used implicitly
 
     //when
-    connection.utf[Int, Int].use(_.list.lPush(key, value)).runSyncUnsafe()
+    connection.connectUtf[Int, Int].use(_.list.lPush(key, value)).runSyncUnsafe()
 
     //then
-    val r = connection.utf[Int, Int].use(_.list.lPop(key)).runSyncUnsafe()
+    val r = connection.connectUtf[Int, Int].use(_.list.lPop(key)).runSyncUnsafe()
     Some(value) shouldBe r
   }
 
@@ -56,7 +56,7 @@ class CodecSuite extends AnyFlatSpec with RedisIntegrationFixture with Matchers 
     implicitly(intUtfCodec) // used implicitly
 
     //when
-    val r = connection.utf[Int, Int].use(cmd =>
+    val r = connection.connectUtf[Int, Int].use(cmd =>
       for {
         _ <- Observable(n, n, n).mapEval(cmd.string.append(key, _)).completedL
         r <- cmd.string.get(key)

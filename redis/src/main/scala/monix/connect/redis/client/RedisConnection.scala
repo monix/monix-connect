@@ -25,7 +25,7 @@ trait RedisConnection {
   /**
     *
     */
-  def utf: Resource[Task, RedisCmd[String, String]]
+  def connectUtf: Resource[Task, RedisCmd[String, String]]
 
   /**
     *
@@ -35,7 +35,9 @@ trait RedisConnection {
     * @tparam V
     * @return
     */
-  def utf[K, V](implicit keyCodec: Codec[K, String], valueCodec: Codec[V, String]): Resource[Task, RedisCmd[K, V]]
+  def connectUtf[K, V](
+    implicit keyCodec: Codec[K, String],
+    valueCodec: Codec[V, String]): Resource[Task, RedisCmd[K, V]]
 
   /**
     *
@@ -45,7 +47,7 @@ trait RedisConnection {
     * @tparam V
     * @return
     */
-  def byteArray[K, V](
+  def connectByteArray[K, V](
     implicit keyCodec: Codec[K, Array[Byte]],
     valueCodec: Codec[V, Array[Byte]]): Resource[Task, RedisCmd[K, V]]
 

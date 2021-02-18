@@ -22,7 +22,7 @@ class ClusterConnectionIntegrationTest extends AnyFlatSpec with RedisIntegration
     //given
     val key = genRedisKey.sample.get
     val value = genRedisValue.sample.get
-    val clusterCmd = Redis.cluster(clusterRedisUris).utf
+    val clusterCmd = Redis.cluster(clusterRedisUris).connectUtf
 
     //when
     clusterCmd.use(_.list.lPush(key, value)).runSyncUnsafe()
@@ -37,7 +37,7 @@ class ClusterConnectionIntegrationTest extends AnyFlatSpec with RedisIntegration
     val key = genRedisKey.sample.get
     val value = genRedisValue.sample.get
     val clusterUri = RedisUri("127.0.0.1", 7001)
-    val clusterCmd = Redis.cluster(List(clusterUri)).utf
+    val clusterCmd = Redis.cluster(List(clusterUri)).connectUtf
 
     //when
     clusterCmd.use(_.list.lPush(key, value)).runSyncUnsafe()
@@ -52,7 +52,7 @@ class ClusterConnectionIntegrationTest extends AnyFlatSpec with RedisIntegration
     val key = genRedisKey.sample.get
     val value = genRedisValue.sample.get
     val clusterUri = RedisUri("127.0.0.1", 7005)
-    val clusterCmd = Redis.cluster(List(clusterUri)).utf
+    val clusterCmd = Redis.cluster(List(clusterUri)).connectUtf
 
     //when
     clusterCmd.use(_.list.lPush(key, value)).runSyncUnsafe()
@@ -67,7 +67,7 @@ class ClusterConnectionIntegrationTest extends AnyFlatSpec with RedisIntegration
     val key: Int = Gen.choose(1, 1000).sample.get
     val value: Double = Gen.choose(1, 1000).sample.get.toDouble
     val clusterUri = RedisUri("127.0.0.1", 7004)
-    val clusterCmd = Redis.cluster[Int, Double](List(clusterUri)).utf(intUtfCodec, doubleUtfCodec)
+    val clusterCmd = Redis.cluster[Int, Double](List(clusterUri)).connectUtf(intUtfCodec, doubleUtfCodec)
 
     //when
     clusterCmd.use(_.list.lPush(key, value)).runSyncUnsafe()
@@ -86,7 +86,7 @@ class ClusterConnectionIntegrationTest extends AnyFlatSpec with RedisIntegration
     val personPk = genPersonPk.sample.get
     val person = genPerson.sample.get
     val clusterUri = RedisUri("127.0.0.1", 7003)
-    val clusterCmd = Redis.cluster[PersonPk, Person](List(clusterUri)).byteArray(personPkCodec, personCodec)
+    val clusterCmd = Redis.cluster[PersonPk, Person](List(clusterUri)).connectByteArray(personPkCodec, personCodec)
 
     //when
     clusterCmd.use(_.list.lPush(personPk, person)).runSyncUnsafe()

@@ -15,7 +15,7 @@ import scala.concurrent.duration._
 class ConnectionIntegrationTest extends AnyFlatSpec with RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll with Eventually {
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
-  "redis://localhost:6379"
+
   val singleConnection = Redis.single(redisUri)
 
   "ClusterConnection" should "connect with default utf codecs" in {
@@ -24,10 +24,10 @@ class ConnectionIntegrationTest extends AnyFlatSpec with RedisIntegrationFixture
     val value: String = Gen.identifier.sample.get
 
     //when
-    singleConnection.utf.use(_.list.lPush(key, value)).runSyncUnsafe()
+    singleConnection.connectUtf.use(_.list.lPush(key, value)).runSyncUnsafe()
 
     //then
-    val r = singleConnection.utf.use(_.list.lPop(key)).runSyncUnsafe()
+    val r = singleConnection.connectUtf.use(_.list.lPop(key)).runSyncUnsafe()
     Some(value) shouldBe r
   }
 
@@ -38,10 +38,10 @@ class ConnectionIntegrationTest extends AnyFlatSpec with RedisIntegrationFixture
     implicitly(intUtfCodec) // used implicitly
 
     //when
-    singleConnection.utf[Int, Int].use(_.list.lPush(key, value)).runSyncUnsafe()
+    singleConnection.connectUtf[Int, Int].use(_.list.lPush(key, value)).runSyncUnsafe()
 
     //then
-    val r = singleConnection.utf[Int, Int].use(_.list.lPop(key)).runSyncUnsafe()
+    val r = singleConnection.connectUtf[Int, Int].use(_.list.lPop(key)).runSyncUnsafe()
     Some(value) shouldBe r
   }
 
@@ -53,10 +53,10 @@ class ConnectionIntegrationTest extends AnyFlatSpec with RedisIntegrationFixture
     val person = genPerson.sample.get
 
     //when
-    singleConnection.byteArray[PersonPk, Person].use(_.list.lPush(personPk, person)).runSyncUnsafe()
+    singleConnection.connectByteArray[PersonPk, Person].use(_.list.lPush(personPk, person)).runSyncUnsafe()
 
     //then
-    val r = singleConnection.byteArray[PersonPk, Person].use(_.list.lPop(personPk)).runSyncUnsafe()
+    val r = singleConnection.connectByteArray[PersonPk, Person].use(_.list.lPop(personPk)).runSyncUnsafe()
     Some(person) shouldBe r
   }
 
