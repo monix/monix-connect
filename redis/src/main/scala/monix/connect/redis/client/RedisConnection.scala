@@ -27,6 +27,8 @@ trait RedisConnection {
     */
   def connectUtf: Resource[Task, RedisCmd[String, String]]
 
+  def hello = ""
+
   /**
     *
     * @param keyCodec

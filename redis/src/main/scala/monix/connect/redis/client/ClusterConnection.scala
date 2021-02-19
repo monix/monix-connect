@@ -19,7 +19,7 @@ package monix.connect.redis.client
 
 import cats.effect.Resource
 import io.lettuce.core.cluster.RedisClusterClient
-import io.lettuce.core.codec.{ByteArrayCodec, Utf8StringCodec}
+import io.lettuce.core.codec.{ByteArrayCodec, StringCodec, Utf8StringCodec}
 import monix.eval.Task
 import io.lettuce.core.cluster.api.{StatefulRedisClusterConnection => RedisClusterConnection}
 
@@ -30,27 +30,25 @@ case class ClusterConnection(uris: List[RedisUri]) extends RedisConnection {
   def connectUtf: Resource[Task, RedisCmd[String, String]] = {
     RedisCmd
       .connectResource[String, String, RedisClusterConnection[String, String]] {
-        Task.from {
-          RedisClusterClient
-            .create(uris.map(_.toJava).asJava)
-            .connectAsync(new Utf8StringCodec())
-            .toCompletableFuture
-        }
-      }
-      .evalMap(RedisCmd.cluster)
+        for {
+          client <- Task.now(RedisClusterClient.create(uris.map(_.toJava).asJava))
+          _ <- Task.now(client.getPartitions)
+          conn <- Task.from(client.connectAsync(new StringCodec()).toCompletableFuture)
+        } yield (client, conn)
+      }.evalMap(RedisCmd.cluster)
   }
 
-  def connectUtf[K, V](
-    implicit keyCodec: Codec[K, String],
-    valueCodec: Codec[V, String]): Resource[Task, RedisCmd[K, V]] = {
+
+  def connectUtf[K, V](implicit keyCodec: Codec[K, String], valueCodec: Codec[V, String]): Resource[Task, RedisCmd[K, V]] = {
     RedisCmd
       .connectResource[K, V, RedisClusterConnection[K, V]] {
-        Task.from {
-          RedisClusterClient
-            .create(uris.map(_.toJava).asJava)
-            .connectAsync(Codec(keyCodec, valueCodec, new Utf8StringCodec()))
-            .toCompletableFuture
-        }
+        for {
+          client <- Task.now(RedisClusterClient.create(uris.map(_.toJava).asJava))
+          _ <- Task.now(client.getPartitions)
+          conn <- Task.from {
+            client.connectAsync(Codec(keyCodec, valueCodec, new StringCodec())).toCompletableFuture
+          }
+        } yield (client, conn)
       }
       .evalMap(RedisCmd.cluster)
   }
@@ -58,27 +56,29 @@ case class ClusterConnection(uris: List[RedisUri]) extends RedisConnection {
   def connectByteArray: Resource[Task, RedisCmd[Array[Byte], Array[Byte]]] = {
     RedisCmd
       .connectResource[Array[Byte], Array[Byte], RedisClusterConnection[Array[Byte], Array[Byte]]] {
-        Task.from {
-          RedisClusterClient
-            .create(uris.map(_.toJava).asJava)
-            .connectAsync(new ByteArrayCodec())
-            .toCompletableFuture
-        }
+        for {
+          client <- Task.now(RedisClusterClient.create(uris.map(_.toJava).asJava))
+          _ <- Task.now(client.getPartitions)
+          conn <- Task.from {
+            client.connectAsync(new ByteArrayCodec()).toCompletableFuture
+          }
+        } yield (client, conn)
       }
-      .evalMap(RedisCmd.cluster(_))
+      .evalMap(RedisCmd.cluster)
   }
 
   def connectByteArray[K, V](
-    implicit keyCodec: Codec[K, Array[Byte]],
-    valueCodec: Codec[V, Array[Byte]]): Resource[Task, RedisCmd[K, V]] = {
+                              implicit keyCodec: Codec[K, Array[Byte]],
+                              valueCodec: Codec[V, Array[Byte]]): Resource[Task, RedisCmd[K, V]] = {
     RedisCmd
       .connectResource[K, V, RedisClusterConnection[K, V]] {
-        Task.from {
-          RedisClusterClient
-            .create(uris.map(_.toJava).asJava)
-            .connectAsync(Codec(keyCodec, valueCodec, new ByteArrayCodec()))
-            .toCompletableFuture
-        }
+        for {
+          client <- Task.now(RedisClusterClient.create(uris.map(_.toJava).asJava))
+          _ <- Task.eval(client.getPartitions)
+          conn <- Task.from {
+            client.connectAsync(Codec(keyCodec, valueCodec, new ByteArrayCodec())).toCompletableFuture
+          }
+        } yield (client, conn)
       }
       .evalMap(RedisCmd.cluster)
   }

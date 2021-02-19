@@ -19,6 +19,7 @@ object Dependencies {
     val Pureconfig = "0.14.0"
     val Elastic4s = "7.10.2"
     val ScalaCompat = "2.3.2"
+    val Lettuce = "6.0.2.RELEASE"
 
     //test
     val Scalatest = "3.2.3"
@@ -84,7 +85,7 @@ object Dependencies {
   ) ++ commonDependencies(hasIt = true)
 
   val Redis = Seq(
-    "io.lettuce" % "lettuce-core" % "5.1.8.RELEASE",
+    "io.lettuce" % "lettuce-core" % Versions.Lettuce,
     "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat,
     "com.thesamet.scalapb"      %% "scalapb-runtime-grpc"  % scalapb.compiler.Version.scalapbVersion % IntegrationTest,
     "com.thesamet.scalapb"      %% "scalapb-runtime"       % scalapb.compiler.Version.scalapbVersion % IntegrationTest

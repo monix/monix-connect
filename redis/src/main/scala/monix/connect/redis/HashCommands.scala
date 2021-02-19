@@ -74,8 +74,8 @@ private[redis] class HashCommands[K, V](reactiveCmd: RedisHashReactiveCommands[K
     * @param key the key
     * @return Map of the fields and their values stored in the hash, or an empty list when key does not exist.
     */
-  def hGetAll(key: K): Task[Map[K, V]] =
-    Task.fromReactivePublisher(reactiveCmd.hgetall(key)).map(_.map(_.asScala.toMap).getOrElse(Map.empty))
+  def hGetAll(key: K): Observable[(K, Option[V])] =
+    Observable.fromReactivePublisher(reactiveCmd.hgetall(key)).map(kvToTuple)
 
   /**
     * Get all the fields in a hash.

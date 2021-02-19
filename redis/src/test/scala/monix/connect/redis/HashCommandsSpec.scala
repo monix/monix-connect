@@ -19,6 +19,7 @@ package monix.connect.redis
 
 import io.lettuce.core.{KeyValue, MapScanCursor, ScanCursor}
 import io.lettuce.core.api.StatefulRedisConnection
+import monix.connect.redis.client.{Redis, RedisUri}
 import monix.eval.Task
 import monix.reactive.Observable
 import org.scalatest.flatspec.AnyFlatSpec
@@ -26,6 +27,7 @@ import org.scalatest.matchers.should.Matchers
 import org.mockito.MockitoSugar.verify
 import org.mockito.MockitoSugar.when
 import org.mockito.IdiomaticMockito
+import org.scalacheck.Gen
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 import scala.jdk.CollectionConverters._
@@ -45,6 +47,17 @@ class HashCommandsSpec
     reset(reactiveRedisCommands)
     reset(reactiveRedisCommands)
   }
+  import monix.execution.Scheduler.Implicits.global
+  "ClusterConnection" should "connect with default utf codecs" in {
+    //given
+    val key: String = Gen.identifier.sample.get
+    val value: String = Gen.identifier.sample.get
+
+    //when
+
+    //then
+  }
+
   /*
   s"${RedisHash} " should "extend the RedisHash trait" in {
     RedisHash shouldBe a[HashCommands]

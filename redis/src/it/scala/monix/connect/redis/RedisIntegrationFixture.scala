@@ -9,8 +9,8 @@ trait RedisIntegrationFixture {
   type K = String
   type V = String
 
-  val redisUri = RedisUri("localhost")
-  val utfConnection = Redis.single(RedisUri("localhost")).connectUtf
+  val redisUri = RedisUri("localhost", 6379)
+  val utfConnection = Redis.single(RedisUri("localhost", 6379)).connectUtf
 
   val genRedisKey: Gen[K] = Gen.identifier.map(_.take(10))
   val genRedisValue: Gen[V] = Gen.choose(0, 10000).map(_.toString)

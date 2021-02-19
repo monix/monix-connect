@@ -34,33 +34,33 @@ case class MasterSlaveConnection(uri: RedisUri) extends RedisConnection {
   //    .evalMap(RedisCmd.single)
   //}
 
-  def connectUtf[K, V](
-    implicit keyCodec: Codec[K, String],
-    valueCodec: Codec[V, String]): Resource[Task, RedisCmd[K, V]] = {
-    RedisCmd
-      .connectResource[K, V, StatefulRedisConnection[K, V]] {
-        Task.from {
-          RedisClient
-            .create(uri.toJava)
-            .connectAsync(Codec(keyCodec, valueCodec, new Utf8StringCodec()), uri.toJava)
-            .toCompletableFuture
-        }
-      }
-      .evalMap(RedisCmd.single)
-  }
+ def connectUtf[K, V](
+  implicit keyCodec: Codec[K, String],
+  valueCodec: Codec[V, String]): Resource[Task, RedisCmd[K, V]] = ???
+ //  RedisCmd
+ //    .connectResource[K, V, StatefulRedisConnection[K, V]] {
+ //      Task.from {
+ //        RedisClient
+ //          .create(uri.toJava)
+ //          .connectAsync(Codec(keyCodec, valueCodec, new Utf8StringCodec()), uri.toJava)
+ //          .toCompletableFuture
+ //      }
+ //    }
+ //    .evalMap(RedisCmd.single)
+ //}
 
-  def connectByteArray[K, V](
-    implicit keyCodec: Codec[K, Array[Byte]],
-    valueCodec: Codec[V, Array[Byte]]): Resource[Task, RedisCmd[K, V]] = {
-    RedisCmd
-      .connectResource[K, V, StatefulRedisConnection[K, V]] {
-        Task.from {
-          RedisClient
-            .create(uri.toJava)
-            .connectAsync(Codec(keyCodec, valueCodec, new ByteArrayCodec()), uri.toJava)
-            .toCompletableFuture
-        }
-      }
-      .evalMap(RedisCmd.single)
-  }
+ def connectByteArray[K, V](
+   implicit keyCodec: Codec[K, Array[Byte]],
+   valueCodec: Codec[V, Array[Byte]]): Resource[Task, RedisCmd[K, V]] = ???
+ //  RedisCmd
+ //    .connectResource[K, V, StatefulRedisConnection[K, V]] {
+ //      Task.from {
+ //        RedisClient
+ //          .create(uri.toJava)
+ //          .connectAsync(Codec(keyCodec, valueCodec, new ByteArrayCodec()), uri.toJava)
+ //          .toCompletableFuture
+ //      }
+ //    }
+ //    .evalMap(RedisCmd.single)
+ //}
 }

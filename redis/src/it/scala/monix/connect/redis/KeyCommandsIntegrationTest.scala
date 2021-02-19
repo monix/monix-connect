@@ -1,6 +1,5 @@
 package monix.connect.redis
 
-import monix.connect.redis.client.Redis
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import org.scalatest.concurrent.Eventually

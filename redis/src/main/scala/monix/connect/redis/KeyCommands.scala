@@ -153,7 +153,7 @@ private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, 
     * Return a random key from the keyspace.
     * @return The random key, or null when the database is empty.
     */
-  def randomKey(): Task[Option[V]] =
+  def randomKey(): Task[Option[K]] =
     Task.fromReactivePublisher(reactiveCmd.randomkey())
 
   /** Rename a key. */

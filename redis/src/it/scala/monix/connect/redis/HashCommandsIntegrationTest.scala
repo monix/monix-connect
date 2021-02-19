@@ -1,15 +1,12 @@
 package monix.connect.redis
 
 import monix.connect.redis.client.Redis
-import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
-import java.time.Instant
-import java.util.Date
 import scala.concurrent.duration._
 
 class HashCommandsIntegrationTest

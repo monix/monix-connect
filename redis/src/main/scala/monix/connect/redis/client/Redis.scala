@@ -32,12 +32,9 @@ import scala.jdk.CollectionConverters._
   */
 object Redis {
 
-  def single[K, V](uris: RedisUri): RedisConnection =
+  def single[K, V](uris: RedisUri): SingleConnection =
     SingleConnection(uris)
 
-  def cluster[K, V](uris: List[RedisUri]): RedisConnection =
-    ClusterConnection(uris)
-
-  def masterSlave[K, V](uris: List[RedisUri]): RedisConnection =
+  def cluster[K, V](uris: List[RedisUri]): ClusterConnection =
     ClusterConnection(uris)
 }

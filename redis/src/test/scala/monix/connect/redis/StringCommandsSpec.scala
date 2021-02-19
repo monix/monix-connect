@@ -17,12 +17,9 @@
 
 package monix.connect.redis
 
-import io.lettuce.core.KeyValue
 import io.lettuce.core.api.StatefulRedisConnection
-import monix.eval.Task
-import monix.reactive.Observable
 import org.mockito.IdiomaticMockito
-import org.mockito.MockitoSugar.{verify, when}
+import org.mockito.MockitoSugar.when
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
