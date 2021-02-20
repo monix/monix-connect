@@ -17,34 +17,6 @@ class RedisConnectionIntegrationTest extends AnyFlatSpec
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
 
-  s"${HashCommands}" should "access non existing key in redis and get None" in {
-    //given
-    val key: K = genRedisKey.sample.get
-    val field: K = genRedisKey.sample.get
-
-    //when
-    val r: Option[String] = utfConnection.use(_.hash.hGet(key, field)).runSyncUnsafe()
-
-    //then
-    r shouldBe None
-  }
-
-  it should "insert a single element into a hash and read it back" in {
-    //given
-    val key: K = genRedisKey.sample.get
-    val field: K = genRedisKey.sample.get
-    val value: String = genRedisValue.sample.get
-
-    //when
-    utfConnection.use(_.hash.hSet(key, field, value)).runSyncUnsafe()
-
-    //and
-    val r: Option[String] = utfConnection.use(_.hash.hGet(key, field)).runSyncUnsafe()
-
-    //then
-    r shouldBe Some(value)
-  }
-
   s"$StringCommands" should "insert a string into the given key and get its size from redis" in {
     //given
     val key: K = genRedisKey.sample.get

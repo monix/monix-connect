@@ -33,8 +33,8 @@ case class ClusterConnection(uris: List[RedisUri]) extends RedisConnection {
         for {
           client <- Task.now(RedisClusterClient.create(uris.map(_.toJava).asJava))
           _ <- Task.now(client.getPartitions)
-          conn <- Task.from(client.connectAsync(new StringCodec()).toCompletableFuture)
-        } yield (client, conn)
+          conn <- Task.from(client.connectAsync(StringCodec.UTF8).toCompletableFuture)
+        } yield conn
       }.evalMap(RedisCmd.cluster)
   }
 
@@ -46,9 +46,9 @@ case class ClusterConnection(uris: List[RedisUri]) extends RedisConnection {
           client <- Task.now(RedisClusterClient.create(uris.map(_.toJava).asJava))
           _ <- Task.now(client.getPartitions)
           conn <- Task.from {
-            client.connectAsync(Codec(keyCodec, valueCodec, new StringCodec())).toCompletableFuture
+            client.connectAsync(Codec(keyCodec, valueCodec, StringCodec.UTF8)).toCompletableFuture
           }
-        } yield (client, conn)
+        } yield conn
       }
       .evalMap(RedisCmd.cluster)
   }
@@ -62,7 +62,7 @@ case class ClusterConnection(uris: List[RedisUri]) extends RedisConnection {
           conn <- Task.from {
             client.connectAsync(new ByteArrayCodec()).toCompletableFuture
           }
-        } yield (client, conn)
+        } yield conn
       }
       .evalMap(RedisCmd.cluster)
   }
@@ -78,7 +78,7 @@ case class ClusterConnection(uris: List[RedisUri]) extends RedisConnection {
           conn <- Task.from {
             client.connectAsync(Codec(keyCodec, valueCodec, new ByteArrayCodec())).toCompletableFuture
           }
-        } yield (client, conn)
+        } yield conn
       }
       .evalMap(RedisCmd.cluster)
   }

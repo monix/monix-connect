@@ -450,7 +450,7 @@ class KeyCommandsIntegrationTest
       .runSyncUnsafe()
   }
 
-  it should "determines the type stored at key" in {
+  it should "determine the type stored at key" in {
     //given
     val k1: K = genRedisKey.sample.get
     val k2: K = genRedisKey.sample.get

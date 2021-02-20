@@ -18,6 +18,11 @@ class CodecSuite extends AnyFlatSpec with RedisIntegrationFixture with Matchers 
 
   val connection = Redis.single(redisUri)
 
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+    connection.connectUtf.use(_.server.flushAll()).runSyncUnsafe()
+  }
+
   "A byte array codec" should "encode and decode protobuf keys and values" in {
 
     implicit val personPkCodec: Codec[PersonPk, Array[Byte]] = Codec.byteArray[PersonPk](pk => PersonPk.toByteArray(pk), str => PersonPk.parseFrom(str))
@@ -35,14 +40,14 @@ class CodecSuite extends AnyFlatSpec with RedisIntegrationFixture with Matchers 
     Some(person) shouldBe r
   }
 
-  s"An utf codec" should "encode and decode int values" in {
+  s"An utf codec" should "encode and decode int numbers" in {
     //given
     val key: Int = Gen.chooseNum(1, 1000).sample.get
     val value: Int = Gen.chooseNum(1, 1000).sample.get
     implicitly(intUtfCodec) // used implicitly
 
     //when
-    connection.connectUtf[Int, Int].use(_.list.lPush(key, value)).runSyncUnsafe()
+    connection.connectUtf[Int, Int](intUtfCodec, intUtfCodec).use(_.list.lPush(key, value)).runSyncUnsafe()
 
     //then
     val r = connection.connectUtf[Int, Int].use(_.list.lPop(key)).runSyncUnsafe()
@@ -67,6 +72,33 @@ class CodecSuite extends AnyFlatSpec with RedisIntegrationFixture with Matchers 
     r shouldBe Some(s"$n$n$n".toInt)
   }
 
+  it should "encode and decode float numbers" in {
+    //given
+    val key: Float = Gen.chooseNum[Float](1, 1000).sample.get
+    val value: Float = Gen.chooseNum[Float](1, 1000).sample.get
+    implicitly(intUtfCodec) // used implicitly
+
+    //when
+    connection.connectUtf[Float, Float].use(_.list.lPush(key, value)).runSyncUnsafe()
+
+    //then
+    val r = connection.connectUtf[Float, Float].use(_.list.lPop(key)).runSyncUnsafe()
+    Some(value) shouldBe r
+  }
+
+  it should "encode and decode double numbers" in {
+    //given
+    val key: Double = Gen.chooseNum[Double](1, 1000).sample.get
+    val value: Double = Gen.chooseNum[Double](1, 1000).sample.get
+    implicitly(intUtfCodec) // used implicitly
+
+    //when
+    connection.connectUtf[Double, Double].use(_.list.lPush(key, value)).runSyncUnsafe()
+
+    //then
+    val r = connection.connectUtf[Double, Double].use(_.list.lPop(key)).runSyncUnsafe()
+    Some(value) shouldBe r
+  }
 
 
 }

@@ -149,5 +149,4 @@ private[redis] class HashCommands[K, V](reactiveCmd: RedisHashReactiveCommands[K
 private[redis] object HashCommands {
   def apply[K, V](reactiveCmd: RedisHashReactiveCommands[K, V]): HashCommands[K, V] =
     new HashCommands[K, V](reactiveCmd)
-
 }

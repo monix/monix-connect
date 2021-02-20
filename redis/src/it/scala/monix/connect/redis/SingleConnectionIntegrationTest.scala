@@ -17,6 +17,11 @@ class SingleConnectionIntegrationTest extends AnyFlatSpec with RedisIntegrationF
 
   val singleConnection = Redis.single(redisUri)
 
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+    singleConnection.connectUtf.use(_.server.flushAll()).runSyncUnsafe()
+  }
+
   "ClusterConnection" should "connect with default utf codecs" in {
     //given
     val key: String = Gen.identifier.sample.get
@@ -42,6 +47,19 @@ class SingleConnectionIntegrationTest extends AnyFlatSpec with RedisIntegrationF
     //then
     val r = singleConnection.connectUtf[Int, Int].use(_.list.lPop(key)).runSyncUnsafe()
     Some(value) shouldBe r
+  }
+
+  it can "be used with `byteArray` codec by default" in {
+    //given
+    val k: Array[Byte] = Gen.identifier.sample.get.getBytes
+    val v: Array[Byte] = Gen.identifier.sample.get.getBytes
+
+    //when
+    singleConnection.connectByteArray.use(_.list.lPush(k, v)).runSyncUnsafe()
+
+    //then
+    val r = singleConnection.connectByteArray.use(_.list.lPop(k)).runSyncUnsafe()
+    v should contain theSameElementsAs r.get
   }
 
   it can "be used with custom byte array Codec for key and value" in {

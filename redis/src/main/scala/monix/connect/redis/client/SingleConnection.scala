@@ -20,8 +20,7 @@ package monix.connect.redis.client
 import cats.effect.Resource
 import io.lettuce.core.RedisClient
 import io.lettuce.core.api.StatefulRedisConnection
-import io.lettuce.core.cluster.RedisClusterClient
-import io.lettuce.core.codec.{ByteArrayCodec, StringCodec, Utf8StringCodec}
+import io.lettuce.core.codec.{ByteArrayCodec, StringCodec}
 import monix.eval.Task
 
 case class SingleConnection(uri: RedisUri) extends RedisConnection {
@@ -31,8 +30,8 @@ case class SingleConnection(uri: RedisUri) extends RedisConnection {
       .connectResource[String, String, StatefulRedisConnection[String, String]] {
         for {
           client <- Task.evalAsync(RedisClient.create(uri.toJava))
-          conn <- Task.from(client.connectAsync(new StringCodec(), uri.toJava).toCompletableFuture)
-        } yield (client, conn)
+          conn <- Task.from(client.connectAsync(StringCodec.UTF8, uri.toJava).toCompletableFuture)
+        } yield conn
       }
       .evalMap(RedisCmd.single)
   }
@@ -44,8 +43,22 @@ case class SingleConnection(uri: RedisUri) extends RedisConnection {
       .connectResource[K, V, StatefulRedisConnection[K, V]] {
         for {
           client <- Task.evalAsync(RedisClient.create(uri.toJava))
-          conn <- Task.from(client.connectAsync(Codec(keyCodec, valueCodec, new StringCodec()), uri.toJava).toCompletableFuture)
-        } yield (client, conn)
+          conn <- Task.from(client.connectAsync(Codec(keyCodec, valueCodec, StringCodec.UTF8), uri.toJava).toCompletableFuture)
+        } yield conn
+      }
+      .evalMap(RedisCmd.single)
+  }
+
+  def connectByteArray: Resource[Task, RedisCmd[Array[Byte], Array[Byte]]] = {
+    RedisCmd
+      .connectResource[Array[Byte], Array[Byte], StatefulRedisConnection[Array[Byte], Array[Byte]]] {
+        for {
+          client <- Task.evalAsync(RedisClient.create(uri.toJava))
+          conn <- Task.from {
+            client.connectAsync(new ByteArrayCodec(), uri.toJava)
+              .toCompletableFuture
+          }
+        } yield conn
       }
       .evalMap(RedisCmd.single)
   }
@@ -60,7 +73,7 @@ case class SingleConnection(uri: RedisUri) extends RedisConnection {
             client.connectAsync(Codec(keyCodec, valueCodec, new ByteArrayCodec()), uri.toJava)
               .toCompletableFuture
           }
-        } yield (client, conn)
+        } yield conn
       }
       .evalMap(RedisCmd.single)
   }

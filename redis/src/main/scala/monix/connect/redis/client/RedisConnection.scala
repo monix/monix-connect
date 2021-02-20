@@ -27,8 +27,6 @@ trait RedisConnection {
     */
   def connectUtf: Resource[Task, RedisCmd[String, String]]
 
-  def hello = ""
-
   /**
     *
     * @param keyCodec
@@ -40,6 +38,9 @@ trait RedisConnection {
   def connectUtf[K, V](
     implicit keyCodec: Codec[K, String],
     valueCodec: Codec[V, String]): Resource[Task, RedisCmd[K, V]]
+
+
+  def connectByteArray: Resource[Task, RedisCmd[Array[Byte], Array[Byte]]]
 
   /**
     *
