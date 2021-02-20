@@ -17,39 +17,6 @@ class RedisConnectionIntegrationTest extends AnyFlatSpec
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
 
-  s"$StringCommands" should "insert a string into the given key and get its size from redis" in {
-    //given
-    val key: K = genRedisKey.sample.get
-    val value: String = genRedisValue.sample.get
-
-    //when
-    utfConnection.use(_.string.set(key, value)).runSyncUnsafe()
-
-    //and
-    val t: Task[Long] = utfConnection.use(_.string.strLen(key))
-
-    //then
-    val lenght: Long = t.runSyncUnsafe()
-    lenght shouldBe value.length
-  }
-
-  s"${ServerCommands} " should "insert a string into key and get its size from redis" in {
-    //given
-    val key: K = genRedisKey.sample.get
-    val value: String = genRedisValue.sample.get
-
-    //when
-    utfConnection.use(_.string.set(key, value)).runSyncUnsafe()
-    val beforeFlush: Boolean = utfConnection.use(_.key.exists(key)).runSyncUnsafe()
-
-    //and
-    utfConnection.use(_.server.flushAll()).runSyncUnsafe()
-    val afterFlush: Boolean = utfConnection.use(_.key.exists(key)).runSyncUnsafe()
-
-    //then
-    beforeFlush shouldEqual true
-    afterFlush shouldEqual false
-  }
 
   s"${KeyCommands}" should "handles ttl correctly" in {
     //given

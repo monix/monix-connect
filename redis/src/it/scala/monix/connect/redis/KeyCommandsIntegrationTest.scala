@@ -1,5 +1,6 @@
 package monix.connect.redis
 
+import monix.connect.redis.client.RedisCmd
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import org.scalatest.concurrent.Eventually
@@ -13,7 +14,7 @@ import scala.concurrent.duration._
 
 class KeyCommandsIntegrationTest
   extends AnyFlatSpec with RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll
-  with Eventually {
+    with Eventually {
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
 
@@ -54,7 +55,7 @@ class KeyCommandsIntegrationTest
     //when
     utfConnection.use { cmd =>
       for {
-        _  <- cmd.string.set(k1, value) *> cmd.string.set(k2, value)
+        _ <- cmd.string.set(k1, value) *> cmd.string.set(k2, value)
         r1 <- cmd.key.unLink(k1, k2)
         r2 <- cmd.key.unLink(k3)
       } yield {
@@ -75,7 +76,7 @@ class KeyCommandsIntegrationTest
     //when
     utfConnection.use { cmd =>
       for {
-        _  <- cmd.string.set(k1, value)
+        _ <- cmd.string.set(k1, value)
         d1 <- cmd.key.dump(k1)
         d2 <- cmd.key.dump(k2)
       } yield {
@@ -97,7 +98,7 @@ class KeyCommandsIntegrationTest
     //when
     utfConnection.use { cmd =>
       for {
-        _  <- cmd.string.set(k1, value) *> cmd.string.set(k2, value)
+        _ <- cmd.string.set(k1, value) *> cmd.string.set(k2, value)
         r1 <- cmd.key.exists(List(k1, k2))
         r2 <- cmd.key.exists(List(k3))
       } yield {
@@ -118,7 +119,7 @@ class KeyCommandsIntegrationTest
     //when
     utfConnection.use { cmd =>
       for {
-        _  <- cmd.string.set(k1, value)
+        _ <- cmd.string.set(k1, value)
         r1 <- cmd.key.exists(k1)
         r2 <- cmd.key.exists(k2)
       } yield {
@@ -130,7 +131,7 @@ class KeyCommandsIntegrationTest
 
   }
 
-  "expire" should "set the expiration of a key" in {
+  "expire" should "allow overriding the ttl expiration" in {
     //given
     val k1: K = genRedisKey.sample.get
     val k2: K = genRedisKey.sample.get
@@ -140,54 +141,73 @@ class KeyCommandsIntegrationTest
     utfConnection.use { cmd =>
       //when
       for {
-        r1 <- cmd.key.pExpire(k1, 100.seconds)
-        r2 <- cmd.key.pExpire(k2, 100.seconds)
+        r1 <- cmd.key.pExpire(k1, 9.seconds)
+        initialTtl <- cmd.key.ttl(k1)
+        isOverwritten <- cmd.key.pExpire(k1, 15.seconds)
+        overwrittenTtl <- cmd.key.ttl(k1)
+        expireOnNonExistingKey <- cmd.key.pExpire(k2, 1002.seconds)
       } yield {
         //then
         r1 shouldBe true
-        r2 shouldBe false
+        initialTtl.toSeconds should be < 10L
+        isOverwritten shouldBe true
+        overwrittenTtl.toSeconds should be > 10L
+        expireOnNonExistingKey shouldBe false
+
       }
     }.runSyncUnsafe()
 
   }
 
-  "expireAt" should "set the expiration at a certain date" in {
+  it should "allow set long expiration times" in {
     //given
     val k1: K = genRedisKey.sample.get
     val k2: K = genRedisKey.sample.get
-    val k3: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get
+    utfConnection.use(cmd => cmd.string.set(k1, value)).runSyncUnsafe()
 
     utfConnection.use { cmd =>
+      //when
       for {
-        //when
-        _ <- cmd.string.set(k1, value) >> cmd.string.set(k2, value)
-        //and
-        r1         <- cmd.key.pExpireAt(k1, new Date())
-        ttl1Before <- cmd.key.ttl(k1)
-        r1Updated  <- cmd.key.pExpireAt(k1, Instant.now().toEpochMilli)
-        ttl1After  <- cmd.key.ttl(k1)
-        r2         <- cmd.key.pExpireAt(k3, new Date())
-        r3         <- cmd.key.pExpireAt(k2, Instant.now().toEpochMilli)
-        ttl3Before <- cmd.key.ttl(k1)
-        r3Updated  <- cmd.key.pExpireAt(k2, Instant.now().toEpochMilli + 10.seconds.toMillis)
-        ttl3After  <- cmd.key.ttl(k1)
-        r4         <- cmd.key.pExpireAt(k3, Instant.now().toEpochMilli)
+        r1 <- cmd.key.pExpire(k1, 99999.days)
+        ttl <- cmd.key.ttl(k1)
       } yield {
         //then
         r1 shouldBe true
-        r1Updated shouldBe false //the expiration was already set with expireAt(Date) and fails if we try on the same key with `expireAt(epochMillis)`
-        ttl1Before shouldBe ttl1After
-        r2 shouldBe false
-
-        //and
-        r3 shouldBe true
-        r3Updated shouldBe true //updates expiration
-        ttl3Before shouldBe ttl3After
-        r4 shouldBe false //did not exited
+        ttl.toDays should be <= 99999.days.toDays
       }
     }.runSyncUnsafe()
+  }
 
+  "ttl" should "be propagated if key gets renamed" in {
+    //given
+    val key1: K = genRedisKey.sample.get
+    val key2: K = genRedisKey.sample.get
+    val value: String = genRedisValue.sample.get
+    utfConnection.use(_.string.set(key1, value)).runSyncUnsafe()
+
+    //when
+    utfConnection.use { case RedisCmd(_, keys, _, _, _, _, _) =>
+      for {
+        initialTtl <- keys.ttl(key1)
+        expire <- keys.pExpire(key1, 2.seconds)
+        finalTtl <- keys.ttl(key1)
+        existsWithinTtl <- keys.exists(key1)
+        _ <- keys.rename(key1, key2) // the ttl should be preserved on the new key
+        existsRenamed <- keys.exists(key2)
+        _ <- Task.sleep(3.seconds)
+        existsAfterFiveSeconds <- keys.exists(key2) //the new key will gone after the ttl.
+      } yield {
+        //then
+        (initialTtl.toMillis < 0L) shouldBe true
+        expire shouldBe true
+        (2.seconds.toMillis > finalTtl.toMillis) shouldBe true
+        (finalTtl.toMillis > 0L) shouldBe true
+        existsWithinTtl shouldBe true
+        existsRenamed shouldBe true
+        existsAfterFiveSeconds shouldBe false
+      }
+    }.runSyncUnsafe()
   }
 
   "keys" should "get only matched keys" in {
@@ -279,8 +299,8 @@ class KeyCommandsIntegrationTest
       .use(cmd =>
         for {
           //when
-          _  <- cmd.string.set(k1, value)
-          _  <- cmd.key.touch(k1)
+          _ <- cmd.string.set(k1, value)
+          _ <- cmd.key.touch(k1)
           r1 <- cmd.key.objectIdleTime(k1)
           r2 <- cmd.key.objectIdleTime(k1).delayExecution(4.seconds)
           r3 <- cmd.key.objectIdleTime(k2)
@@ -309,7 +329,7 @@ class KeyCommandsIntegrationTest
       .use(cmd =>
         //when
         for {
-          _  <- cmd.string.set(k1, value) >> cmd.key.pExpire(k1, 100.seconds) >> cmd.string.set(k2, value)
+          _ <- cmd.string.set(k1, value) >> cmd.key.pExpire(k1, 100.seconds) >> cmd.string.set(k2, value)
           r1 <- cmd.key.persist(k1)
           r2 <- cmd.key.persist(k2)
           r3 <- cmd.key.persist(k3)
@@ -333,9 +353,9 @@ class KeyCommandsIntegrationTest
     utfConnection
       .use(cmd =>
         for {
-          _  <- cmd.server.flushAll()
+          _ <- cmd.server.flushAll()
           r1 <- cmd.key.randomKey()
-          _  <- cmd.string.set(k1, value) >> cmd.string.set(k2, value)
+          _ <- cmd.string.set(k1, value) >> cmd.string.set(k2, value)
           r2 <- cmd.key.randomKey()
         } yield {
           //then
@@ -357,18 +377,18 @@ class KeyCommandsIntegrationTest
       .use(cmd =>
         //when
         for {
-          _            <- cmd.string.set(k1, value)
+          _ <- cmd.string.set(k1, value)
           beforeRename <- Task.parZip2(cmd.key.exists(k1), cmd.key.exists(k2))
-          _            <- cmd.key.rename(k1, k2)
-          afterRename  <- Task.parZip2(cmd.key.exists(k1), cmd.key.exists(k2))
-          _            <- cmd.string.set(k3, value)
-          _            <- cmd.key.rename(k2, k3) // renames even if new key exists
+          _ <- cmd.key.rename(k1, k2)
+          afterRename <- Task.parZip2(cmd.key.exists(k1), cmd.key.exists(k2))
+          _ <- cmd.string.set(k3, value)
+          _ <- cmd.key.rename(k2, k3) // renames even if new key exists
           afterRenameOnExistingKey <- Task.parZip3(cmd.key.exists(k1), cmd.key.exists(k2), cmd.key.exists(k3))
         } yield {
           //then
-          beforeRename shouldBe (true, false)
-          afterRename shouldBe (false, true)
-          afterRenameOnExistingKey shouldBe (false, false, true)
+          beforeRename shouldBe(true, false)
+          afterRename shouldBe(false, true)
+          afterRenameOnExistingKey shouldBe(false, false, true)
         })
       .runSyncUnsafe()
   }
@@ -384,21 +404,21 @@ class KeyCommandsIntegrationTest
       .use(cmd =>
         //when
         for {
-          _            <- cmd.string.set(k1, value)
+          _ <- cmd.string.set(k1, value)
           beforeRename <- Task.parZip2(cmd.key.exists(k1), cmd.key.exists(k2))
-          r1            <- cmd.key.renameNx(k1, k2) // true if new key does not exists
-          afterRename  <- Task.parZip2(cmd.key.exists(k1), cmd.key.exists(k2))
-          _            <- cmd.string.set(k3, value)
-          r2            <- cmd.key.renameNx(k2, k3) // false if new key exists
+          r1 <- cmd.key.renameNx(k1, k2) // true if new key does not exists
+          afterRename <- Task.parZip2(cmd.key.exists(k1), cmd.key.exists(k2))
+          _ <- cmd.string.set(k3, value)
+          r2 <- cmd.key.renameNx(k2, k3) // false if new key exists
           afterRenameOnExistingKey <- Task.parZip3(cmd.key.exists(k1), cmd.key.exists(k2), cmd.key.exists(k3))
         } yield {
           //then
           r1 shouldBe true
           r2 shouldBe false
           //and
-          beforeRename shouldBe (true, false)
-          afterRename shouldBe (false, true)
-          afterRenameOnExistingKey shouldBe (false, true, true)
+          beforeRename shouldBe(true, false)
+          afterRename shouldBe(false, true)
+          afterRenameOnExistingKey shouldBe(false, true, true)
         })
       .runSyncUnsafe()
   }
@@ -413,7 +433,7 @@ class KeyCommandsIntegrationTest
     utfConnection
       .use(cmd =>
         for {
-          _  <- cmd.string.set(k1, value)
+          _ <- cmd.string.set(k1, value)
           dump <- cmd.key.dump(k1)
           _ <- cmd.key.restore(k2, 100.seconds, dump)
           v1 <- cmd.string.get(k1)
@@ -439,7 +459,7 @@ class KeyCommandsIntegrationTest
     utfConnection
       .use(cmd =>
         for {
-          _  <- cmd.list.lPush(k1, v2, v5, v3, v4, v1)
+          _ <- cmd.list.lPush(k1, v2, v5, v3, v4, v1)
           sorted <- cmd.key.sort(k1).toListL
         } yield {
           //then

@@ -23,7 +23,9 @@ import monix.eval.Task
 import monix.reactive.Observable
 
 import java.util.concurrent.TimeUnit
-import scala.concurrent.duration.{Duration, FiniteDuration}
+import scala.concurrent.duration
+import scala.concurrent.duration.{Duration, FiniteDuration, MILLISECONDS}
+import scala.util.Try
 
 /**
   * not Supported - scan, use `keys` instead, expire and expireAt, use pexpire and pExpireAt
@@ -73,6 +75,7 @@ private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, 
   def pExpire(key: K, timeout: FiniteDuration): Task[Boolean] =
     Task.fromReactivePublisher(reactiveCmd.expire(key, timeout.toSeconds)).map(_.exists(_.booleanValue))
 
+  /*
   /**
     * Set the expiration date timeout for a key as UNIX timestamp with a precision of milliseconds.
     *
@@ -94,6 +97,7 @@ private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, 
     */
   def pExpireAt(key: K, timestamp: Long): Task[Boolean] =
     Task.fromReactivePublisher(reactiveCmd.expireat(key, timestamp)).map(_.exists(_.booleanValue))
+*/
 
   /**
     * Find all keys matching the given pattern.
@@ -190,12 +194,13 @@ private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, 
   /** Get the time to live for a key.
     *
     * @return the [[FiniteDuration]] in precision of milliseconds,
-    *         or [[Duration.Undefined]] if the key does not exists.
+    *         or `-1.milliseconds` if the key does not exists, or on unexpected error.
     */
   def ttl(key: K): Task[FiniteDuration] =
     Task
       .fromReactivePublisher(reactiveCmd.pttl(key))
-      .map(_.map(seconds => Duration(seconds, TimeUnit.MILLISECONDS)).getOrElse(Duration.Zero))
+      .map(_.flatMap { millis => Try(Duration(millis, TimeUnit.MILLISECONDS)).toOption
+      }.getOrElse(Duration(-1, MILLISECONDS)))
 
   /**
     * Determine the type stored at key.
