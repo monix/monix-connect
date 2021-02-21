@@ -15,12 +15,11 @@
  * limitations under the License.
  */
 
-package monix.connect.redis.client
+package monix.connect.redis.domain
 
-import io.lettuce.core.codec.{ByteArrayCodec, RedisCodec, ToByteBufEncoder, Utf8StringCodec}
+import io.lettuce.core.codec.RedisCodec
 
 import java.nio.ByteBuffer
-import scala.reflect.ClassTag
 
 sealed trait Codec[T, R] {
   def encode(dec: T): R

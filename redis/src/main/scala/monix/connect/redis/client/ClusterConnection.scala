@@ -19,7 +19,7 @@ package monix.connect.redis.client
 
 import cats.effect.Resource
 import io.lettuce.core.cluster.RedisClusterClient
-import io.lettuce.core.codec.{ByteArrayCodec, StringCodec, Utf8StringCodec}
+import io.lettuce.core.codec.{ByteArrayCodec, StringCodec}
 import monix.eval.Task
 import io.lettuce.core.cluster.api.{StatefulRedisClusterConnection => RedisClusterConnection}
 

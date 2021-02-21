@@ -1,6 +1,6 @@
 package monix.connect.redis
 
-import monix.connect.redis.client.{Redis, RedisUri}
+import monix.connect.redis.client.Redis
 import org.scalacheck.Gen
 import monix.connect.redis.test.protobuf.{Person, PersonPk}
 

@@ -23,8 +23,8 @@ package monix.connect.redis.client
   */
 object Redis {
 
-  def single[K, V](uris: RedisUri): RedisConnection =
-    SingleConnection(uris)
+  def single[K, V](uri: RedisUri): RedisConnection =
+    SingleConnection(uri)
 
   def cluster[K, V](uris: List[RedisUri]): RedisConnection =
     ClusterConnection(uris)

@@ -21,7 +21,7 @@ class SortedSetCommandsSuite
     utfConnection.use(cmd => cmd.server.flushAll()).runSyncUnsafe()
   }
 
-  s"${SortedSetCommands}" should "insert elements into a with no order and reading back sorted" in {
+  s"${SortedSetCommands}" should "insert elements with no order and reading back sorted" in {
     //given
     val k: K = genRedisKey.sample.get
     val v0: String = Gen.alphaLowerStr.sample.get
@@ -52,10 +52,7 @@ class SortedSetCommandsSuite
 
   }
 
-  it should "bZPopMin" in {
-
-    
-  }
+  it should "bZPopMin" in {}
 
   it should "bZPopMax" in {}
 
