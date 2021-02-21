@@ -18,7 +18,6 @@
 package monix.connect.redis.client
 
 import cats.effect.Resource
-import io.lettuce.core.{AbstractRedisClient, RedisClient}
 import io.lettuce.core.api.{StatefulConnection, StatefulRedisConnection}
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection
 import monix.connect.redis.commands.{HashCommands, KeyCommands, ListCommands, ServerCommands, SetCommands, SortedSetCommands, StringCommands}

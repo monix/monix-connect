@@ -1,6 +1,7 @@
 package monix.connect.redis
 
-import monix.connect.redis.client.Redis
+import monix.connect.redis.client.{Redis, RedisUri}
+import monix.connect.redis.domain.VScore
 import org.scalacheck.Gen
 import monix.connect.redis.test.protobuf.{Person, PersonPk}
 
@@ -18,6 +19,19 @@ trait RedisIntegrationFixture {
     n      <- Gen.chooseNum(2, 10)
     values <- Gen.listOfN(n, Gen.choose(0, 10000))
   } yield values.map(_.toString)
+
+  protected val genVScore: Gen[VScore[V]] = {
+    for {
+      v <- genRedisValue
+      score <- Gen.choose(1, 1000)
+    } yield VScore(score, Some(v))
+  }
+
+  protected def genVScore(score: Double): Gen[VScore[V]] = {
+    for {
+      v <- genRedisValue
+    } yield VScore(score, v)
+  }
 
   val genPerson: Gen[Person] = {
     for {

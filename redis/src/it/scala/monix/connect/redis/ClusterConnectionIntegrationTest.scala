@@ -1,6 +1,6 @@
 package monix.connect.redis
 
-import monix.connect.redis.client.{Codec, Redis}
+import monix.connect.redis.client.{Codec, Redis, RedisUri}
 import monix.connect.redis.test.protobuf.{Person, PersonPk}
 import monix.execution.Scheduler.Implicits.global
 import org.scalacheck.Gen

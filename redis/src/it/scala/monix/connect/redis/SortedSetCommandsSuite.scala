@@ -1,6 +1,8 @@
 package monix.connect.redis
 
 import monix.connect.redis.client.RedisCmd
+import monix.connect.redis.commands.SortedSetCommands
+import monix.connect.redis.domain.VScore
 import monix.execution.Scheduler.Implicits.global
 import org.scalacheck.Gen
 import org.scalatest.concurrent.Eventually
@@ -52,11 +54,109 @@ class SortedSetCommandsSuite
 
   }
 
-  it should "bZPopMin" in {}
+  "bZPopMin" should "remove and return the member with lowest score from one of the keys" in {
+    //given
+    val k1 = genRedisKey.sample.get
+    val k2 = genRedisKey.sample.get
+    val vScore1 = genVScore(1).sample.get
+    val vScore3 = genVScore(3).sample.get
+    val vScore5 = genVScore(5).sample.get
 
-  it should "bZPopMax" in {}
+    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+      for {
+        //when
+        _ <- sortedSet.zAdd(k1, vScore1, vScore5)
+        _ <- sortedSet.zAdd(k2, vScore3)
+        firstMin <- sortedSet.bZPopMin(1.seconds, k1, k2)
+        secondMin <- sortedSet.bZPopMin(1.seconds, k1, k2)
+        thirdMin <- sortedSet.bZPopMin(1.seconds, k1, k2)
+        empty <- sortedSet.bZPopMin(1.seconds, k1, k2)
+      } yield {
+        //then
+        firstMin shouldBe Some(k1, vScore1)
+        secondMin shouldBe Some(k1, vScore5) // returns 5 because is the min score in k1
+        thirdMin shouldBe Some(k2, vScore3)
+        empty shouldBe None
+      }
+    }.runSyncUnsafe()
 
-  it should "zAdd" in {}
+  }
+
+  "bZPopMax" should "remove and return the member with lowest score from one of the keys" in {
+    //given
+    val k1 = genRedisKey.sample.get
+    val k2 = genRedisKey.sample.get
+    val vScore1 = genVScore(1).sample.get
+    val vScore3 = genVScore(3).sample.get
+    val vScore5 = genVScore(5).sample.get
+
+    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+      for {
+        //when
+        _ <- sortedSet.zAdd(k1, vScore1, vScore5)
+        _ <- sortedSet.zAdd(k2, vScore3)
+        firstMax <- sortedSet.bZPopMax(1.seconds, k1, k2)
+        secondMax <- sortedSet.bZPopMax(1.seconds, k1, k2)
+        thirdMax <- sortedSet.bZPopMax(1.seconds, k1, k2)
+        empty <- sortedSet.bZPopMax(1.seconds, k1, k2)
+      } yield {
+        //then
+        firstMax shouldBe Some(k1, vScore5)
+        secondMax shouldBe Some(k1, vScore1) // returns 5 because is the min score in k1
+        thirdMax shouldBe Some(k2, vScore3)
+        empty shouldBe None
+      }
+    }.runSyncUnsafe()
+  }
+
+  "zAdd" should "add a single scored values to the sorted set" in {
+    //given
+    val k1 = genRedisKey.sample.get
+
+    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+      for {
+        //when
+        add1 <- sortedSet.zAdd(k1, 1, k1)
+        add2 <- sortedSet.zAdd(k1, 5, k1)
+        size1 <- sortedSet.zCountAll(k1)
+        value <- sortedSet.zPopMin(k1)
+
+      } yield {
+        //then
+        add1 shouldBe true
+        add2 shouldBe false //false if the value already existed
+        size1 shouldBe 1L
+        value.score shouldBe 5
+      }
+    }.runSyncUnsafe()
+  }
+
+  it should "add multiple scored values to the sorted set" in {
+    //given
+    val k1 = genRedisKey.sample.get
+    val k2 = genRedisKey.sample.get
+    val vScore1 = genVScore(1).sample.get
+    val vScore2 = genVScore(2).sample.get
+    val vScore3 = genVScore(3).sample.get
+
+    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+      for {
+        //when
+        add1 <- sortedSet.zAdd(k1, vScore1)
+        add2 <- sortedSet.zAdd(k2, vScore2, vScore3)
+        add3 <- sortedSet.zAdd(k2, List(vScore1, vScore2, vScore3))
+        size1 <- sortedSet.zCountAll(k1)
+        size2 <- sortedSet.zCountAll(k2)
+      } yield {
+        //then
+        add1 shouldBe 1L
+        add2 shouldBe 2L
+        add3 shouldBe 1L
+        size1 shouldBe 1L
+        size2 shouldBe 3L
+      }
+    }.runSyncUnsafe()
+  }
 
   it should "zAddIncr" in {}
 

@@ -15,15 +15,13 @@
  * limitations under the License.
  */
 
-package monix.connect.redis
+package monix.connect.redis.commands
 
-import java.util.Date
 import io.lettuce.core.api.reactive.RedisKeyReactiveCommands
 import monix.eval.Task
 import monix.reactive.Observable
 
 import java.util.concurrent.TimeUnit
-import scala.concurrent.duration
 import scala.concurrent.duration.{Duration, FiniteDuration, MILLISECONDS}
 import scala.util.Try
 
@@ -33,7 +31,7 @@ import scala.util.Try
   * @tparam K
   * @tparam V
   */
-private[redis] class KeyCommands[K, V](reactiveCmd: RedisKeyReactiveCommands[K, V]) {
+final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveCommands[K, V]) {
 
   /**
     * Delete one or more keys.

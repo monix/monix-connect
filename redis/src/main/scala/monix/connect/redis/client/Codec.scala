@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package monix.connect.redis.domain
+package monix.connect.redis.client
 
 import io.lettuce.core.codec.RedisCodec
 

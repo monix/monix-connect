@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package monix.connect.redis
+package monix.connect.redis.commands
 
 import io.lettuce.core.api.reactive.RedisServerReactiveCommands
 import monix.eval.Task
@@ -26,7 +26,7 @@ import scala.jdk.CollectionConverters._
   * @see The reference Lettuce Api at:
   *      [[io.lettuce.core.api.reactive.RedisServerReactiveCommands]]
   */
-private[redis] class ServerCommands[K, V](reactiveCmd: RedisServerReactiveCommands[K, V]) {
+final class ServerCommands[K, V] private[redis] (reactiveCmd: RedisServerReactiveCommands[K, V]) {
 
   /**
     * Asynchronously rewrite the append-only file.

@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
-package monix.connect.redis
+package monix.connect.redis.commands
 
 import io.lettuce.core.api.reactive.RedisStringReactiveCommands
+import monix.connect.redis.kvToTuple
 import monix.eval.Task
+import monix.execution.internal.InternalApi
 import monix.reactive.Observable
 
 import scala.jdk.CollectionConverters._
@@ -26,7 +28,7 @@ import scala.jdk.CollectionConverters._
 /**
   * @see The reference to lettuce api [[io.lettuce.core.api.reactive.RedisStringReactiveCommands]]
   */
-private[redis] class StringCommands[K, V](reactiveCmd: RedisStringReactiveCommands[K, V]) {
+final class StringCommands[K, V] private[redis] (reactiveCmd: RedisStringReactiveCommands[K, V]) {
 
   /**
     * Append a value to a key.
@@ -237,9 +239,10 @@ private[redis] class StringCommands[K, V](reactiveCmd: RedisStringReactiveComman
   /**
     * Overwrite part of a string at key starting at the specified offset.
     * @return The length of the string after it was modified by the command.
+    *         or `0` if the key does not exist.
     */
-  def setRange(key: K, offset: Long, value: V): Task[Option[Long]] =
-    Task.fromReactivePublisher(reactiveCmd.setrange(key, offset, value)).map(_.map(_.longValue))
+  def setRange(key: K, offset: Long, value: V): Task[Long] =
+    Task.fromReactivePublisher(reactiveCmd.setrange(key, offset, value)).map(_.map(_.longValue).getOrElse(0L))
 
   /**
     * Get the length of the value stored in a key.
@@ -250,7 +253,8 @@ private[redis] class StringCommands[K, V](reactiveCmd: RedisStringReactiveComman
 
 }
 
-object StringCommands {
+@InternalApi
+private[redis] object StringCommands {
   def apply[K, V](reactiveCmd: RedisStringReactiveCommands[K, V]): StringCommands[K, V] =
     new StringCommands[K, V](reactiveCmd)
 }

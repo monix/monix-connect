@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-package monix.connect.redis
+package monix.connect.redis.domain
 
 import io.lettuce.core.ScoredValue
 
 import java.util.Optional
 
-class VScore[V](val score: Double, val value: Option[V]) {
+case class VScore[V] private[redis] (val score: Double, val value: Option[V]) {
 
   def mapScore(f: Double => Double): VScore[V] =  VScore(f(score), value)
 
@@ -35,7 +35,7 @@ class VScore[V](val score: Double, val value: Option[V]) {
 
 object VScore {
 
-  def apply[V](score: Double, value: Option[V]) =  new VScore(score, value)
+  def apply[V](score: Double, value: V) =  new VScore(score, Some(value))
 
   def from[V](scoredValue: ScoredValue[V]) = new VScore[V](scoredValue.getScore, Option(scoredValue.getValue))
 

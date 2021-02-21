@@ -15,19 +15,16 @@
  * limitations under the License.
  */
 
-package monix.connect.redis
+package monix.connect.redis.commands
 
-import io.lettuce.core.api.StatefulRedisConnection
-import io.lettuce.core.ValueScanCursor
-import io.lettuce.core.api.async.{RedisKeyAsyncCommands, RedisServerAsyncCommands, RedisSetAsyncCommands}
-import io.lettuce.core.api.reactive.{RedisKeyReactiveCommands, RedisServerReactiveCommands, RedisSetReactiveCommands}
+import io.lettuce.core.api.reactive.RedisSetReactiveCommands
 import monix.eval.Task
 import monix.reactive.Observable
 
 /**
   * @see The reference to lettuce api [[io.lettuce.core.api.reactive.RedisSetReactiveCommands]]
   */
-private[redis] class SetCommands[K, V](reactiveCmd: RedisSetReactiveCommands[K, V]) {
+final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveCommands[K, V]) {
 
   /**
     * Add one or more members to a set.
@@ -155,7 +152,7 @@ private[redis] class SetCommands[K, V](reactiveCmd: RedisSetReactiveCommands[K, 
 
 }
 
-object SetCommands {
+private[redis] object SetCommands {
   def apply[K, V](reactiveCmd: RedisSetReactiveCommands[K, V]): SetCommands[K, V] =
     new SetCommands[K, V](reactiveCmd)
 

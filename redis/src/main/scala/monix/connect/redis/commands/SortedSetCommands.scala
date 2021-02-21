@@ -15,25 +15,28 @@
  * limitations under the License.
  */
 
-package monix.connect.redis
-
+package monix.connect.redis.commands
 
 import io.lettuce.core.api.reactive.RedisSortedSetReactiveCommands
 import io.lettuce.core.{Limit, Range}
+import monix.connect.redis.domain.VScore
+import monix.connect.redis.kvToTuple
 import monix.eval.Task
 import monix.reactive.Observable
+
+import scala.concurrent.duration.FiniteDuration
 
 /**
   * @see The reference Lettuce Api at: [[io.lettuce.core.api.reactive.RedisSortedSetReactiveCommands]]
   */
-private[redis] class SortedSetCommands[K, V](reactiveCmd: RedisSortedSetReactiveCommands[K, V]) {
+class SortedSetCommands[K, V] private[redis] (reactiveCmd: RedisSortedSetReactiveCommands[K, V]) {
 
   /**
     * Removes and returns a member with the lowest scores in the sorted set stored at one of the keys.
     * @return Multi-bulk containing the name of the key, the score and the popped member.
     */
-  def bZPopMin(timeout: Long, keys: K*): Task[Option[(K, VScore[V])]] =
-    Task.fromReactivePublisher(reactiveCmd.bzpopmin(timeout, keys: _*)).map(_.map(kvToTuple))
+  def bZPopMin(timeout: FiniteDuration, keys: K*): Task[Option[(K, VScore[V])]] =
+    Task.fromReactivePublisher(reactiveCmd.bzpopmin(timeout.toSeconds, keys: _*)).map(_.map(kvToTuple))
       .map(_.map{
         case (t1, t2) =>
           (t1, t2.map(VScore.from[V])
@@ -44,8 +47,8 @@ private[redis] class SortedSetCommands[K, V](reactiveCmd: RedisSortedSetReactive
     * Removes and returns a member with the highest scores in the sorted set stored at one of the keys.
     * @return Multi-bulk containing the name of the key, the score and the popped member.
     */
-  def bZPopMax(timeout: Long, keys: K*): Task[Option[(K, VScore[V])]] =
-    Task.fromReactivePublisher(reactiveCmd.bzpopmax(timeout, keys: _*))
+  def bZPopMax(timeout: FiniteDuration, keys: K*): Task[Option[(K, VScore[V])]] =
+    Task.fromReactivePublisher(reactiveCmd.bzpopmax(timeout.toSeconds, keys: _*))
       .map(_.map(kvToTuple)
         .map{ case (t1, t2) =>
           (t1, t2.map(VScore.from).getOrElse(VScore.empty))
@@ -55,11 +58,11 @@ private[redis] class SortedSetCommands[K, V](reactiveCmd: RedisSortedSetReactive
   /**
     * Add one or more members to a sorted set, or update its score if it already exists.
     * @return Long integer-reply specifically:
-    *         The number of elements added to the sorted sets, not including elements already existing for which the score was
-    *         updated.
+    *         True if the member was added to the sorted sets
+    *         False if the member was already present, in which case the score is also been updated.
     */
-  def zAdd(key: K, score: Double, member: V): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.zadd(key, score, member)).map(_.map(_.longValue).getOrElse(0L))
+  def zAdd(key: K, score: Double, member: V): Task[Boolean] =
+    Task.fromReactivePublisher(reactiveCmd.zadd(key, score, member)).map(_.exists(_.longValue > 0L))
 
   /**
     * Add one or more members to a sorted set, or update its score if it already exists.
@@ -99,6 +102,15 @@ private[redis] class SortedSetCommands[K, V](reactiveCmd: RedisSortedSetReactive
     */
   def zCount(key: K, range: Range[_ <: Number]): Task[Long] =
     Task.fromReactivePublisher(reactiveCmd.zcount(key, range))
+      .map(_.map(_.longValue()).getOrElse(0L))
+
+
+  /**
+    * Count the members in a sorted set with scores within the given [[Range]].
+    * @return The number of elements of the sorted set, or 0 if key does not exist.
+    */
+  def zCountAll(key: K): Task[Long] =
+    Task.fromReactivePublisher(reactiveCmd.zcount(key, Range.unbounded()))
       .map(_.map(_.longValue()).getOrElse(0L))
 
   /**

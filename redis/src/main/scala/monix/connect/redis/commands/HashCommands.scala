@@ -15,16 +15,17 @@
  * limitations under the License.
  */
 
-package monix.connect.redis
+package monix.connect.redis.commands
 
 import io.lettuce.core.api.reactive.RedisHashReactiveCommands
+import monix.connect.redis.kvToTuple
 import monix.eval.Task
 import monix.execution.internal.InternalApi
 import monix.reactive.Observable
 
 import scala.jdk.CollectionConverters._
 
-private[redis] class HashCommands[K, V](reactiveCmd: RedisHashReactiveCommands[K, V]) {
+final class HashCommands[K, V] private[redis](reactiveCmd: RedisHashReactiveCommands[K, V]) {
 
   /**
     * Delete one or more hash fields.

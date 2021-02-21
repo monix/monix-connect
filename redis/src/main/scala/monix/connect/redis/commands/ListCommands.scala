@@ -15,13 +15,14 @@
  * limitations under the License.
  */
 
-package monix.connect.redis
+package monix.connect.redis.commands
 
 import io.lettuce.core.api.reactive.RedisListReactiveCommands
+import monix.connect.redis.kvToTuple
 import monix.eval.Task
 import monix.reactive.Observable
 
-private[redis] class ListCommands[K, V](reactiveCmd: RedisListReactiveCommands[K, V]) {
+class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[K, V]) {
 
   /**
     * Remove and get the first element in a list, or block until one is available.
