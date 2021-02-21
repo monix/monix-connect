@@ -1,6 +1,6 @@
 package monix.connect.redis
 
-import monix.connect.redis.client.{Codec, Redis}
+import monix.connect.redis.client.{Codec, Redis, RedisUri}
 import monix.connect.redis.test.protobuf.{Person, PersonPk}
 import monix.execution.Scheduler.Implicits.global
 import org.scalacheck.Gen
@@ -11,7 +11,7 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 import scala.concurrent.duration._
 
-class SingleConnectionIntegrationTest extends AnyFlatSpec with RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll with Eventually {
+class SingleConnectionSuite extends AnyFlatSpec with RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll with Eventually {
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
 
@@ -22,7 +22,20 @@ class SingleConnectionIntegrationTest extends AnyFlatSpec with RedisIntegrationF
     singleConnection.connectUtf.use(_.server.flushAll()).runSyncUnsafe()
   }
 
-  "ClusterConnection" should "connect with default utf codecs" in {
+  it should "connect through the uri" in {
+    //given
+    val key: String = Gen.identifier.sample.get
+    val value: String = Gen.identifier.sample.get
+
+    //when
+    Redis.single(RedisUri(redisUrl)).connectUtf.use(_.list.lPush(key, value)).runSyncUnsafe()
+
+    //then
+    val r = Redis.single(RedisUri(redisUrl)).connectUtf.use(_.list.lPop(key)).runSyncUnsafe()
+    Some(value) shouldBe r
+  }
+
+  it should "connect with default utf codecs" in {
     //given
     val key: String = Gen.identifier.sample.get
     val value: String = Gen.identifier.sample.get

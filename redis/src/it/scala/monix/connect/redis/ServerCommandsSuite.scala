@@ -19,22 +19,62 @@ class ServerCommandsSuite
     utfConnection.use(cmd => cmd.server.flushAll()).runSyncUnsafe()
   }
 
-  it should "insert a string into key and get its size from redis" in {
+  it should "bgRewriteAOF" in {
+
+  }
+
+  it should "bgSave" in {
+
+  }
+
+  it should "clientGetName" in {
+
+  }
+
+  it should "clientSetName" in {
+
+  }
+
+  it should "clientKill" in {
+
+  }
+
+  it should "clientList" in {
+
+  }
+
+  it should "commandCount" in {
+
+  }
+
+  it should "configGet" in {
+
+  }
+
+  it should "configResetStat" in {
+
+  }
+
+  it should "flushAll" in {
     //given
     val key: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get
 
     //when
     utfConnection.use(_.string.set(key, value)).runSyncUnsafe()
-    val beforeFlush: Boolean = utfConnection.use(_.key.exists(key)).runSyncUnsafe()
+    val existsBeforeFlush: Boolean = utfConnection.use(_.key.exists(key)).runSyncUnsafe()
 
     //and
     utfConnection.use(_.server.flushAll()).runSyncUnsafe()
-    val afterFlush: Boolean = utfConnection.use(_.key.exists(key)).runSyncUnsafe()
+    val existsAfterFlush: Boolean = utfConnection.use(_.key.exists(key)).runSyncUnsafe()
 
     //then
-    beforeFlush shouldEqual true
-    afterFlush shouldEqual false
+    existsBeforeFlush shouldEqual true
+    existsAfterFlush shouldEqual false
+  }
+
+  it should "flushDb" in {
+
   }
 
 }

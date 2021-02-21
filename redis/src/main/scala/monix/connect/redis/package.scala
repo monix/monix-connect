@@ -19,8 +19,6 @@ package monix.connect
 
 import io.lettuce.core.KeyValue
 import monix.connect.redis.client.Codec
-import monix.eval.{Task, TaskLike}
-import reactor.core.publisher.Mono
 
 import scala.util.Try
 
@@ -33,7 +31,7 @@ package object redis {
   implicit val intUtfCodec: Codec[Int, String] = Codec.utf(_.toString, str => Try(str.toInt).getOrElse(0))
   implicit val doubleUtfCodec: Codec[Double, String] = Codec.utf(_.toString, str => Try(str.toDouble).getOrElse(0.0))
   implicit val floatUtfCodec: Codec[Float, String] = Codec.utf(_.toString, str => Try(str.toFloat).getOrElse(0L))
- //implicit val bigIntUtfCodec: Codec[BigInt, String] = Codec.utf(_.toString, str => Try(BigInt.apply(str)).getOrElse(0))
- //implicit val bigDecimalUtfCodec: Codec[BigDecimal, String] = Codec.utf(_.toString, str => Try(BigDecimal.apply(str)).getOrElse(0.0))
+  implicit val bigIntUtfCodec: Codec[BigInt, String] = Codec.utf(_.toString, str => Try(BigInt.apply(str)).getOrElse(0))
+  implicit val bigDecimalUtfCodec: Codec[BigDecimal, String] = Codec.utf(_.toString, str => Try(BigDecimal.apply(str)).getOrElse(0.0))
 
 }

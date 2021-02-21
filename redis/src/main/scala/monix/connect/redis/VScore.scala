@@ -17,4 +17,28 @@
 
 package monix.connect.redis
 
-class VScore {}
+import io.lettuce.core.ScoredValue
+
+import java.util.Optional
+
+class VScore[V](val score: Double, val value: Option[V]) {
+
+  def mapScore(f: Double => Double): VScore[V] =  VScore(f(score), value)
+
+  def flatMap(f: Option[V] => Option[V]) = new VScore(score, f(value))
+
+  private[redis] def toScoredValue: ScoredValue[V] = {
+    val optional: Optional[V] = value.map(a => Optional.of(a)).getOrElse(Optional.empty())
+    ScoredValue.from(score, optional)
+  }
+}
+
+object VScore {
+
+  def apply[V](score: Double, value: Option[V]) =  new VScore(score, value)
+
+  def from[V](scoredValue: ScoredValue[V]) = new VScore[V](scoredValue.getScore, Option(scoredValue.getValue))
+
+  def empty[V] = new VScore(0, Option.empty[V])
+
+}

@@ -36,4 +36,56 @@ class StringCommandsSuite
     lenght shouldBe value.length
   }
 
+  it should "append" in {}
+
+  it should "bitCount" in {}
+
+  it should "bitPos" in {}
+
+  it should "bitOpAnd" in {}
+
+  it should "bitOpNot" in {}
+
+  it should "bitOpOr" in {}
+
+  it should "bitOpXor" in {}
+
+  it should "decr" in {}
+
+  it should "decrBy" in {}
+
+  it should "get" in {}
+
+  it should "getBit" in {}
+
+  it should "getRange" in {}
+
+  it should "getSet" in {}
+
+  it should "incr" in {}
+
+  it should "incrBy" in {}
+
+  it should "incrByFloat" in {}
+
+  it should "mGet" in {}
+
+  it should "mSet" in {}
+
+  it should "mSetNx" in {}
+
+  it should "set" in {}
+
+  it should "setBit" in {}
+
+  it should "setEx" in {}
+
+  it should "pSetEx" in {}
+
+  it should "setNx" in {}
+
+  it should "setRange" in {}
+
+  it should "strLen" in {}
+
 }

@@ -22,50 +22,76 @@ import io.lettuce.core.RedisURI
 import java.time.Duration
 import scala.concurrent.duration.FiniteDuration
 
-case class RedisUri(
-  host: String,
-  port: Int,
-  database: Option[Int] = None,
-  password: Option[String] = None,
-  ssl: Option[Boolean] = None,
-  verifyPeer: Option[Boolean] = None,
-  startTls: Option[Boolean] = None,
-  timeout: Option[FiniteDuration] = None,
-  sentinels: List[String] = List.empty,
-  socket: Option[String] = None,
-  sentinelMasterId: Option[String] = None,
-  clientName: Option[String] = None) {
+/**
+  *
+  */
+class RedisUri(
+                uri: Either[String, (String, Int)],
+                database: Option[Int] = None,
+                password: Option[String] = None,
+                ssl: Option[Boolean] = None,
+                verifyPeer: Option[Boolean] = None,
+                startTls: Option[Boolean] = None,
+                timeout: Option[FiniteDuration] = None,
+                sentinels: List[String] = List.empty,
+                socket: Option[String] = None,
+                sentinelMasterId: Option[String] = None,
+                clientName: Option[String] = None) {
 
   def withDatabase(database: Int): RedisUri = copy(database = Some(database))
+
   def withPassword(password: String): RedisUri = copy(password = Some(password))
-  def ssl(ssl: Boolean): RedisUri = copy(ssl = Some(ssl))
+
+  def withSsl(ssl: Boolean): RedisUri = copy(ssl = Some(ssl))
+
   def withVerifyPeer(verifyPeer: Boolean): RedisUri = copy(verifyPeer = Some(verifyPeer))
+
   def withStartTls(startTls: Boolean): RedisUri = copy(startTls = Some(startTls))
+
   def withTimeout(timeout: FiniteDuration): RedisUri = copy(timeout = Some(timeout))
+
   def withSentinels(sentinels: List[String]): RedisUri = copy(sentinels = sentinels)
+
   def withSocket(socket: String): RedisUri = copy(socket = Some(socket))
+
   def withSentinelMasterId(sentinelMasterId: String): RedisUri = copy(sentinelMasterId = Some(sentinelMasterId))
+
   def withClientName(clientName: String): RedisUri = copy(clientName = Some(clientName))
 
   private[redis] def toJava: RedisURI = {
-    val builder = RedisURI.builder().withHost(host).withPort(port)
-    database.map(builder.withDatabase)
-    password.map(builder.withPassword)
-    ssl.map(builder.withSsl)
-    verifyPeer.map(builder.withVerifyPeer)
-    startTls.map(builder.withStartTls)
-    timeout.map(timeout => builder.withTimeout(Duration.ofMillis(timeout.toMillis)))
-    sentinels.map(builder.withSentinel) //todo add sentinel host and port
-    //socket.map(builder.socket) // todo figure out why it does not compile
-    sentinelMasterId.map(builder.withSentinelMasterId)
-    clientName.map(builder.withClientName)
-    builder.build()
+    val redisUri = uri.map { case (host, port) => RedisURI.create(host, port) }.left.map(uri => RedisURI.create(uri)).merge
+    database.map(_ => redisUri.setDatabase(_))
+    password.map(pass => redisUri.setPassword(pass))
+    ssl.map(_ => redisUri.setSsl(_))
+    verifyPeer.map(redisUri.setVerifyPeer(_))
+    startTls.map(_ => redisUri.setStartTls(_))
+    timeout.map(timeout => redisUri.setTimeout(Duration.ofMillis(timeout.toMillis)))
+    sentinels.map(_ => redisUri.setSentinelMasterId(_)) //todo add sentinel host and port
+    socket.map(_ => redisUri.setSocket(_))
+    sentinelMasterId.map(_ => redisUri.setSentinelMasterId(_))
+    clientName.map(_ => redisUri.setClientName(_))
+    redisUri
+  }
+
+  private def copy(uri: Either[String, (String, Int)] = this.uri,
+                   database: Option[Int] = this.database,
+                   password: Option[String] = this.password,
+                   ssl: Option[Boolean] = this.ssl,
+                   verifyPeer: Option[Boolean] = this.verifyPeer,
+                   startTls: Option[Boolean] = this.startTls,
+                   timeout: Option[FiniteDuration] = this.timeout,
+                   sentinels: List[String] = this.sentinels,
+                   socket: Option[String] = this.socket,
+                   sentinelMasterId: Option[String] = this.sentinelMasterId,
+                   clientName: Option[String] = this.clientName): RedisUri = {
+    this
   }
 }
 
-//object RedisUri {
-//
-//  //def apply(host: String, port: Int): RedisUri = RedisUri(host, port)
-//  //def apply(host: String): RedisUri = RedisUri(host, 6379)
-//
-//}
+object RedisUri {
+
+  def apply(host: String, port: Int): RedisUri = new RedisUri(Right(host, port))
+
+  def apply(uri: String): RedisUri = new RedisUri(Left(uri))
+
+}

@@ -25,6 +25,10 @@ import monix.eval.Task
 
 case class SingleConnection(uri: RedisUri) extends RedisConnection {
 
+  /**
+    *
+    * @return
+    */
   def connectUtf: Resource[Task, RedisCmd[String, String]] = {
     RedisCmd
       .connectResource[String, String, StatefulRedisConnection[String, String]] {
@@ -36,6 +40,14 @@ case class SingleConnection(uri: RedisUri) extends RedisConnection {
       .evalMap(RedisCmd.single)
   }
 
+  /**
+    *
+    * @param keyCodec
+    * @param valueCodec
+    * @tparam K
+    * @tparam V
+    *  @return
+    */
   def connectUtf[K, V](
                         implicit keyCodec: Codec[K, String],
                         valueCodec: Codec[V, String]): Resource[Task, RedisCmd[K, V]] = {
@@ -49,6 +61,10 @@ case class SingleConnection(uri: RedisUri) extends RedisConnection {
       .evalMap(RedisCmd.single)
   }
 
+  /**
+    *
+    * @return
+    */
   def connectByteArray: Resource[Task, RedisCmd[Array[Byte], Array[Byte]]] = {
     RedisCmd
       .connectResource[Array[Byte], Array[Byte], StatefulRedisConnection[Array[Byte], Array[Byte]]] {
@@ -63,6 +79,14 @@ case class SingleConnection(uri: RedisUri) extends RedisConnection {
       .evalMap(RedisCmd.single)
   }
 
+  /**
+    *
+    * @param keyCodec
+    * @param valueCodec
+    * @tparam K
+    * @tparam V
+    * @return
+    */
   def connectByteArray[K, V](implicit keyCodec: Codec[K, Array[Byte]],
                               valueCodec: Codec[V, Array[Byte]]): Resource[Task, RedisCmd[K, V]] = {
     RedisCmd
