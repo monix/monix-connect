@@ -862,9 +862,8 @@ trait S3 { self =>
     *   val s3Objects: Observable[S3Object] = s3.listObjects(bucket, maxTotalKeys = Some(1011), prefix = Some(prefix))
     * }}}
     *
-    * To use this operation in an AWS (IAM) policy, you must have permissions to perform
-    * the `ListBucket` action. The bucket owner has this permission by default and can grant it.
-    *
+    * @note                To use this operation in an AWS (IAM) policy, you must have permissions to perform
+    *                      the `ListBucket` action. The bucket owner has this permission by default and can grant it.
     * @param bucket        target S3 bucket name of the object to be downloaded.
     * @param maxTotalKeys  sets the maximum number of keys to be list,
     *                      it must be a positive number.
@@ -883,6 +882,176 @@ trait S3 { self =>
       listResponse <- ListObjectsObservable(bucket, prefix, maxTotalKeys, requestPayer, this.s3Client)
       s3Object     <- Observable.fromIterable(listResponse.contents.asScala)
     } yield s3Object
+  }
+
+  /** Returns oldest N objects in bucket.
+    *
+    * ==Example==
+    *
+    * {{{
+    * import cats.effect.Resource
+    * import monix.connect.s3.S3
+    * import monix.eval.Task
+    * import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+    * import software.amazon.awssdk.regions.Region
+    * import monix.execution.Scheduler.Implicits.global
+    *
+    * val bucket = "my-bucket"
+    * val prefix = "prefix/to/list/keys"
+    * val s3AccessKey: String = "TESTKEY"
+    * val s3SecretKey: String = "TESTSECRET"
+    * val basicAWSCredentials = AwsBasicCredentials.create(s3AccessKey, s3SecretKey)
+    * val staticCredProvider = StaticCredentialsProvider.create(basicAWSCredentials)
+    *
+    * val s3: Resource[Task, S3] = S3.create(staticCredProvider, Region.AWS_GLOBAL)
+    *
+    * s3.use{s3 => s3.listOldestNObjects(bucket, 6, prefix = Some(prefix)).toListL}.runToFuture
+    * }}}
+    *
+    * @note To use this operation in an AWS (IAM) policy, you must have permissions to perform
+    * the `ListBucket` action. The bucket owner has this permission by default and can grant it.
+    *
+    * @param bucket        target S3 bucket name of the object to be downloaded.
+    * @param amount        the number of objects you would like to return
+    * @param prefix        limits the response to keys that begin with the specified prefix.
+    * @param requestPayer  confirms that the requester knows that she or he will be charged for
+    *                      the list objects request in V2 style.
+    *                      Bucket owners need not specify this parameter in their requests.
+    * @return an [[Observable]] that emits the [[S3Object]]s.
+    */
+  def listOldestNObjects(
+    bucket: String,
+    n: Int,
+    prefix: Option[String] = None,
+    requestPayer: Option[RequestPayer] = None): Observable[S3Object] = {
+    val sorted: (S3Object, S3Object) => Boolean = (x, y) => x.lastModified().compareTo(y.lastModified()) < 0
+    ListObjectsObservable.listNHelper(bucket, n, sorted, prefix, requestPayer, this.s3Client)
+  }
+
+  /** Returns latest N objects in bucket.
+    *
+    * ==Example==
+    *
+    * {{{
+    * import cats.effect.Resource
+    * import monix.connect.s3.S3
+    * import monix.eval.Task
+    * import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+    * import software.amazon.awssdk.regions.Region
+    * import monix.execution.Scheduler.Implicits.global
+    *
+    * val bucket = "my-bucket"
+    * val prefix = "prefix/to/list/keys"
+    * val s3AccessKey: String = "TESTKEY"
+    * val s3SecretKey: String = "TESTSECRET"
+    * val basicAWSCredentials = AwsBasicCredentials.create(s3AccessKey, s3SecretKey)
+    * val staticCredProvider = StaticCredentialsProvider.create(basicAWSCredentials)
+    *
+    * val s3: Resource[Task, S3] = S3.create(staticCredProvider, Region.AWS_GLOBAL)
+    *
+    * s3.use{s3 => s3.listLatestNObjects(bucket, 6, prefix = Some(prefix)).toListL}.runToFuture
+    * }}}
+    *
+    * @note To use this operation in an AWS (IAM) policy, you must have permissions to perform
+    * the `ListBucket` action. The bucket owner has this permission by default and can grant it.
+    *
+    * @param bucket        target S3 bucket name of the object to be downloaded.
+    * @param amount        the number of objects you would like to return
+    * @param prefix        limits the response to keys that begin with the specified prefix.
+    * @param requestPayer  confirms that the requester knows that she or he will be charged for
+    *                      the list objects request in V2 style.
+    *                      Bucket owners need not specify this parameter in their requests.
+    * @return an [[Observable]] that emits the [[S3Object]]s.
+    */
+  def listLatestNObjects(
+    bucket: String,
+    n: Int,
+    prefix: Option[String] = None,
+    requestPayer: Option[RequestPayer] = None): Observable[S3Object] = {
+    val sorted: (S3Object, S3Object) => Boolean = (x, y) => x.lastModified().compareTo(y.lastModified()) > 0
+    ListObjectsObservable.listNHelper(bucket, n, sorted, prefix, requestPayer, this.s3Client)
+  }
+
+  /**
+    * Returns the most recently uploaded object in a bucket.
+    *
+    * ==Example==
+    *
+    * {{{
+    * import cats.effect.Resource
+    * import monix.connect.s3.S3
+    * import monix.eval.Task
+    * import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+    * import software.amazon.awssdk.regions.Region
+    * import monix.execution.Scheduler.Implicits.global
+    *
+    * val bucket = "my-bucket"
+    * val prefix = "prefix/to/list/keys"
+    * val s3AccessKey: String = "TESTKEY"
+    * val s3SecretKey: String = "TESTSECRET"
+    * val basicAWSCredentials = AwsBasicCredentials.create(s3AccessKey, s3SecretKey)
+    * val staticCredProvider = StaticCredentialsProvider.create(basicAWSCredentials)
+    *
+    * val s3: Resource[Task, S3] = S3.create(staticCredProvider, Region.AWS_GLOBAL)
+    *
+    * s3.use{s3 => s3.listLatestObject(bucket, prefix = Some(prefix))}.runToFuture
+    * }}}
+    *
+    * @note                To use this operation in an AWS (IAM) policy, you must have permissions to perform
+    *                      the `ListBucket` action. The bucket owner has this permission by default and can grant it.
+    * @param bucket        target S3 bucket name of the object to be downloaded.
+    * @param prefix        limits the response to keys that begin with the specified prefix.
+    * @param requestPayer  confirms that the requester knows that she or he will be charged for
+    *                      the list objects request in V2 style.
+    *                      Bucket owners need not specify this parameter in their requests.
+    * @return an [[Task]] that emits the [[Option[S3Object]]]s.
+    */
+  def listLatestObject(
+    bucket: String,
+    prefix: Option[String] = None,
+    requestPayer: Option[RequestPayer] = None): Task[Option[S3Object]] = {
+    listLatestNObjects(bucket, 1, prefix, requestPayer).headOptionL
+  }
+
+  /**
+    * Returns the most oldest uploaded object in a bucket.
+    *
+    * ==Example==
+    *
+    * {{{
+    * import cats.effect.Resource
+    * import monix.connect.s3.S3
+    * import monix.eval.Task
+    * import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+    * import software.amazon.awssdk.regions.Region
+    * import monix.execution.Scheduler.Implicits.global
+    *
+    * val bucket = "my-bucket"
+    * val prefix = "prefix/to/list/keys"
+    * val s3AccessKey: String = "TESTKEY"
+    * val s3SecretKey: String = "TESTSECRET"
+    * val basicAWSCredentials = AwsBasicCredentials.create(s3AccessKey, s3SecretKey)
+    * val staticCredProvider = StaticCredentialsProvider.create(basicAWSCredentials)
+    *
+    * val s3: Resource[Task, S3] = S3.create(staticCredProvider, Region.AWS_GLOBAL)
+    *
+    * s3.use{s3 => s3.listOldestObject(bucket, prefix = Some(prefix))}.runToFuture
+    * }}}
+    *
+    * @note                To use this operation in an AWS (IAM) policy, you must have permissions to perform
+    *                      the `ListBucket` action. The bucket owner has this permission by default and can grant it.
+    * @param bucket        target S3 bucket name of the object to be downloaded.
+    * @param prefix        limits the response to keys that begin with the specified prefix.
+    * @param requestPayer  confirms that the requester knows that she or he will be charged for
+    *                      the list objects request in V2 style.
+    *                      Bucket owners need not specify this parameter in their requests.
+    * @return an [[Task]] that emits the [[Option[S3Object]]]s.
+    */
+  def listOldestObject(
+    bucket: String,
+    prefix: Option[String] = None,
+    requestPayer: Option[RequestPayer] = None): Task[Option[S3Object]] = {
+    listOldestNObjects(bucket, 1, prefix, requestPayer).headOptionL
   }
 
   /**
