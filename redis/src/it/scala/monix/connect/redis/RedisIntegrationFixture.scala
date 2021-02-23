@@ -23,7 +23,7 @@ trait RedisIntegrationFixture {
   protected val genVScore: Gen[VScore[V]] = {
     for {
       v <- genRedisValue
-      score <- Gen.choose(1, 1000)
+      score <- Gen.choose(1, 90000)
     } yield VScore(score, Some(v))
   }
 
