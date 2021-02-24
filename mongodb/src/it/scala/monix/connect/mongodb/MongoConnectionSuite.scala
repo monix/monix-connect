@@ -621,7 +621,7 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
       companiesCol))
 
     //when
-    val (r1, r2, r3, r4, r5, r6, r7, r8) = connection.use {
+    connection.use {
       case (employees1, employees2, employees3, employees4, employees5, employees6, employees7, companies) =>
         for {
           r1 <- employees1.single
@@ -648,17 +648,19 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
           r8 <- companies.single
             .insertOne(company)
             .flatMap(_ => companies.source.find(Filters.eq("name", company.name)).headL)
-        } yield (r1, r2, r3, r4, r5, r6, r7, r8)
+        } yield {
+          //then
+          r1 shouldBe employee1
+          r2 shouldBe employee2
+          r3 shouldBe employee3
+          r4 shouldBe employee4
+          r5 shouldBe employee5
+          r6 shouldBe employee6
+          r7 shouldBe employee7
+          r8 shouldBe company
+        }
     }.runSyncUnsafe()
 
-    //then
-    r1 shouldBe employee1
-    r2 shouldBe employee2
-    r3 shouldBe employee3
-    r4 shouldBe employee4
-    r5 shouldBe employee5
-    r6 shouldBe employee6
-    r7 shouldBe employee7
-    r8 shouldBe company
+
   }
 }

@@ -309,7 +309,7 @@ class SortedSetCommandsSuite
         //when
         add1 <- sortedSet.zAddIncr(k1, ZArgs.NX, 1, vA)
         elems1 <- sortedSet.zScanVScores(k1).toListL
-        add2 <- sortedSet.zAddIncr(k1, ZArgs.NX,3, vA)
+        add2 <- sortedSet.zAddIncr(k1, ZArgs.NX, 3, vA)
         elems2 <- sortedSet.zScanVScores(k1).toListL
 
       } yield {
@@ -332,9 +332,9 @@ class SortedSetCommandsSuite
         //when
         add1 <- sortedSet.zAddIncr(k1, ZArgs.CH, 1, vA)
         elems1 <- sortedSet.zScanVScores(k1).toListL
-        add2 <- sortedSet.zAddIncr(k1, ZArgs.CH,1, vA)
+        add2 <- sortedSet.zAddIncr(k1, ZArgs.CH, 1, vA)
         elems2 <- sortedSet.zScanVScores(k1).toListL
-        add3 <- sortedSet.zAddIncr(k1, ZArgs.CH,2, vA)
+        add3 <- sortedSet.zAddIncr(k1, ZArgs.CH, 2, vA)
         elems3 <- sortedSet.zScanVScores(k1).toListL
       } yield {
         //then
@@ -359,9 +359,9 @@ class SortedSetCommandsSuite
         add1 <- sortedSet.zAddIncr(k1, ZArgs.XX, 1, vA)
         elems1 <- sortedSet.zScanVScores(k1).toListL
         _ <- sortedSet.zAdd(k1, 1, vA)
-        add2 <- sortedSet.zAddIncr(k1, ZArgs.XX,1, vA)
+        add2 <- sortedSet.zAddIncr(k1, ZArgs.XX, 1, vA)
         elems2 <- sortedSet.zScanVScores(k1).toListL
-        add3 <- sortedSet.zAddIncr(k1, ZArgs.XX,2, vA)
+        add3 <- sortedSet.zAddIncr(k1, ZArgs.XX, 2, vA)
         elems3 <- sortedSet.zScanVScores(k1).toListL
       } yield {
         //then
@@ -392,6 +392,7 @@ class SortedSetCommandsSuite
     }.runSyncUnsafe()
   }
 
+  //todo fix
   "zIncrBy" should "increment the score by the given number" in {
     //given
     val k1 = genRedisKey.sample.get
@@ -405,7 +406,6 @@ class SortedSetCommandsSuite
         _ <- sortedSet.zAdd(k1, 1, vA)
         incr2 <- sortedSet.zIncrBy(k1, 2, vA)
         elems2 <- sortedSet.zScanVScores(k1).toListL
-
       } yield {
         //then
         //incr1 shouldBe None
@@ -469,7 +469,7 @@ class SortedSetCommandsSuite
         rangeAd <- sortedSet.zLexCount(k1, ZRange("A", "D"))
         range24 <- sortedSet.zLexCount(k1, ZRange("2", "4"))
         rangeGte2 <- sortedSet.zLexCount(k1, ZRange.gte("2")) //counts alpha. members too
-        rangeLtA <- sortedSet.zLexCount(k1, ZRange.lt("B"))  //includes numbers too
+        rangeLtA <- sortedSet.zLexCount(k1, ZRange.lt("B")) //includes numbers too
       } yield {
         //then
         4L shouldBe rangeAd //A, B, C D
@@ -484,21 +484,248 @@ class SortedSetCommandsSuite
 
   it should "zPopMax" in {}
 
-  it should "zRange" in {}
+  /*
+  "zRange" should "return all the elements in the specified range" in {
+    //given
+    val k1 = genRedisKey.sample.get
+    val k2 = genRedisKey.sample.get
+    val vScoreA = VScore(2, "A")
+    val vScoreB = VScore(3, "B")
+    val vScoreC = VScore(5, "C")
+    val vScoreD = VScore(4, "D")
+    val vScore1 = VScore(6, "1")
+    val vScore2 = VScore(3, "2")
+    val vScore3 = VScore(1, "3")
 
-  it should "zRangeWithScores" in {}
+    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+      for {
+        //when
+        _ <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScoreC, vScoreD, vScore1, vScore2, vScore3)
+        rangeAll <- sortedSet.zRange(k1, 0, 6).toListL
+        rangeEmpty <- sortedSet.zRange(k1, 8, 13).toListL
+        range25 <- sortedSet.zRange(k1, 1, 5).toListL
+        range34 <- sortedSet.zRange(k1, 2, 4).toListL
 
-  it should "zRangeByLex" in {}
+      } yield {
+        //then
+        rangeAll should contain theSameElementsAs List("A", "B", "C", "D", "1", "2", "3")
+        rangeEmpty should contain theSameElementsAs List.empty
+        range25 should contain theSameElementsAs List("A", "B", "C", "D", "2")
+        range34 should contain theSameElementsAs List("B", "D", "2")
+      }
+    }.runSyncUnsafe()
+  }
 
-  it should "zRangeByScore" in {}
+  "zRangeWithScores" should "return all the elements in the specified range with scores" in {
+    //given
+    val k1 = genRedisKey.sample.get
+    val vScoreA = VScore(2, "A")
+    val vScoreB = VScore(3, "B")
+    val vScoreC = VScore(5, "C")
+    val vScoreD = VScore(4, "D")
+    val vScore1 = VScore(6, "1")
+    val vScore2 = VScore(3, "2")
+    val vScore3 = VScore(1, "3")
 
-  it should "zRangeByScoreWithScores" in {}
+    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+      for {
+        //when
+        _ <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScoreC, vScoreD, vScore1, vScore2, vScore3)
+        rangeAll <- sortedSet.zRangeWithScores(k1, 0, 6).toListL
+        rangeEmpty <- sortedSet.zRangeWithScores(k1, 8, 13).toListL
+        range25 <- sortedSet.zRangeWithScores(k1, 1, 5).toListL
+        range34 <- sortedSet.zRangeWithScores(k1, 2, 4).toListL
 
-  it should "zRank" in {}
+      } yield {
+        //then
+        rangeAll should contain theSameElementsAs List(vScoreA, vScoreB, vScoreC, vScoreD, vScore1, vScore2, vScore3)
+        rangeEmpty should contain theSameElementsAs List.empty
+        range25 should contain theSameElementsAs List(vScoreA, vScoreB, vScoreC, vScoreD, vScore2)
+        range34 should contain theSameElementsAs List(vScoreB, vScoreD, vScore2)
+      }
+    }.runSyncUnsafe()
+  }*/
 
-  it should "zRem" in {}
+  "zRangeByLex" should "return all the elements in the specified range with scores" in {
+    //given
+    val k1 = genRedisKey.sample.get
+    val vScoreA = VScore(1, "A")
+    val vScoreB = VScore(1, "B")
+    val vScoreC = VScore(2, "C")
+    val vScoreD = VScore(1, "D")
+    val vScore1 = VScore(1, "1")
+    val vScore2 = VScore(1, "2")
+    val vScore3 = VScore(1, "3")
 
-  it should "zRemRangeByLex" in {}
+    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+      for {
+        //when
+        _ <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScoreC, vScoreD, vScore1, vScore2, vScore3)
+        rangeAd <- sortedSet.zRangeByLex(k1, ZRange("A", "D")).toListL
+        range24 <- sortedSet.zRangeByLex(k1, ZRange("2", "4")).toListL
+        rangeGte2 <- sortedSet.zRangeByLex(k1, ZRange.gte("2")).toListL //counts alpha. members too
+        rangeLtA <- sortedSet.zRangeByLex(k1, ZRange.lt("B")).toListL //includes numbers too
+      } yield {
+        //then
+        rangeAd should contain theSameElementsAs List("A", "B", "C", "D")
+        range24 should contain theSameElementsAs List("2", "3")
+        rangeGte2 should contain theSameElementsAs List("A", "B", "C", "D", "2", "3")
+        rangeLtA should contain theSameElementsAs List("A", "3", "2", "1")
+      }
+    }.runSyncUnsafe()
+  }
+
+  it should "zRangeByScore" in {
+    //given
+    val k1 = genRedisKey.sample.get
+    val vScoreA = VScore(2, "A")
+    val vScoreB = VScore(3, "B")
+    val vScoreC = VScore(5, "C")
+    val vScoreD = VScore(4, "D")
+    val vScore1 = VScore(6, "1")
+    val vScore2 = VScore(3, "2")
+    val vScore3 = VScore(1, "3")
+
+    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+      for {
+        //when
+        _ <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScoreC, vScoreD, vScore1, vScore2, vScore3)
+        rangeAll <- sortedSet.zRange(k1, ZRange.unbounded()).toListL
+        rangeEmpty <- sortedSet.zRange(k1, ZRange(8, 13)).toListL
+        range25 <- sortedSet.zRange(k1, ZRange(1, 5)).toListL
+        range34 <- sortedSet.zRange(k1, ZRange(2, 4)).toListL
+        lt4 <- sortedSet.zRange(k1, ZRange.lt(4)).toListL
+        gte4 <- sortedSet.zRange(k1, ZRange.gte(4)).toListL
+      } yield {
+        //then
+        rangeAll should contain theSameElementsAs List("A", "B", "C", "D", "1", "2", "3")
+        rangeEmpty should contain theSameElementsAs List.empty
+        range25 should contain theSameElementsAs List("A", "B", "C", "D", "2", "3")
+        range34 should contain theSameElementsAs List("A", "B", "D", "2")
+        lt4 should contain theSameElementsAs List("3", "2", "A", "B")
+        gte4 should contain theSameElementsAs List("D", "C", "1")
+      }
+    }.runSyncUnsafe()
+  }
+
+
+  it should "zRangeByScoreWithScores" in {
+    //given
+    val k1 = genRedisKey.sample.get
+    val vScoreA = VScore(2, "A")
+    val vScoreB = VScore(3, "B")
+    val vScoreC = VScore(5, "C")
+    val vScoreD = VScore(4, "D")
+    val vScore1 = VScore(6, "1")
+    val vScore2 = VScore(3, "2")
+    val vScore3 = VScore(1, "3")
+
+    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+      for {
+        //when
+        _ <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScoreC, vScoreD, vScore1, vScore2, vScore3)
+        rangeAll <- sortedSet.zRangeWithScores(k1, ZRange.unbounded()).toListL
+        rangeEmpty <- sortedSet.zRangeWithScores(k1, ZRange(8, 13)).toListL
+        range25 <- sortedSet.zRangeWithScores(k1, ZRange(1, 5)).toListL
+        range34 <- sortedSet.zRangeWithScores(k1, ZRange(2, 4)).toListL
+        lt4 <- sortedSet.zRangeWithScores(k1, ZRange.lt(4)).toListL
+        gte4 <- sortedSet.zRangeWithScores(k1, ZRange.gte(4)).toListL
+      } yield {
+        //then
+        rangeAll should contain theSameElementsAs List(vScoreA, vScoreB, vScoreC, vScoreD, vScore1, vScore2, vScore3)
+        rangeEmpty should contain theSameElementsAs List.empty
+        range25 should contain theSameElementsAs List(vScoreA, vScoreB, vScoreC, vScoreD, vScore2, vScore3)
+        range34 should contain theSameElementsAs List(vScoreA, vScoreB, vScoreD, vScore2)
+        lt4 should contain theSameElementsAs List(vScore3, vScore2, vScoreA, vScoreB)
+        gte4 should contain theSameElementsAs List(vScoreD, vScoreC, vScore1)
+      }
+    }.runSyncUnsafe()
+  }
+
+  "zRank" should "the index of a member in a sorted set" in {
+    //given
+    val k1 = genRedisKey.sample.get
+    val vScoreA = VScore(1, "A")
+    val vScoreB = VScore(2, "B")
+    val vScore1 = VScore(3, "1")
+    //since it is a number will be ranked first then `B` although having the same score
+    val vScore2 = VScore(2, "2")
+
+    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+      for {
+        //when
+        _ <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScore1, vScore2)
+        rA <- sortedSet.zRank(k1, "A")
+        rB <- sortedSet.zRank(k1, "B")
+        r1 <- sortedSet.zRank(k1, "1")
+        r2 <- sortedSet.zRank(k1, "2")
+        rEmpty <- sortedSet.zRank(k1, "5")
+      } yield {
+        //then
+        rA shouldBe Some(0L)
+        rB shouldBe Some(2L)
+        r1 shouldBe Some(3L)
+        r2 shouldBe Some(1L)
+        rEmpty shouldBe Option.empty
+      }
+    }.runSyncUnsafe()
+  }
+
+  it should "zRem" in {
+    //given
+    val k1 = genRedisKey.sample.get
+    val vScoreA = VScore(1, "A")
+    val vScoreB = VScore(3, "B")
+    val vScore1 = VScore(6, "1")
+    val vScore2 = VScore(3, "2")
+
+    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+      for {
+        //when
+        _ <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScore1, vScore2)
+        count1 <- sortedSet.zCard(k1)
+        removed1 <- sortedSet.zRem(k1, "A", "1")
+        count2 <- sortedSet.zCard(k1)
+        removed2 <- sortedSet.zRem(k1, "B", "2", "3")
+        count3 <- sortedSet.zCard(k1)
+      } yield {
+        //then
+        count1 shouldBe 4L
+        removed1 shouldBe 2L
+        count2 shouldBe 2L
+        removed2 shouldBe 2L
+        count3 shouldBe 0L
+      }
+    }.runSyncUnsafe()
+  }
+
+  it should "zRemRangeByLex" in {
+    //given
+    val k1 = genRedisKey.sample.get
+    val vScoreA = VScore(1, "A")
+    val vScoreB = VScore(3, "B")
+    val vScore1 = VScore(6, "1")
+    val vScore2 = VScore(3, "2")
+
+    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+      for {
+        //when
+        _ <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScore1, vScore2)
+        count1 <- sortedSet.zCard(k1)
+        removed1 <- sortedSet.zRemRangeByLex(k1, ZRange("A", "1"))
+        count2 <- sortedSet.zCard(k1)
+        removed2 <- sortedSet.zRem(k1, "B", "2", "3")
+        count3 <- sortedSet.zCard(k1)
+      } yield {
+        //then
+        count1 shouldBe 4L
+        removed1 shouldBe 2L
+        count2 shouldBe 2L
+        removed2 shouldBe 2L
+        count3 shouldBe 0L
+      }
+    }.runSyncUnsafe()
+  }
 
   it should "zRemRangeByRank" in {}
 

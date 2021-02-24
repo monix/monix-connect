@@ -19,17 +19,7 @@ package monix.connect.mongodb
 
 import cats.effect.Resource
 import com.mongodb.MongoClientSettings
-import monix.connect.mongodb.domain.{
-  MongoCollection,
-  MongoConnector,
-  Tuple2F,
-  Tuple3F,
-  Tuple4F,
-  Tuple5F,
-  Tuple6F,
-  Tuple7F,
-  Tuple8F
-}
+import monix.connect.mongodb.domain.{MongoCollection, MongoConnector, Tuple2F, Tuple3F, Tuple4F, Tuple5F, Tuple6F, Tuple7F, Tuple8F}
 import monix.eval.Task
 import com.mongodb.reactivestreams.client.{MongoClient, MongoClients, MongoDatabase}
 import monix.execution.annotations.UnsafeBecauseImpure
@@ -233,6 +223,7 @@ object MongoConnection {
     * @param collection describes the collection that wants to be used (db, collectionName, codecs...)
     * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]
     */
+  @UnsafeBecauseImpure
   def createUnsafe1[T1](client: MongoClient, collection: MongoCollection[T1]): Resource[Task, MongoConnector[T1]] =
     connection1[T1].createUnsafe(client, collection)
 
@@ -458,6 +449,7 @@ object MongoConnection {
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
     * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]
     */
+  @UnsafeBecauseImpure
   def createUnsafe3[T1, T2, T3](
     client: MongoClient,
     collections: Tuple3F[MongoCollection, T1, T2, T3]): Resource[Task, Tuple3F[MongoConnector, T1, T2, T3]] =
@@ -508,6 +500,7 @@ object MongoConnection {
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
     * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]
     */
+  @UnsafeBecauseImpure
   def createUnsafe4[T1, T2, T3, T4](
     client: MongoClient,
     collections: Tuple4F[MongoCollection, T1, T2, T3, T4]): Resource[Task, Tuple4F[MongoConnector, T1, T2, T3, T4]] =
@@ -558,6 +551,7 @@ object MongoConnection {
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
     * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]
     */
+  @UnsafeBecauseImpure
   def createUnsafe5[T1, T2, T3, T4, T5](client: MongoClient, collections: Tuple5F[MongoCollection, T1, T2, T3, T4, T5])
     : Resource[Task, Tuple5F[MongoConnector, T1, T2, T3, T4, T5]] =
     connection5.createUnsafe(client, collections)
@@ -662,6 +656,7 @@ object MongoConnection {
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
     * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]
     */
+  @UnsafeBecauseImpure
   def createUnsafe7[T1, T2, T3, T4, T5, T6, T7](
     client: MongoClient,
     collections: Tuple7F[MongoCollection, T1, T2, T3, T4, T5, T6, T7])
@@ -715,6 +710,7 @@ object MongoConnection {
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
     * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]
     */
+  @UnsafeBecauseImpure
   def createUnsafe8[T1, T2, T3, T4, T5, T6, T7, T8](
     client: MongoClient,
     collections: Tuple8F[MongoCollection, T1, T2, T3, T4, T5, T6, T7, T8])
