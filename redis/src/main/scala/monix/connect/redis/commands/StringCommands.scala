@@ -23,6 +23,7 @@ import monix.eval.Task
 import monix.execution.internal.InternalApi
 import monix.reactive.Observable
 
+import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 
 /**
@@ -246,18 +247,11 @@ final class StringCommands[K, V] private[redis] (reactiveCmd: RedisStringReactiv
     Task.fromReactivePublisher(reactiveCmd.setbit(key, offset, value)).map(_.map(_.longValue))
 
   /**
-    * Set the value and expiration of a key.
+    * Set the value and expiration of a key (in millis precision)
     * @return Simple string reply.
     */
-  def setEx(key: K, seconds: Long, value: V): Task[Unit] =
-    Task.fromReactivePublisher(reactiveCmd.setex(key, seconds, value)).void
-
-  /**
-    * Set the value and expiration in milliseconds of a key.
-    * @return String simple-string-reply
-    */
-  def pSetEx(key: K, milliseconds: Long, value: V): Task[Unit] =
-    Task.fromReactivePublisher(reactiveCmd.psetex(key, milliseconds, value)).void
+  def setEx(key: K, timeout: FiniteDuration, value: V): Task[Unit] =
+    Task.fromReactivePublisher(reactiveCmd.psetex(key, timeout.toMillis, value)).void
 
   /**
     * Set the value of a key, only if the key does not exist.
@@ -271,7 +265,7 @@ final class StringCommands[K, V] private[redis] (reactiveCmd: RedisStringReactiv
   /**
     * Overwrite part of a string at key starting at the specified offset.
     * @return The length of the string after it was modified by the command.
-    *         or `0` if the key does not exist.
+    *
     */
   def setRange(key: K, offset: Long, value: V): Task[Long] =
     Task.fromReactivePublisher(reactiveCmd.setrange(key, offset, value)).map(_.map(_.longValue).getOrElse(0L))

@@ -169,7 +169,7 @@ class StringCommandsSuite
     }.runSyncUnsafe()
   }
 
-  "get" should "get the value of a key" in {
+  "set and get" should "set and then get the value of a key respectively" in {
     //given
     val k: K = genRedisKey.sample.get
     val v: V = genRedisValue.sample.get
@@ -187,7 +187,7 @@ class StringCommandsSuite
     }.runSyncUnsafe()
   }
 
-  "getBit" should "getBit" in {
+  "setBit and getBit" should "set and get the values of a key respectively" in {
     //given
     val k: K = genRedisKey.sample.get
     val v: V = genRedisValue.sample.get
@@ -278,8 +278,9 @@ class StringCommandsSuite
   "incrByFloat" should "increment the float value of a key by the given amount" in {
     //given
     val k1: K = genRedisKey.sample.get
-    val n: Double = Gen.choose(0, 20).sample.get
-    val v1: Double = Gen.choose(n + 1, 100).sample.get
+    val n: Double = BigDecimal(Gen.choose(0, 20).sample.get).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
+    val v1: Double = BigDecimal(Gen.choose(n + 1, 100).sample.get).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
+
     //when
     utfConnection.use { cmd =>
       for {
@@ -295,6 +296,7 @@ class StringCommandsSuite
     //given
     val kV: List[(K, Option[V])] = List.fill(10)(genRedisKey, genRedisValue).map{ case (k, v) => (k.sample.get, Some(v.sample.get)) }
     val nonExistingKey = genRedisKey.sample.get
+
     //when
     utfConnection.use { cmd =>
       for {
@@ -308,22 +310,123 @@ class StringCommandsSuite
     }.runSyncUnsafe()
   }
 
-  "mSet" should "set multiple keys to multiple values" in {}
+  "mSet" should "set multiple keys to multiple values" in {
+    //given
+    val kV: Map[K, V] = List.fill(10)(genRedisKey, genRedisValue).map{ case (k, v) => (k.sample.get, v.sample.get) }.toMap
 
-  "mSetNx" should "set multiple keys to multiple values, only if none of the keys exist" in {}
+    //when
+    utfConnection.use { cmd =>
+      for {
+        _ <- cmd.string.mSet(kV)
+        result <- cmd.string.mGet(kV.keys.toList).toListL
+      } yield {
+        result should contain theSameElementsAs kV.mapValues(Some(_)).toList
+      }
+    }.runSyncUnsafe()
+  }
 
-  "set" should "set the string value of a key." in {}
+  "mSetNx" should "set multiple keys to multiple values, only if none of the keys exist" in {
+    //given
+    val k1: K = genRedisKey.sample.get
+    val k2: K = genRedisKey.sample.get
+    val k3: K = genRedisKey.sample.get
+    val k4: K = genRedisKey.sample.get
+    val map1: Map[K, V] = Map(k1 -> "1", k2 -> "2", k3 -> "3a")
+    val map2: Map[K, V] = Map(k3 -> "3b", k4 -> "4")
+    //when
+    utfConnection.use { cmd =>
+      for {
+        mSet1 <- cmd.string.mSetNx(map1)
+        mSet2 <- cmd.string.mSetNx(map2)
+        result <- cmd.string.mGet(k1, k2, k3, k4).toListL
+      } yield {
+        mSet1 shouldBe true
+        mSet2 shouldBe false
+        result should contain theSameElementsAs Map(k1 -> Some("1"), k2 -> Some("2"), k3 -> Some("3a"), k4 -> None).toList
+      }
+    }.runSyncUnsafe()
+  }
 
-  "setBit" should "sets or clears the bit at offset in the string value stored at key" in {}
+  "setEx" should "set the value and expiration of a key" in {
+    //given
+    val k1: K = genRedisKey.sample.get
+    val v1: V = genRedisValue.sample.get
 
-  "setEx" should "set the value and expiration of a key" in {}
+    //when
+    utfConnection.use { cmd =>
+      for {
+        _ <- cmd.string.setEx(k1, 1.seconds, v1)
+        ttl <- cmd.key.ttl(k1)
+        existsAfterTimeout <- Task.sleep(2.seconds) >> cmd.key.exists(k1)
+      } yield {
+        ttl.toSeconds should be < 2L
+        ttl.toMillis should be > 0L
+        existsAfterTimeout shouldBe false
+      }
+    }.runSyncUnsafe()
+  }
 
-  "pSetEx" should "set the value and expiration in milliseconds of a key." in {}
+  "setNx" should "set the value of a key, only if the key does not exist" in {
+    //given
+    val k1: K = genRedisKey.sample.get
+    val v1: V = genRedisValue.sample.get
+    val v2: V = genRedisValue.sample.get
 
-  "setNx" should "set the value of a key, only if the key does not exist" in {}
+    //when
+    utfConnection.use { cmd =>
+      for {
+        set1 <- cmd.string.setNx(k1, v1)
+        set2 <- cmd.string.setNx(k1, v2)
+        result <- cmd.string.get(k1)
+      } yield {
+        set1 shouldBe true
+        set2 shouldBe false
+        result shouldBe Some(v1)
+      }
+    }.runSyncUnsafe()
+  }
 
-  "setRange" should "overwrite part of a string at key starting at the specified offset" in {}
+  "setRange" should "overwrite part of a string at key starting at the specified offset" in {
+    //given
+    val k1: K = genRedisKey.sample.get
+    val v1: V = "thisIsSetRangeTest"
+    val expected: V = "thisIsSetRangeExample"
 
-  "strLen" should "get the length of the value stored in a key" in {}
+    //when
+    utfConnection.use { cmd =>
+      for {
+        set1 <- cmd.string.setRange(k1, 1L, v1)
+        set2 <- cmd.string.setRange(k1, 15L, "Example")
+        result <- cmd.string.get(k1)
+      } yield {
+        set1 shouldBe v1.length + 1L
+        set2 shouldBe expected.length + 1L
+        result shouldBe Some("\u0000" + expected)
+      }
+    }.runSyncUnsafe()
+  }
+
+  "strLen" should "get the length of the value stored in a key" in {
+    //given
+    val k1: K = genRedisKey.sample.get
+    val k2: K = genRedisKey.sample.get
+    val v1: V = genRedisValue.sample.get
+    val v2: V = genRedisValue.sample.get
+
+    //when
+    utfConnection.use { cmd =>
+      for {
+        _ <- cmd.string.set(k1, v1) >> cmd.string.set(k2, v2)
+        strLen1 <- cmd.string.strLen(k1)
+        strLen2 <- cmd.string.strLen(k2)
+        strLenEmpty <- cmd.string.strLen("non-existing-key")
+
+      } yield {
+        strLen1 shouldBe v1.length
+        strLen2 shouldBe v2.length
+        strLenEmpty shouldBe 0L
+      }
+    }.runSyncUnsafe()
+  }
 
 }
