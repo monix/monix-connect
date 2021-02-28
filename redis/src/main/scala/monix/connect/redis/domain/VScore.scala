@@ -20,6 +20,7 @@ package monix.connect.redis.domain
 import io.lettuce.core.ScoredValue
 
 import java.util.Optional
+import scala.util.Try
 
 case class VScore[V] private[redis] (val score: Double, val value: Option[V]) {
 
@@ -37,7 +38,7 @@ object VScore {
 
   def apply[V](score: Double, value: V) =  new VScore(score, Some(value))
 
-  def from[V](scoredValue: ScoredValue[V]) = new VScore[V](scoredValue.getScore, Option(scoredValue.getValue))
+  def from[V](scoredValue: ScoredValue[V]) = new VScore[V](scoredValue.getScore, Try(scoredValue.getValue).toOption)
 
   def empty[V] = new VScore(0, Option.empty[V])
 

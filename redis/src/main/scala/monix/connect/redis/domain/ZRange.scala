@@ -6,9 +6,11 @@ final class ZRange[T](private[redis] val underlying: R[T])
 
 object ZRange {
 
-  def apply[T](lower: T, upper: T): ZRange[T] = new ZRange(R.create(lower, upper))
+  def apply[T](lower: T, upper: T): ZRange[T] = new ZRange(R.from(R.Boundary.including(lower), R.Boundary.including(upper)))
 
   def create[T](lower: T, upper: T): ZRange[T] = new ZRange(R.create(lower, upper))
+
+
 
   def unbounded[T](): ZRange[T] = new ZRange(R.unbounded())
 

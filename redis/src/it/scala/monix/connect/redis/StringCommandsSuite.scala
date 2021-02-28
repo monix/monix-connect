@@ -36,7 +36,24 @@ class StringCommandsSuite
     lenght shouldBe value.length
   }
 
-  it should "append" in {}
+  "append" should "append a value to a key" in {
+    //given
+    val k1: K = genRedisKey.sample.get
+    val v1: String = genRedisValue.sample.get
+    val v2: String = genRedisValue.sample.get
+
+    //when
+    utfConnection.use { cmd =>
+     for {
+     append1 <- cmd.string.append(k1, v1)
+     append2 <- cmd.string.set(k1, v1) >> cmd.string.append(k1, v2)
+     } yield {
+       append1 shouldBe 0L
+       append2 shouldBe v1.length + v2.length
+     }
+
+    }.runSyncUnsafe()
+  }
 
   it should "bitCount" in {}
 

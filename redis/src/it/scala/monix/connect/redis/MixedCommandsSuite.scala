@@ -17,12 +17,12 @@ class MixedCommandsSuite extends AnyFlatSpec
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
 
-  s"$Redis" should "allow to composition of different Redis submodules" in {
+  "Redis" should "allow to composition of different Redis submodules" in {
     //given
     val k1: K = genRedisKey.sample.get
-    val value: String = genRedisValue.sample.get.toString
+    val value: String = genRedisValue.sample.get
     val k2: K = genRedisKey.sample.get
-    val values: List[String] = genRedisValues.sample.get.map(_.toString)
+    val values: List[String] = genRedisValues.sample.get
     val k3: K = genRedisKey.sample.get
 
     val (v: Option[String], len: Long, list, keys: List[String]) = {
