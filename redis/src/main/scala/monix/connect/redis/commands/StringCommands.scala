@@ -27,6 +27,7 @@ import scala.jdk.CollectionConverters._
 
 /**
   * @see The reference to lettuce api [[io.lettuce.core.api.reactive.RedisStringReactiveCommands]]
+  * Not supported: bitfield
   */
 final class StringCommands[K, V] private[redis] (reactiveCmd: RedisStringReactiveCommands[K, V]) {
 
@@ -55,32 +56,57 @@ final class StringCommands[K, V] private[redis] (reactiveCmd: RedisStringReactiv
       .map(_.map(_.longValue).getOrElse(0L))
 
   /**
-    * Find first bit set or clear in a string.
+    * Find the position of the first bit set or clear in a string.
     * @return The command returns the position of the first bit set to 1 or 0 according to the request.
     *         [[None]] if the key did not exist.
+    *         If we look for set bits (the bit argument is 1)
+    *         and the string is empty or composed of just zero bytes, -1 is returned.
+    *         If we look for clear bits (the bit argument is 0) and the string only contains bit set to 1,
+    *         the function returns the first bit not part of the string on the right.
+    *         So if the string is three bytes set to the value 0xff the command BITPOS key 0 will return 24,
+    *         since up to bit 23 all the bits are 1. Basically the function consider the right of the string
+    *         as padded with zeros if you look for clear bits and specify no range or the start argument only.
     */
-  def bitPos(key: K, state: Boolean): Task[Option[Long]] =
+  private def bitPos(key: K, state: Boolean): Task[Option[Long]] =
     Task
       .fromReactivePublisher(reactiveCmd.bitpos(key, state))
       .map(_.map(_.longValue))
 
-  /**
-    * Find first bit set or clear in a string.
-    * @return The command returns the position of the first bit set to 1 or 0 according to the request.
-    */
-  def bitPos(key: K, state: Boolean, start: Long): Task[Option[Long]] =
-    Task
-      .fromReactivePublisher(reactiveCmd.bitpos(key, state, start))
-      .map(_.map(_.longValue))
+  def bitPosOne(key: K): Task[Option[Long]] =
+    bitPos(key, state = true)
+
+  def bitPosZero(key: K): Task[Option[Long]] =
+    bitPos(key, state = false)
 
   /**
     * Find first bit set or clear in a string.
     * @return The command returns the position of the first bit set to 1 or 0 according to the request.
     */
-  def bitPos(key: K, state: Boolean, start: Long, end: Long): Task[Option[Long]] =
+  private def bitPos(key: K, state: Boolean, start: Long): Task[Option[Long]] =
+    Task
+      .fromReactivePublisher(reactiveCmd.bitpos(key, state, start))
+      .map(_.map(_.longValue))
+
+  private def bitPosZero(key: K, start: Long): Task[Option[Long]] =
+    bitPos(key, state = false, start)
+
+  private def bitPosOne(key: K, start: Long): Task[Option[Long]] =
+    bitPos(key, state = false, start)
+
+  /**
+    * Find first bit set or clear in a string.
+    * @return The command returns the position of the first bit set to 1 or 0 according to the request.
+    */
+  private def bitPos(key: K, state: Boolean, start: Long, end: Long): Task[Option[Long]] =
     Task
       .fromReactivePublisher(reactiveCmd.bitpos(key, state, start, end))
       .map(_.map(_.longValue))
+
+  def bitPosZero(key: K, start: Long, end: Long): Task[Option[Long]] =
+    bitPos(key, state = false, start, end)
+
+  def bitPosOne(key: K, start: Long, end: Long): Task[Option[Long]] =
+    bitPos(key, state = true, start, end)
 
   /**
     * Perform bitwise AND between strings.
@@ -184,7 +210,14 @@ final class StringCommands[K, V] private[redis] (reactiveCmd: RedisStringReactiv
   def mGet(keys: K*): Observable[(K, Option[V])] =
     Observable.fromReactivePublisher(reactiveCmd.mget(keys: _*)).map(kvToTuple)
 
-  /** todo - return Unit
+  /**
+    * Get the values of all the given keys.
+    * @return Values at the specified keys.
+    */
+  def mGet(keys: List[K]): Observable[(K, Option[V])] =
+    Observable.fromReactivePublisher(reactiveCmd.mget(keys: _*)).map(kvToTuple)
+
+  /**
     * Set multiple keys to multiple values.
     * @return Always [[Unit]] since `MSET` can't fail.
     */
@@ -201,7 +234,6 @@ final class StringCommands[K, V] private[redis] (reactiveCmd: RedisStringReactiv
 
   /**
     * Set the string value of a key.
-    * @return OK if SET was executed correctly.
     */
   def set(key: K, value: V): Task[Unit] =
     Task.fromReactivePublisher(reactiveCmd.set(key, value)).void
