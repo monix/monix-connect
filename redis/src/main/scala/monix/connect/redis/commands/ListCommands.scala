@@ -22,6 +22,8 @@ import monix.connect.redis.kvToTuple
 import monix.eval.Task
 import monix.reactive.Observable
 
+import scala.concurrent.duration.FiniteDuration
+
 class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[K, V]) {
 
   /**
@@ -30,8 +32,8 @@ class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[
     *         A two-element multi-bulk with the first element being the name of the key
     *         where an element was popped and the second element being the value of the popped element.
     */
-  def bLPop(timeout: Long, keys: K*): Task[Option[(K, Option[V])]] =
-    Task.fromReactivePublisher(reactiveCmd.blpop(timeout, keys: _*)).map(_.map(kvToTuple))
+  def bLPop(timeout: FiniteDuration, keys: K*): Task[Option[(K, Option[V])]] =
+    Task.fromReactivePublisher(reactiveCmd.blpop(timeout.toSeconds, keys: _*)).map(_.map(kvToTuple))
 
   /**
     * Remove and get the last element in a list, or block until one is available.
@@ -58,10 +60,28 @@ class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[
 
   /**
     * Insert an element before or after another element in a list.
-    * @return The length of the list after the insert operation, or 0 when the value pivot was not found.
+    * @return The length of the list after the insert operation, or -1 when the value pivot was not found.
     */
   def lInsert(key: K, before: Boolean, pivot: V, value: V): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.linsert(key, before, pivot, value)).map(_.map(_.longValue()) getOrElse (0L))
+    Task.fromReactivePublisher(reactiveCmd.linsert(key, before, pivot, value)).map(_.map(_.longValue()) getOrElse (-1L))
+
+  /**
+    * Insert an element before the pivot element in the list.
+    *
+    * @return `True` if the element was successfully inserted
+    *         `False` if either the key or the pivot element were not found.
+    */
+  def lInsertBefore(key: K, pivot: V, value: V): Task[Boolean] =
+    lInsert(key, before = true, pivot, value).map(_ > 0L)
+
+  /**
+    * Insert an element after the pivot element in the list.
+    *
+    * @return `True` if the element was successfully inserted
+    *         `False` if either the key or the pivot element were not found.
+    */
+  def lInsertAfter(key: K, pivot: V, value: V): Task[Boolean] =
+    lInsert(key, before = false, pivot, value).map(_ > 0L)
 
   /**
     * Get the length of a list.
@@ -82,6 +102,9 @@ class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[
     * @return The length of the list after the push operations.
     */
   def lPush(key: K, values: V*): Task[Long] =
+    Task.fromReactivePublisher(reactiveCmd.lpush(key, values: _*)).map(_.map(_.longValue).getOrElse(0L))
+
+  def lPush(key: K, values: List[V]): Task[Long] =
     Task.fromReactivePublisher(reactiveCmd.lpush(key, values: _*)).map(_.map(_.longValue).getOrElse(0L))
 
   /**
