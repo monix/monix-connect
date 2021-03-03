@@ -19,41 +19,23 @@ class ServerCommandsSuite
     utfConnection.use(cmd => cmd.server.flushAll()).runSyncUnsafe()
   }
 
-  it should "bgRewriteAOF" in {
+  it should "bgRewriteAOF" in {}
 
-  }
+  it should "bgSave" in {}
 
-  it should "bgSave" in {
+  it should "clientGetName" in {}
 
-  }
+  it should "clientSetName" in {}
 
-  it should "clientGetName" in {
+  it should "clientKill" in {}
 
-  }
+  it should "clientList" in {}
 
-  it should "clientSetName" in {
+  it should "commandCount" in {}
 
-  }
+  it should "configGet" in {}
 
-  it should "clientKill" in {
-
-  }
-
-  it should "clientList" in {
-
-  }
-
-  it should "commandCount" in {
-
-  }
-
-  it should "configGet" in {
-
-  }
-
-  it should "configResetStat" in {
-
-  }
+  it should "configResetStat" in {}
 
   it should "flushAll" in {
     //given
@@ -73,8 +55,6 @@ class ServerCommandsSuite
     existsAfterFlush shouldEqual false
   }
 
-  it should "flushDb" in {
-
-  }
+  it should "flushDb" in {}
 
 }

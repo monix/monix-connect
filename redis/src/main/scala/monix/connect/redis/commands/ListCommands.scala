@@ -105,7 +105,7 @@ class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[
     Task.fromReactivePublisher(reactiveCmd.lpush(key, values: _*)).map(_.map(_.longValue).getOrElse(0L))
 
   def lPush(key: K, values: List[V]): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.lpush(key, values: _*)).map(_.map(_.longValue).getOrElse(0L))
+    lPush(key, values: _*)
 
   /**
     * Prepend values to a list, only if the list exists.
@@ -113,6 +113,9 @@ class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[
     */
   def lPushX(key: K, values: V*): Task[Long] =
     Task.fromReactivePublisher(reactiveCmd.lpushx(key, values: _*)).map(_.map(_.longValue()).getOrElse(0L))
+
+  def lPushX(key: K, values: List[V]): Task[Long] =
+    lPush(key, values: _*)
 
   /**
     * Get a range of elements from a list.
@@ -130,10 +133,12 @@ class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[
 
   /**
     * Set the value of an element in a list by its index.
+    *
     * @return string reply
     */
-  def lSet(key: K, index: Long, value: V): Task[Unit] =
-    Task.fromReactivePublisher(reactiveCmd.lset(key, index, value)).void
+  def lSet(key: K, index: Long, value: V): Task[Boolean] =
+    Task.fromReactivePublisher(reactiveCmd.lset(key, index, value)).as(true)
+      .onErrorHandle(ex => !List("index out of range", "no such key").exists(ex.getMessage.contains(_)))
 
   /**
     * Trim a list to the specified range.
@@ -163,12 +168,18 @@ class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[
   def rPush(key: K, values: V*): Task[Long] =
     Task.fromReactivePublisher(reactiveCmd.rpush(key, values: _*)).map(_.map(_.longValue).getOrElse(0L))
 
+  def rPush(key: K, values: List[V]): Task[Long] =
+    rPush(key, values: _*)
+
   /**
     * Append values to a list, only if the list exists.
     * @return The length of the list after the push operation.
     */
   def rPushX(key: K, values: V*): Task[Long] =
     Task.fromReactivePublisher(reactiveCmd.rpushx(key, values: _*)).map(_.map(_.longValue).getOrElse(0L))
+
+  def rPushX(key: K, values: List[V]): Task[Long] = rPushX(key, values: _*)
+
 }
 
 object ListCommands {

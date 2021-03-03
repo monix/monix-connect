@@ -6,7 +6,7 @@ import monix.execution.schedulers.SchedulerService
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Ignore}
 
 import scala.concurrent.duration._
 
@@ -149,26 +149,235 @@ class ListCommandsSuite
     }.runSyncUnsafe()
   }
 
-  "lPop" should "lPop" in {}
+  "lPop" should "remove and get the first element in a list." in {
+    //given
+    val k: K = genRedisKey.sample.get
+    val values: List[String] = List("A", "B", "C")
 
-  "lPush" should "lPush" in {}
+    //when
+    utfConnection.use { cmd =>
+      for {
+        _ <- cmd.list.lPush(k, values)
+        a <- cmd.list.lPop(k)
+        b <- cmd.list.lPop(k)
+        c <- cmd.list.lPop(k)
+        none <- cmd.list.lPop(k)
+      } yield {
+        a shouldBe Some("C")
+        b shouldBe Some("B")
+        c shouldBe Some("A")
+        none shouldBe None
+      }
+    }.runSyncUnsafe()
+  }
 
-  "lPushX" should "lPushX" in {}
+  "lPush" should "prepend one or multiple values to a list" in {
+    //given
+    val k: K = genRedisKey.sample.get
+    val values: List[String] = List("A", "B", "C")
 
-  "lRange" should "lRange" in {}
+    //when
+    utfConnection.use { cmd =>
+      for {
+        size <- cmd.list.lPush(k, values)
+        elements <- cmd.list.lRange(k, 0, size).toListL
+      } yield {
+        size shouldBe values.size
+        elements shouldBe values.reverse
+      }
+    }.runSyncUnsafe()
+  }
 
-  "lRem" should "lRem" in {}
+  //todo it does not behaves as expected
+ //"lPushX" should "prepend values to a list, only if the list exists" in {
+ //  //given
+ //  val k: K = genRedisKey.sample.get
+ //  val values: List[String] = List("A", "B", "C")
 
-  "lSet" should "lSet" in {}
+ //  //when
+ //  utfConnection.use { cmd =>
+ //    for {
+ //      first <- cmd.list.lPushX(k, values)
+ //      _ <- cmd.list.lPush(k, ".")
+ //      second <- cmd.list.lPushX(k, values)
+ //      elements <- cmd.list.lRange(k, 0, second).toListL
+ //    } yield {
+ //      first shouldBe 0L
+ //      second shouldBe values.size
+ //      elements should contain theSameElementsAs values+:(".")
+ //    }
+ //  }.runSyncUnsafe()
+ //}
 
-  "lTrim" should "lTrim" in {}
+  "lRange" should "lRange" in {
+    //given
+    val k: K = genRedisKey.sample.get
+    val values: List[String] = List("A", "B", "C")
 
-  "rPop" should "rPop" in {}
+    //when
+    utfConnection.use { cmd =>
+      for {
+        size <- cmd.list.lPush(k, values)
+        elements <- cmd.list.lRange(k, 0, size).toListL
+      } yield {
+        size shouldBe values.size
+        elements should contain theSameElementsAs values
+      }
+    }.runSyncUnsafe()
+  }
 
-  "rPopLPush" should "rPopLPush" in {}
+  "lRem" should "remove elements from a list" in {
+    //given
+    val k: K = genRedisKey.sample.get
+    val values: List[String] = List("a", "a", "a", "b")
 
-  "rPush" should "rPush" in {}
+    //when
+    utfConnection.use { cmd =>
+      for {
+        size <- cmd.list.lPush(k, values)
+        removed <- cmd.list.lRem(k, 2, "a")
+        nonRemoved1 <- cmd.list.lRem(k, 2, "c")
+        nonRemoved2 <- cmd.list.lRem(k, 2, "c")
+        elements <- cmd.list.lRange(k, 0, size).toListL
+      } yield {
+        size shouldBe values.size
+        removed shouldBe 2L
+        nonRemoved1 shouldBe 0L
+        nonRemoved2 shouldBe 0L
+        elements should contain theSameElementsAs  List("a", "b")
+      }
+    }.runSyncUnsafe()
+  }
 
-  "rPushX" should "rPushX" in {}
+  "lSet" should "set the value of an element in a list by its index" in {
+    //given
+    val k: K = genRedisKey.sample.get
+    val values: List[String] = List("a", "a", "a", "d")
+
+    //when
+    utfConnection.use { cmd =>
+      for {
+        _ <- cmd.list.lPush(k, values)
+        set1 <- cmd.list.lSet(k, 1, "b")
+        set2 <- cmd.list.lSet(k, 2, "c")
+        isIndexOutOfRange <- cmd.list.lSet(k, 10, "out-of-range")
+        notExistingKey <- cmd.list.lSet("not-existing-key", 0, "out-of-range")
+        elements <- cmd.list.lRange(k, 0, values.size).toListL
+      } yield {
+        set1 shouldBe true
+        set2 shouldBe true
+        isIndexOutOfRange shouldBe false
+        notExistingKey shouldBe false
+        elements should contain theSameElementsAs List("a", "b", "c", "d")
+      }
+    }.runSyncUnsafe()
+  }
+
+  "lTrim" should "trim a list to the specified range" in {
+    //given
+    val k: K = genRedisKey.sample.get
+    val values: List[String] = List("a", "b", "c", "d", "e", "f", "g")
+
+    //when
+    utfConnection.use { cmd =>
+      for {
+        _ <- cmd.list.lPush(k, values)
+        _ <- cmd.list.lTrim(k, 1, 4)
+        firstTrim <- cmd.list.lRange(k, 0, values.size).toListL
+        _ <- cmd.list.lTrim(k, 0, 1)
+        secondTrim <- cmd.list.lRange(k, 0, values.size).toListL
+        _ <- cmd.list.lTrim(k, 0, 1)
+        thirdTrim <- cmd.list.lRange(k, 0, values.size).toListL
+        _ <- cmd.list.lTrim(k, 5, 10)
+        fourthTrim <- cmd.list.lRange(k, 0, values.size).toListL
+      } yield {
+        firstTrim should contain theSameElementsAs List("f", "e", "d", "c")
+        secondTrim should contain theSameElementsAs List("f", "e")
+        thirdTrim should contain theSameElementsAs List("f", "e")
+        fourthTrim should contain theSameElementsAs List.empty
+      }
+    }.runSyncUnsafe()
+  }
+
+  "rPop" should "remove and get the last element in a list" in {
+    //given
+    val k: K = genRedisKey.sample.get
+    val values: List[String] = List("A", "B", "C")
+
+    //when
+    utfConnection.use { cmd =>
+      for {
+        _ <- cmd.list.rPush(k, values)
+        a <- cmd.list.rPop(k)
+        b <- cmd.list.rPop(k)
+        c <- cmd.list.rPop(k)
+        none <- cmd.list.rPop(k)
+      } yield {
+        a shouldBe Some("C")
+        b shouldBe Some("B")
+        c shouldBe Some("A")
+        none shouldBe None
+      }
+    }.runSyncUnsafe()
+  }
+
+  "rPopLPush" should "rPopLPush" in {
+    //given
+    val k: K = genRedisKey.sample.get
+    val values: List[String] = List("A", "B", "C")
+
+    //when
+    utfConnection.use { cmd =>
+      for {
+        _ <- cmd.list.lPush(k, values)
+        a <- cmd.list.rPop(k)
+        b <- cmd.list.rPop(k)
+        c <- cmd.list.rPop(k)
+        none <- cmd.list.rPop(k)
+      } yield {
+        a shouldBe Some("A")
+        b shouldBe Some("B")
+        c shouldBe Some("C")
+        none shouldBe None
+      }
+    }.runSyncUnsafe()
+  }
+
+  "rPush" should "append one or multiple values to a list" in {
+    //given
+    val k: K = genRedisKey.sample.get
+    val values: List[String] = List("A", "B", "C")
+
+    //when
+    utfConnection.use { cmd =>
+      for {
+        size <- cmd.list.rPush(k, values)
+        elements <- cmd.list.lRange(k, 0, size).toListL
+      } yield {
+        size shouldBe values.size
+        elements shouldBe values
+      }
+    }.runSyncUnsafe()
+  }
+
+  "rPushX" should "rPushX" in {
+    //given
+    val k: K = genRedisKey.sample.get
+    val values: List[String] = List("A", "B", "C")
+
+    //when
+    utfConnection.use { cmd =>
+      for {
+        first <- cmd.list.rPushX(k, values)
+        _ <- cmd.list.rPush(k, ".")
+        second <- cmd.list.rPushX(k, values)
+        elements <- cmd.list.lRange(k, 0, second).toListL
+      } yield {
+        first shouldBe 0L
+        second shouldBe values.size + 1
+        elements should contain theSameElementsAs (".") :: values
+      }
+    }.runSyncUnsafe()
+  }
 
 }
