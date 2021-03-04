@@ -20,37 +20,136 @@ class SetCommandsSuite
     utfConnection.use(cmd => cmd.server.flushAll()).runSyncUnsafe()
   }
 
-  it should "sAdd" in {}
+  "sAdd" should "add one or more members to a set" in {
+    //given
+    val k1: K = genRedisKey.sample.get
+    val k2: K = genRedisKey.sample.get
+    val values: List[V] = genRedisValues.sample.get
 
-  it should "sCard" in {}
+    //when
+    utfConnection.use { cmd =>
+      for {
+        one <- cmd.set.sAdd(k1, values.head)
+        size <- cmd.set.sAdd(k2, values: _*)
+        members <- cmd.set.sMembers(k2).toListL
+      } yield {
+        //then
+        one shouldBe 1L
+        size shouldBe values.size
+        members should contain theSameElementsAs values
+      }
+    }.runSyncUnsafe()
+  }
 
-  it should "sDiff" in {}
+  "sCard" should "get the number of members in a set" in {
+    //given
+    val k: K = genRedisKey.sample.get
+    val values: List[V] = genRedisValues.sample.get
 
-  it should "sDiffStore" in {}
+    //when
+    utfConnection.use { cmd =>
+      for {
+        size <- cmd.set.sAdd(k, values: _*)
+        card <- cmd.set.sCard(k)
+      } yield {
+        card shouldBe values.size
+        card shouldBe size
+      }
+    }.runSyncUnsafe()
+  }
 
-  it should "sInter" in {}
+  "sDiff" should "subtract the first set with the successive ones" in {
+    //given
+    val k1: K = genRedisKey.sample.get
+    val k2: K = genRedisKey.sample.get
+    val set1: List[V] = List("a", "b", "c", "d")
+    val set2: List[V] = List("c", "d", "e")
 
-  it should "sInterStore" in {}
+    //when
+    utfConnection.use { cmd =>
+      for {
+        size1 <- cmd.set.sAdd(k1, set1)
+        size2 <- cmd.set.sAdd(k2, set2)
+        diff <- cmd.set.sDiff(k1, k2).toListL
+        all <- cmd.set.sDiff(k1, List.empty).toListL
+      } yield {
+        size1 shouldBe set1.size
+        size2 shouldBe set2.size
+        diff shouldBe List("a", "b")
+        all should contain theSameElementsAs set1
+      }
+    }.runSyncUnsafe()
+  }
 
-  it should "sIsMember" in {}
+  "sDiffStore" should "sDiffStore" in {
+    //given
+    val k1: K = genRedisKey.sample.get
+    val k2: K = genRedisKey.sample.get
+    val kDiff: K = genRedisKey.sample.get
+    val set1: List[V] = List("a", "b", "c", "d")
+    val set2: List[V] = List("c", "d", "e")
 
-  it should "sMove" in {}
+    //when
+    utfConnection.use { cmd =>
+      for {
+        size1 <- cmd.set.sAdd(k1, set1)
+        size2 <- cmd.set.sAdd(k2, set2)
+        diffSize <- cmd.set.sDiffStore(kDiff, k1, k2)
+        all <- cmd.set.sDiffStore(".", k1, List.empty)
+        members <- cmd.set.sMembers(kDiff).toListL
+      } yield {
+        size1 shouldBe set1.size
+        size2 shouldBe set2.size
+        diffSize shouldBe 2
+        all shouldBe set1.size
+        members shouldBe List("a", "b")
+      }
+    }.runSyncUnsafe()
+  }
 
-  it should "sMembers" in {}
+  "sInter" should "" in {
+    //given
+    val k1: K = genRedisKey.sample.get
+    val k2: K = genRedisKey.sample.get
+    val kDiff: K = genRedisKey.sample.get
+    val set1: List[V] = List("a", "b", "c")
+    val set2: List[V] = List("b", "c", "d")
 
-  it should "sPop" in {}
+    //when
+    utfConnection.use { cmd =>
+      for {
+        size1 <- cmd.set.sAdd(k1, set1)
+        size2 <- cmd.set.sAdd(k2, set2)
+        intersec <- cmd.set.sInter(k1, k2).toListL
+      } yield {
+        size1 shouldBe set1.size
+        size2 shouldBe set2.size
+        intersec shouldBe List("b", "c")
+      }
+    }.runSyncUnsafe()
+  }
 
-  it should "sRandMember" in {}
+  "sInterStore" should "sInterStore" in {}
 
-  it should "sRandMember" in {}
+  "sIsMember" should "sIsMember" in {}
 
-  it should "sRem" in {}
+  "sMove" should "sMove" in {}
 
-  it should "sUnion" in {}
+  "sMembers" should "sMembers" in {}
 
-  it should "sUnionStore" in {}
+  "sPop" should "sPop" in {}
 
-  it should "sScan" in {}
+  "sRandMember" should "sRandMember" in {}
+
+  it should "sRandMesmber" in {}
+
+  "sRem" should "sRem" in {}
+
+  "sUnion" should "sUnion" in {}
+
+  "sUnionStore" should "sUnionStore" in {}
+
+  "sScan" should "sScan" in {}
 
   it should "allow to compose nice for comprehensions" in {
     //given
@@ -62,7 +161,7 @@ class SetCommandsSuite
 
     //when
     val (size1, size2, moved) = {
-      utfConnection.use { case RedisCmd(_, _, _, _, set ,_, _)  =>
+      utfConnection.use { case RedisCmd(_, _, _, _, set, _, _) =>
         for {
           size1 <- set.sAdd(k1, m1: _*)
           size2 <- set.sAdd(k2, m2: _*)
@@ -76,12 +175,12 @@ class SetCommandsSuite
 
     //and
     val (s1, s2, union, diff) = {
-      utfConnection.use { case RedisCmd(_, _, _, _, set ,_, _)  =>
+      utfConnection.use { case RedisCmd(_, _, _, _, set, _, _) =>
         for {
-          s1    <- set.sMembers(k1).toListL
-          s2    <- set.sMembers(k2).toListL
+          s1 <- set.sMembers(k1).toListL
+          s2 <- set.sMembers(k2).toListL
           union <- set.sUnion(k1, k2).toListL
-          diff  <- set.sDiff(k3, k1).toListL
+          diff <- set.sDiff(k3, k1).toListL
         } yield (s1, s2, union, diff)
       }.runSyncUnsafe()
     }
@@ -99,7 +198,6 @@ class SetCommandsSuite
     diff should contain theSameElementsAs List(m1.head)
     //the difference between the k3 and k1 is equal to the element that was moved
   }
-
 
 
 }

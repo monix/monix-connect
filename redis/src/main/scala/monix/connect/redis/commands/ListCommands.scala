@@ -24,32 +24,13 @@ import monix.reactive.Observable
 
 import scala.concurrent.duration.FiniteDuration
 
+/**
+  * Non supported - `bLPop`, `bRPop`, `bRPopLPush`.
+  * @param reactiveCmd
+  * @tparam K
+  * @tparam V
+  */
 class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[K, V]) {
-
-  /**
-    * Remove and get the first element in a list, or block until one is available.
-    * @return A null multi-bulk when no element could be popped and the timeout expired.
-    *         A two-element multi-bulk with the first element being the name of the key
-    *         where an element was popped and the second element being the value of the popped element.
-    */
-  def bLPop(timeout: FiniteDuration, keys: K*): Task[Option[(K, Option[V])]] =
-    Task.fromReactivePublisher(reactiveCmd.blpop(timeout.toSeconds, keys: _*)).map(_.map(kvToTuple))
-
-  /**
-    * Remove and get the last element in a list, or block until one is available.
-    * @return A null multi-bulk when no element could be popped and the timeout expired.
-    *          A two-element multi-bulk with the first element being the name of the key
-    *          where an element was popped and the second element being the value of the popped element.
-    */
-  def bRPop(timeout: Long, keys: K*): Task[Option[(K, Option[V])]] =
-    Task.fromReactivePublisher(reactiveCmd.brpop(timeout, keys: _*)).map(_.map(kvToTuple))
-
-  /**
-    * Pop a value from a list, push it to another list and return it; or block until one is available.
-    * @return The element being popped from source and pushed to destination.
-    */
-  def bRPopLPush(timeout: Long, source: K, destination: K): Task[Option[V]] =
-    Task.fromReactivePublisher(reactiveCmd.brpoplpush(timeout, source, destination))
 
   /**
     * Get an element from a list by its index.
@@ -154,8 +135,9 @@ class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[
   def rPop(key: K): Task[Option[V]] =
     Task.fromReactivePublisher(reactiveCmd.rpop(key))
 
+  //todo create PR for lettuce
   /**
-    * Remove the last element in a list, append it to another list and return it.
+    * Remove the last element in a list, prepend it to another list and return it.
     * @return The element being popped and pushed.
     */
   def rPopLPush(source: K, destination: K): Task[Option[V]] =

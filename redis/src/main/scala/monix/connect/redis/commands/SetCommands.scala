@@ -21,6 +21,8 @@ import io.lettuce.core.api.reactive.RedisSetReactiveCommands
 import monix.eval.Task
 import monix.reactive.Observable
 
+import scala.annotation.tailrec
+
 /**
   * @see The reference to lettuce api [[io.lettuce.core.api.reactive.RedisSetReactiveCommands]]
   */
@@ -34,6 +36,9 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
   def sAdd(key: K, members: V*): Task[Long] =
     Task.fromReactivePublisher(reactiveCmd.sadd(key, members: _*)).map(_.map(_.longValue).getOrElse(0L))
 
+  def sAdd(key: K, members: List[V]): Task[Long] = sAdd(key, members: _*)
+
+
   /**
     * Get the number of members in a set.
     * @return The cardinality (number of elements) of the set, 0 if the key does not exist.
@@ -42,18 +47,24 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
     Task.fromReactivePublisher(reactiveCmd.scard(key)).map(_.map(_.longValue).getOrElse(0L))
 
   /**
-    * Subtract multiple sets.
+    * Subtract the first set with all the successive sets.
+    *
     * @return A list with members of the resulting set.
     */
-  def sDiff(keys: K*): Observable[V] =
-    Observable.fromReactivePublisher(reactiveCmd.sdiff(keys: _*))
+  def sDiff(first: K, rest: K*): Observable[V] = {
+    Observable.fromReactivePublisher(reactiveCmd.sdiff((rest.+:(first)):_ *))
+  }
+
+  def sDiff(first: K, rest: List[K]): Observable[V] = sDiff(first, rest: _*)
 
   /**
     * Subtract multiple sets and store the resulting set in a key.
     * @return The number of elements in the resulting set.
     */
-  def sDiffStore(destination: K, keys: K*): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.sdiffstore(destination, keys: _*)).map(_.map(_.longValue).getOrElse(0L))
+  def sDiffStore(destination: K, first: K, rest: K*): Task[Long] =
+    Task.fromReactivePublisher(reactiveCmd.sdiffstore(destination, (rest.+:(first)):_ *)).map(_.map(_.longValue).getOrElse(0L))
+
+  def sDiffStore(destination: K, first: K, rest: List[K]): Task[Long] = sDiffStore(destination, first, rest: _*)
 
   /**
     * Intersect multiple sets.
@@ -61,6 +72,8 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
     */
   def sInter(keys: K*): Observable[V] =
     Observable.fromReactivePublisher(reactiveCmd.sinter(keys: _*))
+
+  def sInter(keys: List[K]): Observable[V] = sInter(keys: _*)
 
   /**
     * Intersect multiple sets and store the resulting set in a key.
