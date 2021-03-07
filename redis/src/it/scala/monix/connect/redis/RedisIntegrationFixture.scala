@@ -15,6 +15,12 @@ trait RedisIntegrationFixture {
 
   val genRedisKey: Gen[K] = Gen.identifier.map(_.take(10))
   val genRedisValue: Gen[V] = Gen.choose(0, 10000).map(_.toString)
+
+  val genKv: Gen[(K,V)] = for {
+    key <- genRedisKey
+    value <- genRedisValue
+  } yield (key, value)
+
   val genRedisValues: Gen[List[V]] = for {
     n      <- Gen.chooseNum(2, 10)
     values <- Gen.listOfN(n, Gen.choose(0, 10000))

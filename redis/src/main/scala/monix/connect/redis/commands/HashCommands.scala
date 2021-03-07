@@ -57,7 +57,8 @@ final class HashCommands[K, V] private[redis](reactiveCmd: RedisHashReactiveComm
 
   /**
     * Increment the integer value of a hash field by the given number.
-    * @return The value at field after the increment operation.
+    * @return `Some` value of the field after the increment operation.
+    *         `None` when the value in the field was not a number.
     */
   def hIncrBy(key: K, field: K, amount: Long): Task[Option[Long]] =
     Task.fromReactivePublisher(reactiveCmd.hincrby(key, field, amount)).map(_.map(_.longValue))
@@ -65,10 +66,13 @@ final class HashCommands[K, V] private[redis](reactiveCmd: RedisHashReactiveComm
 
   /**
     * Increment the float value of a hash field by the given amount.
-    * @return The value of field after the increment.
+    * @return `Some` value of the field after the increment operation.
+    *         `None` when the value in the field was not a number.
+    *
     */
   def hIncrBy(key: K, field: K, amount: Double): Task[Option[Double]] =
     Task.fromReactivePublisher(reactiveCmd.hincrbyfloat(key, field, amount)).map(_.map(_.doubleValue))
+      .onErrorHandleWith(ex => if(ex.getMessage.contains(" not a float")) Task.now(None) else Task.raiseError(ex))
 
   /**
     * Get all the fields and values in a hash.

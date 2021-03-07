@@ -1,6 +1,7 @@
 package monix.connect.redis
 
 import monix.execution.Scheduler.Implicits.global
+import org.scalacheck.Gen
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -115,7 +116,7 @@ class HashCommandsIntegrationTest
     r shouldBe None
   }
 
-  it should "incr by" in {
+  "hIncrBy" should "increment the integer value of a hash field by the given number" in {
     //given
     val k: K = genRedisKey.sample.get
     val f1: K = genRedisKey.sample.get
@@ -133,7 +134,7 @@ class HashCommandsIntegrationTest
         _ <- cmd.hash.hSet(k, f2, "someString")
         incNonNumber <- cmd.hash.hIncrBy(k, f2, 1)
         incNotExistingField <- cmd.hash.hIncrBy(k, "none", 1)
-        incNotExistingKey <- cmd.hash.hIncrBy("none", "none", 0)
+        incNotExistingKey <- cmd.hash.hIncrBy("none", "none", 4)
       } yield {
         //then
         inc0 shouldBe v.toLongOption
@@ -141,47 +142,84 @@ class HashCommandsIntegrationTest
         inc2 shouldBe Some(4L)
         inc3 shouldBe Some(7L)
         incNonNumber shouldBe None
-        incNotExistingField shouldBe "1"
-        incNotExistingKey shouldBe None
+        incNotExistingField shouldBe Some(1)
+        incNotExistingKey shouldBe Some(4)
       }
     }.runSyncUnsafe()
   }
 
-  it should "incr by double" in {
+  it should "increment the float value of a hash field by the given amount " in {
     //given
     val k: K = genRedisKey.sample.get
-    val f: K = genRedisKey.sample.get
+    val f1: K = genRedisKey.sample.get
+    val f2: K = genRedisKey.sample.get
     val v: V = "1"
 
     utfConnection.use { cmd =>
       //when
       for {
-        _ <- cmd.hash.hSet(k, f, v)
-        inc0 <- cmd.hash.hIncrBy(k, f, 0.0)
-        inc1 <- cmd.hash.hIncrBy(k, f, 1.1)
-        inc2 <- cmd.hash.hIncrBy(k, f, 2.1)
-        inc3 <- cmd.hash.hIncrBy(k, f, 3.1)
-        incNone <- cmd.hash.hIncrBy(k, "none", 0.0)
+        _ <- cmd.hash.hSet(k, f1, v)
+        inc0 <- cmd.hash.hIncrBy(k, f1, 0.0)
+        inc1 <- cmd.hash.hIncrBy(k, f1, 1.1)
+        inc2 <- cmd.hash.hIncrBy(k, f1, 2.1)
+        inc3 <- cmd.hash.hIncrBy(k, f1, 3.1)
+        _ <- cmd.hash.hSet(k, f2, "someString")
+        incNonNumber <- cmd.hash.hIncrBy(k, f2, 1.1)
+        incNotExistingField <- cmd.hash.hIncrBy(k, "none", 1.1)
+        incNotExistingKey <- cmd.hash.hIncrBy("none", "none", 0.1)
       } yield {
         //then
         inc0 shouldBe v.toDoubleOption
         inc1 shouldBe Some(2.1)
         inc2 shouldBe Some(4.2)
         inc3 shouldBe Some(7.3)
-        incNone shouldBe None
+        incNonNumber shouldBe None
+        incNotExistingField shouldBe Some(1.1)
+        incNotExistingKey shouldBe Some(0.1)
       }
     }.runSyncUnsafe()
   }
 
-  it should "h get all" in {
+  "hGetAll" should "get all the fields and values in a hash" in {
+    //given
+    val k: K = genRedisKey.sample.get
+    val mSet = Gen.mapOfN(10, genKv).sample.get
 
+    utfConnection.use { cmd =>
+      //when
+      for {
+        _ <- cmd.hash.hMSet(k, mSet)
+        getAll <- cmd.hash.hGetAll(k).toListL
+        emptyHash <- cmd.hash.hGetAll("none").toListL
+      } yield {
+        //then
+        getAll should contain theSameElementsAs mSet.toList.map{ case (k, v) => (k, Some(v)) }
+        emptyHash shouldBe List.empty
+      }
+    }.runSyncUnsafe()
   }
 
-  it should "h keys" in {
+  "hKeys" should "get all the fields in a hash" in {
+    //given
+    val k: K = genRedisKey.sample.get
+    val mSet = Gen.mapOf(genKv).sample.get
 
+    utfConnection.use { cmd =>
+      //when
+      for {
+        _ <- cmd.hash.hMSet(k, mSet)
+        keys <- cmd.hash.hKeys(k).toListL
+        emptyKeys <- cmd.hash.hKeys("none").toListL
+
+      } yield {
+        //then
+        keys should contain theSameElementsAs mSet.toList.map(_._1)
+        emptyKeys shouldBe List.empty
+      }
+    }.runSyncUnsafe()
   }
 
-  "hLen" should "het the number of hash fields within a key" in {
+  "hLen" should "set the number of hash fields within a key" in {
     //given
     val k1: K = genRedisKey.sample.get
     val f1: K = genRedisKey.sample.get
@@ -203,7 +241,6 @@ class HashCommandsIntegrationTest
         finalLen shouldBe 0L
       }
     }.runSyncUnsafe()
-
   }
 
   "hMSet" should "get the specified hash keys and values" in {
@@ -226,16 +263,7 @@ class HashCommandsIntegrationTest
     }.runSyncUnsafe()
   }
 
-  it should "hm set" in {
-
-  }
-
-  //todo
-  it should "hscan" in {
-
-  }
-
-  it should "hset" in {
+  "hSet" should "set the string value of a hash field." in {
     //given
     val key: K = genRedisKey.sample.get
     val field: K = genRedisKey.sample.get
@@ -251,8 +279,28 @@ class HashCommandsIntegrationTest
     r shouldBe Some(value)
   }
 
-  //todo test
-  it should "hset nx" in {}
+  "hSetNx" should "set the value of a hash field, only if the field does not exist" in {
+    //given
+    val key: K = genRedisKey.sample.get
+    val field: K = genRedisKey.sample.get
+    val value: V= genRedisValue.sample.get
+
+    //when
+    utfConnection.use(cmd =>
+      for {
+        firstSet <- cmd.hash.hSetNx(key, field, value)
+        secondSet <- cmd.hash.hSetNx(key, field, value)
+        get <- cmd.hash.hGet(key, field)
+        getNone <- cmd.hash.hGet(key, "none")
+      } yield {
+        //then
+        firstSet shouldBe true
+        secondSet shouldBe false
+        get shouldBe Some(value)
+        getNone shouldBe None
+      }
+    ).runSyncUnsafe()
+  }
 
   "hStrLen" should "get the string length of the field value" in {
     //given
@@ -305,6 +353,5 @@ class HashCommandsIntegrationTest
         }
     }.runSyncUnsafe()
   }
-
 
 }

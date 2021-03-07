@@ -27,9 +27,20 @@ import scala.jdk.CollectionConverters._
 
 case class ClusterConnection(uris: List[RedisUri]) extends RedisConnection {
 
+  /**
+    * Connect asynchronously to a Redis Cluster.
+    * Encodes and decodes [[String]] keys and values in `UTF` Charset.
+    *
+    * A default connection is created to the node with the lowest latency
+    * Keyless commands are send to the default connection
+    * Single-key keyspace commands are routed to the appropriate node
+    * Multi-key keyspace commands require the same slot-hash and are routed to the appropriate node
+    *
+    * @return
+    */
   def connectUtf: Resource[Task, RedisCmd[String, String]] = {
     RedisCmd
-      .connectResource[String, String, RedisClusterConnection[String, String]] {
+      .createResource[String, String, RedisClusterConnection[String, String]] {
         for {
           client <- Task.now(RedisClusterClient.create(uris.map(_.toJava).asJava))
           _ <- Task.now(client.getPartitions)
@@ -41,7 +52,7 @@ case class ClusterConnection(uris: List[RedisUri]) extends RedisConnection {
 
   def connectUtf[K, V](implicit keyCodec: Codec[K, String], valueCodec: Codec[V, String]): Resource[Task, RedisCmd[K, V]] = {
     RedisCmd
-      .connectResource[K, V, RedisClusterConnection[K, V]] {
+      .createResource[K, V, RedisClusterConnection[K, V]] {
         for {
           client <- Task.now(RedisClusterClient.create(uris.map(_.toJava).asJava))
           _ <- Task.now(client.getPartitions)
@@ -55,7 +66,7 @@ case class ClusterConnection(uris: List[RedisUri]) extends RedisConnection {
 
   def connectByteArray: Resource[Task, RedisCmd[Array[Byte], Array[Byte]]] = {
     RedisCmd
-      .connectResource[Array[Byte], Array[Byte], RedisClusterConnection[Array[Byte], Array[Byte]]] {
+      .createResource[Array[Byte], Array[Byte], RedisClusterConnection[Array[Byte], Array[Byte]]] {
         for {
           client <- Task.now(RedisClusterClient.create(uris.map(_.toJava).asJava))
           _ <- Task.now(client.getPartitions)
@@ -71,7 +82,7 @@ case class ClusterConnection(uris: List[RedisUri]) extends RedisConnection {
                               implicit keyCodec: Codec[K, Array[Byte]],
                               valueCodec: Codec[V, Array[Byte]]): Resource[Task, RedisCmd[K, V]] = {
     RedisCmd
-      .connectResource[K, V, RedisClusterConnection[K, V]] {
+      .createResource[K, V, RedisClusterConnection[K, V]] {
         for {
           client <- Task.now(RedisClusterClient.create(uris.map(_.toJava).asJava))
           _ <- Task.eval(client.getPartitions)

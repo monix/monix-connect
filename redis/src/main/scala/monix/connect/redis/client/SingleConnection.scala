@@ -31,7 +31,7 @@ case class SingleConnection(uri: RedisUri) extends RedisConnection {
     */
   def connectUtf: Resource[Task, RedisCmd[String, String]] = {
     RedisCmd
-      .connectResource[String, String, StatefulRedisConnection[String, String]] {
+      .createResource[String, String, StatefulRedisConnection[String, String]] {
         for {
           client <- Task.evalAsync(RedisClient.create(uri.toJava))
           conn <- Task.from(client.connectAsync(StringCodec.UTF8, uri.toJava).toCompletableFuture)
@@ -52,7 +52,7 @@ case class SingleConnection(uri: RedisUri) extends RedisConnection {
                         implicit keyCodec: Codec[K, String],
                         valueCodec: Codec[V, String]): Resource[Task, RedisCmd[K, V]] = {
     RedisCmd
-      .connectResource[K, V, StatefulRedisConnection[K, V]] {
+      .createResource[K, V, StatefulRedisConnection[K, V]] {
         for {
           client <- Task.evalAsync(RedisClient.create(uri.toJava))
           conn <- Task.from(client.connectAsync(Codec(keyCodec, valueCodec, StringCodec.UTF8), uri.toJava).toCompletableFuture)
@@ -67,7 +67,7 @@ case class SingleConnection(uri: RedisUri) extends RedisConnection {
     */
   def connectByteArray: Resource[Task, RedisCmd[Array[Byte], Array[Byte]]] = {
     RedisCmd
-      .connectResource[Array[Byte], Array[Byte], StatefulRedisConnection[Array[Byte], Array[Byte]]] {
+      .createResource[Array[Byte], Array[Byte], StatefulRedisConnection[Array[Byte], Array[Byte]]] {
         for {
           client <- Task.evalAsync(RedisClient.create(uri.toJava))
           conn <- Task.from {
@@ -90,7 +90,7 @@ case class SingleConnection(uri: RedisUri) extends RedisConnection {
   def connectByteArray[K, V](implicit keyCodec: Codec[K, Array[Byte]],
                               valueCodec: Codec[V, Array[Byte]]): Resource[Task, RedisCmd[K, V]] = {
     RedisCmd
-      .connectResource[K, V, StatefulRedisConnection[K, V]] {
+      .createResource[K, V, StatefulRedisConnection[K, V]] {
         for {
           client <- Task.evalAsync(RedisClient.create(uri.toJava))
           conn <- Task.from {
