@@ -38,7 +38,6 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
 
   def sAdd(key: K, members: Iterable[V]): Task[Long] = sAdd(key, members.toSeq: _*)
 
-
   /**
     * Get the number of members in a set.
     * @return The cardinality (number of elements) of the set, 0 if the key does not exist.
@@ -52,7 +51,7 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
     * @return A list with members of the resulting set.
     */
   def sDiff(first: K, rest: K*): Observable[V] = {
-    Observable.fromReactivePublisher(reactiveCmd.sdiff((rest.+:(first)):_ *))
+    Observable.fromReactivePublisher(reactiveCmd.sdiff((rest.+:(first)): _*))
   }
 
   def sDiff(first: K, rest: Iterable[K]): Observable[V] = sDiff(first, rest.toSeq: _*)
@@ -62,9 +61,12 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
     * @return The number of elements in the resulting set.
     */
   def sDiffStore(destination: K, first: K, rest: K*): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.sdiffstore(destination, (rest.+:(first)):_ *)).map(_.map(_.longValue).getOrElse(0L))
+    Task
+      .fromReactivePublisher(reactiveCmd.sdiffstore(destination, (rest.+:(first)): _*))
+      .map(_.map(_.longValue).getOrElse(0L))
 
-  def sDiffStore(destination: K, first: K, rest: Iterable[K]): Task[Long] = sDiffStore(destination, first, rest.toSeq: _*)
+  def sDiffStore(destination: K, first: K, rest: Iterable[K]): Task[Long] =
+    sDiffStore(destination, first, rest.toSeq: _*)
 
   /**
     * Intersect multiple sets.
@@ -144,7 +146,7 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
   def sRem(key: K, members: V*): Task[Long] =
     Task.fromReactivePublisher(reactiveCmd.srem(key, members: _*)).map(_.map(_.longValue).getOrElse(0L))
 
-  def sRem(key: K, members: Iterable[V]): Task[Long] = sRem(key, members.toSeq:_ *)
+  def sRem(key: K, members: Iterable[V]): Task[Long] = sRem(key, members.toSeq: _*)
 
   /**
     * Add multiple sets.

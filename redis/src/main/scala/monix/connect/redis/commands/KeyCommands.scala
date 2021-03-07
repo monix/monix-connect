@@ -75,27 +75,27 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
 
   /*
   /**
-    * Set the expiration date timeout for a key as UNIX timestamp with a precision of milliseconds.
-    *
-    * @note calling `EXPIRE/PEXPIRE` with a non-positive timeout or `EXPIREAT/PEXPIREAT` with a time
-    *       in the past will result in the key being deleted rather than expired.
-    * @return `true` if the timeout was set.
-    *         `false` if key does not exist or the timeout could not be set.
-    */
+   * Set the expiration date timeout for a key as UNIX timestamp with a precision of milliseconds.
+   *
+   * @note calling `EXPIRE/PEXPIRE` with a non-positive timeout or `EXPIREAT/PEXPIREAT` with a time
+   *       in the past will result in the key being deleted rather than expired.
+   * @return `true` if the timeout was set.
+   *         `false` if key does not exist or the timeout could not be set.
+   */
   def pExpireAt(key: K, timestamp: Date): Task[Boolean] =
     Task.fromReactivePublisher(reactiveCmd.expireat(key, timestamp)).map(_.exists(_.booleanValue))
 
   /**
-    * Set the expiration date timeout for a key as UNIX timestamp.
-    *
-    * @note calling `EXPIRE/PEXPIRE` with a non-positive timeout or `EXPIREAT/PEXPIREAT` with a time
-    *       in the past will result in the key being deleted rather than expired.
-    * @return `true` if the timeout was set.
-    *         `false` if key does not exist or the timeout could not be set.
-    */
+   * Set the expiration date timeout for a key as UNIX timestamp.
+   *
+   * @note calling `EXPIRE/PEXPIRE` with a non-positive timeout or `EXPIREAT/PEXPIREAT` with a time
+   *       in the past will result in the key being deleted rather than expired.
+   * @return `true` if the timeout was set.
+   *         `false` if key does not exist or the timeout could not be set.
+   */
   def pExpireAt(key: K, timestamp: Long): Task[Boolean] =
     Task.fromReactivePublisher(reactiveCmd.expireat(key, timestamp)).map(_.exists(_.booleanValue))
-*/
+   */
 
   /**
     * Find all keys matching the given pattern.
@@ -197,8 +197,8 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
   def ttl(key: K): Task[FiniteDuration] =
     Task
       .fromReactivePublisher(reactiveCmd.pttl(key))
-      .map(_.flatMap { millis => Try(Duration(millis, TimeUnit.MILLISECONDS)).toOption
-      }.getOrElse(Duration(-1, MILLISECONDS)))
+      .map(_.flatMap { millis => Try(Duration(millis, TimeUnit.MILLISECONDS)).toOption }
+        .getOrElse(Duration(-1, MILLISECONDS)))
 
   /**
     * Determine the type stored at key.

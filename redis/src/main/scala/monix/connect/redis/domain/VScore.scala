@@ -24,7 +24,7 @@ import scala.util.Try
 
 case class VScore[V] private[redis] (val score: Double, val value: Option[V]) {
 
-  def mapScore(f: Double => Double): VScore[V] =  VScore(f(score), value)
+  def mapScore(f: Double => Double): VScore[V] = VScore(f(score), value)
 
   def flatMap(f: Option[V] => Option[V]) = new VScore(score, f(value))
 
@@ -36,7 +36,7 @@ case class VScore[V] private[redis] (val score: Double, val value: Option[V]) {
 
 object VScore {
 
-  def apply[V](score: Double, value: V) =  new VScore(score, Some(value))
+  def apply[V](score: Double, value: V) = new VScore(score, Some(value))
 
   def from[V](scoredValue: ScoredValue[V]) = new VScore[V](scoredValue.getScore, Try(scoredValue.getValue).toOption)
 

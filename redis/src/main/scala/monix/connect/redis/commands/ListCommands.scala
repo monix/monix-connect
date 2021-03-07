@@ -118,7 +118,9 @@ class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[
     * @return string reply
     */
   def lSet(key: K, index: Long, value: V): Task[Boolean] =
-    Task.fromReactivePublisher(reactiveCmd.lset(key, index, value)).as(true)
+    Task
+      .fromReactivePublisher(reactiveCmd.lset(key, index, value))
+      .as(true)
       .onErrorHandle(ex => !List("index out of range", "no such key").exists(ex.getMessage.contains(_)))
 
   /**

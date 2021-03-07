@@ -20,7 +20,15 @@ package monix.connect.redis.client
 import cats.effect.Resource
 import io.lettuce.core.api.{StatefulConnection, StatefulRedisConnection}
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection
-import monix.connect.redis.commands.{HashCommands, KeyCommands, ListCommands, ServerCommands, SetCommands, SortedSetCommands, StringCommands}
+import monix.connect.redis.commands.{
+  HashCommands,
+  KeyCommands,
+  ListCommands,
+  ServerCommands,
+  SetCommands,
+  SortedSetCommands,
+  StringCommands
+}
 import monix.eval.Task
 import monix.execution.internal.InternalApi
 
@@ -63,6 +71,6 @@ private[redis] object RedisCmd { self =>
 
   private[redis] def createResource[K, V, RedisConnection <: StatefulConnection[K, V]](
     acquire: Task[RedisConnection]): Resource[Task, RedisConnection] = {
-    Resource.make(acquire)( connection => Task.eval(connection.close()))
+    Resource.make(acquire)(connection => Task.eval(connection.close()))
   }
 }

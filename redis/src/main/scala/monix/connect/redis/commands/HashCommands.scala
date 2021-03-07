@@ -25,7 +25,7 @@ import monix.reactive.Observable
 
 import scala.jdk.CollectionConverters._
 
-final class HashCommands[K, V] private[redis](reactiveCmd: RedisHashReactiveCommands[K, V]) {
+final class HashCommands[K, V] private[redis] (reactiveCmd: RedisHashReactiveCommands[K, V]) {
 
   /**
     * Delete one or more hash fields.
@@ -61,8 +61,10 @@ final class HashCommands[K, V] private[redis](reactiveCmd: RedisHashReactiveComm
     *         `None` when the value in the field was not a number.
     */
   def hIncrBy(key: K, field: K, amount: Long): Task[Option[Long]] =
-    Task.fromReactivePublisher(reactiveCmd.hincrby(key, field, amount)).map(_.map(_.longValue))
-      .onErrorHandleWith(ex => if(ex.getMessage.contains("not an integer")) Task.now(None) else Task.raiseError(ex))
+    Task
+      .fromReactivePublisher(reactiveCmd.hincrby(key, field, amount))
+      .map(_.map(_.longValue))
+      .onErrorHandleWith(ex => if (ex.getMessage.contains("not an integer")) Task.now(None) else Task.raiseError(ex))
 
   /**
     * Increment the float value of a hash field by the given amount.
@@ -71,8 +73,10 @@ final class HashCommands[K, V] private[redis](reactiveCmd: RedisHashReactiveComm
     *
     */
   def hIncrBy(key: K, field: K, amount: Double): Task[Option[Double]] =
-    Task.fromReactivePublisher(reactiveCmd.hincrbyfloat(key, field, amount)).map(_.map(_.doubleValue))
-      .onErrorHandleWith(ex => if(ex.getMessage.contains(" not a float")) Task.now(None) else Task.raiseError(ex))
+    Task
+      .fromReactivePublisher(reactiveCmd.hincrbyfloat(key, field, amount))
+      .map(_.map(_.doubleValue))
+      .onErrorHandleWith(ex => if (ex.getMessage.contains(" not a float")) Task.now(None) else Task.raiseError(ex))
 
   /**
     * Get all the fields and values in a hash.

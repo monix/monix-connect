@@ -34,7 +34,7 @@ case class SingleConnection(uri: RedisUri) extends RedisConnection {
       .createResource[String, String, StatefulRedisConnection[String, String]] {
         for {
           client <- Task.evalAsync(RedisClient.create(uri.toJava))
-          conn <- Task.from(client.connectAsync(StringCodec.UTF8, uri.toJava).toCompletableFuture)
+          conn   <- Task.from(client.connectAsync(StringCodec.UTF8, uri.toJava).toCompletableFuture)
         } yield conn
       }
       .evalMap(RedisCmd.single)
@@ -49,13 +49,14 @@ case class SingleConnection(uri: RedisUri) extends RedisConnection {
     *  @return
     */
   def connectUtf[K, V](
-                        implicit keyCodec: Codec[K, String],
-                        valueCodec: Codec[V, String]): Resource[Task, RedisCmd[K, V]] = {
+    implicit keyCodec: Codec[K, String],
+    valueCodec: Codec[V, String]): Resource[Task, RedisCmd[K, V]] = {
     RedisCmd
       .createResource[K, V, StatefulRedisConnection[K, V]] {
         for {
           client <- Task.evalAsync(RedisClient.create(uri.toJava))
-          conn <- Task.from(client.connectAsync(Codec(keyCodec, valueCodec, StringCodec.UTF8), uri.toJava).toCompletableFuture)
+          conn <- Task.from(
+            client.connectAsync(Codec(keyCodec, valueCodec, StringCodec.UTF8), uri.toJava).toCompletableFuture)
         } yield conn
       }
       .evalMap(RedisCmd.single)
@@ -71,8 +72,7 @@ case class SingleConnection(uri: RedisUri) extends RedisConnection {
         for {
           client <- Task.evalAsync(RedisClient.create(uri.toJava))
           conn <- Task.from {
-            client.connectAsync(new ByteArrayCodec(), uri.toJava)
-              .toCompletableFuture
+            client.connectAsync(new ByteArrayCodec(), uri.toJava).toCompletableFuture
           }
         } yield conn
       }
@@ -87,15 +87,15 @@ case class SingleConnection(uri: RedisUri) extends RedisConnection {
     * @tparam V
     * @return
     */
-  def connectByteArray[K, V](implicit keyCodec: Codec[K, Array[Byte]],
-                              valueCodec: Codec[V, Array[Byte]]): Resource[Task, RedisCmd[K, V]] = {
+  def connectByteArray[K, V](
+    implicit keyCodec: Codec[K, Array[Byte]],
+    valueCodec: Codec[V, Array[Byte]]): Resource[Task, RedisCmd[K, V]] = {
     RedisCmd
       .createResource[K, V, StatefulRedisConnection[K, V]] {
         for {
           client <- Task.evalAsync(RedisClient.create(uri.toJava))
           conn <- Task.from {
-            client.connectAsync(Codec(keyCodec, valueCodec, new ByteArrayCodec()), uri.toJava)
-              .toCompletableFuture
+            client.connectAsync(Codec(keyCodec, valueCodec, new ByteArrayCodec()), uri.toJava).toCompletableFuture
           }
         } yield conn
       }

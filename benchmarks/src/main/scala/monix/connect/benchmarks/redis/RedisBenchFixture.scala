@@ -26,6 +26,7 @@ import io.lettuce.core.RedisClient
 import io.lettuce.core.api.StatefulRedisConnection
 import laserdisc._
 import monix.connect.redis
+import monix.connect.redis.client.RedisUri
 import monix.execution.Scheduler.Implicits.global
 
 import scala.concurrent.ExecutionContext
@@ -42,7 +43,7 @@ trait RedisBenchFixture {
 
   val connection: StatefulRedisConnection[String, String] = RedisClient.create(redisUrl).connect()
 
-  val monixRedis = monix.connect.redis.client.Redis.connect(redisUrl)
+  val monixRedis = monix.connect.redis.client.Redis.single(RedisUri(redisUrl)).connectUtf
 
   val redis4catsConn = redis4cats.Redis[IO].utf8(redisUrl)
 

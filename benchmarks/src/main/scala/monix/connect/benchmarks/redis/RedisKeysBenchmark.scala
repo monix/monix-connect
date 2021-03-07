@@ -20,7 +20,6 @@ package monix.connect.benchmarks.redis
 import io.chrisdavenport.rediculous.RedisCommands
 import laserdisc.fs2._
 import laserdisc.{Key, all => cmd}
-import monix.connect.redis.KeyCommands
 import monix.execution.Scheduler.Implicits.global
 import org.openjdk.jmh.annotations._
 
@@ -63,7 +62,7 @@ class RedisKeysBenchmark extends RedisBenchFixture {
 
   @Benchmark
   def keyPttlReader(): Unit = {
-    val f = monixRedis.use(_.key.pTtl(keysCycle.next)).runToFuture
+    val f = monixRedis.use(_.key.ttl(keysCycle.next)).runToFuture
     Await.ready(f, 1.seconds)
   }
 

@@ -26,17 +26,17 @@ import scala.concurrent.duration.FiniteDuration
   *
   */
 class RedisUri(
-                uri: Either[String, (String, Int)],
-                database: Option[Int] = None,
-                password: Option[String] = None,
-                ssl: Option[Boolean] = None,
-                verifyPeer: Option[Boolean] = None,
-                startTls: Option[Boolean] = None,
-                timeout: Option[FiniteDuration] = None,
-                sentinels: List[String] = List.empty,
-                socket: Option[String] = None,
-                sentinelMasterId: Option[String] = None,
-                clientName: Option[String] = None) {
+  uri: Either[String, (String, Int)],
+  database: Option[Int] = None,
+  password: Option[String] = None,
+  ssl: Option[Boolean] = None,
+  verifyPeer: Option[Boolean] = None,
+  startTls: Option[Boolean] = None,
+  timeout: Option[FiniteDuration] = None,
+  sentinels: List[String] = List.empty,
+  socket: Option[String] = None,
+  sentinelMasterId: Option[String] = None,
+  clientName: Option[String] = None) {
 
   def withDatabase(database: Int): RedisUri = copy(database = Some(database))
 
@@ -59,7 +59,9 @@ class RedisUri(
   def withClientName(clientName: String): RedisUri = copy(clientName = Some(clientName))
 
   private[redis] def toJava: RedisURI = {
-    val redisUri = uri.map { case (host, port) => RedisURI.create(host, port) }.left.map(uri => RedisURI.create(uri)).merge
+    val redisUri = uri.map { case (host, port) => RedisURI.create(host, port) }.left
+      .map(uri => RedisURI.create(uri))
+      .merge
     database.map(_ => redisUri.setDatabase(_))
     password.map(pass => redisUri.setPassword(pass))
     ssl.map(_ => redisUri.setSsl(_))
@@ -73,17 +75,18 @@ class RedisUri(
     redisUri
   }
 
-  private def copy(uri: Either[String, (String, Int)] = this.uri,
-                   database: Option[Int] = this.database,
-                   password: Option[String] = this.password,
-                   ssl: Option[Boolean] = this.ssl,
-                   verifyPeer: Option[Boolean] = this.verifyPeer,
-                   startTls: Option[Boolean] = this.startTls,
-                   timeout: Option[FiniteDuration] = this.timeout,
-                   sentinels: List[String] = this.sentinels,
-                   socket: Option[String] = this.socket,
-                   sentinelMasterId: Option[String] = this.sentinelMasterId,
-                   clientName: Option[String] = this.clientName): RedisUri = {
+  private def copy(
+    uri: Either[String, (String, Int)] = this.uri,
+    database: Option[Int] = this.database,
+    password: Option[String] = this.password,
+    ssl: Option[Boolean] = this.ssl,
+    verifyPeer: Option[Boolean] = this.verifyPeer,
+    startTls: Option[Boolean] = this.startTls,
+    timeout: Option[FiniteDuration] = this.timeout,
+    sentinels: List[String] = this.sentinels,
+    socket: Option[String] = this.socket,
+    sentinelMasterId: Option[String] = this.sentinelMasterId,
+    clientName: Option[String] = this.clientName): RedisUri = {
     this
   }
 }

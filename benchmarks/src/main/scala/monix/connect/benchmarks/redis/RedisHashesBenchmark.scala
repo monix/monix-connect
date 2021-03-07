@@ -72,9 +72,10 @@ class RedisHashesBenchmark extends RedisBenchFixture {
   @Benchmark
   def hashAllReader(): Unit = {
     val key = keysCycle.next
-    val f = monixRedis.use(_.hash.hGetAll(key)).runToFuture
+    val f = monixRedis.use(_.hash.hGetAll(key).lastL).runToFuture
     Await.result(f, 1.seconds)
   }
+
   /*
   @Benchmark
   def laserdiscHashWriter(): Unit = {

@@ -94,7 +94,6 @@ private[s3] class ListObjectsObservable(
     } yield nextRequest
   }
 
-
 }
 
 private[s3] object ListObjectsObservable {
