@@ -23,9 +23,7 @@ class HashCommandsIntegrationTest
     //given
     val k1: K = genRedisKey.sample.get
     val f1: K = genRedisKey.sample.get
-    val f2: K = genRedisKey.sample.get
     val v: K = genRedisKey.sample.get
-    val value: String = genRedisValue.sample.get
 
     utfConnection.use { cmd =>
       //when
@@ -74,7 +72,23 @@ class HashCommandsIntegrationTest
   }
 
   it should "exists" in {
+    //given
+    val k: K = genRedisKey.sample.get
+    val f: K = genRedisKey.sample.get
+    val v: V = genRedisKey.sample.get
 
+    utfConnection.use { cmd =>
+      //when
+      for {
+        _ <- cmd.hash.hSet(k, f, v)
+        exists1 <- cmd.hash.hExists(k, f)
+        exists2 <- cmd.hash.hExists(k, "non-existing-field")
+      } yield {
+        //then
+        exists1 shouldBe true
+        exists2 shouldBe false
+      }
+    }.runSyncUnsafe()
   }
 
   "hGet" should "return an empty value when accessing to a non existing hash" in {
@@ -89,7 +103,7 @@ class HashCommandsIntegrationTest
     r shouldBe None
   }
 
-  it should "return some value when the hash exists " in {
+  "hIncr" should "return None when the hash does not exists " in {
     //given
     val key: K = genRedisKey.sample.get
     val field: K = genRedisKey.sample.get
@@ -102,11 +116,61 @@ class HashCommandsIntegrationTest
   }
 
   it should "incr by" in {
+    //given
+    val k: K = genRedisKey.sample.get
+    val f1: K = genRedisKey.sample.get
+    val f2: K = genRedisKey.sample.get
+    val v: V = "1"
 
+    utfConnection.use { cmd =>
+      //when
+      for {
+        _ <- cmd.hash.hSet(k, f1, v)
+        inc0 <- cmd.hash.hIncrBy(k, f1, 0)
+        inc1 <- cmd.hash.hIncrBy(k, f1, 1)
+        inc2 <- cmd.hash.hIncrBy(k, f1, 2)
+        inc3 <- cmd.hash.hIncrBy(k, f1, 3)
+        _ <- cmd.hash.hSet(k, f2, "someString")
+        incNonNumber <- cmd.hash.hIncrBy(k, f2, 1)
+        incNotExistingField <- cmd.hash.hIncrBy(k, "none", 1)
+        incNotExistingKey <- cmd.hash.hIncrBy("none", "none", 0)
+      } yield {
+        //then
+        inc0 shouldBe v.toLongOption
+        inc1 shouldBe Some(2L)
+        inc2 shouldBe Some(4L)
+        inc3 shouldBe Some(7L)
+        incNonNumber shouldBe None
+        incNotExistingField shouldBe "1"
+        incNotExistingKey shouldBe None
+      }
+    }.runSyncUnsafe()
   }
 
   it should "incr by double" in {
+    //given
+    val k: K = genRedisKey.sample.get
+    val f: K = genRedisKey.sample.get
+    val v: V = "1"
 
+    utfConnection.use { cmd =>
+      //when
+      for {
+        _ <- cmd.hash.hSet(k, f, v)
+        inc0 <- cmd.hash.hIncrBy(k, f, 0.0)
+        inc1 <- cmd.hash.hIncrBy(k, f, 1.1)
+        inc2 <- cmd.hash.hIncrBy(k, f, 2.1)
+        inc3 <- cmd.hash.hIncrBy(k, f, 3.1)
+        incNone <- cmd.hash.hIncrBy(k, "none", 0.0)
+      } yield {
+        //then
+        inc0 shouldBe v.toDoubleOption
+        inc1 shouldBe Some(2.1)
+        inc2 shouldBe Some(4.2)
+        inc3 shouldBe Some(7.3)
+        incNone shouldBe None
+      }
+    }.runSyncUnsafe()
   }
 
   it should "h get all" in {
@@ -187,9 +251,8 @@ class HashCommandsIntegrationTest
     r shouldBe Some(value)
   }
 
-  it should "hset nx" in {
-
-  }
+  //todo test
+  it should "hset nx" in {}
 
   "hStrLen" should "get the string length of the field value" in {
     //given

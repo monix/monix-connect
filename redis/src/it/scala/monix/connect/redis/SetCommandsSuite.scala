@@ -1,7 +1,10 @@
 package monix.connect.redis
 
 import monix.connect.redis.client.RedisCmd
+import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
+import monix.reactive.Observable
+import org.scalacheck.Gen
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -95,7 +98,7 @@ class SetCommandsSuite
         size1 <- cmd.set.sAdd(k1, set1)
         size2 <- cmd.set.sAdd(k2, set2)
         diffSize <- cmd.set.sDiffStore(kDiff, k1, k2)
-        all <- cmd.set.sDiffStore(".", k1, List.empty)
+        all <- cmd.set.sDiffStore(".", k1, Set.empty)
         members <- cmd.set.sMembers(kDiff).toListL
       } yield {
         size1 shouldBe set1.size
@@ -107,11 +110,10 @@ class SetCommandsSuite
     }.runSyncUnsafe()
   }
 
-  "sInter" should "" in {
+  "sInter" should "intersect multiple sets" in {
     //given
     val k1: K = genRedisKey.sample.get
     val k2: K = genRedisKey.sample.get
-    val kDiff: K = genRedisKey.sample.get
     val set1: List[V] = List("a", "b", "c")
     val set2: List[V] = List("b", "c", "d")
 
@@ -129,27 +131,222 @@ class SetCommandsSuite
     }.runSyncUnsafe()
   }
 
-  "sInterStore" should "sInterStore" in {}
+  "sInterStore" should "sInterStore" in {
+    //given
+    val k1: K = genRedisKey.sample.get
+    val k2: K = genRedisKey.sample.get
+    val kDestination: K = genRedisKey.sample.get
+    val set1: List[V] = List("a", "b", "c")
+    val set2: List[V] = List("b", "c", "d")
 
-  "sIsMember" should "sIsMember" in {}
+    //when
+    utfConnection.use { cmd =>
+      for {
+        size1 <- cmd.set.sAdd(k1, set1)
+        size2 <- cmd.set.sAdd(k2, set2)
+        intersec <- cmd.set.sInterStore(kDestination, k1, k2)
+        members <- cmd.set.sMembers(kDestination).toListL
+      } yield {
+        size1 shouldBe set1.size
+        size2 shouldBe set2.size
+        intersec shouldBe 2L
+        members shouldBe List("b", "c")
+      }
+    }.runSyncUnsafe()
+  }
 
-  "sMove" should "sMove" in {}
+  "sIsMember" should "determine if a given value is a member of a set" in {
+    //given
+    val k: K = genRedisKey.sample.get
+    val members: List[V] = List("a", "b", "c")
 
-  "sMembers" should "sMembers" in {}
+    //when
+    utfConnection.use { cmd =>
+      for {
+        size1 <- cmd.set.sAdd(k, members)
+        isMember1 <- cmd.set.sIsMember(k, members.head)
+        isMember2 <- cmd.set.sIsMember(k, genRedisValue.sample.get)
+      } yield {
+        isMember1 shouldBe true
+        isMember2 shouldBe false
+      }
+    }.runSyncUnsafe()
+  }
 
-  "sPop" should "sPop" in {}
+  "sMove" should "move a member from one set to another" in {
+    //given
+    val k1: K = genRedisKey.sample.get
+    val k2: K = genRedisKey.sample.get
+    val members: List[V] = List("a", "b", "c")
 
-  "sRandMember" should "sRandMember" in {}
+    //when
+    utfConnection.use { cmd =>
+      for {
+        _ <- cmd.set.sAdd(k1, members)
+        isMoved1 <- cmd.set.sMove(k1, k2, "b")
+        isMoved2 <- cmd.set.sMove(k1, k2, "b")
+        members1 <- cmd.set.sMembers(k1).toListL
+        members2 <- cmd.set.sMembers(k2).toListL
+      } yield {
+        isMoved1 shouldBe true
+        isMoved2 shouldBe false
+        members1 shouldBe List("a", "c")
+        members2 shouldBe List("b")
+      }
+    }.runSyncUnsafe()
+  }
 
-  it should "sRandMesmber" in {}
+  "sMembers" should "get all the members in a set" in {
+    //given
+    val k: K = genRedisKey.sample.get
+    val values: List[V] = genRedisValues.sample.get
 
-  "sRem" should "sRem" in {}
+    //when
+    utfConnection.use { cmd =>
+      for {
+        size <- cmd.set.sAdd(k, values)
+        members <- cmd.set.sMembers(k).toListL
+      } yield {
+        //then
+        size shouldBe values.size
+        members should contain theSameElementsAs values
+      }
+    }.runSyncUnsafe()
+  }
 
-  "sUnion" should "sUnion" in {}
+  "sPop" should "remove and return a random member from a set" in {
+    //given
+    val k: K = genRedisKey.sample.get
+    val values: List[V] = List("a", "b", "c")
 
-  "sUnionStore" should "sUnionStore" in {}
+    //when
+    utfConnection.use { cmd =>
+      val popTask = cmd.set.sPop(k)
+      for {
+        size <- cmd.set.sAdd(k, values)
+        popSequence <- Task.sequence(List.fill(3)(popTask))
+        empty <- cmd.set.sPop(k)
+      } yield {
+        //then
+        size shouldBe values.size
+        popSequence should contain theSameElementsAs List(Some("a"), Some("b"), Some("c"))
+        empty shouldBe None
+      }
+    }.runSyncUnsafe()
+  }
 
-  "sScan" should "sScan" in {}
+  "sRandMember" should "get one random member from a set" in {
+    //given
+    val k: K = genRedisKey.sample.get
+    val values: List[V] = Gen.listOfN(1000, genRedisValue).sample.get
+
+    //when
+    utfConnection.use { cmd =>
+      for {
+        _ <- cmd.set.sAdd(k, values)
+        rands <- cmd.set.sRandMember(k, 100).toListL
+        members <- cmd.set.sMembers(k).toListL
+        nonExistingKey <- cmd.set.sRandMember("non-existing-key")
+      } yield {
+        //then
+        (rands.toSet.size > 10L) shouldBe true
+        members should contain theSameElementsAs values.toSet
+        nonExistingKey shouldBe None
+      }
+    }.runSyncUnsafe()
+  }
+
+  it should "get one or multiple random members from a set" in {
+    //given
+    val k: K = genRedisKey.sample.get
+    val values: List[V] = Gen.listOfN(1000, genRedisValue).sample.get
+
+    //when
+    utfConnection.use { cmd =>
+      for {
+        size <- cmd.set.sAdd(k, values)
+        rands <- Task.sequence(List.fill(1000)(cmd.set.sRandMember(k)))
+        members <- cmd.set.sMembers(k).toListL
+        nonExistingKey <- cmd.set.sRandMember("non-existing-key")
+
+      } yield {
+        //then
+        val grouped = rands.groupBy(_.getOrElse("none"))
+        (grouped.size > 10L) shouldBe true
+        members should contain theSameElementsAs values.toSet
+        nonExistingKey shouldBe None
+      }
+    }.runSyncUnsafe()
+  }
+
+  "sRem" should "remove one or more members from a set" in {
+    //given
+    val k: K = genRedisKey.sample.get
+    val values: List[V] = List("a", "b", "c")
+
+    //when
+    utfConnection.use { cmd =>
+      for {
+        size <- cmd.set.sAdd(k, values)
+        remA <- cmd.set.sRem(k, "a")
+        remBc <- cmd.set.sRem(k, List("b", "c"))
+        empty <- cmd.set.sRem(k, "a", "b", "c")
+        nonExistingKey <- cmd.set.sRem("non-existing-key", "a")
+      } yield {
+        //then
+        size shouldBe values.size
+        remA shouldBe 1L
+        remBc shouldBe 2L
+        empty shouldBe 0L
+        nonExistingKey shouldBe 0L
+      }
+    }.runSyncUnsafe()
+  }
+
+  "sUnion" should "add multiple sets" in {
+    //given
+    val k1: K = genRedisKey.sample.get
+    val k2: K = genRedisKey.sample.get
+    val values1: List[V] = List("a", "b", "c")
+    val values2: List[V] = List("c", "d", "e")
+
+    //when
+    utfConnection.use { cmd =>
+      for {
+        _ <- cmd.set.sAdd(k1, values1) >> cmd.set.sAdd(k2, values2)
+        union <- cmd.set.sUnion(k1, k2).toListL
+        empty <- cmd.set.sUnion("non", "existing", "keys").toListL
+      } yield {
+        //then
+        union should contain theSameElementsAs List("a", "b", "c", "d", "e")
+        empty shouldBe List.empty
+      }
+    }.runSyncUnsafe()
+  }
+
+  "sUnionStore" should "sUnionStore" in {
+    //given
+    val k1: K = genRedisKey.sample.get
+    val k2: K = genRedisKey.sample.get
+    val kDest: K = genRedisKey.sample.get
+    val values1: List[V] = List("a", "b", "c")
+    val values2: List[V] = List("c", "d", "e")
+
+    //when
+    utfConnection.use { cmd =>
+      for {
+        _ <- cmd.set.sAdd(k1, values1) >> cmd.set.sAdd(k2, values2)
+        union <- cmd.set.sUnionStore(kDest, k1, k2)
+        members <- cmd.set.sMembers(kDest).toListL
+        empty <- cmd.set.sUnionStore(kDest, "non", "existing", "keys")
+      } yield {
+        //then
+        union shouldBe (values1 ++ values2).toSet.size
+        members should contain theSameElementsAs List("a", "b", "c", "d", "e")
+        empty shouldBe 0L
+      }
+    }.runSyncUnsafe()
+  }
 
   it should "allow to compose nice for comprehensions" in {
     //given

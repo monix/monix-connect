@@ -61,6 +61,7 @@ final class HashCommands[K, V] private[redis](reactiveCmd: RedisHashReactiveComm
     */
   def hIncrBy(key: K, field: K, amount: Long): Task[Option[Long]] =
     Task.fromReactivePublisher(reactiveCmd.hincrby(key, field, amount)).map(_.map(_.longValue))
+      .onErrorHandleWith(ex => if(ex.getMessage.contains("not an integer")) Task.now(None) else Task.raiseError(ex))
 
   /**
     * Increment the float value of a hash field by the given amount.
@@ -102,16 +103,6 @@ final class HashCommands[K, V] private[redis](reactiveCmd: RedisHashReactiveComm
   /** Set multiple hash fields to multiple values. */
   def hMSet(key: K, map: Map[K, V]): Task[Unit] =
     Task.fromReactivePublisher(reactiveCmd.hmset(key, map.asJava)).void
-
-  /// todo - create observable that iterates over
-  //  * Incrementally iterate hash fields and associated values.
-  //  * @return Map scan cursor.
-  //  */
-  //def hScan(key: K): Task[MapScanCursor[K, V]] =
-  //  Task.fromReactivePublisher(reactiveCmd.hscan(key))
-
-  //def hScan(key: K, scanCursor: ScanCursor): Task[MapScanCursor[K, V]] =
-  //  Task.fromReactivePublisher(reactiveCmd.hscan(key, scanCursor))
 
   /**
     * Set the string value of a hash field.

@@ -36,7 +36,7 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
   def sAdd(key: K, members: V*): Task[Long] =
     Task.fromReactivePublisher(reactiveCmd.sadd(key, members: _*)).map(_.map(_.longValue).getOrElse(0L))
 
-  def sAdd(key: K, members: List[V]): Task[Long] = sAdd(key, members: _*)
+  def sAdd(key: K, members: Iterable[V]): Task[Long] = sAdd(key, members.toSeq: _*)
 
 
   /**
@@ -55,7 +55,7 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
     Observable.fromReactivePublisher(reactiveCmd.sdiff((rest.+:(first)):_ *))
   }
 
-  def sDiff(first: K, rest: List[K]): Observable[V] = sDiff(first, rest: _*)
+  def sDiff(first: K, rest: Iterable[K]): Observable[V] = sDiff(first, rest.toSeq: _*)
 
   /**
     * Subtract multiple sets and store the resulting set in a key.
@@ -64,7 +64,7 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
   def sDiffStore(destination: K, first: K, rest: K*): Task[Long] =
     Task.fromReactivePublisher(reactiveCmd.sdiffstore(destination, (rest.+:(first)):_ *)).map(_.map(_.longValue).getOrElse(0L))
 
-  def sDiffStore(destination: K, first: K, rest: List[K]): Task[Long] = sDiffStore(destination, first, rest: _*)
+  def sDiffStore(destination: K, first: K, rest: Iterable[K]): Task[Long] = sDiffStore(destination, first, rest.toSeq: _*)
 
   /**
     * Intersect multiple sets.
@@ -73,7 +73,7 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
   def sInter(keys: K*): Observable[V] =
     Observable.fromReactivePublisher(reactiveCmd.sinter(keys: _*))
 
-  def sInter(keys: List[K]): Observable[V] = sInter(keys: _*)
+  def sInter(keys: Iterable[K]): Observable[V] = sInter(keys.toSeq: _*)
 
   /**
     * Intersect multiple sets and store the resulting set in a key.
@@ -81,6 +81,8 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
     */
   def sInterStore(destination: K, keys: K*): Task[Long] =
     Task.fromReactivePublisher(reactiveCmd.sinterstore(destination, keys: _*)).map(_.map(_.longValue).getOrElse(0L))
+
+  def sInterStore(destination: K, keys: Iterable[K]): Task[Long] = sInterStore(destination, keys.toSeq: _*)
 
   /**
     * Determine if a given value is a member of a set.
@@ -142,12 +144,16 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
   def sRem(key: K, members: V*): Task[Long] =
     Task.fromReactivePublisher(reactiveCmd.srem(key, members: _*)).map(_.map(_.longValue).getOrElse(0L))
 
+  def sRem(key: K, members: Iterable[V]): Task[Long] = sRem(key, members.toSeq:_ *)
+
   /**
     * Add multiple sets.
     * @return The members of the resulting set.
     */
   def sUnion(keys: K*): Observable[V] =
     Observable.fromReactivePublisher(reactiveCmd.sunion(keys: _*))
+
+  def sUnion(keys: Iterable[K]): Observable[V] = sUnion(keys.toSeq: _*)
 
   /**
     * Add multiple sets and store the resulting set in a key.
@@ -156,12 +162,7 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
   def sUnionStore(destination: K, keys: K*): Task[Long] =
     Task.fromReactivePublisher(reactiveCmd.sunionstore(destination, keys: _*)).map(_.map(_.longValue).getOrElse(0L))
 
-  ///** todo
-  //  * Incrementally iterate Set elements.
-  //  * @return Scan cursor.
-  //  */
-  //def sScan(key: K): Task[ValueScanCursor[V]] =
-  //  Task.fromRea(reactiveCmd.sscan(key))
+  def sUnionStore(destination: K, keys: Iterable[K]): Task[Long] = sUnionStore(destination, keys.toSeq: _*)
 
 }
 

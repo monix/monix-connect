@@ -37,7 +37,7 @@ class ClusterConnectionIntegrationTest extends AnyFlatSpec with RedisIntegration
     Some(value) shouldBe r
   }
 
-  it should "can connect to the cluster with the first uri" in {
+  it can "connect to the cluster with the first uri" in {
     //given
     val key = genRedisKey.sample.get
     val value = genRedisValue.sample.get
@@ -52,7 +52,7 @@ class ClusterConnectionIntegrationTest extends AnyFlatSpec with RedisIntegration
     Some(value) shouldBe r
   }
 
-  it should "can connect to the cluster with the last uri" in {
+  it can "connect to the cluster with the last uri" in {
     //given
     val key = genRedisKey.sample.get
     val value = genRedisValue.sample.get
@@ -67,7 +67,7 @@ class ClusterConnectionIntegrationTest extends AnyFlatSpec with RedisIntegration
     Some(value) shouldBe r
   }
 
-  it should "can connect to the cluster with (Int, Double) codecs for key and value respectively " in {
+  it can "connect to the cluster with (Int, Double) codecs for key and value respectively " in {
     //given
     val key: Int = Gen.choose(1, 1000).sample.get
     val value: Double = Gen.choose(1, 1000).sample.get.toDouble
