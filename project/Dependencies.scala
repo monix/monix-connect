@@ -21,7 +21,7 @@ object Dependencies {
     val ScalaCompat = "2.4.2"
 
     //test
-    val Scalatest = "3.2.3"
+    val Scalatest = "3.2.6"
     val Scalacheck = "1.14.0"
     val Mockito = "1.15.0"
     val GCNio = "0.122.10"
