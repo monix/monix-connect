@@ -19,6 +19,8 @@ package monix.connect
 
 import io.lettuce.core.KeyValue
 import monix.connect.redis.client.Codec
+import monix.eval.{Task, TaskLike}
+import reactor.core.publisher.Mono
 
 import scala.util.Try
 
@@ -34,5 +36,13 @@ package object redis {
   implicit val bigIntUtfCodec: Codec[BigInt, String] = Codec.utf(_.toString, str => Try(BigInt.apply(str)).getOrElse(0))
   implicit val bigDecimalUtfCodec: Codec[BigDecimal, String] =
     Codec.utf(_.toString, str => Try(BigDecimal.apply(str)).getOrElse(0.0))
+
+  private[redis] implicit val fromMono: TaskLike[Mono] = new TaskLike[Mono] {
+    def apply[A](m: Mono[A]): Task[A] =
+      Task.fromReactivePublisher(m).flatMap { op =>
+        if (op.nonEmpty) Task.now(op.get)
+        else Task.raiseError(new NoSuchElementException("The result from the executed redis operation was empty."))
+      }
+  }
 
 }
