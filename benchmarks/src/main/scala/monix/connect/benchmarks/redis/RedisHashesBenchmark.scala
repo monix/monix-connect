@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
  * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ import io.chrisdavenport.rediculous.RedisCommands
 import laserdisc.fs2._
 import laserdisc.{Key, all => cmd}
 import monix.connect.redis.RedisHash
+import monix.connect.redis.client.{Redis, RedisUri}
 import monix.execution.Scheduler.Implicits.global
 import org.openjdk.jmh.annotations._
 
@@ -54,6 +55,24 @@ class RedisHashesBenchmark extends RedisBenchFixture {
   @TearDown
   def shutdown(): Unit = {
     flushdb
+  }
+
+  @Benchmark
+  def hashWriter(): Unit = {
+    val key = keysCycle.next
+    Redis.single(RedisUri(redisUrl)).connectUtf.use(_.hash.hSet(key, key, key)).runSyncUnsafe()
+  }
+
+  @Benchmark
+  def hashFieldValueReader(): Unit = {
+    val key = keysCycle.next
+    Redis.single(RedisUri(redisUrl)).connectUtf.use(_.hash.hGet(key, key)).runSyncUnsafe()
+  }
+
+  @Benchmark
+  def hashAllReader(): Unit = {
+    val key = keysCycle.next
+    monixRedis.use(_.hash.hGetAll(key).lastOptionL).runSyncUnsafe()
   }
 
   @Benchmark

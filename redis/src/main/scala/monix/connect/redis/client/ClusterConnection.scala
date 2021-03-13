@@ -44,10 +44,10 @@ case class ClusterConnection(uris: List[RedisUri]) extends RedisConnection {
     RedisCmd
       .createResource[String, String, RedisClusterConnection[String, String]] {
         for {
-          client <- Task.now(RedisClusterClient.create(uris.map(_.toJava).asJava))
-          _      <- Task.now(client.getPartitions)
+          client <- Task.evalAsync(RedisClusterClient.create(uris.map(_.toJava).asJava))
+          _      <- Task.evalAsync(client.getPartitions())
           conn   <- Task.from(client.connectAsync(StringCodec.UTF8).toCompletableFuture)
-        } yield conn
+        } yield (client, conn)
       }
       .evalMap(RedisCmd.cluster)
   }
@@ -58,12 +58,12 @@ case class ClusterConnection(uris: List[RedisUri]) extends RedisConnection {
     RedisCmd
       .createResource[K, V, RedisClusterConnection[K, V]] {
         for {
-          client <- Task.now(RedisClusterClient.create(uris.map(_.toJava).asJava))
-          _      <- Task.now(client.getPartitions)
+          client <- Task.evalAsync(RedisClusterClient.create(uris.map(_.toJava).asJava))
+          _      <- Task.evalAsync(client.getPartitions)
           conn <- Task.from {
             client.connectAsync(Codec(keyCodec, valueCodec, StringCodec.UTF8)).toCompletableFuture
           }
-        } yield conn
+        } yield (client, conn)
       }
       .evalMap(RedisCmd.cluster)
   }
@@ -72,12 +72,12 @@ case class ClusterConnection(uris: List[RedisUri]) extends RedisConnection {
     RedisCmd
       .createResource[Array[Byte], Array[Byte], RedisClusterConnection[Array[Byte], Array[Byte]]] {
         for {
-          client <- Task.now(RedisClusterClient.create(uris.map(_.toJava).asJava))
-          _      <- Task.now(client.getPartitions)
+          client <- Task.evalAsync(RedisClusterClient.create(uris.map(_.toJava).asJava))
+          _      <- Task.evalAsync(client.getPartitions)
           conn <- Task.from {
             client.connectAsync(new ByteArrayCodec()).toCompletableFuture
           }
-        } yield conn
+        } yield (client, conn)
       }
       .evalMap(RedisCmd.cluster)
   }
@@ -88,12 +88,12 @@ case class ClusterConnection(uris: List[RedisUri]) extends RedisConnection {
     RedisCmd
       .createResource[K, V, RedisClusterConnection[K, V]] {
         for {
-          client <- Task.now(RedisClusterClient.create(uris.map(_.toJava).asJava))
-          _      <- Task.eval(client.getPartitions)
+          client <- Task.evalAsync(RedisClusterClient.create(uris.map(_.toJava).asJava))
+          _      <- Task.evalAsync(client.getPartitions)
           conn <- Task.from {
             client.connectAsync(Codec(keyCodec, valueCodec, new ByteArrayCodec())).toCompletableFuture
           }
-        } yield conn
+        } yield (client, conn)
       }
       .evalMap(RedisCmd.cluster)
   }

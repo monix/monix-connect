@@ -22,7 +22,6 @@ import io.lettuce.core.KeyValue
 import monix.eval.Task
 import monix.reactive.Observable
 
-
 private[redis] trait RedisList {
 
   /**

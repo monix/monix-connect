@@ -84,10 +84,10 @@ trait RedisStream {
     * Delete a consumer from a consumer group.
     * @return simple-reply { @literal true} if successful.
     */
-  def xgroupDelconsumer[K, V](key: K, consumer: LConsumer[K])(
-    implicit
-    connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-    Task.from(connection.reactive().xgroupDelconsumer(key, consumer)).map(_.booleanValue())
+  //def xgroupDelconsumer[K, V](key: K, consumer: LConsumer[K])(
+  //  implicit
+  //  connection: StatefulRedisConnection[K, V]): Task[Boolean] =
+  //  Task.from(connection.reactive().xgroupDelconsumer(key, consumer)).map(_.booleanValue())
 
   /**
     * Destroy a consumer group.

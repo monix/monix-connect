@@ -35,7 +35,7 @@ case class SingleConnection(uri: RedisUri) extends RedisConnection {
         for {
           client <- Task.evalAsync(RedisClient.create(uri.toJava))
           conn   <- Task.from(client.connectAsync(StringCodec.UTF8, uri.toJava).toCompletableFuture)
-        } yield conn
+        } yield (client, conn)
       }
       .evalMap(RedisCmd.single)
   }
@@ -57,7 +57,7 @@ case class SingleConnection(uri: RedisUri) extends RedisConnection {
           client <- Task.evalAsync(RedisClient.create(uri.toJava))
           conn <- Task.from(
             client.connectAsync(Codec(keyCodec, valueCodec, StringCodec.UTF8), uri.toJava).toCompletableFuture)
-        } yield conn
+        } yield (client, conn)
       }
       .evalMap(RedisCmd.single)
   }
@@ -74,7 +74,7 @@ case class SingleConnection(uri: RedisUri) extends RedisConnection {
           conn <- Task.from {
             client.connectAsync(new ByteArrayCodec(), uri.toJava).toCompletableFuture
           }
-        } yield conn
+        } yield (client, conn)
       }
       .evalMap(RedisCmd.single)
   }
@@ -97,7 +97,7 @@ case class SingleConnection(uri: RedisUri) extends RedisConnection {
           conn <- Task.from {
             client.connectAsync(Codec(keyCodec, valueCodec, new ByteArrayCodec()), uri.toJava).toCompletableFuture
           }
-        } yield conn
+        } yield (client, conn)
       }
       .evalMap(RedisCmd.single)
   }

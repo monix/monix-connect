@@ -41,7 +41,7 @@ trait RedisBenchFixture {
   implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
   implicit val timer: Timer[IO] = IO.timer(ExecutionContext.global)
 
-  val connection: StatefulRedisConnection[String, String] = RedisClient.create(redisUrl).connect()
+  implicit val connection: StatefulRedisConnection[String, String] = RedisClient.create(redisUrl).connect()
 
   val monixRedis = monix.connect.redis.client.Redis.single(RedisUri(redisUrl)).connectUtf
 

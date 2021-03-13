@@ -15,20 +15,27 @@
  * limitations under the License.
  */
 
-package monix.connect.redis.client
+package monix.connect.benchmarks.redis
 
-/**
-  * An object that provides an aggregation of all the different Redis Apis.
-  * They can be equally accessed independently or from this object.
-  */
-object Redis {
+import monix.connect.redis.RedisHash
+import org.scalatest.flatspec.AnyFlatSpec
+import monix.execution.Scheduler.Implicits.global
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
-  def single[K, V](uri: RedisUri): RedisConnection =
-    SingleConnection(uri)
+class RedisTest extends AnyFlatSpec with RedisBenchFixture {
 
-  def cluster[K, V](uris: RedisUri*): RedisConnection =
-    ClusterConnection(uris.toList)
+  "it" should "connect to redis" in {
 
-  def cluster[K, V](uris: List[RedisUri]): RedisConnection =
-    ClusterConnection(uris)
+    val keys = (0 to maxKey).toList.map(_.toString)
+    val keysCycle = scala.Stream.continually(keys).flatten.iterator
+
+    (1 to maxKey).foreach { key =>
+      val value = key.toString
+      val field = key.toString
+      val f = RedisHash.hset(key.toString, field, value).runToFuture
+      Await.ready(f, 1.seconds)
+    }
+  }
+
 }

@@ -76,8 +76,8 @@ private[redis] trait RedisHash {
     * @param key the key
     * @return Map of the fields and their values stored in the hash, or an empty list when key does not exist.
     */
-  def hgetall[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Map[K, V]] =
-    Task.from(connection.reactive().hgetall(key)).map(_.asScala.toMap)
+  //def hgetall[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Map[K, V]] =
+  //  Task.from(connection.reactive().hgetall(key)).map(_.asScala.toMap)
 
   /**
     * Get all the fields in a hash.
