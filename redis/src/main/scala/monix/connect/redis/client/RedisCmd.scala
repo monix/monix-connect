@@ -18,7 +18,7 @@
 package monix.connect.redis.client
 
 import cats.effect.Resource
-import io.lettuce.core.{AbstractRedisClient, RedisClient}
+import io.lettuce.core.AbstractRedisClient
 import io.lettuce.core.api.{StatefulConnection, StatefulRedisConnection}
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection
 import monix.connect.redis.commands.{
@@ -33,6 +33,17 @@ import monix.connect.redis.commands.{
 import monix.eval.Task
 import monix.execution.internal.InternalApi
 
+/**
+  * Aggregates the different redis commands into a single cmd instance.
+  *
+  * @see <a href="https://redis.io/commands#hash">Hash</a>,
+  *      <a href="https://redis.io/commands#generic">Key</a>,
+  *      <a href="https://redis.io/commands#list">List</a>,
+  *      <a href="https://redis.io/commands#server">Server</a>,
+  *      <a href="https://redis.io/commands#set">Set</a>,
+  *      <a href="https://redis.io/commands#sorted_set">SortedSet</a>,
+  *      <a href="https://redis.io/commands#hash">String</a> commands.
+  */
 case class RedisCmd[K, V](
   hash: HashCommands[K, V],
   key: KeyCommands[K, V],

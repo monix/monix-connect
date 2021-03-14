@@ -22,24 +22,17 @@ import io.lettuce.core.cluster.RedisClusterClient
 import io.lettuce.core.codec.{ByteArrayCodec, StringCodec}
 import monix.eval.Task
 import io.lettuce.core.cluster.api.{StatefulRedisClusterConnection => RedisClusterConnection}
-import monix.reactive.Observable
 
-import scala.io.Source
 import scala.jdk.CollectionConverters._
 
-case class ClusterConnection(uris: List[RedisUri]) extends RedisConnection {
+/**
+  * Represents a connection to a set of redis servers (cluster),
+  * extending the [[RedisConnection]] interface that
+  * defines the set of methods to create the connection that
+  * encodes in `UTF` and `Array[Byte]` with custom [[Codec]]s.
+  */
+private[redis] class ClusterConnection(uris: List[RedisUri]) extends RedisConnection {
 
-  /**
-    * Connect asynchronously to a Redis Cluster.
-    * Encodes and decodes [[String]] keys and values in `UTF` Charset.
-    *
-    * A default connection is created to the node with the lowest latency
-    * Keyless commands are send to the default connection
-    * Single-key keyspace commands are routed to the appropriate node
-    * Multi-key keyspace commands require the same slot-hash and are routed to the appropriate node
-    *
-    * @return
-    */
   def connectUtf: Resource[Task, RedisCmd[String, String]] = {
     RedisCmd
       .createResource[String, String, RedisClusterConnection[String, String]] {

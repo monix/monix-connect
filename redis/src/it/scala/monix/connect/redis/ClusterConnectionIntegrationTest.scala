@@ -15,7 +15,6 @@ class ClusterConnectionIntegrationTest extends AnyFlatSpec with RedisIntegration
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
 
-  val clusterRedisUri = List("redis://localhost:7001", "redis://localhost:7002", "redis://localhost:7003")
   val clusterRedisUris = List(7000, 7001, 7002, 7003, 7004, 7005).map(port => RedisUri("127.0.0.1", port))
 
   override def beforeEach(): Unit = {

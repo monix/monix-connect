@@ -38,7 +38,20 @@ class CodecSuite extends AnyFlatSpec with RedisIntegrationFixture with Matchers 
     Some(person) shouldBe r
   }
 
-  s"An utf codec" should "encode and decode int numbers" in {
+  it should "connect to the cluster en/decoding keys and values as byte array" in {
+    //given
+    val key = genRedisKey.sample.get
+    val value = genRedisValue.sample.get
+
+    //when
+    connection.connectByteArray.use(_.list.lPush(key.getBytes, value.getBytes)).runSyncUnsafe()
+
+    //then
+    val r = connection.connectByteArray.use(_.list.lPop(key.getBytes)).runSyncUnsafe()
+    r.get shouldBe value.getBytes
+  }
+
+  "An utf codec" should "encode and decode int numbers" in {
     //given
     val key: Int = Gen.chooseNum(1, 1000).sample.get
     val value: Int = Gen.chooseNum(1, 1000).sample.get
