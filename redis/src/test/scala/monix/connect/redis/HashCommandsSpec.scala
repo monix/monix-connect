@@ -19,7 +19,7 @@ package monix.connect.redis
 
 import io.lettuce.core.{KeyValue, MapScanCursor, ScanCursor}
 import io.lettuce.core.api.StatefulRedisConnection
-import monix.connect.redis.client.Redis
+import monix.connect.redis.client.RedisConnection
 import monix.eval.Task
 import monix.reactive.Observable
 import org.scalatest.flatspec.AnyFlatSpec

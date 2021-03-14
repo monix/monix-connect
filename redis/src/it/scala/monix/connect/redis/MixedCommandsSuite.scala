@@ -1,7 +1,7 @@
 package monix.connect.redis
 
 import io.lettuce.core.ScoredValue
-import monix.connect.redis.client.{Redis, RedisCmd}
+import monix.connect.redis.client.{RedisConnection, RedisCmd}
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import org.scalacheck.Gen

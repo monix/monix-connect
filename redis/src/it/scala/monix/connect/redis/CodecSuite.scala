@@ -1,6 +1,6 @@
 package monix.connect.redis
 
-import monix.connect.redis.client.{Codec, Redis}
+import monix.connect.redis.client.{Codec, RedisConnection}
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpec
@@ -16,7 +16,7 @@ class CodecSuite extends AnyFlatSpec with RedisIntegrationFixture with Matchers 
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
 
-  val connection = Redis.single(redisUri)
+  val connection = RedisConnection.single(redisUri)
   override def beforeEach(): Unit = {
     super.beforeEach()
     connection.connectUtf.use(_.server.flushAll()).runSyncUnsafe()

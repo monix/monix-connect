@@ -82,7 +82,7 @@ class RedisListsBenchmark extends RedisBenchFixture {
     val f = monixRedis.use(_.list.lRange(keysCycle.next, lowerBoundary, upperBoundary).toListL).runToFuture
     Await.ready(f, 1.seconds)
   }
-  /*
+
   @Benchmark
   def laserdiscListWriter(): Unit = {
     val key = keysCycle.next
@@ -180,5 +180,5 @@ class RedisListsBenchmark extends RedisBenchFixture {
   def redis4catsListRangeReader(): Unit = {
     val f = redis4catsConn.use(c => c.lRange(keysCycle.next, lowerBoundary, upperBoundary)).unsafeToFuture
     Await.ready(f, 1.seconds)
-  } */
+  }
 }

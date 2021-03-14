@@ -65,8 +65,6 @@ class RedisKeysBenchmark extends RedisBenchFixture {
     val f = monixRedis.use(_.key.ttl(keysCycle.next)).runToFuture
     Await.ready(f, 1.seconds)
   }
-
-  /*
   @Benchmark
   def laserDiscKeyExistsReader(): Unit = {
     val f = laserdConn
@@ -82,8 +80,6 @@ class RedisKeysBenchmark extends RedisBenchFixture {
       .unsafeToFuture
     Await.ready(f, 1.seconds)
   }
-
-
   @Benchmark
   def redicolousKeyExistsReader(): Unit = {
     val f = redicolousConn
@@ -110,5 +106,5 @@ class RedisKeysBenchmark extends RedisBenchFixture {
   def redis4catsKeyPttlReader(): Unit = {
     val f = redis4catsConn.use(c => c.pttl(keysCycle.next)).unsafeToFuture
     Await.ready(f, 1.seconds)
-  }   */
+  }
 }

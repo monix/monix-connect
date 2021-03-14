@@ -43,7 +43,7 @@ trait RedisBenchFixture {
 
   implicit val connection: StatefulRedisConnection[String, String] = RedisClient.create(redisUrl).connect()
 
-  val monixRedis = monix.connect.redis.client.Redis.single(RedisUri(redisUrl)).connectUtf
+  val monixRedis = monix.connect.redis.client.RedisConnection.single(RedisUri(redisUrl)).connectUtf
 
   val redis4catsConn = redis4cats.Redis[IO].utf8(redisUrl)
 

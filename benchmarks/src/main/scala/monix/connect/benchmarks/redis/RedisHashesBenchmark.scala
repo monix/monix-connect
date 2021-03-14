@@ -21,7 +21,7 @@ import io.chrisdavenport.rediculous.RedisCommands
 import laserdisc.fs2._
 import laserdisc.{Key, all => cmd}
 import monix.connect.redis.RedisHash
-import monix.connect.redis.client.{Redis, RedisUri}
+import monix.connect.redis.client.{RedisConnection, RedisUri}
 import monix.execution.Scheduler.Implicits.global
 import org.openjdk.jmh.annotations._
 
@@ -60,13 +60,13 @@ class RedisHashesBenchmark extends RedisBenchFixture {
   @Benchmark
   def hashWriter(): Unit = {
     val key = keysCycle.next
-    Redis.single(RedisUri(redisUrl)).connectUtf.use(_.hash.hSet(key, key, key)).runSyncUnsafe()
+    RedisConnection.single(RedisUri(redisUrl)).connectUtf.use(_.hash.hSet(key, key, key)).runSyncUnsafe()
   }
 
   @Benchmark
   def hashFieldValueReader(): Unit = {
     val key = keysCycle.next
-    Redis.single(RedisUri(redisUrl)).connectUtf.use(_.hash.hGet(key, key)).runSyncUnsafe()
+    RedisConnection.single(RedisUri(redisUrl)).connectUtf.use(_.hash.hGet(key, key)).runSyncUnsafe()
   }
 
   @Benchmark

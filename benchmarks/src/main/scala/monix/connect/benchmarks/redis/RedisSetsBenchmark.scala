@@ -76,10 +76,10 @@ class RedisSetsBenchmark extends RedisBenchFixture {
     val f = monixRedis.use(_.set.sCard(keysCycle.next)).runToFuture
     Await.ready(f, 1.seconds)
   }
-  /*
+
   @Benchmark
   def setMembersReader(): Unit = {
-    val f = monixRedis.use(_.set.sMembers(keysCycle.next)).toListL.runToFuture
+    val f = monixRedis.use(_.set.sMembers(keysCycle.next).lastOptionL).runToFuture
     Await.ready(f, 1.seconds)
   }
 
@@ -185,5 +185,5 @@ class RedisSetsBenchmark extends RedisBenchFixture {
   def redis4catsSetMembersReader(): Unit = {
     val f = redis4catsConn.use(c => c.sMembers(keysCycle.next)).unsafeToFuture
     Await.ready(f, 1.seconds)
-  } */
+  }
 }

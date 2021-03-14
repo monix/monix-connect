@@ -75,7 +75,7 @@ class RedisStringsBenchmark extends RedisBenchFixture {
     val f = monixRedis.use(_.string.get(keysCycle.next)).runToFuture
     Await.ready(f, 1.seconds)
   }
-  /*
+
   @Benchmark
   def laserdiscStringWriter(): Unit = {
     val key = keysCycle.next
@@ -152,5 +152,5 @@ class RedisStringsBenchmark extends RedisBenchFixture {
   def redis4catsStringReader(): Unit = {
     val f = redis4catsConn.use(c => c.get(keysCycle.next)).unsafeToFuture
     Await.ready(f, 1.seconds)
-  }*/
+  }
 }

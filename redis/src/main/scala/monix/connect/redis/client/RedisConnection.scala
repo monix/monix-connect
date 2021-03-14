@@ -86,3 +86,34 @@ trait RedisConnection {
     valueCodec: Codec[V, Array[Byte]]): Resource[Task, RedisCmd[K, V]]
 
 }
+
+/**
+  * An object that provides an aggregation of all the different Redis Apis.
+  * They can be equally accessed independently or from this object.
+  */
+object RedisConnection {
+
+  /**
+    *
+    */
+  def single[K, V](uri: RedisUri): RedisConnection =
+    SingleConnection(uri)
+
+  /**
+    *
+    * @param uris
+    * @return
+    */
+  def cluster[K, V](uris: RedisUri*): RedisConnection =
+    ClusterConnection(uris.toList)
+
+  /**
+    *
+    * @param uris
+    * @tparam K
+    * @tparam V
+    * @return
+    */
+  def cluster[K, V](uris: List[RedisUri]): RedisConnection =
+    ClusterConnection(uris)
+}

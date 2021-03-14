@@ -1,6 +1,6 @@
 package monix.connect.redis
 
-import monix.connect.redis.client.{Codec, Redis, RedisUri}
+import monix.connect.redis.client.{Codec, RedisConnection, RedisUri}
 import monix.connect.redis.test.protobuf.{Person, PersonPk}
 import monix.execution.Scheduler.Implicits.global
 import org.scalacheck.Gen
@@ -15,7 +15,7 @@ class SingleConnectionSuite extends AnyFlatSpec with RedisIntegrationFixture wit
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
 
-  val singleConnection = Redis.single(redisUri)
+  val singleConnection = RedisConnection.single(redisUri)
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -28,10 +28,10 @@ class SingleConnectionSuite extends AnyFlatSpec with RedisIntegrationFixture wit
     val value: String = Gen.identifier.sample.get
 
     //when
-    Redis.single(RedisUri(redisUrl)).connectUtf.use(_.list.lPush(key, value)).runSyncUnsafe()
+    RedisConnection.single(RedisUri(redisUrl)).connectUtf.use(_.list.lPush(key, value)).runSyncUnsafe()
 
     //then
-    val r = Redis.single(RedisUri(redisUrl)).connectUtf.use(_.list.lPop(key)).runSyncUnsafe()
+    val r = RedisConnection.single(RedisUri(redisUrl)).connectUtf.use(_.list.lPop(key)).runSyncUnsafe()
     Some(value) shouldBe r
   }
 
