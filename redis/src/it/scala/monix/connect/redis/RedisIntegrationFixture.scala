@@ -30,21 +30,21 @@ trait RedisIntegrationFixture {
     for {
       v <- genRedisValue
       score <- Gen.choose[Double](1, 90000)
-    } yield VScore(score, Some(v))
+    } yield VScore(Some(v), score)
   }
 
   protected def genVScoreWithRange(lower: Int, upper: Int): Gen[VScore[V]] = {
     for {
       v <- genRedisValue
       score <- Gen.choose[Double](lower, upper)
-    } yield VScore(score, Some(v))
+    } yield VScore(Some(v), score)
   }
 
 
   protected def genVScore(score: Double): Gen[VScore[V]] = {
     for {
       v <- genRedisValue
-    } yield VScore(score, v)
+    } yield VScore(v, score)
   }
 
   val genPerson: Gen[Person] = {

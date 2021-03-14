@@ -19,6 +19,7 @@ package monix.connect.benchmarks.redis
 
 import java.util.Optional
 import dev.profunktor.redis4cats.effects.{Score, ScoreWithValue, ZRange}
+import monix.connect.redis.domain.{VScore, ZRange => MonixZrange}
 import io.chrisdavenport.rediculous.RedisCommands
 import io.lettuce.core.ScoredValue
 import laserdisc.fs2._
@@ -66,28 +67,24 @@ class RedisSortedSetsBenchmark extends RedisBenchFixture {
   @Benchmark
   def sortedSetWriter(): Unit = {
     val key = keysCycle.next
-    val value = key.toString
-    val scoredValue: ScoredValue[String] = ScoredValue.from(key.toDouble, Optional.of(value))
-    val f = RedisSortedSet.zadd(key, scoredValue).runToFuture
-    Await.ready(f, 1.seconds)
+    val value = key
+    monixRedis.use(_.sortedSet.zAdd(key, VScore(value, key.toDouble))).runSyncUnsafe()
   }
 
   @Benchmark
   def sortedSetCardReader(): Unit = {
-    val f = RedisSortedSet.zcard(keysCycle.next).runToFuture
-    Await.ready(f, 1.seconds)
+    monixRedis.use(_.sortedSet.zCard(keysCycle.next)).runSyncUnsafe()
   }
 
   @Benchmark
   def sortedSetCountReader(): Unit = {
-    val f = RedisSortedSet.zcount(keysCycle.next, range).runToFuture
-    Await.ready(f, 1.seconds)
+    monixRedis.use(_.sortedSet.zCount(keysCycle.next, MonixZrange(lowerBoundary, upperBoundary))).runSyncUnsafe()
   }
 
   @Benchmark
   def sortedSetRangeReader(): Unit = {
-    val f = RedisSortedSet.zrange(keysCycle.next, lowerBoundary, upperBoundary).toListL.runToFuture
-    Await.ready(f, 1.seconds)
+    monixRedis.use(_.sortedSet.zRangeByScore(keysCycle.next, MonixZrange(lowerBoundary, upperBoundary)).lastOptionL)
+      .runSyncUnsafe()
   }
 
   @Benchmark

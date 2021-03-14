@@ -134,6 +134,16 @@ class SortedSetCommands[K, V] private[redis] (reactiveCmd: RedisSortedSetReactiv
       .fromReactivePublisher(reactiveCmd.zcard(key))
       .map(_.map(_.longValue).getOrElse(0L))
 
+
+  /**
+    * Count the number of members in a sorted set within a given [[ZRange]].
+    * @return The number of elements in the specified score range.
+    */
+  def zCount(key: K, range: ZRange[_ <: Number]): Task[Long] =
+    Task
+      .fromReactivePublisher(reactiveCmd.zcount(key, range.underlying))
+      .map(_.map(_.longValue).getOrElse(0L))
+
   /**
     * Increment the score of a member in a sorted set.
     * @return The new score of member.
@@ -151,6 +161,7 @@ class SortedSetCommands[K, V] private[redis] (reactiveCmd: RedisSortedSetReactiv
     Task
       .fromReactivePublisher(reactiveCmd.zinterstore(destination, keys: _*))
       .map(_.map(_.longValue).getOrElse(0L))
+
 
   /**
     * Count the number of members in a sorted set between a given lexicographical range.

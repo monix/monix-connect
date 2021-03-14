@@ -22,11 +22,11 @@ import io.lettuce.core.ScoredValue
 import java.util.Optional
 import scala.util.Try
 
-case class VScore[V] private[redis] (val score: Double, val value: Option[V]) {
+case class VScore[V] private[redis] (val value: Option[V], val score: Double) {
 
-  def mapScore(f: Double => Double): VScore[V] = VScore(f(score), value)
+  def mapScore(f: Double => Double): VScore[V] = VScore(value, f(score))
 
-  def flatMap(f: Option[V] => Option[V]) = new VScore(score, f(value))
+  def flatMap(f: Option[V] => Option[V]) = new VScore(f(value), score)
 
   private[redis] def toScoredValue: ScoredValue[V] = {
     val optional: Optional[V] = value.map(a => Optional.of(a)).getOrElse(Optional.empty())
@@ -36,10 +36,10 @@ case class VScore[V] private[redis] (val score: Double, val value: Option[V]) {
 
 object VScore {
 
-  def apply[V](score: Double, value: V) = new VScore(score, Some(value))
+  def apply[V](value: V, score: Double) = new VScore(Some(value), score)
 
-  def from[V](scoredValue: ScoredValue[V]) = new VScore[V](scoredValue.getScore, Try(scoredValue.getValue).toOption)
+  def from[V](scoredValue: ScoredValue[V]) = new VScore[V](Try(scoredValue.getValue).toOption, scoredValue.getScore)
 
-  def empty[V] = new VScore(0, Option.empty[V])
+  def empty[V] = new VScore(Option.empty[V], 0)
 
 }

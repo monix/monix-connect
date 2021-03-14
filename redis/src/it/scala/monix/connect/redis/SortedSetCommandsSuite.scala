@@ -180,11 +180,11 @@ class SortedSetCommandsSuite
         //then
         addFirst shouldBe 1L
         addSameScore shouldBe 0L
-        elems1 shouldBe List(VScore(1, vA))
+        elems1 shouldBe List(VScore(vA, 1))
         addDifScore shouldBe 0L
-        elems2 shouldBe List(VScore(1, vA))
+        elems2 shouldBe List(VScore(vA, 1))
         addDifVal shouldBe 1L
-        elems3 should contain theSameElementsAs List(VScore(1, vA), VScore(1, vB))
+        elems3 should contain theSameElementsAs List(VScore(vA, 1), VScore(vB, 1))
       }
     }.runSyncUnsafe()
   }
@@ -195,10 +195,10 @@ class SortedSetCommandsSuite
     val vA = genRedisValue.sample.get
     val vB = genRedisValue.sample.get
     val vC = genRedisValue.sample.get
-    val vScoreA1 = VScore(1, vA)
-    val vScoreA2 = VScore(2, vA)
-    val vScoreB1 = VScore(3, vB)
-    val vScoreC1 = VScore(4, vC)
+    val vScoreA1 = VScore(vA, 1)
+    val vScoreA2 = VScore(vA, 2)
+    val vScoreB1 = VScore(vB, 3)
+    val vScoreC1 = VScore(vC, 4)
 
     utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
       for {
@@ -221,9 +221,9 @@ class SortedSetCommandsSuite
     val vA = genRedisValue.sample.get
     val vB = genRedisValue.sample.get
     val vC = genRedisValue.sample.get
-    val vScoreA2 = VScore(2, vA)
-    val vScoreB1 = VScore(3, vB)
-    val vScoreC1 = VScore(4, vC)
+    val vScoreA2 = VScore(vA, 2)
+    val vScoreB1 = VScore(vB, 3)
+    val vScoreC1 = VScore(vC, 4)
 
     utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
       for {
@@ -248,12 +248,12 @@ class SortedSetCommandsSuite
     val vA = genRedisValue.sample.get
     val vB = genRedisValue.sample.get
     val vC = genRedisValue.sample.get
-    val vScoreA1 = VScore(1, vA)
-    val vScoreA2 = VScore(2, vA)
-    val vScoreA3 = VScore(3, vA)
-    val vScoreB1 = VScore(1, vB)
-    val vScoreB2 = VScore(2, vB)
-    val vScoreC1 = VScore(1, vC)
+    val vScoreA1 = VScore(vA, 1)
+    val vScoreA2 = VScore(vA, 2)
+    val vScoreA3 = VScore(vA, 3)
+    val vScoreB1 = VScore(vB, 1)
+    val vScoreB2 = VScore(vB, 2)
+    val vScoreC1 = VScore(vC, 1)
 
     utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
       for {
@@ -293,9 +293,9 @@ class SortedSetCommandsSuite
       } yield {
         //then
         add1 shouldBe 1L
-        elems1 should contain theSameElementsAs List(VScore(1, vA))
+        elems1 should contain theSameElementsAs List(VScore(vA, 1))
         add2 shouldBe 4L
-        elems2 should contain theSameElementsAs List(VScore(4, vA))
+        elems2 should contain theSameElementsAs List(VScore(vA, 4))
       }
     }.runSyncUnsafe()
   }
@@ -316,9 +316,9 @@ class SortedSetCommandsSuite
       } yield {
         //then
         add1 shouldBe 1L
-        elems1 should contain theSameElementsAs List(VScore(1, vA))
+        elems1 should contain theSameElementsAs List(VScore(vA, 1))
         add2 shouldBe 0L
-        elems2 should contain theSameElementsAs List(VScore(1, vA))
+        elems2 should contain theSameElementsAs List(VScore(vA, 1))
       }
     }.runSyncUnsafe()
   }
@@ -340,11 +340,11 @@ class SortedSetCommandsSuite
       } yield {
         //then
         add1 shouldBe 1L
-        elems1 should contain theSameElementsAs List(VScore(1, vA))
+        elems1 should contain theSameElementsAs List(VScore(vA, 1))
         add2 shouldBe 2L
-        elems2 should contain theSameElementsAs List(VScore(2, vA))
+        elems2 should contain theSameElementsAs List(VScore(vA, 2))
         add3 shouldBe 4L
-        elems3 should contain theSameElementsAs List(VScore(4, vA))
+        elems3 should contain theSameElementsAs List(VScore(vA, 4))
       }
     }.runSyncUnsafe()
   }
@@ -369,9 +369,9 @@ class SortedSetCommandsSuite
         add1 shouldBe 0L
         elems1 shouldBe List.empty
         add2 shouldBe 2L
-        elems2 should contain theSameElementsAs List(VScore(2, vA))
+        elems2 should contain theSameElementsAs List(VScore(vA, 2))
         add3 shouldBe 4L
-        elems3 should contain theSameElementsAs List(VScore(4, vA))
+        elems3 should contain theSameElementsAs List(VScore(vA, 4))
       }
     }.runSyncUnsafe()
   }
@@ -393,7 +393,29 @@ class SortedSetCommandsSuite
     }.runSyncUnsafe()
   }
 
-  //todo fix
+  "zCount" should "count the number of members in a sorted set between a given ZRange." in {
+    //given
+    val k1 = genRedisKey.sample.get
+    val vScore1 = VScore("1", 1)
+    val vScore2 = VScore("2", 2)
+    val vScore3 = VScore("3", 3)
+    val vScoreA = VScore("A", 4)
+    val vScoreB = VScore("B", 5)
+    val vScoreC = VScore("C", 6)
+    val vScoreD = VScore("D", 7)
+
+    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+      for {
+        //when
+        _ <- sortedSet.zAdd(k1, vScore1, vScore2, vScore3, vScoreA, vScoreB, vScoreC, vScoreD)
+        count <- sortedSet.zCount(k1, ZRange(2, 5))
+      } yield {
+        //then
+        count shouldBe 4
+      }
+    }.runSyncUnsafe()
+  }
+
   "zIncrBy" should "increment the score by the given number" in {
     //given
     val k1 = genRedisKey.sample.get
@@ -409,7 +431,7 @@ class SortedSetCommandsSuite
         //then
         incr1 shouldBe 1.1
         incr2 shouldBe 4.1
-        elems2 should contain theSameElementsAs List(VScore(4.1, vA))
+        elems2 should contain theSameElementsAs List(VScore(vA, 4.1))
       }
     }.runSyncUnsafe()
   }
@@ -422,12 +444,12 @@ class SortedSetCommandsSuite
     val vA = genRedisValue.sample.get
     val vB = genRedisValue.sample.get
     val vC = genRedisValue.sample.get
-    val vScoreA1 = VScore(1, vA)
-    val vScoreA2 = VScore(2, vA)
-    val vScoreA3 = VScore(3, vA)
-    val vScoreB1 = VScore(1, vB)
-    val vScoreB2 = VScore(2, vB)
-    val vScoreC1 = VScore(1, vC)
+    val vScoreA1 = VScore(vA, 1)
+    val vScoreA2 = VScore(vA, 2)
+    val vScoreA3 = VScore(vA, 3)
+    val vScoreB1 = VScore(vB, 1)
+    val vScoreB2 = VScore(vB, 2)
+    val vScoreC1 = VScore(vC, 1)
 
     utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
       for {
@@ -452,13 +474,13 @@ class SortedSetCommandsSuite
   "zLexCount" should "increment the score by the given number" in {
     //given
     val k1 = genRedisKey.sample.get
-    val vScoreA = VScore(1, "A")
-    val vScoreB = VScore(1, "B")
-    val vScoreC = VScore(2, "C")
-    val vScoreD = VScore(1, "D")
-    val vScore1 = VScore(1, "1")
-    val vScore2 = VScore(1, "2")
-    val vScore3 = VScore(1, "3")
+    val vScoreA = VScore("A", 1)
+    val vScoreB = VScore("B", 1)
+    val vScoreC = VScore("C", 2)
+    val vScoreD = VScore("D", 1)
+    val vScore1 = VScore("1", 1)
+    val vScore2 = VScore("2", 1)
+    val vScore3 = VScore("3", 1)
 
     utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
       for {
@@ -481,7 +503,7 @@ class SortedSetCommandsSuite
   "zPopMin" should "remove and return the n lowest scores in the sorted set" in {
     //given
     val k1 = genRedisKey.sample.get
-    val vScores = List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).map(n => VScore(n , n.toString))
+    val vScores = List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).map(n => VScore(n.toString, n))
 
     utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
       for {
@@ -497,8 +519,8 @@ class SortedSetCommandsSuite
       } yield {
         //then
         min1 shouldBe vScores.head
-        min2 shouldBe VScore(2, "2")
-        minGroup shouldBe List(3, 4, 5, 6).map(n => VScore(n, n.toString))
+        min2 shouldBe VScore("2", 2)
+        minGroup shouldBe List(3, 4, 5, 6).map(n => VScore(n.toString, n))
         count shouldBe 4L
         emptyVScore shouldBe VScore.empty
         emptyVScores shouldBe List.empty
@@ -509,7 +531,7 @@ class SortedSetCommandsSuite
   "zPopMax" should "remove and return the n lowest scores in the sorted set" in {
     //given
     val k1 = genRedisKey.sample.get
-    val vScores = List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).map(n => VScore(n , n.toString))
+    val vScores = List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).map(n => VScore(n.toString, n))
 
     utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
       for {
@@ -525,8 +547,8 @@ class SortedSetCommandsSuite
       } yield {
         //then
         max1 shouldBe vScores.last
-        max2 shouldBe VScore(9, "9")
-        maxGroup shouldBe List(8, 7, 6, 5).map(n => VScore(n, n.toString))
+        max2 shouldBe VScore("9", 9)
+        maxGroup shouldBe List(8, 7, 6, 5).map(n => VScore(n.toString, n))
         count shouldBe 4L
         emptyVScore shouldBe VScore.empty
         emptyVScores shouldBe List.empty
@@ -599,13 +621,13 @@ class SortedSetCommandsSuite
   "zRangeByLex" should "return all the elements in the specified range with scores" in {
     //given
     val k1 = genRedisKey.sample.get
-    val vScoreA = VScore(1, "A")
-    val vScoreB = VScore(1, "B")
-    val vScoreC = VScore(2, "C") //even if it is ranged by lex, 'd' goes before 'c' because of the score.
-    val vScoreD = VScore(1, "D")
-    val vScore1 = VScore(1, "1")
-    val vScore2 = VScore(1, "2")
-    val vScore3 = VScore(1, "3")
+    val vScoreA = VScore("A", 1)
+    val vScoreB = VScore("B", 1)
+    val vScoreC = VScore("C", 2) //even if it is ranged by lex, 'd' goes before 'c' because of the score.
+    val vScoreD = VScore("D", 1)
+    val vScore1 = VScore("1", 1)
+    val vScore2 = VScore("2", 1)
+    val vScore3 = VScore("3", 1)
 
     utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
       for {
@@ -633,13 +655,13 @@ class SortedSetCommandsSuite
   "zRangeByScore" should "return a range of members in a sorted set, by score." in {
     //given
     val k1 = genRedisKey.sample.get
-    val vScoreA = VScore(2, "A")
-    val vScoreB = VScore(3, "B")
-    val vScoreC = VScore(5, "C")
-    val vScoreD = VScore(4, "D")
-    val vScore1 = VScore(6, "1")
-    val vScore2 = VScore(3, "2")
-    val vScore3 = VScore(1, "3")
+    val vScoreA = VScore("A", 2)
+    val vScoreB = VScore("B", 3)
+    val vScoreC = VScore("C", 5)
+    val vScoreD = VScore("D", 4)
+    val vScore1 = VScore("1", 6)
+    val vScore2 = VScore("2", 3)
+    val vScore3 = VScore("3", 1)
 
     utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
       for {
@@ -670,13 +692,13 @@ class SortedSetCommandsSuite
   "zRangeByScoreWithScores" should "return a range of members with score in a sorted set, by score." in {
     //given
     val k1 = genRedisKey.sample.get
-    val vScoreA = VScore(2, "A")
-    val vScoreB = VScore(3, "B")
-    val vScoreC = VScore(5, "C")
-    val vScoreD = VScore(4, "D")
-    val vScore1 = VScore(6, "1")
-    val vScore2 = VScore(3, "2")
-    val vScore3 = VScore(1, "3")
+    val vScoreA = VScore("A", 2)
+    val vScoreB = VScore("B", 3)
+    val vScoreC = VScore("C", 5)
+    val vScoreD = VScore("D", 4)
+    val vScore1 = VScore("1", 6)
+    val vScore2 = VScore("2", 3)
+    val vScore3 = VScore("3", 1)
 
     utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
       for {
@@ -708,11 +730,11 @@ class SortedSetCommandsSuite
   "zRank" should "the index of a member in a sorted set" in {
     //given
     val k1 = genRedisKey.sample.get
-    val vScoreA = VScore(1, "A")
-    val vScoreB = VScore(2, "B")
-    val vScore1 = VScore(3, "1")
+    val vScoreA = VScore("A", 1)
+    val vScoreB = VScore("B", 2)
+    val vScore1 = VScore("1", 3)
     //since it is a number will be ranked first then `B` although having the same score
-    val vScore2 = VScore(2, "2")
+    val vScore2 = VScore("2", 2)
 
     utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
       for {
@@ -737,10 +759,10 @@ class SortedSetCommandsSuite
   "zRem" should "remove" in {
     //given
     val k1 = genRedisKey.sample.get
-    val vScoreA = VScore(1, "A")
-    val vScoreB = VScore(3, "B")
-    val vScore1 = VScore(6, "1")
-    val vScore2 = VScore(3, "2")
+    val vScoreA = VScore("A", 1)
+    val vScoreB = VScore("B", 3)
+    val vScore1 = VScore("1", 6)
+    val vScore2 = VScore("2", 3)
 
     utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
       for {
@@ -765,7 +787,7 @@ class SortedSetCommandsSuite
     //https://redis.io/commands/zremrangebylex
     //given
     val k1 = genRedisKey.sample.get
-    val vScores = List("1", "2", "3", "a", "b", "c", "g").map(VScore(0, _))
+    val vScores = List("1", "2", "3", "a", "b", "c", "g").map(VScore(_, 0))
 
     utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
       for {
@@ -784,11 +806,11 @@ class SortedSetCommandsSuite
   "zRemRangeByScore" should "remove all members in a sorted set within the given scores" in {
     //given
     val k1 = genRedisKey.sample.get
-    val vScoreA = VScore(1, "A")
-    val vScoreB = VScore(3, "B")
-    val vScoreC = VScore(2, "C")
-    val vScore1 = VScore(5, "1")
-    val vScore2 = VScore(0, "2")
+    val vScoreA = VScore("A", 1)
+    val vScoreB = VScore("B", 3)
+    val vScoreC = VScore("C", 2)
+    val vScore1 = VScore("1", 5)
+    val vScore2 = VScore("2", 0)
 
     utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
       for {
@@ -811,7 +833,7 @@ class SortedSetCommandsSuite
     //https://redis.io/commands/zRevRangeByLex
     //given
     val k1 = genRedisKey.sample.get
-    val vScores = List("a", "b", "c", "d", "e", "f", "g").map(VScore(0, _))
+    val vScores = List("a", "b", "c", "d", "e", "f", "g").map(VScore(_, 0))
 
     utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
       for {
@@ -834,12 +856,12 @@ class SortedSetCommandsSuite
   "zRevRangeByScore" should "return a range of members in a sorted set, by score, with scores ordered from high to low." in {
     //given
     val k1 = genRedisKey.sample.get
-    val vScoreA = VScore(1, "A")
-    val vScoreB = VScore(3, "B")
-    val vScoreC = VScore(2, "C")
-    val vScore1 = VScore(4, "1")
-    val vScore2 = VScore(0, "2")
-    val vScore3 = VScore(2, "3")
+    val vScoreA = VScore("A", 1)
+    val vScoreB = VScore("B", 3)
+    val vScoreC = VScore("C", 2)
+    val vScore1 = VScore("1", 4)
+    val vScore2 = VScore("2", 0)
+    val vScore3 = VScore("3", 2)
 
     utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
       for {
@@ -867,12 +889,12 @@ class SortedSetCommandsSuite
   "zRevRangeByScoreWithScores" should "return a range of members with scores in a sorted set, by score, with scores ordered from high to low" in {
     //given
     val k1 = genRedisKey.sample.get
-    val vScoreA = VScore(1, "A")
-    val vScoreB = VScore(3, "B")
-    val vScoreC = VScore(2, "C")
-    val vScore1 = VScore(4, "1")
-    val vScore2 = VScore(0, "2")
-    val vScore3 = VScore(2, "3")
+    val vScoreA = VScore("A", 1)
+    val vScoreB = VScore("B", 3)
+    val vScoreC = VScore("C", 2)
+    val vScore1 = VScore("1", 4)
+    val vScore2 = VScore("2", 0)
+    val vScore3 = VScore("3", 2)
 
     utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
       for {
@@ -947,9 +969,9 @@ class SortedSetCommandsSuite
     val k3 = genRedisKey.sample.get
     val k4 = genRedisKey.sample.get
 
-    val vScores1 = List("A", "B", "C", "D").map(VScore(1, _))
-    val vScores2 = List("1", "2", "3").map(VScore(1, _))
-    val vScoresDuplicated = List("1", "2").map(VScore(3, _))
+    val vScores1 = List("A", "B", "C", "D").map(VScore(_, 1))
+    val vScores2 = List("1", "2", "3").map(VScore(_, 1))
+    val vScoresDuplicated = List("1", "2").map(VScore(_, 3))
 
     utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
       for {
