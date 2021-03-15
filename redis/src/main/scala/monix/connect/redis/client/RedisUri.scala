@@ -23,6 +23,26 @@ import java.time.Duration
 import scala.concurrent.duration.FiniteDuration
 
 /**
+  * Contains connection details for the communication with standalone redis servers.
+  * Allows to provide the database, client name, password and timeouts and more.
+  *
+  * You have different ways to create a [[RedisUri]]:
+  *
+  * ==Example==
+  *
+  * {{{
+  *   //using an URI
+  *   RedisUri("redis://localhost:6379")
+  *
+  *   //using host and port
+  *   RedisUri("localhost", 6379)
+  *
+  *   //then you can pass custom options
+  *   RedisUri("localhost", 6379)
+  *   .withDatabase("db1")
+  *   .withPassword("Alice123") //this will normally come from a stored secret
+  *   .withClientName("companyX")
+  * }}}
   *
   */
 class RedisUri(
@@ -39,23 +59,14 @@ class RedisUri(
   clientName: Option[String] = None) {
 
   def withDatabase(database: Int): RedisUri = copy(database = Some(database))
-
   def withPassword(password: String): RedisUri = copy(password = Some(password))
-
   def withSsl(ssl: Boolean): RedisUri = copy(ssl = Some(ssl))
-
   def withVerifyPeer(verifyPeer: Boolean): RedisUri = copy(verifyPeer = Some(verifyPeer))
-
   def withStartTls(startTls: Boolean): RedisUri = copy(startTls = Some(startTls))
-
   def withTimeout(timeout: FiniteDuration): RedisUri = copy(timeout = Some(timeout))
-
   def withSentinels(sentinels: List[String]): RedisUri = copy(sentinels = sentinels)
-
   def withSocket(socket: String): RedisUri = copy(socket = Some(socket))
-
   def withSentinelMasterId(sentinelMasterId: String): RedisUri = copy(sentinelMasterId = Some(sentinelMasterId))
-
   def withClientName(clientName: String): RedisUri = copy(clientName = Some(clientName))
 
   private[redis] def toJava: RedisURI = {
@@ -93,8 +104,42 @@ class RedisUri(
 
 object RedisUri {
 
+/**
+  * Creates a [[RedisUri]] from host and port.
+  *
+  * ==Example==
+  *
+  * {{{
+  *   RedisUri("localhost", 6379)
+  *   .withDatabase("db1")
+  *   .withPassword("Alice123") //this will normally come from a stored secret
+  *   .withClientName("companyX")
+  * }}}
+  */
   def apply(host: String, port: Int): RedisUri = new RedisUri(Right(host, port))
 
+  /**
+    * Creates a [[RedisUri]] from a the plain string uri.
+    *
+    * ==Example==
+    *
+    * {{{
+    *   RedisUri("localhost", 6379)
+    *   .withDatabase("db1")
+    *   .withPassword("Alice123") //this will normally come from a stored secret
+    *   .withClientName("companyX")
+    * }}}
+    *
+    * ==Uri Syntax==
+    *
+    * - Redis Standalone
+    * redis://[password@]host [: port][/database][? [timeout=timeout[d|h|m|s|ms|us|ns]] [ &database=database] [&clientName=clientName]]
+    *
+    * - Redis Standalone (SSL)
+    * rediss://[password@]host [: port][/database][? [timeout=timeout[d|h|m|s|ms|us|ns]] [ &database=database] [&clientName=clientName]]
+    *
+    * @see <a href="https://github.com/lettuce-io/lettuce-core/wiki/Redis-URI-and-connection-details">RedisUri connection details.</a>,
+    */
   def apply(uri: String): RedisUri = new RedisUri(Left(uri))
 
 }

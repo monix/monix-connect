@@ -25,10 +25,9 @@ import monix.reactive.Observable
 import scala.concurrent.duration.FiniteDuration
 
 /**
-  * Non supported - `bLPop`, `bRPop`, `bRPopLPush`.
-  * @param reactiveCmd
-  * @tparam K
-  * @tparam V
+  * Exposes the set of redis **list** commands available.
+  * @see <a href="https://redis.io/commands#list">List commands reference</a>.
+  * No support for `bLPop`, `bRPop`, `bRPopLPush`.
   */
 class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[K, V]) {
 

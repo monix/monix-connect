@@ -42,7 +42,7 @@ import monix.execution.internal.InternalApi
   *      <a href="https://redis.io/commands#server">Server</a>,
   *      <a href="https://redis.io/commands#set">Set</a>,
   *      <a href="https://redis.io/commands#sorted_set">SortedSet</a>,
-  *      <a href="https://redis.io/commands#hash">String</a> commands.
+  *      <a href="https://redis.io/commands#string">String</a> commands.
   */
 case class RedisCmd[K, V](
   hash: HashCommands[K, V],

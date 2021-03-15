@@ -23,8 +23,8 @@ import monix.eval.Task
 import scala.jdk.CollectionConverters._
 
 /**
-  * @see The reference Lettuce Api at:
-  *      [[io.lettuce.core.api.reactive.RedisServerReactiveCommands]]
+  * Exposes the set of redis **server** commands available.
+  * @see <a href="https://redis.io/commands#server">Server commands reference</a>.
   */
 final class ServerCommands[K, V] private[redis] (reactiveCmd: RedisServerReactiveCommands[K, V]) {
 

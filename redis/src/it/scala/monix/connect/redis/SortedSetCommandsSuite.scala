@@ -300,7 +300,7 @@ class SortedSetCommandsSuite
     }.runSyncUnsafe()
   }
 
-  it should "not increment the score if it already exists" in {
+  "zAddIncrNx" should "not increment the score if it already exists" in {
     //given
     val k1 = genRedisKey.sample.get
     val vA = genRedisValue.sample.get
@@ -323,7 +323,8 @@ class SortedSetCommandsSuite
     }.runSyncUnsafe()
   }
 
-  it should "only increment the score if the score has changed" in { //this is not true, it is always incrementing
+  //todo this is not true, it is always incrementing
+  "zAddIncrCh" should "only increment the score if the score has changed" in {
     //given
     val k1 = genRedisKey.sample.get
     val vA = genRedisValue.sample.get

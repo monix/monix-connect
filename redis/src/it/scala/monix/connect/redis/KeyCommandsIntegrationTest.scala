@@ -132,7 +132,7 @@ class KeyCommandsIntegrationTest
 
   }
 
-  "expire" should "allow overriding the ttl expiration" in {
+  "pExpire" should "allow overriding the ttl expiration" in {
     //given
     val k1: K = genRedisKey.sample.get
     val k2: K = genRedisKey.sample.get
@@ -142,11 +142,11 @@ class KeyCommandsIntegrationTest
     utfConnection.use { cmd =>
       //when
       for {
-        r1 <- cmd.key.pExpire(k1, 9.seconds)
+        r1 <- cmd.key.expire(k1, 9.seconds)
         initialTtl <- cmd.key.ttl(k1)
-        isOverwritten <- cmd.key.pExpire(k1, 15.seconds)
+        isOverwritten <- cmd.key.expire(k1, 15.seconds)
         overwrittenTtl <- cmd.key.ttl(k1)
-        expireOnNonExistingKey <- cmd.key.pExpire(k2, 1002.seconds)
+        expireOnNonExistingKey <- cmd.key.expire(k2, 1002.seconds)
       } yield {
         //then
         r1 shouldBe true
@@ -170,7 +170,7 @@ class KeyCommandsIntegrationTest
     utfConnection.use { cmd =>
       //when
       for {
-        r1 <- cmd.key.pExpire(k1, 99999.days)
+        r1 <- cmd.key.expire(k1, 99999.days)
         ttl <- cmd.key.ttl(k1)
       } yield {
         //then
@@ -191,7 +191,7 @@ class KeyCommandsIntegrationTest
     utfConnection.use { case RedisCmd(_, keys, _, _, _, _, _) =>
       for {
         initialTtl <- keys.ttl(key1)
-        expire <- keys.pExpire(key1, 2.seconds)
+        expire <- keys.expire(key1, 2.seconds)
         finalTtl <- keys.ttl(key1)
         existsWithinTtl <- keys.exists(key1)
         _ <- keys.rename(key1, key2) // the ttl should be preserved on the new key
@@ -330,7 +330,7 @@ class KeyCommandsIntegrationTest
       .use(cmd =>
         //when
         for {
-          _ <- cmd.string.set(k1, value) >> cmd.key.pExpire(k1, 100.seconds) >> cmd.string.set(k2, value)
+          _ <- cmd.string.set(k1, value) >> cmd.key.expire(k1, 100.seconds) >> cmd.string.set(k2, value)
           r1 <- cmd.key.persist(k1)
           r2 <- cmd.key.persist(k2)
           r3 <- cmd.key.persist(k3)

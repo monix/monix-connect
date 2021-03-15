@@ -27,14 +27,11 @@ import monix.reactive.Observable
 
 import scala.concurrent.duration.FiniteDuration
 
-/*
-//def zRemRangeByRank todo not supported
-not supported
-def zRevRange(key: K, start: Long, stop: Long): Observable[V]
-def zRevRangeWithScores(key: K, start: Long, stop: Long): Observable[VScore[V]]
- */
 /**
-  * @see The reference Lettuce Api at: [[io.lettuce.core.api.reactive.RedisSortedSetReactiveCommands]]
+  * Exposes the set of redis **sorted set** commands available.
+  * @see <a href="https://redis.io/commands#sorted_set">Sorted set commands reference</a>.
+  *
+  * @note No support for `zRevRange`, `zRevRangeWithScores`, `zRemRangeByRank`.
   */
 class SortedSetCommands[K, V] private[redis] (reactiveCmd: RedisSortedSetReactiveCommands[K, V]) {
 
@@ -118,7 +115,12 @@ class SortedSetCommands[K, V] private[redis] (reactiveCmd: RedisSortedSetReactiv
       .fromReactivePublisher(reactiveCmd.zaddincr(key, score, member))
       .map(_.map(_.longValue).getOrElse(0L))
 
-  //todo test
+  /**
+    * Add one or more members to a sorted set,
+    * or update its score depending on [[ZArgs]].
+    *
+    * @return The score number of the updated element.
+    */
   def zAddIncr(key: K, zArg: ZArg, score: Double, member: V): Task[Long] =
     Task
       .fromReactivePublisher(reactiveCmd.zaddincr(key, ZArgs.parse(zArg), score, member))
@@ -133,7 +135,6 @@ class SortedSetCommands[K, V] private[redis] (reactiveCmd: RedisSortedSetReactiv
     Task
       .fromReactivePublisher(reactiveCmd.zcard(key))
       .map(_.map(_.longValue).getOrElse(0L))
-
 
   /**
     * Count the number of members in a sorted set within a given [[ZRange]].

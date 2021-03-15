@@ -21,15 +21,15 @@ import io.lettuce.core.api.reactive.RedisKeyReactiveCommands
 import monix.eval.Task
 import monix.reactive.Observable
 
+import java.util.Date
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.{Duration, FiniteDuration, MILLISECONDS}
 import scala.util.Try
 
 /**
-  * not Supported - scan, use `keys` instead, expire and expireAt, use pexpire and pExpireAt
-  * @param reactiveCmd
-  * @tparam K
-  * @tparam V
+  * Exposes the set of redis **key** commands available.
+  * @see <a href="https://redis.io/commands#generic">Key commands reference</a>.
+  *
   */
 final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveCommands[K, V]) {
 
@@ -38,31 +38,36 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
     * @return The number of keys that were removed.
     */
   def del(keys: K*): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.del(keys: _*)).map(_.map(_.longValue).getOrElse(0L))
+    Task.fromReactivePublisher(reactiveCmd.del(keys: _*))
+      .map(_.map(_.longValue).getOrElse(0L))
 
   /**
     * Unlink one or more keys (non blocking DEL).
     * @return The number of keys that were removed.
     */
   def unLink(keys: K*): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.unlink(keys: _*)).map(_.map(_.longValue).getOrElse(0L))
+    Task.fromReactivePublisher(reactiveCmd.unlink(keys: _*))
+      .map(_.map(_.longValue).getOrElse(0L))
 
   /**
     * Return a serialized version of the value stored at the specified key.
     * @return The serialized value.
     */
   def dump(key: K): Task[Array[Byte]] =
-    Task.fromReactivePublisher(reactiveCmd.dump(key)).map(_.getOrElse(Array.emptyByteArray))
+    Task.fromReactivePublisher(reactiveCmd.dump(key))
+      .map(_.getOrElse(Array.emptyByteArray))
 
   /**
     * Determine how many keys exist.
     * @return Number of existing keys
     */
   def exists(keys: List[K]): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.exists(keys: _*)).map(_.map(_.longValue).getOrElse(0L))
+    Task.fromReactivePublisher(reactiveCmd.exists(keys: _*))
+      .map(_.map(_.longValue).getOrElse(0L))
 
   def exists(key: K): Task[Boolean] =
-    Task.fromReactivePublisher(reactiveCmd.exists(key)).map(_.exists(_.longValue >= 1))
+    Task.fromReactivePublisher(reactiveCmd.exists(key))
+      .map(_.exists(_.longValue >= 1))
   /**
     * Set a key's time to live with a precision of milliseconds.
     *
@@ -70,32 +75,13 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
     *         `false`` if key does not exist or the timeout could not be set.
     *
     */
-  def pExpire(key: K, timeout: FiniteDuration): Task[Boolean] =
-    Task.fromReactivePublisher(reactiveCmd.expire(key, timeout.toSeconds)).map(_.exists(_.booleanValue))
+  def expire(key: K, timeout: FiniteDuration): Task[Boolean] =
+    Task.fromReactivePublisher(reactiveCmd.expire(key, timeout.toSeconds))
+      .map(_.exists(_.booleanValue))
 
-  /*
-  /**
-   * Set the expiration date timeout for a key as UNIX timestamp with a precision of milliseconds.
-   *
-   * @note calling `EXPIRE/PEXPIRE` with a non-positive timeout or `EXPIREAT/PEXPIREAT` with a time
-   *       in the past will result in the key being deleted rather than expired.
-   * @return `true` if the timeout was set.
-   *         `false` if key does not exist or the timeout could not be set.
-   */
-  def pExpireAt(key: K, timestamp: Date): Task[Boolean] =
-    Task.fromReactivePublisher(reactiveCmd.expireat(key, timestamp)).map(_.exists(_.booleanValue))
-
-  /**
-   * Set the expiration date timeout for a key as UNIX timestamp.
-   *
-   * @note calling `EXPIRE/PEXPIRE` with a non-positive timeout or `EXPIREAT/PEXPIREAT` with a time
-   *       in the past will result in the key being deleted rather than expired.
-   * @return `true` if the timeout was set.
-   *         `false` if key does not exist or the timeout could not be set.
-   */
-  def pExpireAt(key: K, timestamp: Long): Task[Boolean] =
-    Task.fromReactivePublisher(reactiveCmd.expireat(key, timestamp)).map(_.exists(_.booleanValue))
-   */
+  def expireAt(key: K, date: Date): Task[Boolean] =
+    Task.fromReactivePublisher(reactiveCmd.expireat(key, date))
+      .map(_.exists(_.booleanValue))
 
   /**
     * Find all keys matching the given pattern.
@@ -140,7 +126,8 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
     * Number of references of the value associated with the specified key.
     */
   def objectRefCount(key: K): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.objectRefcount(key)).map(_.map(_.longValue).getOrElse(0L))
+    Task.fromReactivePublisher(reactiveCmd.objectRefcount(key))
+      .map(_.map(_.longValue).getOrElse(0L))
 
   /**
     * Removes the expiration from a key.
@@ -149,7 +136,8 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
     *         `false` if key does not exist or does not have an associated timeout.
     */
   def persist(key: K): Task[Boolean] =
-    Task.fromReactivePublisher(reactiveCmd.persist(key)).map(_.exists(_.booleanValue))
+    Task.fromReactivePublisher(reactiveCmd.persist(key))
+      .map(_.exists(_.booleanValue))
 
   /**
     * Return a random key from the keyspace.
@@ -169,7 +157,8 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
     *         `false` if newkey already exists.
     */
   def renameNx(key: K, newKey: K): Task[Boolean] =
-    Task.fromReactivePublisher(reactiveCmd.renamenx(key, newKey)).map(_.exists(_.booleanValue))
+    Task.fromReactivePublisher(reactiveCmd.renamenx(key, newKey))
+      .map(_.exists(_.booleanValue))
 
   /** Create a key using the provided serialized value, previously obtained using DUMP. */
   def restore(key: K, ttl: FiniteDuration, value: Array[Byte]): Task[Unit] =
@@ -187,7 +176,8 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
     * @return The number of found keys.
     */
   def touch(keys: K*): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.touch(keys: _*)).map(_.map(_.longValue).getOrElse(0))
+    Task.fromReactivePublisher(reactiveCmd.touch(keys: _*))
+      .map(_.map(_.longValue).getOrElse(0))
 
   /** Get the time to live for a key.
     *

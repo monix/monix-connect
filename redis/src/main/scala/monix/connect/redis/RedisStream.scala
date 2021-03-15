@@ -33,6 +33,7 @@ import io.lettuce.core.XReadArgs.StreamOffset
   * @see The reference to lettuce api: [[io.lettuce.core.api.reactive.RedisStreamReactiveCommands]]
   *
   */
+@deprecated("use the pure `monix.connect.redis.client.RedisConnection`", "0.6.0")
 trait RedisStream {
 
   /**
@@ -84,10 +85,10 @@ trait RedisStream {
     * Delete a consumer from a consumer group.
     * @return simple-reply { @literal true} if successful.
     */
-  //def xgroupDelconsumer[K, V](key: K, consumer: LConsumer[K])(
-  //  implicit
-  //  connection: StatefulRedisConnection[K, V]): Task[Boolean] =
-  //  Task.from(connection.reactive().xgroupDelconsumer(key, consumer)).map(_.booleanValue())
+  def xgroupDelconsumer[K, V](key: K, consumer: LConsumer[K])(
+    implicit
+    connection: StatefulRedisConnection[K, V]): Task[Long] =
+    Task.from(connection.reactive().xgroupDelconsumer(key, consumer)).map(_.longValue())
 
   /**
     * Destroy a consumer group.

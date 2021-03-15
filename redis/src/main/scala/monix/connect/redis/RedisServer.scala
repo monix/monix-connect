@@ -27,6 +27,7 @@ import scala.jdk.CollectionConverters._
   * @see The reference Lettuce Api at:
   *      [[io.lettuce.core.api.reactive.RedisServerReactiveCommands]]
   */
+@deprecated("use the pure `monix.connect.redis.client.RedisConnection`", "0.6.0")
 private[redis] trait RedisServer {
 
   /**

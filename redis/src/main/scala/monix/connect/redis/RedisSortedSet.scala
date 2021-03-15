@@ -25,6 +25,7 @@ import monix.reactive.Observable
 /**
   * @see The reference Lettuce Api at: [[io.lettuce.core.api.reactive.RedisSortedSetReactiveCommands]]
   */
+@deprecated("use the pure `monix.connect.redis.client.RedisConnection`", "0.6.0")
 private[redis] trait RedisSortedSet {
 
   /**

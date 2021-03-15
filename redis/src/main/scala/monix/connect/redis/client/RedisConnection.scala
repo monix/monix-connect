@@ -94,8 +94,8 @@ trait RedisConnection {
 object RedisConnection {
 
   /**
-    * A scalable and thread-safe single node redis connection that communicates
-    * to a single server with the specified `uri`.
+    * A scalable and thread-safe single node redis connection that
+    * communicates to a single server with the specified `uri`.
     *
     * ==Example==
     *
@@ -120,8 +120,8 @@ object RedisConnection {
     new SingleConnection(uri)
 
   /**
-    * A scalable and thread-safe redis cluster connection that communicates
-    * to the different servers with specified `uris`.
+    * A scalable and thread-safe redis cluster connection that
+    * communicates to the different servers with specified `uris`.
     *
     * ==Example==
     *
@@ -129,8 +129,8 @@ object RedisConnection {
     *   import monix.connect.redis.client.{RedisConnection, RedisUri}
     *   import monix.eval.Task
     *
-    *   val redisClusterUris = List(RedisUri("198.0.0.1", 7000), RedisUri("198.0.0.2", 7000))
-    *   val clusterUtfConnection = RedisConnection.cluster(redisClusterUris).connectUtf
+    *   val redisClusterUris = List(RedisUri("198.0.0.1", 7001), RedisUri("198.0.0.2", 7002))
+    *   val clusterConnection = RedisConnection.cluster(redisClusterUris).connectUtf
     *   clusterConnection.use{ cmd =>
     *     // your business logic here
     *     Task.unit
@@ -144,4 +144,5 @@ object RedisConnection {
     */
   def cluster[K, V](uris: List[RedisUri]): RedisConnection =
     new ClusterConnection(uris)
+
 }

@@ -27,8 +27,10 @@ import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 
 /**
-  * @see The reference to lettuce api [[io.lettuce.core.api.reactive.RedisStringReactiveCommands]]
-  * Not supported: bitfield
+  * Exposes the set of redis **string** commands available.
+  * @see <a href="https://redis.io/commands#string">String commands reference</a>.
+  *
+  * @note No support for `bitfield`.
   */
 final class StringCommands[K, V] private[redis] (reactiveCmd: RedisStringReactiveCommands[K, V]) {
 

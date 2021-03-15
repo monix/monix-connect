@@ -21,6 +21,10 @@ import io.lettuce.core.codec.RedisCodec
 
 import java.nio.ByteBuffer
 
+/**
+  * A [[Codec]] encodes keys and values sent to Redis,
+  * and decodes keys and values in the command output.
+  */
 sealed trait Codec[T, R] {
   def encode(dec: T): R
   def decode(enc: R): T
@@ -31,6 +35,16 @@ trait BytesCodec[T] extends Codec[T, Array[Byte]]
 
 object Codec {
 
+  /**
+    * Creates an instance of [[Codec]] that will be used in our
+    * [[RedisConnection connectUtf]] to encode keys, values or
+    * both, sent to Redis, and decodes them from the command output.
+    *
+    * @param encoder function to encode from [[T]] to [[String]].
+    * @param decoder function to decode from [[String]] to [[T]]
+    * @tparam T type that we want to encode as UTF in Redis.
+    *
+    */
   def utf[T](encoder: T => String, decoder: String => T): UtfCodec[T] = {
     new UtfCodec[T] {
       override def encode(dec: T): String = encoder(dec)
@@ -38,6 +52,16 @@ object Codec {
     }
   }
 
+  /**
+    * Creates an instance of [[Codec]] that will be used in our
+    * [[RedisConnection connectByteArray]] to encode keys, values or
+    * both, sent to Redis, and decodes them from the command output.
+    *
+    * @param encoder function to encode from [[T]] to [[Array[Byte] ]].
+    * @param decoder function to decode from [[Array[Byte] ]] to [[T]]
+    * @tparam T type that we want to encode as ByteArray in Redis.
+    *
+    */
   def byteArray[T](encoder: T => Array[Byte], decoder: Array[Byte] => T): BytesCodec[T] = {
     new BytesCodec[T] {
       override def encode(dec: T): Array[Byte] = encoder(dec)

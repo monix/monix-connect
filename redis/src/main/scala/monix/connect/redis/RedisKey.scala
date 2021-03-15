@@ -24,6 +24,7 @@ import io.lettuce.core.{KeyScanCursor, ScanCursor}
 import monix.eval.Task
 import monix.reactive.Observable
 
+@deprecated("use the pure `monix.connect.redis.client.RedisConnection`", "0.6.0")
 private[redis] trait RedisKey {
 
   /**
