@@ -153,4 +153,5 @@ private[redis] trait RedisList {
     Task.from(connection.reactive().rpushx(key, values: _*)).map(_.longValue)
 }
 
+@deprecated("use the pure `monix.connect.redis.client.RedisConnection`", "0.6.0")
 object RedisList extends RedisList

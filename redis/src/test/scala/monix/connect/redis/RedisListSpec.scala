@@ -27,9 +27,9 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
-class ListCommandsSpec
+class RedisListSpec
   extends AnyFlatSpec with Matchers with IdiomaticMockito with BeforeAndAfterEach with BeforeAndAfterAll
-  with RedisFixture {
+    with RedisFixture {
 
   implicit val connection: StatefulRedisConnection[String, Int] = mock[StatefulRedisConnection[String, Int]]
 
@@ -45,9 +45,8 @@ class ListCommandsSpec
     when(connection.reactive()).thenAnswer(reactiveRedisCommands)
   }
 
-  /*
   s"${RedisList} " should " implement RedisList trait" in {
-    RedisList shouldBe a[ListCommands]
+    RedisList shouldBe a[RedisList]
   }
 
   it should "implement blpop" in {
@@ -57,7 +56,7 @@ class ListCommandsSpec
     when(reactiveRedisCommands.blpop(timeout, keys: _*)).thenReturn(mockMono[KeyValue[String, Int]])
 
     //when
-    val _: Task[KeyValue[K, V]] = $Commands.blpop(timeout, keys: _*)
+    val _: Task[KeyValue[K, V]] = Redis.blpop(timeout, keys: _*)
 
     //then
     verify(reactiveRedisCommands).blpop(timeout, keys: _*)
@@ -70,7 +69,7 @@ class ListCommandsSpec
     when(reactiveRedisCommands.brpop(timeout, keys: _*)).thenReturn(mockMono[KeyValue[String, Int]])
 
     //when
-    val _: Task[KeyValue[K, V]] = $Commands.brpop(timeout, keys: _*)
+    val _: Task[KeyValue[K, V]] = Redis.brpop(timeout, keys: _*)
 
     //then
     verify(reactiveRedisCommands).brpop(timeout, keys: _*)
@@ -84,7 +83,7 @@ class ListCommandsSpec
     when(reactiveRedisCommands.brpoplpush(timeout, source, dest)).thenReturn(mockMono[Int])
 
     //when
-    val _: Task[V] = $Commands.brpoplpush(timeout, source, dest)
+    val _: Task[V] = Redis.brpoplpush(timeout, source, dest)
 
     //then
     verify(reactiveRedisCommands).brpoplpush(timeout, source, dest)
@@ -97,7 +96,7 @@ class ListCommandsSpec
     when(reactiveRedisCommands.lindex(key, index)).thenReturn(mockMono[V])
 
     //when
-    val _: Task[V] = $Commands.lindex(key, index)
+    val _: Task[V] = Redis.lindex(key, index)
 
     //then
     verify(reactiveRedisCommands).lindex(key, index)
@@ -110,7 +109,7 @@ class ListCommandsSpec
     when(reactiveRedisCommands.lindex(key, index)).thenReturn(mockMono[V])
 
     //when
-    val _: Task[V] = $Commands.lindex(key, index)
+    val _: Task[V] = Redis.lindex(key, index)
 
     //then
     verify(reactiveRedisCommands).lindex(key, index)
@@ -122,7 +121,7 @@ class ListCommandsSpec
     when(reactiveRedisCommands.llen(key)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val _: Task[Long] = $Commands.llen(key)
+    val _: Task[Long] = Redis.llen(key)
 
     //then
     verify(reactiveRedisCommands).llen(key)
@@ -134,7 +133,7 @@ class ListCommandsSpec
     when(reactiveRedisCommands.lpop(key)).thenReturn(mockMono[Int])
 
     //when
-    val _: Task[V] = $Commands.lpop(key)
+    val _: Task[V] = Redis.lpop(key)
 
     //then
     verify(reactiveRedisCommands).lpop(key)
@@ -147,7 +146,7 @@ class ListCommandsSpec
     when(reactiveRedisCommands.lpush(key, values: _*)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val _: Task[Long] = $Commands.lpush(key, values: _*)
+    val _: Task[Long] = Redis.lpush(key, values: _*)
 
     //then
     verify(reactiveRedisCommands).lpush(key, values: _*)
@@ -160,7 +159,7 @@ class ListCommandsSpec
     when(reactiveRedisCommands.lpushx(key, values: _*)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val _: Task[Long] = $Commands.lpushx(key, values: _*)
+    val _: Task[Long] = Redis.lpushx(key, values: _*)
 
     //then
     verify(reactiveRedisCommands).lpushx(key, values: _*)
@@ -174,7 +173,7 @@ class ListCommandsSpec
     when(reactiveRedisCommands.lrange(key, start, stop)).thenReturn(mockFlux[Int])
 
     //when
-    val _: Observable[V] = $Commands.lrange(key, start, stop)
+    val _: Observable[V] = Redis.lrange(key, start, stop)
 
     //then
     verify(reactiveRedisCommands).lrange(key, start, stop)
@@ -188,7 +187,7 @@ class ListCommandsSpec
     when(reactiveRedisCommands.lrem(key, count, value)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val _: Task[Long] = $Commands.lrem(key, count, value)
+    val _: Task[Long] = Redis.lrem(key, count, value)
 
     //then
     verify(reactiveRedisCommands).lrem(key, count, value)
@@ -202,7 +201,7 @@ class ListCommandsSpec
     when(reactiveRedisCommands.lset(key, index, value)).thenReturn(mockMono[String])
 
     //when
-    val _: Task[String] = $Commands.lset(key, index, value)
+    val _: Task[String] = Redis.lset(key, index, value)
 
     //then
     verify(reactiveRedisCommands).lset(key, index, value)
@@ -217,7 +216,7 @@ class ListCommandsSpec
     when(reactiveRedisCommands.ltrim(key, start, stop)).thenReturn(mockMono[String])
 
     //when
-    val _: Task[String] = $Commands.ltrim(key, start, stop)
+    val _: Task[String] = Redis.ltrim(key, start, stop)
 
     //then
     verify(reactiveRedisCommands).ltrim(key, start, stop)
@@ -229,7 +228,7 @@ class ListCommandsSpec
     when(reactiveRedisCommands.rpop(key)).thenReturn(mockMono[Int])
 
     //when
-    val _: Task[V] = $Commands.rpop(key)
+    val _: Task[V] = Redis.rpop(key)
 
     //then
     verify(reactiveRedisCommands).rpop(key)
@@ -242,7 +241,7 @@ class ListCommandsSpec
     when(reactiveRedisCommands.rpoplpush(source, dest)).thenReturn(mockMono[Int])
 
     //when
-    val _: Task[V] = $Commands.rpoplpush(source, dest)
+    val _: Task[V] = Redis.rpoplpush(source, dest)
 
     //then
     verify(reactiveRedisCommands).rpoplpush(source, dest)
@@ -255,7 +254,7 @@ class ListCommandsSpec
     when(reactiveRedisCommands.rpush(key, values: _*)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val _: Task[Long] = $Commands.rpush(key, values: _*)
+    val _: Task[Long] = Redis.rpush(key, values: _*)
 
     //then
     verify(reactiveRedisCommands).rpush(key, values: _*)
@@ -268,10 +267,10 @@ class ListCommandsSpec
     when(reactiveRedisCommands.rpushx(key, values: _*)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val _: Task[Long] = $Commands.rpushx(key, values: _*)
+    val _: Task[Long] = Redis.rpushx(key, values: _*)
 
     //then
     verify(reactiveRedisCommands).rpushx(key, values: _*)
   }
- */
+
 }

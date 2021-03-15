@@ -26,6 +26,7 @@ import scala.jdk.CollectionConverters._
 /**
   * @see The reference Lettuce Api at: [[io.lettuce.core.api.reactive.BaseRedisReactiveCommands]]
   */
+@deprecated("use the pure `monix.connect.redis.client.RedisConnection`", "0.6.0")
 trait RedisPubSub {
 
   /**
@@ -122,3 +123,6 @@ trait RedisPubSub {
     Task.from(connection.reactive().waitForReplication(replicas, timeout)).map(_.longValue)
 
 }
+
+@deprecated("use the pure `monix.connect.redis.client.RedisConnection`", "0.6.0")
+object RedisPubSub extends RedisPubSub

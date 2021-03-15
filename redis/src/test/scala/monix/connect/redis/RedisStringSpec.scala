@@ -17,18 +17,21 @@
 
 package monix.connect.redis
 
+import io.lettuce.core.KeyValue
 import io.lettuce.core.api.StatefulRedisConnection
+import monix.eval.Task
+import monix.reactive.Observable
 import org.mockito.IdiomaticMockito
-import org.mockito.MockitoSugar.when
+import org.mockito.MockitoSugar.{verify, when}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 import scala.jdk.CollectionConverters._
 
-class StringCommandsSpec
+class RedisStringSpec
   extends AnyFlatSpec with Matchers with IdiomaticMockito with BeforeAndAfterEach with BeforeAndAfterAll
-  with RedisFixture {
+    with RedisFixture {
 
   implicit val connection: StatefulRedisConnection[String, Int] = mock[StatefulRedisConnection[String, Int]]
 
@@ -41,9 +44,9 @@ class StringCommandsSpec
     reset(reactiveRedisCommands)
     reset(reactiveRedisCommands)
   }
-  /*
+
   s"${RedisString} " should " implement RedisString trait" in {
-    RedisString shouldBe a[StringCommands]
+    RedisString shouldBe a[RedisString]
   }
 
   it should "implement append operation" in {
@@ -53,7 +56,7 @@ class StringCommandsSpec
     when(reactiveRedisCommands.append(k, v)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val _: Task[Long] = $Commands.append(k, v)
+    val _: Task[Long] = Redis.append(k, v)
 
     //then
     verify(reactiveRedisCommands).append(k, v)
@@ -68,8 +71,8 @@ class StringCommandsSpec
     when(reactiveRedisCommands.bitcount(key, start, stop)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val r1: Task[Long] = $Commands.bitcount(key)
-    val r2: Task[Long] = $Commands.bitcount(key, start, stop)
+    val r1: Task[Long] = Redis.bitcount(key)
+    val r2: Task[Long] = Redis.bitcount(key, start, stop)
 
     //then
     r1.isInstanceOf[Task[Long]] shouldBe true
@@ -89,9 +92,9 @@ class StringCommandsSpec
     when(reactiveRedisCommands.bitpos(key, state, start, end)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val r1: Task[Long] = $Commands.bitpos(key, state)
-    val r2: Task[Long] = $Commands.bitpos(key, state, start)
-    val r3: Task[Long] = $Commands.bitpos(key, state, start, end)
+    val r1: Task[Long] = Redis.bitpos(key, state)
+    val r2: Task[Long] = Redis.bitpos(key, state, start)
+    val r3: Task[Long] = Redis.bitpos(key, state, start, end)
 
     //then
     r1.isInstanceOf[Task[Long]] shouldBe true
@@ -109,7 +112,7 @@ class StringCommandsSpec
     when(reactiveRedisCommands.bitopAnd(dest, keys: _*)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val _: Task[Long] = $Commands.bitopAnd(dest, keys: _*)
+    val _: Task[Long] = Redis.bitopAnd(dest, keys: _*)
 
     //then
     verify(reactiveRedisCommands).bitopAnd(dest, keys: _*)
@@ -122,7 +125,7 @@ class StringCommandsSpec
     when(reactiveRedisCommands.bitopNot(dest, source)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val _: Task[Long] = $Commands.bitopNot(dest, source)
+    val _: Task[Long] = Redis.bitopNot(dest, source)
 
     //then
     verify(reactiveRedisCommands).bitopNot(dest, source)
@@ -135,7 +138,7 @@ class StringCommandsSpec
     when(reactiveRedisCommands.bitopOr(dest, keys: _*)).thenReturn(mockMono[java.lang.Long])
 
     //when
-    val _: Task[Long] = $Commands.bitopOr(dest, keys: _*)
+    val _: Task[Long] = Redis.bitopOr(dest, keys: _*)
 
     //then
     verify(reactiveRedisCommands).bitopOr(dest, keys: _*)
@@ -398,6 +401,6 @@ class StringCommandsSpec
 
     //then
     verify(reactiveRedisCommands).strlen(key)
-  }*/
+  }
 
 }

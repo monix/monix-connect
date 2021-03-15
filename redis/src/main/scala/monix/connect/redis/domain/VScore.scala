@@ -22,6 +22,7 @@ import io.lettuce.core.ScoredValue
 import java.util.Optional
 import scala.util.Try
 
+/** Represents a value with its score, only usable in sorted sets redis api. */
 case class VScore[V] private[redis] (val value: Option[V], val score: Double) {
 
   def mapScore(f: Double => Double): VScore[V] = VScore(value, f(score))
@@ -36,10 +37,12 @@ case class VScore[V] private[redis] (val value: Option[V], val score: Double) {
 
 object VScore {
 
+  /** Creates a [[VScore]] from a given value and score. */
   def apply[V](value: V, score: Double) = new VScore(Some(value), score)
 
-  def from[V](scoredValue: ScoredValue[V]) = new VScore[V](Try(scoredValue.getValue).toOption, scoredValue.getScore)
-
+  /** Creates an empty [[VScore]] which has an empty value and 0 as score. */
   def empty[V] = new VScore(Option.empty[V], 0)
+
+  private[redis] def from[V](scoredValue: ScoredValue[V]) = new VScore[V](Try(scoredValue.getValue).toOption, scoredValue.getScore)
 
 }

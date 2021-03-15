@@ -30,7 +30,7 @@ import scala.jdk.CollectionConverters._
   * Exposes the set of redis **string** commands available.
   * @see <a href="https://redis.io/commands#string">String commands reference</a>.
   *
-  * @note No support for `bitfield`.
+  * @note Does not support `bitfield`.
   */
 final class StringCommands[K, V] private[redis] (reactiveCmd: RedisStringReactiveCommands[K, V]) {
 

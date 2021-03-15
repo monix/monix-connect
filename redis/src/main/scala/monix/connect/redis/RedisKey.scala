@@ -224,4 +224,5 @@ private[redis] trait RedisKey {
 
 }
 
+@deprecated("use the pure `monix.connect.redis.client.RedisConnection`", "0.6.0")
 object RedisKey extends RedisKey

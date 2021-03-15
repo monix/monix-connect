@@ -27,9 +27,9 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import monix.reactive.Observable
 
-class RedisConnectionSortedSetSpec
+class RedisSortedSetSpec
   extends AnyFlatSpec with Matchers with IdiomaticMockito with BeforeAndAfterEach with BeforeAndAfterAll
-  with RedisFixture {
+    with RedisFixture {
 
   implicit val connection: StatefulRedisConnection[String, Int] = mock[StatefulRedisConnection[String, Int]]
 
@@ -42,9 +42,9 @@ class RedisConnectionSortedSetSpec
     reset(reactiveRedisCommands)
     reset(reactiveRedisCommands)
   }
-  /*
+
   s"${RedisSortedSet} " should "implement the RedisSortedSet trait" in {
-    RedisSortedSet shouldBe a[SortedSetCommands]
+    RedisSortedSet shouldBe a[RedisSortedSet]
   }
 
   it should "implement bzpopmin" in {
@@ -480,5 +480,5 @@ class RedisConnectionSortedSetSpec
     //then
     verify(reactiveRedisCommands).zunionstore(dest, keys: _*)
   }
- */
+
 }

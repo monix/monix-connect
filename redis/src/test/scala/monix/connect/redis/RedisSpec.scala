@@ -24,9 +24,9 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
-class RedisConnectionSpec
+class RedisSpec
   extends AnyWordSpecLike with Matchers with IdiomaticMockito with BeforeAndAfterEach with BeforeAndAfterAll
-  with RedisFixture {
+    with RedisFixture {
 
   implicit val connection: StatefulRedisConnection[String, Int] = mock[StatefulRedisConnection[String, Int]]
 
@@ -40,32 +40,31 @@ class RedisConnectionSpec
     reset(reactiveRedisCommands)
   }
 
-  /*
-  s"${$Commands} " should {
+  s"${Redis} " should {
     " implement RedisKey" in {
-      $Commands shouldBe a[KeyCommands]
+      Redis shouldBe a[RedisKey]
     }
     "implement RedisHash" in {
-      $Commands shouldBe a[HashCommands]
+      Redis shouldBe a[RedisHash]
     }
     "implement RedisList" in {
-      $Commands shouldBe a[ListCommands]
+      Redis shouldBe a[RedisList]
     }
     "implement RedisPubSub" in {
-      $Commands shouldBe a[RedisPubSub]
+      Redis shouldBe a[RedisPubSub]
     }
     "implement RedisSet" in {
-      $Commands shouldBe a[SetCommands]
+      Redis shouldBe a[RedisSet]
     }
     "implement RedisSortedSet" in {
-      $Commands shouldBe a[SortedSetCommands]
+      Redis shouldBe a[RedisSortedSet]
     }
     "implement RedisStream" in {
-      $Commands shouldBe a[RedisStream]
+      Redis shouldBe a[RedisStream]
     }
     "implement RedisString" in {
-      $Commands shouldBe a[StringCommands]
+      Redis shouldBe a[RedisString]
     }
   }
- */
+
 }

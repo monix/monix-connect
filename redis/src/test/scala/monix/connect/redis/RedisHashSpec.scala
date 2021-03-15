@@ -19,7 +19,6 @@ package monix.connect.redis
 
 import io.lettuce.core.{KeyValue, MapScanCursor, ScanCursor}
 import io.lettuce.core.api.StatefulRedisConnection
-import monix.connect.redis.client.RedisConnection
 import monix.eval.Task
 import monix.reactive.Observable
 import org.scalatest.flatspec.AnyFlatSpec
@@ -27,14 +26,13 @@ import org.scalatest.matchers.should.Matchers
 import org.mockito.MockitoSugar.verify
 import org.mockito.MockitoSugar.when
 import org.mockito.IdiomaticMockito
-import org.scalacheck.Gen
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 import scala.jdk.CollectionConverters._
 
-class HashCommandsSpec
+class RedisHashSpec
   extends AnyFlatSpec with Matchers with IdiomaticMockito with BeforeAndAfterEach with BeforeAndAfterAll
-  with RedisFixture {
+    with RedisFixture {
 
   implicit val connection: StatefulRedisConnection[String, Int] = mock[StatefulRedisConnection[String, Int]]
 
@@ -43,24 +41,13 @@ class HashCommandsSpec
     super.beforeAll()
   }
 
-  override def beforeEach(): Unit = {
+  override def beforeEach() = {
     reset(reactiveRedisCommands)
     reset(reactiveRedisCommands)
   }
-  import monix.execution.Scheduler.Implicits.global
-  "ClusterConnection" should "connect with default utf codecs" in {
-    //given
-    val key: String = Gen.identifier.sample.get
-    val value: String = Gen.identifier.sample.get
 
-    //when
-
-    //then
-  }
-
-  /*
   s"${RedisHash} " should "extend the RedisHash trait" in {
-    RedisHash shouldBe a[HashCommands]
+    RedisHash shouldBe a[RedisHash]
   }
 
   it should "implement hexists operation" in {
@@ -117,18 +104,6 @@ class HashCommandsSpec
 
     //then
     verify(reactiveRedisCommands).hincrbyfloat(k, field, v)
-  }
-
-  it should "implement hgetall operation" in {
-    //given
-    val k: String = genRedisKey.sample.get
-    when(reactiveRedisCommands.hgetall(k)).thenReturn(mockMono[java.util.Map[String, Int]])
-
-    //when
-    val _: Task[Map[String, V]] = RedisHash.hgetall(k)
-
-    //then
-    verify(reactiveRedisCommands).hgetall(k)
   }
 
   it should "implement hkeys operation" in {
@@ -261,5 +236,5 @@ class HashCommandsSpec
     //then
     verify(reactiveRedisCommands).hincrby(k, field, v)
   }
- */
+
 }

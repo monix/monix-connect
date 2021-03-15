@@ -153,4 +153,5 @@ private[redis] trait RedisHash {
     Observable.fromReactivePublisher(connection.reactive().hvals(key))
 }
 
+@deprecated("use the pure `monix.connect.redis.client.RedisConnection`", "0.6.0")
 object RedisHash extends RedisHash

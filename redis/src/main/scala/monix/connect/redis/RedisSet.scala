@@ -159,4 +159,5 @@ private[redis] trait RedisSet {
 
 }
 
+@deprecated("use the pure `monix.connect.redis.client.RedisConnection`", "0.6.0")
 object RedisSet extends RedisSet

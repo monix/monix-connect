@@ -218,4 +218,5 @@ trait RedisStream {
 /**
   * Exposes only methods from the RedisStream api
   */
+@deprecated("use the pure `monix.connect.redis.client.RedisConnection`", "0.6.0")
 object RedisStream extends RedisStream

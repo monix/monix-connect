@@ -27,7 +27,7 @@ import scala.concurrent.duration.FiniteDuration
 /**
   * Exposes the set of redis **list** commands available.
   * @see <a href="https://redis.io/commands#list">List commands reference</a>.
-  * No support for `bLPop`, `bRPop`, `bRPopLPush`.
+  * Does not support `bLPop`, `bRPop`, `bRPopLPush`.
   */
 class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[K, V]) {
 

@@ -113,4 +113,5 @@ private[redis] trait RedisServer {
 
 }
 
+@deprecated("use the pure `monix.connect.redis.client.RedisConnection`", "0.6.0")
 object RedisServer extends RedisServer

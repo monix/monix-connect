@@ -25,9 +25,9 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
-class RedisConnectionServerSpec
+class RedisServerSpec
   extends AnyFlatSpec with Matchers with IdiomaticMockito with BeforeAndAfterEach with BeforeAndAfterAll
-  with RedisFixture {
+    with RedisFixture {
 
   implicit val connection: StatefulRedisConnection[String, Int] = mock[StatefulRedisConnection[String, Int]]
 
@@ -40,9 +40,9 @@ class RedisConnectionServerSpec
     reset(reactiveRedisCommands)
     reset(reactiveRedisCommands)
   }
-  /*
-  s"${ServerCommands}" should "extend the RedisServer trait" in {
-    ServerCommands shouldBe a[ServerCommands]
+
+  s"${RedisServer}" should "extend the RedisServer trait" in {
+    RedisServer shouldBe a[RedisServer]
   }
 
   it should "implement flushall operation" in {
@@ -50,7 +50,7 @@ class RedisConnectionServerSpec
     when(reactiveRedisCommands.flushallAsync()).thenReturn(mockMono[String])
 
     //when
-    val _: Task[String] = ServerCommands.flushallAsync()
+    val _: Task[String] = RedisServer.flushallAsync()
 
     //then
     verify(reactiveRedisCommands).flushallAsync()
@@ -61,10 +61,10 @@ class RedisConnectionServerSpec
     when(reactiveRedisCommands.flushdbAsync()).thenReturn(mockMono[String])
 
     //when
-    val _: Task[String] = ServerCommands.flushdbAsync()
+    val _: Task[String] = RedisServer.flushdbAsync()
 
     //then
     verify(reactiveRedisCommands).flushdbAsync()
   }
- */
+
 }

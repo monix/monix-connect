@@ -37,6 +37,7 @@ package object redis {
   implicit val bigDecimalUtfCodec: Codec[BigDecimal, String] =
     Codec.utf(_.toString, str => Try(BigDecimal.apply(str)).getOrElse(0.0))
 
+  @deprecated("not correct error handling, use the pure `monix.connect.redis.client.RedisConnection`", "0.6.0")
   private[redis] implicit val fromMono: TaskLike[Mono] = new TaskLike[Mono] {
     def apply[A](m: Mono[A]): Task[A] =
       Task.fromReactivePublisher(m).flatMap { op =>

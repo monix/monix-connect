@@ -27,9 +27,9 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
-class RedisConnectionPubSubSpec
+class RedisPubSubSpec
   extends AnyFlatSpec with Matchers with IdiomaticMockito with BeforeAndAfterEach with BeforeAndAfterAll
-  with RedisFixture {
+    with RedisFixture {
 
   implicit val connection: StatefulRedisConnection[String, Int] = mock[StatefulRedisConnection[String, Int]]
 
@@ -43,7 +43,6 @@ class RedisConnectionPubSubSpec
     reset(reactiveRedisCommands)
   }
 
-  /*
   s"${RedisPubSub} " should " implement RedisPubSub trait" in {
     RedisPubSub shouldBe a[RedisPubSub]
   }
@@ -181,5 +180,5 @@ class RedisConnectionPubSubSpec
     verify(reactiveRedisCommands).waitForReplication(replicas, timeout)
   }
   //dispatch not supported
- */
+
 }
