@@ -26,7 +26,7 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 class RedisSpec
   extends AnyWordSpecLike with Matchers with IdiomaticMockito with BeforeAndAfterEach with BeforeAndAfterAll
-    with RedisFixture {
+  with RedisFixture {
 
   implicit val connection: StatefulRedisConnection[String, Int] = mock[StatefulRedisConnection[String, Int]]
 

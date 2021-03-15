@@ -43,6 +43,7 @@ object VScore {
   /** Creates an empty [[VScore]] which has an empty value and 0 as score. */
   def empty[V] = new VScore(Option.empty[V], 0)
 
-  private[redis] def from[V](scoredValue: ScoredValue[V]) = new VScore[V](Try(scoredValue.getValue).toOption, scoredValue.getScore)
+  private[redis] def from[V](scoredValue: ScoredValue[V]) =
+    new VScore[V](Try(scoredValue.getValue).toOption, scoredValue.getScore)
 
 }

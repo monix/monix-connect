@@ -24,4 +24,4 @@ package monix.connect.redis
 @deprecated("use the pure `monix.connect.redis.client.RedisConnection`", "0.6.0")
 object Redis
   extends RedisKey with RedisHash with RedisList with RedisPubSub with RedisSet with RedisSortedSet with RedisStream
-    with RedisString with RedisServer
+  with RedisString with RedisServer

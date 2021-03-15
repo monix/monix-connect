@@ -104,18 +104,18 @@ class RedisUri(
 
 object RedisUri {
 
-/**
-  * Creates a [[RedisUri]] from host and port.
-  *
-  * ==Example==
-  *
-  * {{{
-  *   RedisUri("localhost", 6379)
-  *   .withDatabase("db1")
-  *   .withPassword("Alice123") //this will normally come from a stored secret
-  *   .withClientName("companyX")
-  * }}}
-  */
+  /**
+    * Creates a [[RedisUri]] from host and port.
+    *
+    * ==Example==
+    *
+    * {{{
+    *   RedisUri("localhost", 6379)
+    *   .withDatabase("db1")
+    *   .withPassword("Alice123") //this will normally come from a stored secret
+    *   .withClientName("companyX")
+    * }}}
+    */
   def apply(host: String, port: Int): RedisUri = new RedisUri(Right(host, port))
 
   /**

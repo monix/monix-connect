@@ -37,7 +37,8 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
     * @return The number of keys that were removed.
     */
   def del(keys: K*): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.del(keys: _*))
+    Task
+      .fromReactivePublisher(reactiveCmd.del(keys: _*))
       .map(_.map(_.longValue).getOrElse(0L))
 
   /**
@@ -45,7 +46,8 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
     * @return The number of keys that were removed.
     */
   def unLink(keys: K*): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.unlink(keys: _*))
+    Task
+      .fromReactivePublisher(reactiveCmd.unlink(keys: _*))
       .map(_.map(_.longValue).getOrElse(0L))
 
   /**
@@ -53,7 +55,8 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
     * @return The serialized value.
     */
   def dump(key: K): Task[Array[Byte]] =
-    Task.fromReactivePublisher(reactiveCmd.dump(key))
+    Task
+      .fromReactivePublisher(reactiveCmd.dump(key))
       .map(_.getOrElse(Array.emptyByteArray))
 
   /**
@@ -61,11 +64,13 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
     * @return Number of existing keys
     */
   def exists(keys: List[K]): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.exists(keys: _*))
+    Task
+      .fromReactivePublisher(reactiveCmd.exists(keys: _*))
       .map(_.map(_.longValue).getOrElse(0L))
 
   def exists(key: K): Task[Boolean] =
-    Task.fromReactivePublisher(reactiveCmd.exists(key))
+    Task
+      .fromReactivePublisher(reactiveCmd.exists(key))
       .map(_.exists(_.longValue >= 1))
   /**
     * Set a key's time to live with a precision of milliseconds.
@@ -75,11 +80,13 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
     *
     */
   def expire(key: K, timeout: FiniteDuration): Task[Boolean] =
-    Task.fromReactivePublisher(reactiveCmd.expire(key, timeout.toSeconds))
+    Task
+      .fromReactivePublisher(reactiveCmd.expire(key, timeout.toSeconds))
       .map(_.exists(_.booleanValue))
 
   def expireAt(key: K, date: Date): Task[Boolean] =
-    Task.fromReactivePublisher(reactiveCmd.expireat(key, date))
+    Task
+      .fromReactivePublisher(reactiveCmd.expireat(key, date))
       .map(_.exists(_.booleanValue))
 
   /**
@@ -125,7 +132,8 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
     * Number of references of the value associated with the specified key.
     */
   def objectRefCount(key: K): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.objectRefcount(key))
+    Task
+      .fromReactivePublisher(reactiveCmd.objectRefcount(key))
       .map(_.map(_.longValue).getOrElse(0L))
 
   /**
@@ -135,7 +143,8 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
     *         `false` if key does not exist or does not have an associated timeout.
     */
   def persist(key: K): Task[Boolean] =
-    Task.fromReactivePublisher(reactiveCmd.persist(key))
+    Task
+      .fromReactivePublisher(reactiveCmd.persist(key))
       .map(_.exists(_.booleanValue))
 
   /**
@@ -156,7 +165,8 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
     *         `false` if newkey already exists.
     */
   def renameNx(key: K, newKey: K): Task[Boolean] =
-    Task.fromReactivePublisher(reactiveCmd.renamenx(key, newKey))
+    Task
+      .fromReactivePublisher(reactiveCmd.renamenx(key, newKey))
       .map(_.exists(_.booleanValue))
 
   /** Create a key using the provided serialized value, previously obtained using DUMP. */
@@ -175,7 +185,8 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
     * @return The number of found keys.
     */
   def touch(keys: K*): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.touch(keys: _*))
+    Task
+      .fromReactivePublisher(reactiveCmd.touch(keys: _*))
       .map(_.map(_.longValue).getOrElse(0))
 
   /** Get the time to live for a key.

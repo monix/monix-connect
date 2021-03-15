@@ -19,7 +19,17 @@ package monix.connect.mongodb
 
 import cats.effect.Resource
 import com.mongodb.MongoClientSettings
-import monix.connect.mongodb.domain.{MongoCollection, MongoConnector, Tuple2F, Tuple3F, Tuple4F, Tuple5F, Tuple6F, Tuple7F, Tuple8F}
+import monix.connect.mongodb.domain.{
+  MongoCollection,
+  MongoConnector,
+  Tuple2F,
+  Tuple3F,
+  Tuple4F,
+  Tuple5F,
+  Tuple6F,
+  Tuple7F,
+  Tuple8F
+}
 import monix.eval.Task
 import com.mongodb.reactivestreams.client.{MongoClient, MongoClients, MongoDatabase}
 import monix.execution.annotations.UnsafeBecauseImpure

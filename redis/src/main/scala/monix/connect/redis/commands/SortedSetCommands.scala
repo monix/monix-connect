@@ -163,7 +163,6 @@ class SortedSetCommands[K, V] private[redis] (reactiveCmd: RedisSortedSetReactiv
       .fromReactivePublisher(reactiveCmd.zinterstore(destination, keys: _*))
       .map(_.map(_.longValue).getOrElse(0L))
 
-
   /**
     * Count the number of members in a sorted set between a given lexicographical range.
     * @return The number of elements in the specified score range.

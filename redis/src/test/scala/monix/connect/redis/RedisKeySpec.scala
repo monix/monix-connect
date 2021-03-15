@@ -33,7 +33,7 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 class RedisKeySpec
   extends AnyFlatSpec with Matchers with IdiomaticMockito with BeforeAndAfterEach with BeforeAndAfterAll
-    with RedisFixture {
+  with RedisFixture {
 
   implicit val connection: StatefulRedisConnection[String, Int] = mock[StatefulRedisConnection[String, Int]]
 
@@ -266,7 +266,7 @@ class RedisKeySpec
 
   it should "implement randomkey operation" in {
     //given
-    when(reactiveRedisCommands.randomkey()).thenReturn(mockMono[Int])
+    when(reactiveRedisCommands.randomkey()).thenReturn(mockMono[String])
 
     //when
     val _: Task[V] = RedisKey.randomkey()

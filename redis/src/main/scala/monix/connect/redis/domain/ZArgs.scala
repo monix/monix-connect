@@ -23,17 +23,13 @@ object ZArgs extends Enumeration {
 
   val
   /* Only update elements that already exist. Never add elements. */
-  XX,
-
-  /**
+  XX, /**
     * Changed elements are new elements added and elements
     * already existing for which the score was updated.
     * So elements specified in the command line having the
     * same score as they had in the past are not counted.
     */
-  CH,
-
-  /* Does not update already existing elements but always add new ones. */
+  CH, /* Does not update already existing elements but always add new ones. */
   NX = Value
 
   type ZArg = Value

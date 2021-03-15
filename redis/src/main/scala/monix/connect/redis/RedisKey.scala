@@ -157,8 +157,8 @@ private[redis] trait RedisKey {
     * Return a random key from the keyspace.
     * @return The random key, or null when the database is empty.
     */
-//  def randomkey[K, V]()(implicit connection: StatefulRedisConnection[K, V]): Task[V] =
-//    Task.from(connection.reactive().randomkey())
+  def randomkey[K, V]()(implicit connection: StatefulRedisConnection[K, V]): Task[K] =
+    Task.from(connection.reactive().randomkey())
 
   /**
     * Rename a key.

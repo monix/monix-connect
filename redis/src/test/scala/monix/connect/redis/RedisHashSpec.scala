@@ -32,7 +32,7 @@ import scala.jdk.CollectionConverters._
 
 class RedisHashSpec
   extends AnyFlatSpec with Matchers with IdiomaticMockito with BeforeAndAfterEach with BeforeAndAfterAll
-    with RedisFixture {
+  with RedisFixture {
 
   implicit val connection: StatefulRedisConnection[String, Int] = mock[StatefulRedisConnection[String, Int]]
 
