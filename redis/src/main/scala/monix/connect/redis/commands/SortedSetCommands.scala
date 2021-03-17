@@ -28,7 +28,7 @@ import monix.reactive.Observable
 import scala.concurrent.duration.FiniteDuration
 
 /**
-  * Exposes the set of redis **sorted set** commands available.
+  * Exposes the set of redis sorted set commands available.
   * @see <a href="https://redis.io/commands#sorted_set">Sorted set commands reference</a>.
   *
   * @note Does not support `zRevRange`, `zRevRangeWithScores`, `zRemRangeByRank`.
@@ -203,11 +203,6 @@ class SortedSetCommands[K, V] private[redis] (reactiveCmd: RedisSortedSetReactiv
     */
   def zPopMax(key: K, count: Long): Observable[VScore[V]] =
     Observable.fromReactivePublisher(reactiveCmd.zpopmax(key, count)).map(VScore.from)
-
-  /* not supported
-  def zRange(key: K, start: Long, stop: Long)
-  def zRangeWithScores(key: K, start: Long, stop: Long)
-   */
 
   /**
     * Return a range of members in a sorted set, by lexicographical range.

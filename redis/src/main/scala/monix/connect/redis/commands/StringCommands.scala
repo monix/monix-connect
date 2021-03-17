@@ -27,7 +27,7 @@ import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 
 /**
-  * Exposes the set of redis **string** commands available.
+  * Exposes the set of redis string commands available.
   * @see <a href="https://redis.io/commands#string">String commands reference</a>.
   *
   * @note Does not support `bitfield`.
@@ -58,61 +58,32 @@ final class StringCommands[K, V] private[redis] (reactiveCmd: RedisStringReactiv
       .fromReactivePublisher(reactiveCmd.bitcount(key, start, end))
       .map(_.map(_.longValue).getOrElse(0L))
 
-  /**
-    * Find the position of the first bit set or clear in a string.
-    * @return The command returns the position of the first bit set to 1 or 0 according to the request.
-    *         [[None]] if the key did not exist.
-    *         If we look for set bits (the bit argument is 1)
-    *         and the string is empty or composed of just zero bytes, -1 is returned.
-    *         If we look for clear bits (the bit argument is 0) and the string only contains bit set to 1,
-    *         the function returns the first bit not part of the string on the right.
-    *         So if the string is three bytes set to the value 0xff the command BITPOS key 0 will return 24,
-    *         since up to bit 23 all the bits are 1. Basically the function consider the right of the string
-    *         as padded with zeros if you look for clear bits and specify no range or the start argument only.
-    */
-  private def bitPos(key: K, state: Boolean): Task[Option[Long]] =
+  private[this] def bitPos(key: K, state: Boolean): Task[Option[Long]] =
     Task
       .fromReactivePublisher(reactiveCmd.bitpos(key, state))
-      .map(_.map(_.longValue))
+      .map(_.flatMap(pos => if(pos == -1L) Option.empty else Some(pos)))
 
+  /**
+    * Find the position of the first bit set in a string.
+    * @return The command returns the position of the first bit set to 1.
+    *         [[None]] if the key did not exist
+    *         If the string is empty or composed of just zero bytes, -1 is returned.
+    */
   def bitPosOne(key: K): Task[Option[Long]] =
     bitPos(key, state = true)
 
+  /**
+    * Find the position of the first bit clear in a string.
+    *
+    * @return The command returns the position of the first bit set to 1.
+    *         If the key did not exist, was empty or composed
+    *         of just zero bytes, [[None]] is returned.
+    */
   def bitPosZero(key: K): Task[Option[Long]] =
     bitPos(key, state = false)
 
   /**
-    * Find first bit set or clear in a string.
-    * @return The command returns the position of the first bit set to 1 or 0 according to the request.
-    */
-  private def bitPos(key: K, state: Boolean, start: Long): Task[Option[Long]] =
-    Task
-      .fromReactivePublisher(reactiveCmd.bitpos(key, state, start))
-      .map(_.map(_.longValue))
-
-  private def bitPosZero(key: K, start: Long): Task[Option[Long]] =
-    bitPos(key, state = false, start)
-
-  private def bitPosOne(key: K, start: Long): Task[Option[Long]] =
-    bitPos(key, state = false, start)
-
-  /**
-    * Find first bit set or clear in a string.
-    * @return The command returns the position of the first bit set to 1 or 0 according to the request.
-    */
-  private def bitPos(key: K, state: Boolean, start: Long, end: Long): Task[Option[Long]] =
-    Task
-      .fromReactivePublisher(reactiveCmd.bitpos(key, state, start, end))
-      .map(_.map(_.longValue))
-
-  def bitPosZero(key: K, start: Long, end: Long): Task[Option[Long]] =
-    bitPos(key, state = false, start, end)
-
-  def bitPosOne(key: K, start: Long, end: Long): Task[Option[Long]] =
-    bitPos(key, state = true, start, end)
-
-  /**
-    * Perform bitwise AND between strings.
+    * Perform bitwise `AND` between strings.
     * @return The size of the string stored in the destination key, that is equal to the size of the longest
     *         input string.
     */

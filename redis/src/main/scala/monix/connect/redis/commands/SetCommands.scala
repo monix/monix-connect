@@ -21,8 +21,6 @@ import io.lettuce.core.api.reactive.RedisSetReactiveCommands
 import monix.eval.Task
 import monix.reactive.Observable
 
-import scala.annotation.tailrec
-
 /**
   * Exposes the set of redis **set** commands available.
   * @see <a href="https://redis.io/commands#set">Set commands reference</a>.

@@ -81,8 +81,8 @@ private[redis] object RedisCmd { self =>
     }
   }
 
-  private[redis] def createResource[K, V, RedisConnection <: StatefulConnection[K, V]](
-    acquire: Task[(AbstractRedisClient, RedisConnection)]): Resource[Task, RedisConnection] = {
+  private[redis] def createResource[K, V, Connection <: StatefulConnection[K, V]](
+    acquire: Task[(AbstractRedisClient, Connection)]): Resource[Task, Connection] = {
     Resource
       .make(acquire) {
         case (client, conn) =>

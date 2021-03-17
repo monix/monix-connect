@@ -27,7 +27,7 @@ import scala.concurrent.duration.{Duration, FiniteDuration, MILLISECONDS}
 import scala.util.Try
 
 /**
-  * Exposes the set of redis **key** commands available.
+  * Exposes the set of redis key commands available.
   * @see <a href="https://redis.io/commands#generic">Key commands reference</a>.
   */
 final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveCommands[K, V]) {

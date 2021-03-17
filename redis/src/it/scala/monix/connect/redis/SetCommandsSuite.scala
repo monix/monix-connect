@@ -324,7 +324,7 @@ class SetCommandsSuite
     }.runSyncUnsafe()
   }
 
-  "sUnionStore" should "sUnionStore" in {
+  "sUnionStore" should "add multiple sets and store the resulting set in a key" in {
     //given
     val k1: K = genRedisKey.sample.get
     val k2: K = genRedisKey.sample.get

@@ -103,7 +103,7 @@ object RedisConnection {
     *   import monix.connect.redis.client.{RedisConnection, RedisUri}
     *   import monix.eval.Task
     *
-    *   val redisUri = List(RedisUri("198.0.0.1", 6379))
+    *   val redisUri = RedisUri("198.0.0.1", 6379)
     *   val singleConnection = RedisConnection.single(redisUri).connectUtf
     *   singleConnection.use{ cmd =>
     *     // your business logic here

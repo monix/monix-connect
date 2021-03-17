@@ -22,7 +22,7 @@ class SingleConnectionSuite extends AnyFlatSpec with RedisIntegrationFixture wit
     singleConnection.connectUtf.use(_.server.flushAll()).runSyncUnsafe()
   }
 
-  it should "connect through the uri" in {
+  "RedisStandaloneConnection" should "connect through the uri" in {
     //given
     val key: String = Gen.identifier.sample.get
     val value: String = Gen.identifier.sample.get
@@ -48,7 +48,7 @@ class SingleConnectionSuite extends AnyFlatSpec with RedisIntegrationFixture wit
     Some(value) shouldBe r
   }
 
-  it can " be used with Custom utf Codecs" in {
+  it can "be used with Custom utf Codecs" in {
     //given
     val key: Int = Gen.chooseNum(1, 1000).sample.get
     val value: Int = Gen.chooseNum(1, 1000).sample.get

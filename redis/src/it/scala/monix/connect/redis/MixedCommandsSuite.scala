@@ -35,7 +35,7 @@ class MixedCommandsSuite extends AnyFlatSpec
           _ <- list.lPush(k3, values: _*)
           v <- string.get(k2)
           _ <- v match {
-            case Some(value) => list.lPushX(k3, value)
+            case Some(value) => list.lPush(k3, value)
             case None => Task.unit
           }
           _ <- keys.del(k2)

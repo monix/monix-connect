@@ -26,7 +26,7 @@ import monix.reactive.Observable
 import scala.jdk.CollectionConverters._
 
 /**
-  * Exposes the set of redis **hash** commands.
+  * Exposes the set of redis hash commands.
   *
   * @see <a href="https://redis.io/commands#hash">Hash commands reference</a>.
   */

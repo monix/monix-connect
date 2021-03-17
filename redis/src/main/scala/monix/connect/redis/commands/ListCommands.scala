@@ -18,16 +18,13 @@
 package monix.connect.redis.commands
 
 import io.lettuce.core.api.reactive.RedisListReactiveCommands
-import monix.connect.redis.kvToTuple
 import monix.eval.Task
 import monix.reactive.Observable
 
-import scala.concurrent.duration.FiniteDuration
-
 /**
-  * Exposes the set of redis **list** commands available.
+  * Exposes the set of redis list commands available.
   * @see <a href="https://redis.io/commands#list">List commands reference</a>.
-  * Does not support `bLPop`, `bRPop`, `bRPopLPush`.
+  * Does not support `bLPop`, `bRPop`, `bRPopLPush` and `lPushX`.
   */
 class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[K, V]) {
 
@@ -85,16 +82,6 @@ class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[
     Task.fromReactivePublisher(reactiveCmd.lpush(key, values: _*)).map(_.map(_.longValue).getOrElse(0L))
 
   def lPush(key: K, values: List[V]): Task[Long] =
-    lPush(key, values: _*)
-
-  /**
-    * Prepend values to a list, only if the list exists.
-    * @return The length of the list after the push operation.
-    */
-  def lPushX(key: K, values: V*): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.lpushx(key, values: _*)).map(_.map(_.longValue()).getOrElse(0L))
-
-  def lPushX(key: K, values: List[V]): Task[Long] =
     lPush(key, values: _*)
 
   /**

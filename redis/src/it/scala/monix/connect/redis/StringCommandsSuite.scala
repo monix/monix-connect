@@ -21,22 +21,6 @@ class StringCommandsSuite
     utfConnection.use(cmd => cmd.server.flushAll()).runSyncUnsafe()
   }
 
-  it should "insert a string into the given key and get its size from redis" in {
-    //given
-    val key: K = genRedisKey.sample.get
-    val value: String = genRedisValue.sample.get
-
-    //when
-    utfConnection.use(_.string.set(key, value)).runSyncUnsafe()
-
-    //and
-    val t: Task[Long] = utfConnection.use(_.string.strLen(key))
-
-    //then
-    val lenght: Long = t.runSyncUnsafe()
-    lenght shouldBe value.length
-  }
-
   "append" should "append a value to a key" in {
     //given
     val k1: K = genRedisKey.sample.get
@@ -55,7 +39,7 @@ class StringCommandsSuite
     }.runSyncUnsafe()
   }
 
-  it should "bitCount" in {
+  "bitCount" should "count set bits in a string" in {
     //given
     val k1: K = genRedisKey.sample.get
     val word: String = "Pau" //01010000 01100001 01110101
@@ -74,10 +58,11 @@ class StringCommandsSuite
     }.runSyncUnsafe()
   }
 
-  "bitPos" should "bitPos" in {
+  "bitPosOne and bitPosZero" should "find the position of the first bit set or clear in a string respectively" in {
     //given
     val k1: K = genRedisKey.sample.get
     val k2: K = genRedisKey.sample.get
+    val k3: K = genRedisKey.sample.get
     val word1: String = "you" //01111001 01101111 01110101
 
     //when
@@ -89,17 +74,22 @@ class StringCommandsSuite
           cmd.string.setBit(k2, 2L, 1) >>
           cmd.string.setBit(k2, 3L, 1) >>
           cmd.string.setBit(k2, 4L, 0)
+        _ <- cmd.string.setBit(k3, 0L, 0)
         stateBitPos0 <- cmd.string.bitPosOne("no-existing-key")
         stateBitPos1 <- cmd.string.bitPosOne(k1)
         stateBitPos2 <- cmd.string.bitPosOne(k2)
+        stateBitPos3 <- cmd.string.bitPosOne(k3)
         noStateBitPos1 <- cmd.string.bitPosZero(k1)
         noStateBitPos2 <- cmd.string.bitPosZero(k2)
+        noStateBitPos3 <- cmd.string.bitPosZero(k3)
       } yield {
-        stateBitPos0 shouldBe Some(-1)
-        stateBitPos1 shouldBe Some(1L)
-        stateBitPos2 shouldBe Some(0L)
-        noStateBitPos1 shouldBe Some(0L)
-        noStateBitPos2 shouldBe Some(4L)
+        stateBitPos0 shouldBe None
+        stateBitPos1 shouldBe Some(1)
+        stateBitPos2 shouldBe Some(0)
+        stateBitPos3 shouldBe None
+        noStateBitPos1 shouldBe Some(0)
+        noStateBitPos2 shouldBe Some(4)
+        noStateBitPos3 shouldBe Some(0)
       }
     }.runSyncUnsafe()
   }

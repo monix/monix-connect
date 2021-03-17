@@ -125,7 +125,6 @@ class CodecSuite extends AnyFlatSpec with RedisIntegrationFixture with Matchers 
     Some(value) shouldBe r
   }
 
-
   it should "encode and decode big decimals" in {
     //given
     val key: BigDecimal = BigDecimal(Gen.chooseNum[Double](1, 1000).sample.get)

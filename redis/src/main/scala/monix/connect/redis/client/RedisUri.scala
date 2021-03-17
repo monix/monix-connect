@@ -39,7 +39,7 @@ import scala.concurrent.duration.FiniteDuration
   *
   *   //then you can pass custom options
   *   RedisUri("localhost", 6379)
-  *   .withDatabase("db1")
+  *   .withDatabase(1)
   *   .withPassword("Alice123") //this will normally come from a stored secret
   *   .withClientName("companyX")
   * }}}
@@ -111,7 +111,7 @@ object RedisUri {
     *
     * {{{
     *   RedisUri("localhost", 6379)
-    *   .withDatabase("db1")
+    *   .withDatabase(1)
     *   .withPassword("Alice123") //this will normally come from a stored secret
     *   .withClientName("companyX")
     * }}}
@@ -125,7 +125,7 @@ object RedisUri {
     *
     * {{{
     *   RedisUri("localhost", 6379)
-    *   .withDatabase("db1")
+    *   .withDatabase(1)
     *   .withPassword("Alice123") //this will normally come from a stored secret
     *   .withClientName("companyX")
     * }}}
