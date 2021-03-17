@@ -427,6 +427,25 @@ class S3ITest
       isPresent2 shouldBe false
     }
 
+
+    "list all objects" in {
+      //given
+      val n = 1000
+      val prefix = s"test-list-all-truncated/${genKey.sample.get}/"
+      val keys: List[String] =
+        Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + genKey.sample.get + str)).sample.get
+      val contents: List[String] = List.fill(n)(genKey.sample.get)
+      Task
+        .sequence(keys.zip(contents).map { case (key, content) => S3.upload(bucketName, key, content.getBytes()) })
+        .runSyncUnsafe()
+
+      //when
+      val count = S3.listObjects(bucketName, prefix = Some(prefix), maxTotalKeys = Some(n)).countL.runSyncUnsafe()
+
+      //then
+      count shouldBe n
+    }
+
   }
 
 }

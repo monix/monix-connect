@@ -137,7 +137,7 @@ object S3 {
     * @param endpoint            the endpoint with which the SDK should communicate.
     * @param httpClient          sets the [[SdkAsyncHttpClient]] that the SDK service client will use to make HTTP calls.
     * @return a [[Resource]] of [[Task]] that allocates and releases [[S3]].
-    * */
+    */
   def create(
     credentialsProvider: AwsCredentialsProvider,
     region: Region,
@@ -162,11 +162,7 @@ object S3 {
     * Unsafe because the state of the passed [[S3AsyncClient]] is not guaranteed,
     * it can either be malformed or closed, which would result in underlying failures.
     *
-    * @see [[S3.fromConfig]] and [[S3.create]] for a pure usage of [[S3]].
-    *      They both will make sure that the s3 connection is created with the required
-    *      resources and guarantee that the client was not previously closed.
-    *
-    *      ==Example==
+    * ==Example==
     *
     * {{{
     *   import java.time.Duration
@@ -196,6 +192,11 @@ object S3 {
     *
     *     val s3: S3 = S3.createUnsafe(s3AsyncClient)
     * }}}
+    *
+    * @see [[S3.fromConfig]] and [[S3.create]] for a pure usage of [[S3]].
+    *      They both will make sure that the s3 connection is created with the required
+    *      resources and guarantee that the client was not previously closed.
+    *
     * @param s3AsyncClient an instance of a [[S3AsyncClient]].
     * @return An instance of [[S3]]
     */
@@ -378,18 +379,17 @@ object S3 {
     } yield bucket
   }
 
-// @deprecated("Use one of the builders like `S3.create`", "0.5.0")
-// def listObjects(
-//                  bucket: String,
-//                  prefix: Option[String] = None,
-//                  maxTotalKeys: Option[Int] = None,
-//                  requestPayer: Option[RequestPayer] = None)(implicit s3AsyncClient: S3AsyncClient): Observable[S3Object] = {
-//   val n = 1
-//   ListObjectsObservable(bucket, prefix, None, None, s3AsyncClient).foldLeft(List.empty[S3Object])((prev, curr) => {
-//     (prev ++ curr.contents.asScala).sortWith(sorted).take(n)
-//   })
-// }
-//
+  @deprecated("Use one of the builders like `S3.create`", "0.5.0")
+  def listObjects(
+                   bucket: String,
+                   prefix: Option[String] = None,
+                   maxTotalKeys: Option[Int] = None,
+                   requestPayer: Option[RequestPayer] = None)(implicit s3AsyncClient: S3AsyncClient): Observable[S3Object] = {
+    for {
+      listResponse <- ListObjectsObservable(bucket, prefix, maxTotalKeys, requestPayer, s3AsyncClient)
+      s3Object     <- Observable.fromIterable(listResponse.contents.asScala)
+    } yield s3Object
+  }
 
   @deprecated("Use one of the builders like `S3.create`", "0.5.0")
   def upload(bucket: String, key: String, content: Array[Byte], uploadSettings: UploadSettings = DefaultUploadSettings)(
@@ -644,7 +644,7 @@ trait S3 {
     *
     * @see the safer alternative [[downloadMultipart]] to for downloading objects in parts.
     *
-    *      ==Example==
+    * ==Example==
     *
     * {{{
     *   import monix.eval.Task
@@ -660,7 +660,7 @@ trait S3 {
     *   val t: Task[Array[Byte]] = s3Resource.use(_.download(bucket, key, firstNBytes = Some(100)))
     * }}}
     *
-    *      ==Unsafe Example==
+    * ==Unsafe Example==
     *
     * {{{
     *   import monix.eval.Task
