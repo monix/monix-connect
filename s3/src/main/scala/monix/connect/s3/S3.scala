@@ -381,10 +381,10 @@ object S3 {
 
   @deprecated("Use one of the builders like `S3.create`", "0.5.0")
   def listObjects(
-                   bucket: String,
-                   prefix: Option[String] = None,
-                   maxTotalKeys: Option[Int] = None,
-                   requestPayer: Option[RequestPayer] = None)(implicit s3AsyncClient: S3AsyncClient): Observable[S3Object] = {
+    bucket: String,
+    prefix: Option[String] = None,
+    maxTotalKeys: Option[Int] = None,
+    requestPayer: Option[RequestPayer] = None)(implicit s3AsyncClient: S3AsyncClient): Observable[S3Object] = {
     for {
       listResponse <- ListObjectsObservable(bucket, prefix, maxTotalKeys, requestPayer, s3AsyncClient)
       s3Object     <- Observable.fromIterable(listResponse.contents.asScala)
