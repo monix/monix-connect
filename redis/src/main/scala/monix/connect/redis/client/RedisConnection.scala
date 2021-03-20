@@ -52,9 +52,7 @@ trait RedisConnection {
     * @return A `Resource` that acquires a redis connection and exposes the usage
     *         of the [[RedisCmd[K, V] ]].
     */
-  def connectUtf[K, V](
-    implicit keyCodec: UtfCodec[K],
-    valueCodec: UtfCodec[V]): Resource[Task, RedisCmd[K, V]]
+  def connectUtf[K, V](implicit keyCodec: UtfCodec[K], valueCodec: UtfCodec[V]): Resource[Task, RedisCmd[K, V]]
 
   /**
     * Connect asynchronously to a Redis Cluster.

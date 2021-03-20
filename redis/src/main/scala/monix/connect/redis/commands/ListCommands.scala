@@ -92,7 +92,8 @@ class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[
     Observable.fromReactivePublisher(reactiveCmd.lrange(key, start, stop))
 
   def lGetAll(key: K): Observable[V] =
-    Observable.fromTask(lLen(key))
+    Observable
+      .fromTask(lLen(key))
       .flatMap(len => Observable.fromReactivePublisher(reactiveCmd.lrange(key, 0, len)))
 
   /**

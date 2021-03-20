@@ -42,9 +42,7 @@ private[redis] class StandaloneConnection(uri: RedisUri) extends RedisConnection
       .evalMap(RedisCmd.single)
   }
 
-  def connectUtf[K, V](
-    implicit keyCodec: UtfCodec[K],
-    valueCodec: UtfCodec[V]): Resource[Task, RedisCmd[K, V]] = {
+  def connectUtf[K, V](implicit keyCodec: UtfCodec[K], valueCodec: UtfCodec[V]): Resource[Task, RedisCmd[K, V]] = {
     RedisCmd
       .createResource[K, V, StatefulRedisConnection[K, V]] {
         for {

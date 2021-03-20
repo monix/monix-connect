@@ -45,9 +45,7 @@ private[redis] class ClusterConnection(uris: List[RedisUri]) extends RedisConnec
       .evalMap(RedisCmd.cluster)
   }
 
-  def connectUtf[K, V](
-    implicit keyCodec: UtfCodec[K],
-    valueCodec: UtfCodec[V]): Resource[Task, RedisCmd[K, V]] = {
+  def connectUtf[K, V](implicit keyCodec: UtfCodec[K], valueCodec: UtfCodec[V]): Resource[Task, RedisCmd[K, V]] = {
     RedisCmd
       .createResource[K, V, RedisClusterConnection[K, V]] {
         for {

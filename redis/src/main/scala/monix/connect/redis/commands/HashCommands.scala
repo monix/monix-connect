@@ -90,8 +90,10 @@ final class HashCommands[K, V] private[redis] (reactiveCmd: RedisHashReactiveCom
     * @return Map of the fields and their values stored in the hash, or an empty list when key does not exist.
     */
   def hGetAll(key: K): Observable[(K, V)] =
-    Observable.fromReactivePublisher(reactiveCmd.hgetall(key))
-      .filter(_.hasValue).map(kv => (kv.getKey, kv.getValue))
+    Observable
+      .fromReactivePublisher(reactiveCmd.hgetall(key))
+      .filter(_.hasValue)
+      .map(kv => (kv.getKey, kv.getValue))
 
   /**
     * Get all the fields in a hash.
