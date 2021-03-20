@@ -24,12 +24,12 @@ import io.lettuce.core.codec.{ByteArrayCodec, StringCodec}
 import monix.eval.Task
 
 /**
-  * Represents a connection to a single redis server,
+  * Represents a connection to a standalone redis server,
   * extending the [[RedisConnection]] interface that
   * defines the set of methods to create the connection that
   * encodes in `UTF` and `Array[Byte]` with custom [[Codec]]s.
   */
-private[redis] class SingleConnection(uri: RedisUri) extends RedisConnection {
+private[redis] class StandaloneConnection(uri: RedisUri) extends RedisConnection {
 
   def connectUtf: Resource[Task, RedisCmd[String, String]] = {
     RedisCmd
@@ -43,8 +43,8 @@ private[redis] class SingleConnection(uri: RedisUri) extends RedisConnection {
   }
 
   def connectUtf[K, V](
-    implicit keyCodec: Codec[K, String],
-    valueCodec: Codec[V, String]): Resource[Task, RedisCmd[K, V]] = {
+    implicit keyCodec: UtfCodec[K],
+    valueCodec: UtfCodec[V]): Resource[Task, RedisCmd[K, V]] = {
     RedisCmd
       .createResource[K, V, StatefulRedisConnection[K, V]] {
         for {
@@ -70,8 +70,8 @@ private[redis] class SingleConnection(uri: RedisUri) extends RedisConnection {
   }
 
   def connectByteArray[K, V](
-    implicit keyCodec: Codec[K, Array[Byte]],
-    valueCodec: Codec[V, Array[Byte]]): Resource[Task, RedisCmd[K, V]] = {
+    implicit keyCodec: BytesCodec[K],
+    valueCodec: BytesCodec[V]): Resource[Task, RedisCmd[K, V]] = {
     RedisCmd
       .createResource[K, V, StatefulRedisConnection[K, V]] {
         for {

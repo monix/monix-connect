@@ -223,10 +223,31 @@ class ListCommandsSuite
     utfConnection.use { cmd =>
       for {
         size <- cmd.list.lPush(k, values)
-        elements <- cmd.list.lRange(k, 0, size).toListL
+        elements1 <- cmd.list.lRange(k, 0, size).toListL
+        elements2 <- cmd.list.lRange(k, -5, size + 5).toListL
       } yield {
         size shouldBe values.size
+        elements1 should contain theSameElementsAs values
+        elements2 should contain theSameElementsAs values
+      }
+    }.runSyncUnsafe()
+  }
+
+
+  "lGetAll" should "get a range of elements from a list" in {
+    //given
+    val k: K = genRedisKey.sample.get
+    val values: List[String] = List("A", "B", "C")
+
+    //when
+    utfConnection.use { cmd =>
+      for {
+        elements <- cmd.list.lPush(k, values) >> cmd.list.lGetAll(k).toListL
+        noElements <- cmd.list.lGetAll("non-existing-key").toListL
+      } yield {
+        elements.size shouldBe values.size
         elements should contain theSameElementsAs values
+        noElements shouldBe List.empty
       }
     }.runSyncUnsafe()
   }

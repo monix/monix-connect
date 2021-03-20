@@ -1,6 +1,6 @@
 package monix.connect.redis
 
-import monix.connect.redis.client.{Codec, RedisConnection, RedisUri}
+import monix.connect.redis.client.{BytesCodec, Codec, RedisConnection, RedisUri}
 import monix.connect.redis.test.protobuf.{Person, PersonPk}
 import monix.execution.Scheduler.Implicits.global
 import org.scalacheck.Gen
@@ -83,8 +83,8 @@ class ClusterConnectionSuite extends AnyFlatSpec with RedisIntegrationFixture wi
 
   it should "support byte array codecs " in {
     //given
-    implicit val personPkCodec: Codec[PersonPk, Array[Byte]] = Codec.byteArray[PersonPk](pk => PersonPk.toByteArray(pk), str => PersonPk.parseFrom(str))
-    implicit val personCodec: Codec[Person, Array[Byte]] = Codec.byteArray[Person](person => Person.toByteArray(person), str => Person.parseFrom(str))
+    implicit val personPkCodec: BytesCodec[PersonPk] = Codec.byteArray[PersonPk](pk => PersonPk.toByteArray(pk), str => PersonPk.parseFrom(str))
+    implicit val personCodec: BytesCodec[Person] = Codec.byteArray[Person](person => Person.toByteArray(person), str => Person.parseFrom(str))
 
     //given
     val personPk = genPersonPk.sample.get

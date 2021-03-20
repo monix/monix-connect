@@ -100,14 +100,14 @@ final class ServerCommands[K, V] private[redis] (reactiveCmd: RedisServerReactiv
     * Remove all keys from all databases.
     * @return Simple string reply
     */
-  def flushAll(): Task[Unit] =
+  def flushAll: Task[Unit] =
     Task.fromReactivePublisher(reactiveCmd.flushallAsync()).void
 
   /**
     * Remove all keys from the current database.
     * @return Single string reply
     */
-  def flushDb(): Task[Unit] =
+  def flushDb: Task[Unit] =
     Task.fromReactivePublisher(reactiveCmd.flushdbAsync()).void
 
 }

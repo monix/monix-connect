@@ -1,6 +1,6 @@
 package monix.connect.redis
 
-import monix.connect.redis.client.{Codec, RedisConnection, RedisUri}
+import monix.connect.redis.client.{BytesCodec, Codec, RedisConnection, RedisUri}
 import monix.connect.redis.test.protobuf.{Person, PersonPk}
 import monix.execution.Scheduler.Implicits.global
 import org.scalacheck.Gen
@@ -15,7 +15,7 @@ class SingleConnectionSuite extends AnyFlatSpec with RedisIntegrationFixture wit
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
 
-  val singleConnection = RedisConnection.single(redisUri)
+  val singleConnection = RedisConnection.standalone(redisUri)
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -28,10 +28,10 @@ class SingleConnectionSuite extends AnyFlatSpec with RedisIntegrationFixture wit
     val value: String = Gen.identifier.sample.get
 
     //when
-    RedisConnection.single(RedisUri(redisUrl)).connectUtf.use(_.list.lPush(key, value)).runSyncUnsafe()
+    RedisConnection.standalone(RedisUri(redisUrl)).connectUtf.use(_.list.lPush(key, value)).runSyncUnsafe()
 
     //then
-    val r = RedisConnection.single(RedisUri(redisUrl)).connectUtf.use(_.list.lPop(key)).runSyncUnsafe()
+    val r = RedisConnection.standalone(RedisUri(redisUrl)).connectUtf.use(_.list.lPop(key)).runSyncUnsafe()
     Some(value) shouldBe r
   }
 
@@ -77,8 +77,8 @@ class SingleConnectionSuite extends AnyFlatSpec with RedisIntegrationFixture wit
 
   it can "be used with custom byte array Codec for key and value" in {
     //given
-    implicit val personPkCodec: Codec[PersonPk, Array[Byte]] = Codec.byteArray[PersonPk](pk => PersonPk.toByteArray(pk), str => PersonPk.parseFrom(str))
-    implicit val personCodec: Codec[Person, Array[Byte]] = Codec.byteArray[Person](person => Person.toByteArray(person), str => Person.parseFrom(str))
+    implicit val personPkCodec: BytesCodec[PersonPk] = Codec.byteArray[PersonPk](pk => PersonPk.toByteArray(pk), str => PersonPk.parseFrom(str))
+    implicit val personCodec: BytesCodec[Person] = Codec.byteArray[Person](person => Person.toByteArray(person), str => Person.parseFrom(str))
     val personPk = genPersonPk.sample.get
     val person = genPerson.sample.get
 

@@ -1,6 +1,6 @@
 package monix.connect.redis
 
-import monix.connect.redis.client.{Codec, RedisConnection}
+import monix.connect.redis.client.{BytesCodec, Codec, RedisConnection}
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpec
@@ -16,15 +16,15 @@ class CodecSuite extends AnyFlatSpec with RedisIntegrationFixture with Matchers 
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
 
-  val connection = RedisConnection.single(redisUri)
+  val connection = RedisConnection.standalone(redisUri)
   override def beforeEach(): Unit = {
     super.beforeEach()
     connection.connectUtf.use(_.server.flushAll()).runSyncUnsafe()
   }
 
   "A byte array codec" should "encode and decode protobuf keys and values" in {
-    implicit val personPkCodec: Codec[PersonPk, Array[Byte]] = Codec.byteArray[PersonPk](pk => PersonPk.toByteArray(pk), str => PersonPk.parseFrom(str))
-    implicit val personCodec: Codec[Person, Array[Byte]] = Codec.byteArray[Person](person => Person.toByteArray(person), str => Person.parseFrom(str))
+    implicit val personPkCodec: BytesCodec[PersonPk] = Codec.byteArray(pk => PersonPk.toByteArray(pk), bytes => PersonPk.parseFrom(bytes))
+    implicit val personCodec: BytesCodec[Person] = Codec.byteArray(person => Person.toByteArray(person), bytes => Person.parseFrom(bytes))
 
     //given
     val personPk = genPersonPk.sample.get

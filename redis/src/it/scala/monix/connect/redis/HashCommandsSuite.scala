@@ -191,7 +191,7 @@ class HashCommandsSuite
         emptyHash <- cmd.hash.hGetAll("none").toListL
       } yield {
         //then
-        getAll should contain theSameElementsAs mSet.toList.map{ case (k, v) => (k, Some(v)) }
+        getAll should contain theSameElementsAs mSet.toList.map{ case (k, v) => (k, v) }
         emptyHash shouldBe List.empty
       }
     }.runToFuture
@@ -265,16 +265,21 @@ class HashCommandsSuite
     //given
     val key: K = genRedisKey.sample.get
     val field: K = genRedisKey.sample.get
-    val value: String = genRedisValue.sample.get
+    val value1: String = genRedisValue.sample.get
+    val value2: String = genRedisValue.sample.get
 
     //when
-    utfConnection.use(_.hash.hSet(key, field, value)).runSyncUnsafe()
-
-    //and
-    val r: Option[String] = utfConnection.use(_.hash.hGet(key, field)).runSyncUnsafe()
-
-    //then
-    r shouldBe Some(value)
+    utfConnection.use { cmd =>
+      for {
+        setFirst <- cmd.hash.hSet(key, field, value1)
+        setSecond <- cmd.hash.hSet(key, field, value2)
+        finalValue <- cmd.hash.hGet(key, field)
+      } yield {
+        setFirst shouldBe true
+        setSecond shouldBe false
+        finalValue shouldBe Some(value2)
+      }
+    }.runSyncUnsafe()
   }
 
   "hSetNx" should "set the value of a hash field, only if the field does not exist" in {

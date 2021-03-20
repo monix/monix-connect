@@ -18,7 +18,7 @@
 package monix.connect
 
 import io.lettuce.core.KeyValue
-import monix.connect.redis.client.Codec
+import monix.connect.redis.client.{Codec, UtfCodec}
 import monix.eval.{Task, TaskLike}
 import reactor.core.publisher.Mono
 
@@ -30,11 +30,11 @@ package object redis {
     (kv.getKey, Try(kv.getValue).toOption)
   }
 
-  implicit val intUtfCodec: Codec[Int, String] = Codec.utf(_.toString, str => Try(str.toInt).getOrElse(0))
-  implicit val doubleUtfCodec: Codec[Double, String] = Codec.utf(_.toString, str => Try(str.toDouble).getOrElse(0.0))
-  implicit val floatUtfCodec: Codec[Float, String] = Codec.utf(_.toString, str => Try(str.toFloat).getOrElse(0L))
-  implicit val bigIntUtfCodec: Codec[BigInt, String] = Codec.utf(_.toString, str => Try(BigInt.apply(str)).getOrElse(0))
-  implicit val bigDecimalUtfCodec: Codec[BigDecimal, String] =
+  implicit val intUtfCodec: UtfCodec[Int] = Codec.utf(_.toString, str => Try(str.toInt).getOrElse(0))
+  implicit val doubleUtfCodec: UtfCodec[Double] = Codec.utf(_.toString, str => Try(str.toDouble).getOrElse(0.0))
+  implicit val floatUtfCodec: UtfCodec[Float] = Codec.utf(_.toString, str => Try(str.toFloat).getOrElse(0L))
+  implicit val bigIntUtfCodec: UtfCodec[BigInt] = Codec.utf(_.toString, str => Try(BigInt.apply(str)).getOrElse(0))
+  implicit val bigDecimalUtfCodec: UtfCodec[BigDecimal] =
     Codec.utf(_.toString, str => Try(BigDecimal.apply(str)).getOrElse(0.0))
 
   @deprecated("not correct error handling, use the pure `monix.connect.redis.client.RedisConnection`", "0.6.0")

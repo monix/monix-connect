@@ -91,6 +91,10 @@ class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[
   def lRange(key: K, start: Long, stop: Long): Observable[V] =
     Observable.fromReactivePublisher(reactiveCmd.lrange(key, start, stop))
 
+  def lGetAll(key: K): Observable[V] =
+    Observable.fromTask(lLen(key))
+      .flatMap(len => Observable.fromReactivePublisher(reactiveCmd.lrange(key, 0, len)))
+
   /**
     * Remove elements from a list.
     * @return The number of removed elements.

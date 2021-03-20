@@ -46,8 +46,8 @@ private[redis] class ClusterConnection(uris: List[RedisUri]) extends RedisConnec
   }
 
   def connectUtf[K, V](
-    implicit keyCodec: Codec[K, String],
-    valueCodec: Codec[V, String]): Resource[Task, RedisCmd[K, V]] = {
+    implicit keyCodec: UtfCodec[K],
+    valueCodec: UtfCodec[V]): Resource[Task, RedisCmd[K, V]] = {
     RedisCmd
       .createResource[K, V, RedisClusterConnection[K, V]] {
         for {
@@ -76,8 +76,8 @@ private[redis] class ClusterConnection(uris: List[RedisUri]) extends RedisConnec
   }
 
   def connectByteArray[K, V](
-    implicit keyCodec: Codec[K, Array[Byte]],
-    valueCodec: Codec[V, Array[Byte]]): Resource[Task, RedisCmd[K, V]] = {
+    implicit keyCodec: BytesCodec[K],
+    valueCodec: BytesCodec[V]): Resource[Task, RedisCmd[K, V]] = {
     RedisCmd
       .createResource[K, V, RedisClusterConnection[K, V]] {
         for {

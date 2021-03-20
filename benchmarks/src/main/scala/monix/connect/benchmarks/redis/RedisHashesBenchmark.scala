@@ -60,13 +60,13 @@ class RedisHashesBenchmark extends RedisBenchFixture {
   @Benchmark
   def hashWriter(): Unit = {
     val key = keysCycle.next
-    RedisConnection.single(RedisUri(redisUrl)).connectUtf.use(_.hash.hSet(key, key, key)).runSyncUnsafe()
+    RedisConnection.standalone(RedisUri(redisUrl)).connectUtf.use(_.hash.hSet(key, key, key)).runSyncUnsafe()
   }
 
   @Benchmark
   def hashFieldValueReader(): Unit = {
     val key = keysCycle.next
-    RedisConnection.single(RedisUri(redisUrl)).connectUtf.use(_.hash.hGet(key, key)).runSyncUnsafe()
+    RedisConnection.standalone(RedisUri(redisUrl)).connectUtf.use(_.hash.hGet(key, key)).runSyncUnsafe()
   }
 
   @Benchmark

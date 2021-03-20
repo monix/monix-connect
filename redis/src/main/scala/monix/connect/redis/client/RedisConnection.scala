@@ -24,7 +24,7 @@ import monix.eval.Task
   * Trait that defines the generic set of methods to connect with Redis.
   * It supports encoding and decoding in Utf and ByteArray with custom codecs.
   *
-  * It currently supports [[ClusterConnection]] and [[SingleConnection]] for cluster
+  * It currently supports [[ClusterConnection]] and [[StandaloneConnection]] for cluster
   * and single connections to Redis.
   */
 trait RedisConnection {
@@ -43,9 +43,8 @@ trait RedisConnection {
     * It requires a codec for keys and values that will encode/decodes
     * respectively as [[K]] and [[V]] to/from `UTF` Charset.
     *
-    * @see [[ClusterConnection connectUtf()]] and [[SingleConnection connectUtf]] for
+    * @see [[ClusterConnection connectUtf()]] and [[StandaloneConnection connectUtf]] for
     *      respective examples.
-    *
     * @param keyCodec a [[UtfCodec]] to encode/decode the key to `UTF`.
     * @param valueCodec a [[UtfCodec]] to encode/decode the value to `UTF`.
     * @tparam K the connection's key type.
@@ -54,8 +53,8 @@ trait RedisConnection {
     *         of the [[RedisCmd[K, V] ]].
     */
   def connectUtf[K, V](
-    implicit keyCodec: Codec[K, String],
-    valueCodec: Codec[V, String]): Resource[Task, RedisCmd[K, V]]
+    implicit keyCodec: UtfCodec[K],
+    valueCodec: UtfCodec[V]): Resource[Task, RedisCmd[K, V]]
 
   /**
     * Connect asynchronously to a Redis Cluster.
@@ -71,9 +70,8 @@ trait RedisConnection {
     * It requires a codec for keys and values that will encode/decode
     * respectively as [[K]] and [[V]] to/from [[Array[Byte] ]] Charset.
     *
-    * @see [[ClusterConnection connectByteArray()]] and [[SingleConnection connectByteArray]] for
+    * @see [[ClusterConnection connectByteArray()]] and [[StandaloneConnection connectByteArray]] for
     *      respective examples.
-    *
     * @param keyCodec a [[BytesCodec]] to encode/decode the key to [[Array[Byte] ]] .
     * @param valueCodec a [[BytesCodec]] to encode/decode the value to [[Array[Byte] ]] .
     * @tparam K the connection's key type.
@@ -82,8 +80,8 @@ trait RedisConnection {
     *         of the [[RedisCmd[K, V] ]].
     */
   def connectByteArray[K, V](
-    implicit keyCodec: Codec[K, Array[Byte]],
-    valueCodec: Codec[V, Array[Byte]]): Resource[Task, RedisCmd[K, V]]
+    implicit keyCodec: BytesCodec[K],
+    valueCodec: BytesCodec[V]): Resource[Task, RedisCmd[K, V]]
 
 }
 
@@ -116,8 +114,8 @@ object RedisConnection {
     *       `io.netty.channel.EventLoopGroup` that use multiple threads.
     *       Reuse this connection as much as possible.
     */
-  def single[K, V](uri: RedisUri): RedisConnection =
-    new SingleConnection(uri)
+  def standalone[K, V](uri: RedisUri): RedisConnection =
+    new StandaloneConnection(uri)
 
   /**
     * A scalable and thread-safe redis cluster connection that
