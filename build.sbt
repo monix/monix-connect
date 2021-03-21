@@ -33,7 +33,7 @@ lazy val sharedSettings = Seq(
     "-language:experimental.macros"
   ),
   //warnUnusedImports
-  scalacOptions in (Compile, console) ++= Seq("-Ywarn-unused-import"),
+  scalacOptions in (Compile, console) ++= Seq("-Ywarn-unused:imports"),
     // Linter
   scalacOptions ++= Seq(
     "-Ywarn-unused:imports", // Warn if an import selector is not referenced.

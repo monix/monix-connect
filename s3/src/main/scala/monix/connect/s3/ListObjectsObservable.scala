@@ -23,7 +23,9 @@ import monix.execution.internal.InternalApi
 import monix.reactive.Observable
 import monix.reactive.observers.Subscriber
 import software.amazon.awssdk.services.s3.S3AsyncClient
-import software.amazon.awssdk.services.s3.model.{ListObjectsV2Request, ListObjectsV2Response, RequestPayer}
+import software.amazon.awssdk.services.s3.model.{ListObjectsV2Request, ListObjectsV2Response, RequestPayer, S3Object}
+
+import scala.jdk.CollectionConverters._
 
 @InternalApi
 private[s3] class ListObjectsObservable(
@@ -93,7 +95,6 @@ private[s3] class ListObjectsObservable(
       }
     } yield nextRequest
   }
-
 }
 
 private[s3] object ListObjectsObservable {
@@ -104,4 +105,20 @@ private[s3] object ListObjectsObservable {
     requestPayer: Option[RequestPayer],
     s3AsyncClient: S3AsyncClient): ListObjectsObservable =
     new ListObjectsObservable(bucket, prefix, maxTotalKeys, requestPayer, s3AsyncClient)
+
+  def listNHelper(
+    bucket: String,
+    n: Int,
+    sort: (S3Object, S3Object) => Boolean,
+    prefix: Option[String] = None,
+    requestPayer: Option[RequestPayer] = None,
+    s3AsyncClient: S3AsyncClient): Observable[S3Object] = {
+    for {
+      listResponse <- ListObjectsObservable(bucket, prefix, None, None, s3AsyncClient).foldLeft(List.empty[S3Object])(
+        (prev, curr) => {
+          (prev ++ curr.contents.asScala).sortWith(sort).take(n)
+        })
+      s3Object <- Observable.fromIterable(listResponse)
+    } yield s3Object
+  }
 }
