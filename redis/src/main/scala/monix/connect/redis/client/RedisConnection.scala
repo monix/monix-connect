@@ -108,7 +108,7 @@ object RedisConnection {
     * }}}
     *
     * @note This connection is an expensive resource. As it is made using the
-    *       underlying lettuce client which holds a set of netty's
+    *       underlying lettuce client which uses netty and holds a set of
     *       `io.netty.channel.EventLoopGroup` that use multiple threads.
     *       Reuse this connection as much as possible.
     */

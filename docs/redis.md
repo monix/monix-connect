@@ -31,7 +31,17 @@ and [Strings](https://redis.io/commands#string)). On continuation, let's get sta
 standalone_ and _cluster_ connection , also will show how to use the standard `UTF` and `ByteArray` codecs and how to
 create your own one.
 
-## Create a connection
+## Redis Connection
+
+It defines the generic set of methods to connect with Redis.
+The RedisConnection represents a scalable and thread-safe way
+to communicate to a Redis *Standalone server* or *Cluster* by just passing its respective uris.
+
+**Important**: The created redis connection is an expensive resource, as it is made using the
+underlying _lettuce client_ which uses netty and holds a set of `io.netty.channel.EventLoopGroup`
+that use multiple threads.
+
+Reuse this connection as much as possible!
 
 ### Standalone
 
