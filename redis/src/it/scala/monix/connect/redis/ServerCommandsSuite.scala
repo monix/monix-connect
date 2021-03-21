@@ -19,22 +19,31 @@ class ServerCommandsSuite
     utfConnection.use(cmd => cmd.server.flushAll).runSyncUnsafe()
   }
 
+  //todo write tests
   it should "bgRewriteAOF" in {}
 
+  //todo write tests
   it should "bgSave" in {}
 
+  //todo write tests
   it should "clientGetName" in {}
 
+  //todo write tests
   it should "clientSetName" in {}
 
+  //todo write tests
   it should "clientKill" in {}
 
+  //todo write tests
   it should "clientList" in {}
 
+  //todo write tests
   it should "commandCount" in {}
 
+  //todo write tests
   it should "configGet" in {}
 
+  //todo write tests
   it should "configResetStat" in {}
 
   it should "flushAll" in {
@@ -55,6 +64,7 @@ class ServerCommandsSuite
     existsAfterFlush shouldEqual false
   }
 
+  //todo write tests
   it should "flushDb" in {}
 
 }

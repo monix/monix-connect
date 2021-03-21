@@ -1,7 +1,6 @@
 package monix.connect.redis
 
 import monix.connect.redis.client.RedisCmd
-import monix.connect.redis.commands.SortedSetCommands
 import monix.connect.redis.domain.{VScore, ZArgs, ZRange}
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global

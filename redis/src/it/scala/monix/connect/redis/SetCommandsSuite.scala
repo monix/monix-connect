@@ -3,7 +3,6 @@ package monix.connect.redis
 import monix.connect.redis.client.RedisCmd
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
-import monix.reactive.Observable
 import org.scalacheck.Gen
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpec
