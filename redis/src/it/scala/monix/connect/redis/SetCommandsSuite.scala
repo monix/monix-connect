@@ -125,7 +125,7 @@ class SetCommandsSuite
       } yield {
         size1 shouldBe set1.size
         size2 shouldBe set2.size
-        intersec shouldBe List("b", "c")
+        intersec should contain theSameElementsAs List("b", "c")
       }
     }.runSyncUnsafe()
   }
@@ -149,7 +149,7 @@ class SetCommandsSuite
         size1 shouldBe set1.size
         size2 shouldBe set2.size
         intersec shouldBe 2L
-        members shouldBe List("b", "c")
+        members should contain theSameElementsAs List("b", "c")
       }
     }.runSyncUnsafe()
   }
@@ -189,7 +189,7 @@ class SetCommandsSuite
       } yield {
         isMoved1 shouldBe true
         isMoved2 shouldBe false
-        members1 shouldBe List("a", "c")
+        members1 should contain theSameElementsAs List("a", "c")
         members2 shouldBe List("b")
       }
     }.runSyncUnsafe()
