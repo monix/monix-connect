@@ -17,6 +17,11 @@ class MixedCommandsSuite extends AnyFlatSpec
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
 
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+    utfConnection.use(cmd => cmd.server.flushAll).runSyncUnsafe()
+  }
+
   "Redis" should "allow to composition of different Redis submodules" in {
     //given
     val k1: K = genRedisKey.sample.get
@@ -28,7 +33,7 @@ class MixedCommandsSuite extends AnyFlatSpec
     val (v: Option[String], len: Long, list, keys: List[String]) = {
       utfConnection.use { case RedisCmd(_, keys, list, server, _, _, string) =>
         for {
-          _ <- server.flushAll()
+          _ <- server.flushAll
           _ <- keys.touch(k1)
           _ <- string.set(k1, value)
           _ <- keys.rename(k1, k2)

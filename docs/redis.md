@@ -166,7 +166,7 @@ implicit val doubleUtfCodec: UtfCodec[Double] = Codec.utf(_.toString, //serializ
   //deserializes str back to double
   str => Try(str.toDouble)
     .failed.flatMap { ex =>
-    logger.info("Failed to deserialize from Redis to `Int`")
+    logger.info("Failed to deserialize from Redis to `Double`")
     Failure(ex)
   }.getOrElse(0.0)
 )
@@ -484,5 +484,5 @@ val clusterConn = RedisConnection.cluster(redisUris)
 
 ## Yet to come
 
-- Master Replica connection
+- _Master Replica_ connection.
 - _Pub/sub_, _Streams_, _Transactions_, _HyperLogLog_, _Geolocation_, _Scripting_ commands.

@@ -21,7 +21,7 @@ class KeyCommandsSuite
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    utfConnection.use(cmd => cmd.server.flushAll()).runSyncUnsafe()
+    utfConnection.use(cmd => cmd.server.flushAll).runSyncUnsafe()
   }
 
   "del" should "delete key" in {
@@ -347,7 +347,7 @@ class KeyCommandsSuite
     utfConnection
       .use(cmd =>
         for {
-          _ <- cmd.server.flushAll()
+          _ <- cmd.server.flushAll
           r1 <- cmd.key.randomKey()
           _ <- cmd.string.set(k1, value) >> cmd.string.set(k2, value)
           r2 <- cmd.key.randomKey()

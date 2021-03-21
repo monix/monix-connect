@@ -48,3 +48,5 @@ monix-s3/it/test-data/
 benchmarks/data
 benchmarks/data/*
 .bsp/
+
+results/

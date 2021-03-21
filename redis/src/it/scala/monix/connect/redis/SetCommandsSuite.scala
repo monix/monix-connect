@@ -20,7 +20,7 @@ class SetCommandsSuite
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    utfConnection.use(cmd => cmd.server.flushAll()).runSyncUnsafe()
+    utfConnection.use(cmd => cmd.server.flushAll).runSyncUnsafe()
   }
 
   "sAdd" should "add one or more members to a set" in {

@@ -269,7 +269,7 @@ class RedisKeySpec
     when(reactiveRedisCommands.randomkey()).thenReturn(mockMono[String])
 
     //when
-    val _: Task[V] = RedisKey.randomkey()
+    RedisKey.randomkey()
 
     //then
     verify(reactiveRedisCommands).randomkey()

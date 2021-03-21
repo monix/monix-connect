@@ -19,7 +19,7 @@ class SingleConnectionSuite extends AnyFlatSpec with RedisIntegrationFixture wit
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    singleConnection.connectUtf.use(_.server.flushAll()).runSyncUnsafe()
+    singleConnection.connectUtf.use(_.server.flushAll).runSyncUnsafe()
   }
 
   "RedisStandaloneConnection" should "connect through the uri" in {

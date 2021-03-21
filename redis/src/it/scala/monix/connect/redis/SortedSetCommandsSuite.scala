@@ -21,7 +21,7 @@ class SortedSetCommandsSuite
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    utfConnection.use(cmd => cmd.server.flushAll()).runSyncUnsafe()
+    utfConnection.use(cmd => cmd.server.flushAll).runSyncUnsafe()
   }
 
   s"zAdd" should "insert elements with no order and reading back sorted" in {

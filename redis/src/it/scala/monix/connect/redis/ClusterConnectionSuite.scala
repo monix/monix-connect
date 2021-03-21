@@ -19,7 +19,7 @@ class ClusterConnectionSuite extends AnyFlatSpec with RedisIntegrationFixture wi
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    RedisConnection.cluster(clusterRedisUris).connectUtf.use(_.server.flushAll()).runSyncUnsafe()
+    RedisConnection.cluster(clusterRedisUris).connectUtf.use(_.server.flushAll).runSyncUnsafe()
   }
 
   "ClusterConnection" should "can connect to multiple uri" in {

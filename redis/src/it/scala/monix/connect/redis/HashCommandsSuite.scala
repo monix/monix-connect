@@ -17,7 +17,7 @@ class HashCommandsSuite
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    utfConnection.use(cmd => cmd.server.flushAll()).runSyncUnsafe()
+    utfConnection.use(cmd => cmd.server.flushAll).runSyncUnsafe()
   }
 
   "hDel" should "delete single hash field" in {

@@ -19,7 +19,7 @@ class ListCommandsSuite
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    utfConnection.use(cmd => cmd.server.flushAll()).runSyncUnsafe()
+    utfConnection.use(cmd => cmd.server.flushAll).runSyncUnsafe()
   }
 
   //todo not yet supported

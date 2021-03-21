@@ -19,7 +19,7 @@ class CodecSuite extends AnyFlatSpec with RedisIntegrationFixture with Matchers 
   val connection = RedisConnection.standalone(redisUri)
   override def beforeEach(): Unit = {
     super.beforeEach()
-    connection.connectUtf.use(_.server.flushAll()).runSyncUnsafe()
+    connection.connectUtf.use(_.server.flushAll).runSyncUnsafe()
   }
 
   "A byte array codec" should "encode and decode protobuf keys and values" in {
