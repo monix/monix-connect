@@ -16,7 +16,7 @@ object Dependencies {
     val MongoReactiveStreams = "4.2.2"
     val S3 = "2.14.21"
     val Parquet = "1.11.1"
-    val Elastic4s = "7.11.0"
+    val Elastic4s = "7.11.1"
     val Pureconfig = "0.14.1"
     val ScalaCompat = "2.4.2"
 
