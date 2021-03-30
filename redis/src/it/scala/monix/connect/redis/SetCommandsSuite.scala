@@ -73,12 +73,12 @@ class SetCommandsSuite
         size1 <- cmd.set.sAdd(k1, set1)
         size2 <- cmd.set.sAdd(k2, set2)
         diff <- cmd.set.sDiff(k1, k2).toListL
-        all <- cmd.set.sDiff(k1, List.empty).toListL
+        noDiff <- cmd.set.sDiff(k1, List.empty).toListL
       } yield {
         size1 shouldBe set1.size
         size2 shouldBe set2.size
-        diff shouldBe List("a", "b")
-        all should contain theSameElementsAs set1
+        diff should contain theSameElementsAs List("a", "b")
+        noDiff should contain theSameElementsAs set1
       }
     }.runSyncUnsafe()
   }
@@ -97,14 +97,14 @@ class SetCommandsSuite
         size1 <- cmd.set.sAdd(k1, set1)
         size2 <- cmd.set.sAdd(k2, set2)
         diffSize <- cmd.set.sDiffStore(kDiff, k1, k2)
-        all <- cmd.set.sDiffStore(".", k1, Set.empty)
+        noDiff <- cmd.set.sDiffStore(".", k1, Set.empty)
         members <- cmd.set.sMembers(kDiff).toListL
       } yield {
         size1 shouldBe set1.size
         size2 shouldBe set2.size
         diffSize shouldBe 2
-        all shouldBe set1.size
-        members shouldBe List("a", "b")
+        noDiff should contain theSameElementsAs set1.size
+        members should contain theSameElementsAs List("a", "b")
       }
     }.runSyncUnsafe()
   }
