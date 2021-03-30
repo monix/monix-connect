@@ -17,15 +17,15 @@ object Dependencies {
     val S3 = "2.14.21"
     val Parquet = "1.11.1"
     val Lettuce = "6.0.2.RELEASE"
-    val Elastic4s = "7.11.0"
+    val Elastic4s = "7.11.1"
     val Pureconfig = "0.14.1"
-    val ScalaCompat = "2.4.2"
+    val ScalaCompat = "2.4.3"
 
     //test
     val Scalatest = "3.2.6"
     val Scalacheck = "1.14.0"
     val Mockito = "1.15.0"
-    val GCNio = "0.122.10"
+    val GCNio = "0.122.11"
   }
 
   private def commonDependencies(hasIt: Boolean = false): Seq[sbt.ModuleID] = {
