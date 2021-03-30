@@ -97,13 +97,13 @@ class SetCommandsSuite
         size1 <- cmd.set.sAdd(k1, set1)
         size2 <- cmd.set.sAdd(k2, set2)
         diffSize <- cmd.set.sDiffStore(kDiff, k1, k2)
-        noDiff <- cmd.set.sDiffStore(".", k1, Set.empty)
+        all <- cmd.set.sDiffStore(".", k1, Set.empty)
         members <- cmd.set.sMembers(kDiff).toListL
       } yield {
         size1 shouldBe set1.size
         size2 shouldBe set2.size
         diffSize shouldBe 2
-        noDiff should contain theSameElementsAs set1.size
+        all shouldBe set1.size
         members should contain theSameElementsAs List("a", "b")
       }
     }.runSyncUnsafe()
