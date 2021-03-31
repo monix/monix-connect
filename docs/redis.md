@@ -1,12 +1,13 @@
 ---
-id: redis title: Redis
+id: redis 
+title: Redis
 ---
 
 ## Introduction
 
 _Redis_ is an open source, in-memory data structure store, used as a database, cache and message broker providing high
-availability, scalability and a outstanding performance. It supports data structures such as string, hashes, lists,
 sets, sorted sets with range queries, streams and more. It has a defined a set of [commands](https://redis.io/commands)
+availability, scalability and a outstanding performance. It supports data structures such as string, hashes, lists,
 to inter-operate with, and most of them are also available from the java api.
 
 This connector has been built on top of [lettuce](https://lettuce.io/), the most popular java library for operating with

@@ -28,10 +28,10 @@ import scala.jdk.CollectionConverters._
 /**
   * Represents a connection to a set of redis servers (cluster),
   * extending the [[RedisConnection]] interface that
-  * defines the set of methods to create the connection that
-  * encodes in `UTF` and `ByteArray` with custom [[Codec]]s.
+  * defines the set of methods to create a connection that can
+  * encode in `UTF` and `ByteArray` with custom [[Codec]]s.
   */
-private[redis] class ClusterConnection(uris: List[RedisUri]) extends RedisConnection {
+class ClusterConnection(uris: List[RedisUri]) extends RedisConnection {
 
   def connectUtf: Resource[Task, RedisCmd[String, String]] = {
     RedisCmd

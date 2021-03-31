@@ -19,10 +19,15 @@ package monix.connect.redis.domain
 
 import io.lettuce.core.{Range => R}
 
+/**
+  * Defines lower and upper boundaries to retrieve items from a sorted set.
+  * A Scala wrapper for `io.lettuce.core.Range`
+  */
 final class ZRange[T](private[redis] val underlying: R[T])
 
 object ZRange {
 
+  /* Creates a ZRange between [[lower]] and [[upper]], both included. */
   def apply[T](lower: T, upper: T): ZRange[T] =
     new ZRange(R.from(R.Boundary.including(lower), R.Boundary.including(upper)))
 

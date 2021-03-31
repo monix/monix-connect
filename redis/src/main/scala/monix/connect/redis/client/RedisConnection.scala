@@ -22,7 +22,7 @@ import monix.eval.Task
 
 /**
   * Trait that defines the generic set of methods to connect with Redis.
-  * It supports encoding and decoding in Utf and ByteArray with custom codecs.
+  * It supports encoding and decoding in `Utf` and `ByteArray` with custom codecs.
   *
   * It currently supports [[ClusterConnection]] and [[StandaloneConnection]] for cluster
   * and single connections to Redis.
@@ -40,11 +40,12 @@ trait RedisConnection {
 
   /**
     * Connect asynchronously to a Redis Cluster.
-    * It requires a codec for keys and values that will encode/decodes
+    * It requires a codec for keys and values that will encode/decode
     * respectively as [[K]] and [[V]] to/from `UTF` Charset.
     *
-    * @see [[ClusterConnection connectUtf()]] and [[StandaloneConnection connectUtf]] for
+    * @see [[ClusterConnection connectUtf]] and [[StandaloneConnection connectUtf]] for
     *      respective examples.
+    *
     * @param keyCodec a [[UtfCodec]] to encode/decode the key to `UTF`.
     * @param valueCodec a [[UtfCodec]] to encode/decode the value to `UTF`.
     * @tparam K the connection's key type.
@@ -64,11 +65,11 @@ trait RedisConnection {
   def connectByteArray: Resource[Task, RedisCmd[Array[Byte], Array[Byte]]]
 
   /**
-    * Connect asynchronously to a Redis.
+    * Connect asynchronously to Redis.
     * It requires a codec for keys and values that will encode/decode
     * respectively as [[K]] and [[V]] to/from [[Array[Byte] ]] Charset.
     *
-    * @see [[ClusterConnection connectByteArray()]] and [[StandaloneConnection connectByteArray]] for
+    * @see [[ClusterConnection connectByteArray]] and [[StandaloneConnection connectByteArray]] for
     *      respective examples.
     * @param keyCodec a [[BytesCodec]] to encode/decode the key to [[Array[Byte] ]] .
     * @param valueCodec a [[BytesCodec]] to encode/decode the value to [[Array[Byte] ]] .

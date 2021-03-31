@@ -37,8 +37,8 @@ object Codec {
 
   /**
     * Creates an instance of [[Codec]] that will be used in our
-    * [[RedisConnection connectUtf]] to encode keys, values or
-    * both, sent to Redis, and decodes them from the command output.
+    * [[RedisConnection connectUtf]] to encode keys and/or values
+    * sent to Redis, and decodes them from the command output.
     *
     * @param encoder function to encode from [[T]] to [[String]].
     * @param decoder function to decode from [[String]] to [[T]]
@@ -54,8 +54,8 @@ object Codec {
 
   /**
     * Creates an instance of [[Codec]] that will be used in our
-    * [[RedisConnection connectByteArray]] to encode keys, values or
-    * both, sent to Redis, and decodes them from the command output.
+    * [[RedisConnection connectByteArray]] to encode keys and/or values
+    * sent to Redis, and decodes them from the command output.
     *
     * @param encoder function to encode from [[T]] to [[Array[Byte] ]].
     * @param decoder function to decode from [[Array[Byte] ]] to [[T]]
