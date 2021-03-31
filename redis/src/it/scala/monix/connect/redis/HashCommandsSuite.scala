@@ -322,7 +322,7 @@ class HashCommandsSuite
           k2StrLen <- cmd.hash.hStrLen("non-existing-key", f1)
         } yield {
           //then
-          f1StrLen shouldBe f1.length
+          f1StrLen shouldBe v.length
           f2StrLen shouldBe 0L
           k2StrLen shouldBe 0L
         }
