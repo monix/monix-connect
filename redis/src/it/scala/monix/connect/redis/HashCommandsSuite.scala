@@ -200,7 +200,7 @@ class HashCommandsSuite
   "hKeys" should "get all the fields in a hash" in {
     //given
     val k: K = genRedisKey.sample.get
-    val mSet = Gen.mapOf(genKv).sample.get
+    val mSet = Gen.mapOfN(10, genKv).sample.get
 
     utfConnection.use { cmd =>
       //when
