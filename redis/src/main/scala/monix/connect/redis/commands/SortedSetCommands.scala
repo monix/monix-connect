@@ -31,7 +31,7 @@ import scala.concurrent.duration.FiniteDuration
   * Exposes the set of redis sorted set commands available.
   * @see <a href="https://redis.io/commands#sorted_set">Sorted set commands reference</a>.
   *
-  * @note Does not support `zRevRange`, `zRevRangeWithScores`, `zRemRangeByRank`.
+  * @note Does yet not support `zRevRange`, `zRevRangeWithScores`, `zRemRangeByRank`.
   */
 class SortedSetCommands[K, V] private[redis] (reactiveCmd: RedisSortedSetReactiveCommands[K, V]) {
 

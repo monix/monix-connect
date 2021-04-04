@@ -18,7 +18,7 @@ a _non blocking_ Redis client.
 Add the following dependency:
 
 ```scala
-libraryDependencies += "io.monix" %% "monix-redis" % "0.6.0"
+libraryDependencies += "io.monix" %% "monix-redis" % "0.6.0-RC1"
 ```
 
 ## Getting started
@@ -67,7 +67,7 @@ val redisConn: RedisConnection = RedisConnection.standalone(redisUri)
 ### Cluster
 
 Creating a **cluster** connection is seamlessly to the standalone one, they both end up encoded the same parent
-class `RedisConnection`, but for the fact it's creation requires multiple `RedisUri`s that represents the set of redis
+class `RedisConnection`, but for the fact that its creation requires multiple `RedisUri`s that represent the set of redis
 servers in the cluster.
 
 ```scala
@@ -82,9 +82,14 @@ val redisClusterConn: RedisConnection = RedisConnection.cluster(List(redisNode1,
 
 ## RedisCmd
 
-Once we have created a `RedisConnection`, the next steps are to actually release and use the resources associated with
-that connection. In the following example we will use the default encoding format which is to work and represent _Keys_
-and _Values_ as `Strings`, persisting them into `UTF` format in Redis.
+Once we got a `RedisConnection`, we can start using the `RedisCmd`, a case class that contains all the redis commands for 
+_server_, _keys_, _lists_, _sets_, _sorted sets_ and _hashes_.  
+The `RedisCmd` is actually provided with a `cats.effect.Resource`, 
+which abstract the logic to release and close the connection and the associated resources.
+
+In the following example we will create a connection that by default encodes _Keys_
+and _Values_ as `Strings`, persisting them into `UTF` format in _Redis_. 
+
 
 ```scala
 import cats.effect.Resource
@@ -108,7 +113,7 @@ val values: List[String] = List("b", "c", "d")
 // alternatively you can also do:  redisConn.use { redisCmd => redisCmd.string.get("k1") }
 redisConn.use { case RedisCmd(hash, keys, list, server, set, sortedSet, string) =>
   for {
-    _ <- server.flushAll()
+    _ <- server.flushAll
     _ <- keys.touch(k1)
     _ <- string.set(k1, value)
     _ <- keys.rename(k1, k2)
@@ -126,7 +131,7 @@ redisConn.use { case RedisCmd(hash, keys, list, server, set, sortedSet, string) 
 
 ## Codecs
 
-In the previous sections we learned how to create a connection to redis and to start using the `RedisCmd` with its
+In the previous sections it was shown how to create a connection to redis and to start using the `RedisCmd` with its
 different redis modules. The connection that we created was a resource that provided a
 `RedisCmd[String, String]` was expecting `Strings` for both _Keys_ and _Values_. In order to decide how do we want our
 redis connection to encode and decode k and v, we would need to pass a custom `Codec` both for key and value. A `Codec`
@@ -138,7 +143,6 @@ package monix.connect.redis.client
 
 object Codec {
   def utf[T](encoder: T => String, decoder: String => T) = ???
-
   def byteArray[T](encoder: T => Array[Byte], decoder: Array[Byte] => T) = ???
 }
 ```
@@ -146,11 +150,11 @@ object Codec {
 You will find some already predefined `Codec` for `Int`, `Float`, `Double`, `BigInt` and `BigDecimal` under the package
 object `monix.connect.redis._`.
 
-Still let's show an example of creating a custom codec that mixes `UTFCodec` and `ByteArrayCodec`:
+The next subsections are an example of creating custom codec that mixes `UTFCodec` and `ByteArrayCodec`:
 
 ### UTFCodec
 
-In this example we will create two custom `UTFCodec[T]`, one for keys as `Int`
+In this case we will create two custom `UTFCodec[T]`, one for keys as `Int`
 and the other for `Double` which will represent the redis values, resulting in `RedisCmd[Int, Double]`.
 
 These two will be passed as parameters when connecting to redis with *connectUtf*.
@@ -193,11 +197,10 @@ val f: CancelableFuture[Option[Double]] =
   }.runToFuture
 ````
 
-
 ### BytesCodec
 
-On the other hand, we could also create a `BytesCodec[T]` to serialize and deserialize to/from `Array[Byte]`.
-In this case we will show an example of using `Protobuf` serialization format to dela with redis keys and values:
+On the other hand, there is also a `BytesCodec[T]`, which des/serializes from/to `Array[Byte]`.
+In this case we will show an example of using `Protobuf` serialization format to dealing with redis _keys_ and _values_:
 
 In below snippet we defined our _proto_ objects, in which `PersonPK` will represent the redis keys and `Person` the values.  
 

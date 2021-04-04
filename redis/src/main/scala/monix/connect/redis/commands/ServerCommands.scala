@@ -20,50 +20,27 @@ package monix.connect.redis.commands
 import io.lettuce.core.api.reactive.RedisServerReactiveCommands
 import monix.eval.Task
 
+import java.time.Instant
+import java.util.Date
 import scala.jdk.CollectionConverters._
 
 /**
   * Exposes the set of redis **server** commands available.
+  * @note Does yet not support `clientCaching`, `clientGetredir`, `commandCount, `clientKill`, `bgRewriteAOF`.
   * @see <a href="https://redis.io/commands#server">Server commands reference</a>.
   */
 final class ServerCommands[K, V] private[redis] (reactiveCmd: RedisServerReactiveCommands[K, V]) {
 
   /**
-    * Asynchronously rewrite the append-only file.
-    * @return Always OK.
-    */
-  def bgRewriteAOF: Task[Unit] =
-    Task.fromReactivePublisher(reactiveCmd.bgrewriteaof()).void
-
-  /**
-    * Asynchronously save the dataset to disk.
-    * @note `bg` as it is performed in the background
-    * @return Simple string reply
-    */
-  def bgSave: Task[Unit] =
-    Task.fromReactivePublisher(reactiveCmd.bgsave()).void
-
-  /**
     * Get the current connection name.
-    * @return The connection name, or a null bulk reply if no name is set.
+    * @return The connection name, if set.
     */
-  def clientGetName: Task[Unit] =
-    Task.fromReactivePublisher(reactiveCmd.bgsave()).void
+  def clientName: Task[Option[K]] =
+    Task.fromReactivePublisher(reactiveCmd.clientGetname())
 
-  /**
-    * Set the current connection name.
-    *
-    * @return OK if the connection name was successfully set.
-    */
-  def clientSetName(name: K): Task[Unit] =
-    Task.fromReactivePublisher(reactiveCmd.bgsave()).void
-
-  /**
-    * Kill the connection of a client identified by ip:port.
-    * @return OK if the connection exists and has been closed.
-    */
-  def clientKill(addr: String): Task[Unit] =
-    Task.fromReactivePublisher(reactiveCmd.clientKill(addr)).void
+  /** Set the current connection name. */
+  def setClientName(name: K): Task[Unit] =
+    Task.fromReactivePublisher(reactiveCmd.clientSetname(name)).void
 
   /**
     * Get the list of client connections.
@@ -86,15 +63,26 @@ final class ServerCommands[K, V] private[redis] (reactiveCmd: RedisServerReactiv
     * Get the value of a configuration parameter.
     * @return Bulk string reply
     */
-  def configGet(parameter: String): Task[Map[String, String]] =
-    Task.fromReactivePublisher(reactiveCmd.configGet(parameter)).map(_.map(_.asScala.toMap).getOrElse(Map.empty))
+  def configGet(parameter: String): Task[Option[String]] =
+    Task.fromReactivePublisher(reactiveCmd.configGet(parameter)).map(_.map(_.asScala.toMap).flatMap(_.headOption.map(_._2)))
+
+  /**
+    * Set a configuration parameter to the given value.
+    * All the supported parameters have the same meaning.
+    * of the equivalent configuration parameter used in the
+    * https://raw.githubusercontent.com/redis/redis/6.0/redis.conf
+    */
+  def configSet(parameter: String, value: String): Task[Unit] =
+    Task.fromReactivePublisher(reactiveCmd.configSet(parameter, value)).void
 
   /**
     * Reset the stats returned by INFO.
-    * @return Always OK.
     */
   def configResetStat: Task[Unit] =
     Task.fromReactivePublisher(reactiveCmd.configResetstat()).void
+
+  /** Get the number of keys in the selected database. */
+  def dbSize: Task[Long] = Task.fromReactivePublisher(reactiveCmd.dbsize()).map(_.map(_.toLong).getOrElse(0L))
 
   /**
     * Remove all keys from all databases.
@@ -109,6 +97,28 @@ final class ServerCommands[K, V] private[redis] (reactiveCmd: RedisServerReactiv
     */
   def flushDb: Task[Unit] =
     Task.fromReactivePublisher(reactiveCmd.flushdbAsync()).void
+
+  /** Get information and statistics about the server as a collection of text lines. */
+  def info: Task[String] = Task.fromReactivePublisher(reactiveCmd.info()).map(_.getOrElse(""))
+
+  /**
+    * Get the section information and statistics about
+    * the server as a collection of text lines.
+    */
+  def info(section: String): Task[String] = Task.fromReactivePublisher(reactiveCmd.info(section)).map(_.getOrElse(""))
+
+  /**
+    * Get the [[Date]] of the last successful save to disk if any,
+    * otherwise return [[Instant MIN]] .
+    */
+  def lastSave: Task[Option[Date]] = Task.fromReactivePublisher(reactiveCmd.lastsave())
+
+  /** Number of bytes that a key and its value require to be stored in RAM. */
+  def memoryUsage(key: K): Task[Long] =
+    Task.fromReactivePublisher(reactiveCmd.memoryUsage(key)).map(_.map(_.longValue()).getOrElse(0L))
+
+  /** Synchronously save the dataset to disk */
+  def save: Task[Unit] = Task.fromReactivePublisher(reactiveCmd.save()).void
 
 }
 
