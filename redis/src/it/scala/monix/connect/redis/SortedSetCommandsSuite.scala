@@ -59,24 +59,32 @@ class SortedSetCommandsSuite
     //given
     val k1 = genRedisKey.sample.get
     val k2 = genRedisKey.sample.get
-    val vScore1 = genVScore(1).sample.get
-    val vScore3 = genVScore(3).sample.get
-    val vScore5 = genVScore(5).sample.get
+    val vScore1 = VScore("a", 1)
+    val vScore2 = VScore("b", 2)
+    val vScore3 = VScore("c", 3)
+    val vScore4 = VScore("d", 4)
+    val vScore5 = VScore("e", 5)
+
 
     utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
       for {
         //when
-        _ <- sortedSet.zAdd(k1, vScore1, vScore5)
+        _ <- sortedSet.zAdd(k1, vScore1, vScore2, vScore4, vScore5)
         _ <- sortedSet.zAdd(k2, vScore3)
-        firstMin <- sortedSet.bZPopMin(1.seconds, k1, k2)
-        secondMin <- sortedSet.bZPopMin(1.seconds, k1, k2)
-        thirdMin <- sortedSet.bZPopMin(1.seconds, k1, k2)
+        min1 <- sortedSet.bZPopMin(1.seconds, k1, k2)
+        min2 <- sortedSet.bZPopMin(1.seconds, k1, k2)
+        min4 <- sortedSet.bZPopMin(1.seconds, k1, k2)
+        min5 <- sortedSet.bZPopMin(1.seconds, k1, k2)
+        min3 <- sortedSet.bZPopMin(1.seconds, k1, k2)
         empty <- sortedSet.bZPopMin(1.seconds, k1, k2)
       } yield {
         //then
-        firstMin shouldBe Some(k1, vScore1)
-        secondMin shouldBe Some(k1, vScore5) // returns 5 because is the min score in k1
-        thirdMin shouldBe Some(k2, vScore3)
+        min1 shouldBe Some(k1, vScore1)
+        min2 shouldBe Some(k1, vScore2) // returns 5 because is the min score in k1
+        min4 shouldBe Some(k1, vScore4)
+        min5 shouldBe Some(k1, vScore5)
+        min3 shouldBe Some(k2, vScore3)
+
         empty shouldBe None
       }
     }.runSyncUnsafe()
@@ -171,11 +179,11 @@ class SortedSetCommandsSuite
         //when
         addFirst <- sortedSet.zAdd(k1, ZArgs.NX, 1, vA)
         addSameScore <- sortedSet.zAdd(k1, ZArgs.NX, 1, vA)
-        elems1 <- sortedSet.zScanVScores(k1).toListL
+        elems1 <- sortedSet.zRevGetAll(k1).toListL
         addDifScore <- sortedSet.zAdd(k1, ZArgs.NX, 2, vA)
-        elems2 <- sortedSet.zScanVScores(k1).toListL
+        elems2 <- sortedSet.zRevGetAll(k1).toListL
         addDifVal <- sortedSet.zAdd(k1, ZArgs.NX, 1, vB)
-        elems3 <- sortedSet.zScanVScores(k1).toListL
+        elems3 <- sortedSet.zRevGetAll(k1).toListL
 
       } yield {
         //then
@@ -206,7 +214,7 @@ class SortedSetCommandsSuite
         //when
         add1 <- sortedSet.zAdd(k1, ZArgs.NX, vScoreA1)
         add2 <- sortedSet.zAdd(k1, ZArgs.NX, List(vScoreA2, vScoreB1, vScoreC1))
-        elems <- sortedSet.zScanVScores(k1).toListL
+        elems <- sortedSet.zRevGetAll(k1).toListL
       } yield {
         //then
         add1 shouldBe 1L
@@ -232,7 +240,7 @@ class SortedSetCommandsSuite
         add1 <- sortedSet.zAdd(k1, ZArgs.CH, 1, vA)
         add2 <- sortedSet.zAdd(k1, ZArgs.CH, List(vScoreA2, vScoreB1, vScoreC1))
         add3 <- sortedSet.zAdd(k1, ZArgs.CH, 2, vA)
-        elems <- sortedSet.zScanVScores(k1).toListL
+        elems <- sortedSet.zRevGetAll(k1).toListL
       } yield {
         //then
         add1 shouldBe 1L
@@ -260,12 +268,12 @@ class SortedSetCommandsSuite
       for {
         //when
         add1 <- sortedSet.zAdd(k1, ZArgs.XX, 1, vA)
-        elems1 <- sortedSet.zScanVScores(k1).toListL
+        elems1 <- sortedSet.zRevGetAll(k1).toListL
         _ <- sortedSet.zAdd(k1, vScoreA1, vScoreB1)
         add2 <- sortedSet.zAdd(k1, ZArgs.XX, vScoreA2)
-        elems2 <- sortedSet.zScanVScores(k1).toListL
+        elems2 <- sortedSet.zRevGetAll(k1).toListL
         add3 <- sortedSet.zAdd(k1, ZArgs.XX, vScoreA3, vScoreB2, vScoreC1)
-        elems3 <- sortedSet.zScanVScores(k1).toListL
+        elems3 <- sortedSet.zRevGetAll(k1).toListL
       } yield {
         //then
         add1 shouldBe 0L
@@ -287,9 +295,9 @@ class SortedSetCommandsSuite
       for {
         //when
         add1 <- sortedSet.zAddIncr(k1, 1, vA)
-        elems1 <- sortedSet.zScanVScores(k1).toListL
+        elems1 <- sortedSet.zRevGetAll(k1).toListL
         add2 <- sortedSet.zAddIncr(k1, 3, vA)
-        elems2 <- sortedSet.zScanVScores(k1).toListL
+        elems2 <- sortedSet.zRevGetAll(k1).toListL
 
       } yield {
         //then
@@ -310,9 +318,9 @@ class SortedSetCommandsSuite
       for {
         //when
         add1 <- sortedSet.zAddIncr(k1, ZArgs.NX, 1, vA)
-        elems1 <- sortedSet.zScanVScores(k1).toListL
+        elems1 <- sortedSet.zRevGetAll(k1).toListL
         add2 <- sortedSet.zAddIncr(k1, ZArgs.NX, 3, vA)
-        elems2 <- sortedSet.zScanVScores(k1).toListL
+        elems2 <- sortedSet.zRevGetAll(k1).toListL
 
       } yield {
         //then
@@ -334,11 +342,11 @@ class SortedSetCommandsSuite
       for {
         //when
         add1 <- sortedSet.zAddIncr(k1, ZArgs.CH, 1, vA)
-        elems1 <- sortedSet.zScanVScores(k1).toListL
+        elems1 <- sortedSet.zRevGetAll(k1).toListL
         add2 <- sortedSet.zAddIncr(k1, ZArgs.CH, 1, vA)
-        elems2 <- sortedSet.zScanVScores(k1).toListL
+        elems2 <- sortedSet.zRevGetAll(k1).toListL
         add3 <- sortedSet.zAddIncr(k1, ZArgs.CH, 2, vA)
-        elems3 <- sortedSet.zScanVScores(k1).toListL
+        elems3 <- sortedSet.zRevGetAll(k1).toListL
       } yield {
         //then
         add1 shouldBe 1L
@@ -360,12 +368,12 @@ class SortedSetCommandsSuite
       for {
         //when
         add1 <- sortedSet.zAddIncr(k1, ZArgs.XX, 1, vA)
-        elems1 <- sortedSet.zScanVScores(k1).toListL
+        elems1 <- sortedSet.zRevGetAll(k1).toListL
         _ <- sortedSet.zAdd(k1, 1, vA)
         add2 <- sortedSet.zAddIncr(k1, ZArgs.XX, 1, vA)
-        elems2 <- sortedSet.zScanVScores(k1).toListL
+        elems2 <- sortedSet.zRevGetAll(k1).toListL
         add3 <- sortedSet.zAddIncr(k1, ZArgs.XX, 2, vA)
-        elems3 <- sortedSet.zScanVScores(k1).toListL
+        elems3 <- sortedSet.zRevGetAll(k1).toListL
       } yield {
         //then
         add1 shouldBe 0L
@@ -428,7 +436,7 @@ class SortedSetCommandsSuite
         //when
         incr1 <- sortedSet.zIncrBy(k1, 1.1, vA)
         incr2 <- sortedSet.zIncrBy(k1, 3, vA)
-        elems2 <- sortedSet.zScanVScores(k1).toListL
+        elems2 <- sortedSet.zRevGetAll(k1).toListL
       } yield {
         //then
         incr1 shouldBe 1.1
@@ -723,7 +731,7 @@ class SortedSetCommandsSuite
     }.runSyncUnsafe()
   }
 
- "zRemRangeByLex" should "remove all members in a sorted set between the given lexicographical range" in {
+  "zRemRangeByLex" should "remove all members in a sorted set between the given lexicographical range" in {
     //https://redis.io/commands/zremrangebylex
     //given
     val k1 = genRedisKey.sample.get
@@ -734,7 +742,7 @@ class SortedSetCommandsSuite
         //when
         _ <- sortedSet.zAdd(k1, vScores)
         removed <- sortedSet.zRemRangeByLex(k1, ZRange("3", "f")) //removes "3" and "f"
-        members <- sortedSet.zScanMembers(k1).toListL
+        members <- sortedSet.zMembers(k1).toListL
       } yield {
         //then
         removed shouldBe 4L
@@ -757,7 +765,7 @@ class SortedSetCommandsSuite
         //when
         count1 <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScoreC, vScore1, vScore2) >> sortedSet.zCard(k1)
         removed1 <- sortedSet.zRemRangeByScore(k1, ZRange(0, 2))
-        remaining1 <- sortedSet.zScanMembers(k1).toListL
+        remaining1 <- sortedSet.zMembers(k1).toListL
         removed2 <- sortedSet.zRemRangeByScore(k1, ZRange.gte(1))
       } yield {
         //then
@@ -858,26 +866,63 @@ class SortedSetCommandsSuite
     }.runSyncUnsafe()
   }
 
-  "zScan" should "return all members with scores" in {
+  "all members" can "be fetched and ordered from high to low and viceversa" in {
     //given
     val k1 = genRedisKey.sample.get
-    val k2 = genRedisKey.sample.get
-    val vScores = Gen.listOfN(15, genVScore).sample.get
+    val vScores = List(
+      VScore("A", 1),
+      VScore("B", 2),
+      VScore("C", 3),
+      VScore("D", 4),
+      VScore("E", 5),
+      VScore("F", 6)
+    )
 
     utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
       for {
         //when
         _ <- sortedSet.zAdd(k1, vScores)
-        scanMembers <- sortedSet.zScanMembers(k1).toListL
-        emptyMembers <- sortedSet.zScanMembers(k2).toListL
-        scanVScores <- sortedSet.zScanVScores(k1).toListL
-        emptyVcores <- sortedSet.zScanVScores(k2).toListL
+        members <- sortedSet.zMembers(k1).toListL
+        emptyMembers <- sortedSet.zMembers("non-existing-key").toListL
+        revMembers <- sortedSet.zRevMembers(k1).toListL
+        revEmptyMembers <- sortedSet.zRevMembers("non-existing-key").toListL
+
       } yield {
         //then
-        scanMembers should contain theSameElementsAs vScores.map(_.value.get)
+        members shouldBe vScores.map(_.value.get)
+        revMembers shouldBe vScores.map(_.value.get).reverse
         emptyMembers shouldBe List.empty
-        scanVScores should contain theSameElementsAs vScores
-        emptyVcores shouldBe List.empty
+        revEmptyMembers shouldBe List.empty
+      }
+    }.runSyncUnsafe()
+  }
+
+  "all value with score" can "be fetched and ordered from low to high and viceversa" in {
+    //given
+    val k1 = genRedisKey.sample.get
+    val vScores = List(
+      VScore("A", 1),
+      VScore("B", 2),
+      VScore("C", 3),
+      VScore("D", 4),
+      VScore("E", 5),
+      VScore("F", 6)
+    )
+
+    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+      for {
+        //when
+        _ <- sortedSet.zAdd(k1, vScores)
+        getAllVScores <- sortedSet.zGetAll(k1).toListL
+        emptyVScores <- sortedSet.zGetAll("non-existing-key").toListL
+        revGetAllVScores <- sortedSet.zRevGetAll(k1).toListL
+        revEmptyVScores <- sortedSet.zRevGetAll("non-existing-key").toListL
+      } yield {
+        //then
+        getAllVScores shouldBe vScores
+        revGetAllVScores shouldBe vScores.reverse
+        emptyVScores shouldBe List.empty
+        revEmptyVScores shouldBe List.empty
       }
     }.runSyncUnsafe()
   }
@@ -916,9 +961,9 @@ class SortedSetCommandsSuite
     utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
       for {
         //when
-        _ <- sortedSet.zAdd(k1, vScores1) >> sortedSet.zAdd(k2, vScores2)  >> sortedSet.zAdd(k3, vScoresDuplicated)
+        _ <- sortedSet.zAdd(k1, vScores1) >> sortedSet.zAdd(k2, vScores2) >> sortedSet.zAdd(k3, vScoresDuplicated)
         union <- sortedSet.zUnionStore(k4, k1, k2, k3)
-        scan <- sortedSet.zScanMembers(k4).toListL
+        scan <- sortedSet.zMembers(k4).toListL
       } yield {
         //then
         union shouldBe vScores1.size + vScores2.size

@@ -39,12 +39,13 @@ final class ServerCommands[K, V] private[redis] (reactiveCmd: RedisServerReactiv
     Task.fromReactivePublisher(reactiveCmd.clientGetname())
 
   /** Set the current connection name. */
-  def setClientName(name: K): Task[Unit] =
+  def clientNameSet(name: K): Task[Unit] =
     Task.fromReactivePublisher(reactiveCmd.clientSetname(name)).void
 
   /**
     * Get the list of client connections.
     *
+    * @see <a href="https://redis.io/commands/hvals">HVALS</a>.
     * @return A unique string, formatted as follows: One client connection per line (separated by LF),
     *         each line is composed of a succession of property=value fields separated by a space character.
     */
@@ -61,31 +62,37 @@ final class ServerCommands[K, V] private[redis] (reactiveCmd: RedisServerReactiv
 
   /**
     * Get the value of a configuration parameter.
+    *
+    * @see <a href="https://redis.io/commands/config-get">CONFIG GET</a>.
     * @return Bulk string reply
     */
   def configGet(parameter: String): Task[Option[String]] =
-    Task.fromReactivePublisher(reactiveCmd.configGet(parameter)).map(_.map(_.asScala.toMap).flatMap(_.headOption.map(_._2)))
+    Task
+      .fromReactivePublisher(reactiveCmd.configGet(parameter))
+      .map(_.map(_.asScala.toMap).flatMap(_.headOption.map(_._2)))
 
   /**
     * Set a configuration parameter to the given value.
     * All the supported parameters have the same meaning.
     * of the equivalent configuration parameter used in the
     * https://raw.githubusercontent.com/redis/redis/6.0/redis.conf
+    *
+    * @see <a href="https://redis.io/commands/config-set">CONFIG SET</a>.
     */
   def configSet(parameter: String, value: String): Task[Unit] =
     Task.fromReactivePublisher(reactiveCmd.configSet(parameter, value)).void
 
   /**
-    * Reset the stats returned by INFO.
+    * Get the number of keys in the selected database.
+    *
+    * @see <a href="https://redis.io/commands/dbsize">DBSIZE</a>.
     */
-  def configResetStat: Task[Unit] =
-    Task.fromReactivePublisher(reactiveCmd.configResetstat()).void
-
-  /** Get the number of keys in the selected database. */
   def dbSize: Task[Long] = Task.fromReactivePublisher(reactiveCmd.dbsize()).map(_.map(_.toLong).getOrElse(0L))
 
   /**
     * Remove all keys from all databases.
+    *
+    * @see <a href="https://redis.io/commands/flushall">FLUSHALL</a>.
     * @return Simple string reply
     */
   def flushAll: Task[Unit] =
@@ -93,31 +100,51 @@ final class ServerCommands[K, V] private[redis] (reactiveCmd: RedisServerReactiv
 
   /**
     * Remove all keys from the current database.
+    *
+    * @see <a href="https://redis.io/commands/flushdb">FLUSHDB</a>.
     * @return Single string reply
     */
   def flushDb: Task[Unit] =
     Task.fromReactivePublisher(reactiveCmd.flushdbAsync()).void
 
-  /** Get information and statistics about the server as a collection of text lines. */
+  /**
+    * Get information and statistics about the server as a collection of text lines.
+    *
+    * @see <a href="https://redis.io/commands/info">INFO</a>.
+    */
   def info: Task[String] = Task.fromReactivePublisher(reactiveCmd.info()).map(_.getOrElse(""))
 
   /**
     * Get the section information and statistics about
     * the server as a collection of text lines.
+    *
+    * @see <a href="https://redis.io/commands/info">INFO</a>.
     */
-  def info(section: String): Task[String] = Task.fromReactivePublisher(reactiveCmd.info(section)).map(_.getOrElse(""))
+  def info(section: String): Task[String] =
+    Task.fromReactivePublisher(reactiveCmd.info(section)).map(_.getOrElse(""))
 
   /**
-    * Get the [[Date]] of the last successful save to disk if any,
-    * otherwise return [[Instant MIN]] .
+    * Get the [[Date]] of the last successful save to disk if any.
+    *
+    * @see <a href="https://redis.io/commands/lastsave">LASTSAVE</a>.
     */
   def lastSave: Task[Option[Date]] = Task.fromReactivePublisher(reactiveCmd.lastsave())
 
-  /** Number of bytes that a key and its value require to be stored in RAM. */
+  /**
+    * Number of bytes that a key and its value require to be stored in RAM.
+    *
+    * @see <a href="https://redis.io/commands/memory-stats">MEMORY STATS</a>.
+    */
   def memoryUsage(key: K): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.memoryUsage(key)).map(_.map(_.longValue()).getOrElse(0L))
+    Task
+      .fromReactivePublisher(reactiveCmd.memoryUsage(key))
+      .map(_.map(_.longValue()).getOrElse(0L))
 
-  /** Synchronously save the dataset to disk */
+  /**
+    * Synchronously save the dataset to disk
+    *
+    * @see <a href="https://redis.io/commands/save">SAVE</a>.
+    */
   def save: Task[Unit] = Task.fromReactivePublisher(reactiveCmd.save()).void
 
 }

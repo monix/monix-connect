@@ -1,5 +1,6 @@
 package monix.connect.redis
 
+import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import org.scalacheck.Gen
 import org.scalatest.concurrent.Eventually
@@ -130,18 +131,18 @@ class HashCommandsSuite
         inc2 <- cmd.hash.hIncrBy(k, f1, 2)
         inc3 <- cmd.hash.hIncrBy(k, f1, 3)
         _ <- cmd.hash.hSet(k, f2, "someString")
-        incNonNumber <- cmd.hash.hIncrBy(k, f2, 1)
+        incNonNumber <- cmd.hash.hIncrBy(k, f2, 1).onErrorHandleWith(ex => if (ex.getMessage.contains("not an integer")) Task.now(-10) else Task.now(-11))
         incNotExistingField <- cmd.hash.hIncrBy(k, "none", 1)
         incNotExistingKey <- cmd.hash.hIncrBy("none", "none", 4)
       } yield {
         //then
-        inc0 shouldBe v.toLongOption
-        inc1 shouldBe Some(2L)
-        inc2 shouldBe Some(4L)
-        inc3 shouldBe Some(7L)
-        incNonNumber shouldBe None
-        incNotExistingField shouldBe Some(1)
-        incNotExistingKey shouldBe Some(4)
+        inc0 shouldBe v.toLong
+        inc1 shouldBe 2L
+        inc2 shouldBe 4L
+        inc3 shouldBe 7L
+        incNonNumber shouldBe -10
+        incNotExistingField shouldBe 1
+        incNotExistingKey shouldBe 4
       }
     }.runToFuture
   }
@@ -162,18 +163,18 @@ class HashCommandsSuite
         inc2 <- cmd.hash.hIncrBy(k, f1, 2.1)
         inc3 <- cmd.hash.hIncrBy(k, f1, 3.1)
         _ <- cmd.hash.hSet(k, f2, "someString")
-        incNonNumber <- cmd.hash.hIncrBy(k, f2, 1.1)
+        incNonNumber <- cmd.hash.hIncrBy(k, f2, 1.1).onErrorHandleWith(ex => if (ex.getMessage.contains(" not a float")) Task.now(-10.10) else Task.now(-11.11))
         incNotExistingField <- cmd.hash.hIncrBy(k, "none", 1.1)
         incNotExistingKey <- cmd.hash.hIncrBy("none", "none", 0.1)
       } yield {
         //then
-        inc0 shouldBe v.toDoubleOption
-        inc1 shouldBe Some(2.1)
-        inc2 shouldBe Some(4.2)
-        inc3 shouldBe Some(7.3)
-        incNonNumber shouldBe None
-        incNotExistingField shouldBe Some(1.1)
-        incNotExistingKey shouldBe Some(0.1)
+        inc0 shouldBe v.toDouble
+        inc1 shouldBe 2.1
+        inc2 shouldBe 4.2
+        inc3 shouldBe 7.3
+        incNonNumber shouldBe -10.10
+        incNotExistingField shouldBe 1.1
+        incNotExistingKey shouldBe 0.1
       }
     }.runToFuture
   }

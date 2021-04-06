@@ -30,6 +30,8 @@ class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[
 
   /**
     * Get an element from a list by its index.
+    *
+    * @see <a href="https://redis.io/commands/lindex">LINDEX</a>.
     * @return The requested element, or null when index is out of range.
     */
   def lIndex(key: K, index: Long): Task[Option[V]] =
@@ -37,10 +39,14 @@ class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[
 
   /**
     * Insert an element before or after another element in a list.
+    *
+    * @see <a href="https://redis.io/commands/linsert">LINSERT</a>.
     * @return The length of the list after the insert operation, or -1 when the value pivot was not found.
     */
   def lInsert(key: K, before: Boolean, pivot: V, value: V): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.linsert(key, before, pivot, value)).map(_.map(_.longValue()) getOrElse (-1L))
+    Task
+      .fromReactivePublisher(reactiveCmd.linsert(key, before, pivot, value))
+      .map(_.map(_.longValue()) getOrElse (-1L))
 
   /**
     * Insert an element before the pivot element in the list.
@@ -62,13 +68,19 @@ class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[
 
   /**
     * Get the length of a list.
+    *
+    * @see <a href="https://redis.io/commands/llen">LLEN</a>.
     * @return Long integer-reply the length of the list at { @code key}.
     */
   def lLen(key: K): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.llen(key)).map(_.map(_.longValue) getOrElse (0L))
+    Task
+      .fromReactivePublisher(reactiveCmd.llen(key))
+      .map(_.map(_.longValue) getOrElse (0L))
 
   /**
     * Remove and get the first element in a list.
+    *
+    * @see <a href="https://redis.io/commands/lpop">LPOP</a>.
     * @return The value of the first element, or null when key does not exist.
     */
   def lPop(key: K): Task[Option[V]] =
@@ -76,21 +88,28 @@ class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[
 
   /**
     * Prepend one or multiple values to a list.
+    *
+    * @see <a href="https://redis.io/commands/lpush">LPUSH</a>.
     * @return The length of the list after the push operations.
     */
   def lPush(key: K, values: V*): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.lpush(key, values: _*)).map(_.map(_.longValue).getOrElse(0L))
+    Task
+      .fromReactivePublisher(reactiveCmd.lpush(key, values: _*))
+      .map(_.map(_.longValue).getOrElse(0L))
 
   def lPush(key: K, values: List[V]): Task[Long] =
     lPush(key, values: _*)
 
   /**
     * Get a range of elements from a list.
+    *
+    * @see <a href="https://redis.io/commands/lrange">LRANGE</a>.
     * @return List of elements in the specified range.
     */
   def lRange(key: K, start: Long, stop: Long): Observable[V] =
     Observable.fromReactivePublisher(reactiveCmd.lrange(key, start, stop))
 
+  /** Get all of elements from a list. */
   def lGetAll(key: K): Observable[V] =
     Observable
       .fromTask(lLen(key))
@@ -98,6 +117,8 @@ class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[
 
   /**
     * Remove elements from a list.
+    *
+    * @see <a href="https://redis.io/commands/lrem">LREM</a>.
     * @return The number of removed elements.
     */
   def lRem(key: K, count: Long, value: V): Task[Long] =
@@ -106,7 +127,10 @@ class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[
   /**
     * Set the value of an element in a list by its index.
     *
-    * @return string reply
+    * @see <a href="https://redis.io/commands/lset">LSET</a>.
+    * @return `true` if the element was inserted correctly,
+    *         `false` if the key did not exited or the index was out of range,
+    *         and a failed [[Task]] on unexpected issue.
     */
   def lSet(key: K, index: Long, value: V): Task[Boolean] =
     Task
@@ -116,21 +140,26 @@ class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[
 
   /**
     * Trim a list to the specified range.
-    * @return Simple string reply
+    *
+    * @see <a href="https://redis.io/commands/ltrim">LTRIM</a>.
     */
   def lTrim(key: K, start: Long, stop: Long): Task[Unit] =
     Task.fromReactivePublisher(reactiveCmd.ltrim(key, start, stop)).void
 
   /**
     * Remove and get the last element in a list.
+    *
+    * @see <a href="https://redis.io/commands/rpop">RPOP</a>.
     * @return The value of the last element, or null when key does not exist.
     */
   def rPop(key: K): Task[Option[V]] =
     Task.fromReactivePublisher(reactiveCmd.rpop(key))
 
-  //todo create PR for lettuce
+  //create PR for lettuce
   /**
     * Remove the last element in a list, prepend it to another list and return it.
+    *
+    * @see <a href="https://redis.io/commands/rpoplpush">RPOPLPUSH</a>.
     * @return The element being popped and pushed.
     */
   def rPopLPush(source: K, destination: K): Task[Option[V]] =
@@ -138,20 +167,28 @@ class ListCommands[K, V] private[redis] (reactiveCmd: RedisListReactiveCommands[
 
   /**
     * Append one or multiple values to a list.
+    *
+    * @see <a href="https://redis.io/commands/rpush">RPUSH</a>.
     * @return The length of the list after the push operation.
     */
   def rPush(key: K, values: V*): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.rpush(key, values: _*)).map(_.map(_.longValue).getOrElse(0L))
+    Task
+      .fromReactivePublisher(reactiveCmd.rpush(key, values: _*))
+      .map(_.map(_.longValue).getOrElse(0L))
 
   def rPush(key: K, values: List[V]): Task[Long] =
     rPush(key, values: _*)
 
   /**
     * Append values to a list, only if the list exists.
+    *
+    * @see <a href="https://redis.io/commands/rpushx">RPUSHX</a>.
     * @return The length of the list after the push operation.
     */
   def rPushX(key: K, values: V*): Task[Long] =
-    Task.fromReactivePublisher(reactiveCmd.rpushx(key, values: _*)).map(_.map(_.longValue).getOrElse(0L))
+    Task
+      .fromReactivePublisher(reactiveCmd.rpushx(key, values: _*))
+      .map(_.map(_.longValue).getOrElse(0L))
 
   def rPushX(key: K, values: List[V]): Task[Long] = rPushX(key, values: _*)
 

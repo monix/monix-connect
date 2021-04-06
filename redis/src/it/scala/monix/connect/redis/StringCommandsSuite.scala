@@ -391,6 +391,7 @@ class StringCommandsSuite
       } yield {
         set1 shouldBe v1.length + 1L
         set2 shouldBe expected.length + 1L
+        //`\u0000` is present since we used an offset of 1L
         result shouldBe Some("\u0000" + expected)
       }
     }.runSyncUnsafe()

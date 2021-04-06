@@ -180,6 +180,7 @@ class KeyCommandsSuite
     //when
     utfConnection.use { case RedisCmd(_, keys, _, _, _, _, _) =>
       for {
+        ttlEmptyKey <- keys.ttl("non-existing-key")
         initialTtl <- keys.ttl(key1)
         expire <- keys.expire(key1, 2.seconds)
         finalTtl <- keys.ttl(key1)
@@ -190,6 +191,7 @@ class KeyCommandsSuite
         existsAfterFiveSeconds <- keys.exists(key2) //the new key will gone after the ttl.
       } yield {
         //then
+        ttlEmptyKey.toMillis shouldBe -2L
         (initialTtl.toMillis < 0L) shouldBe true
         expire shouldBe true
         (2.seconds.toMillis > finalTtl.toMillis) shouldBe true

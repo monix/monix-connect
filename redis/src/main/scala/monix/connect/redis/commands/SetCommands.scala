@@ -29,6 +29,8 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
 
   /**
     * Add one or more members to a set.
+    *
+    * @see <a href="https://redis.io/commands/sadd">SADD</a>.
     * @return The number of elements that were added to the set, not including all the elements already
     *         present into the set.
     */
@@ -39,6 +41,8 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
 
   /**
     * Get the number of members in a set.
+    *
+    * @see <a href="https://redis.io/commands/scard">SCARD</a>.
     * @return The cardinality (number of elements) of the set, 0 if the key does not exist.
     */
   def sCard(key: K): Task[Long] =
@@ -47,6 +51,7 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
   /**
     * Subtract the first set with all the successive sets.
     *
+    * @see <a href="https://redis.io/commands/sdiff">SDIFF</a>.
     * @return A list with members of the resulting set.
     */
   def sDiff(first: K, rest: K*): Observable[V] = {
@@ -57,6 +62,8 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
 
   /**
     * Subtract multiple sets and store the resulting set in a key.
+    *
+    * @see <a href="https://redis.io/commands/sdiffstore">SDIFFSTORE</a>.
     * @return The number of elements in the resulting set.
     */
   def sDiffStore(destination: K, first: K, rest: K*): Task[Long] =
@@ -69,6 +76,8 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
 
   /**
     * Intersect multiple sets.
+    *
+    * @see <a href="https://redis.io/commands/sinter">SINTER</a>.
     * @return A list with members of the resulting set.
     */
   def sInter(keys: K*): Observable[V] =
@@ -78,6 +87,8 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
 
   /**
     * Intersect multiple sets and store the resulting set in a key.
+    *
+    * @see <a href="https://redis.io/commands/sinterstore">SINTERSOTRE</a>.
     * @return The number of elements in the resulting set.
     */
   def sInterStore(destination: K, keys: K*): Task[Long] =
@@ -87,6 +98,8 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
 
   /**
     * Determine if a given value is a member of a set.
+    *
+    * @see <a href="https://redis.io/commands/sismember">SINTERSOTRE</a>.
     * @return True if the element is a member of the set.
     *         False if the element is not a member of the set, or if key does not exist.
     */
@@ -94,7 +107,18 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
     Task.fromReactivePublisher(reactiveCmd.sismember(key, member)).map(_.exists(_.booleanValue))
 
   /**
+    * Get all the members in a set.
+    *
+    * @see <a href="https://redis.io/commands/smembers">SMEMBERS</a>.
+    * @return All elements of the set.
+    */
+  def sMembers(key: K): Observable[V] =
+    Observable.fromReactivePublisher(reactiveCmd.smembers(key))
+
+  /**
     * Move a member from one set to another.
+    *
+    * @see <a href="https://redis.io/commands/smove">SMOVE</a>.
     * @return True if the element is moved.
     *         False if the element is not a member of source and no operation was performed.
     */
@@ -102,14 +126,9 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
     Task.fromReactivePublisher(reactiveCmd.smove(source, destination, member)).map(_.exists(_.booleanValue))
 
   /**
-    * Get all the members in a set.
-    * @return All elements of the set.
-    */
-  def sMembers(key: K): Observable[V] =
-    Observable.fromReactivePublisher(reactiveCmd.smembers(key))
-
-  /**
     * Remove and return a random member from a set.
+    *
+    * @see <a href="https://redis.io/commands/spop">SPOP</a>.
     * @return The removed element, or ``None when key does not exist.
     */
   def sPop(key: K): Task[Option[V]] =
@@ -117,6 +136,8 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
 
   /**
     * Remove and return one or multiple random members from a set.
+    *
+    * @see <a href="https://redis.io/commands/spop">SPOP</a>.
     * @return The removed element, or null when key does not exist.
     */
   def sPop(key: K, count: Long): Observable[V] =
@@ -124,23 +145,29 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
 
   /**
     * Get one random member from a set.
-    * @return Without the additional count argument the command returns a Bulk Reply with the
-    *         randomly selected element, or null when key does not exist.
+    *
+    * @see <a href="https://redis.io/commands/srandmember">SRANDMEMBER</a>.
+    * @return The randomly selected element, if the key exists,
+    *         otherwise [[None]]
     */
   def sRandMember(key: K): Task[Option[V]] =
     Task.fromReactivePublisher(reactiveCmd.srandmember(key))
 
   /**
     * Get one or multiple random members from a set.
-    * @return  The elements without the additional count argument the command returns a Bulk Reply
-    * with the randomly selected element, or null when key does not exist.
+    *
+    * @see <a href="https://redis.io/commands/srandmember">SRANDMEMBER</a>.
+    * @return The randomly selected elements.
     */
   def sRandMember(key: K, count: Long): Observable[V] =
     Observable.fromReactivePublisher(reactiveCmd.srandmember(key, count))
 
   /**
     * Remove one or more members from a set.
-    * @return Long hat represents the number of members that were removed from the set, not including non existing members.
+    *
+    * @see <a href="https://redis.io/commands/srem">SREM</a>.
+    * @return The number of members that were removed from
+    *         the set, not including non existing members.
     */
   def sRem(key: K, members: V*): Task[Long] =
     Task.fromReactivePublisher(reactiveCmd.srem(key, members: _*)).map(_.map(_.longValue).getOrElse(0L))
@@ -149,6 +176,8 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
 
   /**
     * Add multiple sets.
+    *
+    * @see <a href="https://redis.io/commands/sunion">SUNION</a>.
     * @return The members of the resulting set.
     */
   def sUnion(keys: K*): Observable[V] =
@@ -158,6 +187,8 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
 
   /**
     * Add multiple sets and store the resulting set in a key.
+    *
+    * @see <a href="https://redis.io/commands/sunionstore">SUNIONSTORE</a>.
     * @return Long that represents the number of elements in the resulting set.
     */
   def sUnionStore(destination: K, keys: K*): Task[Long] =

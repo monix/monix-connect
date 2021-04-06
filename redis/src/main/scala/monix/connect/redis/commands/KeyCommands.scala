@@ -28,12 +28,15 @@ import scala.util.Try
 
 /**
   * Exposes the set of redis key commands available.
+  *
   * @see <a href="https://redis.io/commands#generic">Key commands reference</a>.
   */
 final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveCommands[K, V]) {
 
   /**
     * Delete one or more keys.
+    *
+    * @see <a href="https://redis.io/commands/del">DEL</a>.
     * @return The number of keys that were removed.
     */
   def del(keys: K*): Task[Long] =
@@ -42,16 +45,9 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
       .map(_.map(_.longValue).getOrElse(0L))
 
   /**
-    * Unlink one or more keys (non blocking DEL).
-    * @return The number of keys that were removed.
-    */
-  def unLink(keys: K*): Task[Long] =
-    Task
-      .fromReactivePublisher(reactiveCmd.unlink(keys: _*))
-      .map(_.map(_.longValue).getOrElse(0L))
-
-  /**
     * Return a serialized version of the value stored at the specified key.
+    *
+    * @see <a href="https://redis.io/commands/dump">DUMP</a>.
     * @return The serialized value.
     */
   def dump(key: K): Task[Array[Byte]] =
@@ -61,6 +57,8 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
 
   /**
     * Determine how many keys exist.
+    *
+    * @see <a href="https://redis.io/commands/exists">EXISTS</a>.
     * @return Number of existing keys
     */
   def exists(keys: List[K]): Task[Long] =
@@ -75,8 +73,9 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
   /**
     * Set a key's time to live with a precision of milliseconds.
     *
+    * @see <a href="https://redis.io/commands/expire">EXPIRE</a>.
     * @return `true` if the timeout was set.
-    *         `false`` if key does not exist or the timeout could not be set.
+    *         `false` if key does not exist or the timeout could not be set.
     *
     */
   def expire(key: K, timeout: FiniteDuration): Task[Boolean] =
@@ -91,6 +90,8 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
 
   /**
     * Find all keys matching the given pattern.
+    *
+    * @see <a href="https://redis.io/commands/keys">KEYS</a>.
     * @return Keys matching the pattern.
     */
   def keys(pattern: K): Observable[K] =
@@ -98,6 +99,8 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
 
   /**
     * Atomically transfer a key from a Redis instance to another one.
+    *
+    * @see <a href="https://redis.io/commands/migrate">MIGRATE</a>.
     * @return The command returns [[Unit]] on success.
     */
   def migrate(host: String, port: Int, key: K, db: Int, timeout: Long): Task[Unit] =
@@ -105,6 +108,8 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
 
   /**
     * Move a key to another database.
+    *
+    * @see <a href="https://redis.io/commands/move">MOVE</a>.
     * @return True if the move operation succeeded, false if not.
     */
   def move(key: K, db: Int): Task[Boolean] =
@@ -122,6 +127,7 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
   /**
     * Time since the object stored at the specified key
     * is idle (not requested by read or write operations).
+    *
     */
   def objectIdleTime(key: K): Task[Option[FiniteDuration]] =
     Task
@@ -130,6 +136,7 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
 
   /** todo test
     * Number of references of the value associated with the specified key.
+    **
     */
   def objectRefCount(key: K): Task[Long] =
     Task
@@ -139,6 +146,7 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
   /**
     * Removes the expiration from a key.
     *
+    * @see <a href="https://redis.io/commands/persist">PERSIST</a>.
     * @return `true` if the timeout was removed.
     *         `false` if key does not exist or does not have an associated timeout.
     */
@@ -149,18 +157,25 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
 
   /**
     * Return a random key from the keyspace.
+    *
+    * @see <a href="https://redis.io/commands/randomkey">RANDOMKEY</a>.
     * @return The random key, or null when the database is empty.
     */
   def randomKey(): Task[Option[K]] =
     Task.fromReactivePublisher(reactiveCmd.randomkey())
 
-  /** Rename a key. */
+  /**
+    * Rename a key.
+    *
+    * @see <a href="https://redis.io/commands/rename">RENAME</a>.
+    */
   def rename(key: K, newKey: K): Task[Unit] =
     Task.fromReactivePublisher(reactiveCmd.rename(key, newKey)).void
 
   /**
     * Rename a key, only if the new key does not exist.
     *
+    * @see <a href="https://redis.io/commands/renamenx">RENAMENX</a>.
     * @return `true` if key was renamed to newkey.
     *         `false` if newkey already exists.
     */
@@ -169,12 +184,18 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
       .fromReactivePublisher(reactiveCmd.renamenx(key, newKey))
       .map(_.exists(_.booleanValue))
 
-  /** Create a key using the provided serialized value, previously obtained using DUMP. */
+  /**
+    * Create a key using the provided serialized value, previously obtained using DUMP.
+    *
+    * @see <a href="https://redis.io/commands/restore">RESTORE</a>.
+    */
   def restore(key: K, ttl: FiniteDuration, value: Array[Byte]): Task[Unit] =
     Task.fromReactivePublisher(reactiveCmd.restore(key, ttl.toMillis, value)).void
 
   /**
     * Sort the elements in a list, set or sorted set.
+    *
+    * @see <a href="https://redis.io/commands/sort">SORT</a>.
     * @return Sorted elements.
     */
   def sort(key: K): Observable[V] =
@@ -182,6 +203,8 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
 
   /**
     * Touch one or more keys. Touch sets the last accessed time for a key. Non-exsitent keys wont get created.
+    *
+    * @see <a href="https://redis.io/commands/touch">TOUCH</a>.
     * @return The number of found keys.
     */
   def touch(keys: K*): Task[Long] =
@@ -191,21 +214,35 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
 
   /** Get the time to live for a key.
     *
-    * @return the [[FiniteDuration]] in precision of milliseconds,
-    *         or `-1.milliseconds` if the key does not exists, or on unexpected error.
+    * @see <a href="https://redis.io/commands/pttl">PTTL</a>.
+    * @return It is a variant of the Redis PTTL, but instead of an integer
+    *         representing milliseconds, it returns a[[FiniteDuration]].
+    *         A negative value `-2` if the key does not exists, or on unexpected error.
     */
   def ttl(key: K): Task[FiniteDuration] =
     Task
       .fromReactivePublisher(reactiveCmd.pttl(key))
       .map(_.flatMap { millis => Try(Duration(millis, TimeUnit.MILLISECONDS)).toOption }
-        .getOrElse(Duration(-1, MILLISECONDS)))
+        .getOrElse(Duration(-40, MILLISECONDS)))
 
   /**
     * Determine the type stored at key.
+    *
     * @return Type of key, or none when key does not exist.
     */
   def keyType(key: K): Task[Option[String]] =
     Task.fromReactivePublisher(reactiveCmd.`type`(key))
+
+  /**
+    * Unlink one or more keys (non blocking DEL).
+    *
+    * @see <a href="https://redis.io/commands/unlink">UNLINK</a>.
+    * @return The number of keys that were removed.
+    */
+  def unLink(keys: K*): Task[Long] =
+    Task
+      .fromReactivePublisher(reactiveCmd.unlink(keys: _*))
+      .map(_.map(_.longValue).getOrElse(0L))
 
 }
 
