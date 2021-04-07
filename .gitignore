@@ -35,7 +35,6 @@ monix-s3/it/test-data/
 .deployment/kubernetes/ap-archiver/charts
 *.so
 
-
 #website
 /website/blog/
 /website/build/
