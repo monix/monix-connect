@@ -303,7 +303,10 @@ class ServerCommandsSuite
       for {
         _ <- cmd.string.set(intKey, value)
         stringMemSize <- cmd.server.memoryUsage(intKey)
-      } yield (stringMemSize should be >= 50L)
+      } yield {
+        stringMemSize should be >= 50L
+        stringMemSize should be <= 54L
+      }
     ).runSyncUnsafe()
   }
 

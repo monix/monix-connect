@@ -13,7 +13,7 @@ trait RedisIntegrationFixture {
   val redisUri = RedisUri("localhost", 6379)
   val utfConnection = RedisConnection.standalone(RedisUri("localhost", 6379)).connectUtf
 
-  val genRedisKey: Gen[K] = Gen.identifier.map(_.take(10))
+  val genRedisKey: Gen[K] = Gen.identifier.map(_.take(30))
   val genRedisValue: Gen[V] = Gen.choose(0, 10000).map(_.toString)
 
   val genKv: Gen[(K,V)] = for {
@@ -28,9 +28,9 @@ trait RedisIntegrationFixture {
 
   protected val genVScore: Gen[VScore[V]] = {
     for {
-      v <- genRedisValue
+      member <- Gen.identifier.map(_.take(30))
       score <- Gen.choose[Double](1, 90000)
-    } yield VScore(Some(v), score)
+    } yield VScore(Some(member), score)
   }
 
   protected def genVScoreWithRange(lower: Int, upper: Int): Gen[VScore[V]] = {
@@ -39,7 +39,6 @@ trait RedisIntegrationFixture {
       score <- Gen.choose[Double](lower, upper)
     } yield VScore(Some(v), score)
   }
-
 
   protected def genVScore(score: Double): Gen[VScore[V]] = {
     for {
