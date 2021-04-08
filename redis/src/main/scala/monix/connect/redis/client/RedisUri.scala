@@ -46,17 +46,17 @@ import scala.concurrent.duration.FiniteDuration
   *
   */
 class RedisUri(
-  uri: Either[String, (String, Int)],
-  database: Option[Int] = None,
-  password: Option[String] = None,
-  ssl: Option[Boolean] = None,
-  verifyPeer: Option[Boolean] = None,
-  startTls: Option[Boolean] = None,
-  timeout: Option[FiniteDuration] = None,
-  sentinels: List[String] = List.empty,
-  socket: Option[String] = None,
-  sentinelMasterId: Option[String] = None,
-  clientName: Option[String] = None) {
+  val uri: Either[String, (String, Int)],
+  val database: Option[Int] = None,
+  val password: Option[String] = None,
+  val ssl: Option[Boolean] = None,
+  val verifyPeer: Option[Boolean] = None,
+  val startTls: Option[Boolean] = None,
+  val timeout: Option[FiniteDuration] = None,
+  val sentinels: List[String] = List.empty,
+  val socket: Option[String] = None,
+  val sentinelMasterId: Option[String] = None,
+  val clientName: Option[String] = None) {
 
   def withDatabase(database: Int): RedisUri = copy(database = Some(database))
   def withPassword(password: String): RedisUri = copy(password = Some(password))

@@ -1,6 +1,6 @@
 package monix.connect.redis
 
-import monix.connect.redis.client.RedisCmd
+import monix.connect.redis.client.{RedisCmd, RedisConnection, RedisUri}
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import org.scalatest.concurrent.Eventually
@@ -224,26 +224,31 @@ class KeyCommandsSuite
 
   }
 
-  //todo add tests
-  /*
-  "migrate" should "transfer a key from a redis instance to another one" in {
+  // Todo - Y not supported
+  /*"migrate" should "transfer a key from a redis instance to another one" in {
     //given
-    val prefix = "prefix_"
-    val k1: K = prefix + genRedisKey.sample.get
-    val k2: K = prefix + genRedisKey.sample.get
-    val k3: K = genRedisKey.sample.get
+    val k1: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get
-    Redis.connect(redisUrl).use{ cmd =>
-      cmd.string.set(k1, value) *>
-        cmd.string.set(k2, value) *>
-        cmd.string.set(k3, value)
-    }.runSyncUnsafe()
+    val host = "127.0.0.1"
+    val port = 7000
 
     //when
-    val l = Redis.connect(redisUrl).use(_.key.keys(s"$prefix*" ).toListL).runSyncUnsafe()
+    utfConnection.use{ cmd =>
+      cmd.string.set(k1, value) *>
+        cmd.key.migrate(host, port, k1, 0, 10.seconds)
+    }.runSyncUnsafe()
 
     //then
-    List(k1, k2) should contain theSameElementsAs l
+    RedisConnection.standalone(RedisUri(host, port)).connectUtf.use(cmd =>
+      for {
+        exists <- cmd.key.exists(k1)
+        get <- cmd.string.get(k1)
+
+      } yield {
+        exists shouldBe true
+        get shouldBe value
+      })
+      .runSyncUnsafe()
   }*/
 
   "move" should "move a key to another database" in {

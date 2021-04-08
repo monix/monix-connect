@@ -20,50 +20,6 @@ class ListCommandsSuite
     utfConnection.use(cmd => cmd.server.flushAll).runSyncUnsafe()
   }
 
-  //todo not yet supported
-   "bLPop" should "remove and get the first element in a list, or block until one is available" in {
-   /*  //given
-   val k: K = genRedisKey.sample.get
-   val values: List[String] = genRedisValues.sample.get
-
-   //when
-   utfConnection.use { cmd =>
-     for {
-       _ <- cmd.list.lPush(k, values).delayExecution(3.seconds).startAndForget
-       // blpop wait for a new value for 5 seconds, and the values are pushed after 1 seconds
-       blPop <- cmd.list.bLPop(5.seconds, k)
-       blPopEmpty <- cmd.list.bLPop(1.second, "non-existing-key")
-     } yield {
-       blPop shouldBe Some((k, Some(values.last)))
-       blPopEmpty shouldBe None
-     }
-   }.runSyncUnsafe()*/
-  }
-
-  //todo not yet supported
-  "bRPop" should "bRPop" in {
-   /*
-    //given
-   val k: K = genRedisKey.sample.get
-   val values: List[String] = genRedisValues.sample.get
-
-   //when
-   utfConnection.use { cmd =>
-     for {
-       _ <- cmd.list.rPush(k, values.head).delayExecution(1.seconds).startAndForget
-       // blpop wait for a new value for 5 seconds, and the values are pushed after 1 seconds
-       blPop2 <- cmd.list.bRPop(10, k)
-       blPopEmpty <- cmd.list.bLPop(1.second, "non-existing-key")
-     } yield {
-       blPop2 shouldBe Some((k, Some(values.last)))
-       blPopEmpty shouldBe None
-     }
-   }.runSyncUnsafe() */
-  }
-
-  //todo not yet supported
-  "bRPopLPush" should "bRPopLPush" in {}
-
   "lIndex" should "get an element from a list by its index" in {
     //given
     val k: K = genRedisKey.sample.get

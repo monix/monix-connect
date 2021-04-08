@@ -98,15 +98,6 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
     Observable.fromReactivePublisher(reactiveCmd.keys(pattern))
 
   /**
-    * Atomically transfer a key from a Redis instance to another one.
-    *
-    * @see <a href="https://redis.io/commands/migrate">MIGRATE</a>.
-    * @return The command returns [[Unit]] on success.
-    */
-  def migrate(host: String, port: Int, key: K, db: Int, timeout: Long): Task[Unit] =
-    Task.fromReactivePublisher(reactiveCmd.migrate(host, port, key, db, timeout)).void
-
-  /**
     * Move a key to another database.
     *
     * @see <a href="https://redis.io/commands/move">MOVE</a>.

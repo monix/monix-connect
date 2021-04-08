@@ -5,9 +5,10 @@ title: Redis
 
 ## Introduction
 
-_Redis_ is an open source, in-memory data structure store, used as a database, cache and message broker providing high
-sets, sorted sets with range queries, streams and more. It has a defined a set of [commands](https://redis.io/commands)
-availability, scalability and a outstanding performance. It supports data structures such as string, hashes, lists,
+_Redis_ is an open source, in-memory data structure store, used as a database, cache and message broker.
+providing high availability, scalability and a outstanding performance. sorted sets, and a set of [commands](https://redis.io/commands) 
+that can run atomically on these, like appending to a string; incrementing the value in a hash; pushing an element 
+It supports data structures such as string, hashes, lists,
 to inter-operate with, and most of them are also available from the java api.
 
 This connector has been built on top of [lettuce](https://lettuce.io/), the most popular java library for operating with
@@ -21,34 +22,19 @@ Add the following dependency:
 libraryDependencies += "io.monix" %% "monix-redis" % "0.6.0-RC1"
 ```
 
-## Getting started
-
-Redis provides a wide range of commands to perform a different set of operations, divided into 15 different groups.
-Currently, this connector only provides support for the most common used
-ones:  ([Keys](https://redis.io/commands#generic), [Hashes](https://redis.io/commands#hash)
-, [List](https://redis.io/commands#list), [Server](https://redis.io/commands#server)
-, [Sets](https://redis.io/commands#set), [SortedSets](https://redis.io/commands#sorted_set)
-and [Strings](https://redis.io/commands#string)). On continuation, let's get started on how to create a redis _
-standalone_ and _cluster_ connection , also will show how to use the standard `UTF` and `ByteArray` codecs and how to
-create your own one.
-
 ## Redis Connection
 
-It defines the generic set of methods to connect with Redis.
-The RedisConnection represents a scalable and thread-safe way
-to communicate to a Redis *Standalone server* or *Cluster* by just passing its respective uris.
+The first step is to create a `RedisConnection` a simple, scalable and pure interface that allows to
+ communicate to a Redis *Standalone* or *Cluster* servers.
 
-**Important**: The created redis connection is an expensive resource, as it is made using the
-underlying _lettuce client_ which uses netty and holds a set of `io.netty.channel.EventLoopGroup`
-that use multiple threads.
-
-Reuse this connection as much as possible!
+**Remember** that the created connection is an expensive resource, as it is made with the
+underlying _lettuce_ which also uses netty and holds a set of `io.netty.channel.EventLoopGroup`
+that use multiple threads. So, reuse the connection as much as possible!
 
 ### Standalone
 
-Represents a connection to a standalone redis server, extending the `monix.connect.redis.client.RedisConnection`
-interface, which defines the set of methods to create the connection that encodes in _UTF_ and _Array[Byte]_ and also
-supports custom _Codecs_.
+In order to create a standalone connection, we will use the companion object's signature `RedisConnection.standalone`,
+which returns a connection instance.
 
 In order to create the connection, first we would just need a single `monix.connect.redis.client.RedisUri` relative to
 the redis standalone server:
@@ -73,9 +59,9 @@ servers in the cluster.
 ```scala
 import monix.connect.redis.client.{RedisConnection, RedisUri}
 
-val redisNode1 = RedisUri("my-redis-node-1", 7000)
-val redisNode2 = RedisUri("my-redis-node-1", 7001)
-val redisNode3 = RedisUri("my-redis-node-1", 7002)
+val redisNode1 = RedisUri("my.redis.node.1", 7000)
+val redisNode2 = RedisUri("my.redis.node.1", 7001)
+val redisNode3 = RedisUri("my.redis.node.1", 7002)
 
 val redisClusterConn: RedisConnection = RedisConnection.cluster(List(redisNode1, redisNode2, redisNode3))
 ```
@@ -83,13 +69,12 @@ val redisClusterConn: RedisConnection = RedisConnection.cluster(List(redisNode1,
 ## RedisCmd
 
 Once we got a `RedisConnection`, we can start using the `RedisCmd`, a case class that contains all the redis commands for 
-_server_, _keys_, _lists_, _sets_, _sorted sets_ and _hashes_.  
-The `RedisCmd` is actually provided with a `cats.effect.Resource`, 
-which abstract the logic to release and close the connection and the associated resources.
+_server_, _key_, _list_, _set_, _sorted set_ and _hash_.  
+The `RedisCmd` is actually accessible through using a `cats.effect.Resource` with `monix.eval.Task`, 
+it actually abstracts the logic of acquiring and releasing the connection with its associated resources.
 
 In the following example we will create a connection that by default encodes _Keys_
 and _Values_ as `Strings`, persisting them into `UTF` format in _Redis_. 
-
 
 ```scala
 import cats.effect.Resource
@@ -106,10 +91,10 @@ val value: String = "a"
 val k2: String = "key2"
 val values: List[String] = List("b", "c", "d")
 
-// from here on, we can start using the connection
-// as we can appreciate, since `RedisCmd` is a case class,
-// we can apply pattern matching against it, which will 
-// nicely allow us to de-compose the different RedisCommands its different api.
+// from there on, we can start using the connection
+// and since `RedisCmd` is a case class, we can apply 
+// pattern matching against it, which will nicely allow us
+// to de-compose the different RedisCommands its different api.
 // alternatively you can also do:  redisConn.use { redisCmd => redisCmd.string.get("k1") }
 redisConn.use { case RedisCmd(hash, keys, list, server, set, sortedSet, string) =>
   for {
@@ -132,10 +117,11 @@ redisConn.use { case RedisCmd(hash, keys, list, server, set, sortedSet, string) 
 ## Codecs
 
 In the previous sections it was shown how to create a connection to redis and to start using the `RedisCmd` with its
-different redis modules. The connection that we created was a resource that provided a
-`RedisCmd[String, String]` was expecting `Strings` for both _Keys_ and _Values_. In order to decide how do we want our
-redis connection to encode and decode k and v, we would need to pass a custom `Codec` both for key and value. A `Codec`
-is a sealed trait conformed by `UTFCodec` and `ByteArrayCodec`, in which you can create instances of those from its
+different redis modules. The created connection was exposed within a cats resource as
+`RedisCmd[String, String]`, meaning that it expects `Strings` for both _Keys_ and _Values_.
+In order to decide how do we want our redis connection to encode and decode **k** and **v**, 
+we would need to pass a custom `Codec` both for key and value. 
+A `Codec` is a sealed trait conformed by `UTFCodec` and `ByteArrayCodec`, in which you can create instances of those from its
 companion object with the respective signatures `utf` and `byteArray`, see below snippet:
 
 ```scala
@@ -150,7 +136,7 @@ object Codec {
 You will find some already predefined `Codec` for `Int`, `Float`, `Double`, `BigInt` and `BigDecimal` under the package
 object `monix.connect.redis._`.
 
-The next subsections are an example of creating custom codec that mixes `UTFCodec` and `ByteArrayCodec`:
+The next subsections are an example of **creating custom codec** that mixes `UTFCodec` and `ByteArrayCodec`:
 
 ### UTFCodec
 
@@ -202,7 +188,7 @@ val f: CancelableFuture[Option[Double]] =
 On the other hand, there is also a `BytesCodec[T]`, which des/serializes from/to `Array[Byte]`.
 In this case we will show an example of using `Protobuf` serialization format to dealing with redis _keys_ and _values_:
 
-In below snippet we defined our _proto_ objects, in which `PersonPK` will represent the redis keys and `Person` the values.  
+In below snippet we defined our _proto_ objects, in which `PersonPK` will represent the redis key and `Person` the value.  
 
 ```proto
 syntax = "proto3";
@@ -220,7 +206,7 @@ message Person {
 }
 ```
 
-Once the scala sources have been generated, we will proceed to creating a `BytesCodec[PersonPk]` and `BytesCodec[Person]`:
+With the generated proto scala sources, we can proceed to creating a `BytesCodec[PersonPk]` and `BytesCodec[Person]`:
 
 ```scala
 import monix.connect.redis.client.{BytesCodec, Codec}
@@ -230,7 +216,7 @@ implicit val personCodec: BytesCodec[Person] =
   Codec.byteArray(person => Person.toByteArray(person), bytes => Person.parseFrom(bytes))
 ```
 
-Finally, we are ready to start to create the connection using the previously defined protobuf codecs:
+Finally, we are ready to start creating the connection using the previously defined protobuf codecs:
 
 ```scala
 import monix.connect.redis.client.{Codec, RedisCmd, RedisConnection, RedisUri, UtfCodec}
@@ -254,8 +240,17 @@ val f: CancelableFuture[Option[Person]] =
       } yield person
     }.runToFuture
 ```
+## Commands 
 
-## __Keys__
+This redis connector implementation provides a wide range of commands to perform a different operations,
+for the most common used modules and types:
+:  ([Keys](https://redis.io/commands#generic), [Hashes](https://redis.io/commands#hash)
+, [List](https://redis.io/commands#list), [Server](https://redis.io/commands#server)
+, [Sets](https://redis.io/commands#set), [SortedSets](https://redis.io/commands#sorted_set)
+and [Strings](https://redis.io/commands#string)). 
+See an example on how to use each of them in the following sub-sections:
+
+### __Keys__
 
 The below snippet shows a simple example of using key commands.
 
@@ -277,7 +272,7 @@ RedisConnection.standalone(redisUri)
   )
 ```
 
-## __Hashes__
+### __Hashes__
 
 The following example uses the redis hash api `RedisHash` to insert a single element into a hash and read it back from
 the hash.
@@ -304,7 +299,7 @@ RedisConnection.standalone(redisUri)
   }.runToFuture
 ```
 
-## __Lists__
+### __Lists__
 
 The following example uses the redis list api `RedisList` to insert elements into a redis list and reading them back
 with limited size.
@@ -335,7 +330,7 @@ RedisConnection.standalone(redisUri)
   }.runToFuture
 ```
 
-## __Server__
+### __Server__
 
 The following code shows how to remove all keys from all dbs in redis using the server api `RedisServer` a very basic
 but also common use case:
@@ -352,7 +347,7 @@ val f = RedisConnection.standalone(redisUri)
   .connectUtf.use(_.server.flushAll).runToFuture
 ```
 
-## __Sets__
+### __Sets__
 
 The [Redis Set commands api](https://redis.io/commands#set) provides operations to work with _sets_, 
 see a practical example in below code snippet.
@@ -375,7 +370,7 @@ val f = RedisConnection.standalone(redisUri)
   }.runToFuture
 ```
 
-## __SortedSets__
+### __SortedSets__
 
 The [Redis SortedSet commands api](https://redis.io/commands#sorted_set) provides operations to work with _sorted sets_,
 see a practical example in below code snippet, where three scored elements (akka `VScore`), are inserted into a sorted set and 
@@ -406,7 +401,7 @@ val f = RedisConnection.standalone(redisUri)
   }.runToFuture
 ```
 
-## __Strings__
+### __Strings__
 
 The [Redis Strings commands api](https://redis.io/commands#string) provides operations to work with _strings_,
 see a practical example in below code snippet, where we insert a string into the given key and get its size.
