@@ -210,11 +210,11 @@ final class KeyCommands[K, V] private[redis] (reactiveCmd: RedisKeyReactiveComma
     *         representing milliseconds, it returns a[[FiniteDuration]].
     *         A negative value `-2` if the key does not exists, or on unexpected error.
     */
-  def ttl(key: K): Task[FiniteDuration] =
+  def pttl(key: K): Task[FiniteDuration] =
     Task
       .fromReactivePublisher(reactiveCmd.pttl(key))
-      .map(_.flatMap { millis => Try(Duration(millis, TimeUnit.MILLISECONDS)).toOption }
-        .getOrElse(Duration(-40, MILLISECONDS)))
+      .map(_.flatMap(millis => Try(Duration(millis, TimeUnit.MILLISECONDS)).toOption)
+        .getOrElse(Duration(-2, MILLISECONDS)))
 
   /**
     * Determine the type stored at key.

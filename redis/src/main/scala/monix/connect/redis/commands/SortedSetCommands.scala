@@ -232,6 +232,15 @@ class SortedSetCommands[K, V] private[redis] (reactiveCmd: RedisSortedSetReactiv
     Observable.fromReactivePublisher(reactiveCmd.zpopmin(key, count)).map(VScore.from)
 
   /**
+    * Return a range of members in a sorted set.
+    *
+    * @see <a href="https://redis.io/commands/zrange">ZRANGE</a>.
+    * @return Elements in the specified range.
+    */
+  def zRange(key: K, start: Long, stop: Long): Observable[V] =
+    Observable.fromReactivePublisher(reactiveCmd.zrange(key, start, stop))
+
+  /**
     * Return a range of members in a sorted set, by lexicographical range.
     *
     * @see <a href="https://redis.io/commands/zrangebylex">ZRANGEBYLEX</a>.

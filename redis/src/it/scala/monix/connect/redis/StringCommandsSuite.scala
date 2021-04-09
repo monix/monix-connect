@@ -346,7 +346,7 @@ class StringCommandsSuite
     utfConnection.use { cmd =>
       for {
         _ <- cmd.string.setEx(k1, 1.seconds, v1)
-        ttl <- cmd.key.ttl(k1)
+        ttl <- cmd.key.pttl(k1)
         existsAfterTimeout <- Task.sleep(2.seconds) >> cmd.key.exists(k1)
       } yield {
         ttl.toSeconds should be < 2L

@@ -135,9 +135,9 @@ class KeyCommandsSuite
       //when
       for {
         r1 <- cmd.key.expire(k1, 9.seconds)
-        initialTtl <- cmd.key.ttl(k1)
+        initialTtl <- cmd.key.pttl(k1)
         isOverwritten <- cmd.key.expire(k1, 15.seconds)
-        overwrittenTtl <- cmd.key.ttl(k1)
+        overwrittenTtl <- cmd.key.pttl(k1)
         expireOnNonExistingKey <- cmd.key.expire(k2, 1002.seconds)
       } yield {
         //then
@@ -161,7 +161,7 @@ class KeyCommandsSuite
       //when
       for {
         r1 <- cmd.key.expire(k1, 99999.days)
-        ttl <- cmd.key.ttl(k1)
+        ttl <- cmd.key.pttl(k1)
       } yield {
         //then
         r1 shouldBe true
@@ -170,7 +170,7 @@ class KeyCommandsSuite
     }.runSyncUnsafe()
   }
 
-  "ttl" should "be propagated if key gets renamed" in {
+  "pttl" should "be propagated if key gets renamed" in {
     //given
     val key1: K = genRedisKey.sample.get
     val key2: K = genRedisKey.sample.get
@@ -180,10 +180,10 @@ class KeyCommandsSuite
     //when
     utfConnection.use { case RedisCmd(_, keys, _, _, _, _, _) =>
       for {
-        ttlEmptyKey <- keys.ttl("non-existing-key")
-        initialTtl <- keys.ttl(key1)
+        ttlEmptyKey <- keys.pttl("non-existing-key")
+        initialTtl <- keys.pttl(key1)
         expire <- keys.expire(key1, 2.seconds)
-        finalTtl <- keys.ttl(key1)
+        finalTtl <- keys.pttl(key1)
         existsWithinTtl <- keys.exists(key1)
         _ <- keys.rename(key1, key2) // the ttl should be preserved on the new key
         existsRenamed <- keys.exists(key2)

@@ -130,7 +130,7 @@ class SetCommandsSuite
     }.runSyncUnsafe()
   }
 
-  "sInterStore" should "sInterStore" in {
+  "sInterStore" should "intersect multiple sets and store the resulting set in a key" in {
     //given
     val k1: K = genRedisKey.sample.get
     val k2: K = genRedisKey.sample.get

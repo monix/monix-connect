@@ -17,11 +17,9 @@
 
 package monix.connect.benchmarks.redis
 
-import monix.connect.redis.RedisHash
-import org.scalatest.flatspec.AnyFlatSpec
+import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
-import scala.concurrent.Await
-import scala.concurrent.duration._
+import org.scalatest.flatspec.AnyFlatSpec
 
 class RedisTest extends AnyFlatSpec with RedisBenchFixture {
 
@@ -30,12 +28,13 @@ class RedisTest extends AnyFlatSpec with RedisBenchFixture {
     val keys = (0 to maxKey).toList.map(_.toString)
     val keysCycle = scala.Stream.continually(keys).flatten.iterator
 
-    (1 to maxKey).foreach { key =>
-      val value = key.toString
-      val field = key.toString
-      val f = RedisHash.hset(key.toString, field, value).runToFuture
-      Await.ready(f, 1.seconds)
-    }
+    Task.parSequence {
+      (1 to maxKey).map { key =>
+        val value = key.toString
+        val field = key.toString
+        monixRedis.use(_.hash.hSet(key.toString, field, value))
+      }
+    }.runSyncUnsafe()
   }
 
 }

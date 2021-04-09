@@ -64,7 +64,4 @@ class AlpakkaS3Test extends AnyFlatSpec with Matchers with S3MonixFixture {
     Await.result(f, Duration.Inf)
   }
 
-  it should "be reached from monix" in {
-    println("Buckets: " + S3.create().use(_.listBuckets().toListL).runSyncUnsafe())
-  }
 }

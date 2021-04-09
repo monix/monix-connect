@@ -566,6 +566,35 @@ class SortedSetCommandsSuite
     }.runSyncUnsafe()
   }
 
+  "zRange" should "return all the elements in the specified range with scores" in {
+    //given
+    val k1 = genRedisKey.sample.get
+    val vScoreA = VScore("A", 2)
+    val vScoreB = VScore("B", 3)
+    val vScoreC = VScore("C", 4)
+    val vScoreD = VScore("D", 5)
+    val vScore1 = VScore("1", 1)
+    val vScore2 = VScore("2", 2)
+    val vScore3 = VScore("3", 4)
+
+    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+      for {
+        //when
+        _ <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScoreC, vScoreD, vScore1, vScore2, vScore3)
+        range01 <- sortedSet.zRange(k1, 0, 1).toListL
+        range24 <- sortedSet.zRange(k1, 2, 4).toListL
+        range37 <- sortedSet.zRange(k1, 3, 7).toListL
+        outOfRange <- sortedSet.zRange(k1, 10, 11).toListL
+      } yield {
+        //then
+        range01 should contain theSameElementsAs List("1", "2")
+        range24 should contain theSameElementsAs List("A", "B", "3")
+        range37 should contain theSameElementsAs List("B", "3", "C", "D")
+        outOfRange shouldBe List()
+      }
+    }.runSyncUnsafe()
+  }
+
   "zRangeByLex" should "return all the elements in the specified range with scores" in {
     //given
     val k1 = genRedisKey.sample.get
