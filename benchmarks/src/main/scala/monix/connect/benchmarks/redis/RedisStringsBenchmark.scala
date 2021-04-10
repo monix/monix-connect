@@ -65,13 +65,13 @@ class RedisStringsBenchmark extends RedisBenchFixture {
     Await.ready(f, 2.seconds)
   }
 
-  @Benchmark
-  def monixAppend(): Unit = {
-    val key = keysCycle.next
-    val value = key
-    val f = monixRedis.use(_.string.append(key, value)).runToFuture
-    Await.ready(f, 2.seconds)
-  }
+  //@Benchmark
+  //def monixAppend(): Unit = {
+  //  val key = keysCycle.next
+  //  val value = key
+  //  val f = monixRedis.use(_.string.append(key, value)).runToFuture
+  //  Await.ready(f, 2.seconds)
+  //}
 
   @Benchmark
   def monixGet(): Unit = {
@@ -89,15 +89,15 @@ class RedisStringsBenchmark extends RedisBenchFixture {
     Await.ready(f, 2.seconds)
   }
 
-  @Benchmark
-  def laserdiscAppend(): Unit = {
-    val key = keysCycle.next
-    val value = key
-    val f = laserdConn
-      .use(c => c.send(cmd.append[String](Key.unsafeFrom(key), value)))
-      .unsafeToFuture
-    Await.ready(f, 2.seconds)
-  }
+  //@Benchmark
+  //def laserdiscAppend(): Unit = {
+  //  val key = keysCycle.next
+  //  val value = key
+  //  val f = laserdConn
+  //    .use(c => c.send(cmd.append[String](Key.unsafeFrom(key), value)))
+  //    .unsafeToFuture
+  //  Await.ready(f, 2.seconds)
+  //}
 
   @Benchmark
   def laserdiscGet(): Unit = {
@@ -117,15 +117,15 @@ class RedisStringsBenchmark extends RedisBenchFixture {
     Await.ready(f, 2.seconds)
   }
 
-  @Benchmark
-  def redicolousAppend(): Unit = {
-    val key = keysCycle.next
-    val value = key
-    val f = redicolousConn
-      .use(c => RedisCommands.append[RedisIO](key, value).run(c))
-      .unsafeToFuture
-    Await.ready(f, 1.seconds)
-  }
+  //@Benchmark
+  //def redicolousAppend(): Unit = {
+  //  val key = keysCycle.next
+  //  val value = key
+  //  val f = redicolousConn
+  //    .use(c => RedisCommands.append[RedisIO](key, value).run(c))
+  //    .unsafeToFuture
+  //  Await.ready(f, 1.seconds)
+  //}
 
   @Benchmark
   def redicolousGet(): Unit = {
@@ -143,13 +143,13 @@ class RedisStringsBenchmark extends RedisBenchFixture {
     Await.ready(f, 2.seconds)
   }
 
-  @Benchmark
-  def redis4catsAppend(): Unit = {
-    val key = keysCycle.next
-    val value = key
-    val f = redis4catsConn.use(c => c.append(key, value)).unsafeToFuture
-    Await.ready(f, 2.seconds)
-  }
+  //@Benchmark
+  //def redis4catsAppend(): Unit = {
+  //  val key = keysCycle.next
+  //  val value = key
+  //  val f = redis4catsConn.use(c => c.append(key, value)).unsafeToFuture
+  //  Await.ready(f, 2.seconds)
+  //}
 
   @Benchmark
   def redis4catsGet(): Unit = {

@@ -51,7 +51,7 @@ trait RedisBenchFixture {
 
   val laserdConn = fs2.RedisClient.to(Host.unsafeFrom(RedisHost), Port.unsafeFrom(RedisPort))
 
-  val maxKey: Int = 5000
+  val maxKey: Int = 1100
 
   def flushdb = monixRedis.use(_.server.flushAll).runSyncUnsafe()
 }

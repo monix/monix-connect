@@ -37,7 +37,7 @@ import scala.concurrent.duration.DurationInt
 class RedisSortedSetsBenchmark extends RedisBenchFixture {
 
   val lowerBoundary = 0
-  val upperBoundary = 1000
+  val upperBoundary = 500
   var keysCycle: Iterator[String] = _
 
   @Setup
@@ -53,7 +53,7 @@ class RedisSortedSetsBenchmark extends RedisBenchFixture {
           (1 to maxKey).map { key =>
             val value = key.toString
             val scoredValue: VScore[String] = VScore(Option(value), key.toDouble)
-            monixRedis.use(_.sortedSet.zAdd(key.toString, scoredValue))
+            cmd.sortedSet.zAdd(key.toString, scoredValue)
           }
         })
       .runSyncUnsafe()
@@ -79,11 +79,6 @@ class RedisSortedSetsBenchmark extends RedisBenchFixture {
   }
 
   @Benchmark
-  def monixZCount(): Unit = {
-    monixRedis.use(_.sortedSet.zCount(keysCycle.next, MonixZrange(lowerBoundary, upperBoundary))).runSyncUnsafe()
-  }
-
-  @Benchmark
   def monixSortedZRangeByScore(): Unit = {
     val f = monixRedis
       .use(_.sortedSet.zRangeByScore(keysCycle.next, MonixZrange(lowerBoundary, upperBoundary)).lastOptionL)
@@ -94,11 +89,11 @@ class RedisSortedSetsBenchmark extends RedisBenchFixture {
   @Benchmark
   def laserdiscZAdd(): Unit = {
     val key = keysCycle.next
-    val value = key.toString
+    val value = key
     val scoredMembers: OneOrMore[(String, ValidDouble)] =
       OneOrMore.unsafeFrom[(String, ValidDouble)](List((value, ValidDouble.unsafeFrom(key.toDouble))))
     val f = laserdConn
-      .use(c => c.send(cmd.zadd(Key.unsafeFrom(key.toString), scoredMembers)))
+      .use(c => c.send(cmd.zadd(Key.unsafeFrom(key), scoredMembers)))
       .unsafeToFuture
     Await.ready(f, 2.seconds)
   }
@@ -107,15 +102,6 @@ class RedisSortedSetsBenchmark extends RedisBenchFixture {
   def laserdiscZCard(): Unit = {
     val f = laserdConn
       .use(c => c.send(cmd.zcard(Key.unsafeFrom(keysCycle.next))))
-      .unsafeToFuture
-    Await.ready(f, 2.seconds)
-  }
-
-  @Benchmark
-  def laserdiscZCount(): Unit = {
-    val range = ScoreRange.open(ValidDouble.unsafeFrom(lowerBoundary), ValidDouble.unsafeFrom(upperBoundary))
-    val f = laserdConn
-      .use(c => c.send(cmd.zcount(Key.unsafeFrom(keysCycle.next), range)))
       .unsafeToFuture
     Await.ready(f, 2.seconds)
   }
@@ -135,7 +121,7 @@ class RedisSortedSetsBenchmark extends RedisBenchFixture {
   @Benchmark
   def redicolousZAdd(): Unit = {
     val key = keysCycle.next
-    val value = key.toString
+    val value = key
     val f = redicolousConn
       .use(c => RedisCommands.zadd[RedisIO](key, List((key.toDouble, value))).run(c))
       .unsafeToFuture
@@ -151,14 +137,6 @@ class RedisSortedSetsBenchmark extends RedisBenchFixture {
   }
 
   @Benchmark
-  def redicolousZCount(): Unit = {
-    val f = redicolousConn
-      .use(c => RedisCommands.zcount[RedisIO](keysCycle.next, lowerBoundary, upperBoundary).run(c))
-      .unsafeToFuture
-    Await.ready(f, 2.seconds)
-  }
-
-  @Benchmark
   def redicolousZRangeByScore(): Unit = {
     val f = redicolousConn
       .use(c => RedisCommands.zrangebyscore[RedisIO](keysCycle.next, lowerBoundary, upperBoundary).run(c))
@@ -169,7 +147,7 @@ class RedisSortedSetsBenchmark extends RedisBenchFixture {
   @Benchmark
   def redis4catsZAdd(): Unit = {
     val key = keysCycle.next
-    val value = key.toString
+    val value = key
     val scoredValue: ScoreWithValue[String] = ScoreWithValue(Score(key.toDouble), value)
     val f = redis4catsConn.use(c => c.zAdd(key, args = None, scoredValue)).unsafeToFuture
     Await.ready(f, 2.seconds)
@@ -178,14 +156,6 @@ class RedisSortedSetsBenchmark extends RedisBenchFixture {
   @Benchmark
   def redis4catsZCard(): Unit = {
     val f = redis4catsConn.use(c => c.zCard(keysCycle.next)).unsafeToFuture
-    Await.ready(f, 2.seconds)
-  }
-
-  @Benchmark
-  def redis4catsZLexCount(): Unit = {
-    val f = redis4catsConn
-      .use(c => c.zLexCount(keysCycle.next, ZRange(lowerBoundary.toString, upperBoundary.toString)))
-      .unsafeToFuture
     Await.ready(f, 2.seconds)
   }
 

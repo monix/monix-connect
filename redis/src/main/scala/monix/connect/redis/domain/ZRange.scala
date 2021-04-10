@@ -31,7 +31,19 @@ object ZRange {
   def apply[T](lower: T, upper: T): ZRange[T] =
     new ZRange(R.from(R.Boundary.including(lower), R.Boundary.including(upper)))
 
-  def closed[T](lower: T, upper: T): ZRange[T] = new ZRange(R.create(lower, upper))
+  /*
+   * Alias for apply method, which includes the upper and lower limits (closed).
+   */
+  def including[T](lower: T, upper: T): ZRange[T] = new ZRange(R.create(lower, upper))
+
+  def excludingUpper[T](lower: T, upper: T) =
+    new ZRange(R.from(R.Boundary.including(lower), R.Boundary.excluding(upper)))
+
+  def excludingLower[T](lower: T, upper: T) =
+    new ZRange(R.from(R.Boundary.excluding(lower), R.Boundary.including(upper)))
+
+  def excluding[T](lower: T, upper: T) =
+    new ZRange(R.from(R.Boundary.excluding(lower), R.Boundary.excluding(upper)))
 
   def unbounded[T](): ZRange[T] = new ZRange(R.unbounded())
 
