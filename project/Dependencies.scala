@@ -6,25 +6,26 @@ object Dependencies {
 
     //main
     val Monix = "3.3.0"
-    val AwsSdk = "2.15.61"
+    val AwsSdk = "2.15.67"
     val AkkaStreams = "2.6.9"
     val AWS = "1.11.749"
     val DynamoDb = "2.10.60"
     val GCS = "1.107.0"
     val Hadoop = "3.1.4"
     val MongoScala = "4.1.1"
-    val MongoReactiveStreams = "4.1.1"
+    val MongoReactiveStreams = "4.2.2"
     val S3 = "2.14.21"
     val Parquet = "1.11.1"
-    val Pureconfig = "0.14.0"
-    val Elastic4s = "7.10.2"
-    val ScalaCompat = "2.3.2"
+    val Lettuce = "6.0.2.RELEASE"
+    val Elastic4s = "7.11.1"
+    val Pureconfig = "0.14.1"
+    val ScalaCompat = "2.4.3"
 
     //test
-    val Scalatest = "3.2.3"
+    val Scalatest = "3.2.6"
     val Scalacheck = "1.14.0"
     val Mockito = "1.15.0"
-    val GCNio = "0.122.4"
+    val GCNio = "0.122.11"
   }
 
   private def commonDependencies(hasIt: Boolean = false): Seq[sbt.ModuleID] = {
@@ -80,12 +81,14 @@ object Dependencies {
   val S3 = Seq(
     "software.amazon.awssdk" % "s3" % Versions.AwsSdk,
     "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat,
-  "org.scalatestplus" %% "scalacheck-1-14" % "3.2.2.0" % Test
+    "org.scalatestplus" %% "scalacheck-1-14" % "3.1.4.0" % Test
   ) ++ commonDependencies(hasIt = true)
 
   val Redis = Seq(
-    "io.lettuce" % "lettuce-core" % "5.1.8.RELEASE",
-    "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat
+    "io.lettuce" % "lettuce-core" % Versions.Lettuce,
+    "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat,
+    "com.thesamet.scalapb"      %% "scalapb-runtime-grpc"  % scalapb.compiler.Version.scalapbVersion % IntegrationTest,
+    "com.thesamet.scalapb"      %% "scalapb-runtime"       % scalapb.compiler.Version.scalapbVersion % IntegrationTest
   ) ++ commonDependencies(hasIt = true)
 
   val GCS = Seq(

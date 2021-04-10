@@ -24,6 +24,7 @@ import io.lettuce.core.{KeyScanCursor, ScanCursor}
 import monix.eval.Task
 import monix.reactive.Observable
 
+@deprecated("use the pure `monix.connect.redis.client.RedisConnection`", "0.6.0")
 private[redis] trait RedisKey {
 
   /**
@@ -156,7 +157,7 @@ private[redis] trait RedisKey {
     * Return a random key from the keyspace.
     * @return The random key, or null when the database is empty.
     */
-  def randomkey[K, V]()(implicit connection: StatefulRedisConnection[K, V]): Task[V] =
+  def randomkey[K, V]()(implicit connection: StatefulRedisConnection[K, V]): Task[K] =
     Task.from(connection.reactive().randomkey())
 
   /**
@@ -223,4 +224,5 @@ private[redis] trait RedisKey {
 
 }
 
+@deprecated("use the pure `monix.connect.redis.client.RedisConnection`", "0.6.0")
 object RedisKey extends RedisKey

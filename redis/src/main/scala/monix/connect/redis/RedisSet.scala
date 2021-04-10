@@ -25,6 +25,7 @@ import monix.reactive.Observable
 /**
   * @see The reference to lettuce api [[io.lettuce.core.api.reactive.RedisSetReactiveCommands]]
   */
+@deprecated("use the pure `monix.connect.redis.client.RedisConnection`", "0.6.0")
 private[redis] trait RedisSet {
 
   /**
@@ -158,4 +159,5 @@ private[redis] trait RedisSet {
 
 }
 
+@deprecated("use the pure `monix.connect.redis.client.RedisConnection`", "0.6.0")
 object RedisSet extends RedisSet

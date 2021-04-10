@@ -17,11 +17,27 @@
 
 package monix.connect
 
+import io.lettuce.core.KeyValue
+import monix.connect.redis.client.{Codec, UtfCodec}
 import monix.eval.{Task, TaskLike}
 import reactor.core.publisher.Mono
 
+import scala.util.Try
+
 package object redis {
 
+  private[redis] def kvToTuple[K, V](kv: KeyValue[K, V]): (K, Option[V]) = {
+    (kv.getKey, Try(kv.getValue).toOption)
+  }
+
+  implicit val intUtfCodec: UtfCodec[Int] = Codec.utf(_.toString, str => Try(str.toInt).getOrElse(0))
+  implicit val doubleUtfCodec: UtfCodec[Double] = Codec.utf(_.toString, str => Try(str.toDouble).getOrElse(0.0))
+  implicit val floatUtfCodec: UtfCodec[Float] = Codec.utf(_.toString, str => Try(str.toFloat).getOrElse(0L))
+  implicit val bigIntUtfCodec: UtfCodec[BigInt] = Codec.utf(_.toString, str => Try(BigInt.apply(str)).getOrElse(0))
+  implicit val bigDecimalUtfCodec: UtfCodec[BigDecimal] =
+    Codec.utf(_.toString, str => Try(BigDecimal.apply(str)).getOrElse(0.0))
+
+  @deprecated("not correct error handling, use the pure `monix.connect.redis.client.RedisConnection`", "0.6.0")
   private[redis] implicit val fromMono: TaskLike[Mono] = new TaskLike[Mono] {
     def apply[A](m: Mono[A]): Task[A] =
       Task.fromReactivePublisher(m).flatMap { op =>

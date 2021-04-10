@@ -33,13 +33,14 @@ lazy val sharedSettings = Seq(
     "-language:experimental.macros"
   ),
   //warnUnusedImports
-  scalacOptions in (Compile, console) ++= Seq("-Ywarn-unused-import", "-deprecation"),
+  scalacOptions in (Compile, console) ++= Seq("-Ywarn-unused:imports"),
     // Linter
   scalacOptions ++= Seq(
     "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
     "-Ywarn-dead-code", // Warn when dead code is identified.
     // Turns all warnings into errors ;-)
-    "-Xfatal-warnings", //Turning of fatal warnings for the moment
+    //temporary disabled for mongodb warn, -YWarn (2.13) and Silencer (2.12) should fix it...
+    //"-Xfatal-warnings", //Turning of fatal warnings for the moment
     // Enables linter options
     "-Xlint:adapted-args", // warn if an argument list is modified to match the receiver
     "-Xlint:infer-any", // warn when a type argument is inferred to be `Any`
@@ -51,10 +52,10 @@ lazy val sharedSettings = Seq(
     "-Xlint:option-implicit", // Option.apply used implicit view
     "-Xlint:delayedinit-select", // Selecting member of DelayedInit
     //"-Xlint:package-object-classes" // Class or object defined in package object
-    "-Wconf:msg=While parsing annotations in:silent"
   ),
 
   // ScalaDoc settings
+  scalacOptions in (Compile, doc) ++= Seq("-no-link-warnings"),
   autoAPIMappings := true,
   scalacOptions in ThisBuild ++= Seq(
     // Note, this is used by the doc-source-url feature to determine the
@@ -107,10 +108,13 @@ lazy val sharedSettings = Seq(
 
 def mimaSettings(projectName: String) = Seq(
   mimaPreviousArtifacts := Set("io.monix" %% projectName % monixConnectSeries),
-  mimaBinaryIssueFilters ++= MimaFilters.changesFor_0_5_3
+  mimaBinaryIssueFilters ++= MimaFilters.allMimaFilters
 )
 
 mimaFailOnNoPrevious in ThisBuild := false
+
+//ignores scaladoc link warnings (which are
+scalacOptions in (Compile, doc) ++= Seq("-no-link-warnings")
 
 val IT = config("it") extend Test
 
@@ -122,7 +126,6 @@ lazy val monixConnect = (project in file("."))
   .aggregate(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, elasticsearch, awsAuth)
   .dependsOn(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, elasticsearch, awsAuth)
 
-
 lazy val akka = monixConnector("akka", Dependencies.Akka)
 
 lazy val dynamodb = monixConnector("dynamodb", Dependencies.DynamoDb).aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
@@ -133,7 +136,13 @@ lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb, isMimaEnabled
 
 lazy val parquet = monixConnector("parquet", Dependencies.Parquet)
 
-lazy val redis = monixConnector("redis", Dependencies.Redis)
+val protoTestSettings = Seq(
+    Compile / PB.targets := Seq(
+      scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
+    )
+      //Compile / PB.protoSources := Seq(new File("src/test/protobuf"))
+  )
+lazy val redis = monixConnector("redis", Dependencies.Redis).settings(protoTestSettings)
 
 lazy val s3 = monixConnector("s3", Dependencies.S3).aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
 
@@ -142,6 +151,7 @@ lazy val gcs = monixConnector("gcs", Dependencies.GCS)
 lazy val elasticsearch =  monixConnector("elasticsearch", Dependencies.Elasticsearch)
 
 //internal
+
 lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth, isMimaEnabled = false)
 
 def monixConnector(
