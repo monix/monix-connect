@@ -17,8 +17,6 @@
 
 package monix.connect.benchmarks.s3
 
-import java.io.FileInputStream
-
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.alpakka.s3.ObjectMetadata
@@ -31,11 +29,11 @@ import monix.reactive.Observable
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
 
-class AkkaTest extends AnyFlatSpec with Matchers with S3MonixFixture {
+class AlpakkaS3Test extends AnyFlatSpec with Matchers with S3MonixFixture {
 
   val bucket = "sample-bucket"
   val s3Key = "sample-key"
@@ -66,7 +64,4 @@ class AkkaTest extends AnyFlatSpec with Matchers with S3MonixFixture {
     Await.result(f, Duration.Inf)
   }
 
-  it should "be reached from monix" in {
-    println("Buckets: " + S3.create().use(_.listBuckets().toListL).runSyncUnsafe())
-  }
 }

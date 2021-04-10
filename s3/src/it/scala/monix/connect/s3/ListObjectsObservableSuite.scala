@@ -138,7 +138,6 @@ class ListObjectsObservableSuite
     s3Objects.size shouldBe limit
   }
 
-
   it must "require a positive max total keys" in {
     //given/when
     val tryNegativeListObjects =

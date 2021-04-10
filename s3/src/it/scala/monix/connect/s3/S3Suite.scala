@@ -366,73 +366,75 @@ class S3Suite
     count shouldBe n
   }
 
-  it should "return with latest" in {
+  it should "list the latest object" in {
     //given
-    val n = 1010
+    val n = 10
     val prefix = s"test-latest/${genKey.sample.get}"
     val keys: List[String] =
-      Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + genKey.sample.get + str)).sample.get
-    val contents: List[String] = List.fill(n)(genKey.sample.get)
-    Task
-      .traverse(keys.zip(contents)){ case (key, content) => S3.fromConfig.use(_.upload(bucketName, key, content.getBytes())) }
-      .runSyncUnsafe()
+      Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + str)).sample.get
 
-    //when
-    val latest = S3.fromConfig.use(s3 => s3.listLatestObject(bucketName, prefix = Some(prefix))).runSyncUnsafe()
-    val latestList = S3.fromConfig.use(s3 => s3.listObjects(bucketName, prefix = Some(prefix)).toListL).runSyncUnsafe() 
-    
-    //then
-    Some(latestList.sortBy(_.lastModified()).reverse.head) shouldBe latest
+    S3.fromConfig.use { s3 =>
+      for {
+        //when
+        _ <- Task.traverse(keys) { key => S3.fromConfig.use(_.upload(bucketName, key, "dummyContent".getBytes())) }
+        latest <- s3.listLatestObject(bucketName, prefix = Some(prefix))
+        latestFive <- s3.listLatestNObjects(bucketName, 5, prefix = Some(prefix)).toListL
+        all <- s3.listObjects(bucketName, prefix = Some(prefix)).toListL
+      } yield {
+        //then
+        all.map(_.key()) should contain theSameElementsAs keys
+        latest.map(_.key()) shouldBe keys.lastOption
+        latest shouldBe all.sortBy(_.lastModified()).reverse.headOption
+        latestFive should contain theSameElementsAs all.sortBy(_.lastModified()).reverse.take(5)
+      }
+    }.runSyncUnsafe()
   }
 
-  it should "return with oldest" in {
+    it should "list the oldest object" in {
     //given
-    val prefix = s"test-latest/"
- 
-    //when
-    val oldest = S3.fromConfig.use(s3 => s3.listOldestObject(bucketName, prefix = Some(prefix))).runSyncUnsafe()
-    val oldestList = S3.fromConfig.use(s3 => s3.listObjects(bucketName, prefix = Some(prefix)).toListL).runSyncUnsafe()
+    val n = 20
+    val prefix = s"test-oldest/${genKey.sample.get}"
+    val keys: List[String] =
+      Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + str)).sample.get
 
-    //then
-    Some(oldestList.sortBy(_.lastModified()).head) shouldBe oldest
+    //when
+    S3.fromConfig.use { s3 =>
+      for {
+        _ <- Task
+          .traverse(keys) { key => S3.fromConfig.use(_.upload(bucketName, key, "dummyContent".getBytes())) }
+        oldest <- s3.listOldestObject(bucketName, prefix = Some(prefix))
+        oldestFive <- s3.listOldestNObjects(bucketName, 5, prefix = Some(prefix)).toListL
+        all <- s3.listObjects(bucketName, prefix = Some(prefix)).toListL
+      } yield {
+        //then
+        all.map(_.key()) should contain theSameElementsAs keys
+        oldest.map(_.key()) shouldBe keys.headOption
+        oldest shouldBe all.sortBy(_.lastModified()).headOption
+        oldestFive should contain theSameElementsAs all.sortBy(_.lastModified()).take(5)
+      }
+    }.runSyncUnsafe()
   }
 
-  it should "return with latest five" in {
+  it should "return with less than requested for" in {
     //given
-    val prefix = s"test-latest/"
+    val prefix = s"test-less-than-requested/${genKey.sample.get}"
+    val keys: List[String] =
+      Gen.listOfN(10, Gen.alphaLowerStr.map(str => prefix + str)).sample.get
 
     //when
-    val latest = S3.fromConfig.use(s3 => s3.listLatestNObjects(bucketName, 5,prefix = Some(prefix)).toListL).runSyncUnsafe()
-    val latestList = S3.fromConfig.use(s3 => s3.listObjects(bucketName, prefix = Some(prefix)).toListL).runSyncUnsafe()
-
-    //then
-    latestList.sortBy(_.lastModified()).reverse.take(5) shouldBe latest
+    S3.fromConfig.use { s3 =>
+      for {
+        _ <- Task
+          .traverse(keys) { key => S3.fromConfig.use(_.upload(bucketName, key, "dummyContent".getBytes())) }
+        all <- s3.listObjects(bucketName, prefix = Some(prefix)).toListL
+        listNObjects <- s3.listOldestNObjects(bucketName, all.size + 10, prefix = Some(prefix)).toListL
+      } yield {
+        all.size shouldBe listNObjects.size
+      }
+    }.runSyncUnsafe()
   }
 
-  it should "return with oldest five" in {
-    //given
-    val prefix = s"test-latest/"
-
-    //when
-    val oldest = S3.fromConfig.use(s3 => s3.listOldestNObjects(bucketName, 5,prefix = Some(prefix)).toListL).runSyncUnsafe()
-    val oldestList = S3.fromConfig.use(s3 => s3.listObjects(bucketName, prefix = Some(prefix)).toListL).runSyncUnsafe()
-
-    //then
-    oldestList.sortBy(_.lastModified()).take(5) shouldBe oldest
-  }
-
-  it should "return with less than asked for" in {
-
-  val prefix = s"test-latest/"
-
-  val actual = S3.fromConfig.use(s3 => s3.listObjects(bucketName, prefix = Some(prefix)).toListL).runSyncUnsafe()
-  val wanted = S3.fromConfig.use(s3 => s3.listOldestNObjects(bucketName, actual.size + 10, prefix = Some(prefix)).toListL).runSyncUnsafe()
-
-  wanted.size shouldBe actual.size
-  
-  }
-
-  "A good real example" should "reuse the resource evaluation" in {
+  "A real usage" should "reuse the resource evaluation" in {
 
     val bucket = genBucketName.sample.get
     val key = "my-key"

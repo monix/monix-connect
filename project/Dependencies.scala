@@ -16,7 +16,8 @@ object Dependencies {
     val MongoReactiveStreams = "4.2.2"
     val S3 = "2.14.21"
     val Parquet = "1.11.1"
-    val Elastic4s = "7.12.0"
+    val Lettuce = "6.0.2.RELEASE"
+    val Elastic4s = "7.11.1"
     val Pureconfig = "0.14.1"
     val ScalaCompat = "2.4.3"
 
@@ -80,12 +81,14 @@ object Dependencies {
   val S3 = Seq(
     "software.amazon.awssdk" % "s3" % Versions.AwsSdk,
     "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat,
-  "org.scalatestplus" %% "scalacheck-1-14" % "3.1.4.0" % Test
+    "org.scalatestplus" %% "scalacheck-1-14" % "3.1.4.0" % Test
   ) ++ commonDependencies(hasIt = true)
 
   val Redis = Seq(
-    "io.lettuce" % "lettuce-core" % "5.1.8.RELEASE",
-    "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat
+    "io.lettuce" % "lettuce-core" % Versions.Lettuce,
+    "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat,
+    "com.thesamet.scalapb"      %% "scalapb-runtime-grpc"  % scalapb.compiler.Version.scalapbVersion % IntegrationTest,
+    "com.thesamet.scalapb"      %% "scalapb-runtime"       % scalapb.compiler.Version.scalapbVersion % IntegrationTest
   ) ++ commonDependencies(hasIt = true)
 
   val GCS = Seq(
