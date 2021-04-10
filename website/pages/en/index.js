@@ -155,10 +155,6 @@ const index = `
             {
             image: `${baseUrl}img/elasticsearch.png`,
             imageAlign: 'right'
-            },
-            {
-            image: `${baseUrl}img/akka.png`,
-            imageAlign: 'right'
             }
             ]}
           </Block>

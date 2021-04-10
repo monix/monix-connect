@@ -28,6 +28,7 @@ import org.reactivestreams.{Publisher, Subscriber}
 
 import scala.concurrent.{Future, Promise}
 
+@deprecated
 object Converters {
 
   implicit class ExtendedAkkaSink[-In, +R <: Future[_], +Out](sink: Sink[In, R]) {
