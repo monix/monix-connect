@@ -20,8 +20,7 @@ package monix.connect.benchmarks.redis
 import io.chrisdavenport.rediculous.RedisCommands
 import laserdisc.fs2._
 import laserdisc.{Key, OneOrMore, all => cmd}
-import monix.connect.redis.RedisSet
-import monix.execution.Scheduler.Implicits.global
+import monix.eval.Task
 import org.openjdk.jmh.annotations._
 
 import scala.concurrent.Await
@@ -43,11 +42,15 @@ class RedisSetsBenchmark extends RedisBenchFixture {
     val keys = (0 to maxKey).toList.map(_.toString)
     keysCycle = scala.Stream.continually(keys).flatten.iterator
 
-    (1 to maxKey).foreach { key =>
-      val values = (1 to 3).map(i => (key + i).toString)
-      val f = RedisSet.sadd(key.toString, values: _*).runToFuture
-      Await.ready(f, 1.seconds)
-    }
+    monixRedis
+      .use(cmd =>
+        Task.sequence {
+          (1 to maxKey).map { key =>
+            val values = (1 to 3).map(i => (key + i).toString)
+            cmd.set.sAdd(key.toString, values: _*)
+          }
+        })
+      .runSyncUnsafe()
   }
 
   @TearDown
@@ -56,36 +59,21 @@ class RedisSetsBenchmark extends RedisBenchFixture {
   }
 
   @Benchmark
-  def setWriter(): Unit = {
+  def monixSAdd(): Unit = {
     val key = keysCycle.next
-    val values = (1 to 3).map(i => (key + i).toString)
-    val f = RedisSet.sadd(key, values: _*).runToFuture
-    Await.ready(f, 1.seconds)
+    val values = (1 to 3).map(i => (key + i))
+    val f = monixRedis.use(_.set.sAdd(key, values: _*)).runToFuture
+    Await.ready(f, 2.seconds)
   }
 
   @Benchmark
-  def setDiffWriter(): Unit = {
-    val key1 = keysCycle.next
-    val key2 = keysCycle.next
-    val keyDest = keysCycle.next
-    val f = RedisSet.sinterstore(keyDest, key1, key2).runToFuture
-    Await.ready(f, 1.seconds)
+  def monixSMembers(): Unit = {
+    val f = monixRedis.use(_.set.sMembers(keysCycle.next).lastOptionL).runToFuture
+    Await.ready(f, 2.seconds)
   }
 
   @Benchmark
-  def setCardReader(): Unit = {
-    val f = RedisSet.scard(keysCycle.next).runToFuture
-    Await.ready(f, 1.seconds)
-  }
-
-  @Benchmark
-  def setMembersReader(): Unit = {
-    val f = RedisSet.smembers(keysCycle.next).toListL.runToFuture
-    Await.ready(f, 1.seconds)
-  }
-
-  @Benchmark
-  def laserdiscSetWriter(): Unit = {
+  def laserdiscSAdd(): Unit = {
     val key = keysCycle.next
     val values = (1 to 3).map(i => (key + i).toString).toList
     val preparedValues = OneOrMore.unsafeFrom[String](values)
@@ -94,28 +82,8 @@ class RedisSetsBenchmark extends RedisBenchFixture {
       .unsafeToFuture
     Await.ready(f, 1.seconds)
   }
-
   @Benchmark
-  def laserdiscSetDiffWriter(): Unit = {
-    val key1 = keysCycle.next
-    val key2 = keysCycle.next
-    val keyDest = keysCycle.next
-    val f = laserdConn
-      .use(c => c.send(cmd.sinterstore(Key.unsafeFrom(keyDest), Key.unsafeFrom(key1), Key.unsafeFrom(key2))))
-      .unsafeToFuture
-    Await.ready(f, 1.seconds)
-  }
-
-  @Benchmark
-  def laserdiscSetCardReader(): Unit = {
-    val f = laserdConn
-      .use(c => c.send(cmd.scard(Key.unsafeFrom(keysCycle.next))))
-      .unsafeToFuture
-    Await.ready(f, 1.seconds)
-  }
-
-  @Benchmark
-  def laserdiscSetMembersReader(): Unit = {
+  def laserdiscSMembers(): Unit = {
     val f = laserdConn
       .use(c => c.send(cmd.smembers(Key.unsafeFrom(keysCycle.next))))
       .unsafeToFuture
@@ -123,9 +91,9 @@ class RedisSetsBenchmark extends RedisBenchFixture {
   }
 
   @Benchmark
-  def redicolousSetWriter(): Unit = {
+  def redicolousSAdd(): Unit = {
     val key = keysCycle.next
-    val values = (1 to 3).map(i => (key + i).toString).toList
+    val values = (1 to 3).map(i => (key + i)).toList
     val f = redicolousConn
       .use(c => RedisCommands.sadd[RedisIO](key, values).run(c))
       .unsafeToFuture
@@ -133,26 +101,7 @@ class RedisSetsBenchmark extends RedisBenchFixture {
   }
 
   @Benchmark
-  def redicolousSetDiffWriter(): Unit = {
-    val key1 = keysCycle.next
-    val key2 = keysCycle.next
-    val keyDest = keysCycle.next
-    val f = redicolousConn
-      .use(c => RedisCommands.sinterstore[RedisIO](keyDest, List(key1, key2)).run(c))
-      .unsafeToFuture
-    Await.ready(f, 1.seconds)
-  }
-
-  @Benchmark
-  def redicolousSetCardReader(): Unit = {
-    val f = redicolousConn
-      .use(c => RedisCommands.scard[RedisIO](keysCycle.next).run(c))
-      .unsafeToFuture
-    Await.ready(f, 1.seconds)
-  }
-
-  @Benchmark
-  def redicolousSetMembersReader(): Unit = {
+  def redicolousSMembers(): Unit = {
     val f = redicolousConn
       .use(c => RedisCommands.smembers[RedisIO](keysCycle.next).run(c))
       .unsafeToFuture
@@ -160,30 +109,15 @@ class RedisSetsBenchmark extends RedisBenchFixture {
   }
 
   @Benchmark
-  def redis4catsSetWriter(): Unit = {
+  def redis4catsSAdd(): Unit = {
     val key = keysCycle.next
-    val values = (1 to 3).map(i => (key + i).toString)
+    val values = (1 to 3).map(i => (key + i))
     val f = redis4catsConn.use(c => c.sAdd(key, values: _*)).unsafeToFuture
     Await.ready(f, 1.seconds)
   }
 
   @Benchmark
-  def redis4catsSetDiffWriter(): Unit = {
-    val key1 = keysCycle.next
-    val key2 = keysCycle.next
-    val keyDest = keysCycle.next
-    val f = redis4catsConn.use(c => c.sInterStore(keyDest, key1, key2)).unsafeToFuture
-    Await.ready(f, 1.seconds)
-  }
-
-  @Benchmark
-  def redis4catsSetCardReader(): Unit = {
-    val f = redis4catsConn.use(c => c.sCard(keysCycle.next)).unsafeToFuture
-    Await.ready(f, 1.seconds)
-  }
-
-  @Benchmark
-  def redis4catsSetMembersReader(): Unit = {
+  def redis4catsSMembers(): Unit = {
     val f = redis4catsConn.use(c => c.sMembers(keysCycle.next)).unsafeToFuture
     Await.ready(f, 1.seconds)
   }

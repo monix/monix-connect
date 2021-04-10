@@ -24,6 +24,7 @@ import monix.reactive.Observable
 
 import scala.jdk.CollectionConverters._
 
+@deprecated("use the `monix.connect.redis.client.RedisConnection`", "0.6.0")
 private[redis] trait RedisHash {
 
   /**
@@ -76,8 +77,8 @@ private[redis] trait RedisHash {
     * @param key the key
     * @return Map of the fields and their values stored in the hash, or an empty list when key does not exist.
     */
-  def hgetall[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Task[Map[K, V]] =
-    Task.from(connection.reactive().hgetall(key)).map(_.asScala.toMap)
+  def hgetall[K, V](key: K)(implicit connection: StatefulRedisConnection[K, V]): Observable[KeyValue[K, V]] =
+    Observable.fromReactivePublisher(connection.reactive().hgetall(key))
 
   /**
     * Get all the fields in a hash.
@@ -152,4 +153,5 @@ private[redis] trait RedisHash {
     Observable.fromReactivePublisher(connection.reactive().hvals(key))
 }
 
+@deprecated("use the pure `monix.connect.redis.client.RedisConnection`", "0.6.0")
 object RedisHash extends RedisHash

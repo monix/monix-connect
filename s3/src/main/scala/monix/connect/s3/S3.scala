@@ -88,7 +88,8 @@ import scala.jdk.CollectionConverters._
   * }}}
   *
   */
-object S3 { self =>
+object S3 {
+  self =>
 
   /**
     * Creates a [[Resource]] that will use the values from a
@@ -100,7 +101,6 @@ object S3 { self =>
     *      https://github.com/monix/monix-connect/blob/master/aws-auth/src/main/resources/reference.conf`
     *
     * @see the cats effect resource data type: https://typelevel.org/cats-effect/datatypes/resource.html
-    *
     * @return a [[Resource]] of [[Task]] that allocates and releases [[S3]].
     */
   def fromConfig: Resource[Task, S3] = {
@@ -111,7 +111,9 @@ object S3 { self =>
       } yield {
         self.createUnsafe(asyncClient)
       }
-    } { _.close }
+    } {
+      _.close
+    }
   }
 
   /**
@@ -131,11 +133,11 @@ object S3 { self =>
     * }}}
     *
     * @param credentialsProvider strategy for loading credentials and authenticate to AWS S3
-    * @param region an Amazon Web Services region that hosts a set of Amazon services.
-    * @param endpoint the endpoint with which the SDK should communicate.
-    * @param httpClient sets the [[SdkAsyncHttpClient]] that the SDK service client will use to make HTTP calls.
+    * @param region              an Amazon Web Services region that hosts a set of Amazon services.
+    * @param endpoint            the endpoint with which the SDK should communicate.
+    * @param httpClient          sets the [[SdkAsyncHttpClient]] that the SDK service client will use to make HTTP calls.
     * @return a [[Resource]] of [[Task]] that allocates and releases [[S3]].
-    **/
+    */
   def create(
     credentialsProvider: AwsCredentialsProvider,
     region: Region,
@@ -146,7 +148,9 @@ object S3 { self =>
         val asyncClient = AsyncClientConversions.from(credentialsProvider, region, endpoint, httpClient)
         createUnsafe(asyncClient)
       }
-    } { _.close }
+    } {
+      _.close
+    }
   }
 
   /**
@@ -157,10 +161,6 @@ object S3 { self =>
     *
     * Unsafe because the state of the passed [[S3AsyncClient]] is not guaranteed,
     * it can either be malformed or closed, which would result in underlying failures.
-    *
-    * @see [[S3.fromConfig]] and [[S3.create]] for a pure usage of [[S3]].
-    * They both will make sure that the s3 connection is created with the required
-    * resources and guarantee that the client was not previously closed.
     *
     * ==Example==
     *
@@ -192,6 +192,10 @@ object S3 { self =>
     *
     *     val s3: S3 = S3.createUnsafe(s3AsyncClient)
     * }}}
+    *
+    * @see [[S3.fromConfig]] and [[S3.create]] for a pure usage of [[S3]].
+    *      They both will make sure that the s3 connection is created with the required
+    *      resources and guarantee that the client was not previously closed.
     *
     * @param s3AsyncClient an instance of a [[S3AsyncClient]].
     * @return An instance of [[S3]]
@@ -225,9 +229,9 @@ object S3 { self =>
     * }}}
     *
     * @param credentialsProvider Strategy for loading credentials and authenticate to AWS S3
-    * @param region An Amazon Web Services region that hosts a set of Amazon services.
-    * @param endpoint The endpoint with which the SDK should communicate.
-    * @param httpClient Sets the [[SdkAsyncHttpClient]] that the SDK service client will use to make HTTP calls.
+    * @param region              An Amazon Web Services region that hosts a set of Amazon services.
+    * @param endpoint            The endpoint with which the SDK should communicate.
+    * @param httpClient          Sets the [[SdkAsyncHttpClient]] that the SDK service client will use to make HTTP calls.
     * @return a [[Resource]] of [[Task]] that allocates and releases [[S3]].
     */
   @UnsafeBecauseImpure
@@ -418,7 +422,8 @@ object S3 { self =>
   * Represents the Monix S3 client which can
   * be created using the builders from its companion object.
   */
-trait S3 { self =>
+trait S3 {
+  self =>
 
   private[s3] val s3Client: S3AsyncClient
 
@@ -472,7 +477,7 @@ trait S3 { self =>
     * Creates a bucket given a [[CreateBucketRequest]].
     *
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/CreateBucketRequest.Builder.html
-    * @param request       an instance of [[CreateBucketRequest]]
+    * @param request an instance of [[CreateBucketRequest]]
     * @return a [[Task]] with the create bucket response [[CreateBucketResponse]] .
     */
   def createBucket(request: CreateBucketRequest): Task[CreateBucketResponse] = {
@@ -512,7 +517,7 @@ trait S3 { self =>
   /**
     * Creates a copy from an already stored object.
     *
-    * @param request       the [[CopyObjectRequest]].
+    * @param request the [[CopyObjectRequest]].
     * @return a [[Task]] containing the result of the CopyObject operation returned by the service.
     */
   def copyObject(request: CopyObjectRequest): Task[CopyObjectResponse] =
@@ -548,16 +553,16 @@ trait S3 { self =>
     *
     * @note Once deleted, the object can only be restored if versioning was enabled when the object was deleted.
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/DeleteObjectRequest.html
-    * @param bucket the bucket name of the object to be deleted.
-    * @param key    the key of the object to be deleted.
+    * @param bucket                    the bucket name of the object to be deleted.
+    * @param key                       the key of the object to be deleted.
     * @param bypassGovernanceRetention Indicates whether S3 Object Lock should bypass Governance-mode
     *                                  restrictions to process this operation.
-    * @param mfa    the concatenation of the authentication device's serial number, a space,
-    *               and the value that is displayed on your authentication device.
-    *               Required to permanently delete a versioned object if versioning is configured
-    *               with MFA delete enabled.
-    * @param requestPayer sets the value of the RequestPayer property for this object.
-    * @param versionId  versionId used to reference a specific version of the object.
+    * @param mfa                       the concatenation of the authentication device's serial number, a space,
+    *                                  and the value that is displayed on your authentication device.
+    *                                  Required to permanently delete a versioned object if versioning is configured
+    *                                  with MFA delete enabled.
+    * @param requestPayer              sets the value of the RequestPayer property for this object.
+    * @param versionId                 versionId used to reference a specific version of the object.
     * @return a [[Task]] with the delete object response [[DeleteObjectResponse]] .
     */
   def deleteObject(
@@ -577,7 +582,7 @@ trait S3 { self =>
     * Once deleted, the object can only be restored if versioning was enabled when the object was deleted.
     *
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/DeleteObjectRequest.html
-    * @param request       the AWS delete object request of type [[DeleteObjectRequest]]
+    * @param request the AWS delete object request of type [[DeleteObjectRequest]]
     * @return a [[Task]] with the delete object response [[DeleteObjectResponse]] .
     */
   def deleteObject(request: DeleteObjectRequest): Task[DeleteObjectResponse] =
@@ -586,7 +591,7 @@ trait S3 { self =>
   /**
     * Check whether the specified bucket exists or not.
     *
-    * @param bucket        the bucket name to check its existence
+    * @param bucket the bucket name to check its existence
     * @return a boolean [[Task]] indicating whether the bucket exists or not.
     */
   def existsBucket(bucket: String): Task[Boolean] =
@@ -607,8 +612,8 @@ trait S3 { self =>
     *   val t: Task[Boolean] = S3.fromConfig.use(_.existsObject(bucket, s3Key))
     * }}}
     *
-    * @param bucket        the bucket name of the object to check its existence.
-    * @param key           the key of the object to be deleted.
+    * @param bucket the bucket name of the object to check its existence.
+    * @param key    the key of the object to be deleted.
     * @return a boolean [[Task]] indicating whether the object existed or not.
     */
   def existsObject(bucket: String, key: String): Task[Boolean] = {
@@ -653,7 +658,7 @@ trait S3 { self =>
     *   val t: Task[Array[Byte]] = s3Resource.use(_.download(bucket, key, firstNBytes = Some(100)))
     * }}}
     *
-    *  ==Unsafe Example==
+    * ==Unsafe Example==
     *
     * {{{
     *   import monix.eval.Task
@@ -672,7 +677,6 @@ trait S3 { self =>
     *   // only downloads the first 100 bytes of the object
     *   val arr: Task[Array[Byte]] = s3.download(bucket, key, firstNBytes = Some(100))
     * }}}
-    *
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/mediastoredata/model/GetObjectRequest.html
     * @param bucket           target S3 bucket name of the object to be downloaded.
     * @param key              key of the object to be downloaded.
@@ -699,7 +703,7 @@ trait S3 { self =>
     * Downloads an object as byte array.
     *
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/GetObjectRequest.html
-    * @param request     the AWS get object request of type [[GetObjectRequest]].
+    * @param request the AWS get object request of type [[GetObjectRequest]].
     * @return A [[Task]] that contains the downloaded object as a byte array.
     */
   @Unsafe("OOM risk, use `downloadMultipart` for big downloads.")
@@ -1110,8 +1114,8 @@ trait S3 { self =>
     * Uploads a new object to the specified Amazon S3 bucket.
     *
     * @see https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/s3/model/PutObjectRequest.html
-    * @param request       instance of [[PutObjectRequest]]
-    * @param content       content to be uploaded
+    * @param request instance of [[PutObjectRequest]]
+    * @param content content to be uploaded
     * @return the response from the http put object request as [[PutObjectResponse]].
     */
   def upload(request: PutObjectRequest, content: Array[Byte]): Task[PutObjectResponse] =
@@ -1155,9 +1159,9 @@ trait S3 { self =>
     *   val response = Observable.pure(content).consumeWith(s3.uploadMultipart(bucket, key))
     * }}}
     *
-    * @param bucket        the bucket name where the object will be stored
-    * @param key           the key where the object will be stored.
-    * @param minChunkSize  size of the chunks (parts) that will be sent in the http body. (the minimum size is set by default, don't use a lower one)
+    * @param bucket       the bucket name where the object will be stored
+    * @param key          the key where the object will be stored.
+    * @param minChunkSize size of the chunks (parts) that will be sent in the http body. (the minimum size is set by default, don't use a lower one)
     * @return the confirmation of the multipart whole upload as [[CompleteMultipartUploadResponse]].
     */
   def uploadMultipart(

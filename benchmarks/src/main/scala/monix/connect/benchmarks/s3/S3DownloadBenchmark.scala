@@ -18,7 +18,6 @@
 package monix.connect.benchmarks.s3
 
 import java.io.FileInputStream
-
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.alpakka.s3.ObjectMetadata
@@ -42,6 +41,7 @@ import akka.stream.alpakka.s3.scaladsl.{S3 => AkkaS3}
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import akka.util.ByteString
 import monix.connect.s3.S3
+import org.scalacheck.Gen
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -63,7 +63,7 @@ class S3DownloadBenchmark extends S3MonixFixture {
 
   @Setup
   def setup(): Unit = {
-    key = nonEmptyString.value()
+    key = Gen.identifier.sample.get
     createBucket(bucketName)
     val inputStream = Task(new FileInputStream("./src/main/resources/test.csv"))
     val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)

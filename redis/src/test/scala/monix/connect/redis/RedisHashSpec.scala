@@ -106,18 +106,6 @@ class RedisHashSpec
     verify(reactiveRedisCommands).hincrbyfloat(k, field, v)
   }
 
-  it should "implement hgetall operation" in {
-    //given
-    val k: String = genRedisKey.sample.get
-    when(reactiveRedisCommands.hgetall(k)).thenReturn(mockMono[java.util.Map[String, Int]])
-
-    //when
-    val _: Task[Map[String, V]] = RedisHash.hgetall(k)
-
-    //then
-    verify(reactiveRedisCommands).hgetall(k)
-  }
-
   it should "implement hkeys operation" in {
     //given
     val k: String = genRedisKey.sample.get
