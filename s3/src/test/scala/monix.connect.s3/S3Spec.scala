@@ -44,7 +44,7 @@ import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient
 
-class S3Spec
+class nS3Spec
   extends AnyFlatSpec with BeforeAndAfterEach with Matchers with BeforeAndAfterAll with ScalaCheckDrivenPropertyChecks
   with S3RequestGenerators {
 

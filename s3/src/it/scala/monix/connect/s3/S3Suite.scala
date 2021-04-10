@@ -366,7 +366,75 @@ class S3Suite
     count shouldBe n
   }
 
-  "A good real example" should "reuse the resource evaluation" in {
+  it should "list the latest object" in {
+    //given
+    val n = 10
+    val prefix = s"test-latest/${genKey.sample.get}"
+    val keys: List[String] =
+      Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + str)).sample.get
+
+    S3.fromConfig.use { s3 =>
+      for {
+        //when
+        _ <- Task.traverse(keys) { key => S3.fromConfig.use(_.upload(bucketName, key, "dummyContent".getBytes())) }
+        latest <- s3.listLatestObject(bucketName, prefix = Some(prefix))
+        latestFive <- s3.listLatestNObjects(bucketName, 5, prefix = Some(prefix)).toListL
+        all <- s3.listObjects(bucketName, prefix = Some(prefix)).toListL
+      } yield {
+        //then
+        all.map(_.key()) should contain theSameElementsAs keys
+        latest.map(_.key()) shouldBe keys.lastOption
+        latest shouldBe all.sortBy(_.lastModified()).reverse.headOption
+        latestFive should contain theSameElementsAs all.sortBy(_.lastModified()).reverse.take(5)
+      }
+    }.runSyncUnsafe()
+  }
+
+    it should "list the oldest object" in {
+    //given
+    val n = 20
+    val prefix = s"test-oldest/${genKey.sample.get}"
+    val keys: List[String] =
+      Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + str)).sample.get
+
+    //when
+    S3.fromConfig.use { s3 =>
+      for {
+        _ <- Task
+          .traverse(keys) { key => S3.fromConfig.use(_.upload(bucketName, key, "dummyContent".getBytes())) }
+        oldest <- s3.listOldestObject(bucketName, prefix = Some(prefix))
+        oldestFive <- s3.listOldestNObjects(bucketName, 5, prefix = Some(prefix)).toListL
+        all <- s3.listObjects(bucketName, prefix = Some(prefix)).toListL
+      } yield {
+        //then
+        all.map(_.key()) should contain theSameElementsAs keys
+        oldest.map(_.key()) shouldBe keys.headOption
+        oldest shouldBe all.sortBy(_.lastModified()).headOption
+        oldestFive should contain theSameElementsAs all.sortBy(_.lastModified()).take(5)
+      }
+    }.runSyncUnsafe()
+  }
+
+  it should "return with less than requested for" in {
+    //given
+    val prefix = s"test-less-than-requested/${genKey.sample.get}"
+    val keys: List[String] =
+      Gen.listOfN(10, Gen.alphaLowerStr.map(str => prefix + str)).sample.get
+
+    //when
+    S3.fromConfig.use { s3 =>
+      for {
+        _ <- Task
+          .traverse(keys) { key => S3.fromConfig.use(_.upload(bucketName, key, "dummyContent".getBytes())) }
+        all <- s3.listObjects(bucketName, prefix = Some(prefix)).toListL
+        listNObjects <- s3.listOldestNObjects(bucketName, all.size + 10, prefix = Some(prefix)).toListL
+      } yield {
+        all.size shouldBe listNObjects.size
+      }
+    }.runSyncUnsafe()
+  }
+
+  "A real usage" should "reuse the resource evaluation" in {
 
     val bucket = genBucketName.sample.get
     val key = "my-key"
@@ -389,4 +457,6 @@ class S3Suite
     val result = Await.result(f, 3.seconds)
     result shouldBe content.getBytes
   }
+
+
 }

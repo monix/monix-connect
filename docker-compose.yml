@@ -40,6 +40,20 @@ services:
     ports:
       - 6379:6379
 
+  redisCluster:
+    restart: always
+    image: grokzen/redis-cluster:6.0.5
+    ports:
+      - "7000:7000"
+      - "7001:7001"
+      - "7002:7002"
+      - "7003:7003"
+      - "7004:7004"
+      - "7005:7005"
+    environment:
+      - STANDALONE=true
+      - IP=0.0.0.0
+
   elasticsearch:
     image: elasticsearch:7.10.1
     environment:

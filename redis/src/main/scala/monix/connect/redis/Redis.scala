@@ -21,6 +21,7 @@ package monix.connect.redis
   * An object that provides an aggregation of all the different Redis Apis.
   * They can be equally accessed independently or from this object.
   */
+@deprecated("use the pure `monix.connect.redis.client.RedisConnection`", "0.6.0")
 object Redis
   extends RedisKey with RedisHash with RedisList with RedisPubSub with RedisSet with RedisSortedSet with RedisStream
   with RedisString with RedisServer

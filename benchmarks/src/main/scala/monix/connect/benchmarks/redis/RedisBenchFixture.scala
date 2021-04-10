@@ -22,17 +22,15 @@ import dev.profunktor._
 import dev.profunktor.redis4cats.effect.Log.NoOp._
 import fs2.io.tcp.SocketGroup
 import io.chrisdavenport.rediculous.{Redis, RedisConnection}
-import io.lettuce.core.RedisClient
-import io.lettuce.core.api.StatefulRedisConnection
 import laserdisc._
-import monix.connect.redis
-import monix.execution.Scheduler.Implicits.global
+import monix.connect.redis.client.RedisUri
 
 import scala.concurrent.ExecutionContext
 
 trait RedisBenchFixture {
   type RedisIO[A] = Redis[IO, A]
 
+  implicit val io = monix.execution.Scheduler.io("monix-redis-io")
   final val RedisHost = "localhost"
   final val RedisPort = 6379
   final val redisUrl = s"redis://$RedisHost:$RedisPort"
@@ -40,7 +38,7 @@ trait RedisBenchFixture {
   implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
   implicit val timer: Timer[IO] = IO.timer(ExecutionContext.global)
 
-  implicit val connection: StatefulRedisConnection[String, String] = RedisClient.create(redisUrl).connect()
+  val monixRedis = monix.connect.redis.client.RedisConnection.standalone(RedisUri(redisUrl)).connectUtf
 
   val redis4catsConn = redis4cats.Redis[IO].utf8(redisUrl)
 
@@ -53,7 +51,7 @@ trait RedisBenchFixture {
 
   val laserdConn = fs2.RedisClient.to(Host.unsafeFrom(RedisHost), Port.unsafeFrom(RedisPort))
 
-  val maxKey: Int = 5000
+  val maxKey: Int = 1100
 
-  def flushdb = redis.Redis.flushdbAsync().runSyncUnsafe()
+  def flushdb = monixRedis.use(_.server.flushAll).runSyncUnsafe()
 }
