@@ -187,14 +187,14 @@ class KeyCommandsSuite
         existsWithinTtl <- keys.exists(key1)
         _ <- keys.rename(key1, key2) // the ttl should be preserved on the new key
         existsRenamed <- keys.exists(key2)
-        _ <- Task.sleep(3.seconds)
+        _ <- Task.sleep(4.seconds)
         existsAfterFiveSeconds <- keys.exists(key2) //the new key will gone after the ttl.
       } yield {
         //then
         ttlEmptyKey.toMillis shouldBe -2L
         (initialTtl.toMillis < 0L) shouldBe true
         expire shouldBe true
-        (2.seconds.toMillis > finalTtl.toMillis) shouldBe true
+        (2.seconds.toMillis >= finalTtl.toMillis) shouldBe true
         (finalTtl.toMillis > 0L) shouldBe true
         existsWithinTtl shouldBe true
         existsRenamed shouldBe true
