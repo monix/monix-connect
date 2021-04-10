@@ -266,10 +266,10 @@ class RedisKeySpec
 
   it should "implement randomkey operation" in {
     //given
-    when(reactiveRedisCommands.randomkey()).thenReturn(mockMono[Int])
+    when(reactiveRedisCommands.randomkey()).thenReturn(mockMono[String])
 
     //when
-    val _: Task[V] = RedisKey.randomkey()
+    RedisKey.randomkey()
 
     //then
     verify(reactiveRedisCommands).randomkey()
