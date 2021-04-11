@@ -17,6 +17,7 @@
 
 package monix.connect.redis.commands
 
+import io.lettuce.core.FlushMode
 import io.lettuce.core.api.reactive.RedisServerReactiveCommands
 import monix.eval.Task
 
@@ -96,7 +97,7 @@ final class ServerCommands[K, V] private[redis] (reactiveCmd: RedisServerReactiv
     * @return Simple string reply
     */
   def flushAll: Task[Unit] =
-    Task.fromReactivePublisher(reactiveCmd.flushallAsync()).void
+    Task.fromReactivePublisher(reactiveCmd.flushall(FlushMode.ASYNC)).void
 
   /**
     * Remove all keys from the current database.
@@ -105,7 +106,7 @@ final class ServerCommands[K, V] private[redis] (reactiveCmd: RedisServerReactiv
     * @return Single string reply
     */
   def flushDb: Task[Unit] =
-    Task.fromReactivePublisher(reactiveCmd.flushdbAsync()).void
+    Task.fromReactivePublisher(reactiveCmd.flushdb(FlushMode.ASYNC)).void
 
   /**
     * Get information and statistics about the server as a collection of text lines.

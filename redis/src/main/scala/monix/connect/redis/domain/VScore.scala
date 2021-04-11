@@ -31,7 +31,7 @@ case class VScore[V] private[redis] (val value: Option[V], val score: Double) {
 
   private[redis] def toScoredValue: ScoredValue[V] = {
     val optional: Optional[V] = value.map(a => Optional.of(a)).getOrElse(Optional.empty())
-    ScoredValue.from(score, optional)
+    ScoredValue.from(score, optional).asInstanceOf[ScoredValue[V]]
   }
 }
 
