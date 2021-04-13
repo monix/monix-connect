@@ -15,33 +15,26 @@
  * limitations under the License.
  */
 
-package monix.connect.mongodb
+package monix.connect.mongodb.client
 
 import cats.effect.Resource
 import com.mongodb.MongoClientSettings
-import monix.connect.mongodb.domain.{
-  MongoCollection,
-  MongoConnector,
-  Tuple2F,
-  Tuple3F,
-  Tuple4F,
-  Tuple5F,
-  Tuple6F,
-  Tuple7F,
-  Tuple8F
-}
-import monix.eval.Task
 import com.mongodb.reactivestreams.client.{MongoClient, MongoClients, MongoDatabase}
+import monix.connect.mongodb
+import monix.connect.mongodb.domain._
+import monix.connect.mongodb.{MongoDb, MongoSingle, MongoSink, MongoSource}
+import monix.eval.Task
 import monix.execution.annotations.UnsafeBecauseImpure
 import monix.reactive.Observable
-import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
+import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
+import org.mongodb.scala.ConnectionString
 import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
 
 /**
   * Singleton object that exposes signatures to create a connection to the desired
   * specified mongo collections, the abstraction to operate with collections is
-  * returned in form of [[MongoConnector]], which is based of three different
+  * returned in form of [[CollectionOperator]], which is based of three different
   * components, the db, source, single and sink.
   *
   * The aim is to provide a idiomatic interface for different operations that
@@ -55,25 +48,25 @@ object MongoConnection {
   private[mongodb] def fromCodecProvider(codecRegistry: CodecProvider*): CodecRegistry =
     fromRegistries(fromProviders(codecRegistry: _*), DEFAULT_CODEC_REGISTRY)
 
-  private[mongodb] def connection1[T1]: MongoConnection[MongoCollection[T1], MongoConnector[T1]] =
-    new MongoConnection[MongoCollection[T1], MongoConnector[T1]] {
+  private[mongodb] def connection1[T1]: MongoConnection[CollectionRef[T1], CollectionOperator[T1]] = {
+    new MongoConnection[CollectionRef[T1], CollectionOperator[T1]] {
 
-      override def createConnectors(client: MongoClient, collections: MongoCollection[T1]): Task[MongoConnector[T1]] = {
+      override def createCollectionOperator(client: MongoClient, collections: CollectionRef[T1]): Task[CollectionOperator[T1]] = {
         val db: MongoDatabase = client.getDatabase(collections.databaseName)
         MongoDb.createIfNotExists(db, collections.collectionName).map { _ =>
           val col = db
             .getCollection(collections.collectionName, collections.clazz)
             .withCodecRegistry(fromCodecProvider(collections.codecProvider: _*))
-          MongoConnector(MongoDb(client, db), MongoSource(col), MongoSingle(col), MongoSink(col))
+          mongodb.client.CollectionOperator(MongoDb(client, db), MongoSource(col), MongoSingle(col), MongoSink(col))
         }
       }
 
-      override def close(connectors: MongoConnector[T1]): Task[Unit] = connectors.close
     }
+  }
 
   private[mongodb] def connection2[T1, T2]
-    : MongoConnection[Tuple2F[MongoCollection, T1, T2], Tuple2F[MongoConnector, T1, T2]] =
-    (client: MongoClient, collections: Tuple2F[MongoCollection, T1, T2]) => {
+    : MongoConnection[Tuple2F[CollectionRef, T1, T2], Tuple2F[CollectionOperator, T1, T2]] =
+    (client: MongoClient, collections: Tuple2F[CollectionRef, T1, T2]) => {
       for {
         a <- connection1[T1](client, collections._1)
         b <- connection1[T2](client, collections._2)
@@ -81,71 +74,71 @@ object MongoConnection {
     }
 
   private[mongodb] def connection3[T1, T2, T3]
-    : MongoConnection[Tuple3F[MongoCollection, T1, T2, T3], Tuple3F[MongoConnector, T1, T2, T3]] =
-    (client: MongoClient, collections: Tuple3F[MongoCollection, T1, T2, T3]) => {
+    : MongoConnection[Tuple3F[CollectionRef, T1, T2, T3], Tuple3F[CollectionOperator, T1, T2, T3]] =
+    (client: MongoClient, collections: Tuple3F[CollectionRef, T1, T2, T3]) => {
       val (c1, c2, c3) = collections
       for {
         a <- connection1[T1](client, c1)
-        b <- connection2[T2, T3].createConnectors(client, (c2, c3))
+        b <- connection2[T2, T3].createCollectionOperator(client, (c2, c3))
       } yield (a, b._1, b._2)
     }
 
   private[mongodb] def connection4[T1, T2, T3, T4]
-    : MongoConnection[Tuple4F[MongoCollection, T1, T2, T3, T4], Tuple4F[MongoConnector, T1, T2, T3, T4]] =
-    (client: MongoClient, collections: Tuple4F[MongoCollection, T1, T2, T3, T4]) => {
+    : MongoConnection[Tuple4F[CollectionRef, T1, T2, T3, T4], Tuple4F[CollectionOperator, T1, T2, T3, T4]] =
+    (client: MongoClient, collections: Tuple4F[CollectionRef, T1, T2, T3, T4]) => {
       val (c1, c2, c3, c4) = collections
       for {
         a <- connection1[T1](client, c1)
-        b <- connection3[T2, T3, T4].createConnectors(client, (c2, c3, c4))
+        b <- connection3[T2, T3, T4].createCollectionOperator(client, (c2, c3, c4))
       } yield (a, b._1, b._2, b._3)
     }
 
   private[mongodb] def connection5[T1, T2, T3, T4, T5]
-    : MongoConnection[Tuple5F[MongoCollection, T1, T2, T3, T4, T5], Tuple5F[MongoConnector, T1, T2, T3, T4, T5]] =
-    (client: MongoClient, collections: Tuple5F[MongoCollection, T1, T2, T3, T4, T5]) => {
+    : MongoConnection[Tuple5F[CollectionRef, T1, T2, T3, T4, T5], Tuple5F[CollectionOperator, T1, T2, T3, T4, T5]] =
+    (client: MongoClient, collections: Tuple5F[CollectionRef, T1, T2, T3, T4, T5]) => {
       val (c1, c2, c3, c4, c5) = collections
 
       for {
         a <- connection1[T1](client, c1)
-        b <- connection4[T2, T3, T4, T5].createConnectors(client, (c2, c3, c4, c5))
+        b <- connection4[T2, T3, T4, T5].createCollectionOperator(client, (c2, c3, c4, c5))
       } yield (a, b._1, b._2, b._3, b._4)
     }
 
   private[mongodb] def connection6[T1, T2, T3, T4, T5, T6]: MongoConnection[
-    Tuple6F[MongoCollection, T1, T2, T3, T4, T5, T6],
-    Tuple6F[MongoConnector, T1, T2, T3, T4, T5, T6]] =
-    (client: MongoClient, collections: Tuple6F[MongoCollection, T1, T2, T3, T4, T5, T6]) => {
+    Tuple6F[CollectionRef, T1, T2, T3, T4, T5, T6],
+    Tuple6F[CollectionOperator, T1, T2, T3, T4, T5, T6]] =
+    (client: MongoClient, collections: Tuple6F[CollectionRef, T1, T2, T3, T4, T5, T6]) => {
       val (c1, c2, c3, c4, c5, c6) = collections
       for {
         a <- connection1[T1](client, c1)
-        b <- connection5[T2, T3, T4, T5, T6].createConnectors(client, (c2, c3, c4, c5, c6))
+        b <- connection5[T2, T3, T4, T5, T6].createCollectionOperator(client, (c2, c3, c4, c5, c6))
       } yield (a, b._1, b._2, b._3, b._4, b._5)
     }
 
   private[mongodb] def connection7[T1, T2, T3, T4, T5, T6, T7]: MongoConnection[
-    Tuple7F[MongoCollection, T1, T2, T3, T4, T5, T6, T7],
-    Tuple7F[MongoConnector, T1, T2, T3, T4, T5, T6, T7]] =
-    (client: MongoClient, collections: Tuple7F[MongoCollection, T1, T2, T3, T4, T5, T6, T7]) => {
+    Tuple7F[CollectionRef, T1, T2, T3, T4, T5, T6, T7],
+    Tuple7F[CollectionOperator, T1, T2, T3, T4, T5, T6, T7]] =
+    (client: MongoClient, collections: Tuple7F[CollectionRef, T1, T2, T3, T4, T5, T6, T7]) => {
       val (c1, c2, c3, c4, c5, c6, c7) = collections
       for {
         a <- connection1[T1](client, c1)
-        b <- connection6[T2, T3, T4, T5, T6, T7].createConnectors(client, (c2, c3, c4, c5, c6, c7))
+        b <- connection6[T2, T3, T4, T5, T6, T7].createCollectionOperator(client, (c2, c3, c4, c5, c6, c7))
       } yield (a, b._1, b._2, b._3, b._4, b._5, b._6)
     }
 
   private[mongodb] def connection8[T1, T2, T3, T4, T5, T6, T7, T8]: MongoConnection[
-    Tuple8F[MongoCollection, T1, T2, T3, T4, T5, T6, T7, T8],
-    Tuple8F[MongoConnector, T1, T2, T3, T4, T5, T6, T7, T8]] =
-    (client: MongoClient, collections: Tuple8F[MongoCollection, T1, T2, T3, T4, T5, T6, T7, T8]) => {
+    Tuple8F[CollectionRef, T1, T2, T3, T4, T5, T6, T7, T8],
+    Tuple8F[CollectionOperator, T1, T2, T3, T4, T5, T6, T7, T8]] =
+    (client: MongoClient, collections: Tuple8F[CollectionRef, T1, T2, T3, T4, T5, T6, T7, T8]) => {
       val (c1, c2, c3, c4, c5, c6, c7, c8) = collections
       for {
         a <- connection1[T1](client, c1)
-        b <- connection7[T2, T3, T4, T5, T6, T7, T8].createConnectors(client, (c2, c3, c4, c5, c6, c7, c8))
+        b <- connection7[T2, T3, T4, T5, T6, T7, T8].createCollectionOperator(client, (c2, c3, c4, c5, c6, c7, c8))
       } yield (a, b._1, b._2, b._3, b._4, b._5, b._6, b._7)
     }
 
   /**
-    * Creates a single [[MongoConnector]] from the passed [[MongoCollection]].
+    * Creates a single [[CollectionOperator]] from the passed [[CollectionRef]].
     *
     * ==Example==
     * {{{
@@ -174,14 +167,14 @@ object MongoConnection {
     *                         [[https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html]]
     *                         and [[https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/]]
     * @param collection describes the collection that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]].
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]].
     */
-  def create1[T1](connectionString: String, collection: MongoCollection[T1]): Resource[Task, MongoConnector[T1]] =
+  def create1[T1](connectionString: String, collection: CollectionRef[T1]): Resource[Task, CollectionOperator[T1]] =
     connection1[T1].create(connectionString, collection)
 
   /**
     *
-    * Creates a single [[MongoConnector]] from the passed [[MongoCollection]].
+    * Creates a single [[CollectionOperator]] from the passed [[CollectionRef]].
     *
     * ==Example==
     * {{{
@@ -212,17 +205,17 @@ object MongoConnection {
     *   }
     * }}}
     *
-    * @param clientSettings various settings to control the behavior the created [[MongoConnector]].
+    * @param clientSettings various settings to control the behavior the created [[CollectionOperator]].
     * @param collection     describes the collection that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]].
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]].
     */
   def create1[T1](
     clientSettings: MongoClientSettings,
-    collection: MongoCollection[T1]): Resource[Task, MongoConnector[T1]] =
+    collection: CollectionRef[T1]): Resource[Task, CollectionOperator[T1]] =
     connection1[T1].create(clientSettings, collection)
 
   /**
-    * Creates a single [[MongoConnector]] from the specified [[MongoCollection]].
+    * Creates a single [[CollectionOperator]] from the specified [[CollectionRef]].
     *
     * WARN: It is unsafe because it directly expects an instance of [[MongoClient]],
     * which might have already been closed, alternatively it will be released
@@ -231,15 +224,15 @@ object MongoConnection {
     *
     * @param client an instance of [[MongoClient]]
     * @param collection describes the collection that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]
     */
   @UnsafeBecauseImpure
-  def createUnsafe1[T1](client: MongoClient, collection: MongoCollection[T1]): Resource[Task, MongoConnector[T1]] =
+  def createUnsafe1[T1](client: MongoClient, collection: CollectionRef[T1]): Resource[Task, CollectionOperator[T1]] =
     connection1[T1].createUnsafe(client, collection)
 
   /**
-    * Creates a connection to mongodb and provides with a [[MongoConnector]]
-    * for each of the *TWO* provided [[MongoCollection]]s.
+    * Creates a connection to mongodb and provides with a [[CollectionOperator]]
+    * for each of the *TWO* provided [[CollectionRef]]s.
     *
     * ==Example==
     * {{{
@@ -276,16 +269,16 @@ object MongoConnection {
     *                         [[https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html]]
     *                         and [[https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]s.
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]s.
     */
   def create2[T1, T2](
     connectionString: String,
-    collections: Tuple2F[MongoCollection, T1, T2]): Resource[Task, Tuple2F[MongoConnector, T1, T2]] =
+    collections: Tuple2F[CollectionRef, T1, T2]): Resource[Task, Tuple2F[CollectionOperator, T1, T2]] =
     connection2.create(connectionString, collections)
 
   /**
-    * Creates a connection to mongodb and provides with a [[MongoConnector]]
-    * for each of the *TWO* provided [[MongoCollection]]s.
+    * Creates a connection to mongodb and provides with a [[CollectionOperator]]
+    * for each of the *TWO* provided [[CollectionRef]]s.
     *
     * ==Example==
     * {{{
@@ -323,18 +316,18 @@ object MongoConnection {
     *   }
     * }}}
     *
-    * @param clientSettings various settings to control the behavior of the created [[MongoConnector]]s.
+    * @param clientSettings various settings to control the behavior of the created [[CollectionOperator]]s.
     * @param collections    describes the set of collections that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]].
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]].
     */
   def create2[T1, T2](
     clientSettings: MongoClientSettings,
-    collections: Tuple2F[MongoCollection, T1, T2]): Resource[Task, Tuple2F[MongoConnector, T1, T2]] =
+    collections: Tuple2F[CollectionRef, T1, T2]): Resource[Task, Tuple2F[CollectionOperator, T1, T2]] =
     connection2.create(clientSettings, collections)
 
   /**
-    * Unsafely creates a connection to mongodb and provides a [[MongoConnector]]
-    * to each of the *TWO* provided [[MongoCollection]]s.
+    * Unsafely creates a connection to mongodb and provides a [[CollectionOperator]]
+    * to each of the *TWO* provided [[CollectionRef]]s.
     *
     * WARN: It is unsafe because it directly expects an instance of [[MongoClient]],
     * which might have already been closed, or alternatively it will be released
@@ -343,17 +336,17 @@ object MongoConnection {
     *
     * @param client an instance of [[MongoClient]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]
     */
   @UnsafeBecauseImpure
   def createUnsafe2[T1, T2](
     client: MongoClient,
-    collections: Tuple2F[MongoCollection, T1, T2]): Resource[Task, Tuple2F[MongoConnector, T1, T2]] =
+    collections: Tuple2F[CollectionRef, T1, T2]): Resource[Task, Tuple2F[CollectionOperator, T1, T2]] =
     connection2.createUnsafe(client, collections)
 
   /**
-    * Creates a connection to mongodb and provides a [[MongoConnector]]
-    * for each of the *THREE* provided [[MongoCollection]]s.
+    * Creates a connection to mongodb and provides a [[CollectionOperator]]
+    * for each of the *THREE* provided [[CollectionRef]]s.
     *
     * ==Example==
     * {{{
@@ -427,29 +420,29 @@ object MongoConnection {
     *                         [[https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html]]
     *                         and [[https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]s.
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]s.
     */
   def create3[T1, T2, T3](
     connectionString: String,
-    collections: Tuple3F[MongoCollection, T1, T2, T3]): Resource[Task, Tuple3F[MongoConnector, T1, T2, T3]] =
+    collections: Tuple3F[CollectionRef, T1, T2, T3]): Resource[Task, Tuple3F[CollectionOperator, T1, T2, T3]] =
     connection3.create(connectionString, collections)
 
   /**
-    * Creates a connection to mongodb and provides a [[MongoConnector]]
-    * for each of the *THREE* provided [[MongoCollection]]s.
+    * Creates a connection to mongodb and provides a [[CollectionOperator]]
+    * for each of the *THREE* provided [[CollectionRef]]s.
     *
-    * @param clientSettings various settings to control the behavior of the created [[MongoConnector]]s.
+    * @param clientSettings various settings to control the behavior of the created [[CollectionOperator]]s.
     * @param collections    describes the set of collections that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]].
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]].
     */
   def create3[T1, T2, T3](
     clientSettings: MongoClientSettings,
-    collections: Tuple3F[MongoCollection, T1, T2, T3]): Resource[Task, Tuple3F[MongoConnector, T1, T2, T3]] =
+    collections: Tuple3F[CollectionRef, T1, T2, T3]): Resource[Task, Tuple3F[CollectionOperator, T1, T2, T3]] =
     connection3.create(clientSettings, collections)
 
   /**
-    * Unsafely creates a connection to mongodb and provides a [[MongoConnector]]
-    * to each of the *THREE* provided [[MongoCollection]]s.
+    * Unsafely creates a connection to mongodb and provides a [[CollectionOperator]]
+    * to each of the *THREE* provided [[CollectionRef]]s.
     *
     * WARN: It is unsafe because it directly expects an instance of [[MongoClient]],
     * which will be released and closed towards the usage of the resource task.
@@ -457,17 +450,17 @@ object MongoConnection {
     *
     * @param client an instance of [[MongoClient]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]
     */
   @UnsafeBecauseImpure
   def createUnsafe3[T1, T2, T3](
     client: MongoClient,
-    collections: Tuple3F[MongoCollection, T1, T2, T3]): Resource[Task, Tuple3F[MongoConnector, T1, T2, T3]] =
+    collections: Tuple3F[CollectionRef, T1, T2, T3]): Resource[Task, Tuple3F[CollectionOperator, T1, T2, T3]] =
     connection3.createUnsafe(client, collections)
 
   /**
-    * Creates a connection to mongodb and provides a [[MongoConnector]]
-    * to each of the *FOUR* provided [[MongoCollection]]s.
+    * Creates a connection to mongodb and provides a [[CollectionOperator]]
+    * to each of the *FOUR* provided [[CollectionRef]]s.
     *
     * @see an example of usage could be extrapolated from the scaladoc
     *      example of [[create1]], [[create2]] and [[create3]].
@@ -476,31 +469,31 @@ object MongoConnection {
     *                         [[https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html]]
     *                         and [[https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]s.
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]s.
     */
   def create4[T1, T2, T3, T4](
     connectionString: String,
-    collections: Tuple4F[MongoCollection, T1, T2, T3, T4]): Resource[Task, Tuple4F[MongoConnector, T1, T2, T3, T4]] =
+    collections: Tuple4F[CollectionRef, T1, T2, T3, T4]): Resource[Task, Tuple4F[CollectionOperator, T1, T2, T3, T4]] =
     connection4.create(connectionString, collections)
 
   /**
-    * Creates a connection to mongodb and provides a [[MongoConnector]]
-    * to each of the *FOUR* provided [[MongoCollection]]s.
+    * Creates a connection to mongodb and provides a [[CollectionOperator]]
+    * to each of the *FOUR* provided [[CollectionRef]]s.
     *
     * @see an example of usage could be extrapolated from the scaladoc
     *      example of [[create1]], [[create2]] and [[create3]].
-    * @param clientSettings various settings to control the behavior of the created [[MongoConnector]]s.
+    * @param clientSettings various settings to control the behavior of the created [[CollectionOperator]]s.
     * @param collections    describes the set of collections that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]].
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]].
     */
   def create4[T1, T2, T3, T4](
     clientSettings: MongoClientSettings,
-    collections: Tuple4F[MongoCollection, T1, T2, T3, T4]): Resource[Task, Tuple4F[MongoConnector, T1, T2, T3, T4]] =
+    collections: Tuple4F[CollectionRef, T1, T2, T3, T4]): Resource[Task, Tuple4F[CollectionOperator, T1, T2, T3, T4]] =
     connection4.create(clientSettings, collections)
 
   /**
-    * Unsafely creates a connection to mongodb and provides a [[MongoConnector]]
-    * to each of the *FOUR* provided [[MongoCollection]]s.
+    * Unsafely creates a connection to mongodb and provides a [[CollectionOperator]]
+    * to each of the *FOUR* provided [[CollectionRef]]s.
     *
     * WARN: It is unsafe because it directly expects an instance of [[MongoClient]],
     * which will be released and closed towards the usage of the resource task.
@@ -508,17 +501,17 @@ object MongoConnection {
     *
     * @param client an instance of [[MongoClient]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]
     */
   @UnsafeBecauseImpure
   def createUnsafe4[T1, T2, T3, T4](
     client: MongoClient,
-    collections: Tuple4F[MongoCollection, T1, T2, T3, T4]): Resource[Task, Tuple4F[MongoConnector, T1, T2, T3, T4]] =
+    collections: Tuple4F[CollectionRef, T1, T2, T3, T4]): Resource[Task, Tuple4F[CollectionOperator, T1, T2, T3, T4]] =
     connection4.createUnsafe(client, collections)
 
   /**
-    * Creates a connection to mongodb and provides a [[MongoConnector]]
-    * to each of the *FIVE* provided [[MongoCollection]]s.
+    * Creates a connection to mongodb and provides a [[CollectionOperator]]
+    * to each of the *FIVE* provided [[CollectionRef]]s.
     *
     * @see an example of usage could be extrapolated from the scaladoc
     *      example of [[create1]], [[create2]] and [[create3]].
@@ -527,31 +520,31 @@ object MongoConnection {
     *                         [[https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html]]
     *                         and [[https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]s.
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]s.
     */
-  def create5[T1, T2, T3, T4, T5](connectionString: String, collections: Tuple5F[MongoCollection, T1, T2, T3, T4, T5])
-    : Resource[Task, Tuple5F[MongoConnector, T1, T2, T3, T4, T5]] =
+  def create5[T1, T2, T3, T4, T5](connectionString: String, collections: Tuple5F[CollectionRef, T1, T2, T3, T4, T5])
+    : Resource[Task, Tuple5F[CollectionOperator, T1, T2, T3, T4, T5]] =
     connection5.create(connectionString, collections)
 
   /**
-    * Creates a connection to mongodb and provides a [[MongoConnector]]
-    * to each of the *FIVE* provided [[MongoCollection]]s.
+    * Creates a connection to mongodb and provides a [[CollectionOperator]]
+    * to each of the *FIVE* provided [[CollectionRef]]s.
     *
     * @see an example of usage could be extrapolated from the scaladoc
     *      example of [[create1]], [[create2]] and [[create3]].
-    * @param clientSettings various settings to control the behavior of the created [[MongoConnector]]s.
+    * @param clientSettings various settings to control the behavior of the created [[CollectionOperator]]s.
     * @param collections    describes the set of collections that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]].
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]].
     */
   def create5[T1, T2, T3, T4, T5](
     clientSettings: MongoClientSettings,
-    collections: Tuple5F[MongoCollection, T1, T2, T3, T4, T5])
-    : Resource[Task, Tuple5F[MongoConnector, T1, T2, T3, T4, T5]] =
+    collections: Tuple5F[CollectionRef, T1, T2, T3, T4, T5])
+    : Resource[Task, Tuple5F[CollectionOperator, T1, T2, T3, T4, T5]] =
     connection5.create(clientSettings, collections)
 
   /**
-    * Unsafely creates a connection to mongodb and provides a [[MongoConnector]]
-    * to each of the *FIVE* provided [[MongoCollection]]s.
+    * Unsafely creates a connection to mongodb and provides a [[CollectionOperator]]
+    * to each of the *FIVE* provided [[CollectionRef]]s.
     *
     * WARN: It is unsafe because it directly expects an instance of [[MongoClient]],
     * which will be released and closed towards the usage of the resource task.
@@ -559,16 +552,16 @@ object MongoConnection {
     *
     * @param client an instance of [[MongoClient]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]
     */
   @UnsafeBecauseImpure
-  def createUnsafe5[T1, T2, T3, T4, T5](client: MongoClient, collections: Tuple5F[MongoCollection, T1, T2, T3, T4, T5])
-    : Resource[Task, Tuple5F[MongoConnector, T1, T2, T3, T4, T5]] =
+  def createUnsafe5[T1, T2, T3, T4, T5](client: MongoClient, collections: Tuple5F[CollectionRef, T1, T2, T3, T4, T5])
+    : Resource[Task, Tuple5F[CollectionOperator, T1, T2, T3, T4, T5]] =
     connection5.createUnsafe(client, collections)
 
   /**
-    * Creates a connection to mongodb and provides a [[MongoConnector]]
-    * to each of the *SIX* provided [[MongoCollection]]s.
+    * Creates a connection to mongodb and provides a [[CollectionOperator]]
+    * to each of the *SIX* provided [[CollectionRef]]s.
     *
     * @see an example of usage could be extrapolated from the scaladoc
     *      example of [[create1]], [[create2]] and [[create3]].
@@ -577,33 +570,33 @@ object MongoConnection {
     *                         [[https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html]]
     *                         and [[https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]s.
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]s.
     */
   def create6[T1, T2, T3, T4, T5, T6](
     connectionString: String,
-    collections: Tuple6F[MongoCollection, T1, T2, T3, T4, T5, T6])
-    : Resource[Task, Tuple6F[MongoConnector, T1, T2, T3, T4, T5, T6]] =
+    collections: Tuple6F[CollectionRef, T1, T2, T3, T4, T5, T6])
+    : Resource[Task, Tuple6F[CollectionOperator, T1, T2, T3, T4, T5, T6]] =
     connection6.create(connectionString, collections)
 
   /**
-    * Creates a connection to mongodb and provides a [[MongoConnector]]
-    * to each of the *SIX* provided [[MongoCollection]]s.
+    * Creates a connection to mongodb and provides a [[CollectionOperator]]
+    * to each of the *SIX* provided [[CollectionRef]]s.
     *
     * @see an example of usage could be extrapolated from the scaladoc
     *      example of [[create1]], [[create2]] and [[create3]].
-    * @param clientSettings various settings to control the behavior of the created [[MongoConnector]]s.
+    * @param clientSettings various settings to control the behavior of the created [[CollectionOperator]]s.
     * @param collections    describes the set of collections that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]].
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]].
     */
   def create6[T1, T2, T3, T4, T5, T6](
     clientSettings: MongoClientSettings,
-    collections: Tuple6F[MongoCollection, T1, T2, T3, T4, T5, T6])
-    : Resource[Task, Tuple6F[MongoConnector, T1, T2, T3, T4, T5, T6]] =
+    collections: Tuple6F[CollectionRef, T1, T2, T3, T4, T5, T6])
+    : Resource[Task, Tuple6F[CollectionOperator, T1, T2, T3, T4, T5, T6]] =
     connection6.create(clientSettings, collections)
 
   /**
-    * Unsafely creates a connection to mongodb and provides a [[MongoConnector]]
-    * to each of the *SIX* provided [[MongoCollection]]s.
+    * Unsafely creates a connection to mongodb and provides a [[CollectionOperator]]
+    * to each of the *SIX* provided [[CollectionRef]]s.
     *
     * WARN: It is unsafe because it directly expects an instance of [[MongoClient]],
     * which will be released and closed towards the usage of the resource task.
@@ -611,17 +604,17 @@ object MongoConnection {
     *
     * @param client an instance of [[MongoClient]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]
     */
   def createUnsafe6[T1, T2, T3, T4, T5, T6](
     client: MongoClient,
-    collections: Tuple6F[MongoCollection, T1, T2, T3, T4, T5, T6])
-    : Resource[Task, Tuple6F[MongoConnector, T1, T2, T3, T4, T5, T6]] =
+    collections: Tuple6F[CollectionRef, T1, T2, T3, T4, T5, T6])
+    : Resource[Task, Tuple6F[CollectionOperator, T1, T2, T3, T4, T5, T6]] =
     connection6.createUnsafe(client, collections)
 
   /**
-    * Creates a connection to mongodb and provides a [[MongoConnector]]
-    * to each of the *SEVEN* provided [[MongoCollection]]s.
+    * Creates a connection to mongodb and provides a [[CollectionOperator]]
+    * to each of the *SEVEN* provided [[CollectionRef]]s.
     *
     * @see an example of usage could be extrapolated from the scaladoc
     *      example of [[create1]], [[create2]] and [[create3]].
@@ -630,33 +623,33 @@ object MongoConnection {
     *                         [[https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html]]
     *                         and [[https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]s.
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]s.
     */
   def create7[T1, T2, T3, T4, T5, T6, T7](
     connectionString: String,
-    collections: Tuple7F[MongoCollection, T1, T2, T3, T4, T5, T6, T7])
-    : Resource[Task, Tuple7F[MongoConnector, T1, T2, T3, T4, T5, T6, T7]] =
+    collections: Tuple7F[CollectionRef, T1, T2, T3, T4, T5, T6, T7])
+    : Resource[Task, Tuple7F[CollectionOperator, T1, T2, T3, T4, T5, T6, T7]] =
     connection7.create(connectionString, collections)
 
   /**
-    * Creates a connection to mongodb and provides a [[MongoConnector]]
-    * to each of the *SEVEN* provided [[MongoCollection]]s.
+    * Creates a connection to mongodb and provides a [[CollectionOperator]]
+    * to each of the *SEVEN* provided [[CollectionRef]]s.
     *
     * @see an example of usage could be extrapolated from the scaladoc
     *      example of [[create1]], [[create2]] and [[create3]].
-    * @param clientSettings various settings to control the behavior of the created [[MongoConnector]]s.
+    * @param clientSettings various settings to control the behavior of the created [[CollectionOperator]]s.
     * @param collections    describes the set of collections that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]].
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]].
     */
   def create7[T1, T2, T3, T4, T5, T6, T7](
     clientSettings: MongoClientSettings,
-    collections: Tuple7F[MongoCollection, T1, T2, T3, T4, T5, T6, T7])
-    : Resource[Task, Tuple7F[MongoConnector, T1, T2, T3, T4, T5, T6, T7]] =
+    collections: Tuple7F[CollectionRef, T1, T2, T3, T4, T5, T6, T7])
+    : Resource[Task, Tuple7F[CollectionOperator, T1, T2, T3, T4, T5, T6, T7]] =
     connection7.create(clientSettings, collections)
 
   /**
-    * Unsafely creates a connection to mongodb and provides a [[MongoConnector]]
-    * to each of the *SEVEN* provided [[MongoCollection]]s.
+    * Unsafely creates a connection to mongodb and provides a [[CollectionOperator]]
+    * to each of the *SEVEN* provided [[CollectionRef]]s.
     *
     * WARN: It is unsafe because it directly expects an instance of [[MongoClient]],
     * which will be released and closed towards the usage of the resource task.
@@ -664,18 +657,18 @@ object MongoConnection {
     *
     * @param client an instance of [[MongoClient]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]
     */
   @UnsafeBecauseImpure
   def createUnsafe7[T1, T2, T3, T4, T5, T6, T7](
     client: MongoClient,
-    collections: Tuple7F[MongoCollection, T1, T2, T3, T4, T5, T6, T7])
-    : Resource[Task, Tuple7F[MongoConnector, T1, T2, T3, T4, T5, T6, T7]] =
+    collections: Tuple7F[CollectionRef, T1, T2, T3, T4, T5, T6, T7])
+    : Resource[Task, Tuple7F[CollectionOperator, T1, T2, T3, T4, T5, T6, T7]] =
     connection7.createUnsafe(client, collections)
 
   /**
-    * Creates a connection to mongodb and provides a [[MongoConnector]]
-    * to each of the *EIGHT* provided [[MongoCollection]]s.
+    * Creates a connection to mongodb and provides a [[CollectionOperator]]
+    * to each of the *EIGHT* provided [[CollectionRef]]s.
     *
     * @see an example of usage could be extrapolated from the scaladoc
     *      example of [[create1]], [[create2]] and [[create3]].
@@ -684,33 +677,33 @@ object MongoConnection {
     *                         [[https://mongodb.github.io/mongo-java-driver/3.9/javadoc/com/mongodb/ConnectionString.html]]
     *                         and [[https://mongodb.github.io/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]s.
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]s.
     */
   def create8[T1, T2, T3, T4, T5, T6, T7, T8](
     connectionString: String,
-    collections: Tuple8F[MongoCollection, T1, T2, T3, T4, T5, T6, T7, T8])
-    : Resource[Task, Tuple8F[MongoConnector, T1, T2, T3, T4, T5, T6, T7, T8]] =
+    collections: Tuple8F[CollectionRef, T1, T2, T3, T4, T5, T6, T7, T8])
+    : Resource[Task, Tuple8F[CollectionOperator, T1, T2, T3, T4, T5, T6, T7, T8]] =
     connection8.create(connectionString, collections)
 
   /**
-    * Creates a connection to mongodb and provides a [[MongoConnector]]
-    * to each of the *EIGHT* provided [[MongoCollection]]s.
+    * Creates a connection to mongodb and provides a [[CollectionOperator]]
+    * to each of the *EIGHT* provided [[CollectionRef]]s.
     *
     * @see an example of usage could be extrapolated from the scaladoc
     *      example of [[create1]], [[create2]] and [[create3]].
-    * @param clientSettings various settings to control the behavior of the created [[MongoConnector]]s.
+    * @param clientSettings various settings to control the behavior of the created [[CollectionOperator]]s.
     * @param collections    describes the set of collections that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]].
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]].
     */
   def create8[T1, T2, T3, T4, T5, T6, T7, T8](
     clientSettings: MongoClientSettings,
-    collections: Tuple8F[MongoCollection, T1, T2, T3, T4, T5, T6, T7, T8])
-    : Resource[Task, Tuple8F[MongoConnector, T1, T2, T3, T4, T5, T6, T7, T8]] =
+    collections: Tuple8F[CollectionRef, T1, T2, T3, T4, T5, T6, T7, T8])
+    : Resource[Task, Tuple8F[CollectionOperator, T1, T2, T3, T4, T5, T6, T7, T8]] =
     connection8.create(clientSettings, collections)
 
   /**
-    * Unsafely creates a connection to mongodb and provides a [[MongoConnector]]
-    * to each of the *EIGHT* provided [[MongoCollection]]s.
+    * Unsafely creates a connection to mongodb and provides a [[CollectionOperator]]
+    * to each of the *EIGHT* provided [[CollectionRef]]s.
     *
     * WARN: It is unsafe because it directly expects an instance of [[MongoClient]],
     * which will be released and closed towards the usage of the resource task.
@@ -718,44 +711,46 @@ object MongoConnection {
     *
     * @param client an instance of [[MongoClient]]
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
-    * @return a [[Resource]] that provides a single [[MongoConnector]] instance, linked to the specified [[MongoCollection]]
+    * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]
     */
   @UnsafeBecauseImpure
   def createUnsafe8[T1, T2, T3, T4, T5, T6, T7, T8](
     client: MongoClient,
-    collections: Tuple8F[MongoCollection, T1, T2, T3, T4, T5, T6, T7, T8])
-    : Resource[Task, Tuple8F[MongoConnector, T1, T2, T3, T4, T5, T6, T7, T8]] =
+    collections: Tuple8F[CollectionRef, T1, T2, T3, T4, T5, T6, T7, T8])
+    : Resource[Task, Tuple8F[CollectionOperator, T1, T2, T3, T4, T5, T6, T7, T8]] =
     connection8.createUnsafe(client, collections)
 }
 
 private[mongodb] trait MongoConnection[A <: Product, T2 <: Product] { self =>
 
-  def apply(client: MongoClient, collections: A): Task[T2] = createConnectors(client, collections)
+  def apply(client: MongoClient, collections: A): Task[T2] = createCollectionOperator(client, collections)
 
-  def createConnectors(client: MongoClient, collections: A): Task[T2]
+  def createCollectionOperator(client: MongoClient, collections: A): Task[T2]
 
-  def create(url: String, collectionInfo: A): Resource[Task, T2] =
-    Resource.make(Task.now(MongoClients.create(url)))(_ => Task.unit).flatMap(createUnsafe(_, collectionInfo))
+  def create(connectionStr: String, collectionRefs: A): Resource[Task, T2] =
+    for {
+      client <- Resource.fromAutoCloseable(Task.evalAsync(MongoClients.create(connectionStr)))
+      collectionOperator <- Resource.liftF(createCollectionOperator(client, collectionRefs))
+    } yield collectionOperator
 
-  def create(clientSettings: MongoClientSettings, collections: A): Resource[Task, T2] =
-    Resource
-      .make(Task.now(MongoClients.create(clientSettings)))(_ => Task.unit)
-      .flatMap(createUnsafe(_, collections))
+  def create(connectionStr: ConnectionString, collectionRefs: A): Resource[Task, T2] =
+    for {
+      client <- Resource.fromAutoCloseable(Task.evalAsync(MongoClients.create(connectionStr)))
+      collectionOperator <- Resource.liftF(createCollectionOperator(client, collectionRefs))
+    } yield collectionOperator
+
+  def create(clientSettings: MongoClientSettings, collectionRefs: A): Resource[Task, T2] =
+    for {
+      client <- Resource.fromAutoCloseable(Task.evalAsync(MongoClients.create(clientSettings)))
+      collectionOperator <- Resource.liftF(createCollectionOperator(client, collectionRefs))
+    } yield collectionOperator
 
   @UnsafeBecauseImpure
-  def createUnsafe(client: MongoClient, collections: A): Resource[Task, T2] = {
-    Resource.make(createConnectors(client, collections))(self.close)
-  }
-
-  /** Has to be overwritten for instances of Connection where [[T2]] is
-    * not a tuple/iterable [[Product]]. I.E in: [[MongoConnection.connection1]].
-    */
-  @UnsafeBecauseImpure
-  def close(connectors: T2): Task[Unit] = {
-    Observable
-      .fromIterable(connectors.productIterator.toList)
-      .map(_.asInstanceOf[MongoConnector[_]].close)
-      .completedL
+  def createUnsafe(client: MongoClient, collectionRefs: A): Resource[Task, T2] = {
+    for {
+      client <- Resource.fromAutoCloseable(Task.now(client))
+      collectionOperator <- Resource.liftF(createCollectionOperator(client, collectionRefs))
+    } yield collectionOperator
   }
 
 }

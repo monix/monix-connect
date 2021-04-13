@@ -18,7 +18,7 @@
 package monix.connect.mongodb
 
 import com.mongodb.client.model.{Accumulators, Aggregates, CountOptions, Filters, Updates}
-import monix.connect.mongodb.domain.MongoConnector
+import monix.connect.mongodb.client.{CollectionOperator, MongoConnection}
 import monix.execution.Scheduler.Implicits.global
 import org.bson.Document
 import org.bson.conversions.Bson
@@ -177,7 +177,7 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     val l = MongoSource.findAll[Employee](employeesMongoCol).toListL.runSyncUnsafe()
 
     //then
-    l shouldBe empty
+    l shouldBe List.empty
   }
 
   it should  "find filtered elements" in {
@@ -200,7 +200,7 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     val company = Company("myCompany", employees, 1000)
 
     //when
-    val exists = MongoConnection.create1(mongoEndpoint, companiesCol).use{ case MongoConnector(_, source, single, _) =>
+    val exists = MongoConnection.create1(mongoEndpoint, companiesCol).use{ case CollectionOperator(_, source, single, _) =>
       for{
         _ <- single.insertOne(company)
         //two different ways to filter the same thing
