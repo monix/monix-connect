@@ -63,4 +63,5 @@ package object domain {
   type Tuple7F[T[_], A, B, C, D, E, F, G] = (T[A], T[B], T[C], T[D], T[E], T[F], T[G])
   type Tuple8F[T[_], A, B, C, D, E, F, G, H] = (T[A], T[B], T[C], T[D], T[E], T[F], T[G], T[H])
 
+
 }

@@ -21,7 +21,7 @@ import cats.effect.Resource
 import com.mongodb.{MongoClientSettings, ServerAddress}
 import com.mongodb.client.model.{Filters, Updates}
 import com.mongodb.reactivestreams.client.MongoClients
-import monix.connect.mongodb.client.{CollectionOperator, CollectionRef, MongoConnection}
+import monix.connect.mongodb.client.{CollectionCodec, CollectionOperator, CollectionRef, MongoConnection}
 import monix.connect.mongodb.domain.{Tuple2F, Tuple3F, Tuple4F, Tuple5F, Tuple6F, Tuple7F, Tuple8F}
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
@@ -284,8 +284,8 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
 
     protected[this] def createConnectionTest2(
       makeResource: (
-        CollectionRef[Employee],
-        CollectionRef[Company]) => Resource[Task, Tuple2F[CollectionOperator, Employee, Company]]): Assertion = {
+        CollectionCodec[Employee],
+          CollectionCodec[Company]) => Resource[Task, Tuple2F[CollectionOperator, Employee, Company]]): Assertion = {
       //given
       val employee = genEmployee.sample.get
       val company = genCompany.sample.get
@@ -312,9 +312,9 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
 
     protected[this] def abstractCreateConnectionTest3(
       makeResource: (
-        CollectionRef[Company],
-        CollectionRef[Employee],
-        CollectionRef[Investor]) => Resource[Task, Tuple3F[CollectionOperator, Company, Employee, Investor]])
+        CollectionCodec[Company],
+          CollectionCodec[Employee],
+          CollectionCodec[Investor]) => Resource[Task, Tuple3F[CollectionOperator, Company, Employee, Investor]])
       : Assertion = {
       //given
       val employees = List(Employee("Caroline", 21, "Barcelona", "OldCompany"))

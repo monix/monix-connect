@@ -43,8 +43,8 @@ class MongoDbSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
 
     //then
     existedBefore shouldBe false
-    dbs should not be empty
-    dbs.filter(dbNames.contains(_)).size shouldBe dbNames.size
+    dbs.isEmpty shouldBe false
+    dbs.count(dbNames.contains(_)) shouldBe dbNames.size
   }
 
   it should "create a collection" in {
