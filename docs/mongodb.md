@@ -5,17 +5,17 @@ title: MongoDB
 
 ## Introduction
   
-_MongoDB_ is a _document database_ which means that stores data in _JSON-like documents_ and is much more expressive and powerful than the traditional _row/column_ model.
+_MongoDB_ is a _document database_, in which the data is stored in _JSON-like documents_ differing to the traditional _row/column_ model.
  It has a rich and expressive query language that allows you to filter and sort by any field with 
  support for aggregations and other modern use-cases.
- The _Monix MongoDB_ connector offers a _non blocking_ and _side-effectful_ api that relies on the the underlying the [MongoDB Java Reactive Streams](https://docs.mongodb.com/drivers/reactive-streams) driver. 
+ The _Monix MongoDB_ connector offers a _reactive_, _non blocking_ and _resource safe_ api, which relies in the underlying the [MongoDB Java Reactive Streams](https://docs.mongodb.com/drivers/reactive-streams) driver. 
  The library is designed in four different parts:
   - __Database:__ Used to manage and dealing with _mongo databases_ and _collections_.
   - __Operation:__ It exposes single operations to delete, insert, replace and update _collections_.
   - __Sink:__ Implements the same operations as the _Operation_ api, but it in a streaming fashion.
   - __Source:__ Used to fetch data from the collections with _aggregate_, _count_, _distinct_ and _find_.
 
- Each of these components is explained in detail on the following sections, being _Operation_ and _Sink_ joined in the same section since they share 
+ Each of these components is explained in detail in the following sections:
  
 ## Dependency
 
@@ -24,37 +24,105 @@ Add the following dependency to get started:
 libraryDependencies += "io.monix" %% "monix-mongodb" % "0.6.0"
 ```
 
-## Database
+## Connection 
 
-Dealing with _database_ management is a quite common use case in any driver. Nevertheless, this connector provides 
-a set of methods to interact with _MongoDB_ domain, exposed in the _object_ `monix.connect.mongodb.MongoDb` with the methods to __create__, __drop__, __list__ and __check existence__ of both _databases_ and _collections_.                                                                        
-
-Let's then see some examples on how to use the mentioned utilities.
-
-Firstly, it is needed to create a connection to the _database_, which in this case we're using a local _standalone MongoDB instance_, but if you need to 
- connect to a _Replica Set_, a _Sharded Cluster_ or use some options such _TLS/SSL_, you would better refer to the [MongoDB documentation](https://mongodb.github.io/mongo-java-driver/4.1/driver-reactive/tutorials/connect-to-mongodb/).
+Before creating the connection, we would need to know the details of the `Collection`  where we would like store and read documents in/from, analogous to tables in relational databases.
+ 
+The collection is represented in the `CollectionRef` class, which to be created it requires the _database_ and _collection_ names, 
+and the `Codec` to read and write documents.
+See below example of the creating a _collection_ instance, in which for didactic purposes we have defined 
+`case class Employee(name: String, age: Int, city: String)`, representing the collection's json documents.
 
 ```scala
-import com.mongodb.reactivestreams.client.{MongoClients, MongoDatabase}
+import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
+import monix.connect.mongodb.{MongoConnection, client}
+import monix.connect.mongodb.client.CollectionRef
 
-val client: MongoClient = MongoClients.create(s"mongodb://localhost:27017")
-
-// now you can request a database instance by just typing its name
-val db: MongoDatabase = client.getDatabase("mydb") 
+val employee = Employee("Bob", 29)
+val employeesCol = client.CollectionCodec("myDb", "employees", classOf[Employee], createCodecProvider[Employee]())
 ```
+
+Then, the _collection_ will be passed to the creation of the _connection_ which is represented in the `MongoConnection` class.
+Creating the connection also requires the either a _connectionString_ or some _client settings_.
+You can find below an example of connecting to a _standalone MongoDB server_,
+but you could also connect to a _Replica Set_, a _Sharded Cluster_ and pass different options such _TLS/SSL_.
+Please, refer to the [official documentation](https://mongodb.github.io/mongo-java-driver/4.1/driver-reactive/tutorials/connect-to-mongodb/) for a complete guide.
+
+### Client String 
+
+On the one hand, using a connection string it would look like:
+
+```scala
+import cats.effect.Resource
+import monix.connect.mongodb.client.{MongoConnection, CollectionRef}
+import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
+import com.mongodb.client.model.Filters
+import monix.connect.mongodb.client.{CollectionOperator, CollectionRef}
+import monix.eval.Task
+
+val employee = Employee("Bob", 29)
+val employeesCol = CollectionCodec("myDb", "employees", classOf[Employee], createCodecProvider[Employee]())
+val connection: Resource[Task, CollectionOperator[Employee]] =
+ MongoConnection.create1("mongodb://localhost:27017", employeesCol)
+
+connection.use { case CollectionOperator(db, source, single, sink) => single.insertOne(employee) }
+```
+
+### Client Settings
+On the other hand, we could also build and pass the `MongoClientSettings` at the time of creating the connection:
+
+```scala
+import monix.connect.mongodb.client.{MongoConnection, CollectionRef}
+import com.mongodb.{MongoClientSettings, ServerAddress}
+import monix.connect.mongodb.client.CollectionRef
+import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
+
+import scala.jdk.CollectionConverters._
+
+val clientSettings =
+ MongoClientSettings.builder()
+         .applyToClusterSettings(builder =>
+          builder.hosts(
+           List(
+            new ServerAddress("host1", 27017),
+            new ServerAddress("host2", 27017)
+           ).asJava
+          )
+         ).build()
+
+val employeesCol = CollectionCodec("myDb", "employees", classOf[Employee], createCodecProvider[Employee]())
+val connection = MongoConnection.create1(clientSettings, employeesCol)
+```
+
+### CollectionOperator
+
+Notice that the creation of the connection returns `cats.effect.Resource`, which abstracts the acquisition and release of the 
+resources consumed by the `MongoClient`. 
+The usage of such resources provides a `CollectionOperator`, which it is composed by four main components: `Database`, `Source`, `Single` and `Sink`,
+ and bring together the necessary methods to operate with the specified collections.
+
+## Database
+
+Dealing with _database_ operations is a common use case in any driver. Nevertheless, the `CollectionOperator` comes with 
+ an instance of `MongoDatabase`, allowing to __create__, __drop__, __list__ and __check existence__ of both _databases_ and _collections_, 
 
 ### Exists
 
-__Important__ to incise that the `MongoDatabase` is just a reference to the target _database, 
+The `MongoDatabase` is just a reference to the target _database_, 
 which may or may not already exist. In case you want to check that before trying to read or insert any data:
 
 ```scala
+import monix.eval.Task
 import monix.connect.mongodb.MongoDb
+import monix.connect.mongodb.client.MongoConnection
+import monix.connect.mongodb.client.CollectionRef
+import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
 
-val isDbPresent: Task[Boolean] = MongoDb.existsDatabase(db)
+val employeesCol = CollectionCodec("myDb", "employees", classOf[Employee], createCodecProvider[Employee]())
+val connection = MongoConnection.create1("mongodb://host:27017", employeesCol).use(_.db.existsDatabase("db123"))
 
 // if the db existed you could also check the existence of a particular collection
-val isCollectionPresent: Task[Boolean] = MongoDb.existsCollection(db, "myCollection")
+val isCollectionPresent: Task[Boolean] = MongoDb.existsCollection("db123", "col123")
 ```
 
 ### Create 
@@ -62,18 +130,39 @@ val isCollectionPresent: Task[Boolean] = MongoDb.existsCollection(db, "myCollect
 Create a new collection within a given _database_.
 
 ```scala
-val created: Task[Boolean] = MongoDb.createCollection(db, "myCollection")
+import monix.eval.Task
+import monix.connect.mongodb.MongoDb
+import monix.connect.mongodb.client.MongoConnection
+import monix.connect.mongodb.client.CollectionRef
+
+val employeesCol = CollectionCodec("myDb", "employeesCol", classOf[Employee], createCodecProvider[Employee]())
+val connection = MongoConnection.create1("mongodb://host:27017", employeesCol).use(_.db.createCollection("db123"))
 ```
 
-_Notice_ that creating a collection within a _database_ forces the second one to be created as well (in case it did not exist before).
+_Notice_ that the collection we are explicitly creating is different to the one we passed to `CollectionRef`,
+the reason is because `myDb` is automatically created with the connection, so we don't need to explicitly create it. 
 
 ### List
 
 List _collection_ and _database_ names.
 
 ```scala
-val databases: Observable[String] = MongoDb.listDatabases(client)
-val collections: Observable[String] = MongoDb.listCollections(db)
+import monix.connect.mongodb.client.MongoConnection
+import monix.connect.mongodb.client.CollectionRef
+import monix.reactive.Observable
+
+val employeesCol = CollectionCodec("myDb", "employeesCol", classOf[Employee], createCodecProvider[Employee]())
+val connection = MongoConnection.create1("mongodb://host:27017", employeesCol).use { collOperator =>
+ //collection names from all databases
+ val collections: Observable[String] = for {
+  databaseName <- collOperator.db.listAllDatabases
+  collectionName <- collOperator.db.listCollections(databaseName)
+  // calling `listCollections` without arguments, would only
+  // return the collections names from the current list 
+ } yield collectionName
+ collections.count
+}
+
 ```
 
 ### Rename
@@ -81,7 +170,12 @@ val collections: Observable[String] = MongoDb.listCollections(db)
 Rename _collection's_ name on convenience.
 
 ```scala
-val isRenamed: Task[Boolean] = MongoDb.renameCollection(db, "oldCollection", "newCollection")
+import cats.effect.Resource
+import monix.eval.Task
+import monix.connect.mongodb.client.{CollectionOperator, MongoConnection}
+
+val connection: Resource[Task, CollectionOperator[Employee]] 
+val t = connection.use(_.db.renameCollection("oldCollectionName", "newCollectionName"))
 ```
 
 ### Drop
@@ -89,8 +183,18 @@ val isRenamed: Task[Boolean] = MongoDb.renameCollection(db, "oldCollection", "ne
 And finally _drop_ either the whole _database_ or a single _collection_.
 
 ```scala
-val databases: Task[Boolean] = MongoDb.dropDatabase(db)
-val collections: Task[Boolean] = MongoDb.dropCollection(db, "newCollection")
+import cats.effect.Resource
+import monix.eval.Task
+import monix.connect.mongodb.client.{CollectionOperator, MongoConnection}
+
+val connection: Resource[Task, CollectionOperator[Employee]]
+val t = connection.use { operator =>
+ for {
+  _ <- operator.db.dropCollection("db123", "coll123")
+  _ <- operator.db.dropDatabase("db123")
+ } yield ()
+}
+
 ```
 
 ## Collections 
@@ -141,7 +245,7 @@ Notice that in the below examples we are going to use the _employees collection_
 
 ## Operations & Sinks
 As it was mentioned at the beginning, the documentation of _Operation_ (`MongoOp`) and _Sink_ (`MongoSink`) is explained in the same section
-since these expose exactly the same set of operations _insert_, _delete_, _replace_ and _update_, although they approach differs on single (`Task`) vs multiple elements (`Observable`).
+since these expose exactly the same set of operations _insert_, _delete_, _replace_ and _update_, although they approach differs on single execution (`Task`) vs multiple (`Observable`).
 
 The following sub-sections represent the list of different _operations_ and _sinks_ available to use, with a small example for each one.
 Notice that the objects `MongoOp` and `MongoSink` are not imported in each of the examples since its assumed that these objects are already in the scope, 

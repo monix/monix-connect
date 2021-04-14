@@ -17,9 +17,11 @@ Monix Connect is an initiative to implement stream integrations for [Monix](http
 
 Learn more on how to get started in the [documentation page](https://monix.github.io/monix-connect/).
 
-Please, drop a ⭐ to support this project if you found it interesting!
+Please, drop a ⭐ to support this project if you found it interesting! 
+Reach us out on [gitter](https://gitter.im/monix/monix-connect) or submit an [issue](https://github.com/monix/monix-connect/issues/new)
+if you see room for improvement.
 
-### Connectors
+## Connectors
 
 The below list comprehends the current set of available connectors:
 1. [Apache Parquet](https://connect.monix.io/docs/parquet)
@@ -31,7 +33,7 @@ The below list comprehends the current set of available connectors:
 7. [MongoDB](https://connect.monix.io/docs/mongodb)
 8. [Redis](https://connect.monix.io/docs/redis)
 
-### Contributing
+## Contributing
 
 The Monix Connect project welcomes contributions from anybody wishing to
 participate.  All code or documentation that is provided must be
@@ -47,7 +49,7 @@ Feel free to open an issue if you notice a bug, you have a question about the co
 gladly accepted. For more information, check out the
 [contributor guide](CONTRIBUTING.md).
 
-### Credits 
+## Credits 
 
 The foundation of _Monix Connect_ was inspired on essence to the Akka's [Alpakka](https://doc.akka.io/docs/alpakka/current/index.html) project, and its name from the also popular [Kafka Connect](https://docs.confluent.io/current/connect/index.html).
 
