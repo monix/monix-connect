@@ -51,7 +51,7 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
     val connection = MongoConnection
       .create1(
         mongoEndpoint,
-        CollectionRef(
+        CollectionCodec(
           dbName,
           collectionName,
           classOf[Investor],
@@ -77,7 +77,7 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
 
     val connection = MongoConnection.create1(
       mongoClientSettings,
-      CollectionRef(dbName, collectionName, classOf[Employee], createCodecProvider[Employee]()))
+      CollectionCodec(dbName, collectionName, classOf[Employee], createCodecProvider[Employee]()))
 
     //when
     val r = connection.use {
@@ -93,7 +93,7 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
     //given
     val collectionName = Gen.identifier.sample.get
     val employee = genEmployee.sample.get
-    val col = CollectionRef(dbName, collectionName, classOf[Employee], createCodecProvider[Employee]())
+    val col = CollectionCodec(dbName, collectionName, classOf[Employee], createCodecProvider[Employee]())
     val connection = MongoConnection.createUnsafe1(MongoClients.create(mongoEndpoint), col)
 
     //when
@@ -325,15 +325,15 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
       MongoSingle.insertMany(employeesMongoCol, employees).runSyncUnsafe()
       MongoSingle.insertOne(companiesMongoCol, company).runSyncUnsafe()
       //and
-      val companiesCol = CollectionRef(
+      val companiesCol = CollectionCodec(
         dbName,
         companiesColName,
         classOf[Company],
         createCodecProvider[Company](),
         createCodecProvider[Employee]())
       val employeesCol =
-        CollectionRef(dbName, employeesColName, classOf[Employee], createCodecProvider[Employee]())
-      val investorsCol = CollectionRef(
+        CollectionCodec(dbName, employeesColName, classOf[Employee], createCodecProvider[Employee]())
+      val investorsCol = CollectionCodec(
         dbName,
         investorsColName,
         classOf[Investor],

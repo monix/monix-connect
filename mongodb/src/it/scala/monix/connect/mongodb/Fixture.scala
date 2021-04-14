@@ -25,6 +25,7 @@ import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistr
 import org.scalacheck.Gen
 import org.mongodb.scala.bson.codecs.Macros._
 import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
+import org.mongodb.scala.bson.conversions.Bson
 
 trait Fixture {
 
@@ -55,9 +56,10 @@ trait Fixture {
   val investorsMongoCol: MongoCollection[Investor] = db.getCollection(investorsColName, classOf[Investor])
     .withCodecRegistry(codecRegistry)
 
-  val employeesCol = CollectionRef(dbName, employeesColName, classOf[Employee], createCodecProvider[Employee]())
-  val companiesCol = CollectionRef(dbName, companiesColName, classOf[Company], createCodecProvider[Company](), createCodecProvider[Employee]())
-  val investorsCol = CollectionRef(dbName, companiesColName, classOf[Company], createCodecProvider[Investor](), createCodecProvider[Company](), createCodecProvider[Employee]())
+  val employeesCol = CollectionCodec(dbName, employeesColName, classOf[Employee], createCodecProvider[Employee]())
+  val companiesCol = CollectionCodec(dbName, companiesColName, classOf[Company], createCodecProvider[Company](), createCodecProvider[Employee]())
+  val investorsCol = CollectionCodec(dbName, companiesColName, classOf[Company], createCodecProvider[Investor](), createCodecProvider[Company](), createCodecProvider[Employee]())
+  val bsonCol = CollectionCodec(dbName, companiesColName, classOf[Bson])
 
   protected val genNonEmptyStr = Gen.identifier.map(_.take(10))
 

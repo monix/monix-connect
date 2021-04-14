@@ -17,6 +17,7 @@
 
 package monix.connect.mongodb
 
+import com.mongodb.connection.ClusterDescription
 import com.mongodb.reactivestreams.client.{MongoClient, MongoDatabase}
 import monix.connect.mongodb.internal.MongoDbImpl
 import monix.eval.Task
@@ -114,6 +115,17 @@ object MongoDb extends MongoDbImpl {
 class MongoDb(private[mongodb] val client: MongoClient, private[mongodb] val db: MongoDatabase) extends MongoDbImpl {
 
   /**
+    * Gets the current cluster description.
+    * The method may return a ClusterDescription whose clusterType is unknown and whose
+    * com.mongodb.connection.ServerDescriptions are all in the connecting state.
+    *
+    * If the application requires notifications after the driver has connected to a member of the cluster,
+    * it should register a ClusterListener via the ClusterSettings in com.mongodb.MongoClientSettings.
+    * the current cluster description
+    */
+  def getClusterDescription: Task[ClusterDescription] = Task.now(client.getClusterDescription)
+
+  /**
     * Create a new collection with the given name.
     *
     * @param collectionName the name for the new collection to create
@@ -124,21 +136,37 @@ class MongoDb(private[mongodb] val client: MongoClient, private[mongodb] val db:
     super.createCollection(db, collectionName)
 
   /**
-    * Drops a database.
+    * Drops the current database.
     *
     * @return a unit that signals on completion.
     */
-  def dropDatabase(): Task[Unit] =
+  def dropDatabase: Task[Unit] =
     super.dropDatabase(db)
 
   /**
-    * Drops a collection from the database.
+    * Drops the specified database.
+    *
+    * @return a unit that signals on completion.
+    */
+  def dropDatabase(db: String): Task[Unit] = Task.fromReactivePublisher(client.getDatabase(db).drop()).void
+
+  /**
+    * Drops a collection from the current database.
     *
     * @param collectionName the name of the collection to drop
     * @return a unit that signals on completion
     */
   def dropCollection(collectionName: String): Task[Unit] =
     super.dropCollection(db, collectionName)
+
+  /**
+    * Drops a collection from the specified database.
+    *
+    * @param collectionName the name of the collection to drop
+    * @return a unit that signals on completion
+    */
+  def dropCollection(db: String, collectionName: String): Task[Unit] =
+    Task.fromReactivePublisher(client.getDatabase(db).getCollection(collectionName).drop()).void
 
   /**
     * Check whether a collection exists or not.
@@ -169,18 +197,27 @@ class MongoDb(private[mongodb] val client: MongoClient, private[mongodb] val db:
     super.renameCollection(db, oldCollectionName, newCollectionName)
 
   /**
-    * Lists all the collections in the given database.
+    * Lists all the collections the current database.
     *
     * @return an [[Observable]] that emits the names of all the existing collections.
     */
-  def listCollections(): Observable[String] =
+  def listCollections: Observable[String] =
     super.listCollections(db)
+
+  /**
+    * Lists all the collections the given database.
+    *
+    * @return an [[Observable]] that emits the names of all the existing collections.
+    */
+  def listCollections(db: String): Observable[String] =
+    super.listCollections(client.getDatabase(db))
 
   /**
     * Get the list of the all database names.
     *
     * @return an [[Observable]] that emits the names of all the existing databases.
     */
-  def listAllDatabases(): Observable[String] =
+  def listAllDatabases: Observable[String] =
     super.listDatabases(client)
+
 }

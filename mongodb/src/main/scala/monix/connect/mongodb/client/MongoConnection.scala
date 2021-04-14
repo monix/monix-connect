@@ -31,6 +31,7 @@ import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
 import org.mongodb.scala.ConnectionString
 import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
 
+
 /**
   * Singleton object that exposes signatures to create a connection to the desired
   * specified mongo collections, the abstraction to operate with collections is
@@ -48,16 +49,18 @@ object MongoConnection {
   private[mongodb] def fromCodecProvider(codecRegistry: CodecProvider*): CodecRegistry =
     fromRegistries(fromProviders(codecRegistry: _*), DEFAULT_CODEC_REGISTRY)
 
-  private[mongodb] def connection1[T1]: MongoConnection[CollectionRef[T1], CollectionOperator[T1]] = {
-    new MongoConnection[CollectionRef[T1], CollectionOperator[T1]] {
+  private[mongodb] def connection1[T1]: MongoConnection[CollectionRef, CollectionOperator[T1]] = {
+    new MongoConnection[CollectionRef, CollectionOperator[T1]] {
 
-      override def createCollectionOperator(client: MongoClient, collections: CollectionRef[T1]): Task[CollectionOperator[T1]] = {
+      override def createCollectionOperator(client: MongoClient, collections: CollectionRef): Task[CollectionOperator[T1]] = {
         val db: MongoDatabase = client.getDatabase(collections.databaseName)
         MongoDb.createIfNotExists(db, collections.collectionName).map { _ =>
-          val col = db
-            .getCollection(collections.collectionName, collections.clazz)
-            .withCodecRegistry(fromCodecProvider(collections.codecProvider: _*))
-          mongodb.client.CollectionOperator(MongoDb(client, db), MongoSource(col), MongoSingle(col), MongoSink(col))
+          val col = collections match {
+            case _: CollectionBson => db.getCollection(collections.collectionName)
+            case CollectionCodec(_, collectionName, clazz, codecProviders) =>
+              db.getCollection(collectionName, clazz).withCodecRegistry(fromCodecProvider(codecProviders: _*))
+          }
+          CollectionOperator(MongoDb(client, db), MongoSource(col), MongoSingle(col), MongoSink(col))
         }
       }
 
