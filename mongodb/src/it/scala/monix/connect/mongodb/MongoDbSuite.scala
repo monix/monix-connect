@@ -145,7 +145,7 @@ class MongoDbSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     val l = MongoDb.listCollections(db).toListL.runSyncUnsafe()
 
     //then
-    l should not be empty
+    l.isEmpty shouldBe false
     l should contain theSameElementsAs collectionNames
   }
 

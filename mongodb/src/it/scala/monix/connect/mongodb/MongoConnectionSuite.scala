@@ -284,8 +284,8 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
 
     protected[this] def createConnectionTest2(
       makeResource: (
-        CollectionCodec[Employee],
-          CollectionCodec[Company]) => Resource[Task, Tuple2F[CollectionOperator, Employee, Company]]): Assertion = {
+        CollectionRef[Employee],
+        CollectionRef[Company]) => Resource[Task, Tuple2F[CollectionOperator, Employee, Company]]): Assertion = {
       //given
       val employee = genEmployee.sample.get
       val company = genCompany.sample.get
@@ -312,9 +312,9 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
 
     protected[this] def abstractCreateConnectionTest3(
       makeResource: (
-        CollectionCodec[Company],
-          CollectionCodec[Employee],
-          CollectionCodec[Investor]) => Resource[Task, Tuple3F[CollectionOperator, Company, Employee, Investor]])
+        CollectionRef[Company],
+        CollectionRef[Employee],
+        CollectionRef[Investor]) => Resource[Task, Tuple3F[CollectionOperator, Company, Employee, Investor]])
       : Assertion = {
       //given
       val employees = List(Employee("Caroline", 21, "Barcelona", "OldCompany"))
@@ -645,7 +645,6 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
           r8 shouldBe company
         }
     }.runSyncUnsafe()
-
 
   }
 }

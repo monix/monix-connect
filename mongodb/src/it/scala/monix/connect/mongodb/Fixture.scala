@@ -18,7 +18,7 @@
 package monix.connect.mongodb
 
 import com.mongodb.reactivestreams.client.{MongoClient, MongoClients, MongoCollection, MongoDatabase}
-import monix.connect.mongodb.client.CollectionRef
+import monix.connect.mongodb.client.{CollectionCodec, CollectionRef}
 import org.bson.Document
 import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
@@ -28,8 +28,6 @@ import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.conversions.Bson
 
 trait Fixture {
-
-
 
   case class Employee(name: String, age: Int, city: String, companyName: String = "x", activities: List[String] = List.empty)
   case class UnwoundEmployee(name: String, age: Int, city: String, activities: String)

@@ -19,6 +19,7 @@ package monix.connect.mongodb.client
 
 import cats.effect.Resource
 import com.mongodb.MongoClientSettings
+import com.mongodb.reactivestreams.client
 import com.mongodb.reactivestreams.client.{MongoClient, MongoClients, MongoDatabase}
 import monix.connect.mongodb
 import monix.connect.mongodb.domain._
@@ -26,9 +27,12 @@ import monix.connect.mongodb.{MongoDb, MongoSingle, MongoSink, MongoSource}
 import monix.eval.Task
 import monix.execution.annotations.UnsafeBecauseImpure
 import monix.reactive.Observable
+import org.bson
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
 import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
-import org.mongodb.scala.ConnectionString
+import org.bson.conversions.Bson
+import com.mongodb.reactivestreams.client.MongoCollection
+import org.mongodb.scala.{ConnectionString, Document}
 import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
 
 
@@ -46,96 +50,98 @@ import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
   */
 object MongoConnection {
 
+
   private[mongodb] def fromCodecProvider(codecRegistry: CodecProvider*): CodecRegistry =
     fromRegistries(fromProviders(codecRegistry: _*), DEFAULT_CODEC_REGISTRY)
 
-  private[mongodb] def connection1[T1]: MongoConnection[CollectionRef, CollectionOperator[T1]] = {
-    new MongoConnection[CollectionRef, CollectionOperator[T1]] {
-
-      override def createCollectionOperator(client: MongoClient, collections: CollectionRef): Task[CollectionOperator[T1]] = {
-        val db: MongoDatabase = client.getDatabase(collections.databaseName)
-        MongoDb.createIfNotExists(db, collections.collectionName).map { _ =>
-          val col = collections match {
-            case _: CollectionBson => db.getCollection(collections.collectionName)
-            case CollectionCodec(_, collectionName, clazz, codecProviders) =>
-              db.getCollection(collectionName, clazz).withCodecRegistry(fromCodecProvider(codecProviders: _*))
+  private[mongodb] def connection1[T1]: MongoConnection[Tuple1[CollectionRef[T1]], CollectionOperator[T1]] = {
+    new MongoConnection[Tuple1[CollectionRef[T1]], CollectionOperator[T1]] {
+      override def createCollectionOperator(client: MongoClient, collections: Tuple1[CollectionRef[T1]]): Task[CollectionOperator[T1]] = {
+        val db: MongoDatabase = client.getDatabase(collections._1.databaseName)
+        MongoDb.createIfNotExists(db, collections._1.collectionName).map { _ =>
+          val col: MongoCollection[T1] = {
+            collections._1 match {
+              case CollectionBson(_, collectionName) => db.getCollection(collectionName)
+              case codec: CollectionCodec[T1] =>
+                db.getCollection(collections._1.collectionName, codec.clazz)
+                  .withCodecRegistry(fromCodecProvider(codec.codecProviders: _*))
+            }
           }
           CollectionOperator(MongoDb(client, db), MongoSource(col), MongoSingle(col), MongoSink(col))
         }
       }
-
     }
   }
 
   private[mongodb] def connection2[T1, T2]
-    : MongoConnection[Tuple2[CollectionRef, CollectionRef], Tuple2F[CollectionOperator, T1, T2]] =
-    (client: MongoClient, collections: Tuple2[CollectionRef, CollectionRef]) => {
+  : MongoConnection[Tuple2F[CollectionRef, T1, T2], Tuple2F[CollectionOperator, T1, T2]] =
+    (client: MongoClient, collections: Tuple2F[CollectionRef, T1, T2]) => {
       for {
-        a <- connection1[T1](client, collections._1)
-        b <- connection1[T2](client, collections._2)
-      } yield (a, b)
+        one <- connection1[T1](client, Tuple1(collections._1))
+        two <- connection1[T2](client, Tuple1(collections._2))
+      } yield (one, two)
     }
 
   private[mongodb] def connection3[T1, T2, T3]
-    : MongoConnection[Tuple3[CollectionRef, CollectionRef, CollectionRef], Tuple3F[CollectionOperator, T1, T2, T3]] =
-    (client: MongoClient, collections: Tuple3[CollectionRef, CollectionRef, CollectionRef]) => {
+  : MongoConnection[Tuple3F[CollectionRef, T1, T2, T3], Tuple3F[CollectionOperator, T1, T2, T3]] =
+    (client: MongoClient, collections: Tuple3F[CollectionRef, T1, T2, T3]) => {
       val (c1, c2, c3) = collections
       for {
-        a <- connection1[T1](client, c1)
+        a <- connection1[T1](client, Tuple1(c1))
         b <- connection2[T2, T3].createCollectionOperator(client, (c2, c3))
       } yield (a, b._1, b._2)
     }
 
   private[mongodb] def connection4[T1, T2, T3, T4]
-    : MongoConnection[Tuple4[CollectionRef, CollectionRef, CollectionRef, CollectionRef], Tuple4F[CollectionOperator, T1, T2, T3, T4]] =
-    (client: MongoClient, collections: Tuple4[CollectionRef, CollectionRef, CollectionRef, CollectionRef]) => {
+  : MongoConnection[Tuple4F[CollectionRef, T1, T2, T3, T4], Tuple4F[CollectionOperator, T1, T2, T3, T4]] =
+    (client: MongoClient, collections: Tuple4F[CollectionRef, T1, T2, T3, T4]) => {
       val (c1, c2, c3, c4) = collections
       for {
-        a <- connection1[T1](client, c1)
+        a <- connection1[T1](client, Tuple1(c1))
         b <- connection3[T2, T3, T4].createCollectionOperator(client, (c2, c3, c4))
       } yield (a, b._1, b._2, b._3)
     }
 
   private[mongodb] def connection5[T1, T2, T3, T4, T5]
-    : MongoConnection[Tuple5[CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef], Tuple5F[CollectionOperator, T1, T2, T3, T4, T5]] =
-    (client: MongoClient, collections: Tuple5[CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef]) => {
+  : MongoConnection[Tuple5F[CollectionRef, T1, T2, T3, T4, T5], Tuple5F[CollectionOperator, T1, T2, T3, T4, T5]] =
+    (client: MongoClient, collections: Tuple5F[CollectionRef, T1, T2, T3, T4, T5]) => {
       val (c1, c2, c3, c4, c5) = collections
 
       for {
-        a <- connection1[T1](client, c1)
+        a <- connection1[T1](client, Tuple1(c1))
         b <- connection4[T2, T3, T4, T5].createCollectionOperator(client, (c2, c3, c4, c5))
       } yield (a, b._1, b._2, b._3, b._4)
     }
 
   private[mongodb] def connection6[T1, T2, T3, T4, T5, T6]: MongoConnection[
-    Tuple6[CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef],
+    Tuple6F[CollectionRef, T1, T2, T3, T4, T5, T6],
     Tuple6F[CollectionOperator, T1, T2, T3, T4, T5, T6]] =
-    (client: MongoClient, collections: Tuple6[CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef]) => {
+    (client: MongoClient, collections: Tuple6F[CollectionRef, T1, T2, T3, T4, T5, T6]) => {
       val (c1, c2, c3, c4, c5, c6) = collections
       for {
-        a <- connection1[T1](client, c1)
+        a <- connection1[T1](client, Tuple1(c1))
         b <- connection5[T2, T3, T4, T5, T6].createCollectionOperator(client, (c2, c3, c4, c5, c6))
       } yield (a, b._1, b._2, b._3, b._4, b._5)
     }
 
   private[mongodb] def connection7[T1, T2, T3, T4, T5, T6, T7]: MongoConnection[
-    Tuple7[CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef],
+    Tuple7F[CollectionRef, T1, T2, T3, T4, T5, T6, T7],
     Tuple7F[CollectionOperator, T1, T2, T3, T4, T5, T6, T7]] =
-    (client: MongoClient, collections: Tuple7[CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef]) => {
+    (client: MongoClient, collections: Tuple7F[CollectionRef, T1, T2, T3, T4, T5, T6, T7]) => {
       val (c1, c2, c3, c4, c5, c6, c7) = collections
       for {
-        a <- connection1[T1](client, c1)
+        a <- connection1[T1](client, Tuple1(c1))
         b <- connection6[T2, T3, T4, T5, T6, T7].createCollectionOperator(client, (c2, c3, c4, c5, c6, c7))
       } yield (a, b._1, b._2, b._3, b._4, b._5, b._6)
     }
 
   private[mongodb] def connection8[T1, T2, T3, T4, T5, T6, T7, T8]: MongoConnection[
-    Tuple8[CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef],
+    Tuple8F[CollectionRef, T1, T2, T3, T4, T5, T6, T7, T8],
     Tuple8F[CollectionOperator, T1, T2, T3, T4, T5, T6, T7, T8]] =
-    (client: MongoClient, collections: Tuple8[CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef]) => {
+    (client: MongoClient, collections: Tuple8F[CollectionRef, T1, T2, T3, T4, T5, T6, T7, T8]) => {
       val (c1, c2, c3, c4, c5, c6, c7, c8) = collections
       for {
-        a <- connection1[T1](client, c1)
+        a <- connection1[T1](client, Tuple1(c1))
         b <- connection7[T2, T3, T4, T5, T6, T7, T8].createCollectionOperator(client, (c2, c3, c4, c5, c6, c7, c8))
       } yield (a, b._1, b._2, b._3, b._4, b._5, b._6, b._7)
     }
@@ -173,7 +179,7 @@ object MongoConnection {
     * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]].
     */
   def create1[T1](connectionString: String, collection: CollectionRef[T1]): Resource[Task, CollectionOperator[T1]] =
-    connection1[T1].create(connectionString, collection)
+    connection1[T1].create(connectionString, Tuple1(collection))
 
   /**
     *
@@ -213,9 +219,9 @@ object MongoConnection {
     * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]].
     */
   def create1[T1](
-    clientSettings: MongoClientSettings,
-    collection: CollectionRef): Resource[Task, CollectionOperator[T1]] =
-    connection1[T1].create(clientSettings, collection)
+                   clientSettings: MongoClientSettings,
+                   collection: CollectionRef[T1]): Resource[Task, CollectionOperator[T1]] =
+    connection1[T1].create(clientSettings, Tuple1(collection))
 
   /**
     * Creates a single [[CollectionOperator]] from the specified [[CollectionRef]].
@@ -230,8 +236,8 @@ object MongoConnection {
     * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]
     */
   @UnsafeBecauseImpure
-  def createUnsafe1[T1](client: MongoClient, collection: CollectionRef): Resource[Task, CollectionOperator[T1]] =
-    connection1[T1].createUnsafe(client, collection)
+  def createUnsafe1[T1](client: MongoClient, collection: CollectionRef[T1]): Resource[Task, CollectionOperator[T1]] =
+    connection1[T1].createUnsafe(client, Tuple1(collection))
 
   /**
     * Creates a connection to mongodb and provides with a [[CollectionOperator]]
@@ -275,8 +281,8 @@ object MongoConnection {
     * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]s.
     */
   def create2[T1, T2](
-    connectionString: String,
-    collections: Tuple2[CollectionRef, CollectionRef]): Resource[Task, Tuple2F[CollectionOperator, T1, T2]] =
+                       connectionString: String,
+                       collections: Tuple2F[CollectionRef, T1, T2]): Resource[Task, Tuple2F[CollectionOperator, T1, T2]] =
     connection2.create(connectionString, collections)
 
   /**
@@ -324,8 +330,8 @@ object MongoConnection {
     * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]].
     */
   def create2[T1, T2](
-    clientSettings: MongoClientSettings,
-    collections: Tuple2[CollectionRef, CollectionRef]): Resource[Task, Tuple2F[CollectionOperator, T1, T2]] =
+                       clientSettings: MongoClientSettings,
+                       collections: Tuple2F[CollectionRef, T1, T2]): Resource[Task, Tuple2F[CollectionOperator, T1, T2]] =
     connection2.create(clientSettings, collections)
 
   /**
@@ -343,8 +349,8 @@ object MongoConnection {
     */
   @UnsafeBecauseImpure
   def createUnsafe2[T1, T2](
-    client: MongoClient,
-    collections: Tuple2[CollectionRef, CollectionRef]): Resource[Task, Tuple2F[CollectionOperator, T1, T2]] =
+                             client: MongoClient,
+                             collections: Tuple2F[CollectionRef, T1, T2]): Resource[Task, Tuple2F[CollectionOperator, T1, T2]] =
     connection2.createUnsafe(client, collections)
 
   /**
@@ -426,8 +432,8 @@ object MongoConnection {
     * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]s.
     */
   def create3[T1, T2, T3](
-    connectionString: String,
-    collections: Tuple3[CollectionRef, CollectionRef, CollectionRef]): Resource[Task, Tuple3F[CollectionOperator, T1, T2, T3]] =
+                           connectionString: String,
+                           collections: Tuple3F[CollectionRef, T1, T2, T3]): Resource[Task, Tuple3F[CollectionOperator, T1, T2, T3]] =
     connection3.create(connectionString, collections)
 
   /**
@@ -439,8 +445,8 @@ object MongoConnection {
     * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]].
     */
   def create3[T1, T2, T3](
-    clientSettings: MongoClientSettings,
-    collections: Tuple3[CollectionRef, CollectionRef, CollectionRef]): Resource[Task, Tuple3F[CollectionOperator, T1, T2, T3]] =
+                           clientSettings: MongoClientSettings,
+                           collections: Tuple3F[CollectionRef, T1, T2, T3]): Resource[Task, Tuple3F[CollectionOperator, T1, T2, T3]] =
     connection3.create(clientSettings, collections)
 
   /**
@@ -457,8 +463,8 @@ object MongoConnection {
     */
   @UnsafeBecauseImpure
   def createUnsafe3[T1, T2, T3](
-    client: MongoClient,
-    collections: Tuple3[CollectionRef, CollectionRef, CollectionRef]): Resource[Task, Tuple3F[CollectionOperator, T1, T2, T3]] =
+                                 client: MongoClient,
+                                 collections: Tuple3F[CollectionRef, T1, T2, T3]): Resource[Task, Tuple3F[CollectionOperator, T1, T2, T3]] =
     connection3.createUnsafe(client, collections)
 
   /**
@@ -475,8 +481,8 @@ object MongoConnection {
     * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]s.
     */
   def create4[T1, T2, T3, T4](
-    connectionString: String,
-    collections: Tuple4[CollectionRef, CollectionRef, CollectionRef, CollectionRef]): Resource[Task, Tuple4F[CollectionOperator, T1, T2, T3, T4]] =
+                               connectionString: String,
+                               collections: Tuple4F[CollectionRef, T1, T2, T3, T4]): Resource[Task, Tuple4F[CollectionOperator, T1, T2, T3, T4]] =
     connection4.create(connectionString, collections)
 
   /**
@@ -490,8 +496,8 @@ object MongoConnection {
     * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]].
     */
   def create4[T1, T2, T3, T4](
-    clientSettings: MongoClientSettings,
-    collections: Tuple4[CollectionRef, CollectionRef, CollectionRef, CollectionRef]): Resource[Task, Tuple4F[CollectionOperator, T1, T2, T3, T4]] =
+                               clientSettings: MongoClientSettings,
+                               collections: Tuple4F[CollectionRef, T1, T2, T3, T4]): Resource[Task, Tuple4F[CollectionOperator, T1, T2, T3, T4]] =
     connection4.create(clientSettings, collections)
 
   /**
@@ -508,8 +514,8 @@ object MongoConnection {
     */
   @UnsafeBecauseImpure
   def createUnsafe4[T1, T2, T3, T4](
-    client: MongoClient,
-    collections: Tuple4[CollectionRef, CollectionRef, CollectionRef, CollectionRef]): Resource[Task, Tuple4F[CollectionOperator, T1, T2, T3, T4]] =
+                                     client: MongoClient,
+                                     collections: Tuple4F[CollectionRef, T1, T2, T3, T4]): Resource[Task, Tuple4F[CollectionOperator, T1, T2, T3, T4]] =
     connection4.createUnsafe(client, collections)
 
   /**
@@ -525,8 +531,8 @@ object MongoConnection {
     * @param collections describes the set of collections that wants to be used (db, collectionName, codecs...)
     * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]s.
     */
-  def create5[T1, T2, T3, T4, T5](connectionString: String, collections: Tuple5[CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef])
-    : Resource[Task, Tuple5F[CollectionOperator, T1, T2, T3, T4, T5]] =
+  def create5[T1, T2, T3, T4, T5](connectionString: String, collections: Tuple5F[CollectionRef, T1, T2, T3, T4, T5])
+  : Resource[Task, Tuple5F[CollectionOperator, T1, T2, T3, T4, T5]] =
     connection5.create(connectionString, collections)
 
   /**
@@ -540,9 +546,9 @@ object MongoConnection {
     * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]].
     */
   def create5[T1, T2, T3, T4, T5](
-    clientSettings: MongoClientSettings,
-    collections: Tuple5[CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef])
-    : Resource[Task, Tuple5F[CollectionOperator, T1, T2, T3, T4, T5]] =
+                                   clientSettings: MongoClientSettings,
+                                   collections: Tuple5F[CollectionRef, T1, T2, T3, T4, T5])
+  : Resource[Task, Tuple5F[CollectionOperator, T1, T2, T3, T4, T5]] =
     connection5.create(clientSettings, collections)
 
   /**
@@ -558,8 +564,8 @@ object MongoConnection {
     * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]
     */
   @UnsafeBecauseImpure
-  def createUnsafe5[T1, T2, T3, T4, T5](client: MongoClient, collections: Tuple5[CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef])
-    : Resource[Task, Tuple5F[CollectionOperator, T1, T2, T3, T4, T5]] =
+  def createUnsafe5[T1, T2, T3, T4, T5](client: MongoClient, collections: Tuple5F[CollectionRef, T1, T2, T3, T4, T5])
+  : Resource[Task, Tuple5F[CollectionOperator, T1, T2, T3, T4, T5]] =
     connection5.createUnsafe(client, collections)
 
   /**
@@ -576,9 +582,9 @@ object MongoConnection {
     * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]s.
     */
   def create6[T1, T2, T3, T4, T5, T6](
-    connectionString: String,
-    collections: Tuple6[CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef])
-    : Resource[Task, Tuple6F[CollectionOperator, T1, T2, T3, T4, T5, T6]] =
+                                       connectionString: String,
+                                       collections: Tuple6F[CollectionRef, T1, T2, T3, T4, T5, T6])
+  : Resource[Task, Tuple6F[CollectionOperator, T1, T2, T3, T4, T5, T6]] =
     connection6.create(connectionString, collections)
 
   /**
@@ -592,9 +598,9 @@ object MongoConnection {
     * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]].
     */
   def create6[T1, T2, T3, T4, T5, T6](
-    clientSettings: MongoClientSettings,
-    collections: Tuple6[CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef])
-    : Resource[Task, Tuple6F[CollectionOperator, T1, T2, T3, T4, T5, T6]] =
+                                       clientSettings: MongoClientSettings,
+                                       collections: Tuple6F[CollectionRef, T1, T2, T3, T4, T5, T6])
+  : Resource[Task, Tuple6F[CollectionOperator, T1, T2, T3, T4, T5, T6]] =
     connection6.create(clientSettings, collections)
 
   /**
@@ -610,9 +616,9 @@ object MongoConnection {
     * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]
     */
   def createUnsafe6[T1, T2, T3, T4, T5, T6](
-    client: MongoClient,
-    collections: Tuple6[CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef])
-    : Resource[Task, Tuple6F[CollectionOperator, T1, T2, T3, T4, T5, T6]] =
+                                             client: MongoClient,
+                                             collections: Tuple6F[CollectionRef, T1, T2, T3, T4, T5, T6])
+  : Resource[Task, Tuple6F[CollectionOperator, T1, T2, T3, T4, T5, T6]] =
     connection6.createUnsafe(client, collections)
 
   /**
@@ -629,9 +635,9 @@ object MongoConnection {
     * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]s.
     */
   def create7[T1, T2, T3, T4, T5, T6, T7](
-    connectionString: String,
-    collections: Tuple7[CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef])
-    : Resource[Task, Tuple7F[CollectionOperator, T1, T2, T3, T4, T5, T6, T7]] =
+                                           connectionString: String,
+                                           collections: Tuple7F[CollectionRef, T1, T2, T3, T4, T5, T6, T7])
+  : Resource[Task, Tuple7F[CollectionOperator, T1, T2, T3, T4, T5, T6, T7]] =
     connection7.create(connectionString, collections)
 
   /**
@@ -645,9 +651,9 @@ object MongoConnection {
     * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]].
     */
   def create7[T1, T2, T3, T4, T5, T6, T7](
-    clientSettings: MongoClientSettings,
-    collections: Tuple7[CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef])
-    : Resource[Task, Tuple7F[CollectionOperator, T1, T2, T3, T4, T5, T6, T7]] =
+                                           clientSettings: MongoClientSettings,
+                                           collections: Tuple7F[CollectionRef, T1, T2, T3, T4, T5, T6, T7])
+  : Resource[Task, Tuple7F[CollectionOperator, T1, T2, T3, T4, T5, T6, T7]] =
     connection7.create(clientSettings, collections)
 
   /**
@@ -664,9 +670,9 @@ object MongoConnection {
     */
   @UnsafeBecauseImpure
   def createUnsafe7[T1, T2, T3, T4, T5, T6, T7](
-    client: MongoClient,
-    collections: Tuple7[CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef])
-    : Resource[Task, Tuple7F[CollectionOperator, T1, T2, T3, T4, T5, T6, T7]] =
+                                                 client: MongoClient,
+                                                 collections: Tuple7F[CollectionRef, T1, T2, T3, T4, T5, T6, T7])
+  : Resource[Task, Tuple7F[CollectionOperator, T1, T2, T3, T4, T5, T6, T7]] =
     connection7.createUnsafe(client, collections)
 
   /**
@@ -683,9 +689,9 @@ object MongoConnection {
     * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]]s.
     */
   def create8[T1, T2, T3, T4, T5, T6, T7, T8](
-    connectionString: String,
-    collections: Tuple8[CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef, CollectionRef])
-    : Resource[Task, Tuple8F[CollectionOperator, T1, T2, T3, T4, T5, T6, T7, T8]] =
+                                               connectionString: String,
+                                               collections: Tuple8F[CollectionRef, T1, T2, T3, T4, T5, T6, T7, T8])
+  : Resource[Task, Tuple8F[CollectionOperator, T1, T2, T3, T4, T5, T6, T7, T8]] =
     connection8.create(connectionString, collections)
 
   /**
@@ -699,10 +705,9 @@ object MongoConnection {
     * @return a [[Resource]] that provides a single [[CollectionOperator]] instance, linked to the specified [[CollectionRef]].
     */
   def create8[T1, T2, T3, T4, T5, T6, T7, T8](
-    clientSettings: MongoClientSettings,
-    collections: Tuple8[CollectionRef[T1], CollectionRef[T2], CollectionRef[T3], CollectionRef[T4],
-      CollectionRef[T5], CollectionRef[T6], CollectionRef[T7], CollectionRef[T8]])
-    : Resource[Task, Tuple8F[CollectionOperator, T1, T2, T3, T4, T5, T6, T7, T8]] =
+                                               clientSettings: MongoClientSettings,
+                                               collections: Tuple8F[CollectionRef, T1, T2, T3, T4, T5, T6, T7, T8])
+  : Resource[Task, Tuple8F[CollectionOperator, T1, T2, T3, T4, T5, T6, T7, T8]] =
     connection8.create(clientSettings, collections)
 
   /**
@@ -719,9 +724,9 @@ object MongoConnection {
     */
   @UnsafeBecauseImpure
   def createUnsafe8[T1, T2, T3, T4, T5, T6, T7, T8](
-    client: MongoClient,
-    collections: Tuple8F[CollectionRef, T1, T2, T3, T4, T5, T6, T7, T8])
-    : Resource[Task, Tuple8F[CollectionOperator, T1, T2, T3, T4, T5, T6, T7, T8]] =
+                                                     client: MongoClient,
+                                                     collections: Tuple8F[CollectionRef, T1, T2, T3, T4, T5, T6, T7, T8])
+  : Resource[Task, Tuple8F[CollectionOperator, T1, T2, T3, T4, T5, T6, T7, T8]] =
     connection8.createUnsafe(client, collections)
 }
 
