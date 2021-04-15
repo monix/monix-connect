@@ -19,22 +19,16 @@ package monix.connect.mongodb.client
 
 import cats.effect.Resource
 import com.mongodb.MongoClientSettings
-import com.mongodb.reactivestreams.client
 import com.mongodb.reactivestreams.client.{MongoClient, MongoClients, MongoDatabase}
-import monix.connect.mongodb
 import monix.connect.mongodb.domain._
 import monix.connect.mongodb.{MongoDb, MongoSingle, MongoSink, MongoSource}
 import monix.eval.Task
 import monix.execution.annotations.UnsafeBecauseImpure
-import monix.reactive.Observable
-import org.bson
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
 import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
-import org.bson.conversions.Bson
 import com.mongodb.reactivestreams.client.MongoCollection
-import org.mongodb.scala.{ConnectionString, Document}
+import org.mongodb.scala.ConnectionString
 import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
-
 
 /**
   * Singleton object that exposes signatures to create a connection to the desired
@@ -54,19 +48,19 @@ object MongoConnection {
   private[mongodb] def fromCodecProvider(codecRegistry: CodecProvider*): CodecRegistry =
     fromRegistries(fromProviders(codecRegistry: _*), DEFAULT_CODEC_REGISTRY)
 
-  private[mongodb] def connection1[T1]: MongoConnection[Tuple1[CollectionRef[T1]], CollectionOperator[T1]] = {
-    new MongoConnection[Tuple1[CollectionRef[T1]], CollectionOperator[T1]] {
-      override def createCollectionOperator(client: MongoClient, collections: Tuple1[CollectionRef[T1]]): Task[CollectionOperator[T1]] = {
+  private[mongodb] def connection1[Doc]: MongoConnection[Tuple1[CollectionRef[Doc]], CollectionOperator[Doc]] = {
+    new MongoConnection[Tuple1[CollectionRef[Doc]], CollectionOperator[Doc]] {
+      override def createCollectionOperator(client: MongoClient, collections: Tuple1[CollectionRef[Doc]]): Task[CollectionOperator[Doc]] = {
         val db: MongoDatabase = client.getDatabase(collections._1.databaseName)
         MongoDb.createIfNotExists(db, collections._1.collectionName).map { _ =>
-          val col: MongoCollection[T1] = {
+          val col: MongoCollection[Doc] = {
             collections._1 match {
-              case CollectionBson(_, collectionName) => db.getCollection(collectionName)
-              case codec: CollectionCodec[T1] =>
+              case CollectionBsonRef(_, collectionName) => db.getCollection(collectionName)
+              case codec: CollectionCodec[Doc] =>
                 db.getCollection(collections._1.collectionName, codec.clazz)
                   .withCodecRegistry(fromCodecProvider(codec.codecProviders: _*))
             }
-          }
+          }.asInstanceOf[MongoCollection[Doc]]
           CollectionOperator(MongoDb(client, db), MongoSource(col), MongoSingle(col), MongoSink(col))
         }
       }

@@ -58,7 +58,6 @@ trait Fixture {
   val companiesCol = CollectionCodec(dbName, companiesColName, classOf[Company], createCodecProvider[Company](), createCodecProvider[Employee]())
   val investorsCol = CollectionCodec(dbName, companiesColName, classOf[Company], createCodecProvider[Investor](), createCodecProvider[Company](), createCodecProvider[Employee]())
   val bsonCol = CollectionCodec(dbName, companiesColName, classOf[Bson])
-
   protected val genNonEmptyStr = Gen.identifier.map(_.take(10))
 
   val genInvestor = for {

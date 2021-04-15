@@ -142,6 +142,24 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
     abstractCreateConnectionTest3(makeResource)
   }
 
+  "Three collections" should "be created given the url endpoint" in new MongoConnectionFixture {
+    def makeResource(col1: CollectionRef[Company], col2: CollectionRef[Employee], col3: CollectionRef[Investor]) =
+      MongoConnection.create3(mongoEndpoint, (col1, col2, col3))
+    abstractCreateConnectionTest3(makeResource)
+  }
+
+  it should "be created given the mongo client settings" in new MongoConnectionFixture {
+    def makeResource(col1: CollectionRef[Company], col2: CollectionRef[Employee], col3: CollectionRef[Investor]) =
+      MongoConnection.create3(mongoClientSettings, (col1, col2, col3))
+    abstractCreateConnectionTest3(makeResource)
+  }
+
+  it should "be created unsafely given a mongo client" in new MongoConnectionFixture {
+    def makeResource(col1: CollectionRef[Company], col2: CollectionRef[Employee], col3: CollectionRef[Investor]) =
+      MongoConnection.createUnsafe3(MongoClients.create(mongoEndpoint), (col1, col2, col3))
+    abstractCreateConnectionTest3(makeResource)
+  }
+
   "Four collections" should "be created given the url endpoint" in new MongoConnectionFixture {
     val makeResource = (collections: Tuple4F[CollectionRef, Employee, Employee, Employee, Company]) =>
       MongoConnection.create4(mongoEndpoint, (collections._1, collections._2, collections._3, collections._4))
