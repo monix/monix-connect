@@ -1,131 +1,201 @@
 ---
-id: mongodb
-title: MongoDB
+id: mongodb title: MongoDB
 ---
 
 ## Introduction
-  
-_MongoDB_ is a _document database_, in which the data is stored in _JSON-like documents_ differing to the traditional _row/column_ model.
- It has a rich and expressive query language that allows you to filter and sort by any field with 
- support for aggregations and other modern use-cases.
- The _Monix MongoDB_ connector offers a _reactive_, _non blocking_ and _resource safe_ api, which relies in the underlying the [MongoDB Java Reactive Streams](https://docs.mongodb.com/drivers/reactive-streams) driver. 
- The library is designed in four different parts:
-  - __Database:__ Used to manage and dealing with _mongo databases_ and _collections_.
-  - __Operation:__ It exposes single operations to delete, insert, replace and update _collections_.
-  - __Sink:__ Implements the same operations as the _Operation_ api, but it in a streaming fashion.
-  - __Source:__ Used to fetch data from the collections with _aggregate_, _count_, _distinct_ and _find_.
 
- Each of these components is explained in detail in the following sections:
- 
+_MongoDB_ is a _document database_, in which the data is stored in _JSON-like documents_ differing to the traditional _
+row/column_ model. It has a rich and expressive query language that allows you to filter and sort by any field with
+support for aggregations and other modern use-cases. The _Monix MongoDB_ connector offers a _reactive_, _non blocking_
+and _resource safe_ api, which relies in the underlying
+the [MongoDB Java Reactive Streams](https://docs.mongodb.com/drivers/reactive-streams) driver. The library is designed
+in four different parts:
+
+- __Database:__ Used to manage and dealing with _mongo databases_ and _collections_.
+- __Operation:__ It exposes single operations to delete, insert, replace and update _collections_.
+- __Sink:__ Implements the same operations as the _Operation_ api, but it in a streaming fashion.
+- __Source:__ Used to fetch data from the collections with _aggregate_, _count_, _distinct_ and _find_.
+
+Each of these components is explained in detail in the following sections:
+
 ## Dependency
 
 Add the following dependency to get started:
+
 ```scala
 libraryDependencies += "io.monix" %% "monix-mongodb" % "0.6.0"
 ```
 
-## Connection 
+## Collection Reference
 
-Before creating the connection, we would need to know the details of the `Collection`  where we would like store and read documents in/from, analogous to tables in relational databases.
- 
-The collection is represented in the `CollectionRef` class, which to be created it requires the _database_ and _collection_ names, 
-and the `Codec` to read and write documents.
-See below example of the creating a _collection_ instance, in which for didactic purposes we have defined 
-`case class Employee(name: String, age: Int, city: String)`, representing the collection's json documents.
+Before creating the connection, we would need to have a reference to the `Collection` that we want to reach and to use
+for storing and reading documents.
+
+Such collection reference is identified by the _database_ and _collection_ names, and represented in code by
+the `CollectionRef` _sealed trait_, which is inherited by `CollectionCodecRef` and `CollectionDocRef`.
+
+### CollectionCodecRef
+
+The most practical way of representing documents in _Scala_ code is by defining them as _case class_, in which then they
+would need to be derived as `CodecProvider`. To do so, we could import implicit codec conversions
+from `import org.mongodb.scala.bson.codecs.Macros._`.
+
+For didactic purposes we have defined an `Employee` with a hypothetical `employees` collection that will be used to show
+how to create a collection reference with our custom _Codec_ that will later be used to create the `MongoConnection`.
 
 ```scala
 import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
-import monix.connect.mongodb.{MongoConnection, client}
+import monix.connect.mongodb.client.CollectionCodecRef
 import monix.connect.mongodb.client.CollectionRef
 
-val employee = Employee("Bob", 29)
-val employeesCol = client.CollectionCodec("myDb", "employees", classOf[Employee], createCodecProvider[Employee]())
+case class Employee(name: String, age: Int, city: String)
+
+val employee = Employee("Bob", 29, "Barcelona")
+val employeesCol: CollectionRef[Employee] =
+  CollectionCodecRef("myDb", "employees", classOf[Employee], createCodecProvider[Employee]())
 ```
 
-Then, the _collection_ will be passed to the creation of the _connection_ which is represented in the `MongoConnection` class.
-Creating the connection also requires the either a _connectionString_ or some _client settings_.
-You can find below an example of connecting to a _standalone MongoDB server_,
-but you could also connect to a _Replica Set_, a _Sharded Cluster_ and pass different options such _TLS/SSL_.
-Please, refer to the [official documentation](https://mongodb.github.io/mongo-java-driver/4.1/driver-reactive/tutorials/connect-to-mongodb/) for a complete guide.
+### CollectionDocumentRef
 
-### Client String 
+On the other hand, one could also use `org.bson.Document` as a generic type for representing a _Document_. In that
+case `CollectionDocumentRef` would be used, which only require the _db_ and _collection_ name to be created:
 
-On the one hand, using a connection string it would look like:
+```scala
+import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
+import monix.connect.mongodb.client.CollectionDocumentRef
+import monix.connect.mongodb.client.CollectionRef
+import org.bson.Document
+
+val sampleDocument = Document.parse("""{"film_name":"Jumanji", "year": 1995 }""")
+val documentCol: CollectionRef[Document] = CollectionDocumentRef("myDb", "employees")
+```
+
+## Connection
+
+Once we have created _collection reference_, we will pass it to the method that creates the _connection_
+which also requires either a **mongo** **connectionString** or **client settings**. You can find below an example of
+connecting to a _standalone MongoDB server_, but being also configurable for _Replica Set_, and _Sharded Cluster_  with
+different options such _TLS/SSL_, etc. For more details, please refer to
+the [official documentation](https://mongodb.github.io/mongo-java-driver/4.1/driver-reactive/tutorials/connect-to-mongodb/)
+.
+
+### Connection String
+
+See in below code snippet how to create the connection with **connection string**:
 
 ```scala
 import cats.effect.Resource
-import monix.connect.mongodb.client.{MongoConnection, CollectionRef}
+import monix.connect.mongodb.client.{CollectionCodecRef, MongoConnection}
 import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
 import com.mongodb.client.model.Filters
-import monix.connect.mongodb.client.{CollectionOperator, CollectionRef}
 import monix.eval.Task
 
-val employee = Employee("Bob", 29)
-val employeesCol = CollectionCodec("myDb", "employees", classOf[Employee], createCodecProvider[Employee]())
-val connection: Resource[Task, CollectionOperator[Employee]] =
- MongoConnection.create1("mongodb://localhost:27017", employeesCol)
+val employeesCol = CollectionCodecRef("myDb", "employees", classOf[Employee], createCodecProvider[Employee]())
+val connectionStr = "mongodb://localhost:27017"
+val connection = MongoConnection.create1(connectionStr, employeesCol)
 
-connection.use { case CollectionOperator(db, source, single, sink) => single.insertOne(employee) }
 ```
 
 ### Client Settings
-On the other hand, we could also build and pass the `MongoClientSettings` at the time of creating the connection:
+
+On the other hand, you could also build the configuration in a typed way with `MongoClientSettings`, see an example in
+below snippet:
 
 ```scala
-import monix.connect.mongodb.client.{MongoConnection, CollectionRef}
+import monix.connect.mongodb.client.{CollectionCodecRef, MongoConnection}
 import com.mongodb.{MongoClientSettings, ServerAddress}
-import monix.connect.mongodb.client.CollectionRef
 import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
 
 import scala.jdk.CollectionConverters._
 
 val clientSettings =
- MongoClientSettings.builder()
-         .applyToClusterSettings(builder =>
-          builder.hosts(
-           List(
-            new ServerAddress("host1", 27017),
-            new ServerAddress("host2", 27017)
-           ).asJava
-          )
-         ).build()
+  MongoClientSettings.builder()
+    .applyToClusterSettings(builder =>
+      builder.hosts(
+        List(
+          new ServerAddress("host1", 27017),
+          new ServerAddress("host2", 27017)
+        ).asJava
+      )
+    ).build()
 
-val employeesCol = CollectionCodec("myDb", "employees", classOf[Employee], createCodecProvider[Employee]())
+val employeesCol = CollectionCodecRef("myDb", "employees", classOf[Employee], createCodecProvider[Employee]())
 val connection = MongoConnection.create1(clientSettings, employeesCol)
 ```
 
-### CollectionOperator
+## CollectionOperator
 
-Notice that the creation of the connection returns `cats.effect.Resource`, which abstracts the acquisition and release of the 
-resources consumed by the `MongoClient`. 
-The usage of such resources provides a `CollectionOperator`, which it is composed by four main components: `Database`, `Source`, `Single` and `Sink`,
- and bring together the necessary methods to operate with the specified collections.
+Notice that the creation of the connection returns `cats.effect.Resource`, which abstracts the acquisition and release
+of the resources consumed by creating the `MongoClient`. The usage of such resources provides a `CollectionOperator`,
+which it is composed by four main components: `Database`, `Source`, `Single` and `Sink`, and together, they bring all
+the necessary methods to operate with the specified collections.
+
+### Multiple Collections
+
+The api is designed to allow using multiple collections (up to 8) in a single connection. This is exposed in the
+signatures `create1`, `create2`, `create3`, ..., `create8`, and they a `TupleN` respectively to the number of
+collections, see below an example:
+
+```scala
+import monix.connect.mongodb.client.{CollectionCodecRef, CollectionDocumentRef, MongoConnection}
+import com.mongodb.{MongoClientSettings, ServerAddress}
+import com.mongodb.client.model.Filters
+import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
+import org.bson.Document
+import monix.execution.Scheduler.Implicits.global
+
+import scala.jdk.CollectionConverters._
+
+val business: Document = Document.parse(s"""{"business_name":"MyBusiness", "year": 1995}""")
+val employee1 = Employee("Employee1", 21, "Paris")
+val employee2 = Employee("Employee2", 29, "Amsterdam")
+val businessCol = CollectionDocumentRef(database = "myDb", collection = "business_collection")
+val employeesCol =
+  CollectionCodecRef("myDb", "employees_collection", classOf[Employee], createCodecProvider[Employee]())
+val connection = MongoConnection.create2("mongodb://host:27017", (employeesCol, businessCol))
+
+connection.use { case (employeesOperator, businessOperator) =>
+  for {
+    //business logic here
+    _ <- employeesOperator.single.insertMany(List(employee1, employee2)) >>
+      businessOperator.single.insertOne(business)
+    parisEmployeesCount <- employeesOperator.source.count(Filters.eq("city", "Paris"))
+    myOnlyBusiness <- businessOperator.source.find(Filters.eq("film_name", "MyBusiness")).headL
+  } yield (parisEmployeesCount, myOnlyBusiness)
+}.runToFuture
+```
 
 ## Database
 
-Dealing with _database_ operations is a common use case in any driver. Nevertheless, the `CollectionOperator` comes with 
- an instance of `MongoDatabase`, allowing to __create__, __drop__, __list__ and __check existence__ of both _databases_ and _collections_, 
+Dealing with _database_ operations is a common use case in any driver. Nevertheless, the `CollectionOperator` comes with
+an instance of `MongoDatabase`, allowing to __create__, __drop__, __list__ and __check existence__ of both _databases_
+and _collections_,
 
 ### Exists
 
-The `MongoDatabase` is just a reference to the target _database_, 
-which may or may not already exist. In case you want to check that before trying to read or insert any data:
+The `MongoDatabase` is just a reference to the target _database_, which may or may not already exist. In case you want
+to check that before trying to read or insert any data:
 
 ```scala
 import monix.eval.Task
 import monix.connect.mongodb.MongoDb
 import monix.connect.mongodb.client.MongoConnection
-import monix.connect.mongodb.client.CollectionRef
+import monix.connect.mongodb.client.CollectionCodecRef
 import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
 
-val employeesCol = CollectionCodec("myDb", "employees", classOf[Employee], createCodecProvider[Employee]())
-val connection = MongoConnection.create1("mongodb://host:27017", employeesCol).use(_.db.existsDatabase("db123"))
-
+val employeesCol = CollectionCodecRef("myDb", "employees", classOf[Employee], createCodecProvider[Employee]())
+val connection = MongoConnection.create1("mongodb://host:27017", employeesCol)
+val isDbPresent = connection.use { colOperator =>
+  for {
+    isDbPresent <- colOperator.db.existsDatabase("myDb")
+    isCollectionPresent <- colOperator.db.existsCollection("my_collection")
+  } yield (isDbPresent, isCollectionPresent)
+}
 // if the db existed you could also check the existence of a particular collection
-val isCollectionPresent: Task[Boolean] = MongoDb.existsCollection("db123", "col123")
+val isCollectionPresent: Task[Boolean] = MongoDb.existsCollection("myDb", "my_collection")
 ```
 
-### Create 
+### Create
 
 Create a new collection within a given _database_.
 
@@ -139,8 +209,8 @@ val employeesCol = CollectionCodec("myDb", "employeesCol", classOf[Employee], cr
 val connection = MongoConnection.create1("mongodb://host:27017", employeesCol).use(_.db.createCollection("db123"))
 ```
 
-_Notice_ that the collection we are explicitly creating is different to the one we passed to `CollectionRef`,
-the reason is because `myDb` is automatically created with the connection, so we don't need to explicitly create it. 
+_Notice_ that the collection we are explicitly creating is different to the one we passed to `CollectionRef`, the reason
+is because `myDb` is automatically created with the connection, so we don't need to explicitly create it.
 
 ### List
 
@@ -153,14 +223,14 @@ import monix.reactive.Observable
 
 val employeesCol = CollectionCodec("myDb", "employeesCol", classOf[Employee], createCodecProvider[Employee]())
 val connection = MongoConnection.create1("mongodb://host:27017", employeesCol).use { collOperator =>
- //collection names from all databases
- val collections: Observable[String] = for {
-  databaseName <- collOperator.db.listAllDatabases
-  collectionName <- collOperator.db.listCollections(databaseName)
-  // calling `listCollections` without arguments, would only
-  // return the collections names from the current list 
- } yield collectionName
- collections.count
+  //collection names from all databases
+  val collections: Observable[String] = for {
+    databaseName <- collOperator.db.listAllDatabases
+    collectionName <- collOperator.db.listCollections(databaseName)
+    // calling `listCollections` without arguments, would only
+    // return the collections names from the current list 
+  } yield collectionName
+  collections.count
 }
 
 ```
@@ -174,13 +244,13 @@ import cats.effect.Resource
 import monix.eval.Task
 import monix.connect.mongodb.client.{CollectionOperator, MongoConnection}
 
-val connection: Resource[Task, CollectionOperator[Employee]] 
+val connection: Resource[Task, CollectionOperator[Employee]]
 val t = connection.use(_.db.renameCollection("oldCollectionName", "newCollectionName"))
 ```
 
 ### Drop
 
-And finally _drop_ either the whole _database_ or a single _collection_.
+And finally, _drop_ either the entire _database_ or _collection_.
 
 ```scala
 import cats.effect.Resource
@@ -189,22 +259,24 @@ import monix.connect.mongodb.client.{CollectionOperator, MongoConnection}
 
 val connection: Resource[Task, CollectionOperator[Employee]]
 val t = connection.use { operator =>
- for {
-  _ <- operator.db.dropCollection("db123", "coll123")
-  _ <- operator.db.dropDatabase("db123")
- } yield ()
+  for {
+    _ <- operator.db.dropCollection("db123", "coll123")
+    _ <- operator.db.dropDatabase("db123")
+  } yield ()
 }
 
 ```
 
-## Collections 
+## Collections
 
-At the time you are directly interacting with the collections either for reading or writing,
- you would always need an instance of a `MongoCollection` which represents the target collection.
- 
-Such object is typed by default with `org.bson.Document` but it also supports automatic _codec derivation_ which allows to specify a class document to that collection.
+At the time you are directly interacting with the collections either for reading or writing, you would always need an
+instance of a `MongoCollection` which represents the target collection.
 
-Both have some pros and cons, the first one provides more flexibility to working with any type of document that the collection may contain and also to insert following different formats. 
+Such object is typed by default with `org.bson.Document` but it also supports automatic _codec derivation_ which allows
+to specify a class document to that collection.
+
+Both have some pros and cons, the first one provides more flexibility to working with any type of document that the
+collection may contain and also to insert following different formats.
 
 Creating an instance of a _collection_ without _codec derivation_ would be just like below code:
 
@@ -215,13 +287,16 @@ import org.bson.Document
 val col: MongoCollection[Document] = db.getCollection("myCollection")
 ```
 
-On the other hand if you use _codec derivation_, your generated collection will stick to that codec either for _reading_ or _writing_.
-To do so, it is necessary first to define the class that you'll later supply to the `codecRegistry`, as an example we are going to use the following one:
+On the other hand if you use _codec derivation_, your generated collection will stick to that codec either for _reading_
+or _writing_. To do so, it is necessary first to define the class that you'll later supply to the `codecRegistry`, as an
+example we are going to use the following one:
+
 ```scala
 case class Employee(name: String, age: Int, nationality: String, activities: List[String] = List.empty)
 ```
 
-Then create a `_codecRegistry_ with the _case class_ we just defined and supply it to the _collection_. 
+Then create a `_codecRegistry_ with the _case class_ we just defined and supply it to the _collection_.
+
  ```scala
 import com.mongodb.reactivestreams.client.{MongoCollection, MongoClient, MongoClients, MongoDatabase}
 import org.bson.Document
@@ -232,24 +307,28 @@ import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistr
 
 val client: MongoClient = MongoClients.create(s"mongodb://localhost:27017")
 val db: MongoDatabase = client.getDatabase("mydb")
- 
+
 val codecRegistry = fromRegistries(fromProviders(classOf[Employee]), DEFAULT_CODEC_REGISTRY)
 
 val col: MongoCollection[Employee] = db.getCollection("myCollection", classOf[Employee])
-    .withCodecRegistry(codecRegistry)
+  .withCodecRegistry(codecRegistry)
 ```
 
-Now that we have the instance of `MongoCollection` we're ready to start operating with such _collection_. 
-Notice that in the below examples we are going to use the _employees collection_ that just was created,
- meaning that our input and output documents will be of type `Employee`.
+Now that we have the instance of `MongoCollection` we're ready to start operating with such _collection_. Notice that in
+the below examples we are going to use the _employees collection_ that just was created, meaning that our input and
+output documents will be of type `Employee`.
 
 ## Operations & Sinks
-As it was mentioned at the beginning, the documentation of _Operation_ (`MongoOp`) and _Sink_ (`MongoSink`) is explained in the same section
-since these expose exactly the same set of operations _insert_, _delete_, _replace_ and _update_, although they approach differs on single execution (`Task`) vs multiple (`Observable`).
 
-The following sub-sections represent the list of different _operations_ and _sinks_ available to use, with a small example for each one.
-Notice that the objects `MongoOp` and `MongoSink` are not imported in each of the examples since its assumed that these objects are already in the scope, 
-if you want to import them they are located in the package: `monix.connect.mongodb`.
+As it was mentioned at the beginning, the documentation of _Operation_ (`MongoOp`) and _Sink_ (`MongoSink`) is explained
+in the same section since these expose exactly the same set of operations _insert_, _delete_, _replace_ and _update_,
+although they approach differs on single execution (`Task`) vs multiple (`Observable`).
+
+The following sub-sections represent the list of different _operations_ and _sinks_ available to use, with a small
+example for each one. Notice that the objects `MongoOp` and `MongoSink` are not imported in each of the examples since
+its assumed that these objects are already in the scope, if you want to import them they are located in the
+package: `monix.connect.mongodb`.
+
 ### Insert
 
 #### insertOne
@@ -257,6 +336,7 @@ if you want to import them they are located in the package: `monix.connect.mongo
 Inserts the provided document to the specified collection.
 
 _Operation_:
+
 ```scala
 import monix.connect.mongodb.domain.InsertOneResult
 import monix.connect.mongodb.MongoOp
@@ -267,12 +347,13 @@ val t: Task[InsertOneResult] = MongoOp.insertOne(col, employee)
 ```
 
 _Sink_:
+
 ```scala
 import monix.connect.mongodb.MongoSink
 
 val employees: List[Employee] = List(Employee("Ryan", "Singapore", 25), Employee("Nil", "Singapore", 55))
 Observable.from(employees) // Observable[Employee]
- .consumeWith(MongoSink.insertOne(col))
+  .consumeWith(MongoSink.insertOne(col))
 ```
 
 #### insertMany
@@ -280,6 +361,7 @@ Observable.from(employees) // Observable[Employee]
 Inserts the provided list of documents to the specified collection.
 
 _Operation_:
+
 ```scala
 import monix.connect.mongodb.domain.InsertManyResult
 import monix.connect.mongodb.MongoOp
@@ -290,6 +372,7 @@ val t: Task[InsertManyResult] = MongoOp.insertMany(col, employees)
 ```
 
 _Sink_:
+
 ```scala
 import monix.connect.mongodb.MongoSink
 
@@ -302,21 +385,25 @@ Observable.from(List(l1, l2)) // Observable[List[Employee]]
 
 ### Delete
 
-#### deleteOne 
-Removes at most one _document_ from the _collection_ that matches the given _filter_. If no documents match, the _collection_ is not modified.
+#### deleteOne
+
+Removes at most one _document_ from the _collection_ that matches the given _filter_. If no documents match, the _
+collection_ is not modified.
 
 _Operation_:
+
 ```scala
 import com.mongodb.client.model.Filters
 import monix.connect.mongodb.domain.DeleteResult
 import monix.connect.mongodb.MongoOp
 
-val filter = Filters.eq("name", "Bob") 
+val filter = Filters.eq("name", "Bob")
 // returns an empty option when for example the filter did not find any match 
 val t: Task[DeleteResult] = MongoOp.deleteOne(col, filter)
 ```
 
 _Sink_:
+
 ```scala
 import com.mongodb.client.model.Filters
 import monix.connect.mongodb.MongoSink
@@ -330,9 +417,12 @@ Observable.from(employees) // Observable[String]
 ```
 
 #### deleteMany
-Removes all documents from the _collection_ that match the given query filter. Again if no _documents_ match, the _collection_ is not modified.
+
+Removes all documents from the _collection_ that match the given query filter. Again if no _documents_ match, the _
+collection_ is not modified.
 
 _Operation_:
+
 ```scala
 import com.mongodb.client.model.Filters
 import monix.connect.mongodb.domain.DeleteResult
@@ -343,22 +433,25 @@ val t: Task[DeleteResult] = MongoOp.deleteMany(col, Filters.gt("age", 65))
 ```
 
 _Sink_:
+
 ```scala
 import com.mongodb.client.model.Filters
 import monix.connect.mongodb.MongoSink
 
 // all employees from `Germany`, `Italy` or `Turkey` would be deleted (fired)  
 Observable.from(List("Germany", "Italy", "Turkey")) // Observable[List[String]]
-   .map(location => Filters.eq("location", location)) // Observable[List[Bson]]
-   .consumeWith(MongoSink.deleteMany(col))
+  .map(location => Filters.eq("location", location)) // Observable[List[Bson]]
+  .consumeWith(MongoSink.deleteMany(col))
 ```
 
 ### Replace
 
 #### replaceOne
+
 Replace a _document_ in the _collection_ according to the specified arguments.
 
 _Operation_:
+
 ```scala
 import com.mongodb.client.model.Filters
 import monix.connect.mongodb.domain.UpdateResult
@@ -375,6 +468,7 @@ val t: Task[UpdateResult] = MongoOp.replaceOne(col, filter, alice)
 ```
 
 _Sink_:
+
 ```scala
 import com.mongodb.client.model.Filters
 import monix.connect.mongodb.MongoSink
@@ -385,16 +479,17 @@ val t2 = (Filters.eq("name", "Employee2"), Employee("Employee4", 37, "Rio"))
 val replacements: Seq[(Bson, Employee)] = List(t1, t2)
 
 Observable.from(replacements) // Observable[(Bson, Employee)]
-.consumeWith(MongoSink.replaceOne(col)).runSyncUnsafe()
+  .consumeWith(MongoSink.replaceOne(col)).runSyncUnsafe()
 ```
 
 ### Update
 
 #### updateOne
 
-Update a single document in the collection according to the specified arguments. 
+Update a single document in the collection according to the specified arguments.
 
 _Operation_:
+
 ```scala
 import com.mongodb.client.model.{Filters, Updates}
 import monix.connect.mongodb.domain.UpdateResult
@@ -420,7 +515,7 @@ val l: Seq[(Bson, Bson)] = List.fill(4)((filter, update))
 
 // imagine that a company wants to send four of its employees from Porto to Lisbon
 Observable.from(l) // Observable[(Bson, Bson)]
-.consumeWith(MongoSink.updateOne(col))
+  .consumeWith(MongoSink.updateOne(col))
 ```
 
 #### updateMany
@@ -428,6 +523,7 @@ Observable.from(l) // Observable[(Bson, Bson)]
 Update all documents in the collection according to the specified arguments.
 
 _Operation_:
+
 ```scala
 import com.mongodb.client.model.{Filters, Updates}
 import monix.connect.mongodb.domain.UpdateResult
@@ -441,6 +537,7 @@ val t: Task[UpdateResult] = MongoOp.updateMany(col, filter, update)
 ```
 
 _Sink_:
+
 ```scala
 import com.mongodb.client.model.{Filters, Updates}
 import monix.connect.mongodb.MongoSink
@@ -454,17 +551,18 @@ Observable.from(cities) // Observable[String]
 
 ## Sources
 
-The `MongoSource` object abstracts the mongodb _read-like_ operations (_aggregate_, _count_, _distinct_ and _find_) 
-with some exceptions that also will modify the collection (_findOneAnd* Delete_, _Replace_ or _Update_),
- these three exceptions were put to _MongoSource_ rather than to _MongoOp_ 
- since its main purpose is to _fetch_ a _document_ but then they also alter it from the _collection_. 
- 
- ### Aggregate
-     
- This source _aggregates_ documents according to the specified _aggregation pipeline_. 
- You can find below examples for performing _group by_ and a _unwind_ aggregations.
+The `MongoSource` object abstracts the mongodb _read-like_ operations (_aggregate_, _count_, _distinct_ and _find_)
+with some exceptions that also will modify the collection (_findOneAnd* Delete_, _Replace_ or _Update_), these three
+exceptions were put to _MongoSource_ rather than to _MongoOp_
+since its main purpose is to _fetch_ a _document_ but then they also alter it from the _collection_.
+
+### Aggregate
+
+This source _aggregates_ documents according to the specified _aggregation pipeline_. You can find below examples for
+performing _group by_ and a _unwind_ aggregations.
 
 __Group By__
+
  ```scala
 import org.bson.Document
 import monix.connect.mongodb.MongoSource
@@ -479,8 +577,8 @@ val aggregated: Task[Option[Document]] = MongoSource.aggregate[Employee](col, Se
 
 __Unwind__
 
-Deconstructs an array field from the input documents to output a document for each element. 
-So each output document is a copy of the the main document with the value of the array field replaced by the element.
+Deconstructs an array field from the input documents to output a document for each element. So each output document is a
+copy of the the main document with the value of the array field replaced by the element.
 
 In the below example the _activities_ of the specified employee will be deconstructed.
 
@@ -512,8 +610,8 @@ val unwound2: Observable[Document] = MongoSource.aggregate[Employee](col, Seq(fi
 ```
 
 ### Count
- 
-#### countAll 
+
+#### countAll
 
 Counts all the documents (with no filters)
 
@@ -535,7 +633,7 @@ val filer: Bson = Filters.eq("city", "Sydney")
 val nElements: Task[Long] = MongoSource.count(col, filer)
 ```
 
- ### Distinct
+### Distinct
 
 Gets the distinct values of the specified field name.
 
@@ -546,9 +644,10 @@ import monix.connect.mongodb.MongoSource
 val distinct: Observable[String] = MongoSource.distinct(col, "city", classOf[String])
 ```
 
- ### Find
+### Find
 
- #### findAll   
+#### findAll
+
 Finds all the documents.
 
 ```scala
@@ -557,7 +656,7 @@ import monix.connect.mongodb.MongoSource
 val ob: Observable[Employee] = MongoSource.findAll[Employee](col)
 ```
 
- #### find   
+#### find
 
 Finds the documents in the collection that matched the query filter.
 
@@ -569,20 +668,20 @@ val filter = Filters.eq("city", "San Francisco")
 val ob: Observable[Employee] = MongoSource.find[Employee](col, filter)
 ```
 
- #### findOneAndDelete   
-   
- Atomically _find_ a document and _remove_ it.
-   
+#### findOneAndDelete
+
+Atomically _find_ a document and _remove_ it.
+
    ```scala
 import com.mongodb.client.model.Filters
 import monix.connect.mongodb.MongoSource
 
 // finds and deletes one Cracow employee older than 66 and
-val filter = Filters.and(Filters.eq("city", "Cracow"), Filters.gt("age", 66)) 
+val filter = Filters.and(Filters.eq("city", "Cracow"), Filters.gt("age", 66))
 val t: Task[Employee] = MongoSource.findOneAndDelete(col, filter)
  ```
 
-#### findOneAndReplace  
+#### findOneAndReplace
 
 Atomically _find_ a document and _replace_ it.
 
@@ -592,7 +691,7 @@ import monix.connect.mongodb.MongoSource
 
 val filter = Filters.and(Filters.eq("city", "Cadiz"), Filters.eq("name", "Gustavo"))
 val replacement = Employee(name = "Alberto", city = "Cadiz", age = 33)
-val t: Task[Employee]  = MongoSource.findOneAndReplace(col, filter, replacement)
+val t: Task[Employee] = MongoSource.findOneAndReplace(col, filter, replacement)
 ```
 
 #### findOneAndUpdate

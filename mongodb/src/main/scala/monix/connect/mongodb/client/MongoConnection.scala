@@ -51,13 +51,13 @@ object MongoConnection {
   private[mongodb] def connection1[Doc]: MongoConnection[Tuple1[CollectionRef[Doc]], CollectionOperator[Doc]] = {
     new MongoConnection[Tuple1[CollectionRef[Doc]], CollectionOperator[Doc]] {
       override def createCollectionOperator(client: MongoClient, collections: Tuple1[CollectionRef[Doc]]): Task[CollectionOperator[Doc]] = {
-        val db: MongoDatabase = client.getDatabase(collections._1.databaseName)
-        MongoDb.createIfNotExists(db, collections._1.collectionName).map { _ =>
+        val db: MongoDatabase = client.getDatabase(collections._1.database)
+        MongoDb.createIfNotExists(db, collections._1.collection).map { _ =>
           val col: MongoCollection[Doc] = {
             collections._1 match {
-              case CollectionBsonRef(_, collectionName) => db.getCollection(collectionName)
-              case codec: CollectionCodec[Doc] =>
-                db.getCollection(collections._1.collectionName, codec.clazz)
+              case CollectionDocumentRef(_, collectionName) => db.getCollection(collectionName)
+              case codec: CollectionCodecRef[Doc] =>
+                db.getCollection(collections._1.collection, codec.clazz)
                   .withCodecRegistry(fromCodecProvider(codec.codecProviders: _*))
             }
           }.asInstanceOf[MongoCollection[Doc]]

@@ -18,10 +18,9 @@
 package monix.connect.mongodb
 
 import cats.effect.Resource
-import com.mongodb.{MongoClientSettings, ServerAddress}
 import com.mongodb.client.model.{Filters, Updates}
 import com.mongodb.reactivestreams.client.MongoClients
-import monix.connect.mongodb.client.{CollectionCodec, CollectionOperator, CollectionRef, MongoConnection}
+import monix.connect.mongodb.client.{CollectionCodecRef, CollectionOperator, CollectionRef, MongoConnection}
 import monix.connect.mongodb.domain.{Tuple2F, Tuple3F, Tuple4F, Tuple5F, Tuple6F, Tuple7F, Tuple8F}
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
@@ -51,7 +50,7 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
     val connection = MongoConnection
       .create1(
         mongoEndpoint,
-        CollectionCodec(
+        CollectionCodecRef(
           dbName,
           collectionName,
           classOf[Investor],
@@ -77,7 +76,7 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
 
     val connection = MongoConnection.create1(
       mongoClientSettings,
-      CollectionCodec(dbName, collectionName, classOf[Employee], createCodecProvider[Employee]()))
+      CollectionCodecRef(dbName, collectionName, classOf[Employee], createCodecProvider[Employee]()))
 
     //when
     val r = connection.use {
@@ -93,7 +92,7 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
     //given
     val collectionName = Gen.identifier.sample.get
     val employee = genEmployee.sample.get
-    val col = CollectionCodec(dbName, collectionName, classOf[Employee], createCodecProvider[Employee]())
+    val col = CollectionCodecRef(dbName, collectionName, classOf[Employee], createCodecProvider[Employee]())
     val connection = MongoConnection.createUnsafe1(MongoClients.create(mongoEndpoint), col)
 
     //when
@@ -294,12 +293,6 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
 
   trait MongoConnectionFixture {
 
-    val mongoClientSettings =
-      MongoClientSettings
-        .builder()
-        .applyToClusterSettings(builder => builder.hosts(List(new ServerAddress("localhost", 27017)).asJava))
-        .build()
-
     protected[this] def createConnectionTest2(
       makeResource: (
         CollectionRef[Employee],
@@ -343,15 +336,15 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
       MongoSingle.insertMany(employeesMongoCol, employees).runSyncUnsafe()
       MongoSingle.insertOne(companiesMongoCol, company).runSyncUnsafe()
       //and
-      val companiesCol = CollectionCodec(
+      val companiesCol = CollectionCodecRef(
         dbName,
         companiesColName,
         classOf[Company],
         createCodecProvider[Company](),
         createCodecProvider[Employee]())
       val employeesCol =
-        CollectionCodec(dbName, employeesColName, classOf[Employee], createCodecProvider[Employee]())
-      val investorsCol = CollectionCodec(
+        CollectionCodecRef(dbName, employeesColName, classOf[Employee], createCodecProvider[Employee]())
+      val investorsCol = CollectionCodecRef(
         dbName,
         investorsColName,
         classOf[Investor],
@@ -362,7 +355,7 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
       val connection = makeResource(companiesCol, employeesCol, investorsCol)
 
       //when
-      val updateResult = connection.use {
+      connection.use {
         case (
             CollectionOperator(_, companySource, companySingle, companySink),
             CollectionOperator(_, employeeSource, employeeSingle, employeeSink),
@@ -386,18 +379,18 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
             updateResult <- companySingle.updateMany(
               Filters.eq("name", "NewCompany"),
               Updates.set("investment", investment))
+            newCompany <- MongoSource.find(companiesMongoCol, Filters.eq("name", "NewCompany")).headL
+          } yield {
+            //then
+            updateResult.wasAcknowledged shouldBe true
+            updateResult.matchedCount shouldBe 1
 
-          } yield updateResult
+            //and
+            newCompany.employees should contain theSameElementsAs employees
+            newCompany.investment shouldBe investor1.funds + investor2.funds
+          }
       }.runSyncUnsafe()
 
-      //then
-      updateResult.wasAcknowledged shouldBe true
-      updateResult.matchedCount shouldBe 1
-
-      //and
-      val newCompany = MongoSource.find(companiesMongoCol, Filters.eq("name", "NewCompany")).headL.runSyncUnsafe()
-      newCompany.employees should contain theSameElementsAs employees
-      newCompany.investment shouldBe investor1.funds + investor2.funds
     }
 
     protected[this] def abstractCreateConnectionTest4(
@@ -411,7 +404,7 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
       val connection = makeResource((employeesCol, employeesCol, employeesCol, companiesCol))
 
       //when
-      val (r1, r2, r3, r4) = connection.use {
+      connection.use {
         case (employees1, employees2, employees3, companies) =>
           for {
             r1 <- employees1.single
@@ -426,14 +419,15 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
             r4 <- companies.single
               .insertOne(company)
               .flatMap(_ => companies.source.find(Filters.eq("name", company.name)).headL)
-          } yield (r1, r2, r3, r4)
+          } yield {
+            //then
+            r1 shouldBe employee1
+            r2 shouldBe employee2
+            r3 shouldBe employee3
+            r4 shouldBe company
+          }
       }.runSyncUnsafe()
 
-      //then
-      r1 shouldBe employee1
-      r2 shouldBe employee2
-      r3 shouldBe employee3
-      r4 shouldBe company
     }
   }
 
@@ -448,7 +442,7 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
     val connection = makeResource((employeesCol, employeesCol, employeesCol, employeesCol, companiesCol))
 
     //when
-    val (r1, r2, r3, r4, r5) = connection.use {
+    connection.use {
       case (employees1, employees2, employees3, employees4, companies) =>
         for {
           r1 <- employees1.single
@@ -466,15 +460,16 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
           r5 <- companies.single
             .insertOne(company)
             .flatMap(_ => companies.source.find(Filters.eq("name", company.name)).headL)
-        } yield (r1, r2, r3, r4, r5)
+        } yield {
+          //then
+          r1 shouldBe employee1
+          r2 shouldBe employee2
+          r3 shouldBe employee3
+          r4 shouldBe employee4
+          r5 shouldBe company
+        }
     }.runSyncUnsafe()
 
-    //then
-    r1 shouldBe employee1
-    r2 shouldBe employee2
-    r3 shouldBe employee3
-    r4 shouldBe employee4
-    r5 shouldBe company
   }
 
   protected[this] def abstractCreateConnectionTest6(
@@ -493,7 +488,7 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
     val connection = makeResource((employeesCol, employeesCol, employeesCol, employeesCol, employeesCol, companiesCol))
 
     //when
-    val (r1, r2, r3, r4, r5, r6) = connection.use {
+    connection.use {
       case (employees1, employees2, employees3, employees4, employees5, companies) =>
         for {
           r1 <- employees1.single
@@ -514,16 +509,18 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
           r6 <- companies.single
             .insertOne(company)
             .flatMap(_ => companies.source.find(Filters.eq("name", company.name)).headL)
-        } yield (r1, r2, r3, r4, r5, r6)
+        } yield {
+          //then
+          r1 shouldBe employee1
+          r2 shouldBe employee2
+          r3 shouldBe employee3
+          r4 shouldBe employee4
+          r5 shouldBe employee5
+          r6 shouldBe company
+        }
     }.runSyncUnsafe()
 
-    //then
-    r1 shouldBe employee1
-    r2 shouldBe employee2
-    r3 shouldBe employee3
-    r4 shouldBe employee4
-    r5 shouldBe employee5
-    r6 shouldBe company
+
   }
 
   protected[this] def abstractCreateConnectionTest7(makeResource: Tuple7F[
@@ -551,7 +548,7 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
       makeResource((employeesCol, employeesCol, employeesCol, employeesCol, employeesCol, employeesCol, companiesCol))
 
     //when
-    val (r1, r2, r3, r4, r5, r6, r7) = connection.use {
+    connection.use {
       case (employees1, employees2, employees3, employees4, employees5, employees6, companies) =>
         for {
           r1 <- employees1.single
@@ -575,17 +572,18 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
           r7 <- companies.single
             .insertOne(company)
             .flatMap(_ => companies.source.find(Filters.eq("name", company.name)).headL)
-        } yield (r1, r2, r3, r4, r5, r6, r7)
+        } yield {
+          //then
+          r1 shouldBe employee1
+          r2 shouldBe employee2
+          r3 shouldBe employee3
+          r4 shouldBe employee4
+          r5 shouldBe employee5
+          r6 shouldBe employee6
+          r7 shouldBe company
+        }
     }.runSyncUnsafe()
 
-    //then
-    r1 shouldBe employee1
-    r2 shouldBe employee2
-    r3 shouldBe employee3
-    r4 shouldBe employee4
-    r5 shouldBe employee5
-    r6 shouldBe employee6
-    r7 shouldBe company
   }
 
   protected[this] def abstractCreateConnectionTest8(

@@ -1,17 +1,25 @@
 package monix.connect.mongodb.client
 
+import org.bson.Document
 import org.bson.codecs.configuration.CodecProvider
-import org.bson.conversions.Bson
 
-trait CollectionRef[Doc] {
- val databaseName: String
- val collectionName: String
+trait CollectionRef[+Doc] {
+ val database: String
+ val collection: String
 }
 
-final case class CollectionCodec[Doc](databaseName: String,
-                                      collectionName: String,
-                                      clazz: Class[Doc],
-                                      codecProviders: CodecProvider*) extends CollectionRef[Doc]
+/**
+  * Represents the reference to a collection with a custom codec.
+  *
+  * ==Example==
+  * {{{
+  *   case class Employee(name: String, age: Int, city: String, companyName: String, activities: List[String])
+  * }}}
+  */
+final case class CollectionCodecRef[Doc](database: String,
+                                         collection: String,
+                                         clazz: Class[Doc],
+                                         codecProviders: CodecProvider*) extends CollectionRef[Doc]
 
-final case class CollectionBsonRef(databaseName: String,
-                                   collectionName: String) extends CollectionRef[Bson]
+final case class CollectionDocumentRef(database: String,
+                                       collection: String) extends CollectionRef[Document]
