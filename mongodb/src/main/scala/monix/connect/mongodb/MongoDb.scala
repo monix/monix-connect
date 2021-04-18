@@ -112,7 +112,7 @@ object MongoDb extends MongoDbImpl {
 
 }
 
-class MongoDb(private[mongodb] val client: MongoClient, private[mongodb] val db: MongoDatabase) extends MongoDbImpl {
+class MongoDb(private[mongodb] val client: MongoClient, private[mongodb] val currentDb: MongoDatabase) extends MongoDbImpl {
 
   /**
     * Gets the current cluster description.
@@ -133,7 +133,17 @@ class MongoDb(private[mongodb] val client: MongoClient, private[mongodb] val db:
     *
     */
   def createCollection(collectionName: String): Task[Unit] =
-    super.createCollection(db, collectionName)
+    super.createCollection(currentDb, collectionName)
+
+  /**
+    * Create a new collection in the specified database.
+    *
+    * @param collection the name for the new collection to create
+    * @return a unit that signals on completion.
+    *
+    */
+  def createCollection(db: String, collection: String): Task[Unit] =
+    super.createCollection(client.getDatabase(db), collection)
 
   /**
     * Drops the current database.
@@ -141,7 +151,7 @@ class MongoDb(private[mongodb] val client: MongoClient, private[mongodb] val db:
     * @return a unit that signals on completion.
     */
   def dropDatabase: Task[Unit] =
-    super.dropDatabase(db)
+    super.dropDatabase(currentDb)
 
   /**
     * Drops the specified database.
@@ -153,29 +163,38 @@ class MongoDb(private[mongodb] val client: MongoClient, private[mongodb] val db:
   /**
     * Drops a collection from the current database.
     *
-    * @param collectionName the name of the collection to drop
+    * @param collection the name of the collection to drop
     * @return a unit that signals on completion
     */
-  def dropCollection(collectionName: String): Task[Unit] =
-    super.dropCollection(db, collectionName)
+  def dropCollection(collection: String): Task[Unit] =
+    super.dropCollection(currentDb, collection)
 
   /**
     * Drops a collection from the specified database.
     *
-    * @param collectionName the name of the collection to drop
+    * @param collection the name of the collection to drop
     * @return a unit that signals on completion
     */
-  def dropCollection(db: String, collectionName: String): Task[Unit] =
-    Task.fromReactivePublisher(client.getDatabase(db).getCollection(collectionName).drop()).void
+  def dropCollection(db: String, collection: String): Task[Unit] =
+    Task.fromReactivePublisher(client.getDatabase(db).getCollection(collection).drop()).void
+
+  /**
+    * Check whether a collection in the current db exists or not.
+    *
+    * @param collection the name of the collection
+    * @return a boolean [[Task]] indicating whether the collection exists or not.
+    */
+  def existsCollection(collection: String): Task[Boolean] =
+    super.existsCollection(currentDb, collection)
 
   /**
     * Check whether a collection exists or not.
     *
-    * @param collectionName the name of the collection
+    * @param collection the name of the collection
     * @return a boolean [[Task]] indicating whether the collection exists or not.
     */
-  def existsCollection(collectionName: String): Task[Boolean] =
-    super.existsCollection(db, collectionName)
+  def existsCollection(db: String, collection: String): Task[Boolean] =
+    super.existsCollection(client.getDatabase(db), collection)
 
   /**
     * Checks whether a database exists or not.
@@ -189,12 +208,12 @@ class MongoDb(private[mongodb] val client: MongoClient, private[mongodb] val db:
   /**
     * Rename the collection with oldCollectionName to the newCollectionName.
     *
-    * @param oldCollectionName the current (old) name of the collection
-    * @param newCollectionName the name (new) which the collection will be renamed to
+    * @param oldCollection the current (old) name of the collection
+    * @param newCollection the name (new) which the collection will be renamed to
     * @return a boolean [[Task]] indicating whether the collection was successfully renamed or not.
     */
-  def renameCollection(oldCollectionName: String, newCollectionName: String): Task[Boolean] =
-    super.renameCollection(db, oldCollectionName, newCollectionName)
+  def renameCollection(oldCollection: String, newCollection: String): Task[Boolean] =
+    super.renameCollection(currentDb, oldCollection, newCollection)
 
   /**
     * Lists all the collections the current database.
@@ -202,7 +221,7 @@ class MongoDb(private[mongodb] val client: MongoClient, private[mongodb] val db:
     * @return an [[Observable]] that emits the names of all the existing collections.
     */
   def listCollections: Observable[String] =
-    super.listCollections(db)
+    super.listCollections(currentDb)
 
   /**
     * Lists all the collections the given database.
@@ -217,7 +236,7 @@ class MongoDb(private[mongodb] val client: MongoClient, private[mongodb] val db:
     *
     * @return an [[Observable]] that emits the names of all the existing databases.
     */
-  def listAllDatabases: Observable[String] =
+  def listDatabases: Observable[String] =
     super.listDatabases(client)
 
 }

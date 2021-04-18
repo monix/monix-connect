@@ -512,4 +512,5 @@ class MongoSingle[Doc](private[mongodb] val collection: MongoCollection[Doc]) ex
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Task[UpdateResult] = {
     super.updateMany(collection, filter, update, updateOptions, retryStrategy)
   }
+
 }

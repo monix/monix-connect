@@ -396,7 +396,7 @@ class MongoSource[Doc](private[mongodb] val collection: MongoCollection[Doc]) ex
     *
     * @return all documents of type [[Doc]] within the collection
     */
-  def findAll(): Observable[Doc] =
+  def findAll: Observable[Doc] =
     super.findAll(collection)
 
   /**
