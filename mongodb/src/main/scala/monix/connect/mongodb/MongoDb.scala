@@ -112,7 +112,8 @@ object MongoDb extends MongoDbImpl {
 
 }
 
-class MongoDb(private[mongodb] val client: MongoClient, private[mongodb] val currentDb: MongoDatabase) extends MongoDbImpl {
+class MongoDb(private[mongodb] val client: MongoClient, private[mongodb] val currentDb: MongoDatabase)
+  extends MongoDbImpl {
 
   /**
     * Gets the current cluster description.

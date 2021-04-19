@@ -4,8 +4,8 @@ import org.bson.Document
 import org.bson.codecs.configuration.CodecProvider
 
 trait CollectionRef[+Doc] {
- val database: String
- val collection: String
+  val database: String
+  val collection: String
 }
 
 /**
@@ -16,10 +16,11 @@ trait CollectionRef[+Doc] {
   *   case class Employee(name: String, age: Int, city: String, companyName: String, activities: List[String])
   * }}}
   */
-final case class CollectionCodecRef[Doc](database: String,
-                                         collection: String,
-                                         clazz: Class[Doc],
-                                         codecProviders: CodecProvider*) extends CollectionRef[Doc]
+final case class CollectionCodecRef[Doc](
+  database: String,
+  collection: String,
+  clazz: Class[Doc],
+  codecProviders: CodecProvider*)
+  extends CollectionRef[Doc]
 
-final case class CollectionDocumentRef(database: String,
-                                       collection: String) extends CollectionRef[Document]
+final case class CollectionDocumentRef(database: String, collection: String) extends CollectionRef[Document]

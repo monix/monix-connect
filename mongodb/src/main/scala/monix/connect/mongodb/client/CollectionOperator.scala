@@ -15,4 +15,8 @@ import monix.eval.Task
   * @param sink provides the same operations as [[MongoSingle]], but it is
   *             designed and exposed as a reactive subscriber [[Consumer]].
   */
-final case class CollectionOperator[Doc](db: MongoDb, source: MongoSource[Doc], single: MongoSingle[Doc], sink: MongoSink[Doc])
+final case class CollectionOperator[Doc](
+  db: MongoDb,
+  source: MongoSource[Doc],
+  single: MongoSingle[Doc],
+  sink: MongoSink[Doc])
