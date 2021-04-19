@@ -148,18 +148,17 @@ object MongoConnection {
     * {{{
     *   import com.mongodb.client.model.Filters
     *   import monix.eval.Task
-    *   import monix.connect.mongodb.domain.{MongoCollection, MongoConnector}
-    *   import monix.connect.mongodb.MongoConnection
+    *   import monix.connect.mongodb.client.{MongoConnection, CollectionOperator, CollectionCodecRef}
     *   import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
     *
     *   case class Employee(name: String, age: Int, companyName: String = "X")
     *
     *   val employee = Employee("Stephen", 32)
-    *   val employeesCol = MongoCollection("myDb", "employees", classOf[Employee], createCodecProvider[Employee]())
+    *   val employeesCol = CollectionCodecRef("myDb", "employees", classOf[Employee], createCodecProvider[Employee]())
     *   val connection = MongoConnection.create1("mongodb://localhost:27017", employeesCol)
     *
     *   val t: Task[Employee] =
-    *   connection.use { case MongoConnector(db, source, single, sink) =>
+    *   connection.use { case CollectionOperator(db, source, single, sink) =>
     *     // business logic here
     *     single.insertOne(employee)
     *       .flatMap(_ => source.find(Filters.eq("name", employee.name)).headL)
@@ -185,8 +184,7 @@ object MongoConnection {
     *   import com.mongodb.client.model.Filters
     *   import monix.eval.Task
     *   import com.mongodb.{MongoClientSettings, ServerAddress}
-    *   import monix.connect.mongodb.MongoConnection
-    *   import monix.connect.mongodb.domain.{MongoCollection, MongoConnector}
+    *   import monix.connect.mongodb.client.{MongoConnection, CollectionOperator, CollectionCodecRef}
     *   import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
     *
     *   import scala.jdk.CollectionConverters._
@@ -194,7 +192,7 @@ object MongoConnection {
     *   case class Employee(name: String, age: Int, companyName: String = "X")
     *
     *   val employee = Employee("Stephen", 32)
-    *   val employeesCol = MongoCollection("myDb", "employees", classOf[Employee], createCodecProvider[Employee]())
+    *   val employeesCol = CollectionCodecRef("myDb", "employees", classOf[Employee], createCodecProvider[Employee]())
     *
     *   val mongoClientSettings = MongoClientSettings.builder
     *       .applyToClusterSettings(builder => builder.hosts(List(new ServerAddress("localhost", 27017)).asJava))
@@ -202,7 +200,7 @@ object MongoConnection {
     *
     *   val connection = MongoConnection.create1(mongoClientSettings, employeesCol)
     *   val t: Task[Employee] =
-    *   connection.use { case MongoConnector(db, source, single, sink) =>
+    *   connection.use { case CollectionOperator(db, source, single, sink) =>
     *     // business logic here
     *     single.insertOne(employee)
     *       .flatMap(_ => source.find(Filters.eq("name", employee.name)).headL)
@@ -241,8 +239,7 @@ object MongoConnection {
     * ==Example==
     * {{{
     *   import monix.eval.Task
-    *   import monix.connect.mongodb.domain.{MongoCollection, MongoConnector}
-    *   import monix.connect.mongodb.MongoConnection
+    *   import monix.connect.mongodb.client.{MongoConnection, CollectionOperator, CollectionCodecRef}
     *   import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
     *
     *   case class Employee(name: String, age: Int, companyName: String = "X")
@@ -252,14 +249,14 @@ object MongoConnection {
     *   val employee2 = Employee("Laura", 41)
     *   val company = Company("Stephen", List(employee1, employee2))
     *
-    *   val employeesCol = MongoCollection("business", "employees_collection", classOf[Employee], createCodecProvider[Employee]())
-    *   val companiesCol = MongoCollection("business", "companies_collection", classOf[Company], createCodecProvider[Company](), createCodecProvider[Employee]())
+    *   val employeesCol = CollectionCodecRef("business", "employees_collection", classOf[Employee], createCodecProvider[Employee]())
+    *   val companiesCol = CollectionCodecRef("business", "companies_collection", classOf[Company], createCodecProvider[Company](), createCodecProvider[Employee]())
     *
     *   val connection = MongoConnection.create2("mongodb://localhost:27017", (employeesCol, companiesCol))
     *
     *   val t: Task[Unit] =
-    *   connection.use { case (MongoConnector(_, employeeSource, employeeSingle, employeeSink),
-    *                          MongoConnector(_, companySource, companySingle, companySink)) =>
+    *   connection.use { case (CollectionOperator(_, employeeSource, employeeSingle, employeeSink),
+    *                          CollectionOperator(_, companySource, companySingle, companySink)) =>
     *     // business logic here
     *     for {
     *       r1 <- employeeSingle.insertMany(List(employee1, employee2))
@@ -287,8 +284,7 @@ object MongoConnection {
     * ==Example==
     * {{{
     *   import monix.eval.Task
-    *   import monix.connect.mongodb.domain.{MongoCollection, MongoConnector}
-    *   import monix.connect.mongodb.MongoConnection
+    *   import monix.connect.mongodb.client.{MongoConnection, CollectionOperator, CollectionCodecRef}
     *   import com.mongodb.{MongoClientSettings, ServerAddress}
     *   import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
     *   import scala.jdk.CollectionConverters._
@@ -300,8 +296,8 @@ object MongoConnection {
     *   val employee2 = Employee("Laura", 41)
     *   val company = Company("Stephen", List(employee1, employee2))
     *
-    *   val employeesCol = MongoCollection("business", "employees_collection", classOf[Employee], createCodecProvider[Employee]())
-    *   val companiesCol = MongoCollection("business", "companies_collection", classOf[Company], createCodecProvider[Company](), createCodecProvider[Employee]())
+    *   val employeesCol = CollectionCodecRef("business", "employees_collection", classOf[Employee], createCodecProvider[Employee]())
+    *   val companiesCol = CollectionCodecRef("business", "companies_collection", classOf[Company], createCodecProvider[Company](), createCodecProvider[Employee]())
     *
     *   val mongoClientSettings = MongoClientSettings.builder
     *       .applyToClusterSettings(builder => builder.hosts(List(new ServerAddress("localhost", 27017)).asJava))
@@ -310,8 +306,8 @@ object MongoConnection {
     *   val connection = MongoConnection.create2(mongoClientSettings, (employeesCol, companiesCol))
     *
     *   val t: Task[Unit] =
-    *   connection.use { case (MongoConnector(_, employeeSource, employeeSingle, employeeSink),
-    *                          MongoConnector(_, companySource, companySingle, companySink)) =>
+    *   connection.use { case (CollectionOperator(_, employeeSource, employeeSingle, employeeSink),
+    *                          CollectionOperator(_, companySource, companySingle, companySink)) =>
     *     // business logic here
     *     for {
     *       r1 <- employeeSingle.insertMany(List(employee1, employee2))
@@ -356,8 +352,8 @@ object MongoConnection {
     * {{{
     *   import com.mongodb.client.model.{Filters, Updates}
     *   import monix.eval.Task
-    *   import monix.connect.mongodb.domain.{MongoCollection, UpdateResult}
-    *   import monix.connect.mongodb.MongoConnection
+    *   import monix.connect.mongodb.client.{MongoConnection, CollectionCodecRef}
+    *   import monix.connect.mongodb.domain.UpdateResult
     *   import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
     *
     *   import scala.concurrent.duration._
@@ -367,15 +363,15 @@ object MongoConnection {
     *   case class Company(name: String, employees: List[Employee], investment: Int = 0)
     *   case class Investor(name: String, funds: Int, companies: List[Company])
     *
-    *   val companiesCol = MongoCollection(
+    *   val companiesCol = CollectionCodecRef(
     *         "my_db",
     *         "companies_collection",
     *         classOf[Company],
     *         createCodecProvider[Company](),
     *         createCodecProvider[Employee]())
     *   val employeesCol =
-    *     MongoCollection("my_db", "employees_collection", classOf[Employee], createCodecProvider[Employee]())
-    *   val investorsCol = MongoCollection(
+    *     CollectionCodecRef("my_db", "employees_collection", classOf[Employee], createCodecProvider[Employee]())
+    *   val investorsCol = CollectionCodecRef(
     *     "my_db",
     *     "investors_collection",
     *     classOf[Investor],
