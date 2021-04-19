@@ -104,11 +104,11 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
 
     import org.mongodb.scala.bson.codecs.Macros._
     val codecRegistry: CodecRegistry = fromRegistries(fromProviders(classOf[Person], classOf[UnwoundPerson]))
-
+    val hobbies =  List("reading", "running", "programming")
     val col = CollectionCodecRef("myDb", "persons", classOf[Person], codecRegistry)
     MongoConnection.create1(mongoEndpoint, col).use{ operator =>
       for {
-        _ <- operator.single.insertOne(Person("Mario", 32, List("reading", "running", "programming")))
+        _ <- operator.single.insertOne(Person("Mario", 32, hobbies))
         unwound <- {
           val filter = Aggregates.`match`(Filters.gte("age", 32))
           val unwind = Aggregates.unwind("$hobbies")
@@ -240,7 +240,7 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
         _ <- single.insertOne(company)
         //two different ways to filter the same thing
         exists1 <- source.find(Filters.in("employees", employee)).nonEmptyL
-        exists2 <- source.findAll().filter(_.name == company.name).map(_.employees.contains(employee)).headOrElseL(false)
+        exists2 <- source.findAll.filter(_.name == company.name).map(_.employees.contains(employee)).headOrElseL(false)
       } yield (exists1 && exists2)
     }.runSyncUnsafe()
 

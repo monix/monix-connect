@@ -18,7 +18,6 @@
 package monix.connect.mongodb.client
 
 import monix.connect.mongodb.{MongoDb, MongoSingle, MongoSink, MongoSource}
-import monix.eval.Task
 
 /**
   * Comprehends the set of classes needed to communicate and operate with mongodb.
