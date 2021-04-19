@@ -48,7 +48,7 @@ import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
 import monix.connect.mongodb.client.CollectionCodecRef
 import monix.connect.mongodb.client.CollectionRef
 
-case class Employee(name: String, age: Int, city: String)
+case class Employee(name: String, age: Int, city: String, hobbies: List[String] = List.empty)
 
 val employee = Employee("Bob", 29, "Barcelona")
 val employeesCol: CollectionRef[Employee] =
@@ -57,8 +57,9 @@ val employeesCol: CollectionRef[Employee] =
 
 ### CollectionDocumentRef
 
-On the other hand, one could also use `org.bson.Document` as a generic and flexible type for representing a _document_. In that
-case `CollectionDocumentRef` would be used, which would only require the _db_ and _collection_ name to be created:
+On the other hand, one could also use `org.bson.Document` as a generic and flexible type for representing a _document_.
+In that case `CollectionDocumentRef` would be used, which would only require the _db_ and _collection_ name to be
+created:
 
 ```scala
 import monix.connect.mongodb.client.CollectionDocumentRef
@@ -268,8 +269,8 @@ val t = connection.use { operator =>
 
 ## Source
 
-The `MongoSource` class abstracts the _read-like_ operations _aggregate_, _count_, _distinct_ and _find_ and others, 
-see examples for these in next subsections:
+The `MongoSource` class abstracts the _read-like_ operations _aggregate_, _count_, _distinct_ and _find_ and others, see
+examples for these in next subsections:
 
 ### Aggregate
 
@@ -291,7 +292,7 @@ val group = Aggregates.group("group", Accumulators.avg("average", "$age"))
 
 val connection: Resource[Task, CollectionOperator[Employee]]
 val aggregated: Task[Option[Document]] = connection.use {
-  operator => 
+  operator =>
     // eventually returns a [[Document]] with the field `average` 
     // that contains the age average of Venezuelan employees.
     operator.source.aggregate(Seq(filter, group)).headOptionL
@@ -314,23 +315,25 @@ import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistr
 import org.bson.codecs.configuration.CodecRegistry
 
 case class Person(name: String, age: Int, hobbies: Seq[String])
+
 case class UnwoundPerson(name: String, age: Int, hobbies: String)
 
 val codecRegistry: CodecRegistry = fromRegistries(fromProviders(classOf[Person], classOf[UnwoundPerson]))
 val col = CollectionCodecRef("myDb", "persons", classOf[Person], codecRegistry)
-MongoConnection.create1("mongodb://host:27017", col).use{ operator =>
+MongoConnection.create1("mongodb://host:27017", col).use { operator =>
   for {
     _ <- operator.single.insertOne(Person("Mario", 32, List("reading", "running", "programming")))
     unwound <- {
       val filter = Aggregates.`match`(Filters.gte("age", 32))
       val unwind = Aggregates.unwind("$hobbies")
       operator.source.aggregate(Seq(filter, unwind), classOf[UnwoundPerson]).toListL
+
       /** Returns ->
-        *  List(
-        *   UnwoundPerson("Mario", 32, "reading"), 
-        *   UnwoundPerson("Mario", 32, "running"),
-        *   UnwoundPerson("Mario", 32, "programming")
-        *   )
+        * List(
+        * UnwoundPerson("Mario", 32, "reading"), 
+        * UnwoundPerson("Mario", 32, "running"),
+        * UnwoundPerson("Mario", 32, "programming")
+        * )
         */
     }
     //
@@ -380,7 +383,6 @@ import com.mongodb.client.model.Filters
 import monix.connect.mongodb.client.{CollectionOperator, MongoConnection}
 import monix.eval.Task
 import org.bson.conversions.Bson
-
 
 val connection: Resource[Task, CollectionOperator[Employee]]
 // count of the distinct cities
@@ -493,13 +495,12 @@ connection.use(_.source.findOneAndUpdate(filter, update)).runToFuture
 
 ## Single & Sinks
 
-The `Single` and `Sink` components are documented together since they both implement exactly
-the same set of operations _insert_, _delete_, _replace_ and _update_,
-although with the difference that the first executes the operation in single task and the latter 
-pipes the elements of the stream to a _Monix_ `Consumer` to execute them. 
+The `Single` and `Sink` components are documented together since they both implement exactly the same set of
+operations _insert_, _delete_, _replace_ and _update_, although with the difference that the first executes the
+operation in single task and the latter pipes the elements of the stream to a _Monix_ `Consumer` to execute them.
 
 The following sub-sections represent the list of different _operations_ and _sinks_ available to use, with a small
-example on each one. 
+example on each one.
 
 ### Insert
 
@@ -507,52 +508,72 @@ example on each one.
 
 Inserts the provided _document_ to the specified collection.
 
-_Operation_:
+_Single_:
 
 ```scala
+import cats.effect.Resource
 import monix.connect.mongodb.domain.InsertOneResult
-import monix.connect.mongodb.MongoOp
+import monix.connect.mongodb.client.CollectionOperator
+import monix.eval.Task
 
-val employee: Employee = Employee("Luke", "London", 29)
-
-val t: Task[InsertOneResult] = MongoOp.insertOne(col, employee)
+val employee: Employee = Employee("Luke", "London", 41)
+val connection: Resource[Task, CollectionOperator[Employee]]
+val t: Task[InsertOneResult] = connection.use(_.single.insertOne(employee))
 ```
 
 _Sink_:
 
 ```scala
-import monix.connect.mongodb.MongoSink
+import cats.effect.Resource
+import monix.connect.mongodb.client.CollectionOperator
+import monix.eval.Task
+import monix.reactive.Observable
 
-val employees: List[Employee] = List(Employee("Ryan", "Singapore", 25), Employee("Nil", "Singapore", 55))
-Observable.from(employees) // Observable[Employee]
-  .consumeWith(MongoSink.insertOne(col))
+val employees = List(Employee("Luke", "London", 41))
+val connection: Resource[Task, CollectionOperator[Employee]]
+connection.use { operator =>
+  Observable.from(employees) // Observable[Employee]
+    .consumeWith(operator.sink.insertOne())
+}.runToFuture
 ```
 
 #### insertMany
 
 Inserts the provided list of documents to the specified collection.
 
-_Operation_:
+_Single_:
 
 ```scala
+import cats.effect.Resource
 import monix.connect.mongodb.domain.InsertManyResult
-import monix.connect.mongodb.MongoOp
+import monix.connect.mongodb.client.CollectionOperator
+import monix.eval.Task
 
-val employees: List[Employee] = List(Employee("John", "Vienna", 33), Employee("Albert", "Vienna", 45))
+val employees: List[Employee] = List(Employee("Jim", "Vienna", 33), Employee("Albert", "Vienna", 45))
 
-val t: Task[InsertManyResult] = MongoOp.insertMany(col, employees)
+val connection: Resource[Task, CollectionOperator[Employee]]
+val t: Task[InsertManyResult] = connection.use(_.single.insertMany(employees))
 ```
 
 _Sink_:
 
 ```scala
-import monix.connect.mongodb.MongoSink
+import cats.effect.Resource
+import monix.connect.mongodb.client.CollectionOperator
+import monix.eval.Task
+import monix.reactive.Observable
 
-val l1: List[Employee] = List(Employee("Gerard", "Paris", 36), Employee("Gabriel", "Paris", 35))
-val l2: List[Employee] = List(Employee("Salomon", "Berlin", 23), Employee("Victor", "Berlin", 54))
-
-Observable.from(List(l1, l2)) // Observable[List[Employee]]
-  .consumeWith(MongoSink.insertMany(col))
+val employees: List[Employee] = List(
+  Employee("Salomon", "Berlin", 23),
+  Employee("Victor", "Berlin", 54),
+  Employee("Gabriel", "Paris", 35)
+)
+val connection: Resource[Task, CollectionOperator[Employee]]
+connection.use { operator =>
+  Observable.from(employees) // Observable[Employee]
+    .bufferTumbling(3) // Observable[Seq[Employee]]
+    .consumeWith(operator.sink.insertMany())
+}.runToFuture
 ```
 
 ### Delete
@@ -562,30 +583,36 @@ Observable.from(List(l1, l2)) // Observable[List[Employee]]
 Removes at most one _document_ from the _collection_ that matches the given _filter_. If no documents match, the _
 collection_ is not modified.
 
-_Operation_:
+_Single_:
 
 ```scala
 import com.mongodb.client.model.Filters
 import monix.connect.mongodb.domain.DeleteResult
-import monix.connect.mongodb.MongoOp
+import cats.effect.Resource
+import monix.connect.mongodb.client.CollectionOperator
+import monix.eval.Task
 
 val filter = Filters.eq("name", "Bob")
-// returns an empty option when for example the filter did not find any match 
-val t: Task[DeleteResult] = MongoOp.deleteOne(col, filter)
+val connection: Resource[Task, CollectionOperator[Employee]]
+val t: Task[DeleteResult] = connection.use(_.single.deleteOne(filter))
 ```
 
 _Sink_:
 
 ```scala
 import com.mongodb.client.model.Filters
-import monix.connect.mongodb.MongoSink
+import cats.effect.Resource
+import monix.connect.mongodb.client.CollectionOperator
+import monix.eval.Task
+import monix.reactive.Observable
 
-val employeeNames: List[String]
-
-// per each element, one employee will be deleted
-Observable.from(employees) // Observable[String] 
-  .map(name => Filters.eq("name", name)) // Observable[Bson]
-  .consumeWith(MongoSink.deleteOne(col))
+val connection: Resource[Task, CollectionOperator[Employee]]
+connection.use { operator =>
+  // employees to be deleted from the collection
+  Observable.from(List("Lauren", "Marie", "Simon")) // Observable[String] 
+    .map(name => Filters.eq("name", name)) // Observable[Bson]
+    .consumeWith(operator.sink.deleteOne())
+}.runToFuture
 ```
 
 #### deleteMany
@@ -593,27 +620,37 @@ Observable.from(employees) // Observable[String]
 Removes all documents from the _collection_ that match the given query filter. Again if no _documents_ match, the _
 collection_ is not modified.
 
-_Operation_:
+_Single_:
 
 ```scala
 import com.mongodb.client.model.Filters
 import monix.connect.mongodb.domain.DeleteResult
-import monix.connect.mongodb.MongoOp
+import cats.effect.Resource
+import monix.connect.mongodb.client.CollectionOperator
+import monix.eval.Task
 
+val connection: Resource[Task, CollectionOperator[Employee]]
 // delete all employees older than 65 y.o
-val t: Task[DeleteResult] = MongoOp.deleteMany(col, Filters.gt("age", 65))
+val filter = Filters.gt("age", 65)
+val t: Task[DeleteResult] = connection.use(_.single.deleteMany(filter))
 ```
 
 _Sink_:
 
 ```scala
 import com.mongodb.client.model.Filters
-import monix.connect.mongodb.MongoSink
+import cats.effect.Resource
+import monix.connect.mongodb.client.CollectionOperator
+import monix.eval.Task
+import monix.reactive.Observable
 
-// all employees from `Germany`, `Italy` or `Turkey` would be deleted (fired)  
-Observable.from(List("Germany", "Italy", "Turkey")) // Observable[List[String]]
-  .map(location => Filters.eq("location", location)) // Observable[List[Bson]]
-  .consumeWith(MongoSink.deleteMany(col))
+val connection: Resource[Task, CollectionOperator[Employee]]
+connection.use { operator =>
+  // all employees from `Germany`, `Italy` or `Turkey` were fired (deleted)
+  Observable.from(List("Germany", "Italy", "Turkey")) // Observable[String] 
+    .map(city => Filters.eq("city", city)) // Observable[Bson]
+    .consumeWith(operator.sink.deleteMany())
+}.runToFuture
 ```
 
 ### Replace
@@ -622,36 +659,44 @@ Observable.from(List("Germany", "Italy", "Turkey")) // Observable[List[String]]
 
 Replace a _document_ in the _collection_ according to the specified arguments.
 
-_Operation_:
+_Single_:
 
 ```scala
 import com.mongodb.client.model.Filters
-import monix.connect.mongodb.domain.UpdateResult
-import monix.connect.mongodb.MongoOp
+import monix.connect.mongodb.domain.DeleteResult
+import cats.effect.Resource
+import monix.connect.mongodb.client.CollectionOperator
+import monix.eval.Task
 
-// assuming that `Bob` exists in the collection
-val bob = Employee(name = "Bob", location = "France", age = 65)
-
-val alice = Employee(name = "Alice", location = "France", age = 43)
-val filter: Bson = Filters.eq("name", "Bob")
-
-// Bob retires and is replaced by Alice
-val t: Task[UpdateResult] = MongoOp.replaceOne(col, filter, alice)
+val connection: Resource[Task, CollectionOperator[Employee]]
+// assuming that `Bob` exists in the collection it gets 
+// retired and replaced by `Alice`
+val filter = Filters.eq("name", "Bob")
+val replacement = Employee("Alice", "France", 43)
+val t: Task[DeleteResult] = connection.use(_.single.replaceOne(filter, replacement))
 ```
 
 _Sink_:
 
 ```scala
+import cats.effect.Resource
 import com.mongodb.client.model.Filters
-import monix.connect.mongodb.MongoSink
+import monix.connect.mongodb.client.CollectionOperator
+import monix.eval.Task
+import monix.reactive.Observable
+import org.bson.conversions.Bson
 
-// presumably the collection have employees 1 and 2, then they are replaced by 3 and 4
-val t1 = (Filters.eq("name", "Employee1"), Employee("Employee3", 43, "Rio"))
-val t2 = (Filters.eq("name", "Employee2"), Employee("Employee4", 37, "Rio"))
-val replacements: Seq[(Bson, Employee)] = List(t1, t2)
-
-Observable.from(replacements) // Observable[(Bson, Employee)]
-  .consumeWith(MongoSink.replaceOne(col)).runSyncUnsafe()
+val connection: Resource[Task, CollectionOperator[Employee]]
+// Presumably the collection have employees 1 and 2, then they are replaced by 3 and 4
+val replacements: Seq[(Bson, Employee)] =
+  List(
+    (Filters.eq("name", "Employee1"), Employee("Employee3", 43, "Rio")),
+    (Filters.eq("name", "Employee2"), Employee("Employee4", 37, "Rio"))
+  )
+connection.use { operator =>
+  Observable.from(replacements) // Observable[(Bson, Employee)]
+    .consumeWith(operator.sink.replaceOne())
+}.runToFuture
 ```
 
 ### Update
@@ -660,65 +705,80 @@ Observable.from(replacements) // Observable[(Bson, Employee)]
 
 Update a single document in the collection according to the specified arguments.
 
-_Operation_:
+_Single_:
 
 ```scala
+import cats.effect.Resource
 import com.mongodb.client.model.{Filters, Updates}
 import monix.connect.mongodb.domain.UpdateResult
-import monix.connect.mongodb.MongoOp
+import monix.connect.mongodb.client.CollectionOperator
+import monix.eval.Task
 
+val connection: Resource[Task, CollectionOperator[Employee]]
+/** Updates Bob's employee record for its anniversary, an empty option is returned 
+  * when there was no record that matched with the given filter. */
 val filter = Filters.eq("name", "Bob")
 val anniversaryUpdate = Updates.inc("age", 1)
-
-/** updates Bob's employee record for its anniversary, an empty option is returned 
-  * when there was no record that matched with the given filter. */
-val t: Task[UpdateResult] = MongoOp.updateOne(col, filter, anniversaryUpdate)
+val t: Task[UpdateResult] = connection.use(_.single.updateOne(filter, anniversaryUpdate))
 ```
 
 _Sink_:
 
 ```scala
+import cats.effect.Resource
 import com.mongodb.client.model.{Filters, Updates}
-import monix.connect.mongodb.MongoSink
+import monix.connect.mongodb.client.CollectionOperator
+import monix.eval.Task
+import monix.reactive.Observable
+import org.bson.conversions.Bson
 
-val filter = Filters.eq("city", "Porto")
-val update = Updates.set("city", "Lisbon")
-val l: Seq[(Bson, Bson)] = List.fill(4)((filter, update))
-
-// imagine that a company wants to send four of its employees from Porto to Lisbon
-Observable.from(l) // Observable[(Bson, Bson)]
-  .consumeWith(MongoSink.updateOne(col))
+val connection: Resource[Task, CollectionOperator[Employee]]
+connection.use { operator =>
+  val filter = Filters.eq("city", "Porto")
+  val update = Updates.set("city", "Lisbon")
+  val updateElements: Seq[(Bson, Bson)] = List.fill(4)((filter, update))
+  // imagine that a company wants to send four of its employees from Porto to Lisbon
+  Observable.from(updateElements) // Observable[(Bson, Bson)]
+    .consumeWith(operator.sink.updateOne())
+}.runToFuture
 ```
 
 #### updateMany
 
 Update all documents in the collection according to the specified arguments.
 
-_Operation_:
+_Single_:
 
 ```scala
+import cats.effect.Resource
 import com.mongodb.client.model.{Filters, Updates}
 import monix.connect.mongodb.domain.UpdateResult
-import monix.connect.mongodb.MongoOp
+import monix.connect.mongodb.client.CollectionOperator
+import monix.eval.Task
 
-/** imagine that the company in Bombay bought a Table Tennis table, 
-  * and we want to add it to list of activities of all the employees of that area */
-val filter = Filters.eq("city", "Mumbai")
-val update = Updates.push("activities", "Table Tennis")
-val t: Task[UpdateResult] = MongoOp.updateMany(col, filter, update)
+val connection: Resource[Task, CollectionOperator[Employee]]
+val filter = Filters.eq("city", "Spain")
+val update = Updates.push("hobbies", "Football")
+val t: Task[UpdateResult] = connection.use(_.single.updateMany(filter, update))
 ```
 
 _Sink_:
 
 ```scala
+import cats.effect.Resource
 import com.mongodb.client.model.{Filters, Updates}
-import monix.connect.mongodb.MongoSink
+import monix.connect.mongodb.client.CollectionOperator
+import monix.eval.Task
+import monix.reactive.Observable
+import org.bson.conversions.Bson
 
-val cities: Set[String] = Set("Seattle", "Nairobi", "Dakar")
-
-Observable.from(cities) // Observable[String]
-  .map(city => (Filters.eq("city", city), Updates.pull("activities", "Table Tennis"))) // Observable[(Bson, Bson)]
-  .consumeWith(MongoSink.updateMany(col))
+val connection: Resource[Task, CollectionOperator[Employee]]
+connection.use { operator =>
+  val cities: Set[String] = Set("Seattle", "Nairobi", "Dakar")
+  Observable.from(cities) // Observable[String]
+    .map(city => (Filters.eq("city", city), Updates.pull("hobbies", "Table Tennis"))) // Observable[(Bson, Bson)]
+    .consumeWith(operator.sink.updateMany())
+}.runToFuture
 ```
 
 
