@@ -96,7 +96,7 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
     val connection = MongoConnection.createUnsafe1(MongoClients.create(mongoEndpoint), col)
 
     //when
-    val r = connection.use {
+    val r = connection.flatMap {
       case CollectionOperator(_, source, single, _) =>
         single.insertOne(employee).flatMap(_ => source.find(Filters.eq("name", employee.name)).headL)
     }.runSyncUnsafe()
@@ -119,7 +119,7 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
 
   it should "be created unsafely given the mongo client" in new MongoConnectionFixture {
     def makeResource(col1: CollectionRef[Employee], col2: CollectionRef[Company]) =
-      MongoConnection.createUnsafe2(MongoClients.create(mongoEndpoint), (col1, col2))
+      Resource.liftF(MongoConnection.createUnsafe2(MongoClients.create(mongoEndpoint), (col1, col2)))
     createConnectionTest2(makeResource)
   }
 
@@ -137,7 +137,7 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
 
   it should "be created unsafely given a mongo client" in new MongoConnectionFixture {
     def makeResource(col1: CollectionRef[Company], col2: CollectionRef[Employee], col3: CollectionRef[Investor]) =
-      MongoConnection.createUnsafe3(MongoClients.create(mongoEndpoint), (col1, col2, col3))
+      Resource.liftF(MongoConnection.createUnsafe3(MongoClients.create(mongoEndpoint), (col1, col2, col3)))
     abstractCreateConnectionTest3(makeResource)
   }
 
@@ -155,9 +155,11 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
 
   it should "be created unsafely given a mongo client" in new MongoConnectionFixture {
     val makeResource = (collections: Tuple4F[CollectionRef, Employee, Employee, Employee, Company]) =>
-      MongoConnection.createUnsafe4(
-        MongoClients.create(mongoEndpoint),
-        (collections._1, collections._2, collections._3, collections._4))
+      Resource.liftF(
+        MongoConnection.createUnsafe4(
+          MongoClients.create(mongoEndpoint),
+          (collections._1, collections._2, collections._3, collections._4))
+      )
     abstractCreateConnectionTest4(makeResource)
   }
 
@@ -177,9 +179,12 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
 
   it should "be created unsafely given a mongo client" in new MongoConnectionFixture {
     val makeResource = (collections: Tuple5F[CollectionRef, Employee, Employee, Employee, Employee, Company]) =>
-      MongoConnection.createUnsafe5(
-        MongoClients.create(mongoEndpoint),
-        (collections._1, collections._2, collections._3, collections._4, collections._5))
+      Resource.liftF(
+        MongoConnection.createUnsafe5(
+          MongoClients.create(mongoEndpoint),
+          (collections._1, collections._2, collections._3, collections._4, collections._5)
+        )
+      )
     abstractCreateConnectionTest5(makeResource)
   }
 
@@ -207,8 +212,10 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
     val makeResource =
       (collections: Tuple6F[CollectionRef, Employee, Employee, Employee, Employee, Employee, Company]) => {
         val (c1, c2, c3, c4, c5, c6) = collections
-        MongoConnection
+        Resource.liftF(
+          MongoConnection
           .createUnsafe6(MongoClients.create(mongoEndpoint), (c1, c2, c3, c4, c5, c6))
+        )
       }
     abstractCreateConnectionTest6(makeResource)
   }
@@ -237,8 +244,10 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
     val makeResource =
       (collections: Tuple7F[CollectionRef, Employee, Employee, Employee, Employee, Employee, Employee, Company]) => {
         val (c1, c2, c3, c4, c5, c6, c7) = collections
-        MongoConnection
+        Resource.liftF(
+          MongoConnection
           .createUnsafe7(MongoClients.create(mongoEndpoint), (c1, c2, c3, c4, c5, c6, c7))
+        )
       }
     abstractCreateConnectionTest7(makeResource)
   }
@@ -267,8 +276,10 @@ class MongoConnectionSuite extends AnyFlatSpecLike with Fixture with Matchers wi
     val makeResource =
       (collections: Tuple8F[CollectionRef, Employee, Employee, Employee, Employee, Employee, Employee, Employee, Company]) => {
         val (c1, c2, c3, c4, c5, c6, c7, c8) = collections
-        MongoConnection
+        Resource.liftF(
+          MongoConnection
           .createUnsafe8(MongoClients.create(mongoEndpoint), (c1, c2, c3, c4, c5, c6, c7, c8))
+        )
       }
     abstractCreateConnectionTest8(makeResource)
   }

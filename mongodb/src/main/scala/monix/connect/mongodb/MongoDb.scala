@@ -29,12 +29,11 @@ object MongoDb extends MongoDbImpl {
   def apply(client: MongoClient, db: MongoDatabase): MongoDb = new MongoDb(client, db)
 
   /**
-    * Create a new collection with the given name.
+    * Creates a new collection with the given name.
     *
     * @param db the database
     * @param collectionName the name for the new collection to create
     * @return a unit that signals on completion.
-    *
     */
   override def createCollection(db: MongoDatabase, collectionName: String): Task[Unit] =
     super.createCollection(db, collectionName)
@@ -127,7 +126,7 @@ class MongoDb(private[mongodb] val client: MongoClient, private[mongodb] val cur
   def getClusterDescription: Task[ClusterDescription] = Task.now(client.getClusterDescription)
 
   /**
-    * Create a new collection with the given name.
+    * Creates a new collection with the given name.
     *
     * @param collectionName the name for the new collection to create
     * @return a unit that signals on completion.
@@ -137,7 +136,7 @@ class MongoDb(private[mongodb] val client: MongoClient, private[mongodb] val cur
     super.createCollection(currentDb, collectionName)
 
   /**
-    * Create a new collection in the specified database.
+    * Creates a new collection in the specified database.
     *
     * @param collection the name for the new collection to create
     * @return a unit that signals on completion.

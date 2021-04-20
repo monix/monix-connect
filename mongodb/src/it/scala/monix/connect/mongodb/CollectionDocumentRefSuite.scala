@@ -95,7 +95,7 @@ class CollectionDocumentRefSuite extends AnyFlatSpecLike with Fixture with Match
     val connection = MongoConnection.createUnsafe1(MongoClients.create(mongoEndpoint), bsonCol1)
 
     //when
-    val r = connection.use {
+    val r = connection.flatMap {
       case CollectionOperator(_, source, single, _) =>
         single.insertOne(greg).flatMap(_ => source.find(Filters.eq("name", name)).headL)
     }.runSyncUnsafe()
