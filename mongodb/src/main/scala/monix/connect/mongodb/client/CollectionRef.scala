@@ -57,6 +57,8 @@ final case class CollectionCodecRef[Doc](
   * ==Example==
   * {{{
   *   import monix.connect.mongodb.client.{CollectionRef, CollectionDocumentRef}
+  *   import org.bson.Document
+  *   
   *   // only requires db and collection names
   *   val genericDocCol: CollectionRef[Document] =
   *   CollectionDocumentRef("businessDb", "employees_collection")
