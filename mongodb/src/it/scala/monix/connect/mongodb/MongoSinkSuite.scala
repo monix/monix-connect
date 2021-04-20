@@ -18,7 +18,7 @@
 package monix.connect.mongodb
 
 import com.mongodb.client.model.{Filters, Updates}
-import monix.connect.mongodb.domain.MongoConnector
+import monix.connect.mongodb.client.{CollectionOperator, MongoConnection}
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
 import org.bson.conversions.Bson
@@ -62,7 +62,7 @@ class MongoSinkSuite extends AnyFlatSpecLike with Fixture with Matchers with Bef
     MongoConnection
       .create1(mongoEndpoint, employeesCol)
       .use {
-        case MongoConnector(_, _, _, sink) =>
+        case CollectionOperator(_, _, _, sink) =>
           Observable
             .from(e1)
             .map(elem => Filters.eq("name", elem.name))
@@ -105,7 +105,7 @@ class MongoSinkSuite extends AnyFlatSpecLike with Fixture with Matchers with Bef
     MongoConnection
       .create1(mongoEndpoint, employeesCol)
       .use {
-        case MongoConnector(_, _, _, sink) =>
+        case CollectionOperator(_, _, _, sink) =>
           Observable
             .from(List("Munich", "Rome", "Istanbul"))
             .map(city => Filters.eq("city", city))
@@ -146,7 +146,7 @@ class MongoSinkSuite extends AnyFlatSpecLike with Fixture with Matchers with Bef
     MongoConnection
       .create1(mongoEndpoint, employeesCol)
       .use {
-        case MongoConnector(_, _, _, sink) =>
+        case CollectionOperator(_, _, _, sink) =>
           Observable.from(employees).consumeWith(sink.insertOne())
       }
       .runSyncUnsafe()
@@ -182,7 +182,7 @@ class MongoSinkSuite extends AnyFlatSpecLike with Fixture with Matchers with Bef
     MongoConnection
       .create1(mongoEndpoint, employeesCol)
       .use {
-        case MongoConnector(_, _, _, sink) =>
+        case CollectionOperator(_, _, _, sink) =>
           Observable
             .from(employees)
             .bufferTumbling(5)
@@ -234,7 +234,7 @@ class MongoSinkSuite extends AnyFlatSpecLike with Fixture with Matchers with Bef
     MongoConnection
       .create1(mongoEndpoint, employeesCol)
       .use {
-        case MongoConnector(_, _, _, sink) =>
+        case CollectionOperator(_, _, _, sink) =>
           Observable.from(updates).consumeWith(sink.updateOne())
       }
       .runSyncUnsafe()
@@ -281,7 +281,7 @@ class MongoSinkSuite extends AnyFlatSpecLike with Fixture with Matchers with Bef
     MongoConnection
       .create1(mongoEndpoint, employeesCol)
       .use {
-        case MongoConnector(_, _, _, sink) =>
+        case CollectionOperator(_, _, _, sink) =>
           Observable.from(replacements).consumeWith(sink.replaceOne())
       }
       .runSyncUnsafe()
@@ -359,7 +359,7 @@ class MongoSinkSuite extends AnyFlatSpecLike with Fixture with Matchers with Bef
     MongoConnection
       .create1(mongoEndpoint, employeesCol)
       .use {
-        case MongoConnector(_, _, _, sink) =>
+        case CollectionOperator(_, _, _, sink) =>
           Observable
             .from(cities)
             .map(city => (Filters.eq("city", city), Updates.pull("activities", "Table Tennis")))

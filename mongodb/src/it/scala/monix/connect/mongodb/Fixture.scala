@@ -17,8 +17,9 @@
 
 package monix.connect.mongodb
 
+import com.mongodb.{MongoClientSettings, ServerAddress}
 import com.mongodb.reactivestreams.client.{MongoClient, MongoClients, MongoCollection, MongoDatabase}
-import monix.connect.mongodb.domain.{MongoCollection => MCollection}
+import monix.connect.mongodb.client.{CollectionCodecRef, CollectionDocumentRef, CollectionRef}
 import org.bson.Document
 import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
@@ -26,27 +27,32 @@ import org.scalacheck.Gen
 import org.mongodb.scala.bson.codecs.Macros._
 import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
 
+import scala.jdk.CollectionConverters._
+
 trait Fixture {
-
-
 
   case class Employee(name: String, age: Int, city: String, companyName: String = "x", activities: List[String] = List.empty)
   case class UnwoundEmployee(name: String, age: Int, city: String, activities: String)
   case class Investor(name: String, funds: Int, companies: List[Company])
   case class Company(name: String, employees: List[Employee], investment: Double)
 
-
   val provider: CodecProvider = classOf[Employee]
   val codecRegistry: CodecRegistry = fromRegistries(fromProviders(classOf[Employee], classOf[UnwoundEmployee], classOf[Company], classOf[Investor]), DEFAULT_CODEC_REGISTRY)
 
   val mongoEndpoint = "mongodb://localhost:27017"
   protected val client: MongoClient = MongoClients.create(mongoEndpoint)
+  val mongoClientSettings =
+    MongoClientSettings
+      .builder()
+      .applyToClusterSettings(builder => builder.hosts(List(new ServerAddress("localhost", 27017)).asJava))
+      .build()
 
-  val dbName = "mydb"
+  val dbName = "myDb"
   val db: MongoDatabase = client.getDatabase(dbName)
 
   val employeesColName = "employees"
   val companiesColName = "companies"
+  val bsonColName = "bson"
   val investorsColName = "investors"
   val employeesMongoCol: MongoCollection[Employee] = db.getCollection(employeesColName, classOf[Employee])
     .withCodecRegistry(codecRegistry)
@@ -55,10 +61,15 @@ trait Fixture {
   val investorsMongoCol: MongoCollection[Investor] = db.getCollection(investorsColName, classOf[Investor])
     .withCodecRegistry(codecRegistry)
 
-  val employeesCol = MCollection(dbName, employeesColName, classOf[Employee], createCodecProvider[Employee]())
-  val companiesCol = MCollection(dbName, companiesColName, classOf[Company], createCodecProvider[Company](), createCodecProvider[Employee]())
-  val investorsCol = MCollection(dbName, companiesColName, classOf[Company], createCodecProvider[Investor](), createCodecProvider[Company](), createCodecProvider[Employee]())
-
+  val employeesCol = CollectionCodecRef(dbName, employeesColName, classOf[Employee], createCodecProvider[Employee]())
+  val companiesCol = CollectionCodecRef(dbName, companiesColName, classOf[Company], createCodecProvider[Company](), createCodecProvider[Employee]())
+  val investorsCol = CollectionCodecRef(dbName, companiesColName, classOf[Company], createCodecProvider[Investor](), createCodecProvider[Company](), createCodecProvider[Employee]())
+  val bsonCol1: CollectionRef[Document] = CollectionDocumentRef(
+    dbName,
+    bsonColName)
+  val bsonCol2 = CollectionDocumentRef(
+    dbName,
+    bsonColName)
   protected val genNonEmptyStr = Gen.identifier.map(_.take(10))
 
   val genInvestor = for {
@@ -66,7 +77,6 @@ trait Fixture {
     funds <- Gen.chooseNum(1, 100000)
     companies <- Gen.listOf(genCompany)
   } yield Investor(name.mkString.take(8), funds, companies)
-
 
   val genEmployee = for {
     name <- Gen.identifier

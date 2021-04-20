@@ -62,7 +62,7 @@ object MongoOp {
   def deleteOne[Doc](collection: MongoCollection[Doc], filter: Bson): Task[DeleteResult] =
     Task
       .fromReactivePublisher(collection.deleteOne(filter))
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultDeleteResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultDeleteResult))
 
   /**
     * Removes at most one document from the collection that matches the given filter with some delete options.
@@ -90,7 +90,7 @@ object MongoOp {
     @deprecated timeout: Option[FiniteDuration] = Option.empty,
     delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[DeleteResult] =
     retryOnFailure(Coeval(collection.deleteOne(filter, deleteOptions)), retries, timeout, delayAfterFailure)
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultDeleteResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultDeleteResult))
 
   /**
     * Removes all documents from the collection that match the given query filter.
@@ -105,7 +105,7 @@ object MongoOp {
   def deleteMany[Doc](collection: MongoCollection[Doc], filter: Bson): Task[DeleteResult] =
     Task
       .fromReactivePublisher(collection.deleteMany(filter))
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultDeleteResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultDeleteResult))
 
   /**
     * Removes all documents from the collection that match the given query filter.
@@ -133,7 +133,7 @@ object MongoOp {
     @deprecated timeout: Option[FiniteDuration] = Option.empty,
     delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[DeleteResult] =
     retryOnFailure(Coeval(collection.deleteMany(filter, deleteOptions)), retries, timeout, delayAfterFailure)
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultDeleteResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultDeleteResult))
 
   /**
     * Inserts the provided document.
@@ -149,7 +149,7 @@ object MongoOp {
   def insertOne[Doc](collection: MongoCollection[Doc], document: Doc): Task[InsertOneResult] =
     Task
       .fromReactivePublisher(collection.insertOne(document))
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultInsertOneResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultInsertOneResult))
 
   /**
     * Inserts the provided document.
@@ -176,7 +176,7 @@ object MongoOp {
     @deprecated timeout: Option[FiniteDuration] = Option.empty,
     delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[InsertOneResult] =
     retryOnFailure(Coeval(collection.insertOne(document, insertOneOptions)), retries, timeout, delayAfterFailure)
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultInsertOneResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultInsertOneResult))
 
   /**
     * Inserts a batch of documents.
@@ -191,7 +191,7 @@ object MongoOp {
   def insertMany[Doc](collection: MongoCollection[Doc], docs: Seq[Doc]): Task[InsertManyResult] =
     Task
       .fromReactivePublisher(collection.insertMany(docs.asJava))
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultInsertManyResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultInsertManyResult))
 
   /**
     * Inserts a batch of documents.
@@ -218,7 +218,7 @@ object MongoOp {
     timeout: Option[FiniteDuration] = Option.empty,
     delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[InsertManyResult] =
     retryOnFailure(Coeval(collection.insertMany(docs.asJava, insertManyOptions)), retries, timeout, delayAfterFailure)
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultInsertManyResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultInsertManyResult))
 
   /**
     * Replace a document in the collection according to the specified arguments.
@@ -234,7 +234,7 @@ object MongoOp {
   def replaceOne[Doc](collection: MongoCollection[Doc], filter: Bson, replacement: Doc): Task[UpdateResult] =
     Task
       .fromReactivePublisher(collection.replaceOne(filter, replacement))
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultUpdateResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultUpdateResult))
 
   /**
     * Replace a document in the collection according to the specified arguments.
@@ -266,7 +266,7 @@ object MongoOp {
       retries,
       timeout,
       delayAfterFailure)
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultUpdateResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultUpdateResult))
 
   /**
     * Update a single document in the collection according to the specified arguments.
@@ -284,7 +284,7 @@ object MongoOp {
   def updateOne[Doc](collection: MongoCollection[Doc], filter: Bson, update: Bson): Task[UpdateResult] =
     Task
       .fromReactivePublisher(collection.updateOne(filter, update))
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultUpdateResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultUpdateResult))
 
   /**
     * Update a single document in the collection according to the specified arguments.
@@ -314,7 +314,7 @@ object MongoOp {
     @deprecated timeout: Option[FiniteDuration] = Option.empty,
     delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[UpdateResult] =
     retryOnFailure(Coeval(collection.updateOne(filter, update, updateOptions)), retries, timeout, delayAfterFailure)
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultUpdateResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultUpdateResult))
 
   /**
     * Update all documents in the collection according to the specified arguments.
@@ -330,7 +330,7 @@ object MongoOp {
   def updateMany[Doc](collection: MongoCollection[Doc], filter: Bson, update: Bson): Task[UpdateResult] =
     Task
       .fromReactivePublisher(collection.updateMany(filter, update))
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultUpdateResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultUpdateResult))
 
   /**
     * Update all documents in the collection according to the specified arguments.
@@ -359,7 +359,7 @@ object MongoOp {
     @deprecated timeout: Option[FiniteDuration] = Option.empty,
     delayAfterFailure: Option[FiniteDuration] = Option.empty): Task[UpdateResult] = {
     retryOnFailure(Coeval(collection.updateMany(filter, update, updateOptions)), retries, timeout, delayAfterFailure)
-      .map(_.map(ResultConverter.fromJava(_)).getOrElse(DefaultUpdateResult))
+      .map(_.map(ResultConverter.fromJava).getOrElse(DefaultUpdateResult))
   }
 
 }

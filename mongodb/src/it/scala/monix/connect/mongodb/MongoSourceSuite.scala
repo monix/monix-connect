@@ -18,9 +18,11 @@
 package monix.connect.mongodb
 
 import com.mongodb.client.model.{Accumulators, Aggregates, CountOptions, Filters, Updates}
-import monix.connect.mongodb.domain.MongoConnector
+import monix.connect.mongodb.client.{CollectionCodecRef, CollectionOperator, MongoConnection}
 import monix.execution.Scheduler.Implicits.global
 import org.bson.Document
+import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
+import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
@@ -78,7 +80,7 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     aggregated.head.getDouble("average") shouldBe 60
   }
 
-  it should "aggregate by unwind" in {
+  it should "aggregate with unwind" in {
     val hobbies = List("reading", "running", "programming")
     val employee: Employee = genEmployeeWith(city = Some("Toronto"), activities = hobbies).sample.get
     MongoSingle.insertOne(employeesMongoCol, employee).runSyncUnsafe()
@@ -92,6 +94,39 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
 
     unwinded.size shouldBe 3
     unwinded.map(_.activities) should contain theSameElementsAs hobbies
+  }
+
+  it should "aggregate with unwind in new api" in {
+    MongoDb.dropCollection(db, "persons").runSyncUnsafe()
+
+    case class Person(name: String, age: Int, hobbies: Seq[String])
+    case class UnwoundPerson(name: String, age: Int, hobbies: String)
+
+    import org.mongodb.scala.bson.codecs.Macros._
+    val codecRegistry: CodecRegistry = fromRegistries(fromProviders(classOf[Person], classOf[UnwoundPerson]))
+    val hobbies =  List("reading", "running", "programming")
+    val col = CollectionCodecRef("myDb", "persons", classOf[Person], codecRegistry)
+    MongoConnection.create1(mongoEndpoint, col).use{ operator =>
+      for {
+        _ <- operator.single.insertOne(Person("Mario", 32, hobbies))
+        unwound <- {
+          val filter = Aggregates.`match`(Filters.gte("age", 32))
+          val unwind = Aggregates.unwind("$hobbies")
+          operator.source.aggregate(Seq(filter, unwind), classOf[UnwoundPerson]).toListL
+          /** Returns ->
+            *  List(
+            *   UnwoundPerson("Mario", 32, "reading"),
+            *   UnwoundPerson("Mario", 32, "running"),
+            *   UnwoundPerson("Mario", 32, "programming")
+            *   )
+            */
+        }
+        //
+      } yield {
+        unwound.size shouldBe 3
+        unwound.map(_.hobbies) should contain theSameElementsAs hobbies
+      }
+    }.runSyncUnsafe()
   }
 
   "count" should  "count all" in {
@@ -177,7 +212,7 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     val l = MongoSource.findAll[Employee](employeesMongoCol).toListL.runSyncUnsafe()
 
     //then
-    l shouldBe empty
+    l shouldBe List.empty
   }
 
   it should  "find filtered elements" in {
@@ -200,12 +235,12 @@ class MongoSourceSuite extends AnyFlatSpecLike with Fixture with Matchers with B
     val company = Company("myCompany", employees, 1000)
 
     //when
-    val exists = MongoConnection.create1(mongoEndpoint, companiesCol).use{ case MongoConnector(_, source, single, _) =>
+    val exists = MongoConnection.create1(mongoEndpoint, companiesCol).use{ case CollectionOperator(_, source, single, _) =>
       for{
         _ <- single.insertOne(company)
         //two different ways to filter the same thing
         exists1 <- source.find(Filters.in("employees", employee)).nonEmptyL
-        exists2 <- source.findAll().filter(_.name == company.name).map(_.employees.contains(employee)).headOrElseL(false)
+        exists2 <- source.findAll.filter(_.name == company.name).map(_.employees.contains(employee)).headOrElseL(false)
       } yield (exists1 && exists2)
     }.runSyncUnsafe()
 

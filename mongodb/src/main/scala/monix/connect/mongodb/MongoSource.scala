@@ -348,7 +348,7 @@ class MongoSource[Doc](private[mongodb] val collection: MongoCollection[Doc]) ex
     *         the result will be -1 if the underlying publisher did not emitted any documents,
     *         or a failed one when emitted an error.
     */
-  def countAll(): Task[Long] =
+  def countAll: Task[Long] =
     super.countAll(collection)
 
   /**
@@ -396,7 +396,7 @@ class MongoSource[Doc](private[mongodb] val collection: MongoCollection[Doc]) ex
     *
     * @return all documents of type [[Doc]] within the collection
     */
-  def findAll(): Observable[Doc] =
+  def findAll: Observable[Doc] =
     super.findAll(collection)
 
   /**

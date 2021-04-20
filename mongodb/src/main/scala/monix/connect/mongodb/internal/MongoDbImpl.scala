@@ -19,7 +19,6 @@ package monix.connect.mongodb.internal
 
 import com.mongodb.MongoNamespace
 import com.mongodb.reactivestreams.client.{MongoClient, MongoDatabase}
-import monix.connect.mongodb.MongoDb
 import monix.eval.Task
 import monix.execution.internal.InternalApi
 import monix.reactive.Observable
@@ -29,8 +28,8 @@ private[mongodb] class MongoDbImpl {
 
   private[mongodb] def createIfNotExists(db: MongoDatabase, collectionName: String): Task[Unit] =
     for {
-      exists <- MongoDb.existsCollection(db, collectionName)
-      create <- if (!exists) MongoDb.createCollection(db, collectionName) else Task.unit
+      exists <- this.existsCollection(db, collectionName)
+      create <- if (!exists) this.createCollection(db, collectionName) else Task.unit
     } yield create
 
   protected[this] def createCollection(db: MongoDatabase, collectionName: String): Task[Unit] =
@@ -43,10 +42,10 @@ private[mongodb] class MongoDbImpl {
     Task.fromReactivePublisher(db.getCollection(collectionName).drop()).map((_ => ()))
 
   protected[this] def existsCollection(db: MongoDatabase, collectionName: String): Task[Boolean] =
-    MongoDb.listCollections(db).filter(_ == collectionName).map(_ => true).headOrElseL(false)
+    this.listCollections(db).existsL(_ == collectionName)
 
   protected[this] def existsDatabase(client: MongoClient, dbName: String): Task[Boolean] =
-    MongoDb.listDatabases(client).filter(_ == dbName).map(_ => true).headOrElseL(false)
+    this.listDatabases(client).existsL(_ == dbName)
 
   protected[this] def renameCollection(
     db: MongoDatabase,
