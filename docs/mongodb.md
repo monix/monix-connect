@@ -8,15 +8,15 @@ _MongoDB_ is a _document database_, in which the data is stored in _JSON-like do
 row/column_ model. It has a rich and expressive query language that allows you to filter and sort by any field with
 support for aggregations and other modern use-cases. The _Monix MongoDB_ connector offers a _reactive_, _non blocking_
 and _resource safe_ api, which relies in the underlying
-the [MongoDB Java Reactive Streams](https://docs.mongodb.com/drivers/reactive-streams) driver. The library is designed
-in four different parts:
-
+the [MongoDB Java Reactive Streams](https://docs.mongodb.com/drivers/reactive-streams) driver. The library core data type 
+to interoperate with collections is `CollectionOperator[Doc]`, which is composed by the following four main pillars:
 - __Database:__ Used to manage and dealing with _mongo databases_ and _collections_.
-- __Operation:__ It exposes single operations to delete, insert, replace and update _collections_.
+- __Single:__ It exposes single operations to delete, insert, replace and update _collections_.
 - __Sink:__ Implements the same operations as the _Operation_ api, but it in a streaming fashion.
 - __Source:__ Used to fetch data from the collections with _aggregate_, _count_, _distinct_ and _find_.
 
-Each of these components is explained in detail in the following sections:
+Each of these components is explained in detail in the following sub-sections, 
+but before we will see how configure and connect to the database server.
 
 ## Dependency
 
@@ -29,7 +29,7 @@ libraryDependencies += "io.monix" %% "monix-mongodb" % "0.6.0"
 ## Collection Reference
 
 Before creating the connection, we would need to have a **reference** to the **collection** that we want to interoperate with
-and use for storing and reading documents.
+and use for storing and reading _documents_.
 
 Such _reference_ is identified by the _database_ and _collection_ names, and represented in code by
 the `CollectionRef` _sealed trait_, which is inherited by `CollectionCodecRef` and `CollectionDocRef`.

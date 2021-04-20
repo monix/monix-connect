@@ -51,13 +51,15 @@ final case class CollectionCodecRef[Doc](
   codecProviders: CodecProvider*)
   extends CollectionRef[Doc]
 
-/** Represents the reference to a collection with a custom codec.
+/**
+  * Represents the reference to a collection, typed in a generic abstraction, as [[Document]].
   *
   * ==Example==
   * {{{
   *   import monix.connect.mongodb.client.CollectionDocumentRef
   *   // only requires db and collection names
-  *   val genericDocCol = CollectionDocumentRef("businessDb", "employees_collection")
+  *   val genericDocCol: CollectionRef[Document] =
+  *   CollectionDocumentRef("businessDb", "employees_collection")
   * }}}
   */
 final case class CollectionDocumentRef(database: String, collection: String) extends CollectionRef[Document]
