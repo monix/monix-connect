@@ -30,7 +30,18 @@ trait CollectionRef[+Doc] {
   *
   * ==Example==
   * {{{
-  *   case class Employee(name: String, age: Int, city: String, companyName: String, activities: List[String])
+  *   import monix.connect.mongodb.client.CollectionCodecRef
+  *   import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
+  *
+  *   case class Employee(name: String, age: Int, companyName: String = "X")
+  *   case class Company(name: String, employees: List[Employee], investment: Int = 0)
+  *
+  *   val employee1 = Employee("Gerard", 39)
+  *   val employee2 = Employee("Laura", 41)
+  *   val company = Company("Stephen", List(employee1, employee2))
+  *
+  *   val employeesCol = CollectionCodecRef("businessDb", "employees_collection", classOf[Employee], createCodecProvider[Employee]())
+  *   val companiesCol = CollectionCodecRef("businessDb", "companies_collection", classOf[Company], createCodecProvider[Company](), createCodecProvider[Employee]())
   * }}}
   */
 final case class CollectionCodecRef[Doc](
@@ -40,4 +51,13 @@ final case class CollectionCodecRef[Doc](
   codecProviders: CodecProvider*)
   extends CollectionRef[Doc]
 
+/** Represents the reference to a collection with a custom codec.
+  *
+  * ==Example==
+  * {{{
+  *   import monix.connect.mongodb.client.CollectionDocumentRef
+  *   // only requires db and collection names
+  *   val genericDocCol = CollectionDocumentRef("businessDb", "employees_collection")
+  * }}}
+  */
 final case class CollectionDocumentRef(database: String, collection: String) extends CollectionRef[Document]
