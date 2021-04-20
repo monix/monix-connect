@@ -28,20 +28,20 @@ libraryDependencies += "io.monix" %% "monix-mongodb" % "0.6.0"
 
 ## Collection Reference
 
-Before creating the connection, we would need to have a reference to the `Collection` that we want to reach and to use
-for storing and reading documents.
+Before creating the connection, we would need to have a **reference** to the **collection** that we want to interoperate with
+and use for storing and reading documents.
 
-Such collection reference is identified by the _database_ and _collection_ names, and represented in code by
+Such _reference_ is identified by the _database_ and _collection_ names, and represented in code by
 the `CollectionRef` _sealed trait_, which is inherited by `CollectionCodecRef` and `CollectionDocRef`.
 
 ### CollectionCodecRef
 
-The most practical way of representing documents in _Scala_ code is by defining them as _case class_, in which then they
-would need to be derived as `CodecProvider`. To do so, we could import implicit codec conversions
+The most practical way of representing documents in _Scala_ code is by using a _case class_, in which then they
+would be auto-derived as `CodecProvider` using implicit conversions
 from `import org.mongodb.scala.bson.codecs.Macros._`.
 
-For didactic purposes we have defined an `Employee` with a hypothetical `employees` collection that will be used to show
-how to create a collection reference with our custom _Codec_ that will later be used to create the `MongoConnection`.
+For didactic purposes we have defined a hypothetical `Employee` class with its `employees` _collection_, which
+that will be used to show how to create a collection reference with our custom _Codec_ that will later be used to create the `MongoConnection`.
 
 ```scala
 import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
@@ -58,12 +58,11 @@ val employeesCol: CollectionRef[Employee] =
 ### CollectionDocumentRef
 
 On the other hand, one could also use `org.bson.Document` as a generic and flexible type for representing a _document_.
-In that case `CollectionDocumentRef` would be used, which would only require the _db_ and _collection_ name to be
+In that case `CollectionDocumentRef` will be used, which would only require the _db_ and _collection_ name to be
 created:
 
 ```scala
-import monix.connect.mongodb.client.CollectionDocumentRef
-import monix.connect.mongodb.client.CollectionRef
+import monix.connect.mongodb.client.{CollectionDocumentRef, CollectionRef}
 import org.bson.Document
 
 val sampleDocument: Document = Document.parse("""{"film_name":"Jumanji", "year": 1995 }""")
@@ -88,12 +87,10 @@ import cats.effect.Resource
 import monix.connect.mongodb.client.{CollectionCodecRef, MongoConnection}
 import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
 import com.mongodb.client.model.Filters
-import monix.eval.Task
 
 val employeesCol = CollectionCodecRef("myDb", "employees", classOf[Employee], createCodecProvider[Employee]())
 val connectionStr = "mongodb://localhost:27017"
 val connection = MongoConnection.create1(connectionStr, employeesCol)
-
 ```
 
 ### Client Settings
@@ -138,7 +135,6 @@ collections, see below an example:
 
 ```scala
 import monix.connect.mongodb.client.{CollectionCodecRef, CollectionDocumentRef, MongoConnection}
-import com.mongodb.{MongoClientSettings, ServerAddress}
 import com.mongodb.client.model.Filters
 import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
 import org.bson.Document
@@ -182,6 +178,7 @@ import monix.connect.mongodb.MongoDb
 import monix.connect.mongodb.client.MongoConnection
 import monix.connect.mongodb.client.CollectionCodecRef
 import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
+import monix.execution.Scheduler.Implicits.global
 
 val employeesCol = CollectionCodecRef("myDb", "employees", classOf[Employee], createCodecProvider[Employee]())
 val connection = MongoConnection.create1("mongodb://host:27017", employeesCol)
@@ -200,11 +197,8 @@ val isCollectionPresent: Task[Boolean] = MongoDb.existsCollection("myDb", "my_co
 Create a new collection within a given _database_.
 
 ```scala
-import monix.eval.Task
-import monix.connect.mongodb.MongoDb
 import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
-import monix.connect.mongodb.client.{MongoConnection, CollectionCodecRef, CollectionRef}
-import monix.connect.mongodb.client.CollectionRef
+import monix.connect.mongodb.client.{MongoConnection, CollectionCodecRef}
 
 val employeesCol = CollectionCodecRef("myDb", "employeesCol", classOf[Employee], createCodecProvider[Employee]())
 val connection = MongoConnection.create1("mongodb://host:27017", employeesCol).use(_.db.createCollection("db123"))
@@ -219,6 +213,7 @@ List _collection_ and _database_ names.
 
 ```scala
 import monix.connect.mongodb.client.{CollectionCodecRef, CollectionRef, MongoConnection}
+import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
 import monix.reactive.Observable
 
 val employeesCol = CollectionCodecRef("myDb", "employeesCol", classOf[Employee], createCodecProvider[Employee]())
@@ -258,13 +253,12 @@ import monix.eval.Task
 import monix.connect.mongodb.client.{CollectionOperator, MongoConnection}
 
 val connection: Resource[Task, CollectionOperator[Document]]
-val t = connection.use { operator =>
+connection.use { operator =>
   for {
     _ <- operator.db.dropCollection("db123", "coll123")
     _ <- operator.db.dropDatabase("db123")
   } yield ()
-}
-
+}.runToFuture
 ```
 
 ## Source
@@ -281,18 +275,16 @@ __Group By__
 
  ```scala
 import org.bson.Document
-import monix.connect.mongodb.MongoSource
 import com.mongodb.client.model.{Accumulators, Aggregates, Filters}
 import cats.effect.Resource
 import monix.eval.Task
-import monix.connect.mongodb.client.{CollectionOperator, MongoConnection}
-
-val filter = Aggregates.`match`(Filters.eq("city", "Caracas"))
-val group = Aggregates.group("group", Accumulators.avg("average", "$age"))
+import monix.connect.mongodb.client.CollectionOperator
 
 val connection: Resource[Task, CollectionOperator[Employee]]
 val aggregated: Task[Option[Document]] = connection.use {
   operator =>
+    val filter = Aggregates.`match`(Filters.eq("city", "Caracas"))
+    val group = Aggregates.group("group", Accumulators.avg("average", "$age"))
     // eventually returns a [[Document]] with the field `average` 
     // that contains the age average of Venezuelan employees.
     operator.source.aggregate(Seq(filter, group)).headOptionL
@@ -308,8 +300,8 @@ In the below example the _hobbies_ of the specified employee will be deconstruct
 
 ```scala
 import com.mongodb.client.model.{Aggregates, Filters}
-import com.mongodb.reactivestreams.client.MongoCollection
 import monix.connect.mongodb.client.{CollectionCodecRef, MongoConnection}
+import monix.execution.Scheduler.Implicits.global
 import org.mongodb.scala.bson.codecs.Macros._
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
 import org.bson.codecs.configuration.CodecRegistry
@@ -327,7 +319,6 @@ MongoConnection.create1("mongodb://host:27017", col).use { operator =>
       val filter = Aggregates.`match`(Filters.gte("age", 32))
       val unwind = Aggregates.unwind("$hobbies")
       operator.source.aggregate(Seq(filter, unwind), classOf[UnwoundPerson]).toListL
-
       /** Returns ->
         * List(
         * UnwoundPerson("Mario", 32, "reading"), 
@@ -338,7 +329,7 @@ MongoConnection.create1("mongodb://host:27017", col).use { operator =>
     }
     //
   } yield unwound
-}.runSyncUnsafe()
+}.runToFuture
 ```
 
 ### Count
@@ -363,10 +354,8 @@ Counts the number of elements that matched with the given filter.
 ```scala
 import cats.effect.Resource
 import com.mongodb.client.model.Filters
-import monix.connect.mongodb.client.{CollectionOperator, MongoConnection}
+import monix.connect.mongodb.client.CollectionOperator
 import monix.eval.Task
-import org.bson.conversions.Bson
-
 
 val connection: Resource[Task, CollectionOperator[Employee]]
 // counts the number of employees based in Sydney
@@ -380,9 +369,8 @@ Gets the distinct values of the specified field name.
 ```scala
 import cats.effect.Resource
 import com.mongodb.client.model.Filters
-import monix.connect.mongodb.client.{CollectionOperator, MongoConnection}
+import monix.connect.mongodb.client.CollectionOperator
 import monix.eval.Task
-import org.bson.conversions.Bson
 
 val connection: Resource[Task, CollectionOperator[Employee]]
 // count of the distinct cities
@@ -397,11 +385,9 @@ Finds all the documents.
 
 ```scala
 import cats.effect.Resource
-import monix.connect.mongodb.client.{CollectionOperator, MongoConnection}
+import monix.connect.mongodb.client.CollectionOperator
 import monix.eval.Task
 import monix.reactive.Observable
-import org.bson.conversions.Bson
-
 
 val connection: Resource[Task, CollectionOperator[Employee]]
 val t = connection.use { operator =>
@@ -416,19 +402,18 @@ val t = connection.use { operator =>
 Finds the documents in the collection that matched the query filter.
 
 ```scala
-import com.mongodb.client.model.Filters
 import cats.effect.Resource
-import monix.connect.mongodb.client.{CollectionOperator, MongoConnection}
+import com.mongodb.client.model.Filters
+import monix.connect.mongodb.client.CollectionOperator
 import monix.eval.Task
 import monix.reactive.Observable
-import org.bson.conversions.Bson
 
 val connection: Resource[Task, CollectionOperator[Employee]]
 connection.use { operator =>
   val rioEmployees: Observable[Employee] = operator.source.find(Filters.eq("city", "Rio"))
   //business logic here
   rioEmployees.completedL
-}
+}.runToFuture
 ```
 
 #### findOneAndDelete
@@ -460,10 +445,8 @@ Atomically _find_ a document and _replace_ it.
 ```scala
 import cats.effect.Resource
 import com.mongodb.client.model.Filters
-import monix.connect.mongodb.client.{CollectionOperator, MongoConnection}
+import monix.connect.mongodb.client.CollectionOperator
 import monix.eval.Task
-import monix.reactive.Observable
-import org.bson.conversions.Bson
 
 val filter = Filters.and(Filters.eq("city", "Cadiz"), Filters.eq("name", "Gustavo"))
 val replacement = Employee(name = "Alberto", city = "Cadiz", age = 33)
@@ -482,10 +465,8 @@ Atomically _find_ a document and _update_ it.
 ```scala
 import cats.effect.Resource
 import com.mongodb.client.model.{Filters, Updates}
-import monix.connect.mongodb.client.{CollectionOperator, MongoConnection}
+import monix.connect.mongodb.client.CollectionOperator
 import monix.eval.Task
-import monix.reactive.Observable
-import org.bson.conversions.Bson
 
 val filter = Filters.and(Filters.eq("city", "Moscou"), Filters.eq("name", "Vladimir"))
 val update = Updates.inc("age", 1)
@@ -586,9 +567,9 @@ collection_ is not modified.
 _Single_:
 
 ```scala
+import cats.effect.Resource
 import com.mongodb.client.model.Filters
 import monix.connect.mongodb.domain.DeleteResult
-import cats.effect.Resource
 import monix.connect.mongodb.client.CollectionOperator
 import monix.eval.Task
 
@@ -623,9 +604,9 @@ collection_ is not modified.
 _Single_:
 
 ```scala
+import cats.effect.Resource
 import com.mongodb.client.model.Filters
 import monix.connect.mongodb.domain.DeleteResult
-import cats.effect.Resource
 import monix.connect.mongodb.client.CollectionOperator
 import monix.eval.Task
 
@@ -638,8 +619,8 @@ val t: Task[DeleteResult] = connection.use(_.single.deleteMany(filter))
 _Sink_:
 
 ```scala
-import com.mongodb.client.model.Filters
 import cats.effect.Resource
+import com.mongodb.client.model.Filters
 import monix.connect.mongodb.client.CollectionOperator
 import monix.eval.Task
 import monix.reactive.Observable
@@ -657,7 +638,7 @@ connection.use { operator =>
 
 #### replaceOne
 
-Replace a _document_ in the _collection_ according to the specified arguments.
+Replaces a _document_ in the _collection_ according to the specified arguments.
 
 _Single_:
 
