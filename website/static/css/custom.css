@@ -21,6 +21,14 @@
   color: #7c7c7c;
 }
 
+.navPusher {
+  background: #FFFFFF;
+}
+
+.hljs {
+  background: #F8FAFF;
+}
+
 .nav-footer .separator {
   width: 350px;
   margin: 0 auto;
@@ -58,9 +66,9 @@
 }
 
 a {
-  color: #19647e;
+  color: #29A4D6;
 }
 
 .onPageNav a:hover {
-  color: #122932;
+  color: #E9F1FF;
 }

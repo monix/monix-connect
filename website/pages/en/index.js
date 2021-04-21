@@ -70,7 +70,7 @@ class Index extends React.Component {
     const { config: siteConfig, language = "" } = this.props;
     const { baseUrl } = siteConfig;
 
-const index = `
+    const index = `
                     [![Release](https://img.shields.io/github/v/tag/monix/monix-connect.svg)](https://search.maven.org/search?q=a:monix-connect*)
                     [![Build](https://github.com/monix/monix-connect/workflows/build/badge.svg)](https://github.com/monix/monix-connect/actions?query=branch%3Amaster+workflow%3Abuild)
                     [![Join the chat](https://badges.gitter.im/monix/monix-connect.svg)](https://gitter.im/monix/monix-connect?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
@@ -91,7 +91,7 @@ const index = `
 
     const Block = props => (
       <Container
-        padding={["bottom", "top"]}
+        padding={[]}
         id={props.id}
         background={props.background}
       >
@@ -104,56 +104,56 @@ const index = `
     );
 
     const Layer0 = () => (
-          <Block layout="fourColumn">
-            {[
-              {
-                image: `${baseUrl}img/mongodb.jpg`,
-                imageAlign: 'right',
-              }
-             ,
-             {
-                image: `${baseUrl}img/s3.png`,
-                imageAlign: 'left'
-             },
-             {
-                image: `${baseUrl}img/hadoop.png`,
-                imageAlign: 'right',
-             }
+      <Block layout="fourColumn" >
+        {[
+          {
+            image: `${baseUrl}img/mongodb.jpg`,
+            imageAlign: 'right',
+          }
+          ,
+          {
+            image: `${baseUrl}img/s3.png`,
+            imageAlign: 'left'
+          },
+          {
+            image: `${baseUrl}img/hadoop.png`,
+            imageAlign: 'right',
+          }
 
-            ]}
-          </Block>
-        );
+        ]}
+      </Block>
+    );
 
     const Layer1 = () => (
-                    <Block layout="fourColumn">
-                      {[
-                        {
-                        image: `${baseUrl}img/gcs.png`,
-                        imageAlign: 'left'
-                        },
-                        {
-                        image: `${baseUrl}img/amazon-dynamo-db.png`,
-                        imageAlign: 'left'
-                        },
-                        {
-                        image: `${baseUrl}img/parquet.png`,
-                        imageAlign: 'right'
-                        }
+      <Block layout="fourColumn">
+        {[
+          {
+            image: `${baseUrl}img/gcs.png`,
+            imageAlign: 'left'
+          },
+          {
+            image: `${baseUrl}img/elasticsearch.png`,
+            imageAlign: 'left'
+          },
+          {
+            image: `${baseUrl}img/parquet.jpg`,
+            imageAlign: 'right'
+          }
 
-                      ]}
-                    </Block>
-                  );
+        ]}
+      </Block>
+    );
 
 
     const Layer2 = () => (
-          <Block layout="fourColumn">
-            {[
-            {
-             image: `${baseUrl}img/redis.png`,
-             imageAlign: 'left'
-            },
-            {
-            image: `${baseUrl}img/elasticsearch.png`,
+      <Block layout="fourColumn">
+        {[
+          {
+            image: `${baseUrl}img/redis.png`,
+            imageAlign: 'left'
+          },
+          {
+            image: `${baseUrl}img/dynamodb.png`,
             imageAlign: 'right'
             }
             ]}
@@ -170,9 +170,9 @@ const index = `
           <div className="index">
             <MarkdownBlock>{index}</MarkdownBlock>
           </div>
-         <Layer0 />
-         <Layer1 />
-         <Layer2 />
+          <Layer0 />
+          <Layer1 />
+          <Layer2 />
         </div>
       </div>
     );

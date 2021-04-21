@@ -48,3 +48,10 @@ benchmarks/data
 benchmarks/data/*
 .bsp/
 
+.metals/
+
+.vscode/
+
+project/metals.sbt
+
+website/.docusaurus/

@@ -114,7 +114,7 @@ redisConn.use { case RedisCmd(hash, keys, list, server, set, sortedSet, string) 
 }.runToFuture
 ```
 
-## Codecs
+## Custom Codecs
 
 In the previous sections it was shown how to create a connection to redis and to start using the `RedisCmd` with its
 different redis modules. The created connection was exposed within a cats resource as
