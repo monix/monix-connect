@@ -19,7 +19,7 @@ a _non blocking_ Redis client.
 Add the following dependency:
 
 ```scala
-libraryDependencies += "io.monix" %% "monix-redis" % "0.6.0"
+libraryDependencies += "io.monix" %% "monix-redis" % "0.6.0-RC1"
 ```
 
 ## Redis Connection

@@ -23,7 +23,7 @@ but before we will see how configure and connect to the database server.
 Add the following dependency to get started:
 
 ```scala
-libraryDependencies += "io.monix" %% "monix-mongodb" % "0.6.0"
+libraryDependencies += "io.monix" %% "monix-mongodb" % "0.6.0-RC1"
 ```
 
 ## Collection Reference
