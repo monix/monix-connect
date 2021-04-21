@@ -1,0 +1,596 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>mongodb title: MongoDB · Monix Connect</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="## Introduction"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="mongodb title: MongoDB · Monix Connect"/><meta property="og:type" content="website"/><meta property="og:url" content="https://connect.monix.io/"/><meta property="og:description" content="## Introduction"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://connect.monix.io/img/monix-logo.png"/><link rel="shortcut icon" href="/img/monix-logo.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css"/><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/monix-logo.svg" alt="Monix Connect"/><h2 class="headerTitleWithLogo">Monix Connect</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/api/monix/connect/index.html" target="_self">API Docs</a></li><li class=""><a href="/docs/overview" target="_self">Documentation</a></li><li class=""><a href="https://github.com/monix/monix-connect" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">mongodb title: MongoDB</h1></header><article><div><span><h2><a class="anchor" aria-hidden="true" id="introduction"></a><a href="#introduction" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Introduction</h2>
+<p><em>MongoDB</em> is a <em>document database</em>, in which the data is stored in <em>JSON-like documents</em> differing to the traditional _
+row/column_ model. It has a rich and expressive query language that allows you to filter and sort by any field with
+support for aggregations and other modern use-cases. The <em>Monix MongoDB</em> connector offers a <em>reactive</em>, <em>non blocking</em>
+and <em>resource safe</em> api, which relies in the underlying
+the <a href="https://docs.mongodb.com/drivers/reactive-streams">MongoDB Java Reactive Streams</a> driver. The library core data type
+to interoperate with collections is <code>CollectionOperator[Doc]</code>, which is composed by the following four main pillars:</p>
+<ul>
+<li><strong>Database:</strong> Used to manage and dealing with <em>mongo databases</em> and <em>collections</em>.</li>
+<li><strong>Single:</strong> It exposes single operations to delete, insert, replace and update <em>collections</em>.</li>
+<li><strong>Sink:</strong> Implements the same operations as the <em>Operation</em> api, but it in a streaming fashion.</li>
+<li><strong>Source:</strong> Used to fetch data from the collections with <em>aggregate</em>, <em>count</em>, <em>distinct</em> and <em>find</em>.</li>
+</ul>
+<p>Each of these components is explained in detail in the following sub-sections,
+but before we will see how configure and connect to the database server.</p>
+<h2><a class="anchor" aria-hidden="true" id="dependency"></a><a href="#dependency" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Dependency</h2>
+<p>Add the following dependency to get started:</p>
+<pre><code class="hljs css language-scala">libraryDependencies += <span class="hljs-string">"io.monix"</span> %% <span class="hljs-string">"monix-mongodb"</span> % <span class="hljs-string">"0.6.0-RC1"</span>
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="collection-reference"></a><a href="#collection-reference" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Collection Reference</h2>
+<p>Before creating the connection, we would need to have a <strong>reference</strong> to the <strong>collection</strong> that we want to interoperate with
+and use for storing and reading <em>documents</em>.</p>
+<p>Such <em>reference</em> is identified by the <em>database</em> and <em>collection</em> names, and represented in code by
+the <code>CollectionRef</code> <em>sealed trait</em>, which is inherited by <code>CollectionCodecRef</code> and <code>CollectionDocRef</code>.</p>
+<h3><a class="anchor" aria-hidden="true" id="collectioncodecref"></a><a href="#collectioncodecref" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>CollectionCodecRef</h3>
+<p>The most practical way of representing documents in <em>Scala</em> code is by using a <em>case class</em>, in which then they
+would be auto-derived as <code>CodecProvider</code> using implicit conversions
+from <code>import org.mongodb.scala.bson.codecs.Macros._</code>.</p>
+<p>For didactic purposes we have defined a hypothetical <code>Employee</code> class with its <code>employees</code> <em>collection</em>, which
+that will be used to show how to create a collection reference with our custom <em>Codec</em> that will later be used to create the <code>MongoConnection</code>.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> org.mongodb.scala.bson.codecs.<span class="hljs-type">Macros</span>.createCodecProvider
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionCodecRef</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionRef</span>
+
+<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Employee</span>(<span class="hljs-params">name: <span class="hljs-type">String</span>, age: <span class="hljs-type">Int</span>, city: <span class="hljs-type">String</span>, hobbies: <span class="hljs-type">List</span>[<span class="hljs-type">String</span>] = <span class="hljs-type">List</span>.empty</span>)</span>
+
+<span class="hljs-keyword">val</span> employee = <span class="hljs-type">Employee</span>(<span class="hljs-string">"Bob"</span>, <span class="hljs-number">29</span>, <span class="hljs-string">"Barcelona"</span>)
+<span class="hljs-keyword">val</span> employeesCol: <span class="hljs-type">CollectionRef</span>[<span class="hljs-type">Employee</span>] =
+  <span class="hljs-type">CollectionCodecRef</span>(<span class="hljs-string">"myDb"</span>, <span class="hljs-string">"employees"</span>, classOf[<span class="hljs-type">Employee</span>], createCodecProvider[<span class="hljs-type">Employee</span>]())
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="collectiondocumentref"></a><a href="#collectiondocumentref" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>CollectionDocumentRef</h3>
+<p>On the other hand, one could also use <code>org.bson.Document</code> as a generic and flexible type for representing a <em>document</em>.
+In that case <code>CollectionDocumentRef</code> will be used, which would only require the <em>db</em> and <em>collection</em> name to be
+created:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.mongodb.client.{<span class="hljs-type">CollectionDocumentRef</span>, <span class="hljs-type">CollectionRef</span>}
+<span class="hljs-keyword">import</span> org.bson.<span class="hljs-type">Document</span>
+
+<span class="hljs-keyword">val</span> sampleDocument: <span class="hljs-type">Document</span> = <span class="hljs-type">Document</span>.parse(<span class="hljs-string">""</span><span class="hljs-string">"{"</span>film_<span class="hljs-string">name":"</span><span class="hljs-type">Jumanji</span><span class="hljs-string">", "</span><span class="hljs-string">year": 1995 }"</span><span class="hljs-string">""</span>)
+<span class="hljs-keyword">val</span> documentCol: <span class="hljs-type">CollectionRef</span>[<span class="hljs-type">Document</span>] = <span class="hljs-type">CollectionDocumentRef</span>(<span class="hljs-string">"myDb"</span>, <span class="hljs-string">"employees"</span>)
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="connection"></a><a href="#connection" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Connection</h2>
+<p>Once we have created <em>collection reference</em>, we will pass it to the method that creates the <em>connection</em>
+which also requires either a <strong>mongo</strong> <strong>connectionString</strong> or <strong>client settings</strong>. You can find below an example of
+connecting to a <em>standalone MongoDB server</em>, but being also configurable for <em>Replica Set</em>, and <em>Sharded Cluster</em>  with
+different options such <em>TLS/SSL</em>, etc. For more details, please refer to
+the <a href="https://mongodb.github.io/mongo-java-driver/4.1/driver-reactive/tutorials/connect-to-mongodb/">official documentation</a>
+.</p>
+<h3><a class="anchor" aria-hidden="true" id="connection-string"></a><a href="#connection-string" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Connection String</h3>
+<p>See in below code snippet how to create the connection with <strong>connection string</strong>:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.{<span class="hljs-type">CollectionCodecRef</span>, <span class="hljs-type">MongoConnection</span>}
+<span class="hljs-keyword">import</span> org.mongodb.scala.bson.codecs.<span class="hljs-type">Macros</span>.createCodecProvider
+<span class="hljs-keyword">import</span> com.mongodb.client.model.<span class="hljs-type">Filters</span>
+
+<span class="hljs-keyword">val</span> employeesCol = <span class="hljs-type">CollectionCodecRef</span>(<span class="hljs-string">"myDb"</span>, <span class="hljs-string">"employees"</span>, classOf[<span class="hljs-type">Employee</span>], createCodecProvider[<span class="hljs-type">Employee</span>]())
+<span class="hljs-keyword">val</span> connectionStr = <span class="hljs-string">"mongodb://localhost:27017"</span>
+<span class="hljs-keyword">val</span> connection = <span class="hljs-type">MongoConnection</span>.create1(connectionStr, employeesCol)
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="client-settings"></a><a href="#client-settings" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Client Settings</h3>
+<p>On the other hand, you could also build the configuration in a typed way with <code>MongoClientSettings</code>, see an example in
+below snippet:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.mongodb.client.{<span class="hljs-type">CollectionCodecRef</span>, <span class="hljs-type">MongoConnection</span>}
+<span class="hljs-keyword">import</span> com.mongodb.{<span class="hljs-type">MongoClientSettings</span>, <span class="hljs-type">ServerAddress</span>}
+<span class="hljs-keyword">import</span> org.mongodb.scala.bson.codecs.<span class="hljs-type">Macros</span>.createCodecProvider
+
+<span class="hljs-keyword">import</span> scala.jdk.<span class="hljs-type">CollectionConverters</span>._
+
+<span class="hljs-keyword">val</span> clientSettings =
+  <span class="hljs-type">MongoClientSettings</span>.builder()
+    .applyToClusterSettings(builder =&gt;
+      builder.hosts(
+        <span class="hljs-type">List</span>(
+          <span class="hljs-keyword">new</span> <span class="hljs-type">ServerAddress</span>(<span class="hljs-string">"host1"</span>, <span class="hljs-number">27017</span>),
+          <span class="hljs-keyword">new</span> <span class="hljs-type">ServerAddress</span>(<span class="hljs-string">"host2"</span>, <span class="hljs-number">27017</span>)
+        ).asJava
+      )
+    ).build()
+
+<span class="hljs-keyword">val</span> employeesCol = <span class="hljs-type">CollectionCodecRef</span>(<span class="hljs-string">"myDb"</span>, <span class="hljs-string">"employees"</span>, classOf[<span class="hljs-type">Employee</span>], createCodecProvider[<span class="hljs-type">Employee</span>]())
+<span class="hljs-keyword">val</span> connection = <span class="hljs-type">MongoConnection</span>.create1(clientSettings, employeesCol)
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="collectionoperator"></a><a href="#collectionoperator" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>CollectionOperator</h2>
+<p>Notice that the creation of the connection returns <code>cats.effect.Resource</code>, which abstracts the acquisition and release
+of the resources consumed by creating the <code>MongoClient</code>. The usage of such resources provides a <code>CollectionOperator</code>,
+which it is composed by four main components: <code>Database</code>, <code>Source</code>, <code>Single</code> and <code>Sink</code>, and together, they bring all
+the necessary methods to operate with the specified collections.</p>
+<h3><a class="anchor" aria-hidden="true" id="multiple-collections"></a><a href="#multiple-collections" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Multiple Collections</h3>
+<p>The api is designed to allow using multiple collections (up to 8) in a single connection. This is exposed in the
+signatures <code>create1</code>, <code>create2</code>, <code>create3</code>, ..., <code>create8</code>, and they a <code>TupleN</code> respectively to the number of
+collections, see below an example:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.mongodb.client.{<span class="hljs-type">CollectionCodecRef</span>, <span class="hljs-type">CollectionDocumentRef</span>, <span class="hljs-type">MongoConnection</span>}
+<span class="hljs-keyword">import</span> com.mongodb.client.model.<span class="hljs-type">Filters</span>
+<span class="hljs-keyword">import</span> org.mongodb.scala.bson.codecs.<span class="hljs-type">Macros</span>.createCodecProvider
+<span class="hljs-keyword">import</span> org.bson.<span class="hljs-type">Document</span>
+<span class="hljs-keyword">import</span> monix.execution.<span class="hljs-type">Scheduler</span>.<span class="hljs-type">Implicits</span>.global
+
+<span class="hljs-keyword">import</span> scala.jdk.<span class="hljs-type">CollectionConverters</span>._
+
+<span class="hljs-keyword">val</span> business: <span class="hljs-type">Document</span> = <span class="hljs-type">Document</span>.parse(<span class="hljs-string">s""</span><span class="hljs-string">"{"</span>business_<span class="hljs-string">name":"</span><span class="hljs-type">MyBusiness</span><span class="hljs-string">", "</span><span class="hljs-string">year": 1995}"</span><span class="hljs-string">""</span>)
+<span class="hljs-keyword">val</span> employee1 = <span class="hljs-type">Employee</span>(<span class="hljs-string">"Employee1"</span>, <span class="hljs-number">21</span>, <span class="hljs-string">"Paris"</span>)
+<span class="hljs-keyword">val</span> employee2 = <span class="hljs-type">Employee</span>(<span class="hljs-string">"Employee2"</span>, <span class="hljs-number">29</span>, <span class="hljs-string">"Amsterdam"</span>)
+<span class="hljs-keyword">val</span> businessCol = <span class="hljs-type">CollectionDocumentRef</span>(database = <span class="hljs-string">"myDb"</span>, collection = <span class="hljs-string">"business_collection"</span>)
+<span class="hljs-keyword">val</span> employeesCol =
+  <span class="hljs-type">CollectionCodecRef</span>(<span class="hljs-string">"myDb"</span>, <span class="hljs-string">"employees_collection"</span>, classOf[<span class="hljs-type">Employee</span>], createCodecProvider[<span class="hljs-type">Employee</span>]())
+<span class="hljs-keyword">val</span> connection = <span class="hljs-type">MongoConnection</span>.create2(<span class="hljs-string">"mongodb://host:27017"</span>, (employeesCol, businessCol))
+
+connection.use { <span class="hljs-keyword">case</span> (employeesOperator, businessOperator) =&gt;
+  <span class="hljs-keyword">for</span> {
+    <span class="hljs-comment">//business logic here</span>
+    _ &lt;- employeesOperator.single.insertMany(<span class="hljs-type">List</span>(employee1, employee2)) &gt;&gt;
+      businessOperator.single.insertOne(business)
+    parisEmployeesCount &lt;- employeesOperator.source.count(<span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"city"</span>, <span class="hljs-string">"Paris"</span>))
+    myOnlyBusiness &lt;- businessOperator.source.find(<span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"film_name"</span>, <span class="hljs-string">"MyBusiness"</span>)).headL
+  } <span class="hljs-keyword">yield</span> (parisEmployeesCount, myOnlyBusiness)
+}.runToFuture
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="database"></a><a href="#database" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Database</h2>
+<p>Dealing with <em>database</em> operations is a common use case in any driver. Nevertheless, the <code>CollectionOperator</code> comes with
+an instance of <code>MongoDatabase</code>, allowing to <strong>create</strong>, <strong>drop</strong>, <strong>list</strong> and <strong>check existence</strong> of both <em>databases</em>
+and <em>collections</em>,</p>
+<h3><a class="anchor" aria-hidden="true" id="exists"></a><a href="#exists" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Exists</h3>
+<p>The <code>MongoDatabase</code> is just a reference to the target <em>database</em>, which may or may not already exist. In case you want
+to check that before trying to read or insert any data:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.<span class="hljs-type">MongoDb</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">MongoConnection</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionCodecRef</span>
+<span class="hljs-keyword">import</span> org.mongodb.scala.bson.codecs.<span class="hljs-type">Macros</span>.createCodecProvider
+<span class="hljs-keyword">import</span> monix.execution.<span class="hljs-type">Scheduler</span>.<span class="hljs-type">Implicits</span>.global
+
+<span class="hljs-keyword">val</span> employeesCol = <span class="hljs-type">CollectionCodecRef</span>(<span class="hljs-string">"myDb"</span>, <span class="hljs-string">"employees"</span>, classOf[<span class="hljs-type">Employee</span>], createCodecProvider[<span class="hljs-type">Employee</span>]())
+<span class="hljs-keyword">val</span> connection = <span class="hljs-type">MongoConnection</span>.create1(<span class="hljs-string">"mongodb://host:27017"</span>, employeesCol)
+<span class="hljs-keyword">val</span> isDbPresent = connection.use { colOperator =&gt;
+  <span class="hljs-keyword">for</span> {
+    isDbPresent &lt;- colOperator.db.existsDatabase(<span class="hljs-string">"myDb"</span>)
+    isCollectionPresent &lt;- colOperator.db.existsCollection(<span class="hljs-string">"my_collection"</span>)
+  } <span class="hljs-keyword">yield</span> (isDbPresent, isCollectionPresent)
+}
+<span class="hljs-comment">// if the db existed you could also check the existence of a particular collection</span>
+<span class="hljs-keyword">val</span> isCollectionPresent: <span class="hljs-type">Task</span>[<span class="hljs-type">Boolean</span>] = <span class="hljs-type">MongoDb</span>.existsCollection(<span class="hljs-string">"myDb"</span>, <span class="hljs-string">"my_collection"</span>)
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="create"></a><a href="#create" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Create</h3>
+<p>Create a new collection within a given <em>database</em>.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> org.mongodb.scala.bson.codecs.<span class="hljs-type">Macros</span>.createCodecProvider
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.{<span class="hljs-type">MongoConnection</span>, <span class="hljs-type">CollectionCodecRef</span>}
+
+<span class="hljs-keyword">val</span> employeesCol = <span class="hljs-type">CollectionCodecRef</span>(<span class="hljs-string">"myDb"</span>, <span class="hljs-string">"employeesCol"</span>, classOf[<span class="hljs-type">Employee</span>], createCodecProvider[<span class="hljs-type">Employee</span>]())
+<span class="hljs-keyword">val</span> connection = <span class="hljs-type">MongoConnection</span>.create1(<span class="hljs-string">"mongodb://host:27017"</span>, employeesCol).use(_.db.createCollection(<span class="hljs-string">"db123"</span>))
+</code></pre>
+<p><em>Notice</em> that the collection we are explicitly creating is different to the one we passed to <code>CollectionRef</code>, the reason
+is because <code>myDb</code> is automatically created with the connection, so we don't need to explicitly create it.</p>
+<h3><a class="anchor" aria-hidden="true" id="list"></a><a href="#list" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>List</h3>
+<p>List <em>collection</em> and <em>database</em> names.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.mongodb.client.{<span class="hljs-type">CollectionCodecRef</span>, <span class="hljs-type">CollectionRef</span>, <span class="hljs-type">MongoConnection</span>}
+<span class="hljs-keyword">import</span> org.mongodb.scala.bson.codecs.<span class="hljs-type">Macros</span>.createCodecProvider
+<span class="hljs-keyword">import</span> monix.reactive.<span class="hljs-type">Observable</span>
+
+<span class="hljs-keyword">val</span> employeesCol = <span class="hljs-type">CollectionCodecRef</span>(<span class="hljs-string">"myDb"</span>, <span class="hljs-string">"employeesCol"</span>, classOf[<span class="hljs-type">Employee</span>], createCodecProvider[<span class="hljs-type">Employee</span>]())
+<span class="hljs-keyword">val</span> connection = <span class="hljs-type">MongoConnection</span>.create1(<span class="hljs-string">"mongodb://host:27017"</span>, employeesCol).use { collOperator =&gt;
+  <span class="hljs-comment">//collection names from all databases</span>
+  <span class="hljs-keyword">val</span> collections: <span class="hljs-type">Observable</span>[<span class="hljs-type">String</span>] = <span class="hljs-keyword">for</span> {
+    databaseName &lt;- collOperator.db.listDatabases
+    collectionName &lt;- collOperator.db.listCollections(databaseName)
+    <span class="hljs-comment">// calling `listCollections` without arguments, would only</span>
+    <span class="hljs-comment">// return the collections names from the current list </span>
+  } <span class="hljs-keyword">yield</span> collectionName
+  collections.count
+}
+
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="rename"></a><a href="#rename" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Rename</h3>
+<p>Rename <em>collection's</em> name on convenience.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.{<span class="hljs-type">CollectionOperator</span>, <span class="hljs-type">MongoConnection</span>}
+
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
+<span class="hljs-keyword">val</span> t = connection.use(_.db.renameCollection(<span class="hljs-string">"oldCollectionName"</span>, <span class="hljs-string">"newCollectionName"</span>))
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="drop"></a><a href="#drop" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Drop</h3>
+<p>And finally, <em>drop</em> either the entire <em>database</em> or <em>collection</em>.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.{<span class="hljs-type">CollectionOperator</span>, <span class="hljs-type">MongoConnection</span>}
+
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Document</span>]]
+connection.use { operator =&gt;
+  <span class="hljs-keyword">for</span> {
+    _ &lt;- operator.db.dropCollection(<span class="hljs-string">"db123"</span>, <span class="hljs-string">"coll123"</span>)
+    _ &lt;- operator.db.dropDatabase(<span class="hljs-string">"db123"</span>)
+  } <span class="hljs-keyword">yield</span> ()
+}.runToFuture
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="source"></a><a href="#source" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Source</h2>
+<p>The <code>MongoSource</code> class abstracts the <em>read-like</em> operations <em>aggregate</em>, <em>count</em>, <em>distinct</em> and <em>find</em> and others, see
+examples for these in next subsections:</p>
+<h3><a class="anchor" aria-hidden="true" id="aggregate"></a><a href="#aggregate" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Aggregate</h3>
+<p>This source <em>aggregates</em> documents according to the specified <em>aggregation pipeline</em>. You can find below examples for
+performing <em>group by</em> and <em>unwind</em> aggregations.</p>
+<p><strong>Group By</strong></p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> org.bson.<span class="hljs-type">Document</span>
+<span class="hljs-keyword">import</span> com.mongodb.client.model.{<span class="hljs-type">Accumulators</span>, <span class="hljs-type">Aggregates</span>, <span class="hljs-type">Filters</span>}
+<span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
+
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
+<span class="hljs-keyword">val</span> aggregated: <span class="hljs-type">Task</span>[<span class="hljs-type">Option</span>[<span class="hljs-type">Document</span>]] = connection.use {
+ operator =&gt;
+   <span class="hljs-keyword">val</span> filter = <span class="hljs-type">Aggregates</span>.`<span class="hljs-keyword">match</span>`(<span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"city"</span>, <span class="hljs-string">"Caracas"</span>))
+   <span class="hljs-keyword">val</span> group = <span class="hljs-type">Aggregates</span>.group(<span class="hljs-string">"group"</span>, <span class="hljs-type">Accumulators</span>.avg(<span class="hljs-string">"average"</span>, <span class="hljs-string">"$age"</span>))
+   <span class="hljs-comment">// eventually returns a [[Document]] with the field `average` </span>
+   <span class="hljs-comment">// that contains the age average of Venezuelan employees.</span>
+   operator.source.aggregate(<span class="hljs-type">Seq</span>(filter, group)).headOptionL
+}
+</code></pre>
+<p><strong>Unwind</strong></p>
+<p>Deconstructs an array field from the input documents to output a document for each element. So each output document is a
+copy of the the main document with the value of the array field replaced by the element.</p>
+<p>In the below example the <em>hobbies</em> of the specified employee will be deconstructed:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> com.mongodb.client.model.{<span class="hljs-type">Aggregates</span>, <span class="hljs-type">Filters</span>}
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.{<span class="hljs-type">CollectionCodecRef</span>, <span class="hljs-type">MongoConnection</span>}
+<span class="hljs-keyword">import</span> monix.execution.<span class="hljs-type">Scheduler</span>.<span class="hljs-type">Implicits</span>.global
+<span class="hljs-keyword">import</span> org.mongodb.scala.bson.codecs.<span class="hljs-type">Macros</span>._
+<span class="hljs-keyword">import</span> org.bson.codecs.configuration.<span class="hljs-type">CodecRegistries</span>.{fromProviders, fromRegistries}
+<span class="hljs-keyword">import</span> org.bson.codecs.configuration.<span class="hljs-type">CodecRegistry</span>
+
+<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span>(<span class="hljs-params">name: <span class="hljs-type">String</span>, age: <span class="hljs-type">Int</span>, hobbies: <span class="hljs-type">Seq</span>[<span class="hljs-type">String</span>]</span>)</span>
+
+<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">UnwoundPerson</span>(<span class="hljs-params">name: <span class="hljs-type">String</span>, age: <span class="hljs-type">Int</span>, hobbies: <span class="hljs-type">String</span></span>)</span>
+
+<span class="hljs-keyword">val</span> codecRegistry: <span class="hljs-type">CodecRegistry</span> = fromRegistries(fromProviders(classOf[<span class="hljs-type">Person</span>], classOf[<span class="hljs-type">UnwoundPerson</span>]))
+<span class="hljs-keyword">val</span> col = <span class="hljs-type">CollectionCodecRef</span>(<span class="hljs-string">"myDb"</span>, <span class="hljs-string">"persons"</span>, classOf[<span class="hljs-type">Person</span>], codecRegistry)
+<span class="hljs-type">MongoConnection</span>.create1(<span class="hljs-string">"mongodb://host:27017"</span>, col).use { operator =&gt;
+  <span class="hljs-keyword">for</span> {
+    _ &lt;- operator.single.insertOne(<span class="hljs-type">Person</span>(<span class="hljs-string">"Mario"</span>, <span class="hljs-number">32</span>, <span class="hljs-type">List</span>(<span class="hljs-string">"reading"</span>, <span class="hljs-string">"running"</span>, <span class="hljs-string">"programming"</span>)))
+    unwound &lt;- {
+      <span class="hljs-keyword">val</span> filter = <span class="hljs-type">Aggregates</span>.`<span class="hljs-keyword">match</span>`(<span class="hljs-type">Filters</span>.gte(<span class="hljs-string">"age"</span>, <span class="hljs-number">32</span>))
+      <span class="hljs-keyword">val</span> unwind = <span class="hljs-type">Aggregates</span>.unwind(<span class="hljs-string">"$hobbies"</span>)
+      operator.source.aggregate(<span class="hljs-type">Seq</span>(filter, unwind), classOf[<span class="hljs-type">UnwoundPerson</span>]).toListL
+      <span class="hljs-comment">/** Returns -&gt;
+        * List(
+        * UnwoundPerson("Mario", 32, "reading"), 
+        * UnwoundPerson("Mario", 32, "running"),
+        * UnwoundPerson("Mario", 32, "programming")
+        * )
+        */</span>
+    }
+    <span class="hljs-comment">//</span>
+  } <span class="hljs-keyword">yield</span> unwound
+}.runToFuture
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="count"></a><a href="#count" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Count</h3>
+<h4><a class="anchor" aria-hidden="true" id="countall"></a><a href="#countall" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>countAll</h4>
+<p>Counts all the documents, without filtering.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.{<span class="hljs-type">CollectionOperator</span>, <span class="hljs-type">MongoConnection</span>}
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Document</span>]]
+<span class="hljs-keyword">val</span> count = connection.use(_.source.countAll)
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="count-1"></a><a href="#count-1" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>count</h4>
+<p>Counts the number of elements that matched with the given filter.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> com.mongodb.client.model.<span class="hljs-type">Filters</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
+<span class="hljs-comment">// counts the number of employees based in Sydney</span>
+<span class="hljs-keyword">val</span> count = connection.use(_.source.count(<span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"city"</span>, <span class="hljs-string">"Sydney"</span>)))
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="distinct"></a><a href="#distinct" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Distinct</h3>
+<p>Gets the distinct values of the specified field name.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> com.mongodb.client.model.<span class="hljs-type">Filters</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
+<span class="hljs-comment">// count of the distinct cities</span>
+<span class="hljs-keyword">val</span> distinctCount = connection.use(_.source.distinct(<span class="hljs-string">"city"</span>, classOf[<span class="hljs-type">String</span>]).countL)
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="find"></a><a href="#find" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Find</h3>
+<h4><a class="anchor" aria-hidden="true" id="findall"></a><a href="#findall" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>findAll</h4>
+<p>Finds all the documents.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+<span class="hljs-keyword">import</span> monix.reactive.<span class="hljs-type">Observable</span>
+
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
+<span class="hljs-keyword">val</span> t = connection.use { operator =&gt;
+  <span class="hljs-keyword">val</span> allEmployees: <span class="hljs-type">Observable</span>[<span class="hljs-type">Employee</span>] = operator.source.findAll
+  <span class="hljs-comment">//business logic here</span>
+  allEmployees.completedL
+}
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="find-1"></a><a href="#find-1" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>find</h4>
+<p>Finds the documents in the collection that matched the query filter.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> com.mongodb.client.model.<span class="hljs-type">Filters</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+<span class="hljs-keyword">import</span> monix.reactive.<span class="hljs-type">Observable</span>
+
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
+connection.use { operator =&gt;
+  <span class="hljs-keyword">val</span> rioEmployees: <span class="hljs-type">Observable</span>[<span class="hljs-type">Employee</span>] = operator.source.find(<span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"city"</span>, <span class="hljs-string">"Rio"</span>))
+  <span class="hljs-comment">//business logic here</span>
+  rioEmployees.completedL
+}.runToFuture
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="findoneanddelete"></a><a href="#findoneanddelete" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>findOneAndDelete</h4>
+<p>Atomically <em>find</em> a document and <em>remove</em> it.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> com.mongodb.client.model.<span class="hljs-type">Filters</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.{<span class="hljs-type">CollectionOperator</span>, <span class="hljs-type">MongoConnection</span>}
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+<span class="hljs-keyword">import</span> monix.reactive.<span class="hljs-type">Observable</span>
+<span class="hljs-keyword">import</span> org.bson.conversions.<span class="hljs-type">Bson</span>
+
+<span class="hljs-comment">// finds and deletes one Cracow employee older than 66 and</span>
+<span class="hljs-keyword">val</span> filter = <span class="hljs-type">Filters</span>.and(<span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"city"</span>, <span class="hljs-string">"Cracow"</span>), <span class="hljs-type">Filters</span>.gt(<span class="hljs-string">"age"</span>, <span class="hljs-number">66</span>))
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
+connection.use { operator =&gt;
+  <span class="hljs-keyword">val</span> retiredEmployee: <span class="hljs-type">Task</span>[<span class="hljs-type">Option</span>[<span class="hljs-type">Employee</span>]] = operator.source.findOneAndDelete(filter)
+  <span class="hljs-comment">//business logic here</span>
+  retiredEmployee
+}.runToFuture
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="findoneandreplace"></a><a href="#findoneandreplace" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>findOneAndReplace</h4>
+<p>Atomically <em>find</em> a document and <em>replace</em> it.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> com.mongodb.client.model.<span class="hljs-type">Filters</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+
+<span class="hljs-keyword">val</span> filter = <span class="hljs-type">Filters</span>.and(<span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"city"</span>, <span class="hljs-string">"Cadiz"</span>), <span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"name"</span>, <span class="hljs-string">"Gustavo"</span>))
+<span class="hljs-keyword">val</span> replacement = <span class="hljs-type">Employee</span>(name = <span class="hljs-string">"Alberto"</span>, city = <span class="hljs-string">"Cadiz"</span>, age = <span class="hljs-number">33</span>)
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
+connection.use { operator =&gt;
+  <span class="hljs-keyword">val</span> replacedEmployee: <span class="hljs-type">Task</span>[<span class="hljs-type">Option</span>[<span class="hljs-type">Employee</span>]] = operator.source.findOneAndReplace(filter, replacement)
+  <span class="hljs-comment">//business logic here</span>
+  replacedEmployee
+}.runToFuture
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="findoneandupdate"></a><a href="#findoneandupdate" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>findOneAndUpdate</h4>
+<p>Atomically <em>find</em> a document and <em>update</em> it.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> com.mongodb.client.model.{<span class="hljs-type">Filters</span>, <span class="hljs-type">Updates</span>}
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+
+<span class="hljs-keyword">val</span> filter = <span class="hljs-type">Filters</span>.and(<span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"city"</span>, <span class="hljs-string">"Moscou"</span>), <span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"name"</span>, <span class="hljs-string">"Vladimir"</span>))
+<span class="hljs-keyword">val</span> update = <span class="hljs-type">Updates</span>.inc(<span class="hljs-string">"age"</span>, <span class="hljs-number">1</span>)
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
+connection.use(_.source.findOneAndUpdate(filter, update)).runToFuture
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="single--sinks"></a><a href="#single--sinks" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Single &amp; Sinks</h2>
+<p>The <code>Single</code> and <code>Sink</code> components are documented together since they both implement exactly the same set of
+operations <em>insert</em>, <em>delete</em>, <em>replace</em> and <em>update</em>, although with the difference that the first executes the
+operation in single task and the latter pipes the elements of the stream to a <em>Monix</em> <code>Consumer</code> to execute them.</p>
+<p>The following sub-sections represent the list of different <em>operations</em> and <em>sinks</em> available to use, with a small
+example on each one.</p>
+<h3><a class="anchor" aria-hidden="true" id="insert"></a><a href="#insert" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Insert</h3>
+<h4><a class="anchor" aria-hidden="true" id="insertone"></a><a href="#insertone" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>insertOne</h4>
+<p>Inserts the provided <em>document</em> to the specified collection.</p>
+<p><em>Single</em>:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.domain.<span class="hljs-type">InsertOneResult</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+
+<span class="hljs-keyword">val</span> employee: <span class="hljs-type">Employee</span> = <span class="hljs-type">Employee</span>(<span class="hljs-string">"Luke"</span>, <span class="hljs-string">"London"</span>, <span class="hljs-number">41</span>)
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">InsertOneResult</span>] = connection.use(_.single.insertOne(employee))
+</code></pre>
+<p><em>Sink</em>:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+<span class="hljs-keyword">import</span> monix.reactive.<span class="hljs-type">Observable</span>
+
+<span class="hljs-keyword">val</span> employees = <span class="hljs-type">List</span>(<span class="hljs-type">Employee</span>(<span class="hljs-string">"Luke"</span>, <span class="hljs-string">"London"</span>, <span class="hljs-number">41</span>))
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
+connection.use { operator =&gt;
+  <span class="hljs-type">Observable</span>.from(employees) <span class="hljs-comment">// Observable[Employee]</span>
+    .consumeWith(operator.sink.insertOne())
+}.runToFuture
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="insertmany"></a><a href="#insertmany" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>insertMany</h4>
+<p>Inserts the provided list of documents to the specified collection.</p>
+<p><em>Single</em>:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.domain.<span class="hljs-type">InsertManyResult</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+
+<span class="hljs-keyword">val</span> employees: <span class="hljs-type">List</span>[<span class="hljs-type">Employee</span>] = <span class="hljs-type">List</span>(<span class="hljs-type">Employee</span>(<span class="hljs-string">"Jim"</span>, <span class="hljs-string">"Vienna"</span>, <span class="hljs-number">33</span>), <span class="hljs-type">Employee</span>(<span class="hljs-string">"Albert"</span>, <span class="hljs-string">"Vienna"</span>, <span class="hljs-number">45</span>))
+
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">InsertManyResult</span>] = connection.use(_.single.insertMany(employees))
+</code></pre>
+<p><em>Sink</em>:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+<span class="hljs-keyword">import</span> monix.reactive.<span class="hljs-type">Observable</span>
+
+<span class="hljs-keyword">val</span> employees: <span class="hljs-type">List</span>[<span class="hljs-type">Employee</span>] = <span class="hljs-type">List</span>(
+  <span class="hljs-type">Employee</span>(<span class="hljs-string">"Salomon"</span>, <span class="hljs-string">"Berlin"</span>, <span class="hljs-number">23</span>),
+  <span class="hljs-type">Employee</span>(<span class="hljs-string">"Victor"</span>, <span class="hljs-string">"Berlin"</span>, <span class="hljs-number">54</span>),
+  <span class="hljs-type">Employee</span>(<span class="hljs-string">"Gabriel"</span>, <span class="hljs-string">"Paris"</span>, <span class="hljs-number">35</span>)
+)
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
+connection.use { operator =&gt;
+  <span class="hljs-type">Observable</span>.from(employees) <span class="hljs-comment">// Observable[Employee]</span>
+    .bufferTumbling(<span class="hljs-number">3</span>) <span class="hljs-comment">// Observable[Seq[Employee]]</span>
+    .consumeWith(operator.sink.insertMany())
+}.runToFuture
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="delete"></a><a href="#delete" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Delete</h3>
+<h4><a class="anchor" aria-hidden="true" id="deleteone"></a><a href="#deleteone" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>deleteOne</h4>
+<p>Removes at most one <em>document</em> from the <em>collection</em> that matches the given <em>filter</em>. If no documents match, the _
+collection_ is not modified.</p>
+<p><em>Single</em>:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> com.mongodb.client.model.<span class="hljs-type">Filters</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.domain.<span class="hljs-type">DeleteResult</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+
+<span class="hljs-keyword">val</span> filter = <span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"name"</span>, <span class="hljs-string">"Bob"</span>)
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">DeleteResult</span>] = connection.use(_.single.deleteOne(filter))
+</code></pre>
+<p><em>Sink</em>:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> com.mongodb.client.model.<span class="hljs-type">Filters</span>
+<span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+<span class="hljs-keyword">import</span> monix.reactive.<span class="hljs-type">Observable</span>
+
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
+connection.use { operator =&gt;
+  <span class="hljs-comment">// employees to be deleted from the collection</span>
+  <span class="hljs-type">Observable</span>.from(<span class="hljs-type">List</span>(<span class="hljs-string">"Lauren"</span>, <span class="hljs-string">"Marie"</span>, <span class="hljs-string">"Simon"</span>)) <span class="hljs-comment">// Observable[String] </span>
+    .map(name =&gt; <span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"name"</span>, name)) <span class="hljs-comment">// Observable[Bson]</span>
+    .consumeWith(operator.sink.deleteOne())
+}.runToFuture
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="deletemany"></a><a href="#deletemany" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>deleteMany</h4>
+<p>Removes all documents from the <em>collection</em> that match the given query filter. Again if no <em>documents</em> match, the _
+collection_ is not modified.</p>
+<p><em>Single</em>:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> com.mongodb.client.model.<span class="hljs-type">Filters</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.domain.<span class="hljs-type">DeleteResult</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
+<span class="hljs-comment">// delete all employees older than 65 y.o</span>
+<span class="hljs-keyword">val</span> filter = <span class="hljs-type">Filters</span>.gt(<span class="hljs-string">"age"</span>, <span class="hljs-number">65</span>)
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">DeleteResult</span>] = connection.use(_.single.deleteMany(filter))
+</code></pre>
+<p><em>Sink</em>:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> com.mongodb.client.model.<span class="hljs-type">Filters</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+<span class="hljs-keyword">import</span> monix.reactive.<span class="hljs-type">Observable</span>
+
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
+connection.use { operator =&gt;
+  <span class="hljs-comment">// all employees from `Germany`, `Italy` or `Turkey` were fired (deleted)</span>
+  <span class="hljs-type">Observable</span>.from(<span class="hljs-type">List</span>(<span class="hljs-string">"Germany"</span>, <span class="hljs-string">"Italy"</span>, <span class="hljs-string">"Turkey"</span>)) <span class="hljs-comment">// Observable[String] </span>
+    .map(city =&gt; <span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"city"</span>, city)) <span class="hljs-comment">// Observable[Bson]</span>
+    .consumeWith(operator.sink.deleteMany())
+}.runToFuture
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="replace"></a><a href="#replace" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Replace</h3>
+<h4><a class="anchor" aria-hidden="true" id="replaceone"></a><a href="#replaceone" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>replaceOne</h4>
+<p>Replaces a <em>document</em> in the <em>collection</em> according to the specified arguments.</p>
+<p><em>Single</em>:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> com.mongodb.client.model.<span class="hljs-type">Filters</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.domain.<span class="hljs-type">DeleteResult</span>
+<span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
+<span class="hljs-comment">// assuming that `Bob` exists in the collection it gets </span>
+<span class="hljs-comment">// retired and replaced by `Alice`</span>
+<span class="hljs-keyword">val</span> filter = <span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"name"</span>, <span class="hljs-string">"Bob"</span>)
+<span class="hljs-keyword">val</span> replacement = <span class="hljs-type">Employee</span>(<span class="hljs-string">"Alice"</span>, <span class="hljs-string">"France"</span>, <span class="hljs-number">43</span>)
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">DeleteResult</span>] = connection.use(_.single.replaceOne(filter, replacement))
+</code></pre>
+<p><em>Sink</em>:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> com.mongodb.client.model.<span class="hljs-type">Filters</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+<span class="hljs-keyword">import</span> monix.reactive.<span class="hljs-type">Observable</span>
+<span class="hljs-keyword">import</span> org.bson.conversions.<span class="hljs-type">Bson</span>
+
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
+<span class="hljs-comment">// Presumably the collection have employees 1 and 2, then they are replaced by 3 and 4</span>
+<span class="hljs-keyword">val</span> replacements: <span class="hljs-type">Seq</span>[(<span class="hljs-type">Bson</span>, <span class="hljs-type">Employee</span>)] =
+  <span class="hljs-type">List</span>(
+    (<span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"name"</span>, <span class="hljs-string">"Employee1"</span>), <span class="hljs-type">Employee</span>(<span class="hljs-string">"Employee3"</span>, <span class="hljs-number">43</span>, <span class="hljs-string">"Rio"</span>)),
+    (<span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"name"</span>, <span class="hljs-string">"Employee2"</span>), <span class="hljs-type">Employee</span>(<span class="hljs-string">"Employee4"</span>, <span class="hljs-number">37</span>, <span class="hljs-string">"Rio"</span>))
+  )
+connection.use { operator =&gt;
+  <span class="hljs-type">Observable</span>.from(replacements) <span class="hljs-comment">// Observable[(Bson, Employee)]</span>
+    .consumeWith(operator.sink.replaceOne())
+}.runToFuture
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="update"></a><a href="#update" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Update</h3>
+<h4><a class="anchor" aria-hidden="true" id="updateone"></a><a href="#updateone" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>updateOne</h4>
+<p>Update a single document in the collection according to the specified arguments.</p>
+<p><em>Single</em>:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> com.mongodb.client.model.{<span class="hljs-type">Filters</span>, <span class="hljs-type">Updates</span>}
+<span class="hljs-keyword">import</span> monix.connect.mongodb.domain.<span class="hljs-type">UpdateResult</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
+<span class="hljs-comment">/** Updates Bob's employee record for its anniversary, an empty option is returned 
+  * when there was no record that matched with the given filter. */</span>
+<span class="hljs-keyword">val</span> filter = <span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"name"</span>, <span class="hljs-string">"Bob"</span>)
+<span class="hljs-keyword">val</span> anniversaryUpdate = <span class="hljs-type">Updates</span>.inc(<span class="hljs-string">"age"</span>, <span class="hljs-number">1</span>)
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">UpdateResult</span>] = connection.use(_.single.updateOne(filter, anniversaryUpdate))
+</code></pre>
+<p><em>Sink</em>:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> com.mongodb.client.model.{<span class="hljs-type">Filters</span>, <span class="hljs-type">Updates</span>}
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+<span class="hljs-keyword">import</span> monix.reactive.<span class="hljs-type">Observable</span>
+<span class="hljs-keyword">import</span> org.bson.conversions.<span class="hljs-type">Bson</span>
+
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
+connection.use { operator =&gt;
+  <span class="hljs-keyword">val</span> filter = <span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"city"</span>, <span class="hljs-string">"Porto"</span>)
+  <span class="hljs-keyword">val</span> update = <span class="hljs-type">Updates</span>.set(<span class="hljs-string">"city"</span>, <span class="hljs-string">"Lisbon"</span>)
+  <span class="hljs-keyword">val</span> updateElements: <span class="hljs-type">Seq</span>[(<span class="hljs-type">Bson</span>, <span class="hljs-type">Bson</span>)] = <span class="hljs-type">List</span>.fill(<span class="hljs-number">4</span>)((filter, update))
+  <span class="hljs-comment">// imagine that a company wants to send four of its employees from Porto to Lisbon</span>
+  <span class="hljs-type">Observable</span>.from(updateElements) <span class="hljs-comment">// Observable[(Bson, Bson)]</span>
+    .consumeWith(operator.sink.updateOne())
+}.runToFuture
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="updatemany"></a><a href="#updatemany" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>updateMany</h4>
+<p>Update all documents in the collection according to the specified arguments.</p>
+<p><em>Single</em>:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> com.mongodb.client.model.{<span class="hljs-type">Filters</span>, <span class="hljs-type">Updates</span>}
+<span class="hljs-keyword">import</span> monix.connect.mongodb.domain.<span class="hljs-type">UpdateResult</span>
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
+<span class="hljs-keyword">val</span> filter = <span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"city"</span>, <span class="hljs-string">"Spain"</span>)
+<span class="hljs-keyword">val</span> update = <span class="hljs-type">Updates</span>.push(<span class="hljs-string">"hobbies"</span>, <span class="hljs-string">"Football"</span>)
+<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">UpdateResult</span>] = connection.use(_.single.updateMany(filter, update))
+</code></pre>
+<p><em>Sink</em>:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> com.mongodb.client.model.{<span class="hljs-type">Filters</span>, <span class="hljs-type">Updates</span>}
+<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+<span class="hljs-keyword">import</span> monix.reactive.<span class="hljs-type">Observable</span>
+<span class="hljs-keyword">import</span> org.bson.conversions.<span class="hljs-type">Bson</span>
+
+<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
+connection.use { operator =&gt;
+  <span class="hljs-keyword">val</span> cities: <span class="hljs-type">Set</span>[<span class="hljs-type">String</span>] = <span class="hljs-type">Set</span>(<span class="hljs-string">"Seattle"</span>, <span class="hljs-string">"Nairobi"</span>, <span class="hljs-string">"Dakar"</span>)
+  <span class="hljs-type">Observable</span>.from(cities) <span class="hljs-comment">// Observable[String]</span>
+    .map(city =&gt; (<span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"city"</span>, city), <span class="hljs-type">Updates</span>.pull(<span class="hljs-string">"hobbies"</span>, <span class="hljs-string">"Table Tennis"</span>))) <span class="hljs-comment">// Observable[(Bson, Bson)]</span>
+    .consumeWith(operator.sink.updateMany())
+}.runToFuture
+</code></pre>
+</span></div></article></div><div class="docs-prevnext"></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#introduction">Introduction</a></li><li><a href="#dependency">Dependency</a></li><li><a href="#collection-reference">Collection Reference</a><ul class="toc-headings"><li><a href="#collectioncodecref">CollectionCodecRef</a></li><li><a href="#collectiondocumentref">CollectionDocumentRef</a></li></ul></li><li><a href="#connection">Connection</a><ul class="toc-headings"><li><a href="#connection-string">Connection String</a></li><li><a href="#client-settings">Client Settings</a></li></ul></li><li><a href="#collectionoperator">CollectionOperator</a><ul class="toc-headings"><li><a href="#multiple-collections">Multiple Collections</a></li></ul></li><li><a href="#database">Database</a><ul class="toc-headings"><li><a href="#exists">Exists</a></li><li><a href="#create">Create</a></li><li><a href="#list">List</a></li><li><a href="#rename">Rename</a></li><li><a href="#drop">Drop</a></li></ul></li><li><a href="#source">Source</a><ul class="toc-headings"><li><a href="#aggregate">Aggregate</a></li><li><a href="#count">Count</a></li><li><a href="#distinct">Distinct</a></li><li><a href="#find">Find</a></li></ul></li><li><a href="#single--sinks">Single &amp; Sinks</a><ul class="toc-headings"><li><a href="#insert">Insert</a></li><li><a href="#delete">Delete</a></li><li><a href="#replace">Replace</a></li><li><a href="#update">Update</a></li></ul></li></ul></nav></div><footer class="nav-footer" id="footer"><hr class="separator"/><section class="copyright">Copyright © 2020-2021 The Monix Connect Developers.</section></footer></div></body></html>

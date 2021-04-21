@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Redis · Monix Connect</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="## Introduction"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Redis · Monix Connect"/><meta property="og:type" content="website"/><meta property="og:url" content="https://connect.monix.io/"/><meta property="og:description" content="## Introduction"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://connect.monix.io/img/monix-logo.png"/><link rel="shortcut icon" href="/img/monix-logo.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css"/><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/monix-logo.svg" alt="Monix Connect"/><h2 class="headerTitleWithLogo">Monix Connect</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/api/monix/connect/index.html" target="_self">API Docs</a></li><li class="siteNavGroupActive"><a href="/docs/overview" target="_self">Documentation</a></li><li class=""><a href="https://github.com/monix/monix-connect" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Documentation</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Documentation</h3><ul class=""><li class="navListItem"><a class="navItem" href="/docs/overview">Overview</a></li><li class="navListItem"><a class="navItem" href="/docs/akka">Akka Streams</a></li><li class="navListItem"><a class="navItem" href="/docs/parquet">Apache Parquet</a></li><li class="navListItem"><a class="navItem" href="/docs/dynamodb">AWS DynamoDB</a></li><li class="navListItem"><a class="navItem" href="/docs/s3">AWS S3</a></li><li class="navListItem"><a class="navItem" href="/docs/elasticsearch">Elasticsearch</a></li><li class="navListItem"><a class="navItem" href="/docs/gcs">Google Cloud Storage</a></li><li class="navListItem"><a class="navItem" href="/docs/hdfs">HDFS</a></li><li class="navListItem"><a class="navItem" href="/docs/mongodb">MongoDB</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/docs/redis">Redis</a></li></ul></div></div></section></div><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Redis · Monix Connect</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="## Introduction"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Redis · Monix Connect"/><meta property="og:type" content="website"/><meta property="og:url" content="https://connect.monix.io/"/><meta property="og:description" content="## Introduction"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://connect.monix.io/img/monix-logo.png"/><link rel="shortcut icon" href="/img/monix-logo.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css"/><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/monix-logo.svg" alt="Monix Connect"/><h2 class="headerTitleWithLogo">Monix Connect</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/api/monix/connect/index.html" target="_self">API Docs</a></li><li class="siteNavGroupActive"><a href="/docs/overview" target="_self">Documentation</a></li><li class=""><a href="https://github.com/monix/monix-connect" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Documentation</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Documentation</h3><ul class=""><li class="navListItem"><a class="navItem" href="/docs/overview">Overview</a></li><li class="navListItem"><a class="navItem" href="/docs/parquet">Apache Parquet</a></li><li class="navListItem"><a class="navItem" href="/docs/dynamodb">AWS DynamoDB</a></li><li class="navListItem"><a class="navItem" href="/docs/s3">AWS S3</a></li><li class="navListItem"><a class="navItem" href="/docs/elasticsearch">Elasticsearch</a></li><li class="navListItem"><a class="navItem" href="/docs/gcs">Google Cloud Storage</a></li><li class="navListItem"><a class="navItem" href="/docs/hdfs">HDFS</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/docs/redis">Redis</a></li></ul></div></div></section></div><script>
             var coll = document.getElementsByClassName('collapsible');
             var checkActiveCategory = true;
             for (var i = 0; i < coll.length; i++) {
@@ -55,239 +55,397 @@
               }
             });
         </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Redis</h1></header><article><div><span><h2><a class="anchor" aria-hidden="true" id="introduction"></a><a href="#introduction" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Introduction</h2>
-<p><em>Redis</em> is an open source, in-memory data structure store, used as a database, cache and message broker providing high availability, scalability and a outstanding performance.
-It supports data structures such as string, hashes, lists, sets, sorted sets with range queries, streams and more.
-It has a defined a set of <a href="https://redis.io/commands">commands</a> to inter-operate with, and most of them are also available from the java api.</p>
-<p>This connector has been built on top of <a href="https://lettuce.io/">lettuce</a>, the most popular java library for operating with a <em>non blocking</em> Redis client.</p>
+<p><em>Redis</em> is an open source, in-memory data structure store, used as a database, cache and message broker.
+providing high availability, scalability and a outstanding performance. sorted sets, and a set of <a href="https://redis.io/commands">commands</a>
+that can run atomically on these, like appending to a string; incrementing the value in a hash; pushing an element
+It supports data structures such as string, hashes, lists,
+to inter-operate with, and most of them are also available from the java api.</p>
+<p>This connector has been built on top of <a href="https://lettuce.io/">lettuce</a>, the most popular java library for operating with
+a <em>non blocking</em> Redis client.</p>
 <h2><a class="anchor" aria-hidden="true" id="dependency"></a><a href="#dependency" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Dependency</h2>
 <p>Add the following dependency:</p>
-<pre><code class="hljs css language-scala">libraryDependencies += <span class="hljs-string">"io.monix"</span> %% <span class="hljs-string">"monix-redis"</span> % <span class="hljs-string">"0.5.1"</span>
+<pre><code class="hljs css language-scala">libraryDependencies += <span class="hljs-string">"io.monix"</span> %% <span class="hljs-string">"monix-redis"</span> % <span class="hljs-string">"0.6.0-RC1"</span>
 </code></pre>
-<h2><a class="anchor" aria-hidden="true" id="getting-started"></a><a href="#getting-started" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Getting started</h2>
-<p>Redis provides a wide range of commands to perform a different range of operations, divided into 15 different groups.
-Currently, this connector only  provides support for the most common used ones:  (<a href="https://redis.io/commands#generic">Keys</a>, <a href="https://redis.io/commands#hash">Hashes</a>, <a href="https://redis.io/commands#list">List</a>, <a href="https://redis.io/commands#pubsub">Pub/Sub</a>, <a href="https://redis.io/commands#server">Server</a>, <a href="https://redis.io/commands#set">Sets</a>, <a href="https://redis.io/commands#sorted_set">SortedSets</a>, <a href="https://redis.io/commands#stream">Streams</a> and <a href="https://redis.io/commands#string">Strings</a>).
-Each of these modules has its own object located under <code>monix.connect.redis</code> package, being <code>Redis</code> the one that aggregates them all. But they can be individually used too.</p>
-<p>Apart of that, you will only need to define an implicit instance of <code>StatefulRedisConnection[K, V]</code> in the scope of the .</p>
-<p>On continuation let's show an example for each of the redis data group:</p>
-<h3><a class="anchor" aria-hidden="true" id="__keys__"></a><a href="#__keys__" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><strong>Keys</strong></h3>
-<p>The following example uses the redis keys api <code>RedisKey</code> to show a little example on working with some basic key operations.</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.redis.<span class="hljs-type">RedisKey</span>
+<h2><a class="anchor" aria-hidden="true" id="redis-connection"></a><a href="#redis-connection" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Redis Connection</h2>
+<p>The first step is to create a <code>RedisConnection</code> a simple, scalable and pure interface that allows to
+communicate to a Redis <em>Standalone</em> or <em>Cluster</em> servers.</p>
+<p><strong>Remember</strong> that the created connection is an expensive resource, as it is made with the
+underlying <em>lettuce</em> which also uses netty and holds a set of <code>io.netty.channel.EventLoopGroup</code>
+that use multiple threads. So, reuse the connection as much as possible!</p>
+<h3><a class="anchor" aria-hidden="true" id="standalone"></a><a href="#standalone" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Standalone</h3>
+<p>In order to create a standalone connection, we will use the companion object's signature <code>RedisConnection.standalone</code>,
+which returns a connection instance.</p>
+<p>In order to create the connection, first we would just need a single <code>monix.connect.redis.client.RedisUri</code> relative to
+the redis standalone server:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.redis.client.{<span class="hljs-type">RedisConnection</span>, <span class="hljs-type">RedisUri</span>}
 
-<span class="hljs-comment">//given two keys and a value</span>
-<span class="hljs-keyword">val</span> key1: <span class="hljs-type">K</span> <span class="hljs-comment">// assuming that k1 initially exists</span>
-<span class="hljs-keyword">val</span> key2: <span class="hljs-type">K</span> <span class="hljs-comment">// k2 does not exists</span>
-<span class="hljs-keyword">val</span> value: <span class="hljs-type">String</span>
+<span class="hljs-comment">// RedisUri has an overloaded `apply` which also allows host and port to be passed separately</span>
+<span class="hljs-comment">// like RedisUri("localhost", 6379) </span>
+<span class="hljs-keyword">val</span> redisUri = <span class="hljs-type">RedisUri</span>(<span class="hljs-string">"redis://localhost:6379"</span>)
 
-<span class="hljs-comment">//when</span>
-<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">Long</span>, <span class="hljs-type">Boolean</span>, <span class="hljs-type">Long</span>, <span class="hljs-type">Long</span>, <span class="hljs-type">Long</span>, <span class="hljs-type">Long</span>] = {
+<span class="hljs-comment">// then we create the connection</span>
+<span class="hljs-keyword">val</span> redisConn: <span class="hljs-type">RedisConnection</span> = <span class="hljs-type">RedisConnection</span>.standalone(redisUri)
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="cluster"></a><a href="#cluster" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Cluster</h3>
+<p>Creating a <strong>cluster</strong> connection is seamlessly to the standalone one, they both end up encoded the same parent
+class <code>RedisConnection</code>, but for the fact that its creation requires multiple <code>RedisUri</code>s that represent the set of redis
+servers in the cluster.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.redis.client.{<span class="hljs-type">RedisConnection</span>, <span class="hljs-type">RedisUri</span>}
+
+<span class="hljs-keyword">val</span> redisNode1 = <span class="hljs-type">RedisUri</span>(<span class="hljs-string">"my.redis.node.1"</span>, <span class="hljs-number">7000</span>)
+<span class="hljs-keyword">val</span> redisNode2 = <span class="hljs-type">RedisUri</span>(<span class="hljs-string">"my.redis.node.1"</span>, <span class="hljs-number">7001</span>)
+<span class="hljs-keyword">val</span> redisNode3 = <span class="hljs-type">RedisUri</span>(<span class="hljs-string">"my.redis.node.1"</span>, <span class="hljs-number">7002</span>)
+
+<span class="hljs-keyword">val</span> redisClusterConn: <span class="hljs-type">RedisConnection</span> = <span class="hljs-type">RedisConnection</span>.cluster(<span class="hljs-type">List</span>(redisNode1, redisNode2, redisNode3))
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="rediscmd"></a><a href="#rediscmd" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>RedisCmd</h2>
+<p>Once we got a <code>RedisConnection</code>, we can start using the <code>RedisCmd</code>, a case class that contains all the redis commands for
+<em>server</em>, <em>key</em>, <em>list</em>, <em>set</em>, <em>sorted set</em> and <em>hash</em>.<br>
+The <code>RedisCmd</code> is actually accessible through using a <code>cats.effect.Resource</code> with <code>monix.eval.Task</code>,
+it actually abstracts the logic of acquiring and releasing the connection with its associated resources.</p>
+<p>In the following example we will create a connection that by default encodes <em>Keys</em>
+and <em>Values</em> as <code>Strings</code>, persisting them into <code>UTF</code> format in <em>Redis</em>.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> monix.connect.redis.client.{<span class="hljs-type">RedisCmd</span>, <span class="hljs-type">RedisConnection</span>, <span class="hljs-type">RedisUri</span>}
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+<span class="hljs-keyword">import</span> monix.execution.<span class="hljs-type">Scheduler</span>.<span class="hljs-type">Implicits</span>.global
+
+<span class="hljs-keyword">val</span> redisUri = <span class="hljs-type">RedisUri</span>(<span class="hljs-string">"redis://localhost:6379"</span>)
+
+<span class="hljs-keyword">val</span> redisConn: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">RedisCmd</span>[<span class="hljs-type">String</span>, <span class="hljs-type">String</span>]] = <span class="hljs-type">RedisConnection</span>.standalone(redisUri).connectUtf
+
+<span class="hljs-keyword">val</span> k1: <span class="hljs-type">String</span> = <span class="hljs-string">"key1"</span>
+<span class="hljs-keyword">val</span> value: <span class="hljs-type">String</span> = <span class="hljs-string">"a"</span>
+<span class="hljs-keyword">val</span> k2: <span class="hljs-type">String</span> = <span class="hljs-string">"key2"</span>
+<span class="hljs-keyword">val</span> values: <span class="hljs-type">List</span>[<span class="hljs-type">String</span>] = <span class="hljs-type">List</span>(<span class="hljs-string">"b"</span>, <span class="hljs-string">"c"</span>, <span class="hljs-string">"d"</span>)
+
+<span class="hljs-comment">// from there on, we can start using the connection</span>
+<span class="hljs-comment">// and since `RedisCmd` is a case class, we can apply </span>
+<span class="hljs-comment">// pattern matching against it, which will nicely allow us</span>
+<span class="hljs-comment">// to de-compose the different RedisCommands its different api.</span>
+<span class="hljs-comment">// alternatively you can also do:  redisConn.use { redisCmd =&gt; redisCmd.string.get("k1") }</span>
+redisConn.use { <span class="hljs-keyword">case</span> <span class="hljs-type">RedisCmd</span>(hash, keys, list, server, set, sortedSet, string) =&gt;
   <span class="hljs-keyword">for</span> {
-    initialTtl &lt;- <span class="hljs-type">RedisKey</span>.ttl(key1)          <span class="hljs-comment">//checks the ttl when it hasn't been set yet</span>
-    expire &lt;-  <span class="hljs-type">RedisKey</span>.expire(key1, <span class="hljs-number">5</span>)       <span class="hljs-comment">//sets the ttl to 5 seconds</span>
-    finalTtl &lt;- <span class="hljs-type">RedisKey</span>.ttl(key1)            <span class="hljs-comment">//checks the ttl again</span>
-    existsWithinTtl &lt;- <span class="hljs-type">RedisKey</span>.exists(key1)  <span class="hljs-comment">//checks whether k1 exists or not</span>
-    _ &lt;- <span class="hljs-type">RedisKey</span>.rename(key1, key2)          <span class="hljs-comment">//renames k1 to k2</span>
-    existsRenamed &lt;- <span class="hljs-type">RedisKey</span>.exists(key2)    <span class="hljs-comment">//checks that it exists after being renamed</span>
-    _ &lt;- <span class="hljs-type">Task</span>.sleep(<span class="hljs-number">6.</span>seconds)
-    existsAfterFiveSeconds &lt;- <span class="hljs-type">RedisKey</span>.exists(key2) <span class="hljs-comment">//after 6 seconds checks ttl again</span>
-  } <span class="hljs-keyword">yield</span> (initialTtl, expire, finalTtl, existsWithinTtl, existsRenamed, existsAfterFiveSeconds)
+    _ &lt;- server.flushAll
+    _ &lt;- keys.touch(k1)
+    _ &lt;- string.set(k1, value)
+    _ &lt;- keys.rename(k1, k2)
+    _ &lt;- list.lPush(k1, values: _*)
+    v &lt;- string.get(k2)
+    _ &lt;- v <span class="hljs-keyword">match</span> {
+      <span class="hljs-keyword">case</span> <span class="hljs-type">Some</span>(value) =&gt; list.lPush(k1, value)
+      <span class="hljs-keyword">case</span> <span class="hljs-type">None</span> =&gt; <span class="hljs-type">Task</span>.unit
+    }
+    _ &lt;- keys.del(k2)
+    len &lt;- list.lLen(k1)
+  } <span class="hljs-keyword">yield</span> (len)
+}.runToFuture
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="codecs"></a><a href="#codecs" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Codecs</h2>
+<p>In the previous sections it was shown how to create a connection to redis and to start using the <code>RedisCmd</code> with its
+different redis modules. The created connection was exposed within a cats resource as
+<code>RedisCmd[String, String]</code>, meaning that it expects <code>Strings</code> for both <em>Keys</em> and <em>Values</em>.
+In order to decide how do we want our redis connection to encode and decode <strong>k</strong> and <strong>v</strong>,
+we would need to pass a custom <code>Codec</code> both for key and value.
+A <code>Codec</code> is a sealed trait conformed by <code>UTFCodec</code> and <code>ByteArrayCodec</code>, in which you can create instances of those from its
+companion object with the respective signatures <code>utf</code> and <code>byteArray</code>, see below snippet:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">package</span> monix.connect.redis.client
+
+<span class="hljs-class"><span class="hljs-keyword">object</span> <span class="hljs-title">Codec</span> </span>{
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">utf</span></span>[<span class="hljs-type">T</span>](encoder: <span class="hljs-type">T</span> =&gt; <span class="hljs-type">String</span>, decoder: <span class="hljs-type">String</span> =&gt; <span class="hljs-type">T</span>) = ???
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">byteArray</span></span>[<span class="hljs-type">T</span>](encoder: <span class="hljs-type">T</span> =&gt; <span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>], decoder: <span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>] =&gt; <span class="hljs-type">T</span>) = ???
+}
+</code></pre>
+<p>You will find some already predefined <code>Codec</code> for <code>Int</code>, <code>Float</code>, <code>Double</code>, <code>BigInt</code> and <code>BigDecimal</code> under the package
+object <code>monix.connect.redis._</code>.</p>
+<p>The next subsections are an example of <strong>creating custom codec</strong> that mixes <code>UTFCodec</code> and <code>ByteArrayCodec</code>:</p>
+<h3><a class="anchor" aria-hidden="true" id="utfcodec"></a><a href="#utfcodec" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>UTFCodec</h3>
+<p>In this case we will create two custom <code>UTFCodec[T]</code>, one for keys as <code>Int</code>
+and the other for <code>Double</code> which will represent the redis values, resulting in <code>RedisCmd[Int, Double]</code>.</p>
+<p>These two will be passed as parameters when connecting to redis with <em>connectUtf</em>.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.redis.client.{<span class="hljs-type">Codec</span>, <span class="hljs-type">RedisCmd</span>, <span class="hljs-type">RedisConnection</span>, <span class="hljs-type">RedisUri</span>, <span class="hljs-type">UtfCodec</span>}
+<span class="hljs-keyword">import</span> monix.execution.<span class="hljs-type">CancelableFuture</span>
+<span class="hljs-keyword">import</span> monix.execution.<span class="hljs-type">Scheduler</span>.<span class="hljs-type">Implicits</span>.global
+
+<span class="hljs-keyword">import</span> scala.util.{<span class="hljs-type">Failure</span>, <span class="hljs-type">Try</span>}
+
+<span class="hljs-comment">// there is already a predefined int utf codec under `monix.connect.redis._`</span>
+<span class="hljs-keyword">implicit</span> <span class="hljs-keyword">val</span> intUtfCodec: <span class="hljs-type">UtfCodec</span>[<span class="hljs-type">Int</span>] = <span class="hljs-type">Codec</span>.utf(_.toString, <span class="hljs-comment">//serializes int to str</span>
+  <span class="hljs-comment">//deserializes str back to int</span>
+  str =&gt; <span class="hljs-type">Try</span>(str.toInt)
+    .failed.flatMap { ex =&gt;
+    logger.info(<span class="hljs-string">"Failed to deserialize from Redis to `Int`"</span>)
+    <span class="hljs-type">Failure</span>(ex)
+  }.getOrElse(<span class="hljs-number">0</span>)
+)
+
+<span class="hljs-comment">// there is already a predefined double utf codec under `monix.connect.redis._`</span>
+<span class="hljs-keyword">implicit</span> <span class="hljs-keyword">val</span> doubleUtfCodec: <span class="hljs-type">UtfCodec</span>[<span class="hljs-type">Double</span>] = <span class="hljs-type">Codec</span>.utf(_.toString, <span class="hljs-comment">//serializes double to str</span>
+  <span class="hljs-comment">//deserializes str back to double</span>
+  str =&gt; <span class="hljs-type">Try</span>(str.toDouble)
+    .failed.flatMap { ex =&gt;
+    logger.info(<span class="hljs-string">"Failed to deserialize from Redis to `Double`"</span>)
+    <span class="hljs-type">Failure</span>(ex)
+  }.getOrElse(<span class="hljs-number">0.0</span>)
+)
+
+<span class="hljs-keyword">val</span> redisUri = <span class="hljs-type">RedisUri</span>(<span class="hljs-string">"redis://localhost:6379"</span>)
+
+<span class="hljs-keyword">val</span> f: <span class="hljs-type">CancelableFuture</span>[<span class="hljs-type">Option</span>[<span class="hljs-type">Double</span>]] = 
+ <span class="hljs-type">RedisConnection</span>.standalone(redisUri)
+  .connectUtf(intUtfCodec, doubleUtfCodec) <span class="hljs-comment">//this can be passed implicitly but is explicit for didactic purposes</span>
+  .use { redisCmd: <span class="hljs-type">RedisCmd</span>[<span class="hljs-type">Int</span>, <span class="hljs-type">Double</span>] =&gt;
+    <span class="hljs-comment">//your business logic here</span>
+    redisCmd.list.lPush(<span class="hljs-number">11</span>, <span class="hljs-number">123.134</span>) &gt;&gt; redisCmd.list.rPop(<span class="hljs-number">11</span>) <span class="hljs-comment">//Some(123.134) </span>
+  }.runToFuture
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="bytescodec"></a><a href="#bytescodec" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>BytesCodec</h3>
+<p>On the other hand, there is also a <code>BytesCodec[T]</code>, which des/serializes from/to <code>Array[Byte]</code>.
+In this case we will show an example of using <code>Protobuf</code> serialization format to dealing with redis <em>keys</em> and <em>values</em>:</p>
+<p>In below snippet we defined our <em>proto</em> objects, in which <code>PersonPK</code> will represent the redis key and <code>Person</code> the value.</p>
+<pre><code class="hljs css language-proto">syntax = <span class="hljs-string">"proto3"</span>;
+
+<span class="hljs-keyword">package</span> monix.connect.redis.test;
+
+<span class="hljs-class"><span class="hljs-keyword">message</span> <span class="hljs-title">PersonPk</span> </span>{
+    <span class="hljs-built_in">string</span> id = <span class="hljs-number">1</span>;
 }
 
-<span class="hljs-comment">//then</span>
-<span class="hljs-keyword">val</span> (initialTtl, expire, finalTtl, existsWithinTtl, existsRenamed, existsAfterFiveSeconds) = t.runSyncUnsafe()
-initialTtl should be &lt; <span class="hljs-number">0</span>L
-finalTtl should be &gt; <span class="hljs-number">0</span>L
-expire shouldBe <span class="hljs-literal">true</span>
-existsWithinTtl shouldBe <span class="hljs-number">1</span>L
-existsRenamed shouldBe <span class="hljs-number">1</span>L
-existsAfterFiveSeconds shouldBe <span class="hljs-number">0</span>L
+<span class="hljs-class"><span class="hljs-keyword">message</span> <span class="hljs-title">Person</span> </span>{
+    <span class="hljs-built_in">string</span> name = <span class="hljs-number">1</span>;
+    <span class="hljs-built_in">int64</span> age = <span class="hljs-number">2</span>;
+    <span class="hljs-keyword">repeated</span> <span class="hljs-built_in">string</span> hobbies = <span class="hljs-number">3</span>;
+}
+</code></pre>
+<p>With the generated proto scala sources, we can proceed to creating a <code>BytesCodec[PersonPk]</code> and <code>BytesCodec[Person]</code>:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.redis.client.{<span class="hljs-type">BytesCodec</span>, <span class="hljs-type">Codec</span>}
+<span class="hljs-keyword">implicit</span> <span class="hljs-keyword">val</span> personPkCodec: <span class="hljs-type">BytesCodec</span>[<span class="hljs-type">PersonPk</span>] = 
+  <span class="hljs-type">Codec</span>.byteArray(pk =&gt; <span class="hljs-type">PersonPk</span>.toByteArray(pk), bytes =&gt; <span class="hljs-type">PersonPk</span>.parseFrom(bytes))
+<span class="hljs-keyword">implicit</span> <span class="hljs-keyword">val</span> personCodec: <span class="hljs-type">BytesCodec</span>[<span class="hljs-type">Person</span>] =
+  <span class="hljs-type">Codec</span>.byteArray(person =&gt; <span class="hljs-type">Person</span>.toByteArray(person), bytes =&gt; <span class="hljs-type">Person</span>.parseFrom(bytes))
+</code></pre>
+<p>Finally, we are ready to start creating the connection using the previously defined protobuf codecs:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.redis.client.{<span class="hljs-type">Codec</span>, <span class="hljs-type">RedisCmd</span>, <span class="hljs-type">RedisConnection</span>, <span class="hljs-type">RedisUri</span>, <span class="hljs-type">UtfCodec</span>}
+<span class="hljs-keyword">import</span> monix.connect.redis.test.protobuf.{<span class="hljs-type">Person</span>, <span class="hljs-type">PersonPk</span>}
+<span class="hljs-keyword">import</span> monix.execution.<span class="hljs-type">CancelableFuture</span>
+<span class="hljs-keyword">import</span> monix.execution.<span class="hljs-type">Scheduler</span>.<span class="hljs-type">Implicits</span>.global
+
+<span class="hljs-keyword">val</span> redisUri = <span class="hljs-type">RedisUri</span>(<span class="hljs-string">"redis://localhost:6379"</span>)
+
+<span class="hljs-keyword">val</span> personPk = <span class="hljs-type">PersonPk</span>(<span class="hljs-string">"personId123"</span>)
+<span class="hljs-keyword">val</span> hobbies = <span class="hljs-type">List</span>(<span class="hljs-string">"Snowboarding"</span>, <span class="hljs-string">"Programming"</span>)
+<span class="hljs-keyword">val</span> person = <span class="hljs-type">Person</span>(<span class="hljs-string">"Alice"</span>, <span class="hljs-number">25</span>, hobbies)
+
+<span class="hljs-keyword">val</span> f: <span class="hljs-type">CancelableFuture</span>[<span class="hljs-type">Option</span>[<span class="hljs-type">Person</span>]] =
+  <span class="hljs-type">RedisConnection</span>.standalone(redisUri)
+    .connectUtf(personPkCodec, personCodec)
+    .use{ redisCmd: <span class="hljs-type">RedisCmd</span>[<span class="hljs-type">PersonPk</span>, <span class="hljs-type">Person</span>] =&gt;
+      <span class="hljs-keyword">for</span> {
+        _ &lt;-redisCmd.string.set(personPk, person)
+        person &lt;- redisCmd.string.get(personPk)
+      } <span class="hljs-keyword">yield</span> person
+    }.runToFuture
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="commands"></a><a href="#commands" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Commands</h2>
+<p>This redis connector implementation provides a wide range of commands to perform a different operations,
+for the most common used modules and types:
+:  (<a href="https://redis.io/commands#generic">Keys</a>, <a href="https://redis.io/commands#hash">Hashes</a>
+, <a href="https://redis.io/commands#list">List</a>, <a href="https://redis.io/commands#server">Server</a>
+, <a href="https://redis.io/commands#set">Sets</a>, <a href="https://redis.io/commands#sorted_set">SortedSets</a>
+and <a href="https://redis.io/commands#string">Strings</a>).
+See an example on how to use each of them in the following sub-sections:</p>
+<h3><a class="anchor" aria-hidden="true" id="__keys__"></a><a href="#__keys__" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><strong>Keys</strong></h3>
+<p>The below snippet shows a simple example of using key commands.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.redis.client.{<span class="hljs-type">RedisConnection</span>, <span class="hljs-type">RedisUri</span>}
+<span class="hljs-keyword">import</span> scala.concurrent.duration._
+
+<span class="hljs-keyword">val</span> k: <span class="hljs-type">String</span> <span class="hljs-comment">// assuming that the key already exists</span>
+<span class="hljs-keyword">val</span> redisUri = <span class="hljs-type">RedisUri</span>(<span class="hljs-string">"redis://localhost:6379"</span>)
+
+<span class="hljs-type">RedisConnection</span>.standalone(redisUri)
+  .connectUtf
+  .use(cmd =&gt;
+    <span class="hljs-keyword">for</span> {
+      randomKey &lt;- cmd.key.randomKey() <span class="hljs-comment">//returns a random key from the db</span>
+      _ &lt;- cmd.key.expire(k, <span class="hljs-number">100</span> seconds) <span class="hljs-comment">//specifies an expiration timeout for the k1</span>
+      ttl &lt;- cmd.key.ttl(k) <span class="hljs-comment">//returns the time to live as `FiniteDuration`</span>
+    } <span class="hljs-keyword">yield</span> (randomKey, ttl)
+  )
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="__hashes__"></a><a href="#__hashes__" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><strong>Hashes</strong></h3>
-<p>The following example uses the redis hash api <code>RedisHash</code> to insert a single element into a hash and read it back from the hash.</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.redis.<span class="hljs-type">RedisHash</span>
+<p>The following example uses the redis hash api <code>RedisHash</code> to insert a single element into a hash and read it back from
+the hash.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.redis.client.{<span class="hljs-type">RedisConnection</span>, <span class="hljs-type">RedisUri</span>, <span class="hljs-type">RedisCmd</span>}
+<span class="hljs-keyword">import</span> scala.concurrent.duration._
 
-<span class="hljs-keyword">val</span> key: <span class="hljs-type">String</span> = ???
-<span class="hljs-keyword">val</span> field: <span class="hljs-type">String</span> = ???
-<span class="hljs-keyword">val</span> value: <span class="hljs-type">String</span> = ???
- 
-<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">String</span>] = <span class="hljs-keyword">for</span> {
-    _ &lt;- <span class="hljs-type">RedisHash</span>.hset(key, field, value)
-    v &lt;- <span class="hljs-type">RedisHash</span>.hget(key, field)
-} <span class="hljs-keyword">yield</span> v
-   
-<span class="hljs-keyword">val</span> fv: <span class="hljs-type">Future</span>[<span class="hljs-type">String</span>] = t.runToFuture()
+<span class="hljs-keyword">val</span> key: <span class="hljs-type">String</span> 
+<span class="hljs-keyword">val</span> field: <span class="hljs-type">String</span> 
+<span class="hljs-keyword">val</span> value: <span class="hljs-type">String</span> 
+<span class="hljs-keyword">val</span> redisUri = <span class="hljs-type">RedisUri</span>(<span class="hljs-string">"redis://localhost:6379"</span>)
+<span class="hljs-keyword">val</span> prefix = <span class="hljs-string">"dummy-prefix-"</span>
+
+<span class="hljs-type">RedisConnection</span>.standalone(redisUri)
+  .connectUtf
+  .use { cmd =&gt;
+    <span class="hljs-keyword">for</span> {
+      _ &lt;- cmd.hash.hSet(key, field, value)
+      <span class="hljs-comment">//adds a prefix to all values in a hash </span>
+      _ &lt;- cmd.hash.hGetAll(key).mapEval { <span class="hljs-keyword">case</span> (f, v) =&gt; cmd.hash.hSet(key, f, prefix + v) }.completedL
+      prefixedValue &lt;- cmd.hash.hGet(key, field)
+    } <span class="hljs-keyword">yield</span> prefixedValue
+  }.runToFuture
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="__lists__"></a><a href="#__lists__" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><strong>Lists</strong></h3>
-<p>The following example uses the redis list api <code>RedisList</code> to insert elements into a redis list and reading them back with limited size.</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.redis.<span class="hljs-type">RedisList</span>
+<p>The following example uses the redis list api <code>RedisList</code> to insert elements into a redis list and reading them back
+with limited size.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.redis.client.{<span class="hljs-type">RedisCmd</span>, <span class="hljs-type">RedisConnection</span>, <span class="hljs-type">RedisUri</span>}
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
 
-<span class="hljs-keyword">val</span> key: <span class="hljs-type">String</span> = <span class="hljs-type">String</span>
+<span class="hljs-keyword">import</span> scala.concurrent.duration._
+
+<span class="hljs-keyword">val</span> key1: <span class="hljs-type">String</span>
+<span class="hljs-keyword">val</span> key2: <span class="hljs-type">String</span>
 <span class="hljs-keyword">val</span> values: <span class="hljs-type">List</span>[<span class="hljs-type">String</span>]
-  
-<span class="hljs-keyword">val</span> tl: <span class="hljs-type">Task</span>[<span class="hljs-type">List</span>[<span class="hljs-type">String</span>]] = <span class="hljs-keyword">for</span> {
-  _ &lt;- <span class="hljs-type">RedisList</span>.lpush(key, values: _*)
-  l &lt;- <span class="hljs-type">RedisList</span>.lrange(key, <span class="hljs-number">0</span>, values.size).toListL
-} <span class="hljs-keyword">yield</span> l
-  
-<span class="hljs-comment">//a safer alternative to use that will return Observable[v] rather than Task[List[V]]</span>
-<span class="hljs-keyword">val</span> ob: <span class="hljs-type">Observable</span>[<span class="hljs-type">String</span>] = <span class="hljs-keyword">for</span> {
-  _ &lt;- <span class="hljs-type">Observable</span>.fromTask(<span class="hljs-type">RedisList</span>.lpush(key, values: _*))
-  ob &lt;- <span class="hljs-type">RedisList</span>.lrange(key, <span class="hljs-number">0</span>, values.size)
-} <span class="hljs-keyword">yield</span> ob
+<span class="hljs-keyword">val</span> redisUri = <span class="hljs-type">RedisUri</span>(<span class="hljs-string">"redis://localhost:6379"</span>)
+<span class="hljs-keyword">val</span> prefix = <span class="hljs-string">"dummy-prefix-"</span>
+
+<span class="hljs-type">RedisConnection</span>.standalone(redisUri)
+  .connectUtf
+  .use { cmd =&gt;
+    <span class="hljs-keyword">for</span> {
+      initialSize &lt;- cmd.list.lPush(key1, values)
+      <span class="hljs-comment">//copies all values from `key1` to `key2` adding a static prefix to each element </span>
+      _ &lt;- cmd.list.lGetAll(key1)
+        .mapEval(v =&gt; cmd.list.lPush(key2, prefix + v)).completedL
+      <span class="hljs-comment">//checks if key1 and key2 have the same size</span>
+      haveSameSize &lt;- cmd.list.lLen(key1).map(_ == initialSize)
+    } <span class="hljs-keyword">yield</span> haveSameSize
+  }.runToFuture
 </code></pre>
-<h3><a class="anchor" aria-hidden="true" id="__pubsub__"></a><a href="#__pubsub__" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><strong>Pub/Sub</strong></h3>
-<p>Coming soon.</p>
 <h3><a class="anchor" aria-hidden="true" id="__server__"></a><a href="#__server__" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><strong>Server</strong></h3>
-<p>The following code shows how to remove all keys from all dbs in redis using the server api <code>RedisServer</code> a very basic but also common use case:</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.redis.<span class="hljs-type">RedisServer</span>
- 
-<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">String</span>] = <span class="hljs-type">RedisServer</span>.flushall() <span class="hljs-comment">//returns a simple string reply</span>
+<p>The following code shows how to remove all keys from all dbs in redis using the server api <code>RedisServer</code> a very basic
+but also common use case:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.redis.client.{<span class="hljs-type">RedisCmd</span>, <span class="hljs-type">RedisConnection</span>, <span class="hljs-type">RedisUri</span>}
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+
+<span class="hljs-keyword">val</span> redisUri = <span class="hljs-type">RedisUri</span>(<span class="hljs-string">"redis://localhost:6379"</span>)
+<span class="hljs-keyword">val</span> prefix = <span class="hljs-string">"dummy-prefix-"</span>
+
+<span class="hljs-keyword">val</span> f = <span class="hljs-type">RedisConnection</span>.standalone(redisUri)
+  .connectUtf.use(_.server.flushAll).runToFuture
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="__sets__"></a><a href="#__sets__" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><strong>Sets</strong></h3>
-<p>The following code sample uses the redis sets api from <code>RedisSet</code> object, this one is a bit longer than the others but not more complex.</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.redis.<span class="hljs-type">RedisSet</span>
+<p>The <a href="https://redis.io/commands#set">Redis Set commands api</a> provides operations to work with <em>sets</em>,
+see a practical example in below code snippet.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.redis.client.{<span class="hljs-type">RedisCmd</span>, <span class="hljs-type">RedisConnection</span>, <span class="hljs-type">RedisUri</span>}
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+<span class="hljs-keyword">val</span> k1: <span class="hljs-type">String</span>
+<span class="hljs-keyword">val</span> k2: <span class="hljs-type">String</span>
+<span class="hljs-keyword">val</span> redisUri = <span class="hljs-type">RedisUri</span>(<span class="hljs-string">"redis://localhost:6379"</span>)
 
-<span class="hljs-comment">//given three keys and two redis set of values</span>
-<span class="hljs-keyword">val</span> k1: <span class="hljs-type">K</span> 
-<span class="hljs-keyword">val</span> m1: <span class="hljs-type">Set</span>[<span class="hljs-type">String</span>]
-<span class="hljs-keyword">val</span> k2: <span class="hljs-type">K</span> 
-<span class="hljs-keyword">val</span> m2: <span class="hljs-type">Set</span>[<span class="hljs-type">String</span>]
-<span class="hljs-keyword">val</span> k3: <span class="hljs-type">K</span>
-
-<span class="hljs-comment">//when</span>
-<span class="hljs-keyword">val</span> f1: <span class="hljs-type">Future</span>[(<span class="hljs-type">Long</span>, <span class="hljs-type">Long</span>, <span class="hljs-type">Boolean</span>)] = {
-  <span class="hljs-keyword">for</span> {
-    size1 &lt;- <span class="hljs-type">RedisSet</span>.sadd(k1, m1: _*) <span class="hljs-comment">//first list is added to the first hey</span>
-    size2 &lt;- <span class="hljs-type">RedisSet</span>.sadd(k2, m2: _*) <span class="hljs-comment">//second list is added to second first key</span>
-    _     &lt;- <span class="hljs-type">RedisSet</span>.sadd(k3, m1: _*) <span class="hljs-comment">//first list is added to the third key</span>
-    moved &lt;- <span class="hljs-type">RedisSet</span>.smove(k1, k2, m1.head) <span class="hljs-comment">//moves the head member from the first set to the second one </span>
-  } <span class="hljs-keyword">yield</span> { (size1, size2, moved) }
-}.runToFuture() <span class="hljs-comment">//this is not safe and only</span>
-
-<span class="hljs-comment">//and</span>
-<span class="hljs-keyword">val</span> f2: <span class="hljs-type">Task</span>[(<span class="hljs-type">Long</span>, <span class="hljs-type">Long</span>, <span class="hljs-type">List</span>[<span class="hljs-type">String</span>], <span class="hljs-type">List</span>[<span class="hljs-type">String</span>])] = {
-  <span class="hljs-keyword">for</span> {
-    s1    &lt;- <span class="hljs-type">RedisSet</span>.smembers(k1).toListL <span class="hljs-comment">//get members form k1</span>
-    s2    &lt;- <span class="hljs-type">RedisSet</span>.smembers(k2).toListL <span class="hljs-comment">//get members form k2</span>
-    union &lt;- <span class="hljs-type">RedisSet</span>.sunion(k1, k2).toListL <span class="hljs-comment">//get members form k2 and k2</span>
-    diff  &lt;- <span class="hljs-type">RedisSet</span>.sdiff(k3, k1).toListL <span class="hljs-comment">//get the diff members between k1 and k2</span>
-  } <span class="hljs-keyword">yield</span> (s1, s2, union, diff)
-}
-
-<span class="hljs-comment">//then if the member's set did not existed before we can assume that:</span>
-<span class="hljs-keyword">val</span> (size1, size2, moved) = f2.runSyncUnsafe()
-<span class="hljs-keyword">val</span> (s1, s2, union, diff) = f2.runSyncUnsafe()
-size1 shouldBe m1.size
-s1.size shouldEqual (m1.size - <span class="hljs-number">1</span>)
-size2 shouldBe m2.size
-s2.size shouldEqual (m2.size + <span class="hljs-number">1</span>)
-moved shouldBe <span class="hljs-literal">true</span>
-s1 shouldNot contain theSameElementsAs m1
-s2 shouldNot contain theSameElementsAs m2
-union should contain theSameElementsAs m1 ++ m2
-<span class="hljs-comment">//although the list are not equal as at the beginning because of the move operation, its union still is the same</span>
-diff should contain theSameElementsAs <span class="hljs-type">List</span>(m1.head)
-<span class="hljs-comment">//the difference between the k3 and k1 is equal to the element that was moved</span>
+<span class="hljs-keyword">val</span> f = <span class="hljs-type">RedisConnection</span>.standalone(redisUri)
+  .connectUtf
+  .use { cmd =&gt;
+    <span class="hljs-keyword">for</span> {
+      _ &lt;- cmd.set.sAdd(k1, <span class="hljs-string">"a"</span>, <span class="hljs-string">"b"</span>, <span class="hljs-string">"c"</span>) *&gt;
+        cmd.set.sAdd(k2, <span class="hljs-string">"c"</span>, <span class="hljs-string">"d"</span>) 
+      finalSize &lt;- cmd.set.sUnionStore(k1, k2)
+    } <span class="hljs-keyword">yield</span> finalSize <span class="hljs-comment">//4 = ["a", "b", "c", "d"]</span>
+  }.runToFuture
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="__sortedsets__"></a><a href="#__sortedsets__" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><strong>SortedSets</strong></h3>
-<p>The following example uses the redis sorted sets api from <code>RedisSortedSet</code> to insert three scored elements into a redis sorted set,
-incrementing the middle one and then check that the scores are correctly reflected:</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.redis.<span class="hljs-type">RedisSortedSet</span>
+<p>The <a href="https://redis.io/commands#sorted_set">Redis SortedSet commands api</a> provides operations to work with <em>sorted sets</em>,
+see a practical example in below code snippet, where three scored elements (akka <code>VScore</code>), are inserted into a sorted set and
+then incrementing the score of the middle one.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.redis.client.{<span class="hljs-type">RedisCmd</span>, <span class="hljs-type">RedisConnection</span>, <span class="hljs-type">RedisUri</span>}
+<span class="hljs-keyword">import</span> monix.connect.redis.domain.{<span class="hljs-type">VScore</span>, <span class="hljs-type">ZRange</span>}
 
-<span class="hljs-comment">//given</span>
-<span class="hljs-keyword">val</span> k: <span class="hljs-type">String</span> = <span class="hljs-string">"randomKey"</span>
-<span class="hljs-keyword">val</span> v0: <span class="hljs-type">String</span> = <span class="hljs-string">"v0"</span>
-<span class="hljs-keyword">val</span> v1: <span class="hljs-type">String</span> = <span class="hljs-string">"v1"</span>
-<span class="hljs-keyword">val</span> v2: <span class="hljs-type">String</span> = <span class="hljs-string">"v2"</span>
-<span class="hljs-keyword">val</span> minScore: <span class="hljs-type">Double</span> = <span class="hljs-number">1</span>
-<span class="hljs-keyword">val</span> middleScore: <span class="hljs-type">Double</span> = <span class="hljs-number">3</span> 
-<span class="hljs-keyword">val</span> maxScore: <span class="hljs-type">Double</span> = <span class="hljs-number">4</span>
-<span class="hljs-keyword">val</span> increment: <span class="hljs-type">Double</span> = <span class="hljs-number">2</span>
+<span class="hljs-keyword">val</span> k: <span class="hljs-type">String</span>
+<span class="hljs-keyword">val</span> redisUri: <span class="hljs-type">RedisUri</span>
 
-<span class="hljs-comment">//when</span>
-<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[(<span class="hljs-type">ScoredValue</span>[<span class="hljs-type">String</span>], <span class="hljs-type">ScoredValue</span>[<span class="hljs-type">String</span>])] = <span class="hljs-keyword">for</span> {
-  _ &lt;- <span class="hljs-type">RedisSortedSet</span>.zadd(k, minScore, v0)
-  _ &lt;- <span class="hljs-type">RedisSortedSet</span>.zadd(k, middleScore, v1)
-  _ &lt;- <span class="hljs-type">RedisSortedSet</span>.zadd(k, maxScore, v2)
-  _ &lt;- <span class="hljs-type">RedisSortedSet</span>.zincrby(k, increment, v1) <span class="hljs-comment">//increments middle one by `increment` so it becomes the highest score of the set</span>
-  min &lt;- <span class="hljs-type">RedisSortedSet</span>.zpopmin(k)
-  max &lt;- <span class="hljs-type">RedisSortedSet</span>.zpopmax(k) 
-} <span class="hljs-keyword">yield</span> (min, max)
-
-<span class="hljs-comment">//then we can confirm that:</span>
-<span class="hljs-keyword">val</span> (min, max) = t.runSyncUnsafe()
-min.getScore shouldBe minScore
-min.getValue shouldBe v0
-max.getScore shouldBe middleScore + increment
-max.getValue shouldBe v1
+<span class="hljs-keyword">val</span> f = <span class="hljs-type">RedisConnection</span>.standalone(redisUri)
+  .connectUtf
+  .use { cmd =&gt;
+    <span class="hljs-keyword">for</span> {
+      _ &lt;- cmd.sortedSet.zAdd(k, <span class="hljs-type">VScore</span>(<span class="hljs-string">"Bob"</span>, <span class="hljs-number">1</span>)) &gt;&gt; 
+        cmd.sortedSet.zAdd(k, <span class="hljs-type">VScore</span>(<span class="hljs-string">"Alice"</span>, <span class="hljs-number">2</span>)) &gt;&gt; 
+        cmd.sortedSet.zAdd(k, <span class="hljs-type">VScore</span>(<span class="hljs-string">"Jamie"</span>, <span class="hljs-number">5</span>))
+      <span class="hljs-comment">//increments middle one by `increment` so it becomes the highest score of the set</span>
+      _ &lt;- cmd.sortedSet.zIncrBy(k, <span class="hljs-number">6</span>, <span class="hljs-string">"Bob"</span>) 
+      <span class="hljs-comment">//returns those members with score higher than 4 ["Bob", "Jamie"]</span>
+      zRange &lt;- cmd.sortedSet.zRangeByScore(k, <span class="hljs-type">ZRange</span>.gt(<span class="hljs-number">5</span>)).toListL
+      min &lt;- cmd.sortedSet.zPopMin(k) <span class="hljs-comment">// Alice</span>
+      max &lt;- cmd.sortedSet.zPopMax(k) <span class="hljs-comment">// Bob</span>
+    } <span class="hljs-keyword">yield</span> (min, max, zRange)
+  }.runToFuture
 </code></pre>
-<h3><a class="anchor" aria-hidden="true" id="__streams__"></a><a href="#__streams__" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><strong>Streams</strong></h3>
-<p>Coming soon.</p>
 <h3><a class="anchor" aria-hidden="true" id="__strings__"></a><a href="#__strings__" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><strong>Strings</strong></h3>
-<p>The following example uses the redis keys api from <code>RedisString</code> to insert a string into the given key and get its size from redis</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.redis.<span class="hljs-type">RedisString</span>
+<p>The <a href="https://redis.io/commands#string">Redis Strings commands api</a> provides operations to work with <em>strings</em>,
+see a practical example in below code snippet, where we insert a string into the given key and get its size.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.redis.client.{<span class="hljs-type">RedisCmd</span>, <span class="hljs-type">RedisConnection</span>, <span class="hljs-type">RedisUri</span>}
 
-<span class="hljs-keyword">val</span> ts: <span class="hljs-type">Task</span>[<span class="hljs-type">Long</span>] = <span class="hljs-keyword">for</span> {
-   _ &lt;- <span class="hljs-type">RedisString</span>.set(key, value).runSyncUnsafe()
-   size &lt;- <span class="hljs-type">RedisString</span>.strlen(key)
-  } <span class="hljs-keyword">yield</span> size
-ts.runToFuture() <span class="hljs-comment">//eventually will return a failure if there was a redis server error, 0 if the key did not existed or the size of the string we put </span>
-</code></pre>
-<h3><a class="anchor" aria-hidden="true" id="__all-in-one__"></a><a href="#__all-in-one__" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><strong>All in one</strong></h3>
-<p>See below a complete demonstration on how to compose a different set of redis commands from different
-modules in the same for comprehension:</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.redis.<span class="hljs-type">Redis</span>
-<span class="hljs-keyword">import</span> io.lettuce.core.<span class="hljs-type">RedisClient</span>
-<span class="hljs-keyword">import</span> io.lettuce.core.api.<span class="hljs-type">StatefulRedisConnection</span>
+<span class="hljs-keyword">val</span> k: <span class="hljs-type">String</span>
+<span class="hljs-keyword">val</span> v: <span class="hljs-type">String</span>
+<span class="hljs-keyword">val</span> redisUri: <span class="hljs-type">RedisUri</span>
 
-<span class="hljs-keyword">val</span> redisClient: <span class="hljs-type">RedisClient</span> = <span class="hljs-type">RedisClient</span>.create(<span class="hljs-string">"redis://host:port"</span>)
-<span class="hljs-keyword">implicit</span> <span class="hljs-keyword">val</span> connection: <span class="hljs-type">StatefulRedisConnection</span>[<span class="hljs-type">String</span>, <span class="hljs-type">String</span>] = redisClient.connect()
-<span class="hljs-keyword">val</span> k1: <span class="hljs-type">K</span>
-<span class="hljs-keyword">val</span> value: <span class="hljs-type">V</span>
-<span class="hljs-keyword">val</span> k2: <span class="hljs-type">K</span>
-<span class="hljs-keyword">val</span> values: <span class="hljs-type">List</span>[<span class="hljs-type">V</span>] 
-<span class="hljs-keyword">val</span> k3: <span class="hljs-type">K</span>
-
-<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">String</span>, <span class="hljs-type">Long</span>, <span class="hljs-type">List</span>[<span class="hljs-type">V</span>], <span class="hljs-type">List</span>[<span class="hljs-type">K</span>]] = {
-  <span class="hljs-keyword">for</span> {
-    _ &lt;- <span class="hljs-type">Redis</span>.flushallAsync()            <span class="hljs-comment">//removes all keys</span>
-    _ &lt;- <span class="hljs-type">Redis</span>.touch(k1)                  <span class="hljs-comment">//creates the `k1`</span>
-    _ &lt;- <span class="hljs-type">Redis</span>.set(k1, value)             <span class="hljs-comment">//insert the single `value` to `k2`</span>
-    _ &lt;- <span class="hljs-type">Redis</span>.rename(k1, k2)             <span class="hljs-comment">//rename `k1` to `k2`</span>
-    _ &lt;- <span class="hljs-type">Redis</span>.lpush(k3, values: _*)      <span class="hljs-comment">//push all the elements of the list to `k3`</span>
-    v &lt;- <span class="hljs-type">Redis</span>.get(k2)                    <span class="hljs-comment">//get the element in `k2`</span>
-    _ &lt;- <span class="hljs-type">Redis</span>.lpushx(k3, v)              <span class="hljs-comment">//pre-append v to the list in `k3`</span>
-    _ &lt;- <span class="hljs-type">Redis</span>.del(k2)                    <span class="hljs-comment">//delete key `k2`</span>
-    len &lt;- <span class="hljs-type">Redis</span>.llen(k3)                 <span class="hljs-comment">//lenght of the list</span>
-    l &lt;- <span class="hljs-type">Redis</span>.lrange(k3, <span class="hljs-number">0</span>, len).toListL <span class="hljs-comment">//this is not safe unless you have a reasonable limit</span>
-    keys &lt;- <span class="hljs-type">Redis</span>.keys(<span class="hljs-string">"*"</span>).toListL       <span class="hljs-comment">//get all the keys</span>
-  } <span class="hljs-keyword">yield</span> (v, len, l, keys)
-}
-
-<span class="hljs-comment">//after this comprehnsion of redis operations it can be confirmed that:</span>
-<span class="hljs-keyword">val</span> (v: <span class="hljs-type">String</span>, len: <span class="hljs-type">Long</span>, l: <span class="hljs-type">List</span>[<span class="hljs-type">V</span>], keys: <span class="hljs-type">List</span>[<span class="hljs-type">K</span>]) = t.runSyncUnsafe() <span class="hljs-comment">// this is unsafe, and only used for testing purposes</span>
-v shouldBe value
-len shouldBe values.size + <span class="hljs-number">1</span>
-l should contain theSameElementsAs value :: values
-keys.size shouldBe <span class="hljs-number">1</span>
-keys.head shouldBe k3
+<span class="hljs-keyword">val</span> f = <span class="hljs-type">RedisConnection</span>.standalone(redisUri)
+  .connectUtf
+  .use { cmd =&gt;
+    <span class="hljs-keyword">for</span> {
+      _ &lt;- cmd.string.set(k, v)
+      size &lt;- cmd.string.strLen(k)
+    } <span class="hljs-keyword">yield</span> size
+  }.runToFuture
 </code></pre>
 <h2><a class="anchor" aria-hidden="true" id="local-testing"></a><a href="#local-testing" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Local testing</h2>
-<p>The local tests will use the <a href="https://hub.docker.com/_/redis/">redis docker image</a> from docker hub.</p>
+<p>The local tests will use the <a href="https://hub.docker.com/_/redis/">redis docker image</a> from <em>docker hub</em>.</p>
+<h3><a class="anchor" aria-hidden="true" id="standalone-server"></a><a href="#standalone-server" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Standalone server</h3>
 <p>Add the following service description to your <code>docker-compose.yml</code> file:</p>
 <pre><code class="hljs css language-yaml"> <span class="hljs-attr">redis:</span>
-    <span class="hljs-attr">image:</span> <span class="hljs-string">redis</span>
-    <span class="hljs-attr">ports:</span>
-      <span class="hljs-bullet">-</span> <span class="hljs-number">6379</span><span class="hljs-string">:6379</span>
+   <span class="hljs-attr">image:</span> <span class="hljs-string">redis</span>
+   <span class="hljs-attr">ports:</span>
+     <span class="hljs-bullet">-</span> <span class="hljs-number">6379</span><span class="hljs-string">:6379</span>
 </code></pre>
 <p>Run the following command to build and start the redis server:</p>
 <pre><code class="hljs css language-shell script">docker-compose -f ./docker-compose.yml up -d redis
 </code></pre>
 <p>Check out that the service has started correctly.</p>
-<p>Finally, following code shows how you can create the redis connection to the local server, but
-you would have to modify that to fit your use case - i.e it will be different to connect to a redis cluster or if authenticating to the server is needed using with key and secret, etc.)</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> redisClient: <span class="hljs-type">RedisClient</span> = <span class="hljs-type">RedisClient</span>.create(<span class="hljs-string">"redis://host:port"</span>)
-<span class="hljs-keyword">implicit</span> <span class="hljs-keyword">val</span> connection: <span class="hljs-type">StatefulRedisConnection</span>[<span class="hljs-type">String</span>, <span class="hljs-type">String</span>] = redisClient.connect()
+<p>Finally, following code shows how you can create the redis connection to the local server, but you would have to modify
+that to fit your use case - i.e it will be different to connect to a redis cluster or if authenticating to the server is
+needed using with key and secret, etc.)</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.redis.client
+<span class="hljs-keyword">import</span> monix.connect.redis.client.{<span class="hljs-type">RedisConnection</span>, <span class="hljs-type">RedisUri</span>}
+
+<span class="hljs-keyword">val</span> redisUri = <span class="hljs-type">RedisUri</span>(<span class="hljs-string">"redis://host:port"</span>)
+<span class="hljs-keyword">val</span> standaloneConn = <span class="hljs-type">RedisConnection</span>.standalone(redisUri)
 </code></pre>
-<p>And now you are ready to run your application!</p>
-<p><em>Note that the above example defines the <code>connection</code> as <code>implicit</code>, since it is how the api will expect it.</em></p>
-</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/docs/mongodb"><span class="arrow-prev">← </span><span class="function-name-prevnext">MongoDB</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#introduction">Introduction</a></li><li><a href="#dependency">Dependency</a></li><li><a href="#getting-started">Getting started</a><ul class="toc-headings"><li><a href="#__keys__"><strong>Keys</strong></a></li><li><a href="#__hashes__"><strong>Hashes</strong></a></li><li><a href="#__lists__"><strong>Lists</strong></a></li><li><a href="#__pubsub__"><strong>Pub/Sub</strong></a></li><li><a href="#__server__"><strong>Server</strong></a></li><li><a href="#__sets__"><strong>Sets</strong></a></li><li><a href="#__sortedsets__"><strong>SortedSets</strong></a></li><li><a href="#__streams__"><strong>Streams</strong></a></li><li><a href="#__strings__"><strong>Strings</strong></a></li><li><a href="#__all-in-one__"><strong>All in one</strong></a></li></ul></li><li><a href="#local-testing">Local testing</a></li></ul></nav></div><footer class="nav-footer" id="footer"><hr class="separator"/><section class="copyright">Copyright © 2020-2020 The Monix Connect Developers.</section></footer></div></body></html>
+<p>Now you are ready to run your application!</p>
+<h3><a class="anchor" aria-hidden="true" id="cluster-1"></a><a href="#cluster-1" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Cluster</h3>
+<p>On the other hand, if you want to test how your application will behave running with a redis cluster, you can use <a href="https://hub.docker.com/r/grokzen/redis-cluster/">grokzen/redis-cluster</a></p>
+<pre><code class="hljs css language-yaml">  <span class="hljs-attr">redisCluster:</span>
+    <span class="hljs-attr">restart:</span> <span class="hljs-string">always</span>
+    <span class="hljs-attr">image:</span> <span class="hljs-string">grokzen/redis-cluster:6.0.5</span>
+    <span class="hljs-attr">ports:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">"7000:7000"</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">"7001:7001"</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">"7002:7002"</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">"7003:7003"</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">"7004:7004"</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">"7005:7005"</span>
+    <span class="hljs-attr">environment:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">STANDALONE=true</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">IP=0.0.0.0</span>
+</code></pre>
+<p>And then from the application side you would do:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.redis.client
+<span class="hljs-keyword">import</span> monix.connect.redis.client.{<span class="hljs-type">RedisConnection</span>, <span class="hljs-type">RedisUri</span>}
+
+<span class="hljs-keyword">val</span> redisUris: <span class="hljs-type">Seq</span>[<span class="hljs-type">RedisUri</span>] = (<span class="hljs-number">0</span> to <span class="hljs-number">5</span>).map(n =&gt; <span class="hljs-type">RedisUri</span>(<span class="hljs-string">s"redis://localhost:<span class="hljs-subst">${(700 + n)}</span>"</span>))
+<span class="hljs-keyword">val</span> clusterConn = <span class="hljs-type">RedisConnection</span>.cluster(redisUris)
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="yet-to-come"></a><a href="#yet-to-come" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Yet to come</h2>
+<ul>
+<li><em>Master Replica</em> connection.</li>
+<li><em>Pub/sub</em>, <em>Streams</em>, <em>Transactions</em>, <em>HyperLogLog</em>, <em>Geolocation</em>, <em>Scripting</em> commands.</li>
+</ul>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/docs/mongodb"><span class="arrow-prev">← </span><span>Previous</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#introduction">Introduction</a></li><li><a href="#dependency">Dependency</a></li><li><a href="#redis-connection">Redis Connection</a><ul class="toc-headings"><li><a href="#standalone">Standalone</a></li><li><a href="#cluster">Cluster</a></li></ul></li><li><a href="#rediscmd">RedisCmd</a></li><li><a href="#codecs">Codecs</a><ul class="toc-headings"><li><a href="#utfcodec">UTFCodec</a></li><li><a href="#bytescodec">BytesCodec</a></li></ul></li><li><a href="#commands">Commands</a><ul class="toc-headings"><li><a href="#__keys__"><strong>Keys</strong></a></li><li><a href="#__hashes__"><strong>Hashes</strong></a></li><li><a href="#__lists__"><strong>Lists</strong></a></li><li><a href="#__server__"><strong>Server</strong></a></li><li><a href="#__sets__"><strong>Sets</strong></a></li><li><a href="#__sortedsets__"><strong>SortedSets</strong></a></li><li><a href="#__strings__"><strong>Strings</strong></a></li></ul></li><li><a href="#local-testing">Local testing</a><ul class="toc-headings"><li><a href="#standalone-server">Standalone server</a></li><li><a href="#cluster-1">Cluster</a></li></ul></li><li><a href="#yet-to-come">Yet to come</a></li></ul></nav></div><footer class="nav-footer" id="footer"><hr class="separator"/><section class="copyright">Copyright © 2020-2021 The Monix Connect Developers.</section></footer></div></body></html>
