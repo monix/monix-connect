@@ -21,7 +21,6 @@ import io.lettuce.core.FlushMode
 import io.lettuce.core.api.reactive.RedisServerReactiveCommands
 import monix.eval.Task
 
-import java.time.Instant
 import java.util.Date
 import scala.jdk.CollectionConverters._
 
