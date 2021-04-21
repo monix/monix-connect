@@ -218,6 +218,7 @@ lazy val mdocSettings = Seq(
   sources in (ScalaUnidoc, unidoc) ~= (_ filterNot { file =>
     // Exclude protobuf generated files
     file.getCanonicalPath.contains("/src_managed/main/monix/connect/")
+    file.getCanonicalPath.contains("monix-connect/redis/target/scala-2.12/src_managed")
   }),
 )
 
