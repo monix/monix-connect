@@ -18,16 +18,8 @@
 package monix.connect.s3
 
 import cats.effect.Resource
-import monix.connect.aws.auth.AppConf
-import monix.connect.s3.domain.{
-  awsMinChunkSize,
-  CopyObjectSettings,
-  DefaultCopyObjectSettings,
-  DefaultDownloadSettings,
-  DefaultUploadSettings,
-  DownloadSettings,
-  UploadSettings
-}
+import monix.connect.aws.auth.MonixAwsConf
+import monix.connect.s3.domain.{CopyObjectSettings, DefaultCopyObjectSettings, DefaultDownloadSettings, DefaultUploadSettings, DownloadSettings, UploadSettings, awsMinChunkSize}
 import monix.reactive.{Consumer, Observable}
 import monix.eval.Task
 import monix.execution.annotations.{Unsafe, UnsafeBecauseImpure}
@@ -36,26 +28,7 @@ import software.amazon.awssdk.core.async.{AsyncRequestBody, AsyncResponseTransfo
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient
-import software.amazon.awssdk.services.s3.model.{
-  Bucket,
-  BucketCannedACL,
-  CompleteMultipartUploadResponse,
-  CopyObjectRequest,
-  CopyObjectResponse,
-  CreateBucketRequest,
-  CreateBucketResponse,
-  DeleteBucketRequest,
-  DeleteBucketResponse,
-  DeleteObjectRequest,
-  DeleteObjectResponse,
-  GetObjectRequest,
-  GetObjectResponse,
-  NoSuchKeyException,
-  PutObjectRequest,
-  PutObjectResponse,
-  RequestPayer,
-  S3Object
-}
+import software.amazon.awssdk.services.s3.model.{Bucket, BucketCannedACL, CompleteMultipartUploadResponse, CopyObjectRequest, CopyObjectResponse, CreateBucketRequest, CreateBucketResponse, DeleteBucketRequest, DeleteBucketResponse, DeleteObjectRequest, DeleteObjectResponse, GetObjectRequest, GetObjectResponse, NoSuchKeyException, PutObjectRequest, PutObjectResponse, RequestPayer, S3Object}
 
 import scala.jdk.CollectionConverters._
 
@@ -106,8 +79,8 @@ object S3 {
   def fromConfig: Resource[Task, S3] = {
     Resource.make {
       for {
-        clientConf  <- Task.from(AppConf.load)
-        asyncClient <- Task.now(AsyncClientConversions.fromMonixAwsConf(clientConf.monixAws))
+        monixAwsConf  <- Task.from(MonixAwsConf.load)
+        asyncClient <- Task.now(AsyncClientConversions.fromMonixAwsConf(monixAwsConf))
       } yield {
         self.createUnsafe(asyncClient)
       }

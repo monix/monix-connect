@@ -49,11 +49,9 @@ private[connect] object MonixAwsConf {
   @UnsafeBecauseImpure
   val loadOrThrow: MonixAwsConf = ConfigSource.default.loadOrThrow[AppConf].monixAws
 
-  val load: Task[MonixAwsConf] = Task.fromEither[ConfigReaderFailures, AppConf]{
-    failures => new ConfigReaderException(failures)
-  }(ConfigSource.default.load[AppConf]).map(_.monixAws)
-
-
-
+  val load: Task[MonixAwsConf] = Task
+    .fromEither[ConfigReaderFailures, AppConf] { failures => new ConfigReaderException(failures) }(
+      ConfigSource.default.load[AppConf])
+    .map(_.monixAws)
 
 }

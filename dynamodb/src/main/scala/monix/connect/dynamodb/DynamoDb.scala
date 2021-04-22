@@ -18,7 +18,7 @@
 package monix.connect.dynamodb
 
 import cats.effect.Resource
-import monix.connect.aws.auth.AppConf
+import monix.connect.aws.auth.MonixAwsConf
 import monix.connect.dynamodb.domain.RetryStrategy
 import monix.connect.dynamodb.domain.DefaultRetryStrategy
 import monix.eval.Task
@@ -56,8 +56,8 @@ object DynamoDb { self =>
   def fromConfig: Resource[Task, DynamoDb] = {
     Resource.make {
       for {
-        clientConf  <- Task.from(AppConf.load)
-        asyncClient <- Task.now(AsyncClientConversions.fromMonixAwsConf(clientConf.monixAws))
+        monixAwsConf  <- Task.from(MonixAwsConf.load)
+        asyncClient <- Task.now(AsyncClientConversions.fromMonixAwsConf(monixAwsConf))
       } yield {
         self.createUnsafe(asyncClient)
       }
