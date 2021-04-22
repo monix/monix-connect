@@ -33,13 +33,13 @@ import scala.util.Try
 class MonixAwsConfigSpec extends AnyFlatSpec with Matchers {
 
   "MonixAwsConf" should "load from default config file" in {
-   //given/when
-   val monixAwsConf = MonixAwsConf.loadOrThrow
+    //given/when
+    val monixAwsConf = MonixAwsConf.loadOrThrow
 
-   //then
-   monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
-   monixAwsConf.endpoint.isDefined shouldBe false
-   monixAwsConf.region shouldBe Region.EU_WEST_1
+    //then
+    monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
+    monixAwsConf.endpoint.isDefined shouldBe false
+    monixAwsConf.region shouldBe Region.EU_WEST_1
   }
 
   it should "not require endpoint nor http client settings" in {

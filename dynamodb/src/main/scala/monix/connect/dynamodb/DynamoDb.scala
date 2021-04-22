@@ -56,8 +56,8 @@ object DynamoDb { self =>
   def fromConfig: Resource[Task, DynamoDb] = {
     Resource.make {
       for {
-        monixAwsConf  <- Task.from(MonixAwsConf.load)
-        asyncClient <- Task.now(AsyncClientConversions.fromMonixAwsConf(monixAwsConf))
+        monixAwsConf <- Task.from(MonixAwsConf.load)
+        asyncClient  <- Task.now(AsyncClientConversions.fromMonixAwsConf(monixAwsConf))
       } yield {
         self.createUnsafe(asyncClient)
       }
