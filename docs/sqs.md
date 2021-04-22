@@ -14,7 +14,7 @@ for passing messages between different parts of software systems that run in the
 
 Add the following dependency to get started:
 ```scala 
-libraryDependencies += "io.monix" %% "monix-sqs" % "0.2.0"
+libraryDependencies += "io.monix" %% "monix-sqs" % "0.6.0-RC2"
 ```
 
 ## Getting started

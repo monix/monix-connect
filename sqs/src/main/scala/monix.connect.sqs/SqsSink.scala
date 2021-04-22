@@ -28,10 +28,9 @@ import software.amazon.awssdk.services.sqs.model.{SqsRequest, SqsResponse}
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-private[sqs] class SqsSink[In <: SqsRequest, Out <: SqsResponse]()(
-  implicit
+private[sqs] class SqsSink[In <: SqsRequest, Out <: SqsResponse](
   sqsOp: SqsOp[In, Out],
-  client: SqsAsyncClient)
+  sqsClient: SqsAsyncClient)
   extends Consumer[In, Out] {
 
   override def createSubscriber(cb: Callback[Throwable, Out], s: Scheduler): (Subscriber[In], AssignableCancelable) = {
@@ -41,7 +40,7 @@ private[sqs] class SqsSink[In <: SqsRequest, Out <: SqsResponse]()(
       private var sqsResponse: Task[Out] = _
 
       def onNext(sqsRequest: In): Future[Ack] = {
-        sqsResponse = Task.from(sqsOp.execute(sqsRequest))
+        sqsResponse = Task.from(sqsOp.execute(sqsRequest)(sqsClient))
 
         sqsResponse.onErrorRecover {
           case _: Throwable =>

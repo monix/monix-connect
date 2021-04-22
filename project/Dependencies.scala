@@ -97,13 +97,10 @@ object Dependencies {
     "com.google.cloud"               % "google-cloud-nio" % Versions.GCNio % IntegrationTest,
     "commons-io"                     % "commons-io" % "2.6" % Test
   ) ++ commonDependencies(hasIt = true)
-  private val SqsDependecies = Seq(
-    "software.amazon.awssdk" % "sqs" % DependencyVersions.SQS
-  )
 
-  val Sqs =
-    SqsDependecies ++ CommonProjectDependencies ++ CommonTestDependencies.map(_ % Test) ++ CommonTestDependencies.map(
-      _                                                                         % IntegrationTest)
+  val Sqs = Seq(
+    "software.amazon.awssdk" % "sqs" % Versions.SQS
+  ) ++ commonDependencies(hasIt = true)
 
   val Elasticsearch = Seq(
     "com.sksamuel.elastic4s" %% "elastic4s-client-esjava" % Versions.Elastic4s

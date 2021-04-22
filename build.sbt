@@ -22,7 +22,6 @@ lazy val sharedSettings = Seq(
   scalaVersion       := "2.13.5",
   crossScalaVersions := Seq("2.12.10", "2.13.5"),
   scalafmtOnCompile  := true,
-  addCompilerPlugin(scalafixSemanticdb),
   scalacOptions ++= Seq(
     // warnings
     "-unchecked", // able additional warnings where generated code depends on assumptions
@@ -143,9 +142,12 @@ val protoTestSettings = Seq(
     )
       //Compile / PB.protoSources := Seq(new File("src/test/protobuf"))
   )
+
 lazy val redis = monixConnector("redis", Dependencies.Redis).settings(protoTestSettings)
 
 lazy val s3 = monixConnector("s3", Dependencies.S3).aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
+
+lazy val sqs = monixConnector("sqs", Dependencies.Sqs).aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
 
 lazy val gcs = monixConnector("gcs", Dependencies.GCS)
 
@@ -155,7 +157,6 @@ lazy val elasticsearch =  monixConnector("elasticsearch", Dependencies.Elasticse
 
 lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth, isMimaEnabled = false)
 
-lazy val sqs = monixConnector("sqs", Dependencies.Sqs)
 
 def monixConnector(
   connectorName: String,
