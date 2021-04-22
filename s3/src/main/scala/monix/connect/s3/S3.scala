@@ -106,7 +106,7 @@ object S3 {
   def fromConfig: Resource[Task, S3] = {
     Resource.make {
       for {
-        clientConf  <- Task.eval(AppConf.loadOrThrow)
+        clientConf  <- Task.from(AppConf.load)
         asyncClient <- Task.now(AsyncClientConversions.fromMonixAwsConf(clientConf.monixAws))
       } yield {
         self.createUnsafe(asyncClient)
