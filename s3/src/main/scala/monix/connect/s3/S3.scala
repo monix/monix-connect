@@ -18,7 +18,7 @@
 package monix.connect.s3
 
 import cats.effect.Resource
-import monix.connect.aws.auth.AppConf
+import monix.connect.aws.auth.MonixAwsConf
 import monix.connect.s3.domain.{
   awsMinChunkSize,
   CopyObjectSettings,
@@ -106,8 +106,8 @@ object S3 {
   def fromConfig: Resource[Task, S3] = {
     Resource.make {
       for {
-        clientConf  <- Task.eval(AppConf.loadOrThrow)
-        asyncClient <- Task.now(AsyncClientConversions.fromMonixAwsConf(clientConf.monixAws))
+        monixAwsConf <- Task.from(MonixAwsConf.load)
+        asyncClient  <- Task.now(AsyncClientConversions.fromMonixAwsConf(monixAwsConf))
       } yield {
         self.createUnsafe(asyncClient)
       }

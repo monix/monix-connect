@@ -21,7 +21,8 @@ import java.net.URI
 import org.scalatest.flatspec.AnyFlatSpec
 import pureconfig.ConfigSource
 import pureconfig.generic.auto._
-import MonixAwsConf.Implicits._
+import MonixAwsConf._
+import monix.connect.aws.auth.MonixAwsConf.AppConf
 import org.scalatest.matchers.should.Matchers
 import pureconfig.error.ConfigReaderException
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
@@ -29,16 +30,16 @@ import software.amazon.awssdk.regions.Region
 
 import scala.util.Try
 
-class AwsClientConfigSpec extends AnyFlatSpec with Matchers {
+class MonixAwsConfigSpec extends AnyFlatSpec with Matchers {
 
-  s"${AppConf}" should "load from default config file" in {
+  "MonixAwsConf" should "load from default config file" in {
     //given/when
-    val awsClientConf = AppConf.loadOrThrow
+    val monixAwsConf = MonixAwsConf.loadOrThrow
 
     //then
-    awsClientConf.monixAws.credentials shouldBe a[DefaultCredentialsProvider]
-    awsClientConf.monixAws.endpoint.isDefined shouldBe false
-    awsClientConf.monixAws.region shouldBe Region.EU_WEST_1
+    monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
+    monixAwsConf.endpoint.isDefined shouldBe false
+    monixAwsConf.region shouldBe Region.EU_WEST_1
   }
 
   it should "not require endpoint nor http client settings" in {
@@ -58,13 +59,13 @@ class AwsClientConfigSpec extends AnyFlatSpec with Matchers {
            |""".stripMargin)
 
     //when
-    val awsClientConf = configSource.loadOrThrow[AppConf]
+    val monixAwsConf = configSource.loadOrThrow[AppConf].monixAws
 
     //then
-    awsClientConf.monixAws.credentials shouldBe a[DefaultCredentialsProvider]
-    awsClientConf.monixAws.endpoint shouldBe Some(URI.create("localhost:4566"))
-    awsClientConf.monixAws.httpClient.isDefined shouldBe false
-    awsClientConf.monixAws.region shouldBe Region.AWS_GLOBAL
+    monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
+    monixAwsConf.endpoint shouldBe Some(URI.create("localhost:4566"))
+    monixAwsConf.httpClient.isDefined shouldBe false
+    monixAwsConf.region shouldBe Region.AWS_GLOBAL
   }
 
   it should "read the local endpoint as a uri" in {
@@ -83,13 +84,13 @@ class AwsClientConfigSpec extends AnyFlatSpec with Matchers {
            |""".stripMargin)
 
     //when
-    val awsClientConf = configSource.loadOrThrow[AppConf]
+    val monixAwsConf = configSource.loadOrThrow[AppConf].monixAws
 
     //then
-    awsClientConf.monixAws.credentials shouldBe a[DefaultCredentialsProvider]
-    awsClientConf.monixAws.endpoint.isDefined shouldBe false
-    awsClientConf.monixAws.httpClient.isDefined shouldBe false
-    awsClientConf.monixAws.region shouldBe Region.AWS_GLOBAL
+    monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
+    monixAwsConf.endpoint.isDefined shouldBe false
+    monixAwsConf.httpClient.isDefined shouldBe false
+    monixAwsConf.region shouldBe Region.AWS_GLOBAL
   }
 
   it should "fail when credentials are not present" in {
@@ -105,12 +106,12 @@ class AwsClientConfigSpec extends AnyFlatSpec with Matchers {
            |""".stripMargin)
 
     //when
-    val awsClientConf = Try(configSource.loadOrThrow[AppConf])
+    val monixAwsConf = Try(configSource.loadOrThrow[AppConf]).map(_.monixAws)
 
     //then
-    awsClientConf.isFailure shouldBe true
-    awsClientConf.failed.get shouldBe a[ConfigReaderException[_]]
-    awsClientConf.failed.get.getMessage should include("Key not found: 'credentials'")
+    monixAwsConf.isFailure shouldBe true
+    monixAwsConf.failed.get shouldBe a[ConfigReaderException[_]]
+    monixAwsConf.failed.get.getMessage should include("Key not found: 'credentials'")
   }
 
   it should "fail when credentials region is not present" in {
@@ -128,12 +129,12 @@ class AwsClientConfigSpec extends AnyFlatSpec with Matchers {
            |""".stripMargin)
 
     //when
-    val awsClientConf = Try(configSource.loadOrThrow[AppConf])
+    val monixAwsConf = Try(configSource.loadOrThrow[AppConf]).map(_.monixAws)
 
     //then
-    awsClientConf.isFailure shouldBe true
-    awsClientConf.failed.get shouldBe a[ConfigReaderException[_]]
-    awsClientConf.failed.get.getMessage should include("Key not found: 'region'")
+    monixAwsConf.isFailure shouldBe true
+    monixAwsConf.failed.get shouldBe a[ConfigReaderException[_]]
+    monixAwsConf.failed.get.getMessage should include("Key not found: 'region'")
   }
 
 }
