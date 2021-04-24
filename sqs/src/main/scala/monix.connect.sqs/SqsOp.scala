@@ -21,7 +21,7 @@ import monix.eval.Task
 
 import java.util.concurrent.CompletableFuture
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
-import software.amazon.awssdk.services.sqs.model.{AddPermissionRequest, AddPermissionResponse, ChangeMessageVisibilityRequest, ChangeMessageVisibilityResponse, CreateQueueRequest, CreateQueueResponse, DeleteMessageRequest, DeleteMessageResponse, DeleteQueueRequest, DeleteQueueResponse, GetQueueUrlRequest, GetQueueUrlResponse, ListQueuesRequest, ListQueuesResponse, ReceiveMessageRequest, ReceiveMessageResponse, SendMessageBatchRequest, SendMessageBatchResponse, SendMessageRequest, SendMessageResponse, SqsRequest, SqsResponse}
+import software.amazon.awssdk.services.sqs.model.{AddPermissionRequest, AddPermissionResponse, ChangeMessageVisibilityRequest, ChangeMessageVisibilityResponse, CreateQueueRequest, CreateQueueResponse, DeleteMessageRequest, DeleteMessageResponse, DeleteQueueRequest, DeleteQueueResponse, GetQueueAttributesRequest, GetQueueAttributesResponse, GetQueueUrlRequest, GetQueueUrlResponse, ListDeadLetterSourceQueuesRequest, ListDeadLetterSourceQueuesResponse, ListQueueTagsRequest, ListQueueTagsResponse, ListQueuesRequest, ListQueuesResponse, PurgeQueueRequest, PurgeQueueResponse, ReceiveMessageRequest, ReceiveMessageResponse, RemovePermissionRequest, RemovePermissionResponse, SendMessageBatchRequest, SendMessageBatchResponse, SendMessageRequest, SendMessageResponse, SetQueueAttributesRequest, SetQueueAttributesResponse, SqsRequest, SqsResponse, TagQueueRequest, TagQueueResponse, UntagQueueRequest, UntagQueueResponse}
 
 trait SqsOp[Request <: SqsRequest, Response <: SqsResponse] {
   def execute(sqsRequest: Request)(implicit client: SqsAsyncClient): Task[Response]
@@ -30,29 +30,52 @@ trait SqsOp[Request <: SqsRequest, Response <: SqsResponse] {
 object SqsOp {
 
   implicit val addPermission: SqsOp[AddPermissionRequest, AddPermissionResponse] =
-    SqsOpFactory.build[AddPermissionRequest, AddPermissionResponse](_.addPermission(_))
-  implicit val createQueue: SqsOp[CreateQueueRequest, CreateQueueResponse] = SqsOpFactory.build[CreateQueueRequest, CreateQueueResponse](_.createQueue(_))
-  implicit val deleteMessage: SqsOp[DeleteMessageRequest, DeleteMessageResponse] = SqsOpFactory.build[DeleteMessageRequest, DeleteMessageResponse](_.deleteMessage(_))
-  implicit val deleteQueue: SqsOp[DeleteQueueRequest, DeleteQueueResponse] = SqsOpFactory.build[DeleteQueueRequest, DeleteQueueResponse](_.deleteQueue(_))
-  implicit val getQueueUrl: SqsOp[GetQueueUrlRequest, GetQueueUrlResponse] = SqsOpFactory.build[GetQueueUrlRequest, GetQueueUrlResponse](_.getQueueUrl(_))
-  implicit val listQueues: SqsOp[ListQueuesRequest, ListQueuesResponse] = SqsOpFactory.build[ListQueuesRequest, ListQueuesResponse](_.listQueues(_))
-  implicit val receiveMessage: SqsOp[ReceiveMessageRequest, ReceiveMessageResponse] = SqsOpFactory.build[ReceiveMessageRequest, ReceiveMessageResponse](_.receiveMessage(_))
-  implicit val sendMessage: SqsOp[SendMessageRequest, SendMessageResponse] = SqsOpFactory.build[SendMessageRequest, SendMessageResponse](_.sendMessage(_))
-  implicit val sendMessageBatch: SqsOp[SendMessageBatchRequest, SendMessageBatchResponse] = SqsOpFactory.build[SendMessageBatchRequest, SendMessageBatchResponse](_.sendMessageBatch(_))
+    SqsOp[AddPermissionRequest, AddPermissionResponse](_.addPermission(_))
   implicit val changeMessageVisibility: SqsOp[ChangeMessageVisibilityRequest, ChangeMessageVisibilityResponse] =
-    SqsOpFactory.build[ChangeMessageVisibilityRequest, ChangeMessageVisibilityResponse](_.changeMessageVisibility(_))
+    SqsOp[ChangeMessageVisibilityRequest, ChangeMessageVisibilityResponse](_.changeMessageVisibility(_))
 
-  private[this] object SqsOpFactory {
-    def build[Request <: SqsRequest, Response <: SqsResponse](
-      operation: (SqsAsyncClient, Request) => CompletableFuture[Response]): SqsOp[Request, Response] = {
-      new SqsOp[Request, Response] {
-        def execute(request: Request)(
-          implicit sqsAsyncClient: SqsAsyncClient): Task[Response] = {
-          Task.defer(
-            Task.from(operation(sqsAsyncClient, request))
-          )
-        }
+  implicit val createQueue: SqsOp[CreateQueueRequest, CreateQueueResponse] =
+    SqsOp[CreateQueueRequest, CreateQueueResponse](_.createQueue(_))
+  implicit val deleteMessage: SqsOp[DeleteMessageRequest, DeleteMessageResponse] =
+    SqsOp[DeleteMessageRequest, DeleteMessageResponse](_.deleteMessage(_))
+  implicit val deleteQueue: SqsOp[DeleteQueueRequest, DeleteQueueResponse] =
+    SqsOp[DeleteQueueRequest, DeleteQueueResponse](_.deleteQueue(_))
+  implicit val getQueueUrl: SqsOp[GetQueueUrlRequest, GetQueueUrlResponse] =
+    SqsOp[GetQueueUrlRequest, GetQueueUrlResponse](_.getQueueUrl(_))
+  implicit val getQueueAttributes: SqsOp[GetQueueAttributesRequest, GetQueueAttributesResponse] =
+    SqsOp[GetQueueAttributesRequest, GetQueueAttributesResponse](_.getQueueAttributes(_))
+  implicit val listDeadLetter: SqsOp[ListDeadLetterSourceQueuesRequest, ListDeadLetterSourceQueuesResponse] =
+    SqsOp[ListDeadLetterSourceQueuesRequest, ListDeadLetterSourceQueuesResponse](_.listDeadLetterSourceQueues(_))
+  implicit val listQueues: SqsOp[ListQueuesRequest, ListQueuesResponse] =
+    SqsOp[ListQueuesRequest, ListQueuesResponse](_.listQueues(_))
+  implicit val listQueueTags: SqsOp[ListQueueTagsRequest, ListQueueTagsResponse] =
+    SqsOp[ListQueueTagsRequest, ListQueueTagsResponse](_.listQueueTags(_))
+  implicit val purgeQueue: SqsOp[PurgeQueueRequest, PurgeQueueResponse] =
+    SqsOp[PurgeQueueRequest, PurgeQueueResponse](_.purgeQueue(_))
+  implicit val receiveMessage: SqsOp[ReceiveMessageRequest, ReceiveMessageResponse] =
+    SqsOp[ReceiveMessageRequest, ReceiveMessageResponse](_.receiveMessage(_))
+  implicit val removePermission: SqsOp[RemovePermissionRequest, RemovePermissionResponse] =
+    SqsOp[RemovePermissionRequest, RemovePermissionResponse](_.removePermission(_))
+  implicit val sendMessage: SqsOp[SendMessageRequest, SendMessageResponse] =
+    SqsOp[SendMessageRequest, SendMessageResponse](_.sendMessage(_))
+  implicit val sendMessageBatch: SqsOp[SendMessageBatchRequest, SendMessageBatchResponse] =
+    SqsOp[SendMessageBatchRequest, SendMessageBatchResponse](_.sendMessageBatch(_))
+  implicit val setQueueAttributes: SqsOp[SetQueueAttributesRequest, SetQueueAttributesResponse] =
+    SqsOp[SetQueueAttributesRequest, SetQueueAttributesResponse](_.setQueueAttributes(_))
+
+  implicit val tagQueue: SqsOp[TagQueueRequest, TagQueueResponse] =
+    SqsOp[TagQueueRequest, TagQueueResponse](_.tagQueue(_))
+  implicit val untagQueue: SqsOp[UntagQueueRequest, UntagQueueResponse] =
+    SqsOp[UntagQueueRequest, UntagQueueResponse](_.untagQueue(_))
+
+  private def apply[Request <: SqsRequest, Response <: SqsResponse](
+                                                             operation: (SqsAsyncClient, Request) => CompletableFuture[Response]): SqsOp[Request, Response] = {
+    new SqsOp[Request, Response] {
+      def execute(request: Request)(
+        implicit sqsAsyncClient: SqsAsyncClient): Task[Response] = {
+        Task.from(operation(sqsAsyncClient, request))
       }
     }
   }
+
 }

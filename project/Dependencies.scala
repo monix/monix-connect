@@ -8,19 +8,16 @@ object Dependencies {
     val Monix = "3.3.0"
     val AwsSdk = "2.15.67"
     val AkkaStreams = "2.6.9"
-    val AWS = "1.11.749"
-    val DynamoDb = "2.10.60"
-    val SQS = "2.13.33"
     val GCS = "1.107.0"
     val Hadoop = "3.1.4"
     val MongoScala = "4.1.1"
     val MongoReactiveStreams = "4.2.3"
-    val S3 = "2.14.21"
     val Lettuce = "6.1.1.RELEASE"
     val Parquet = "1.12.0"
     val Elastic4s = "7.12.0"
     val Pureconfig = "0.15.0"
     val ScalaCompat = "2.4.3"
+    val ScalaLogging = "3.9.2"
 
     //test
     val Scalatest = "3.2.8"
@@ -99,7 +96,8 @@ object Dependencies {
   ) ++ commonDependencies(hasIt = true)
 
   val Sqs = Seq(
-    "software.amazon.awssdk" % "sqs" % Versions.SQS
+    "com.typesafe.scala-logging" %% "scala-logging" % Versions.ScalaLogging,
+    "software.amazon.awssdk" % "sqs" % Versions.AwsSdk
   ) ++ commonDependencies(hasIt = true)
 
   val Elasticsearch = Seq(

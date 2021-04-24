@@ -17,48 +17,57 @@
 
 package monix.connect.sqs
 
-import monix.eval.Task
 import monix.execution.cancelables.AssignableCancelable
 import monix.execution.{Ack, Callback, Scheduler}
 import monix.reactive.observers.Subscriber
 import monix.reactive.Consumer
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.{SqsRequest, SqsResponse}
+import com.typesafe.scalalogging.StrictLogging
 
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-private[sqs] class SqsSink[In <: SqsRequest, Out <: SqsResponse](
-  sqsOp: SqsOp[In, Out],
-  sqsClient: SqsAsyncClient)
-  extends Consumer[In, Out] {
+private[sqs] class SqsSink[In, Request <: SqsRequest, Response <: SqsResponse](
+                                                                                preProcessing: In => Request,
+                                                                  sqsOp: SqsOp[Request, Response],
+                                                                  sqsClient: SqsAsyncClient,
+                                                                  stopOnError: Boolean)
+  extends Consumer[In, Unit] with StrictLogging {
 
-  override def createSubscriber(cb: Callback[Throwable, Out], s: Scheduler): (Subscriber[In], AssignableCancelable) = {
+  override def createSubscriber(cb: Callback[Throwable, Unit], s: Scheduler): (Subscriber[In], AssignableCancelable) = {
     val sub = new Subscriber[In] {
 
-      implicit val scheduler = s
-      private var sqsResponse: Task[Out] = _
+      implicit val scheduler: Scheduler = s
 
       def onNext(sqsRequest: In): Future[Ack] = {
-        sqsResponse = Task.from(sqsOp.execute(sqsRequest)(sqsClient))
 
-        sqsResponse.onErrorRecover {
-          case _: Throwable =>
-          case NonFatal(e) => {
-            onError(e)
-            monix.execution.Ack.Stop
+        sqsOp.execute(preProcessing(sqsRequest))(sqsClient)
+          .onErrorRecover {
+            case NonFatal(ex) => {
+              if (stopOnError) {
+                onError(ex)
+                val errorMessage = "Unexpected error in SqsSink, stopping subscription..."
+                logger.error(errorMessage, ex)
+                Ack.Stop
+              }
+              else {
+                logger.error(s"Unexpected error in SqsSink, continuing... ", ex)
+                Ack.Continue
+              }
+            }
           }
-        }.map(_ => monix.execution.Ack.Continue).runToFuture
+          .as(Ack.Continue)
+          .runToFuture
       }
 
-      def onComplete(): Unit = {
-        sqsResponse.runAsync(cb)
-      }
+      def onComplete(): Unit =
+        cb.onSuccess(())
 
-      def onError(ex: Throwable): Unit = {
+      def onError(ex: Throwable): Unit =
         cb.onError(ex)
-      }
     }
+
     (sub, AssignableCancelable.single())
   }
 
