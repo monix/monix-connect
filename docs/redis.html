@@ -93,8 +93,8 @@ servers in the cluster.</p>
 <pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.redis.client.{<span class="hljs-type">RedisConnection</span>, <span class="hljs-type">RedisUri</span>}
 
 <span class="hljs-keyword">val</span> redisNode1 = <span class="hljs-type">RedisUri</span>(<span class="hljs-string">"my.redis.node.1"</span>, <span class="hljs-number">7000</span>)
-<span class="hljs-keyword">val</span> redisNode2 = <span class="hljs-type">RedisUri</span>(<span class="hljs-string">"my.redis.node.1"</span>, <span class="hljs-number">7001</span>)
-<span class="hljs-keyword">val</span> redisNode3 = <span class="hljs-type">RedisUri</span>(<span class="hljs-string">"my.redis.node.1"</span>, <span class="hljs-number">7002</span>)
+<span class="hljs-keyword">val</span> redisNode2 = <span class="hljs-type">RedisUri</span>(<span class="hljs-string">"my.redis.node.2"</span>, <span class="hljs-number">7001</span>)
+<span class="hljs-keyword">val</span> redisNode3 = <span class="hljs-type">RedisUri</span>(<span class="hljs-string">"my.redis.node.3"</span>, <span class="hljs-number">7002</span>)
 
 <span class="hljs-keyword">val</span> redisClusterConn: <span class="hljs-type">RedisConnection</span> = <span class="hljs-type">RedisConnection</span>.cluster(<span class="hljs-type">List</span>(redisNode1, redisNode2, redisNode3))
 </code></pre>
