@@ -36,6 +36,12 @@ services:
     environment:
       - SERVICES=dynamodb,sqs
 
+  elasticmq:
+    image: softwaremill/elasticmq-native:latest
+    ports:
+      - '9325:9325'
+      - '9324:9324'
+
   redis:
     image: redis
     ports:

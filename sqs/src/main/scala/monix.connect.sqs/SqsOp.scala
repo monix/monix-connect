@@ -33,7 +33,6 @@ object SqsOp {
     SqsOp[AddPermissionRequest, AddPermissionResponse](_.addPermission(_))
   implicit val changeMessageVisibility: SqsOp[ChangeMessageVisibilityRequest, ChangeMessageVisibilityResponse] =
     SqsOp[ChangeMessageVisibilityRequest, ChangeMessageVisibilityResponse](_.changeMessageVisibility(_))
-
   implicit val createQueue: SqsOp[CreateQueueRequest, CreateQueueResponse] =
     SqsOp[CreateQueueRequest, CreateQueueResponse](_.createQueue(_))
   implicit val deleteMessage: SqsOp[DeleteMessageRequest, DeleteMessageResponse] =

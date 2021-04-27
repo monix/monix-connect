@@ -1,5 +1,6 @@
 package monix.connect.sqs
 
+import monix.connect.sqs.domain.QueueName
 import org.scalacheck.Gen
 import org.scalatest.TestSuite
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
@@ -13,6 +14,8 @@ import scala.collection.JavaConverters._
 trait SqsFixture {
   this: TestSuite =>
 
+  val nonExistingQueueErrorMsg = "Invalid request: MissingQueryParamRejection(QueueName), MissingFormFieldRejection(QueueUrl)"
+
   val defaultAwsCredProvider = StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x"))
   val asyncClient =
     SqsAsyncClient
@@ -21,14 +24,14 @@ trait SqsFixture {
       .endpointOverride(new URI("http://localhost:4576"))
       .region(Region.US_EAST_1)
       .build
-
+//9324
 
   val genQueueUrl: Gen[String] =
     Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "test-" + chars.mkString.take(200)).sample.get
 
-  def queueUrlPrefix(queueName: String) = s"http://localhost:4576/queue/${queueName}"
+  def queueUrlPrefix(queueName: String) = s"http://localhost:9324/000000000000/${queueName}"
 
-  val genQueueName: Gen[String] = Gen.identifier.map(id => "test-" + id.take(30))
+  val genQueueName: Gen[QueueName] = Gen.identifier.map(id => QueueName("test-" + id.take(30)))
 
   val genNamePrefix: Gen[String] = Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "test-" + chars.mkString.take(20))
 

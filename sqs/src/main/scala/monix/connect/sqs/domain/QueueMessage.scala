@@ -1,26 +1,25 @@
-package monix.connect.sqs
+package monix.connect.sqs.domain
 
-import org.apache.commons.codec.digest.DigestUtils.{sha1Hex, sha256}
-import software.amazon.awssdk.core.SdkBytes
-import software.amazon.awssdk.services.sqs.model.{MessageAttributeValue, MessageSystemAttributeNameForSends, MessageSystemAttributeValue, SendMessageBatchRequestEntry, SendMessageRequest}
+import monix.connect.sqs.MessageAttribute
+import org.apache.commons.codec.digest.DigestUtils.sha1Hex
+import software.amazon.awssdk.services.sqs.model.{MessageSystemAttributeNameForSends, SendMessageBatchRequestEntry, SendMessageRequest}
 
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 
 case class QueueMessage(body: String,
-                        deduplicationId: Option[String],
+                        deduplicationId: Option[String] = Option.empty,
                         messageAttributes: Map[String, MessageAttribute] = Map.empty,
-                        awsTraceHeader: Option[MessageAttribute]) {
+                        awsTraceHeader: Option[MessageAttribute] = Option.empty) {
 
-  def deduplicatedId: String = deduplicationId.getOrElse(sha1Hex(body))
 
-  def toMessageRequest[Attr](queueUrl: String,
+  def toMessageRequest[Attr](queueUrl: QueueUrl,
                              groupId: Option[String],
                              delayDuration: Option[FiniteDuration]): SendMessageRequest = {
-    val builder = SendMessageRequest.builder.messageBody(body).queueUrl(queueUrl)
+    val builder = SendMessageRequest.builder.messageBody(body).queueUrl(queueUrl.url)
     delayDuration.map(delay => builder.delaySeconds(delay.toMillis.toInt))
     groupId.map(builder.messageGroupId)
-    builder.messageDeduplicationId(deduplicatedId)
+    deduplicationId.map(builder.messageDeduplicationId)
     builder.messageAttributes(messageAttributes.map { case (k, v) => (k, v.toAttrValue) }.asJava)
     //todo test that MessageSystemAttributeNameForSend is only AWSTRACEHEADER
     awsTraceHeader.map { attr =>
@@ -36,8 +35,9 @@ case class QueueMessage(body: String,
                           delaySeconds: Option[FiniteDuration]): SendMessageBatchRequestEntry = {
     val builder = SendMessageBatchRequestEntry.builder
       .messageBody(body)
-      .messageDeduplicationId(deduplicatedId)
       .id(batchId)
+
+    deduplicationId.map(builder.messageDeduplicationId)
     groupId.map(builder.messageGroupId)
     delaySeconds.map(delay => builder.delaySeconds(delay.toMillis.toInt))
     builder.messageAttributes(messageAttributes.map { case (k, v) => (k, v.toAttrValue) }.asJava)
