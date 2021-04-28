@@ -17,19 +17,18 @@
 
 package monix.connect.sqs
 
-import monix.execution.cancelables.AssignableCancelable
 import monix.execution.{Ack, Callback, Scheduler}
 import monix.reactive.observers.Subscriber
 import monix.reactive.Consumer
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.{SqsRequest, SqsResponse}
 import com.typesafe.scalalogging.StrictLogging
+import monix.execution.cancelables.AssignableCancelable
 
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-private[sqs] class SqsSink[In, Request <: SqsRequest, Response <: SqsResponse](
-                                                                                preProcessing: In => Request,
+private[sqs] class SqsSink[In, Request <: SqsRequest, Response <: SqsResponse](preProcessing: In => Request,
                                                                   sqsOp: SqsOp[Request, Response],
                                                                   sqsClient: SqsAsyncClient,
                                                                   stopOnError: Boolean)

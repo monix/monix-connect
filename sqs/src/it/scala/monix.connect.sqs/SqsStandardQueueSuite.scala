@@ -1,6 +1,6 @@
 package monix.connect.sqs
 
-import monix.connect.sqs.domain.{QueueMessage, QueueName}
+import monix.connect.sqs.domain.{InboundMessage, QueueName}
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
 import org.apache.commons.codec.digest.DigestUtils.md5Hex
@@ -22,11 +22,11 @@ class SqsStandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutu
   // Standard queue
   "Sqs" can "send a single messages standard queue" in {
     val queueName = genQueueName.sample.get
-    val message = Gen.identifier.map(_.take(10)).map(id => QueueMessage(id, None)).sample.get
-    Sqs.fromConfig.use { sqs =>
+    val message = Gen.identifier.map(_.take(10)).map(id => InboundMessage(id, None)).sample.get
+    Sqs.fromConfig.use { case Sqs(_, producer, operator) =>
       for {
-        queueUrl <- sqs.createQueue(queueName)
-        messageResponse <- sqs.sendMessage(message, queueUrl)
+        queueUrl <- operator.createQueue(queueName)
+        messageResponse <- producer.sendSingleMessage(message, queueUrl)
 
       } yield {
         messageResponse.md5OfMessageBody shouldBe md5Hex(message.body)
@@ -37,15 +37,15 @@ class SqsStandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutu
   it can "send and receive multiple messages standard queue" in {
     val queueName = genQueueName.sample.get
     val n = 10
-    val messages = Gen.listOfN(n, Gen.identifier.map(_.take(10)).map(id => QueueMessage(id, None))).sample.get
-    Sqs.fromConfig.use { sqs =>
+    val messages = Gen.listOfN(n, Gen.identifier.map(_.take(10)).map(id => InboundMessage(id, None))).sample.get
+    Sqs.fromConfig.use { case Sqs(receiver, producer, operator) =>
       for {
-        queueUrl <- sqs.createQueue(queueName)
+        queueUrl <- operator.createQueue(queueName)
         _ <- Observable.fromIterable(messages)
-          .consumeWith(sqs.sendMessageSink(queueUrl))
-        receivedMessages <- sqs.receiveManualAck(queueUrl).take(n).toListL
+          .consumeWith(producer.sink(queueUrl))
+        receivedMessages <- receiver.receiveDeletable(queueUrl).take(n).toListL
       } yield {
-        receivedMessages.map(_.message.body) should contain theSameElementsAs messages.map(_.body)
+        receivedMessages.map(_.body) should contain theSameElementsAs messages.map(_.body)
       }
     }.runSyncUnsafe()
   }

@@ -1,6 +1,6 @@
 package monix.connect.sqs
 
-import monix.connect.sqs.domain.QueueName
+import monix.connect.sqs.domain.{InboundMessage, QueueName}
 import org.scalacheck.Gen
 import org.scalatest.TestSuite
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
@@ -14,7 +14,8 @@ import scala.collection.JavaConverters._
 trait SqsFixture {
   this: TestSuite =>
 
-  val nonExistingQueueErrorMsg = "Invalid request: MissingQueryParamRejection(QueueName), MissingFormFieldRejection(QueueUrl)"
+  val nonExistingQueueErrorMsg: String =
+    """Invalid request: MissingQueryParamRejection(QueueName), MissingFormFieldRejection(QueueUrl); see the SQS docs. (Service: Sqs, Status Code: 400, Request ID: 00000000-0000-0000-0000-000000000000, Extended Request ID: null)""".stripMargin
 
   val defaultAwsCredProvider = StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x"))
   val asyncClient =
@@ -33,6 +34,9 @@ trait SqsFixture {
 
   val genQueueName: Gen[QueueName] = Gen.identifier.map(id => QueueName("test-" + id.take(30)))
 
+  // it must end with `.fifo` prefix, see https://github.com/aws/aws-sdk-php/issues/1331
+  val genFifoQueueName: Gen[QueueName] = Gen.identifier.map(id => QueueName("test-" + id.take(20) + ".fifo"))
+
   val genNamePrefix: Gen[String] = Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "test-" + chars.mkString.take(20))
 
   val genMessageId: Gen[String] = Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "msg-" + chars.mkString.take(5))
@@ -41,6 +45,10 @@ trait SqsFixture {
     Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "rHandle-" + chars.mkString.take(10))
 
   val genMessageBody: Gen[String] = Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "body-" + chars.mkString.take(200))
+
+  val genInboundMessage: Gen[InboundMessage] = Gen.identifier.map(_.take(10)).map(id => InboundMessage(id, Some(id)))
+  def genInboundMessage(deduplicationId: Option[String]): Gen[InboundMessage] = Gen.identifier.map(_.take(10)).map(InboundMessage(_, deduplicationId))
+
 
   val message: Gen[Message] = for {
     id      <- genMessageId

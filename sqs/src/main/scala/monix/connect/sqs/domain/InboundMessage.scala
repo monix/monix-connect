@@ -1,19 +1,18 @@
 package monix.connect.sqs.domain
 
 import monix.connect.sqs.MessageAttribute
-import org.apache.commons.codec.digest.DigestUtils.sha1Hex
 import software.amazon.awssdk.services.sqs.model.{MessageSystemAttributeNameForSends, SendMessageBatchRequestEntry, SendMessageRequest}
 
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 
-case class QueueMessage(body: String,
-                        deduplicationId: Option[String] = Option.empty,
-                        messageAttributes: Map[String, MessageAttribute] = Map.empty,
-                        awsTraceHeader: Option[MessageAttribute] = Option.empty) {
+case class InboundMessage(body: String,
+                          deduplicationId: Option[String] = Option.empty,
+                          messageAttributes: Map[String, MessageAttribute] = Map.empty,
+                          awsTraceHeader: Option[MessageAttribute] = Option.empty) {
 
 
-  def toMessageRequest[Attr](queueUrl: QueueUrl,
+  private[sqs] def toMessageRequest[Attr](queueUrl: QueueUrl,
                              groupId: Option[String],
                              delayDuration: Option[FiniteDuration]): SendMessageRequest = {
     val builder = SendMessageRequest.builder.messageBody(body).queueUrl(queueUrl.url)
@@ -30,7 +29,7 @@ case class QueueMessage(body: String,
     builder.build
   }
 
-  def toMessageBatchEntry(batchId: String,
+  private[sqs] def toMessageBatchEntry(batchId: String,
                           groupId: Option[String],
                           delaySeconds: Option[FiniteDuration]): SendMessageBatchRequestEntry = {
     val builder = SendMessageBatchRequestEntry.builder

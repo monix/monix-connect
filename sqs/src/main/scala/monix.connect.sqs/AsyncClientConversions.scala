@@ -46,7 +46,7 @@ private[sqs] object AsyncClientConversions { self =>
     val builder = SqsAsyncClient.builder().credentialsProvider(credentialsProvider).region(region)
     httpClient.map(builder.httpClient)
     endpoint.map(uri => builder.endpointOverride(URI.create(uri)))
-    builder.build()
+    builder.build
   }
 
   private[this] def httpConfToClient(httpClientConf: HttpClientConf): SdkAsyncHttpClient = {

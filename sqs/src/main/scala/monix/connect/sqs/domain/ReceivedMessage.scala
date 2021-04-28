@@ -1,13 +1,34 @@
 package monix.connect.sqs.domain
 
-import monix.connect.sqs.Sqs
+import monix.connect.sqs.{SqsConsumer, SqsOp}
 import monix.eval.Task
-import software.amazon.awssdk.services.sqs.model.Message
+import software.amazon.awssdk.services.sqs.SqsAsyncClient
+import software.amazon.awssdk.services.sqs.model.{ChangeMessageVisibilityRequest, Message, MessageSystemAttributeName}
 
-class ReceivedMessage(sqs: Sqs, val queueUrl: QueueUrl, val message: Message) {
+import scala.concurrent.duration.FiniteDuration
+import scala.jdk.CollectionConverters._
 
-  def deleteFromQueue(): Task[Unit] = {
-    sqs.deleteMessage(queueUrl, message.receiptHandle)
+class ReceivedMessage private[sqs] (val queueUrl: QueueUrl, protected val message: Message)(implicit asyncClient: SqsAsyncClient) {
+
+  val body: String = message.body()
+
+  val messageId: String = message.messageId()
+
+  val attributes: Map[MessageSystemAttributeName, String] = message.attributes().asScala.toMap
+
+  val md5OfBody: String = message.md5OfBody()
+
+  val md5OfAttributes: String = message.md5OfMessageAttributes()
+
+  val receiptHandle: String = message.receiptHandle()
+
+  def changeVisibilityTimeout(timeout: FiniteDuration): Task[Unit] = {
+    val changeMessageVisibilityRequest = ChangeMessageVisibilityRequest.builder
+      .queueUrl(queueUrl.url)
+      .receiptHandle(message.receiptHandle)
+      .visibilityTimeout(timeout.toSeconds.toInt).build
+    SqsOp.changeMessageVisibility.execute(changeMessageVisibilityRequest)(asyncClient).void
   }
 
 }
+
