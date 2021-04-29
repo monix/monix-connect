@@ -18,10 +18,6 @@ class ReceivedMessage private[sqs] (val queueUrl: QueueUrl, protected val messag
 
   val md5OfBody: String = message.md5OfBody()
 
-  val md5OfAttributes: String = message.md5OfMessageAttributes()
-
-  val receiptHandle: String = message.receiptHandle()
-
   def changeVisibilityTimeout(timeout: FiniteDuration): Task[Unit] = {
     val changeMessageVisibilityRequest = ChangeMessageVisibilityRequest.builder
       .queueUrl(queueUrl.url)

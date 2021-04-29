@@ -34,7 +34,25 @@ class SqsStandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutu
     }.runSyncUnsafe()
   }
 
-  it can "send and receive multiple messages standard queue" in {
+  "A stream of received messages" can "be atomically consumed with automatic deletes" in {
+    val queueName = genQueueName.sample.get
+    val n = 10
+    val messages = Gen.listOfN(n, genInboundMessage(None)).sample.get
+    Sqs.fromConfig.use { case Sqs(receiver, producer, operator) =>
+      for {
+        queueUrl <- operator.createQueue(queueName)
+        _ <- Observable.fromIterable(messages)
+          .consumeWith(producer.sink(queueUrl))
+        receivedMessages <- receiver.receiveAutoDelete(queueUrl)
+          .take(n).toListL
+      } yield {
+        receivedMessages.map(_.body) should contain theSameElementsAs messages.map(_.body)
+      }
+    }.runSyncUnsafe()
+  }
+
+
+  it can "be atomically consumed with manual deletes" in {
     val queueName = genQueueName.sample.get
     val n = 10
     val messages = Gen.listOfN(n, Gen.identifier.map(_.take(10)).map(id => InboundMessage(id, None))).sample.get
@@ -43,13 +61,13 @@ class SqsStandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutu
         queueUrl <- operator.createQueue(queueName)
         _ <- Observable.fromIterable(messages)
           .consumeWith(producer.sink(queueUrl))
-        receivedMessages <- receiver.receiveDeletable(queueUrl).take(n).toListL
+        receivedMessages <- receiver.receiveManualDelete(queueUrl)
+          .take(n).toListL
       } yield {
         receivedMessages.map(_.body) should contain theSameElementsAs messages.map(_.body)
       }
     }.runSyncUnsafe()
   }
-
   override def beforeAll(): Unit = {
    // Task.from(asyncClient.createQueue(createQueueRequest(randomQueueName))).runSyncUnsafe()
     Thread.sleep(3000)

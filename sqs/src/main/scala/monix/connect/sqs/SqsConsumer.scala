@@ -13,19 +13,19 @@ private[sqs] object SqsConsumer {
   def create(implicit asyncClient: SqsAsyncClient): SqsConsumer = new SqsConsumer()
 }
 
-class SqsConsumer private[sqs] (implicit asyncClient: SqsAsyncClient) {
+class SqsConsumer private[sqs](implicit asyncClient: SqsAsyncClient) {
 
   /**
     *
     * @param queueUrl
     * @return
     */
-  def receiveDeletable(queueUrl: QueueUrl,
-                       inFlightMessages: Int = 10,
-                       visibilityTimeout: FiniteDuration = 30.seconds,
-                       waitTimeSeconds: FiniteDuration = Duration.Zero): Observable[DeletableMessage] = {
+  def receiveManualDelete(queueUrl: QueueUrl,
+                          inFlightMessages: Int = 10,
+                          visibilityTimeout: FiniteDuration = 30.seconds,
+                          waitTimeSeconds: FiniteDuration = Duration.Zero): Observable[DeletableMessage] = {
     Observable.repeatEvalF {
-      receiveSingleDeletable(queueUrl,
+      singleManualDelete(queueUrl,
         maxMessages = inFlightMessages,
         visibilityTimeout = visibilityTimeout,
         waitTimeSeconds = waitTimeSeconds)
@@ -39,26 +39,26 @@ class SqsConsumer private[sqs] (implicit asyncClient: SqsAsyncClient) {
     * @param queueUrl
     * @return
     */
-  def receiveSingleDeletable(queueUrl: QueueUrl,
-                             maxMessages: Int,
-                             visibilityTimeout: FiniteDuration = 30.seconds,
-                             waitTimeSeconds: FiniteDuration = Duration.Zero): Task[List[DeletableMessage]] = {
-
+  def singleManualDelete(queueUrl: QueueUrl,
+                         maxMessages: Int = 10,
+                         visibilityTimeout: FiniteDuration = 30.seconds,
+                         waitTimeSeconds: FiniteDuration = Duration.Zero): Task[List[DeletableMessage]] = {
     val receiveRequest = singleReceiveRequest(queueUrl,
       maxMessages = maxMessages,
       visibilityTimeout = visibilityTimeout,
       waitTimeSeconds = waitTimeSeconds)
-    SqsOp.receiveMessage.execute(receiveRequest)
-      .map(_.messages.asScala.toList
-        .map(msg => new DeletableMessage(queueUrl, msg)))
-
+    Task.evalAsync(receiveRequest).flatMap {
+      SqsOp.receiveMessage.execute(_)
+        .map(_.messages.asScala.toList
+          .map(msg => new DeletableMessage(queueUrl, msg)))
+    }
   }
 
   def receiveAutoDelete(queueUrl: QueueUrl,
                         visibilityTimeout: FiniteDuration = 30.seconds,
                         waitTimeSeconds: FiniteDuration = Duration.Zero,
                         autoDeleteRequestRetry: Int = 3): Observable[ReceivedMessage] = {
-    receiveDeletable(queueUrl,
+    receiveManualDelete(queueUrl,
       inFlightMessages = 10,
       visibilityTimeout = visibilityTimeout,
       waitTimeSeconds = waitTimeSeconds)

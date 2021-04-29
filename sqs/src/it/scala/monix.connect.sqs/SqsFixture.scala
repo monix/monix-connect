@@ -46,7 +46,8 @@ trait SqsFixture {
 
   val genMessageBody: Gen[String] = Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "body-" + chars.mkString.take(200))
 
-  val genInboundMessage: Gen[InboundMessage] = Gen.identifier.map(_.take(10)).map(id => InboundMessage(id, Some(id)))
+  val genInboundMessageWithDeduplication: Gen[InboundMessage] = Gen.identifier.map(_.take(10)).map(id => InboundMessage(id, Some(id)))
+
   def genInboundMessage(deduplicationId: Option[String]): Gen[InboundMessage] = Gen.identifier.map(_.take(10)).map(InboundMessage(_, deduplicationId))
 
 
