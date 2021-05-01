@@ -51,7 +51,6 @@ class SqsStandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutu
     }.runSyncUnsafe()
   }
 
-
   it can "be atomically consumed with manual deletes" in {
     val queueName = genQueueName.sample.get
     val n = 10

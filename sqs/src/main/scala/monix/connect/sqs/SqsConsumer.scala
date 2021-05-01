@@ -4,7 +4,7 @@ import monix.connect.sqs.domain.{DeletableMessage, QueueUrl, ReceivedMessage}
 import monix.eval.Task
 import monix.reactive.Observable
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
-import software.amazon.awssdk.services.sqs.model.{ChangeMessageVisibilityRequest, Message, QueueAttributeName, ReceiveMessageRequest}
+import software.amazon.awssdk.services.sqs.model.{QueueAttributeName, ReceiveMessageRequest}
 
 import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
 import scala.jdk.CollectionConverters._
@@ -40,6 +40,26 @@ class SqsConsumer private[sqs](implicit asyncClient: SqsAsyncClient) {
     * @return
     */
   def singleManualDelete(queueUrl: QueueUrl,
+                         maxMessages: Int = 10,
+                         visibilityTimeout: FiniteDuration = 30.seconds,
+                         waitTimeSeconds: FiniteDuration = Duration.Zero): Task[List[DeletableMessage]] = {
+    val receiveRequest = singleReceiveRequest(queueUrl,
+      maxMessages = maxMessages,
+      visibilityTimeout = visibilityTimeout,
+      waitTimeSeconds = waitTimeSeconds)
+    Task.evalAsync(receiveRequest).flatMap {
+      SqsOp.receiveMessage.execute(_)
+        .map(_.messages.asScala.toList
+          .map(msg => new DeletableMessage(queueUrl, msg)))
+    }
+  }
+
+  /**
+    *
+    * @param queueUrl
+    * @return
+    */
+  def singleAutoDelete(queueUrl: QueueUrl,
                          maxMessages: Int = 10,
                          visibilityTimeout: FiniteDuration = 30.seconds,
                          waitTimeSeconds: FiniteDuration = Duration.Zero): Task[List[DeletableMessage]] = {

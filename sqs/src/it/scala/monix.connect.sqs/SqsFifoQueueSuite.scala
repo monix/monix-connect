@@ -13,7 +13,7 @@ import software.amazon.awssdk.services.sqs.model.QueueAttributeName
 
 import scala.concurrent.duration._
 
-class SqsFifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with SqsFixture with BeforeAndAfterAll {
+class SqsFifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with SqsFixture {
 
   implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 300.milliseconds)
   implicit val sqsClient: Sqs = Sqs.createUnsafe(asyncClient)
@@ -93,7 +93,7 @@ class SqsFifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures 
     }.runSyncUnsafe()
   }
 
-  "A stream of messages" can "be produced and received in manual deletes mode" in {
+  "A stream of messages" can "be received in manual delete mode" in {
     val groupId = "group123"
     val queueName = genFifoQueueName.sample.get
     val n = 15
@@ -102,7 +102,7 @@ class SqsFifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures 
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(
           QueueAttributeName.FIFO_QUEUE -> "true"))
-        _ <- Observable.fromIterable(messages).consumeWith(sqs.producer.sink(queueUrl, groupId = Some(groupId)))
+        _ <- Observable.fromIterable(messages).mapEvalF(sqs.producer.sendSingleMessage(_, queueUrl, groupId = Some(groupId))).completedL
         receivedMessages <- sqs.consumer.receiveManualDelete(queueUrl)
           .mapEvalF(deletable => deletable.deleteFromQueue().as(deletable))
           .take(n)
@@ -114,14 +114,15 @@ class SqsFifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures 
     }.runSyncUnsafe()
   }
 
-  it can "be received in auto deleted mode" in {
+  it can "be received in auto delete mode" in {
+    val groupId = "group123"
     val queueName = genFifoQueueName.sample.get
     val n = 15
     val messages = Gen.listOfN(n, Gen.identifier.map(_.take(10)).map(id => InboundMessage(id, Some(id)))).sample.get
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
-        _ <- Observable.fromIterable(messages).consumeWith(sqs.producer.sink(queueUrl, groupId = Some("groupId123")))
+        _ <- Observable.fromIterable(messages).mapEvalF(sqs.producer.sendSingleMessage(_, queueUrl, groupId = Some(groupId))).completedL
         receivedMessages <- sqs.consumer.receiveAutoDelete(queueUrl)
           .take(n)
           .toListL
@@ -132,12 +133,12 @@ class SqsFifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures 
     }.runSyncUnsafe()
   }
 
-  it can "use content based deduplication" in {
+  it can "be processed with content based deduplication" in {
     val groupId1 = "groupId1"
     val queueName = genQueueName.sample.get.map(_ + ".fifo") // it must end with `.fifo` prefix, see https://github.com/aws/aws-sdk-php/issues/1331
-    val message1 = Gen.identifier.map(_.take(10)).map(id => InboundMessage(id)).sample.get
-    val message2 = Gen.identifier.map(_.take(10)).map(id => InboundMessage(id)).sample.get
-    val message3 = Gen.identifier.map(_.take(10)).map(id => InboundMessage(id)).sample.get
+    val message1 = genInboundMessage(None).sample.get
+    val message2 = genInboundMessage(None).sample.get
+    val message3 = genInboundMessage(None).sample.get
 
     Sqs.fromConfig.use { sqs =>
       for {
@@ -145,26 +146,24 @@ class SqsFifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures 
           Map(
             QueueAttributeName.FIFO_QUEUE -> "true",
             QueueAttributeName.CONTENT_BASED_DEDUPLICATION -> "true"))
-        messageResponse1 <- sqs.producer.sendSingleMessage(message1, queueUrl, Some(groupId1))
-        messageResponse2 <- sqs.producer.sendSingleMessage(message2, queueUrl, Some(groupId1))
-        messageResponse3 <- sqs.producer.sendSingleMessage(message3, queueUrl, Some(groupId1))
+        response1 <- sqs.producer.sendSingleMessage(message1, queueUrl, Some(groupId1))
+        duplicated1 <- sqs.producer.sendSingleMessage(message1, queueUrl, Some(groupId1))
+        response2 <- sqs.producer.sendSingleMessage(message2, queueUrl, Some(groupId1))
+        //even if we add deduplication id to the message it does no get duplicated since the queue has `content based deduplication`
+        duplicatedWithDeduplicationId2 <- sqs.producer.sendSingleMessage(message2, queueUrl, Some(groupId1))
+        response3 <- sqs.producer.sendSingleMessage(message3, queueUrl, Some(groupId1))
         receivedMessages <- sqs.consumer.receiveManualDelete(queueUrl).doOnNextF(_.deleteFromQueue()).take(3).toListL
       } yield {
-        messageResponse1.md5OfMessageBody shouldBe md5Hex(message1.body)
-        //messageResponse11.md5OfMessageBody shouldBe md5Hex(message1.body)
+        response1.md5OfMessageBody shouldBe md5Hex(message1.body)
+        duplicated1.md5OfMessageBody shouldBe md5Hex(message1.body)
+        response2.md5OfMessageBody shouldBe md5Hex(message2.body)
+        duplicatedWithDeduplicationId2.md5OfMessageBody shouldBe md5Hex(message2.body)
+        response3.md5OfMessageBody shouldBe md5Hex(message3.body)
+
+        // the same message contents are only consumed once even sending them multiple times
         receivedMessages.map(_.body) should contain theSameElementsAs List(message1, message2, message3).map(_.body)
       }
     }.runSyncUnsafe()
   }
 
-  override def beforeAll(): Unit = {
-   // Task.from(asyncClient.createQueue(createQueueRequest(randomQueueName))).runSyncUnsafe()
-    Thread.sleep(3000)
-    super.beforeAll()
-  }
-
-  override def afterAll(): Unit = {
-    //Task.from(client.deleteQueue(deleteQueueRequest("http://localhost:4576/queue/" + randomQueueName)))
-    super.afterAll()
-  }
 }
