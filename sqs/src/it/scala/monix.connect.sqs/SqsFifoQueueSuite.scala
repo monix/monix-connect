@@ -1,8 +1,7 @@
 package monix.connect.sqs
 
-import monix.connect.sqs.domain.{InboundMessage, QueueName}
+import monix.connect.sqs.domain.{InboundMessage, QueueName, StandardMessage}
 import monix.execution.Scheduler.Implicits.global
-import monix.reactive.Observable
 import org.apache.commons.codec.digest.DigestUtils.md5Hex
 import org.scalacheck.Gen
 import org.scalatest.concurrent.ScalaFutures
@@ -18,13 +17,13 @@ class SqsFifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures 
   implicit val sqsClient: Sqs = Sqs.createUnsafe(asyncClient)
   val queueName: QueueName = genQueueName.sample.get
 
-  "A single message" can "be sent and received to fifo queue" in {
+  "A fifo queue" can "be created and used to receive and produce messages" in {
     val queueName = genFifoQueueName.sample.get
-    val message = genInboundMessageWithDeduplication.sample.get
+    val message = genFifoMessage(defaultGroupId, deduplicationId = Some("123")).sample.get
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
-        messageResponse <- sqs.producer.sendSingleMessage(message, queueUrl, Some("groupId1"))
+        messageResponse <- sqs.producer.sendSingleMessage(message, queueUrl)
         receivedMessage <- sqs.consumer.receiveSingleAutoDelete(queueUrl)
       } yield {
         messageResponse.md5OfMessageBody shouldBe md5Hex(message.body)
@@ -34,22 +33,48 @@ class SqsFifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures 
     }.runSyncUnsafe()
   }
 
+  it can "requires group id when a message is produced" in {
+    val queueName = genFifoQueueName.sample.get
+    val message = StandardMessage("body").asInstanceOf[InboundMessage]
+    Sqs.fromConfig.use { sqs =>
+      for {
+        queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
+        isGroupIdRequired <- sqs.producer.sendSingleMessage(message, queueUrl)
+          .onErrorHandle(ex => if(ex.getMessage.contains("The request must contain the parameter MessageGroupId")) true else false)
+      } yield {
+        isGroupIdRequired shouldBe true
+      }
+    }.runSyncUnsafe()
+  }
+
+  it can "requires either explicit deduplicaiton ids or content based one" in {
+    val messageWithoutDeduplicationId = genFifoMessage(defaultGroupId, deduplicationId = None).sample.get
+
+    Sqs.fromConfig.use { sqs =>
+      for {
+        manualDedupQueueUrl <- sqs.operator.createQueue(genFifoQueueName.sample.get, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
+        failsWithoutDedupMechanism <- sqs.producer.sendSingleMessage(messageWithoutDeduplicationId, manualDedupQueueUrl)
+          .onErrorHandle(ex => if(ex.getMessage.contains("The queue should either have ContentBasedDeduplication enabled or MessageDeduplicationId provided explicitly")) true else false)
+      } yield {
+        failsWithoutDedupMechanism shouldBe true
+      }
+    }.runSyncUnsafe()
+  }
+
   it can "send messages to a fifo queue, with manual deduplication" in {
     val queueName = genFifoQueueName.sample.get
-    val groupId = "groupId"
-
-    val message1 = genInboundMessageWithDeduplication.sample.get
+    val message1 = genFifoMessage(defaultGroupId, deduplicationId = Some(genId.sample.get)).sample.get
     val duplicatedMessageId1 = message1.copy(body = Gen.identifier.sample.get)
-    val message2 = genInboundMessageWithDeduplication.sample.get
+    val message2 = genFifoMessage(defaultGroupId, deduplicationId = Some(genId.sample.get)).sample.get
     val duplicatedMessageId2 = message1.copy(body = Gen.identifier.sample.get)
 
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
-        response1 <- sqs.producer.sendSingleMessage(message1, queueUrl, Some(groupId))
-        duplicatedResponse1 <- sqs.producer.sendSingleMessage(duplicatedMessageId1, queueUrl, Some(groupId))
-        response2 <- sqs.producer.sendSingleMessage(message2, queueUrl, Some(groupId))
-        duplicatedResponse2 <- sqs.producer.sendSingleMessage(duplicatedMessageId2, queueUrl, Some(groupId))
+        response1 <- sqs.producer.sendSingleMessage(message1, queueUrl)
+        duplicatedResponse1 <- sqs.producer.sendSingleMessage(duplicatedMessageId1, queueUrl)
+        response2 <- sqs.producer.sendSingleMessage(message2, queueUrl)
+        duplicatedResponse2 <- sqs.producer.sendSingleMessage(duplicatedMessageId2, queueUrl)
         receivedMessages <- sqs.consumer.receiveManualDelete(queueUrl)
           .bufferTimed(2.seconds)
           .headL
@@ -63,22 +88,21 @@ class SqsFifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures 
     }.runSyncUnsafe()
   }
 
-  it can "send messages to fifo queue, with content based deduplication" in {
+  it can "send messages to fifo a queue, with content based deduplication" in {
     val queueName = genFifoQueueName.sample.get
-    val groupId = "groupId1"
-    val message1 = genInboundMessage(deduplicationId = None).sample.get
-    val message2 = genInboundMessage(deduplicationId = None).sample.get
+    val message1 = genFifoMessage(defaultGroupId, deduplicationId = None).sample.get
+    val message2 = genFifoMessage(defaultGroupId, deduplicationId = None).sample.get
     val queueAttributes = Map(QueueAttributeName.FIFO_QUEUE -> "true",
       QueueAttributeName.CONTENT_BASED_DEDUPLICATION -> "true")
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = queueAttributes)
-        response1 <- sqs.producer.sendSingleMessage(message1, queueUrl, Some(groupId))
-        duplicatedResponse1 <- sqs.producer.sendSingleMessage(message1, queueUrl, Some(groupId))
-        _ <- sqs.producer.sendSingleMessage(message1, queueUrl, Some(groupId))
-        _ <- sqs.producer.sendSingleMessage(message1, queueUrl, Some(groupId))
-        response2 <- sqs.producer.sendSingleMessage(message2, queueUrl, Some(groupId))
-        duplicatedResponse2 <- sqs.producer.sendSingleMessage(message2, queueUrl, Some(groupId))
+        response1 <- sqs.producer.sendSingleMessage(message1, queueUrl)
+        duplicatedResponse1 <- sqs.producer.sendSingleMessage(message1, queueUrl)
+        _ <- sqs.producer.sendSingleMessage(message1, queueUrl)
+        _ <- sqs.producer.sendSingleMessage(message1, queueUrl)
+        response2 <- sqs.producer.sendSingleMessage(message2, queueUrl)
+        duplicatedResponse2 <- sqs.producer.sendSingleMessage(message2, queueUrl)
         receivedMessages <- sqs.consumer.receiveAutoDelete(queueUrl)
           .bufferTimed(2.seconds)
           .headL
@@ -93,23 +117,23 @@ class SqsFifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures 
   }
 
   "Explicit deduplication" should "take preference in front content based one" in {
-    val groupId1 = "groupId1"
-    val queueName = genQueueName.sample.get.map(_ + ".fifo") // it must end with `.fifo` prefix, see https://github.com/aws/aws-sdk-php/issues/1331
-    val message1 = genInboundMessage(deduplicationId = Some("111111")).sample.get
+    val queueName = genFifoQueueName.sample.get
+    val message1 = genFifoMessage(defaultGroupId, deduplicationId = Some("111")).sample.get
     val body = message1.body
-    val message2 = message1.copy(deduplicationId = Some("22222"))
-    val message3 = message1.copy(deduplicationId = Some("33333"))
-
+    val message2 = message1.copy(deduplicationId = Some("222"))
+    val message3 = message1.copy(deduplicationId = Some("333"))
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes =
           Map(
             QueueAttributeName.FIFO_QUEUE -> "true",
             QueueAttributeName.CONTENT_BASED_DEDUPLICATION -> "true"))
-        response1 <- sqs.producer.sendSingleMessage(message1, queueUrl, Some(groupId1))
-        response2 <- sqs.producer.sendSingleMessage(message2, queueUrl, Some(groupId1))
-        response3 <- sqs.producer.sendSingleMessage(message3, queueUrl, Some(groupId1))
-        receivedMessages <- sqs.consumer.receiveManualDelete(queueUrl).doOnNextF(_.deleteFromQueue()).bufferTimed(3.seconds).headL
+        response1 <- sqs.producer.sendSingleMessage(message1, queueUrl)
+        response2 <- sqs.producer.sendSingleMessage(message2, queueUrl)
+        response3 <- sqs.producer.sendSingleMessage(message3, queueUrl)
+        receivedMessages <- sqs.consumer.receiveManualDelete(queueUrl)
+          .doOnNextF(_.deleteFromQueue())
+          .bufferTimed(3.seconds).headL
       } yield {
         response1.md5OfMessageBody shouldBe md5Hex(body)
         response2.md5OfMessageBody shouldBe response1.md5OfMessageBody

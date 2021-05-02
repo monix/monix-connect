@@ -13,7 +13,7 @@ import software.amazon.awssdk.services.sqs.model.QueueAttributeName
 
 import scala.concurrent.duration._
 
-class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with SqsFixture with BeforeAndAfterAll {
+class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with SqsFixture {
 
   implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 300.milliseconds)
   implicit val sqsClient: Sqs = Sqs.createUnsafe(asyncClient)
@@ -22,13 +22,13 @@ class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
   "singleManualDelete" should "consume up to 10 messages at a time" in {
     val groupId = "group123"
     val queueName = genFifoQueueName.sample.get
-    val messages = Gen.listOfN(15, genInboundMessageWithDeduplication).sample.get
+    val messages = Gen.listOfN(15, genFifoMessage(defaultGroupId)).sample.get
 
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(
           QueueAttributeName.FIFO_QUEUE -> "true"))
-        _ <- Task.traverse(messages)(sqs.producer.sendSingleMessage(_, queueUrl, groupId = Some(groupId)))
+        _ <- Task.traverse(messages)(sqs.producer.sendSingleMessage(_, queueUrl))
         receivedMessages1 <- sqs.consumer.receiveSingleManualDelete(queueUrl, inFlightMessages = 1)
           .tapEval(Task.traverse(_)(_.deleteFromQueue()))
         receivedMessages10 <- sqs.consumer.receiveSingleManualDelete(queueUrl, inFlightMessages = 10)
@@ -47,13 +47,13 @@ class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
   it should "respects the specified `inFlight` messages on the same consumer or visibility timeout being exceeded" in {
     val groupId = "group123"
     val queueName = genFifoQueueName.sample.get
-    val messages = Gen.listOfN(15, genInboundMessageWithDeduplication).sample.get
+    val messages = Gen.listOfN(15, genFifoMessage(defaultGroupId)).sample.get
 
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(
           QueueAttributeName.FIFO_QUEUE -> "true"))
-        _ <- Task.traverse(messages)(sqs.producer.sendSingleMessage(_, queueUrl, groupId = Some(groupId)))
+        _ <- Task.traverse(messages)(sqs.producer.sendSingleMessage(_, queueUrl))
         receivedMessages1 <- sqs.consumer.receiveSingleManualDelete(queueUrl, inFlightMessages = 10, visibilityTimeout = 15.seconds)
           .tapEval(Task.traverse(_)(_.deleteFromQueue()).delayExecution(2.seconds).startAndForget)
         //the following receive calls will return empty since the previous messages were not yet processed and deleted
@@ -78,14 +78,13 @@ class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
   }
 
   it should "avoid consuming the same message multiple times when `deleteFromQueue` is triggered and `visibilityTimeout` is exceeded" in {
-    val groupId = "group123"
     val queueName = genFifoQueueName.sample.get
-    val message = genInboundMessageWithDeduplication.sample.get
+    val message = genFifoMessage(defaultGroupId).sample.get
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(
           QueueAttributeName.FIFO_QUEUE -> "true"))
-        _ <- sqs.producer.sendSingleMessage(message, queueUrl, groupId = Some(groupId))
+        _ <- sqs.producer.sendSingleMessage(message, queueUrl)
         receivedMessage <- sqs.consumer.receiveSingleManualDelete(queueUrl, visibilityTimeout = 1.seconds)
           .tapEval(Task.traverse(_)(_.deleteFromQueue()))
         receivedMessagesAfterDeleteFromQueue <- Task.sleep(3.seconds) >> sqs.consumer.receiveSingleManualDelete(queueUrl, visibilityTimeout = 10.seconds)
@@ -100,12 +99,12 @@ class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
   it can "consume the same message multiple times when `deleteFromQueue` is not triggered and `visibilityTimeout` is exceeded" in {
     val groupId = "group123"
     val queueName = genFifoQueueName.sample.get
-    val message = genInboundMessageWithDeduplication.sample.get
+    val message = genFifoMessage(defaultGroupId).sample.get
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(
           QueueAttributeName.FIFO_QUEUE -> "true"))
-        _ <- sqs.producer.sendSingleMessage(message, queueUrl, groupId = Some(groupId))
+        _ <- sqs.producer.sendSingleMessage(message, queueUrl)
         receivedMessage <- sqs.consumer.receiveSingleManualDelete(queueUrl, visibilityTimeout = 1.seconds)
         duplicatedMessage <- Task.sleep(3.seconds) >> sqs.consumer.receiveSingleManualDelete(queueUrl, visibilityTimeout = 10.seconds)
         emptyUnderVisibilityTimeout <- sqs.consumer.receiveSingleManualDelete(queueUrl, visibilityTimeout = 5.seconds)
@@ -120,14 +119,13 @@ class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
   }
 
   "receiveManualDelete" can "allows to manually trigger deletes" in {
-    val groupId = "group123"
     val queueName = genFifoQueueName.sample.get
-    val messages = Gen.choose(10, 150).flatMap(Gen.listOfN(_, genInboundMessageWithDeduplication)).sample.get
+    val messages = Gen.choose(10, 150).flatMap(Gen.listOfN(_, genFifoMessage(defaultGroupId))).sample.get
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(
           QueueAttributeName.FIFO_QUEUE -> "true"))
-        _ <- Observable.fromIterable(messages).mapEvalF(sqs.producer.sendSingleMessage(_, queueUrl, groupId = Some(groupId))).completedL
+        _ <- Observable.fromIterable(messages).mapEvalF(sqs.producer.sendSingleMessage(_, queueUrl)).completedL
         receivedMessages <- sqs.consumer.receiveManualDelete(queueUrl)
           .mapEvalF(deletable => deletable.deleteFromQueue().as(deletable))
           .bufferTimedAndCounted(3.seconds, messages.size)
@@ -142,11 +140,11 @@ class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
   "receiveAutoDelete" can "does not require manually triggering message deletion" in {
     val groupId = "group123"
     val queueName = genFifoQueueName.sample.get
-    val messages = Gen.choose(10, 150).flatMap(Gen.listOfN(_, genInboundMessageWithDeduplication)).sample.get
+    val messages = Gen.choose(10, 150).flatMap(Gen.listOfN(_, genFifoMessage(defaultGroupId))).sample.get
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
-        _ <- Observable.fromIterable(messages).mapEvalF(sqs.producer.sendSingleMessage(_, queueUrl, groupId = Some(groupId))).completedL
+        _ <- Observable.fromIterable(messages).mapEvalF(sqs.producer.sendSingleMessage(_, queueUrl)).completedL
         receivedMessages <- sqs.consumer.receiveAutoDelete(queueUrl)
           .bufferTimedAndCounted(3.seconds, messages.size)
           .headL

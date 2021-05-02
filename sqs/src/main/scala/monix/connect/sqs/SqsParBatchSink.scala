@@ -34,7 +34,6 @@ import scala.jdk.CollectionConverters._
 import scala.util.control.NonFatal
 
 private[sqs] class SqsParBatchSink(queueUrl: QueueUrl,
-                                   groupId: Option[String],
                                    delayDuration: Option[FiniteDuration],
                                    asyncClient: SqsAsyncClient,
                                    stopOnError: Boolean)
@@ -47,7 +46,7 @@ private[sqs] class SqsParBatchSink(queueUrl: QueueUrl,
 
       def onNext(inboundMessages: List[InboundMessage]): Future[Ack] = {
         Task.parTraverse {
-          groupMessagesInBatches(inboundMessages, queueUrl, groupId, delayDuration)
+          groupMessagesInBatches(inboundMessages, queueUrl, delayDuration)
         } { batch =>
           SqsOp.sendMessageBatch.execute(batch)(asyncClient)
         }
@@ -85,16 +84,15 @@ object SqsParBatchSink {
   def groupMessagesInBatches(
                               inboundMessages: List[InboundMessage],
                               queueUrl: QueueUrl,
-                             groupId: Option[String] = None,
-                             delayDuration: Option[FiniteDuration] = None,
-                             ): List[SendMessageBatchRequest] = {
+                              delayDuration: Option[FiniteDuration] = None,
+                            ): List[SendMessageBatchRequest] = {
     inboundMessages match {
       case Nil => List.empty
       case _ =>
         val (firstBatch, nextBatch) = inboundMessages.splitAt(10)
-        val batchEntries = firstBatch.zipWithIndex.map { case (message, index) => message.toMessageBatchEntry(index.toString, groupId, delayDuration) }
+        val batchEntries = firstBatch.zipWithIndex.map { case (message, index) => message.toMessageBatchEntry(index.toString, delayDuration) }
         val batchRequest = SendMessageBatchRequest.builder.entries(batchEntries.asJava).queueUrl(queueUrl.url).build
-        List(batchRequest) ++ groupMessagesInBatches(nextBatch, queueUrl, groupId, delayDuration)
+        List(batchRequest) ++ groupMessagesInBatches(nextBatch, queueUrl, delayDuration)
     }
 
   }

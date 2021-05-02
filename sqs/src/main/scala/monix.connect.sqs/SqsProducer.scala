@@ -19,28 +19,25 @@ class SqsProducer private[sqs](asyncClient: SqsAsyncClient) {
 
   def sendSingleMessage(message: InboundMessage,
                         queueUrl: QueueUrl,
-                        groupId: Option[String] = None,
                         delayDuration: Option[FiniteDuration] = None): Task[SendMessageResponse] = {
-    val producerMessage = message.toMessageRequest(queueUrl, groupId, delayDuration)
+    val producerMessage = message.toMessageRequest(queueUrl, delayDuration)
     SqsOp.sendMessage.execute(producerMessage)(asyncClient)
   }
 
   def parBatch(messages: List[InboundMessage],
                queueUrl: QueueUrl,
-               groupId: Option[String] = None,
                delayDuration: Option[FiniteDuration] = None): Task[List[SendMessageBatchResponse]] = {
     Task.parTraverse {
-      groupMessagesInBatches(messages, queueUrl, groupId, delayDuration)
+      groupMessagesInBatches(messages, queueUrl, delayDuration)
     } { batch =>
       SqsOp.sendMessageBatch.execute(batch)(asyncClient)
     }
   }
 
   def sink(queueUrl: QueueUrl,
-           groupId: Option[String] = None,
            delayDuration: Option[FiniteDuration] = None,
            stopOnError: Boolean = false): Consumer[InboundMessage, Unit] = {
-    val toJavaMessage = (message: InboundMessage) => message.toMessageRequest(queueUrl, groupId, delayDuration)
+    val toJavaMessage = (message: InboundMessage) => message.toMessageRequest(queueUrl, delayDuration)
     new SqsSink(toJavaMessage, SqsOp.sendMessage, asyncClient, stopOnError)
   }
 

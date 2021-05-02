@@ -1,6 +1,6 @@
 package monix.connect.sqs
 
-import monix.connect.sqs.domain.{InboundMessage, QueueName}
+import monix.connect.sqs.domain.{FifoMessage, InboundMessage, QueueName}
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
@@ -22,7 +22,7 @@ class SqsStandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutu
 
   "A standard queue" can "be created and receive messages" in {
     val queueName = genQueueName.sample.get
-    val message = genInboundMessage(None).sample.get
+    val message = genStandardMessage.sample.get
     Sqs.fromConfig.use { case Sqs(_, producer, operator) =>
       for {
         queueUrl <- operator.createQueue(queueName)
@@ -35,16 +35,14 @@ class SqsStandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutu
 
   it should "not support messages with groupId nor deduplicationId" in {
     val queueName = genQueueName.sample.get
-    val groupId = genGroupId.sample.get
-    val messageWithoutDeduplicationId = genInboundMessage(None).sample.get
-    val messageWithDeduplicationId = genInboundMessage(deduplicationId = Some("123")).sample.get
-
+    val messageWithGroupId = new InboundMessage("dummyBody1", groupId = Some("someGroupId"), deduplicationId = None)
+    val messageWithDeduplicationId = new InboundMessage("dummyBody2", groupId = None, deduplicationId = Some("123"))
     Sqs.fromConfig.use { case Sqs(_, producer, operator) =>
       for {
         queueUrl <- operator.createQueue(queueName)
-        isInvalidGroupId <- producer.sendSingleMessage(messageWithoutDeduplicationId, queueUrl, groupId = groupId).as(false)
+        isInvalidGroupId <- producer.sendSingleMessage(messageWithGroupId, queueUrl).as(false)
           .onErrorHandle(ex => if(ex.getMessage.contains("MessageGroupId is invalid")) true else false)
-        isInvalidDeduplicationId <- producer.sendSingleMessage(messageWithDeduplicationId, queueUrl, groupId = None)
+        isInvalidDeduplicationId <- producer.sendSingleMessage(messageWithDeduplicationId, queueUrl)
           .onErrorHandle(ex => if(ex.getMessage.contains("MessageDeduplicationId is invalid")) true else false)
       } yield {
         isInvalidGroupId shouldBe true
@@ -56,7 +54,7 @@ class SqsStandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutu
   "A stream of received messages" can "be atomically consumed with automatic deletes" in {
     val queueName = genQueueName.sample.get
     val n = 10
-    val messages = Gen.listOfN(n, genInboundMessage(None)).sample.get
+    val messages = Gen.listOfN(n, genStandardMessage).sample.get
     Sqs.fromConfig.use { case Sqs(receiver, producer, operator) =>
       for {
         queueUrl <- operator.createQueue(queueName)
@@ -73,7 +71,7 @@ class SqsStandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutu
   it can "be consumed with manual deletes" in {
     val queueName = genQueueName.sample.get
     val n = 10
-    val messages = Gen.listOfN(n, Gen.identifier.map(_.take(10)).map(id => InboundMessage(id, None))).sample.get
+    val messages = Gen.listOfN(n, genStandardMessage).sample.get
     Sqs.fromConfig.use { case Sqs(receiver, producer, operator) =>
       for {
         queueUrl <- operator.createQueue(queueName)

@@ -22,13 +22,12 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
 
 
   "parBatch" must "send a group of 10 message in the same batch" in {
-    val groupId = "groupId"
     val queueName = genFifoQueueName.sample.get
-    val messages = Gen.listOfN(10, genInboundMessageWithDeduplication).sample.get
+    val messages = Gen.listOfN(10, genFifoMessage(defaultGroupId)).sample.get
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
-        response <- sqs.producer.parBatch(messages, queueUrl, Some(groupId))
+        response <- sqs.producer.parBatch(messages, queueUrl)
       } yield {
         val batchEntryResponses = response.flatten(_.successful().asScala)
         response.exists(_.hasFailed()) shouldBe false
@@ -42,11 +41,11 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
     val groupId = "groupId"
     val queueName = genFifoQueueName.sample.get
     val numOfEntries = Gen.choose(11, 100).sample.get
-    val messages = Gen.listOfN(numOfEntries, genInboundMessageWithDeduplication).sample.get
+    val messages = Gen.listOfN(numOfEntries, genFifoMessage(defaultGroupId)).sample.get
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
-        response <- sqs.producer.parBatch(messages, queueUrl, Some(groupId))
+        response <- sqs.producer.parBatch(messages, queueUrl)
       } yield {
         response.size shouldBe (numOfEntries / 10) + 1
         response.exists(_.hasFailed()) shouldBe false
@@ -60,7 +59,7 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
   "parBatchSink" should "send in a single batch, a group of less than 10 messages emitted at once" in {
     val groupId = "groupId"
     val queueName = genFifoQueueName.sample.get
-    val messages = Gen.listOfN(5, genInboundMessageWithDeduplication).sample.get
+    val messages = Gen.listOfN(5, genFifoMessage(defaultGroupId)).sample.get
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
@@ -90,14 +89,13 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
   }
 
   it should "send in batches of at most 10 messages, a group of `N` emitted at once" in {
-    val groupId = "groupId"
     val queueName = genFifoQueueName.sample.get
-    val messages =  Gen.choose(11, 100).flatMap(Gen.listOfN(_, genInboundMessageWithDeduplication)).sample.get
+    val messages =  Gen.choose(11, 100).flatMap(Gen.listOfN(_, genFifoMessage(defaultGroupId))).sample.get
 
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
-        response <- Observable.now(messages).consumeWith(sqs.producer.parBatchSink(queueUrl, Some(groupId)))
+        response <- Observable.now(messages).consumeWith(sqs.producer.parBatchSink(queueUrl))
         result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(1.second).firstL
       } yield {
         response shouldBe a [Unit]
@@ -107,14 +105,13 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
   }
 
   "sink" should "send each emitted message individually" in {
-    val groupId = "groupId"
     val queueName = genFifoQueueName.sample.get
 
-    val messages = Gen.choose(1, 100).flatMap(Gen.listOfN(_, genInboundMessageWithDeduplication)).sample.get
+    val messages = Gen.choose(1, 100).flatMap(Gen.listOfN(_, genFifoMessage(defaultGroupId))).sample.get
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
-        response <- Observable.fromIterable(messages).consumeWith(sqs.producer.sink(queueUrl, Some(groupId)))
+        response <- Observable.fromIterable(messages).consumeWith(sqs.producer.sink(queueUrl))
         result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(1.second).firstL
       } yield {
         response shouldBe a [Unit]
@@ -130,7 +127,7 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
-        response <- Observable.empty[InboundMessage].consumeWith(sqs.producer.sink(queueUrl, Some(groupId)))
+        response <- Observable.empty[InboundMessage].consumeWith(sqs.producer.sink(queueUrl))
         result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(1.second).firstL
       } yield {
         response shouldBe a [Unit]
@@ -142,11 +139,11 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
   "parBatch" must "send a group of 10 message in the same batch" in {
     val groupId = "groupId"
     val queueName = genFifoQueueName.sample.get
-    val messages = Gen.listOfN(10, genInboundMessageWithDeduplication).sample.get
+    val messages = Gen.listOfN(10, genFifoMessage()).sample.get
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
-        response <- sqs.producer.parBatch(messages, queueUrl, Some(groupId))
+        response <- sqs.producer.parBatch(messages, queueUrl)
       } yield {
         val batchEntryResponses = response.flatten(_.successful().asScala)
         response.exists(_.hasFailed()) shouldBe false
@@ -156,14 +153,4 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
     }.runSyncUnsafe()
   }
 
-  override def beforeAll(): Unit = {
-   // Task.from(asyncClient.createQueue(createQueueRequest(randomQueueName))).runSyncUnsafe()
-    Thread.sleep(3000)
-    super.beforeAll()
-  }
-
-  override def afterAll(): Unit = {
-    //Task.from(client.deleteQueue(deleteQueueRequest("http://localhost:4576/queue/" + randomQueueName)))
-    super.afterAll()
-  }
 }
