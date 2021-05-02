@@ -6,10 +6,10 @@ import software.amazon.awssdk.services.sqs.model.{MessageSystemAttributeNameForS
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 
-class InboundMessage private[sqs] (body: String,
-                          deduplicationId: Option[String] = Option.empty,
-                          messageAttributes: Map[String, MessageAttribute] = Map.empty,
-                          awsTraceHeader: Option[MessageAttribute] = Option.empty) {
+class StandardMessage private[sqs](body: String,
+                                   deduplicationId: Option[String] = Option.empty,
+                                   messageAttributes: Map[String, MessageAttribute] = Map.empty,
+                                   awsTraceHeader: Option[MessageAttribute] = Option.empty) {
 
   private[sqs] def toMessageRequest[Attr](queueUrl: QueueUrl,
                              groupId: Option[String],
@@ -47,4 +47,21 @@ class InboundMessage private[sqs] (body: String,
     }
     builder.build
   }
-}
+}          delaySeconds: Option[FiniteDuration]): SendMessageBatchRequestEntry = {
+                                       val builder = SendMessageBatchRequestEntry.builder
+                                         .messageBody(body)
+                                         .id(batchId)
+
+                                       deduplicationId.map(builder.messageDeduplicationId)
+                                       groupId.map(builder.messageGroupId)
+                                       delaySeconds.map(delay => builder.delaySeconds(delay.toMillis.toInt))
+                                       builder.messageAttributes(messageAttributes.map { case (k, v) => (k, v.toAttrValue) }.asJava)
+                                       //todo test that MessageSystemAttributeNameForSend is only AWSTRACEHEADER
+                                       awsTraceHeader.map { attr =>
+                                         builder.messageSystemAttributes(
+                                           Map(MessageSystemAttributeNameForSends.AWS_TRACE_HEADER -> attr.toSystemAttrValue).asJava
+                                         )
+                                       }
+                                       builder.build
+                                     }
+                                   }

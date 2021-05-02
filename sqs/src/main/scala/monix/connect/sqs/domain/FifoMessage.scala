@@ -6,10 +6,10 @@ import software.amazon.awssdk.services.sqs.model.{MessageSystemAttributeNameForS
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 
-class InboundMessage private[sqs] (body: String,
-                          deduplicationId: Option[String] = Option.empty,
-                          messageAttributes: Map[String, MessageAttribute] = Map.empty,
-                          awsTraceHeader: Option[MessageAttribute] = Option.empty) {
+class FifoMessage private[sqs](body: String,
+                               deduplicationId: Option[String] = Option.empty,
+                               messageAttributes: Map[String, MessageAttribute] = Map.empty,
+                               awsTraceHeader: Option[MessageAttribute] = Option.empty) extends InboundMessage {
 
   private[sqs] def toMessageRequest[Attr](queueUrl: QueueUrl,
                              groupId: Option[String],
