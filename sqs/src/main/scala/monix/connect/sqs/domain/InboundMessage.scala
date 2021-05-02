@@ -11,7 +11,6 @@ case class InboundMessage(body: String,
                           messageAttributes: Map[String, MessageAttribute] = Map.empty,
                           awsTraceHeader: Option[MessageAttribute] = Option.empty) {
 
-
   private[sqs] def toMessageRequest[Attr](queueUrl: QueueUrl,
                              groupId: Option[String],
                              delayDuration: Option[FiniteDuration]): SendMessageRequest = {

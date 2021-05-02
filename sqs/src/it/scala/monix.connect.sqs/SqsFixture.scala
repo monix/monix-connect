@@ -32,10 +32,11 @@ trait SqsFixture {
 
   def queueUrlPrefix(queueName: String) = s"http://localhost:9324/000000000000/${queueName}"
 
-  val genQueueName: Gen[QueueName] = Gen.identifier.map(id => QueueName("test-" + id.take(30)))
+  val genQueueName: Gen[QueueName] = Gen.identifier.map(id => QueueName("queue-" + id.take(30)))
 
   // it must end with `.fifo` prefix, see https://github.com/aws/aws-sdk-php/issues/1331
-  val genFifoQueueName: Gen[QueueName] = Gen.identifier.map(id => QueueName("test-" + id.take(20) + ".fifo"))
+  val genFifoQueueName: Gen[QueueName] = Gen.identifier.map(id => QueueName("queue-" + id.take(20) + ".fifo"))
+  val genGroupId: Gen[Some[String]] = Gen.identifier.map(id => Some("groupId-" + id.take(10)))
 
   val genNamePrefix: Gen[String] = Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "test-" + chars.mkString.take(20))
 

@@ -13,15 +13,13 @@ import software.amazon.awssdk.services.sqs.model.{QueueAttributeName, QueueDoesN
 
 import scala.concurrent.duration._
 
-class SqsSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with SqsFixture with BeforeAndAfterAll {
+class SqsOperatorSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with SqsFixture {
 
   implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 300.milliseconds)
   implicit val sqsClient: Sqs = Sqs.createUnsafe(asyncClient)
   val queueName: QueueName = genQueueName.sample.get
 
-  //todo create a queue with attributes
   s"Sqs" can "create queue and check it exists" in {
-
     Sqs.fromConfig.use { sqs =>
       for {
         existedBefore <- sqs.operator.existsQueue(queueName)
@@ -103,7 +101,7 @@ class SqsSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with SqsF
 
   it can "get a queue and queue url from its name" in {
     val queueName = genQueueName.sample.get
-    Sqs.fromConfig.use { case Sqs(receiver, producer, operator) =>
+    Sqs.fromConfig.use { case Sqs(_, _, operator) =>
       for {
         createdQueueUrl <- operator.createQueue(queueName)
         queueUrl <- operator.getQueueUrl(queueName)
@@ -171,65 +169,4 @@ class SqsSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with SqsF
     }.runSyncUnsafe()
   }
 
-  it can "send messages standard queue" in {
-    val queueName = genQueueName.sample.get
-    val message = Gen.identifier.map(_.take(10)).map(id => InboundMessage(id, None)).sample.get
-    Sqs.fromConfig.use { sqs =>
-      for {
-        queueUrl <- sqs.operator.createQueue(queueName)
-        messageResponse <- sqs.producer.sendSingleMessage(message, queueUrl)
-
-      } yield {
-        messageResponse.md5OfMessageBody shouldBe md5Hex(message.body)
-      }
-    }.runSyncUnsafe()
-  }
-
-  it can "send messages to fifo queue, with deduplication and group id" in {
-    val queueName = genQueueName.sample.get.map(_ + ".fifo") // it must end with `.fifo` prefix, see https://github.com/aws/aws-sdk-php/issues/1331
-    val message = Gen.identifier.map(_.take(10)).map(id => InboundMessage(id, Some(id))).sample.get
-    Sqs.fromConfig.use { sqs =>
-      for {
-        queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
-        messageResponse <- sqs.producer.sendSingleMessage(message, queueUrl, Some("groupId1"))
-      } yield {
-        messageResponse.md5OfMessageBody shouldBe md5Hex(message.body)
-      }
-    }.runSyncUnsafe()
-  }
-
-  /*"Change visibility" can "causes the message to be consumed again" in {
-    val queueName = genFifoQueueName.sample.get.map(_ + ".fifo")
-    val groupId = "groupId"
-    val message = genInboundMessage(deduplicationId = None).sample.get
-    val queueAttributes = Map(QueueAttributeName.FIFO_QUEUE -> "true",
-      QueueAttributeName.CONTENT_BASED_DEDUPLICATION -> "true")
-    val initialVisibilityTimeout = 100.seconds
-    Sqs.fromConfig.use { sqs =>
-      for {
-        queueUrl <- sqs.operator.createQueue(queueName, attributes = queueAttributes)
-        response1 <- sqs.producer.sendSingleMessage(message, queueUrl, Some(groupId))
-        receivedMessages1 <- sqs.consumer.receiveSingleDeletable(queueUrl, 10, visibilityTimeout = initialVisibilityTimeout)
-        messageWithinVisibilityTimeout1 <- sqs.consumer.receiveSingleDeletable(queueUrl, 1)
-        messageWithinVisibilityTimeout2 <- sqs.consumer.receiveSingleDeletable(queueUrl, 1)
-        messageWithinVisibilityTimeout3 <- sqs.consumer.receiveSingleDeletable(queueUrl, 1)
-        changeVisibilityTimeoutResponse <- sqs.operator.changeMessageVisibility(queueUrl, visibilityTimeout = initialVisibilityTimeout)
-
-      } yield {
-        response1.md5OfMessageBody shouldBe md5Hex(message.body)
-        receivedMessages.map(_.message.body()) should contain theSameElementsAs List(message).map(_.body)
-      }
-    }.runSyncUnsafe()
-  }*/
-
-  override def beforeAll(): Unit = {
-   // Task.from(asyncClient.createQueue(createQueueRequest(randomQueueName))).runSyncUnsafe()
-    Thread.sleep(3000)
-    super.beforeAll()
-  }
-
-  override def afterAll(): Unit = {
-    //Task.from(client.deleteQueue(deleteQueueRequest("http://localhost:4576/queue/" + randomQueueName)))
-    super.afterAll()
-  }
 }

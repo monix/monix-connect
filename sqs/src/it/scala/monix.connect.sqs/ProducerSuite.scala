@@ -73,7 +73,7 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
     }.runSyncUnsafe()
   }
 
-  it should "do nothing when consuming an empty observable" in {
+  it should "do nothing and gracefully terminate on completion, when consuming an empty observable" in {
     val groupId = "groupId"
     val queueName = genFifoQueueName.sample.get
 
@@ -81,7 +81,7 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
         response <- Observable.empty[List[InboundMessage]].consumeWith(sqs.producer.parBatchSink(queueUrl, Some(groupId)))
-        result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(2.seconds).firstL
+        result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(1.second).firstL
       } yield {
         response shouldBe a [Unit]
         result.map(_.body) shouldBe List.empty
@@ -98,10 +98,60 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
         response <- Observable.now(messages).consumeWith(sqs.producer.parBatchSink(queueUrl, Some(groupId)))
-        result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(2.seconds).firstL
+        result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(1.second).firstL
       } yield {
         response shouldBe a [Unit]
         result.map(_.body) should contain theSameElementsAs messages.map(_.body)
+      }
+    }.runSyncUnsafe()
+  }
+
+  "sink" should "send each emitted message individually" in {
+    val groupId = "groupId"
+    val queueName = genFifoQueueName.sample.get
+
+    val messages = Gen.choose(1, 100).flatMap(Gen.listOfN(_, genInboundMessageWithDeduplication)).sample.get
+    Sqs.fromConfig.use { sqs =>
+      for {
+        queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
+        response <- Observable.fromIterable(messages).consumeWith(sqs.producer.sink(queueUrl, Some(groupId)))
+        result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(1.second).firstL
+      } yield {
+        response shouldBe a [Unit]
+        result.map(_.body) shouldBe messages.map(_.body)
+      }
+    }.runSyncUnsafe()
+  }
+
+  it should "do nothing and gracefully terminate `onCompletion` when consuming an empty observable" in {
+    val groupId = "groupId"
+    val queueName = genFifoQueueName.sample.get
+
+    Sqs.fromConfig.use { sqs =>
+      for {
+        queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
+        response <- Observable.empty[InboundMessage].consumeWith(sqs.producer.sink(queueUrl, Some(groupId)))
+        result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(1.second).firstL
+      } yield {
+        response shouldBe a [Unit]
+        result.map(_.body) shouldBe List.empty
+      }
+    }.runSyncUnsafe()
+  }
+
+  "parBatch" must "send a group of 10 message in the same batch" in {
+    val groupId = "groupId"
+    val queueName = genFifoQueueName.sample.get
+    val messages = Gen.listOfN(10, genInboundMessageWithDeduplication).sample.get
+    Sqs.fromConfig.use { sqs =>
+      for {
+        queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
+        response <- sqs.producer.parBatch(messages, queueUrl, Some(groupId))
+      } yield {
+        val batchEntryResponses = response.flatten(_.successful().asScala)
+        response.exists(_.hasFailed()) shouldBe false
+        batchEntryResponses.size shouldBe 10
+        batchEntryResponses.map(_.md5OfMessageBody()) shouldBe messages.map(msg => md5Hex(msg.body))
       }
     }.runSyncUnsafe()
   }

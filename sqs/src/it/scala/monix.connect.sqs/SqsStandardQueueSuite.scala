@@ -19,15 +19,13 @@ class SqsStandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutu
   implicit val sqsClient: Sqs = Sqs.createUnsafe(asyncClient)
   val queueName: QueueName = genQueueName.sample.get
 
-  // Standard queue
-  "Sqs" can "send a single messages standard queue" in {
+  "A standard queue" can "be created and receive a single message" in {
     val queueName = genQueueName.sample.get
     val message = Gen.identifier.map(_.take(10)).map(id => InboundMessage(id, None)).sample.get
     Sqs.fromConfig.use { case Sqs(_, producer, operator) =>
       for {
         queueUrl <- operator.createQueue(queueName)
         messageResponse <- producer.sendSingleMessage(message, queueUrl)
-
       } yield {
         messageResponse.md5OfMessageBody shouldBe md5Hex(message.body)
       }
@@ -51,7 +49,7 @@ class SqsStandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutu
     }.runSyncUnsafe()
   }
 
-  it can "be atomically consumed with manual deletes" in {
+  it can "be consumed with manual deletes" in {
     val queueName = genQueueName.sample.get
     val n = 10
     val messages = Gen.listOfN(n, Gen.identifier.map(_.take(10)).map(id => InboundMessage(id, None))).sample.get
@@ -60,21 +58,12 @@ class SqsStandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutu
         queueUrl <- operator.createQueue(queueName)
         _ <- Observable.fromIterable(messages)
           .consumeWith(producer.sink(queueUrl))
-        receivedMessages <- receiver.receiveManualDelete(queueUrl)
+        receivedMessages <- receiver.receiveManualDelete(queueUrl).doOnNextF(deletable => deletable.deleteFromQueue().as())
           .take(n).toListL
       } yield {
         receivedMessages.map(_.body) should contain theSameElementsAs messages.map(_.body)
       }
     }.runSyncUnsafe()
   }
-  override def beforeAll(): Unit = {
-   // Task.from(asyncClient.createQueue(createQueueRequest(randomQueueName))).runSyncUnsafe()
-    Thread.sleep(3000)
-    super.beforeAll()
-  }
 
-  override def afterAll(): Unit = {
-    //Task.from(client.deleteQueue(deleteQueueRequest("http://localhost:4576/queue/" + randomQueueName)))
-    super.afterAll()
-  }
 }

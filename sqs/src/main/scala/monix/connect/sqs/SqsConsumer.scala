@@ -25,8 +25,8 @@ class SqsConsumer private[sqs](implicit asyncClient: SqsAsyncClient) {
                           visibilityTimeout: FiniteDuration = 30.seconds,
                           waitTimeSeconds: FiniteDuration = Duration.Zero): Observable[DeletableMessage] = {
     Observable.repeatEvalF {
-      singleManualDelete(queueUrl,
-        maxMessages = inFlightMessages,
+      receiveSingleManualDelete(queueUrl,
+        inFlightMessages = inFlightMessages,
         visibilityTimeout = visibilityTimeout,
         waitTimeSeconds = waitTimeSeconds)
     }.flatMap { deletableMessages =>
@@ -39,12 +39,12 @@ class SqsConsumer private[sqs](implicit asyncClient: SqsAsyncClient) {
     * @param queueUrl
     * @return
     */
-  def singleManualDelete(queueUrl: QueueUrl,
-                         maxMessages: Int = 10,
-                         visibilityTimeout: FiniteDuration = 30.seconds,
-                         waitTimeSeconds: FiniteDuration = Duration.Zero): Task[List[DeletableMessage]] = {
+  def receiveSingleManualDelete(queueUrl: QueueUrl,
+                                inFlightMessages: Int = 10,
+                                visibilityTimeout: FiniteDuration = 30.seconds,
+                                waitTimeSeconds: FiniteDuration = Duration.Zero): Task[List[DeletableMessage]] = {
     val receiveRequest = singleReceiveRequest(queueUrl,
-      maxMessages = maxMessages,
+      maxMessages = inFlightMessages,
       visibilityTimeout = visibilityTimeout,
       waitTimeSeconds = waitTimeSeconds)
     Task.evalAsync(receiveRequest).flatMap {
@@ -59,12 +59,12 @@ class SqsConsumer private[sqs](implicit asyncClient: SqsAsyncClient) {
     * @param queueUrl
     * @return
     */
-  def singleAutoDelete(queueUrl: QueueUrl,
-                         maxMessages: Int = 10,
-                         visibilityTimeout: FiniteDuration = 30.seconds,
-                         waitTimeSeconds: FiniteDuration = Duration.Zero): Task[List[DeletableMessage]] = {
+  def receiveSingleAutoDelete(queueUrl: QueueUrl,
+                              consumedMessage: Int = 10,
+                              visibilityTimeout: FiniteDuration = 30.seconds,
+                              waitTimeSeconds: FiniteDuration = Duration.Zero): Task[List[DeletableMessage]] = {
     val receiveRequest = singleReceiveRequest(queueUrl,
-      maxMessages = maxMessages,
+      maxMessages = consumedMessage,
       visibilityTimeout = visibilityTimeout,
       waitTimeSeconds = waitTimeSeconds)
     Task.evalAsync(receiveRequest).flatMap {

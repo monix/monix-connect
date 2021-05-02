@@ -14,6 +14,7 @@ import scala.jdk.CollectionConverters._
 object SqsOperator {
   def create(implicit asyncClient: SqsAsyncClient) = new SqsOperator(asyncClient)
 }
+
 class SqsOperator private[sqs] (asyncClient: SqsAsyncClient) {
 
 

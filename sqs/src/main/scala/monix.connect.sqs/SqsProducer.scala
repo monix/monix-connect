@@ -15,7 +15,7 @@ object SqsProducer {
   def create(implicit asyncClient: SqsAsyncClient): SqsProducer = new SqsProducer(asyncClient)
 }
 
-class SqsProducer(asyncClient: SqsAsyncClient) {
+class SqsProducer private[sqs](asyncClient: SqsAsyncClient) {
 
   def sendSingleMessage(message: InboundMessage,
                         queueUrl: QueueUrl,

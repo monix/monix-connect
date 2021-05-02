@@ -64,11 +64,11 @@ object Sqs {
       Task.evalAsync {
         AsyncClientConversions.from(credentialsProvider, region, endpoint, httpClient)
       }
-    } (asyncClient => Task.evalAsync(asyncClient.close()))
+    }(asyncClient => Task.evalAsync(asyncClient.close()))
       .map(self.createUnsafe(_))
   }
 
 
 }
 
-case class Sqs(consumer: SqsConsumer, producer: SqsProducer, operator: SqsOperator)
+final case class Sqs private[sqs](consumer: SqsConsumer, producer: SqsProducer, operator: SqsOperator)
