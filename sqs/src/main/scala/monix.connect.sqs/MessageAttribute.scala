@@ -8,7 +8,7 @@ sealed trait MessageAttribute {
   def toSystemAttrValue: MessageSystemAttributeValue
 }
 
-case class StringMessageAttribute(attributeValue: String) extends MessageAttribute {
+final case class StringMessageAttribute(attributeValue: String) extends MessageAttribute {
   def toAttrValue: MessageAttributeValue = {
     MessageAttributeValue.builder.stringValue(attributeValue).dataType("String").build
   }
@@ -21,7 +21,7 @@ case class StringMessageAttribute(attributeValue: String) extends MessageAttribu
   }
 }
 
-class BinaryMessageAttribute(attributeValue: Array[Byte]) extends MessageAttribute {
+final case class BinaryMessageAttribute(attributeValue: Array[Byte]) extends MessageAttribute {
 
   def toAttrValue: MessageAttributeValue = {
     MessageAttributeValue.builder

@@ -47,7 +47,7 @@ class SqsFifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures 
     }.runSyncUnsafe()
   }
 
-  it can "requires either explicit deduplicaiton ids or content based one" in {
+  it can "requires either explicit deduplication ids or content based one" in {
     val messageWithoutDeduplicationId = genFifoMessage(defaultGroupId, deduplicationId = None).sample.get
 
     Sqs.fromConfig.use { sqs =>
@@ -92,11 +92,10 @@ class SqsFifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures 
     val queueName = genFifoQueueName.sample.get
     val message1 = genFifoMessage(defaultGroupId, deduplicationId = None).sample.get
     val message2 = genFifoMessage(defaultGroupId, deduplicationId = None).sample.get
-    val queueAttributes = Map(QueueAttributeName.FIFO_QUEUE -> "true",
-      QueueAttributeName.CONTENT_BASED_DEDUPLICATION -> "true")
+
     Sqs.fromConfig.use { sqs =>
       for {
-        queueUrl <- sqs.operator.createQueue(queueName, attributes = queueAttributes)
+        queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
         response1 <- sqs.producer.sendSingleMessage(message1, queueUrl)
         duplicatedResponse1 <- sqs.producer.sendSingleMessage(message1, queueUrl)
         _ <- sqs.producer.sendSingleMessage(message1, queueUrl)
@@ -124,10 +123,7 @@ class SqsFifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures 
     val message3 = message1.copy(deduplicationId = Some("333"))
     Sqs.fromConfig.use { sqs =>
       for {
-        queueUrl <- sqs.operator.createQueue(queueName, attributes =
-          Map(
-            QueueAttributeName.FIFO_QUEUE -> "true",
-            QueueAttributeName.CONTENT_BASED_DEDUPLICATION -> "true"))
+        queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
         response1 <- sqs.producer.sendSingleMessage(message1, queueUrl)
         response2 <- sqs.producer.sendSingleMessage(message2, queueUrl)
         response3 <- sqs.producer.sendSingleMessage(message3, queueUrl)

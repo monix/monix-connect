@@ -1,6 +1,6 @@
 package monix.connect.sqs
 
-import monix.connect.sqs.domain.{FifoMessage, InboundMessage, QueueName, StandardMessage}
+import monix.connect.sqs.domain.{FifoMessage, InboundMessage, QueueName, QueueUrl, StandardMessage}
 import org.scalacheck.Gen
 import org.scalatest.TestSuite
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
@@ -27,8 +27,10 @@ trait SqsFixture {
       .build
 //9324
 
-  val genQueueUrl: Gen[String] =
-    Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "test-" + chars.mkString.take(200)).sample.get
+  val fifoDeduplicationQueueAttr = Map(
+    QueueAttributeName.FIFO_QUEUE -> "true",
+    QueueAttributeName.CONTENT_BASED_DEDUPLICATION -> "true")
+
 
   def queueUrlPrefix(queueName: String) = s"http://localhost:9324/000000000000/${queueName}"
 
@@ -45,6 +47,7 @@ trait SqsFixture {
     Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "rHandle-" + chars.mkString.take(10))
   val genMessageBody: Gen[String] = Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "body-" + chars.mkString.take(200))
   def genFifoMessage(groupId: String = defaultGroupId, deduplicationId: Option[String] = None): Gen[FifoMessage] = Gen.identifier.map(_.take(10)).map(id => FifoMessage(id, groupId = groupId, deduplicationId = deduplicationId))
+  val genQueueUrl: Gen[QueueUrl] = QueueUrl(genId.sample.get)
 
   val genStandardMessage: Gen[StandardMessage] = Gen.identifier.map(_.take(10)).map(StandardMessage(_))
 

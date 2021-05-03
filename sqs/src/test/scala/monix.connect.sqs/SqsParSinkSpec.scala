@@ -9,8 +9,7 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.jdk.CollectionConverters._
 
-class SqsBatchSink extends AnyFlatSpecLike with Matchers with SqsFixture {
-
+class SqsParSinkSpec extends AnyFlatSpecLike with Matchers with SqsFixture {
 
   "A single inbound message" can "be send as if it was a batch" in {
     val message = genFifoMessage().sample.get

@@ -20,14 +20,13 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
   implicit val sqsClient: Sqs = Sqs.createUnsafe(asyncClient)
   val queueName: QueueName = genQueueName.sample.get
 
-
-  "parBatch" must "send a group of 10 message in the same batch" in {
+  "parSendMessage" must "send a group of 10 message in the same batch" in {
     val queueName = genFifoQueueName.sample.get
     val messages = Gen.listOfN(10, genFifoMessage(defaultGroupId)).sample.get
     Sqs.fromConfig.use { sqs =>
       for {
-        queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
-        response <- sqs.producer.parBatch(messages, queueUrl)
+        queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
+        response <- sqs.producer.parSendMessages(messages, queueUrl)
       } yield {
         val batchEntryResponses = response.flatten(_.successful().asScala)
         response.exists(_.hasFailed()) shouldBe false
@@ -38,14 +37,13 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
   }
 
   it must "allow passing a group of 10 messages by splitting requests in parallel batches of at most 10 entries" in {
-    val groupId = "groupId"
     val queueName = genFifoQueueName.sample.get
     val numOfEntries = Gen.choose(11, 100).sample.get
     val messages = Gen.listOfN(numOfEntries, genFifoMessage(defaultGroupId)).sample.get
     Sqs.fromConfig.use { sqs =>
       for {
-        queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
-        response <- sqs.producer.parBatch(messages, queueUrl)
+        queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
+        response <- sqs.producer.parSendMessages(messages, queueUrl)
       } yield {
         response.size shouldBe (numOfEntries / 10) + 1
         response.exists(_.hasFailed()) shouldBe false
@@ -56,14 +54,13 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
     }.runSyncUnsafe()
   }
 
-  "parBatchSink" should "send in a single batch, a group of less than 10 messages emitted at once" in {
-    val groupId = "groupId"
+  "parSink" should "sends in a single batch, a group of less than 10 messages emitted at once" in {
     val queueName = genFifoQueueName.sample.get
     val messages = Gen.listOfN(5, genFifoMessage(defaultGroupId)).sample.get
     Sqs.fromConfig.use { sqs =>
       for {
-        queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
-        response <- Observable.now(messages).consumeWith(sqs.producer.parBatchSink(queueUrl, Some(groupId)))
+        queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
+        response <- Observable.now(messages).consumeWith(sqs.producer.parSink(queueUrl))
         result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(2.seconds).firstL
       } yield {
         response shouldBe a [Unit]
@@ -73,13 +70,12 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
   }
 
   it should "do nothing and gracefully terminate on completion, when consuming an empty observable" in {
-    val groupId = "groupId"
     val queueName = genFifoQueueName.sample.get
 
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
-        response <- Observable.empty[List[InboundMessage]].consumeWith(sqs.producer.parBatchSink(queueUrl, Some(groupId)))
+        response <- Observable.empty[List[InboundMessage]].consumeWith(sqs.producer.parSink(queueUrl))
         result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(1.second).firstL
       } yield {
         response shouldBe a [Unit]
@@ -94,8 +90,8 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
 
     Sqs.fromConfig.use { sqs =>
       for {
-        queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
-        response <- Observable.now(messages).consumeWith(sqs.producer.parBatchSink(queueUrl))
+        queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
+        response <- Observable.now(messages).consumeWith(sqs.producer.parSink(queueUrl))
         result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(1.second).firstL
       } yield {
         response shouldBe a [Unit]
@@ -110,7 +106,7 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
     val messages = Gen.choose(1, 100).flatMap(Gen.listOfN(_, genFifoMessage(defaultGroupId))).sample.get
     Sqs.fromConfig.use { sqs =>
       for {
-        queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
+        queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
         response <- Observable.fromIterable(messages).consumeWith(sqs.producer.sink(queueUrl))
         result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(1.second).firstL
       } yield {
@@ -121,7 +117,6 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
   }
 
   it should "do nothing and gracefully terminate `onCompletion` when consuming an empty observable" in {
-    val groupId = "groupId"
     val queueName = genFifoQueueName.sample.get
 
     Sqs.fromConfig.use { sqs =>
@@ -136,21 +131,6 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
     }.runSyncUnsafe()
   }
 
-  "parBatch" must "send a group of 10 message in the same batch" in {
-    val groupId = "groupId"
-    val queueName = genFifoQueueName.sample.get
-    val messages = Gen.listOfN(10, genFifoMessage()).sample.get
-    Sqs.fromConfig.use { sqs =>
-      for {
-        queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
-        response <- sqs.producer.parBatch(messages, queueUrl)
-      } yield {
-        val batchEntryResponses = response.flatten(_.successful().asScala)
-        response.exists(_.hasFailed()) shouldBe false
-        batchEntryResponses.size shouldBe 10
-        batchEntryResponses.map(_.md5OfMessageBody()) shouldBe messages.map(msg => md5Hex(msg.body))
-      }
-    }.runSyncUnsafe()
-  }
+
 
 }

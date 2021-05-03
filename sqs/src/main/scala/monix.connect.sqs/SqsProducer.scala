@@ -5,11 +5,9 @@ import monix.connect.sqs.domain.{InboundMessage, QueueUrl}
 import monix.eval.Task
 import monix.reactive.Consumer
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
-import software.amazon.awssdk.services.sqs.model.{SendMessageBatchRequest, SendMessageBatchResponse, SendMessageResponse, SqsRequest, SqsResponse}
+import software.amazon.awssdk.services.sqs.model.{SendMessageBatchResponse, SendMessageResponse}
 
-import java.util.UUID
 import scala.concurrent.duration.FiniteDuration
-import scala.jdk.CollectionConverters._
 
 object SqsProducer {
   def create(implicit asyncClient: SqsAsyncClient): SqsProducer = new SqsProducer(asyncClient)
@@ -24,9 +22,9 @@ class SqsProducer private[sqs](asyncClient: SqsAsyncClient) {
     SqsOp.sendMessage.execute(producerMessage)(asyncClient)
   }
 
-  def parBatch(messages: List[InboundMessage],
-               queueUrl: QueueUrl,
-               delayDuration: Option[FiniteDuration] = None): Task[List[SendMessageBatchResponse]] = {
+  def parSendMessages(messages: List[InboundMessage],
+                      queueUrl: QueueUrl,
+                      delayDuration: Option[FiniteDuration] = None): Task[List[SendMessageBatchResponse]] = {
     Task.parTraverse {
       groupMessagesInBatches(messages, queueUrl, delayDuration)
     } { batch =>
@@ -41,10 +39,9 @@ class SqsProducer private[sqs](asyncClient: SqsAsyncClient) {
     new SqsSink(toJavaMessage, SqsOp.sendMessage, asyncClient, stopOnError)
   }
 
-  def parBatchSink(queueUrl: QueueUrl,
-                   groupId: Option[String] = None,
-                   delayDuration: Option[FiniteDuration] = None,
-                   stopOnError: Boolean = false): Consumer[List[InboundMessage], Unit] = {
-    new SqsParBatchSink(queueUrl, groupId, delayDuration, asyncClient, stopOnError)
+  def parSink(queueUrl: QueueUrl,
+              delayDuration: Option[FiniteDuration] = None,
+              stopOnError: Boolean = false): Consumer[List[InboundMessage], Unit] = {
+    new SqsParBatchSink(queueUrl, delayDuration, asyncClient, stopOnError)
   }
 }

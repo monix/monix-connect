@@ -5,7 +5,6 @@ import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
 import org.scalacheck.Gen
-import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
@@ -20,14 +19,12 @@ class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
   val queueName: QueueName = genQueueName.sample.get
 
   "singleManualDelete" should "consume up to 10 messages at a time" in {
-    val groupId = "group123"
     val queueName = genFifoQueueName.sample.get
     val messages = Gen.listOfN(15, genFifoMessage(defaultGroupId)).sample.get
 
     Sqs.fromConfig.use { sqs =>
       for {
-        queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(
-          QueueAttributeName.FIFO_QUEUE -> "true"))
+        queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
         _ <- Task.traverse(messages)(sqs.producer.sendSingleMessage(_, queueUrl))
         receivedMessages1 <- sqs.consumer.receiveSingleManualDelete(queueUrl, inFlightMessages = 1)
           .tapEval(Task.traverse(_)(_.deleteFromQueue()))
@@ -39,20 +36,18 @@ class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
         receivedMessages1.size shouldBe 1
         receivedMessages10.size shouldBe 10
         receivedMessages4.size shouldBe 4
-        (receivedMessages1 ++ receivedMessages10 ++ receivedMessages4).map(_.body) shouldBe messages.map(_.body)
+        (receivedMessages1 ++ receivedMessages10 ++ receivedMessages4).map(_.body) should contain theSameElementsAs messages.map(_.body)
       }
     }.runSyncUnsafe()
   }
 
   it should "respects the specified `inFlight` messages on the same consumer or visibility timeout being exceeded" in {
-    val groupId = "group123"
     val queueName = genFifoQueueName.sample.get
     val messages = Gen.listOfN(15, genFifoMessage(defaultGroupId)).sample.get
 
     Sqs.fromConfig.use { sqs =>
       for {
-        queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(
-          QueueAttributeName.FIFO_QUEUE -> "true"))
+        queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
         _ <- Task.traverse(messages)(sqs.producer.sendSingleMessage(_, queueUrl))
         receivedMessages1 <- sqs.consumer.receiveSingleManualDelete(queueUrl, inFlightMessages = 10, visibilityTimeout = 15.seconds)
           .tapEval(Task.traverse(_)(_.deleteFromQueue()).delayExecution(2.seconds).startAndForget)
@@ -82,8 +77,7 @@ class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
     val message = genFifoMessage(defaultGroupId).sample.get
     Sqs.fromConfig.use { sqs =>
       for {
-        queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(
-          QueueAttributeName.FIFO_QUEUE -> "true"))
+        queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
         _ <- sqs.producer.sendSingleMessage(message, queueUrl)
         receivedMessage <- sqs.consumer.receiveSingleManualDelete(queueUrl, visibilityTimeout = 1.seconds)
           .tapEval(Task.traverse(_)(_.deleteFromQueue()))
@@ -97,13 +91,11 @@ class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
   }
 
   it can "consume the same message multiple times when `deleteFromQueue` is not triggered and `visibilityTimeout` is exceeded" in {
-    val groupId = "group123"
     val queueName = genFifoQueueName.sample.get
     val message = genFifoMessage(defaultGroupId).sample.get
     Sqs.fromConfig.use { sqs =>
       for {
-        queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(
-          QueueAttributeName.FIFO_QUEUE -> "true"))
+        queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
         _ <- sqs.producer.sendSingleMessage(message, queueUrl)
         receivedMessage <- sqs.consumer.receiveSingleManualDelete(queueUrl, visibilityTimeout = 1.seconds)
         duplicatedMessage <- Task.sleep(3.seconds) >> sqs.consumer.receiveSingleManualDelete(queueUrl, visibilityTimeout = 10.seconds)
@@ -123,12 +115,11 @@ class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
     val messages = Gen.choose(10, 150).flatMap(Gen.listOfN(_, genFifoMessage(defaultGroupId))).sample.get
     Sqs.fromConfig.use { sqs =>
       for {
-        queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(
-          QueueAttributeName.FIFO_QUEUE -> "true"))
+        queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
         _ <- Observable.fromIterable(messages).mapEvalF(sqs.producer.sendSingleMessage(_, queueUrl)).completedL
         receivedMessages <- sqs.consumer.receiveManualDelete(queueUrl)
           .mapEvalF(deletable => deletable.deleteFromQueue().as(deletable))
-          .bufferTimedAndCounted(3.seconds, messages.size)
+          .bufferTimedAndCounted(5.seconds, messages.size)
           .headL
       } yield {
         receivedMessages.size shouldBe messages.size
@@ -138,12 +129,11 @@ class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
   }
 
   "receiveAutoDelete" can "does not require manually triggering message deletion" in {
-    val groupId = "group123"
     val queueName = genFifoQueueName.sample.get
     val messages = Gen.choose(10, 150).flatMap(Gen.listOfN(_, genFifoMessage(defaultGroupId))).sample.get
     Sqs.fromConfig.use { sqs =>
       for {
-        queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
+        queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
         _ <- Observable.fromIterable(messages).mapEvalF(sqs.producer.sendSingleMessage(_, queueUrl)).completedL
         receivedMessages <- sqs.consumer.receiveAutoDelete(queueUrl)
           .bufferTimedAndCounted(3.seconds, messages.size)

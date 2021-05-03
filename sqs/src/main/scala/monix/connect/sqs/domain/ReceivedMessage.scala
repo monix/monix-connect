@@ -11,11 +11,8 @@ import scala.jdk.CollectionConverters._
 class ReceivedMessage private[sqs] (val queueUrl: QueueUrl, protected val message: Message)(implicit asyncClient: SqsAsyncClient) {
 
   val body: String = message.body()
-
   val messageId: String = message.messageId()
-
   val attributes: Map[MessageSystemAttributeName, String] = message.attributes().asScala.toMap
-
   val md5OfBody: String = message.md5OfBody()
 
   def changeVisibilityTimeout(timeout: FiniteDuration): Task[Unit] = {
