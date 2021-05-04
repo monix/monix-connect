@@ -61,7 +61,6 @@ object SqsOp {
     SqsOp[SendMessageBatchRequest, SendMessageBatchResponse](_.sendMessageBatch(_))
   implicit val setQueueAttributes: SqsOp[SetQueueAttributesRequest, SetQueueAttributesResponse] =
     SqsOp[SetQueueAttributesRequest, SetQueueAttributesResponse](_.setQueueAttributes(_))
-
   implicit val tagQueue: SqsOp[TagQueueRequest, TagQueueResponse] =
     SqsOp[TagQueueRequest, TagQueueResponse](_.tagQueue(_))
   implicit val untagQueue: SqsOp[UntagQueueRequest, UntagQueueResponse] =

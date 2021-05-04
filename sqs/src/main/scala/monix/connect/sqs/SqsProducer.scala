@@ -9,7 +9,7 @@ import software.amazon.awssdk.services.sqs.model.{SendMessageBatchResponse, Send
 
 import scala.concurrent.duration.FiniteDuration
 
-object SqsProducer {
+private[sqs] object SqsProducer {
   def create(implicit asyncClient: SqsAsyncClient): SqsProducer = new SqsProducer(asyncClient)
 }
 
@@ -34,14 +34,13 @@ class SqsProducer private[sqs](asyncClient: SqsAsyncClient) {
 
   def sink(queueUrl: QueueUrl,
            delayDuration: Option[FiniteDuration] = None,
-           stopOnError: Boolean = false): Consumer[InboundMessage, Unit] = {
-    val toJavaMessage = (message: InboundMessage) => message.toMessageRequest(queueUrl, delayDuration)
-    new SqsSink(toJavaMessage, SqsOp.sendMessage, asyncClient, stopOnError)
-  }
+           stopOnError: Boolean = false): Consumer[InboundMessage, Unit] =
+    SqsSink.send(queueUrl, delayDuration, SqsOp.sendMessage, asyncClient, stopOnError)
+
 
   def parBatchSink(queueUrl: QueueUrl,
                    delayDuration: Option[FiniteDuration] = None,
-                   stopOnError: Boolean = false): Consumer[List[InboundMessage], Unit] = {
+                   stopOnError: Boolean = false): Consumer[List[InboundMessage], Unit] =
     new SqsParBatchSink(queueUrl, delayDuration, asyncClient, stopOnError)
-  }
+
 }

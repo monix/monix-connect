@@ -2,6 +2,12 @@ package monix.connect.sqs.domain
 
 import monix.connect.sqs.MessageAttribute
 
+/**
+  * The message representation to be sent to a FIFO queue.
+  *
+  * @see <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/FIFO-queues.html">Fifo queues.</a>.
+  *
+  */
 final case class FifoMessage(body: String,
                              groupId: String,
                              deduplicationId: Option[String] = Option.empty,

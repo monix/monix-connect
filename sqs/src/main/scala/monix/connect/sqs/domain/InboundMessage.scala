@@ -6,6 +6,12 @@ import software.amazon.awssdk.services.sqs.model.{MessageSystemAttributeNameForS
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 
+/**
+  * Simple case class encodes the queueUrl.
+  * The reason for this class to exist is to have
+  * a proper distinction between `queueUrl` and the `queueName`,
+  * so that they can not be confused on the method signatures.
+  */
 class InboundMessage private[sqs](body: String,
                                   groupId: Option[String],
                                   deduplicationId: Option[String] = Option.empty,

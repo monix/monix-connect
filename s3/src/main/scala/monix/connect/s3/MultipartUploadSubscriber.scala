@@ -129,7 +129,7 @@ private[s3] class MultipartUploadSubscriber(
           }
           completeMultipartUpload <- {
             val request = S3RequestBuilder
-              .completeMultipartUploadRquest(bucket, key, uid, completedParts, uploadSettings.requestPayer)
+              .completeMultipartUploadRequest(bucket, key, uid, completedParts, uploadSettings.requestPayer)
             Task.from(s3Client.completeMultipartUpload(request)) // completes the multipart upload
           }
         } yield completeMultipartUpload
@@ -158,7 +158,7 @@ private[s3] class MultipartUploadSubscriber(
           key = key,
           partN = partNumber,
           uploadId = uploadId,
-          contentLenght = chunk.size.toLong,
+          contentLength = chunk.size.toLong,
           uploadSettings)
       }
       completedPart <- Task

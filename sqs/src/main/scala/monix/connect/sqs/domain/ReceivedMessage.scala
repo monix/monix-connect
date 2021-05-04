@@ -8,6 +8,11 @@ import software.amazon.awssdk.services.sqs.model.{ChangeMessageVisibilityRequest
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 
+/**
+  * Represents the generic implementation of a message consumed from a specific Sqs Queue.
+  * This representation would typically be used when consuming messages in an auto delete way.
+  * On the other hand, we would use manual deletes with [[DeletableMessage]].
+  */
 class ReceivedMessage private[sqs] (val queueUrl: QueueUrl, protected val message: Message)(implicit asyncClient: SqsAsyncClient) {
 
   val body: String = message.body()

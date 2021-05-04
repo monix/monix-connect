@@ -37,9 +37,9 @@ private[s3] object S3RequestBuilder {
     */
   def deleteBucket(bucket: String): DeleteBucketRequest = {
     DeleteBucketRequest
-      .builder()
+      .builder
       .bucket(bucket)
-      .build()
+      .build
   }
 
   /** A builder for [[DeleteObjectRequest]]. */
@@ -51,14 +51,14 @@ private[s3] object S3RequestBuilder {
     requestPayer: Option[String] = None,
     versionId: Option[String] = None): DeleteObjectRequest = {
     val request = DeleteObjectRequest
-      .builder()
+      .builder
       .bucket(bucket)
       .key(key)
     bypassGovernanceRetention.map(request.bypassGovernanceRetention(_))
-    mfa.map(request.mfa(_))
-    requestPayer.map(request.requestPayer(_))
-    versionId.map(request.versionId(_))
-    request.build()
+    mfa.map(request.mfa)
+    requestPayer.map(request.requestPayer)
+    versionId.map(request.versionId)
+    request.build
   }
 
   /** A builder for [[CreateBucketRequest]]. */
@@ -72,28 +72,28 @@ private[s3] object S3RequestBuilder {
     grantWriteACP: Option[String] = None,
     objectLockEnabledForBucket: Option[Boolean] = None): CreateBucketRequest = {
     val request = CreateBucketRequest
-      .builder()
+      .builder
       .bucket(bucket)
-    acl.map(request.acl(_))
-    grantFullControl.map(request.grantFullControl(_))
-    grantRead.map(request.grantRead(_))
-    grantReadACP.map(request.grantReadACP(_))
-    grantWrite.map(request.grantWrite(_))
-    grantWriteACP.map(request.grantWriteACP(_))
+    acl.map(request.acl)
+    grantFullControl.map(request.grantFullControl)
+    grantRead.map(request.grantRead)
+    grantReadACP.map(request.grantReadACP)
+    grantWrite.map(request.grantWrite)
+    grantWriteACP.map(request.grantWriteACP)
     objectLockEnabledForBucket.map(request.objectLockEnabledForBucket(_))
-    request.build()
+    request.build
   }
 
   /** A builder for [[CompletedPart]]. */
   def completedPart(partN: Int, uploadPartResp: UploadPartResponse): CompletedPart =
     CompletedPart
-      .builder()
+      .builder
       .partNumber(partN)
-      .eTag(uploadPartResp.eTag())
-      .build()
+      .eTag(uploadPartResp.eTag)
+      .build
 
   /** A builder for [[CompleteMultipartUploadRequest]]. */
-  def completeMultipartUploadRquest(
+  def completeMultipartUploadRequest(
     bucket: String,
     key: String,
     uploadId: String,
@@ -101,13 +101,13 @@ private[s3] object S3RequestBuilder {
     requestPayer: Option[RequestPayer]): CompleteMultipartUploadRequest = {
     val completedMultipartUpload = CompletedMultipartUpload.builder.parts(completedParts.asJava).build()
     val request: CompleteMultipartUploadRequest.Builder = CompleteMultipartUploadRequest
-      .builder()
+      .builder
       .bucket(bucket)
       .key(key)
       .uploadId(uploadId)
       .multipartUpload(completedMultipartUpload)
-    requestPayer.map(request.requestPayer(_))
-    request.build()
+    requestPayer.map(request.requestPayer)
+    request.build
   }
 
   /** A builder for [[CreateMultipartUploadRequest]]. */
@@ -120,19 +120,19 @@ private[s3] object S3RequestBuilder {
       .bucket(bucket)
       .key(key)
     //contentType.map(request.contentType(_))
-    uploadSettings.acl.map(request.acl(_))
-    uploadSettings.grantFullControl.map(request.grantFullControl(_))
-    uploadSettings.grantRead.map(request.grantRead(_))
-    uploadSettings.grantReadACP.map(request.grantReadACP(_))
-    uploadSettings.grantWriteACP.map(request.grantWriteACP(_))
-    uploadSettings.requestPayer.map(request.requestPayer(_))
-    uploadSettings.serverSideEncryption.map(request.serverSideEncryption(_))
-    uploadSettings.sseCustomerAlgorithm.map(request.sseCustomerAlgorithm(_))
-    uploadSettings.sseCustomerKey.map(request.sseCustomerKey(_))
-    uploadSettings.sseCustomerKeyMD5.map(request.sseCustomerKeyMD5(_))
-    uploadSettings.ssekmsEncryptionContext.map(request.ssekmsEncryptionContext(_))
-    uploadSettings.ssekmsKeyId.map(request.ssekmsKeyId(_))
-    request.build()
+    uploadSettings.acl.map(request.acl)
+    uploadSettings.grantFullControl.map(request.grantFullControl)
+    uploadSettings.grantRead.map(request.grantRead)
+    uploadSettings.grantReadACP.map(request.grantReadACP)
+    uploadSettings.grantWriteACP.map(request.grantWriteACP)
+    uploadSettings.requestPayer.map(request.requestPayer)
+    uploadSettings.serverSideEncryption.map(request.serverSideEncryption)
+    uploadSettings.sseCustomerAlgorithm.map(request.sseCustomerAlgorithm)
+    uploadSettings.sseCustomerKey.map(request.sseCustomerKey)
+    uploadSettings.sseCustomerKeyMD5.map(request.sseCustomerKeyMD5)
+    uploadSettings.ssekmsEncryptionContext.map(request.ssekmsEncryptionContext)
+    uploadSettings.ssekmsKeyId.map(request.ssekmsKeyId)
+    request.build
   }
 
   /** A builder for [[CopyObjectRequest]]. */
@@ -141,9 +141,9 @@ private[s3] object S3RequestBuilder {
     sourceKey: String,
     destinationBucket: String,
     destinationKey: String,
-    copyObjectSettings: CopyObjectSettings) = {
+    copyObjectSettings: CopyObjectSettings): CopyObjectRequest = {
     val request = CopyObjectRequest
-      .builder()
+      .builder
       .copySource(sourceBucket + "/" + sourceKey)
       .destinationBucket(destinationBucket)
       .destinationKey(destinationKey)
@@ -173,11 +173,11 @@ private[s3] object S3RequestBuilder {
     copyObjectSettings.objectLockLegalHoldStatus.map(request.objectLockLegalHoldStatus)
     copyObjectSettings.objectLockMode.map(request.objectLockMode)
     copyObjectSettings.requestPayer.map(request.requestPayer)
-    request.build()
+    request.build
   }
 
   /**
-    * A builder that requires accepts the minimum required fields ([[bucket]], [[key]]) and some
+    * A builder that requires accepts the minimum required fields (`bucket`, `key`) and some
     * additional settings to build a [[GetObjectRequest]].
     */
   def getObjectRequest(
@@ -185,19 +185,19 @@ private[s3] object S3RequestBuilder {
     key: String,
     range: Option[String] = None,
     downloadSettings: DownloadSettings = DefaultDownloadSettings): GetObjectRequest = {
-    val request: GetObjectRequest.Builder = GetObjectRequest.builder().bucket(bucket).key(key)
-    downloadSettings.ifMatch.map(request.ifMatch(_))
-    downloadSettings.ifModifiedSince.map(request.ifModifiedSince(_))
-    downloadSettings.ifNoneMatch.map(request.ifNoneMatch(_))
-    downloadSettings.ifUnmodifiedSince.map(request.ifUnmodifiedSince(_))
-    range.map(request.range(_))
-    downloadSettings.versionId.map(request.versionId(_))
-    downloadSettings.sseCustomerAlgorithm.map(request.sseCustomerAlgorithm(_))
-    downloadSettings.sseCustomerKey.map(request.sseCustomerKey(_))
-    downloadSettings.sseCustomerKeyMD5.map(request.sseCustomerKeyMD5(_))
-    downloadSettings.requestPayer.map(request.requestPayer(_))
+    val request: GetObjectRequest.Builder = GetObjectRequest.builder.bucket(bucket).key(key)
+    downloadSettings.ifMatch.map(request.ifMatch)
+    downloadSettings.ifModifiedSince.map(request.ifModifiedSince)
+    downloadSettings.ifNoneMatch.map(request.ifNoneMatch)
+    downloadSettings.ifUnmodifiedSince.map(request.ifUnmodifiedSince)
+    range.map(request.range)
+    downloadSettings.versionId.map(request.versionId)
+    downloadSettings.sseCustomerAlgorithm.map(request.sseCustomerAlgorithm)
+    downloadSettings.sseCustomerKey.map(request.sseCustomerKey)
+    downloadSettings.sseCustomerKeyMD5.map(request.sseCustomerKeyMD5)
+    downloadSettings.requestPayer.map(request.requestPayer)
     //partNumber.map(request.partNumber(_)) maybe to add in the future
-    request.build()
+    request.build
   }
 
   /** A builder for [[HeadObjectRequest]]. */
@@ -206,13 +206,13 @@ private[s3] object S3RequestBuilder {
     key: Option[String],
     ifMatch: Option[String] = None,
     ifModifiedSince: Option[Instant] = None,
-    ifEtagMatch: Option[String] = None) = {
+    ifEtagMatch: Option[String] = None): HeadObjectRequest = {
     val request = HeadObjectRequest.builder()
     request.bucket(bucket)
-    key.map(request.key(_))
-    ifMatch.map(request.ifMatch(_))
-    ifModifiedSince.map(request.ifModifiedSince(_))
-    ifEtagMatch.map(request.ifNoneMatch(_))
+    key.map(request.key)
+    ifMatch.map(request.ifMatch)
+    ifModifiedSince.map(request.ifModifiedSince)
+    ifEtagMatch.map(request.ifNoneMatch)
     request.build()
   }
 
@@ -226,62 +226,60 @@ private[s3] object S3RequestBuilder {
     startAfter: Option[String] = None,
     requestPayer: Option[RequestPayer] = None): ListObjectsV2Request = {
     val request = ListObjectsV2Request.builder().bucket(bucket)
-    fetchOwner.map(request.fetchOwner(_))
-    startAfter.map(request.startAfter(_))
-    continuationToken.map(request.continuationToken(_))
+    fetchOwner.map(request.fetchOwner (_))
+    startAfter.map(request.startAfter)
+    continuationToken.map(request.continuationToken)
     maxKeys.map(request.maxKeys(_))
-    prefix.map(request.prefix(_))
-    requestPayer.map(request.requestPayer(_))
+    prefix.map(request.prefix)
+    requestPayer.map(request.requestPayer)
     request.build()
   }
 
   /** A builder for [[UploadPartRequest]]. */
-  def uploadPartRequest(
-    bucket: String,
-    key: String,
-    partN: Int,
-    uploadId: String,
-    contentLenght: Long,
-    uploadSettings: UploadSettings = DefaultUploadSettings): UploadPartRequest = {
+  def uploadPartRequest(bucket: String,
+                        key: String,
+                        partN: Int,
+                        uploadId: String,
+                        contentLength: Long,
+                        uploadSettings: UploadSettings = DefaultUploadSettings): UploadPartRequest = {
     val request =
       UploadPartRequest
-        .builder()
+        .builder
         .bucket(bucket)
         .key(key)
         .partNumber(partN)
         .uploadId(uploadId)
-        .contentLength(contentLenght)
-    uploadSettings.sseCustomerAlgorithm.map(request.sseCustomerAlgorithm(_))
-    uploadSettings.sseCustomerKey.map(request.sseCustomerKey(_))
-    uploadSettings.sseCustomerKeyMD5.map(request.sseCustomerKeyMD5(_))
-    uploadSettings.requestPayer.map(request.requestPayer(_))
-    request.build()
+        .contentLength(contentLength)
+    uploadSettings.sseCustomerAlgorithm.map(request.sseCustomerAlgorithm)
+    uploadSettings.sseCustomerKey.map(request.sseCustomerKey)
+    uploadSettings.sseCustomerKeyMD5.map(request.sseCustomerKeyMD5)
+    uploadSettings.requestPayer.map(request.requestPayer)
+    request.build
   }
 
   /** Builder for [[PutObjectRequest]]. */
-  def putObjectRequest(
-    bucket: String,
-    key: String,
-    contentLenght: Option[Long],
-    uploadSettings: UploadSettings = DefaultUploadSettings) = {
+  def putObjectRequest(bucket: String,
+                       key: String,
+                       contentLength: Option[Long],
+                       uploadSettings: UploadSettings = DefaultUploadSettings): PutObjectRequest = {
     val request = PutObjectRequest
       .builder()
       .bucket(bucket)
       .key(key)
-    contentLenght.map(request.contentLength(_))
+    contentLength.map(request.contentLength(_))
     //contentType.map(request.contentType(_))
-    uploadSettings.acl.map(request.acl(_))
-    uploadSettings.grantFullControl.map(request.grantFullControl(_))
-    uploadSettings.grantRead.map(request.grantRead(_))
-    uploadSettings.grantReadACP.map(request.grantReadACP(_))
-    uploadSettings.grantWriteACP.map(request.grantWriteACP(_))
-    uploadSettings.requestPayer.map(request.requestPayer(_))
-    uploadSettings.serverSideEncryption.map(request.serverSideEncryption(_))
-    uploadSettings.sseCustomerAlgorithm.map(request.sseCustomerAlgorithm(_))
-    uploadSettings.sseCustomerKey.map(request.sseCustomerKey(_))
-    uploadSettings.sseCustomerKeyMD5.map(request.sseCustomerKeyMD5(_))
-    uploadSettings.ssekmsEncryptionContext.map(request.ssekmsEncryptionContext(_))
-    uploadSettings.ssekmsKeyId.map(request.ssekmsKeyId(_))
-    request.build()
+    uploadSettings.acl.map(request.acl)
+    uploadSettings.grantFullControl.map(request.grantFullControl)
+    uploadSettings.grantRead.map(request.grantRead)
+    uploadSettings.grantReadACP.map(request.grantReadACP)
+    uploadSettings.grantWriteACP.map(request.grantWriteACP)
+    uploadSettings.requestPayer.map(request.requestPayer)
+    uploadSettings.serverSideEncryption.map(request.serverSideEncryption)
+    uploadSettings.sseCustomerAlgorithm.map(request.sseCustomerAlgorithm)
+    uploadSettings.sseCustomerKey.map(request.sseCustomerKey)
+    uploadSettings.sseCustomerKeyMD5.map(request.sseCustomerKeyMD5)
+    uploadSettings.ssekmsEncryptionContext.map(request.ssekmsEncryptionContext)
+    uploadSettings.ssekmsKeyId.map(request.ssekmsKeyId)
+    request.build
   }
 }

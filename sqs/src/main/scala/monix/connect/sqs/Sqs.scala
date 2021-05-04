@@ -29,6 +29,16 @@ import software.amazon.awssdk.regions.Region
 object Sqs {
   self =>
 
+  /**
+    * Provides a resource that uses the values from the
+    * config file to acquire and release a [[Sqs]] instance.
+    *
+    * The config can be overwritten from an `application.conf` file
+    * present under the `resources` folder. Which it should look like:
+    * `https://github.com/monix/monix-connect/blob/master/aws-auth/src/main/resources/reference.conf`.
+    *
+    * @return a [[Resource]] of [[Task]] that acquires and releases [[Sqs]].
+    */
   def fromConfig: Resource[Task, Sqs] = {
     Resource.make {
       for {
@@ -39,20 +49,30 @@ object Sqs {
       .map(self.createUnsafe(_))
   }
 
-  @UnsafeBecauseImpure
-  def createUnsafe(implicit sqsAsyncClient: SqsAsyncClient): Sqs = {
-    Sqs(SqsConsumer.create, SqsProducer.create, SqsOperator.create)
-  }
 
-  @UnsafeBecauseImpure
-  def createUnsafe(
-                    credentialsProvider: AwsCredentialsProvider,
-                    region: Region,
-                    endpoint: Option[String] = None,
-                    httpClient: Option[SdkAsyncHttpClient] = None): Sqs = {
-    val sqsAsyncClient = AsyncClientConversions.from(credentialsProvider, region, endpoint, httpClient)
-    self.createUnsafe(sqsAsyncClient)
-  }
+  /**
+    * Creates a [[Resource]] that using passed-by-parameter
+    * AWS configurations, it encodes the acquisition and release
+    * of the resources needed to instantiate the [[S3]].
+    *
+    * ==Example==
+    *
+    * {{{
+    *   import cats.effect.Resource
+    *   import monix.eval.Task
+    *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
+    *   import software.amazon.awssdk.regions.Region
+    *
+    *   val defaultCredentials = DefaultCredentialsProvider.create()
+    *   val sqsResource: Resource[Task, Sqs] = Sqs.create(defaultCredentials, Region.AWS_GLOBAL)
+    * }}}
+    *
+    * @param credentialsProvider strategy for loading credentials and authenticate to AWS S3
+    * @param region              an Amazon Web Services region that hosts a set of Amazon services.
+    * @param endpoint            the endpoint with which the SDK should communicate.
+    * @param httpClient          sets the [[SdkAsyncHttpClient]] that the SDK service client will use to make HTTP calls.
+    * @return a [[Resource]] of [[Task]] that acquires and releases [[Sqs]] instance.
+    */
 
   def create(
               credentialsProvider: AwsCredentialsProvider,
@@ -68,6 +88,92 @@ object Sqs {
       .map(self.createUnsafe(_))
   }
 
+  /**
+    * Creates a instance of [[Sqs]] out of a [[SqsAsyncClient]]
+    * which provides a fast forward access to the [[Sqs]] that avoids
+    * dealing with a proper resource and usage.
+    *
+    * Unsafe because the state of the passed [[SqsAsyncClient]] is not guaranteed,
+    * it can either be malformed or closed, which would result in underlying failures.
+    *
+    * ==Example==
+    *
+    * {{{
+    *   import java.time.Duration
+    *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
+    *   import software.amazon.awssdk.regions.Region.AWS_GLOBAL
+    *   import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
+    *   import software.amazon.awssdk.services.sqs.SqsAsyncClient
+    *
+    *   // the exceptions related with concurrency or timeouts from any of the requests
+    *   // might be solved by raising the `maxConcurrency`, `maxPendingConnectionAcquire` or
+    *   // `connectionAcquisitionTimeout` from the underlying netty http async client.
+    *   // see below an example on how to increase such values.
+    *
+    *   val httpClient = NettyNioAsyncHttpClient.builder()
+    *     .maxConcurrency(500)
+    *     .maxPendingConnectionAcquires(50000)
+    *     .connectionAcquisitionTimeout(Duration.ofSeconds(60))
+    *     .readTimeout(Duration.ofSeconds(60))
+    *     .build()
+    *
+    *   val sqsAsyncClient: SqsAsyncClient = S3AsyncClient
+    *     .builder()
+    *     .httpClient(httpClient)
+    *     .credentialsProvider(DefaultCredentialsProvider.create())
+    *     .region(AWS_GLOBAL)
+    *     .build()
+    *
+    *     val s3: S3 = S3.createUnsafe(s3AsyncClient)
+    * }}}
+    *
+    * @see [[Sqs.fromConfig]] and [[Sqs.create]] for a pure implementation.
+    *      They both will make sure that the s3 connection is created with the required
+    *      resources and guarantee that the client was not previously closed.
+    *
+    * @param sqsAsyncClient an instance of a [[SqsAsyncClient]].
+    * @return an instance of [[Sqs]]
+    */
+  @UnsafeBecauseImpure
+  def createUnsafe(implicit sqsAsyncClient: SqsAsyncClient): Sqs = {
+    Sqs(SqsConsumer.create, SqsProducer.create, SqsOperator.create)
+  }
+
+  /**
+    * Creates a new [[Sqs]] instance out of the the passed AWS configurations.
+    *
+    * It provides a fast forward access to the [[Sqs]] instance.
+    * Thus, it is the user's responsibility of the user to do a proper resource usage
+    * and so, closing the connection.
+    *
+    * ==Example==
+    *
+    * {{{
+    *   import monix.execution.Scheduler.Implicits.global
+    *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
+    *   import software.amazon.awssdk.regions.Region
+    *
+    *   val defaultCred = DefaultCredentialsProvider.create()
+    *   val sqs: Sqs = Sqs.createUnsafe(defaultCred, Region.AWS_GLOBAL)
+    *   // do your stuff here
+    *   sqs.close.runToFuture
+    * }}}
+    *
+    * @param credentialsProvider Strategy for loading credentials and authenticate to AWS S3
+    * @param region              An Amazon Web Services region that hosts a set of Amazon services.
+    * @param endpoint            The endpoint with which the SDK should communicate.
+    * @param httpClient          Sets the [[SdkAsyncHttpClient]] that the SDK service client will use to make HTTP calls.
+    * @return a [[Resource]] of [[Task]] that allocates and releases [[Sqs]].
+    */
+  @UnsafeBecauseImpure
+  def createUnsafe(
+                    credentialsProvider: AwsCredentialsProvider,
+                    region: Region,
+                    endpoint: Option[String] = None,
+                    httpClient: Option[SdkAsyncHttpClient] = None): Sqs = {
+    val sqsAsyncClient = AsyncClientConversions.from(credentialsProvider, region, endpoint, httpClient)
+    self.createUnsafe(sqsAsyncClient)
+  }
 
 }
 
