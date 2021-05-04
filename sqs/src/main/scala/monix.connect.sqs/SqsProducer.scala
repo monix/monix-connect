@@ -22,9 +22,9 @@ class SqsProducer private[sqs](asyncClient: SqsAsyncClient) {
     SqsOp.sendMessage.execute(producerMessage)(asyncClient)
   }
 
-  def parSendMessages(messages: List[InboundMessage],
-                      queueUrl: QueueUrl,
-                      delayDuration: Option[FiniteDuration] = None): Task[List[SendMessageBatchResponse]] = {
+  def parSendBatch(messages: List[InboundMessage],
+                   queueUrl: QueueUrl,
+                   delayDuration: Option[FiniteDuration] = None): Task[List[SendMessageBatchResponse]] = {
     Task.parTraverse {
       groupMessagesInBatches(messages, queueUrl, delayDuration)
     } { batch =>
@@ -39,9 +39,9 @@ class SqsProducer private[sqs](asyncClient: SqsAsyncClient) {
     new SqsSink(toJavaMessage, SqsOp.sendMessage, asyncClient, stopOnError)
   }
 
-  def parSink(queueUrl: QueueUrl,
-              delayDuration: Option[FiniteDuration] = None,
-              stopOnError: Boolean = false): Consumer[List[InboundMessage], Unit] = {
+  def parBatchSink(queueUrl: QueueUrl,
+                   delayDuration: Option[FiniteDuration] = None,
+                   stopOnError: Boolean = false): Consumer[List[InboundMessage], Unit] = {
     new SqsParBatchSink(queueUrl, delayDuration, asyncClient, stopOnError)
   }
 }

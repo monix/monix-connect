@@ -26,7 +26,7 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
-        response <- sqs.producer.parSendMessages(messages, queueUrl)
+        response <- sqs.producer.parSendBatch(messages, queueUrl)
       } yield {
         val batchEntryResponses = response.flatten(_.successful().asScala)
         response.exists(_.hasFailed()) shouldBe false
@@ -43,7 +43,7 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
-        response <- sqs.producer.parSendMessages(messages, queueUrl)
+        response <- sqs.producer.parSendBatch(messages, queueUrl)
       } yield {
         response.size shouldBe (numOfEntries / 10) + 1
         response.exists(_.hasFailed()) shouldBe false
@@ -60,7 +60,7 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
-        response <- Observable.now(messages).consumeWith(sqs.producer.parSink(queueUrl))
+        response <- Observable.now(messages).consumeWith(sqs.producer.parBatchSink(queueUrl))
         result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(2.seconds).firstL
       } yield {
         response shouldBe a [Unit]
@@ -75,7 +75,7 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
-        response <- Observable.empty[List[InboundMessage]].consumeWith(sqs.producer.parSink(queueUrl))
+        response <- Observable.empty[List[InboundMessage]].consumeWith(sqs.producer.parBatchSink(queueUrl))
         result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(1.second).firstL
       } yield {
         response shouldBe a [Unit]
@@ -91,7 +91,7 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
-        response <- Observable.now(messages).consumeWith(sqs.producer.parSink(queueUrl))
+        response <- Observable.now(messages).consumeWith(sqs.producer.parBatchSink(queueUrl))
         result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(1.second).firstL
       } yield {
         response shouldBe a [Unit]
