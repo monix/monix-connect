@@ -5,7 +5,7 @@ object Dependencies {
   object Versions {
 
     //main
-    val Monix = "3.3.0"
+    val Monix = "3.4.0"
     val AwsSdk = "2.15.67"
     val AkkaStreams = "2.6.9"
     val AWS = "1.11.749"
