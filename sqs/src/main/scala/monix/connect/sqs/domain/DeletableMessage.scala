@@ -7,8 +7,10 @@ import software.amazon.awssdk.services.sqs.model.{DeleteMessageRequest, Message}
 
 /**
   * Represents a message consumed with manual delete, meaning that it provides
-  * control over when a message is considered processed and wants
-  * to be deleted from the queue so that we can also consume the next message.
+  * control over when the message is considered processed and wants
+  * to be deleted from the source queue so that the next message can be consumed.
+  *
+  * And that functionality is exposed by the [[deleteFromQueue]] method.
   */
 class DeletableMessage private[sqs](override val queueUrl: QueueUrl,
                                     override protected val message: Message)

@@ -6,4 +6,4 @@ package monix.connect.sqs.domain
   * a proper distinction between the queue url and name,
   * so that they can not be confused on the method signatures.
   */
-final case class QueueUrl(url: String)
+case class QueueUrl(url: String)

@@ -3,7 +3,7 @@ package monix.connect.sqs.domain
 import monix.connect.sqs.MessageAttribute
 
 /**
-  * The message representation to be sent to a Standard queue.
+  * The message representation to be sent to a Standard Sqs queue.
   *
   * @see <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/standard-queues.html">Standard queues.</a>.
   *

@@ -1,7 +1,9 @@
 package monix.connect.sqs
 
 import monix.connect.sqs.domain.{InboundMessage, QueueName, StandardMessage}
+import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
+import monix.reactive.Observable
 import org.apache.commons.codec.digest.DigestUtils.md5Hex
 import org.scalacheck.Gen
 import org.scalatest.concurrent.ScalaFutures
@@ -111,6 +113,49 @@ class SqsFifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures 
         response2.md5OfMessageBody shouldBe md5Hex(message2.body)
         duplicatedResponse2.md5OfMessageBody shouldBe md5Hex(message2.body)
         receivedMessages.map(_.body) should contain theSameElementsAs List(message1, message2).map(_.body)
+      }
+    }.runSyncUnsafe()
+  }
+
+  it should "respect inflight messages on the same groupId even when having multiple consumers watching the same queue" in {
+    val queueName = genFifoQueueName.sample.get
+    val messages = Gen.listOfN(10, genFifoMessageWithDeduplication(defaultGroupId)).sample.get
+
+    Sqs.fromConfig.use { sqs =>
+      for {
+        queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
+        _ <- Observable.fromIterable(messages).consumeWith(sqs.producer.sink(queueUrl))
+        _ <- Observable.fromIterable(messages).consumeWith(sqs.producer.sink(queueUrl))
+        result <- {
+          val singleReceiveTask = sqs.consumer.receiveSingleManualDelete(queueUrl, inFlightMessages = 7)
+          singleReceiveTask.flatMap(a => singleReceiveTask.map((a, _)))
+        }
+      } yield {
+        result._1.size shouldBe 7
+        result._2.size shouldBe 0
+      }
+    }.runSyncUnsafe()
+  }
+
+  it should "respect inFlight message by groupId on the same queue" in {
+    val queueName = genFifoQueueName.sample.get
+    val group1 = genGroupId.sample.get
+    val group2 = genGroupId.sample.get
+    val messagesGroup1 = Gen.listOfN(11, genFifoMessageWithDeduplication(group1)).sample.get
+    val messagesGroup2 = Gen.listOfN(6, genFifoMessageWithDeduplication(group2)).sample.get
+
+    Sqs.fromConfig.use { sqs =>
+      for {
+        queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
+        _ <- Observable.fromIterable(messagesGroup1).consumeWith(sqs.producer.sink(queueUrl))
+        _ <- Observable.fromIterable(messagesGroup2).consumeWith(sqs.producer.sink(queueUrl))
+        result <- {
+          val singleReceiveTask = sqs.consumer.receiveSingleManualDelete(queueUrl, inFlightMessages = 10)
+          singleReceiveTask.flatMap(a => singleReceiveTask.map((a, _)))
+        }
+      } yield {
+        result._1.size shouldBe 10
+        result._2.size shouldBe 6
       }
     }.runSyncUnsafe()
   }

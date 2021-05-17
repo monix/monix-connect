@@ -52,14 +52,13 @@ private[sqs] class SqsParBatchSink(queueUrl: QueueUrl,
         }
           .onErrorRecover {
             case NonFatal(ex) => {
+              val errorMessage = "Unexpected error in SqsParBatchSink, stopping subscription..."
+              logger.error(errorMessage, ex)
               if (stopOnError) {
                 onError(ex)
-                val errorMessage = "Unexpected error in SqsParBatchSink, stopping subscription..."
-                logger.error(errorMessage, ex)
                 Ack.Stop
               }
               else {
-                logger.error(s"Unexpected error in SqsParBatchSink, continuing... ", ex)
                 Ack.Continue
               }
             }

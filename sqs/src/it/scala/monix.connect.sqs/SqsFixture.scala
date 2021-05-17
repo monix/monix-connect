@@ -46,6 +46,9 @@ trait SqsFixture {
   val genReceiptHandle: Gen[String] =
     Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "rHandle-" + chars.mkString.take(10))
   val genMessageBody: Gen[String] = Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "body-" + chars.mkString.take(200))
+  def genFifoMessageWithDeduplication(groupId: String = defaultGroupId): Gen[FifoMessage] =
+    Gen.identifier.map(_.take(10)).map(id => FifoMessage(id, groupId = groupId, deduplicationId = Some(id)))
+
   def genFifoMessage(groupId: String = defaultGroupId, deduplicationId: Option[String] = None): Gen[FifoMessage] = Gen.identifier.map(_.take(10)).map(id => FifoMessage(id, groupId = groupId, deduplicationId = deduplicationId))
   val genQueueUrl: Gen[QueueUrl] = QueueUrl(genId.sample.get)
 

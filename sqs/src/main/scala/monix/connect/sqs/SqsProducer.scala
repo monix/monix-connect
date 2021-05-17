@@ -15,6 +15,13 @@ private[sqs] object SqsProducer {
 
 class SqsProducer private[sqs](asyncClient: SqsAsyncClient) {
 
+  /**
+    * A single send request call
+    * @param message
+    * @param queueUrl
+    * @param delayDuration
+    * @return
+    */
   def sendSingleMessage(message: InboundMessage,
                         queueUrl: QueueUrl,
                         delayDuration: Option[FiniteDuration] = None): Task[SendMessageResponse] = {
