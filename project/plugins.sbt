@@ -7,5 +7,5 @@ addSbtPlugin("com.typesafe"         % "sbt-mima-plugin" % "0.9.1")
 addSbtPlugin("de.heikoseeberger"    % "sbt-header"      % "5.4.0")
 addSbtPlugin("com.geirsson" % "sbt-ci-release" % "1.5.7")
 addSbtPlugin("pl.project13.scala"   % "sbt-jmh"         % "0.4.2")
-addSbtPlugin("com.thesamet" % "sbt-protoc" % "1.0.3")
+addSbtPlugin("com.thesamet" % "sbt-protoc" % "1.0.4")
 libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.11.1"
