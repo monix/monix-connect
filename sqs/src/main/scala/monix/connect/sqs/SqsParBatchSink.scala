@@ -19,7 +19,8 @@ package monix.connect.sqs
 
 import com.typesafe.scalalogging.StrictLogging
 import monix.connect.sqs.SqsParBatchSink.groupMessagesInBatches
-import monix.connect.sqs.domain.{InboundMessage, QueueUrl}
+import monix.connect.sqs.domain.QueueUrl
+import monix.connect.sqs.domain.inbound.InboundMessage
 import monix.eval.Task
 import monix.execution.cancelables.AssignableCancelable
 import monix.execution.{Ack, Callback, Scheduler}
@@ -29,14 +30,11 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequest
 
 import scala.concurrent.Future
-import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
-import scala.util.control.NonFatal
 
 private[sqs] class SqsParBatchSink(queueUrl: QueueUrl,
-                                   delayDuration: Option[FiniteDuration],
-                                   asyncClient: SqsAsyncClient,
-                                   stopOnError: Boolean)
+                                   onErrorHandleWith: Throwable => Task[Ack])
+                                  (implicit asyncClient: SqsAsyncClient)
   extends Consumer[List[InboundMessage], Unit] with StrictLogging {
 
   override def createSubscriber(cb: Callback[Throwable, Unit], s: Scheduler): (Subscriber[List[InboundMessage]], AssignableCancelable) = {
@@ -45,24 +43,8 @@ private[sqs] class SqsParBatchSink(queueUrl: QueueUrl,
       implicit val scheduler: Scheduler = s
 
       def onNext(inboundMessages: List[InboundMessage]): Future[Ack] = {
-        Task.parTraverse {
-          groupMessagesInBatches(inboundMessages, queueUrl, delayDuration)
-        } { batch =>
-          SqsOp.sendMessageBatch.execute(batch)(asyncClient)
-        }
-          .onErrorRecover {
-            case NonFatal(ex) => {
-              val errorMessage = "Unexpected error in SqsParBatchSink, stopping subscription..."
-              logger.error(errorMessage, ex)
-              if (stopOnError) {
-                onError(ex)
-                Ack.Stop
-              }
-              else {
-                Ack.Continue
-              }
-            }
-          }
+        Task.parTraverse(groupMessagesInBatches(inboundMessages, queueUrl))(SqsOp.sendMessageBatch.execute)
+          .onErrorHandleWith(onErrorHandleWith)
           .as(Ack.Continue)
           .runToFuture
       }
@@ -70,11 +52,13 @@ private[sqs] class SqsParBatchSink(queueUrl: QueueUrl,
       def onComplete(): Unit =
         cb.onSuccess(())
 
-      def onError(ex: Throwable): Unit =
+      def onError(ex: Throwable): Unit = {
+        logger.error("Unexpected error in SqsParBatchSink.", ex)
         cb.onError(ex)
+      }
     }
 
-    (sub, AssignableCancelable.single())
+    (sub, AssignableCancelable.dummy)
   }
 
 }
@@ -82,19 +66,17 @@ private[sqs] class SqsParBatchSink(queueUrl: QueueUrl,
 object SqsParBatchSink {
   def groupMessagesInBatches(
                               inboundMessages: List[InboundMessage],
-                              queueUrl: QueueUrl,
-                              delayDuration: Option[FiniteDuration] = None,
+                              queueUrl: QueueUrl
                             ): List[SendMessageBatchRequest] = {
     inboundMessages match {
       case Nil => List.empty
       case _ =>
         val (firstBatch, nextBatch) = inboundMessages.splitAt(10)
-        val batchEntries = firstBatch.zipWithIndex.map { case (message, index) => message.toMessageBatchEntry(index.toString, delayDuration) }
+        val batchEntries = firstBatch.zipWithIndex.map { case (message, index) => message.toMessageBatchEntry(index.toString) }
         val batchRequest = SendMessageBatchRequest.builder.entries(batchEntries.asJava).queueUrl(queueUrl.url).build
-        List(batchRequest) ++ groupMessagesInBatches(nextBatch, queueUrl, delayDuration)
+        List(batchRequest) ++ groupMessagesInBatches(nextBatch, queueUrl)
     }
 
   }
-
 
 }

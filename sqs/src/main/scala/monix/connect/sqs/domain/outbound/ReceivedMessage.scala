@@ -1,6 +1,7 @@
-package monix.connect.sqs.domain
+package monix.connect.sqs.domain.outbound
 
 import monix.connect.sqs.SqsOp
+import monix.connect.sqs.domain.QueueUrl
 import monix.eval.Task
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.{ChangeMessageVisibilityRequest, Message, MessageSystemAttributeName}

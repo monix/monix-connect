@@ -1,6 +1,6 @@
 package monix.connect.sqs
 
-import monix.connect.sqs.domain.FifoMessage
+import monix.connect.sqs.domain.inbound.FifoMessage
 import org.scalacheck.Gen
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
@@ -12,6 +12,7 @@ import scala.jdk.CollectionConverters._
 
 class InboundMessageSpec extends AnyFlatSpecLike with Matchers with SqsFixture {
 
+  //todo test delay
   "A single fifo message" can "be converted to a java `MessageRequest`" in {
     //given
     val body = genId.sample.get
@@ -25,7 +26,7 @@ class InboundMessageSpec extends AnyFlatSpecLike with Matchers with SqsFixture {
     val message = FifoMessage(body, groupId, deduplicationId = deduplicationId, messageAttributes, awsTraceHeader)
 
     //when
-    val messageRequest = message.toMessageRequest(queueUrl, Some(delaySeconds))
+    val messageRequest = message.toMessageRequest(queueUrl)
 
     //then
     messageRequest.delaySeconds() shouldBe delaySeconds.toMillis.toInt

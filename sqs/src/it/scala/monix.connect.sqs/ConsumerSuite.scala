@@ -18,7 +18,7 @@ class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
   implicit val sqsClient: Sqs = Sqs.createUnsafe(asyncClient)
   val queueName: QueueName = genQueueName.sample.get
 
-  "singleManualDelete" should "consume up to 10 messages at a time" in {
+  "singleSingleManualDelete" should "consume up to 10 messages at a time" in {
     val queueName = genFifoQueueName.sample.get
     val messages = Gen.listOfN(15, genFifoMessage(defaultGroupId)).sample.get
 
@@ -128,6 +128,23 @@ class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
     }.runSyncUnsafe()
   }
 
+  it should "consume the same message multiple times delete is not triggered" in {
+    val queueName = genFifoQueueName.sample.get
+    val messages = Gen.choose(1, 10).flatMap(Gen.listOfN(_, genFifoMessage(defaultGroupId))).sample.get
+    Sqs.fromConfig.use { sqs =>
+      for {
+        queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
+        _ <- Observable.fromIterable(messages).mapEvalF(sqs.producer.sendSingleMessage(_, queueUrl)).completedL
+        receivedMessages <- sqs.consumer.receiveManualDelete(queueUrl)
+          .bufferTimedAndCounted(5.seconds, messages.size)
+          .headL
+      } yield {
+        receivedMessages.size shouldBe messages.size
+        receivedMessages.map(_.body) should contain theSameElementsAs messages.map(_.body)
+      }
+    }.runSyncUnsafe()
+  }
+
   "receiveAutoDelete" can "does not require manually triggering message deletion" in {
     val queueName = genFifoQueueName.sample.get
     val messages = Gen.choose(10, 150).flatMap(Gen.listOfN(_, genFifoMessage(defaultGroupId))).sample.get
@@ -136,7 +153,7 @@ class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
         queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
         _ <- Observable.fromIterable(messages).mapEvalF(sqs.producer.sendSingleMessage(_, queueUrl)).completedL
         receivedMessages <- sqs.consumer.receiveAutoDelete(queueUrl)
-          .bufferTimedAndCounted(3.seconds, messages.size)
+          .bufferTimedAndCounted(10.seconds, messages.size)
           .headL
       } yield {
         receivedMessages.size shouldBe messages.size

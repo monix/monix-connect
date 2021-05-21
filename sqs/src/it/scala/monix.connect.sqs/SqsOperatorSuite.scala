@@ -1,6 +1,6 @@
 package monix.connect.sqs
 
-import monix.connect.sqs.domain.{InboundMessage, QueueName, QueueUrl}
+import monix.connect.sqs.domain.{QueueName, QueueUrl}
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import org.apache.commons.codec.digest.DigestUtils.{md2Hex, md5Hex}
@@ -144,7 +144,7 @@ class SqsOperatorSuite extends AnyFlatSpecLike with Matchers with ScalaFutures w
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrls <- Task.traverse(queueNames)(sqs.operator.createQueue(_))
-        fullQueueList <- sqs.operator.listAllQueueUrls.toListL
+        fullQueueList <- sqs.operator.listQueueUrls().toListL
       } yield {
         fullQueueList should contain theSameElementsAs queueUrls
       }
@@ -161,7 +161,7 @@ class SqsOperatorSuite extends AnyFlatSpecLike with Matchers with ScalaFutures w
       for {
         _ <- Task.traverse(nonPrefixedQueueNames)(sqs.operator.createQueue(_))
         prefixedQueueUrls <- Task.traverse(prefixedQueueNames)(sqs.operator.createQueue(_))
-        resultList <- sqs.operator.listQueueUrls(prefix).toListL
+        resultList <- sqs.operator.listQueueUrls(Some(prefix)).toListL
       } yield {
         resultList.size shouldBe n
         resultList should contain theSameElementsAs prefixedQueueUrls.map(_.url)

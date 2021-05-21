@@ -23,11 +23,11 @@ import monix.reactive.Consumer
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.{SendMessageBatchRequest, SendMessageBatchResponse, SendMessageRequest, SendMessageResponse, SqsRequest, SqsResponse}
 import com.typesafe.scalalogging.StrictLogging
-import monix.connect.sqs.domain.{InboundMessage, QueueUrl}
+import monix.connect.sqs.domain.QueueUrl
+import monix.connect.sqs.domain.inbound.InboundMessage
 import monix.execution.cancelables.AssignableCancelable
 
 import scala.concurrent.Future
-import scala.concurrent.duration.FiniteDuration
 import scala.util.control.NonFatal
 
 class SqsSink[In, Request <: SqsRequest, Response <: SqsResponse] private[sqs](preProcessing: In => Request,
@@ -77,11 +77,10 @@ class SqsSink[In, Request <: SqsRequest, Response <: SqsResponse] private[sqs](p
 object SqsSink {
 
   def send(queueUrl: QueueUrl,
-           delayDuration: Option[FiniteDuration],
            sqsOp: SqsOp[SendMessageRequest, SendMessageResponse],
            asyncClient: SqsAsyncClient,
            stopOnError: Boolean): Consumer[InboundMessage, Unit] = {
-    val toJavaMessage = (message: InboundMessage) => message.toMessageRequest(queueUrl, delayDuration)
+    val toJavaMessage = (message: InboundMessage) => message.toMessageRequest(queueUrl)
     new SqsSink[InboundMessage, SendMessageRequest, SendMessageResponse](toJavaMessage, sqsOp, asyncClient, stopOnError)
   }
 }
