@@ -21,6 +21,8 @@ import cats.effect.Resource
 import monix.eval.Task
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import monix.connect.aws.auth.MonixAwsConf
+import monix.connect.sqs.inbound.SqsProducer
+import monix.connect.sqs.outbound.SqsConsumer
 import monix.execution.annotations.UnsafeBecauseImpure
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient

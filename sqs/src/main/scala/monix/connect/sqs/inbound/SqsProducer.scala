@@ -1,8 +1,7 @@
-package monix.connect.sqs
+package monix.connect.sqs.inbound
 
-import monix.connect.sqs.SqsParBatchSink.groupMessagesInBatches
 import monix.connect.sqs.domain.QueueUrl
-import monix.connect.sqs.domain.inbound.InboundMessage
+import monix.connect.sqs.SqsOp
 import monix.eval.Task
 import monix.execution.Ack
 import monix.execution.Ack.Stop

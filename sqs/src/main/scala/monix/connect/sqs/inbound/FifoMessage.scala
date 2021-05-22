@@ -1,4 +1,4 @@
-package monix.connect.sqs.domain.inbound
+package monix.connect.sqs.inbound
 
 import monix.connect.sqs.MessageAttribute
 

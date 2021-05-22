@@ -1,6 +1,6 @@
 package monix.connect.sqs
 
-import monix.connect.sqs.domain.inbound.FifoMessage
+import monix.connect.sqs.inbound.FifoMessage
 import org.scalacheck.Gen
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers

@@ -1,7 +1,7 @@
 package monix.connect.sqs
 
 import monix.connect.sqs.domain.QueueName
-import monix.connect.sqs.domain.inbound.InboundMessage
+import monix.connect.sqs.inbound.InboundMessage
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
 import org.apache.commons.codec.digest.DigestUtils.md5Hex

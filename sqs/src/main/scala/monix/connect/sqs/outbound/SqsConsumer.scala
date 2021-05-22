@@ -1,8 +1,8 @@
-package monix.connect.sqs
+package monix.connect.sqs.outbound
 
 import com.typesafe.scalalogging.StrictLogging
-import monix.connect.sqs.domain.outbound.{DeletableMessage, ReceivedMessage}
 import monix.connect.sqs.domain.QueueUrl
+import monix.connect.sqs.{SqsOp, SqsOperator}
 import monix.eval.Task
 import monix.reactive.Observable
 import software.amazon.awssdk.services.sqs.SqsAsyncClient

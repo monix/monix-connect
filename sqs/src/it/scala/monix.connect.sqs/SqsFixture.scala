@@ -1,6 +1,6 @@
 package monix.connect.sqs
 
-import monix.connect.sqs.domain.inbound.{FifoMessage, StandardMessage}
+import monix.connect.sqs.inbound.{FifoMessage, StandardMessage}
 import monix.connect.sqs.domain.{QueueName, QueueUrl}
 import org.scalacheck.Gen
 import org.scalatest.TestSuite

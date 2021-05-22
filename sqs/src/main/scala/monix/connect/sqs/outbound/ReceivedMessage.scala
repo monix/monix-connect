@@ -1,4 +1,4 @@
-package monix.connect.sqs.domain.outbound
+package monix.connect.sqs.outbound
 
 import monix.connect.sqs.SqsOp
 import monix.connect.sqs.domain.QueueUrl

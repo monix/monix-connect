@@ -15,18 +15,18 @@
  * limitations under the License.
  */
 
-package monix.connect.sqs
+package monix.connect.sqs.inbound
 
-import monix.execution.{Ack, Callback, Scheduler}
-import monix.reactive.observers.Subscriber
-import monix.reactive.Consumer
-import software.amazon.awssdk.services.sqs.SqsAsyncClient
-import software.amazon.awssdk.services.sqs.model.{SendMessageRequest, SendMessageResponse, SqsRequest, SqsResponse}
 import com.typesafe.scalalogging.StrictLogging
+import monix.connect.sqs.SqsOp
 import monix.connect.sqs.domain.QueueUrl
-import monix.connect.sqs.domain.inbound.InboundMessage
 import monix.eval.Task
 import monix.execution.cancelables.AssignableCancelable
+import monix.execution.{Ack, Callback, Scheduler}
+import monix.reactive.Consumer
+import monix.reactive.observers.Subscriber
+import software.amazon.awssdk.services.sqs.SqsAsyncClient
+import software.amazon.awssdk.services.sqs.model.{SendMessageRequest, SendMessageResponse, SqsRequest, SqsResponse}
 
 import scala.concurrent.Future
 

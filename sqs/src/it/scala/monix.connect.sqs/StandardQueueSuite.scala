@@ -1,6 +1,6 @@
 package monix.connect.sqs
 
-import monix.connect.sqs.domain.inbound.InboundMessage
+import monix.connect.sqs.inbound.InboundMessage
 import monix.connect.sqs.domain.QueueName
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
