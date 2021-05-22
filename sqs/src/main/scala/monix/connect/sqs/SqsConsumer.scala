@@ -141,11 +141,12 @@ class SqsConsumer private[sqs](implicit asyncClient: SqsAsyncClient) extends Str
 
   /**
     * Single receive message task that responds with a list of
-    * **already** deleted messages from the specified `queueUrl`.
+    * **already** deleted messages, aka [[ReceivedMessage]],
+    * from the specified `queueUrl`.
     *
     * Meaning that the semantics that this method provides are **at most once**,
-    * since as the message is automatically deleted right after being consumed,
-    * in case there is a failure during the processing of the message,
+    * since the message is automatically deleted right after being consumed,
+    * in case there is a failure during the processing of the message
     * it would be lost as it could not be read again from the queue.
     *
     * @see [[receiveSingleManualDelete]] for at least once semantics.
@@ -158,12 +159,17 @@ class SqsConsumer private[sqs](implicit asyncClient: SqsAsyncClient) extends Str
     *                        Ensure that the HTTP response timeout of the [[NettyNioAsyncHttpClient]]
     *                        is longer than the WaitTimeSeconds parameter to avoid errors.
     *
-    * @return a list of [[DeletableMessage]]s of size of at most as `inFlightMessages` and the maximum available
-    *         in the queue at that time.
+    * @return a list of [[ReceivedMessage]]s of at most 10 messages (maximum configurable per request)
     */
   def receiveSingleAutoDelete(queueUrl: QueueUrl,
-                              waitTimeSeconds: FiniteDuration = Duration.Zero): Task[List[DeletableMessage]] = {
-    receiveSingleManualDelete(queueUrl, waitTimeSeconds = waitTimeSeconds)
+                              waitTimeSeconds: FiniteDuration = Duration.Zero): Task[List[ReceivedMessage]] = {
+    receiveSingleAutoDeleteInternal(queueUrl, waitTimeSeconds = waitTimeSeconds)
+  }
+
+  private[sqs] def receiveSingleAutoDeleteInternal(queueUrl: QueueUrl,
+                                                   waitTimeSeconds: FiniteDuration = Duration.Zero,
+                                                   visibilityTimeout: FiniteDuration = 30.seconds): Task[List[ReceivedMessage]] = {
+    receiveSingleManualDelete(queueUrl, waitTimeSeconds = waitTimeSeconds, visibilityTimeout = visibilityTimeout)
       .tapEval(Task.traverse(_)(_.deleteFromQueue()))
   }
 

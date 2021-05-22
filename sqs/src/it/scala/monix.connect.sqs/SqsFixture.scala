@@ -23,10 +23,9 @@ trait SqsFixture {
     SqsAsyncClient
       .builder
       .credentialsProvider(defaultAwsCredProvider)
-      .endpointOverride(new URI("http://localhost:4576"))
+      .endpointOverride(new URI("http://localhost:9324"))
       .region(Region.US_EAST_1)
       .build
-//9324
 
   val fifoDeduplicationQueueAttr = Map(
     QueueAttributeName.FIFO_QUEUE -> "true",

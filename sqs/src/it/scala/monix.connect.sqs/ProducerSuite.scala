@@ -27,7 +27,7 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
-        response <- sqs.producer.parSendBatch(messages, queueUrl)
+        response <- sqs.producer.sendParBatch(messages, queueUrl)
       } yield {
         val batchEntryResponses = response.flatten(_.successful().asScala)
         response.exists(_.hasFailed()) shouldBe false
@@ -39,18 +39,33 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
 
   it must "allow passing a group of 10 messages by splitting requests in parallel batches of at most 10 entries" in {
     val queueName = genFifoQueueName.sample.get
-    val numOfEntries = Gen.choose(11, 100).sample.get
+    val numOfEntries = Gen.choose(11, 199).sample.get
     val messages = Gen.listOfN(numOfEntries, genFifoMessage(defaultGroupId)).sample.get
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
-        response <- sqs.producer.parSendBatch(messages, queueUrl)
+        responses <- sqs.producer.sendParBatch(messages, queueUrl)
       } yield {
-        response.size shouldBe (numOfEntries / 10) + 1
-        response.exists(_.hasFailed()) shouldBe false
-        val successfulResponses = response.flatten(_.successful().asScala)
+        responses.size shouldBe (numOfEntries / 10) + (if((numOfEntries % 10)==0) 0 else 1)
+        responses.exists(_.hasFailed()) shouldBe false
+        val successfulResponses = responses.flatten(_.successful().asScala)
         successfulResponses.size shouldBe numOfEntries
         successfulResponses.map(_.md5OfMessageBody()) shouldBe messages.map(msg => md5Hex(msg.body))
+
+      }
+    }.runSyncUnsafe()
+  }
+
+  it must "not fail when on empty messages list" in {
+    val queueName = genFifoQueueName.sample.get
+    val messages = List.empty[InboundMessage]
+    Sqs.fromConfig.use { sqs =>
+      for {
+        queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
+        response <- sqs.producer.sendParBatch(messages, queueUrl)
+      } yield {
+        response.size shouldBe 0
+        messages.size shouldBe 0
       }
     }.runSyncUnsafe()
   }
@@ -61,7 +76,7 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
-        response <- Observable.now(messages).consumeWith(sqs.producer.parBatchSink(queueUrl))
+        response <- Observable.now(messages).consumeWith(sqs.producer.sendParBatchSink(queueUrl))
         result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(2.seconds).firstL
       } yield {
         response shouldBe a [Unit]
@@ -70,13 +85,13 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
     }.runSyncUnsafe()
   }
 
-  it should "do nothing and gracefully terminate on completion, when consuming an empty observable" in {
+  it should "do nothing when consuming an empty observable, and gracefully terminate on completion" in {
     val queueName = genFifoQueueName.sample.get
 
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
-        response <- Observable.empty[List[InboundMessage]].consumeWith(sqs.producer.parBatchSink(queueUrl))
+        response <- Observable.empty[List[InboundMessage]].consumeWith(sqs.producer.sendParBatchSink(queueUrl))
         result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(1.second).firstL
       } yield {
         response shouldBe a [Unit]
@@ -92,7 +107,7 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
-        response <- Observable.now(messages).consumeWith(sqs.producer.parBatchSink(queueUrl))
+        response <- Observable.now(messages).consumeWith(sqs.producer.sendParBatchSink(queueUrl))
         result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(1.second).firstL
       } yield {
         response shouldBe a [Unit]
@@ -108,8 +123,8 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
-        response <- Observable.fromIterable(messages).consumeWith(sqs.producer.sink(queueUrl))
-        result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(1.second).firstL
+        response <- Observable.fromIterable(messages).consumeWith(sqs.producer.sendSink(queueUrl))
+        result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(3.second).firstL
       } yield {
         response shouldBe a [Unit]
         result.map(_.body) shouldBe messages.map(_.body)
@@ -117,13 +132,13 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
     }.runSyncUnsafe()
   }
 
-  it should "do nothing and gracefully terminate `onCompletion` when consuming an empty observable" in {
+  it should "do nothing when consuming an empty observable, and gracefully terminate `onCompletion` " in {
     val queueName = genFifoQueueName.sample.get
 
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
-        response <- Observable.empty[InboundMessage].consumeWith(sqs.producer.sink(queueUrl))
+        response <- Observable.empty[InboundMessage].consumeWith(sqs.producer.sendSink(queueUrl))
         result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(1.second).firstL
       } yield {
         response shouldBe a [Unit]
@@ -131,7 +146,5 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
       }
     }.runSyncUnsafe()
   }
-
-
 
 }

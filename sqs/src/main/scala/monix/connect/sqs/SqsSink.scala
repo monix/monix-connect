@@ -21,19 +21,19 @@ import monix.execution.{Ack, Callback, Scheduler}
 import monix.reactive.observers.Subscriber
 import monix.reactive.Consumer
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
-import software.amazon.awssdk.services.sqs.model.{SendMessageBatchRequest, SendMessageBatchResponse, SendMessageRequest, SendMessageResponse, SqsRequest, SqsResponse}
+import software.amazon.awssdk.services.sqs.model.{SendMessageRequest, SendMessageResponse, SqsRequest, SqsResponse}
 import com.typesafe.scalalogging.StrictLogging
 import monix.connect.sqs.domain.QueueUrl
 import monix.connect.sqs.domain.inbound.InboundMessage
+import monix.eval.Task
 import monix.execution.cancelables.AssignableCancelable
 
 import scala.concurrent.Future
-import scala.util.control.NonFatal
 
 class SqsSink[In, Request <: SqsRequest, Response <: SqsResponse] private[sqs](preProcessing: In => Request,
-                                                                  sqsOp: SqsOp[Request, Response],
-                                                                  sqsClient: SqsAsyncClient,
-                                                                  stopOnError: Boolean)
+                                                                               sqsOp: SqsOp[Request, Response],
+                                                                               onErrorHandleWith: Throwable => Task[Ack])
+                                                                              (implicit sqsClient: SqsAsyncClient)
   extends Consumer[In, Unit] with StrictLogging {
 
   override def createSubscriber(cb: Callback[Throwable, Unit], s: Scheduler): (Subscriber[In], AssignableCancelable) = {
@@ -42,22 +42,8 @@ class SqsSink[In, Request <: SqsRequest, Response <: SqsResponse] private[sqs](p
       implicit val scheduler: Scheduler = s
 
       def onNext(sqsRequest: In): Future[Ack] = {
-
         sqsOp.execute(preProcessing(sqsRequest))(sqsClient)
-          .onErrorRecover {
-            case NonFatal(ex) => {
-              if (stopOnError) {
-                onError(ex)
-                val errorMessage = "Unexpected error in SqsSink, stopping subscription..."
-                logger.error(errorMessage, ex)
-                Ack.Stop
-              }
-              else {
-                logger.error(s"Unexpected error in SqsSink, continuing... ", ex)
-                Ack.Continue
-              }
-            }
-          }
+          .onErrorHandleWith(onErrorHandleWith)
           .as(Ack.Continue)
           .runToFuture
       }
@@ -65,8 +51,10 @@ class SqsSink[In, Request <: SqsRequest, Response <: SqsResponse] private[sqs](p
       def onComplete(): Unit =
         cb.onSuccess(())
 
-      def onError(ex: Throwable): Unit =
+      def onError(ex: Throwable): Unit = {
+        logger.error("Unexpected error in SqsSink.", ex)
         cb.onError(ex)
+      }
     }
 
     (sub, AssignableCancelable.single())
@@ -78,9 +66,9 @@ object SqsSink {
 
   def send(queueUrl: QueueUrl,
            sqsOp: SqsOp[SendMessageRequest, SendMessageResponse],
-           asyncClient: SqsAsyncClient,
-           stopOnError: Boolean): Consumer[InboundMessage, Unit] = {
+           onErrorHandleWith: Throwable => Task[Ack])
+           (implicit asyncClient: SqsAsyncClient): Consumer[InboundMessage, Unit] = {
     val toJavaMessage = (message: InboundMessage) => message.toMessageRequest(queueUrl)
-    new SqsSink[InboundMessage, SendMessageRequest, SendMessageResponse](toJavaMessage, sqsOp, asyncClient, stopOnError)
+    new SqsSink(toJavaMessage, sqsOp, onErrorHandleWith)
   }
 }

@@ -11,11 +11,10 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
-import software.amazon.awssdk.services.sqs.model.QueueAttributeName
 
 import scala.concurrent.duration._
 
-class SqsStandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with SqsFixture with BeforeAndAfterAll {
+class StandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with SqsFixture with BeforeAndAfterAll {
 
   implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 300.milliseconds)
   implicit val sqsClient: Sqs = Sqs.createUnsafe(asyncClient)
@@ -52,6 +51,23 @@ class SqsStandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutu
     }.runSyncUnsafe()
   }
 
+  it should "respect delayDuration of messages " in {
+    val queueName = genQueueName.sample.get
+    val delayedMessage =  genStandardMessage.map(_.copy(delayDuration = Some(5.seconds))).sample.get
+    Sqs.fromConfig.use { case Sqs(receiver, producer, operator) =>
+      for {
+        queueUrl <- operator.createQueue(queueName)
+        _ <- producer.sendSingleMessage(delayedMessage, queueUrl)
+        receivedMessages1 <- Task.sleep(2.seconds) *> receiver.receiveSingleAutoDelete(queueUrl)
+        receivedMessages2 <- Task.sleep(5.seconds) *> receiver.receiveSingleAutoDelete(queueUrl)
+      } yield {
+        receivedMessages1 shouldBe List.empty
+        receivedMessages2.size shouldBe 1
+        receivedMessages2.head.body shouldBe delayedMessage.body
+      }
+    }.runSyncUnsafe()
+  }
+
   "A stream of received messages" can "be atomically consumed with automatic deletes" in {
     val queueName = genQueueName.sample.get
     val n = 10
@@ -60,7 +76,7 @@ class SqsStandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutu
       for {
         queueUrl <- operator.createQueue(queueName)
         _ <- Observable.fromIterable(messages)
-          .consumeWith(producer.sink(queueUrl))
+          .consumeWith(producer.sendSink(queueUrl))
         receivedMessages <- receiver.receiveAutoDelete(queueUrl)
           .take(n).toListL
       } yield {
@@ -77,7 +93,7 @@ class SqsStandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutu
       for {
         queueUrl <- operator.createQueue(queueName)
         _ <- Observable.fromIterable(messages)
-          .consumeWith(producer.sink(queueUrl))
+          .consumeWith(producer.sendSink(queueUrl))
         receivedMessages <- receiver.receiveManualDelete(queueUrl)
           .mapEvalF(deletable => deletable.deleteFromQueue().as(deletable))
           .take(n).toListL

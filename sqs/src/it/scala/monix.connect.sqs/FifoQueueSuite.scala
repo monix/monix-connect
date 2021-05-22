@@ -7,14 +7,15 @@ import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
 import org.apache.commons.codec.digest.DigestUtils.md5Hex
 import org.scalacheck.Gen
-import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
-import software.amazon.awssdk.services.sqs.model.QueueAttributeName
+import software.amazon.awssdk.services.sqs.model.{QueueAttributeName, SqsException}
 
 import scala.concurrent.duration._
+import scala.util.Failure
 
-class SqsFifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with SqsFixture {
+class FifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with SqsFixture with Eventually {
 
   implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 300.milliseconds)
   implicit val sqsClient: Sqs = Sqs.createUnsafe(asyncClient)
@@ -43,7 +44,7 @@ class SqsFifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures 
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
         isGroupIdRequired <- sqs.producer.sendSingleMessage(message, queueUrl)
-          .onErrorHandle(ex => if(ex.getMessage.contains("The request must contain the parameter MessageGroupId")) true else false)
+          .onErrorHandle(ex => if (ex.getMessage.contains("The request must contain the parameter MessageGroupId")) true else false)
       } yield {
         isGroupIdRequired shouldBe true
       }
@@ -57,7 +58,7 @@ class SqsFifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures 
       for {
         manualDedupQueueUrl <- sqs.operator.createQueue(genFifoQueueName.sample.get, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
         failsWithoutDedupMechanism <- sqs.producer.sendSingleMessage(messageWithoutDeduplicationId, manualDedupQueueUrl)
-          .onErrorHandle(ex => if(ex.getMessage.contains("The queue should either have ContentBasedDeduplication enabled or MessageDeduplicationId provided explicitly")) true else false)
+          .onErrorHandle(ex => if (ex.getMessage.contains("The queue should either have ContentBasedDeduplication enabled or MessageDeduplicationId provided explicitly")) true else false)
       } yield {
         failsWithoutDedupMechanism shouldBe true
       }
@@ -125,8 +126,8 @@ class SqsFifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures 
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
-        _ <- Observable.fromIterable(messages).consumeWith(sqs.producer.sink(queueUrl))
-        _ <- Observable.fromIterable(messages).consumeWith(sqs.producer.sink(queueUrl))
+        _ <- Observable.fromIterable(messages).consumeWith(sqs.producer.sendSink(queueUrl))
+        _ <- Observable.fromIterable(messages).consumeWith(sqs.producer.sendSink(queueUrl))
         result <- {
           val singleReceiveTask = sqs.consumer.receiveSingleManualDelete(queueUrl, inFlightMessages = 7)
           singleReceiveTask.flatMap(a => singleReceiveTask.map((a, _)))
@@ -148,12 +149,11 @@ class SqsFifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures 
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
-        _ <- Observable.fromIterable(messagesGroup1).consumeWith(sqs.producer.sink(queueUrl))
-        _ <- Observable.fromIterable(messagesGroup2).consumeWith(sqs.producer.sink(queueUrl))
-        result <- {
-          val singleReceiveTask = sqs.consumer.receiveSingleManualDelete(queueUrl, inFlightMessages = 10)
-          singleReceiveTask.flatMap(a => singleReceiveTask.map((a, _)))
-        }
+        _ <- Observable.fromIterable(messagesGroup1).consumeWith(sqs.producer.sendSink(queueUrl))
+        _ <- Observable.fromIterable(messagesGroup2).consumeWith(sqs.producer.sendSink(queueUrl))
+        singleReceiveTask = sqs.consumer.receiveSingleManualDelete(queueUrl, inFlightMessages = 10)
+        result <- Task.sleep(1.second) >> singleReceiveTask.flatMap(a => singleReceiveTask.map((a, _)))
+
       } yield {
         result._1.size shouldBe 10
         result._2.size shouldBe 6
@@ -183,6 +183,26 @@ class SqsFifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures 
         receivedMessages.map(_.body) should contain theSameElementsAs List.fill(3)(body)
       }
     }.runSyncUnsafe()
+  }
+
+  "Delay duration" must "be invalid in fifo queues" in {
+    val body: String = genId.sample.get
+    val groupId: Option[String] = Gen.some(genGroupId).sample.get
+    val deduplicationId: Option[String] = Gen.some(genId).sample.get
+    val delayDuration: Option[FiniteDuration] = Some(5.seconds)
+    val queueName = genFifoQueueName.sample.get
+    val delayedMessage: InboundMessage = new InboundMessage(body, groupId = groupId, deduplicationId = deduplicationId, delayDuration = delayDuration)
+    val attempt =
+      Sqs.fromConfig.use { case Sqs(_, producer, operator) =>
+        for {
+          queueUrl <- operator.createQueue(queueName, attributes = fifoDeduplicationQueueAttr)
+          invalidRequest <- producer.sendSingleMessage(delayedMessage, queueUrl)
+        } yield invalidRequest
+      }.attempt.runSyncUnsafe()
+
+    attempt shouldBe a[Left[Throwable, _]]
+    attempt.toTry.failed.get shouldBe a[SqsException]
+    attempt.toTry.failed.get.getMessage.contains("DelaySeconds is invalid. The request include parameter that is not valid for this queue type") shouldBe true
   }
 
 }

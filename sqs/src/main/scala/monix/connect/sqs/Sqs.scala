@@ -27,7 +27,6 @@ import software.amazon.awssdk.http.async.SdkAsyncHttpClient
 import software.amazon.awssdk.regions.Region
 
 object Sqs {
-  self =>
 
   /**
     * Provides a resource that uses the values from the
@@ -46,7 +45,7 @@ object Sqs {
         asyncClient <- Task.now(AsyncClientConversions.fromMonixAwsConf(clientConf))
       } yield asyncClient
     }(asyncClient => Task.evalAsync(asyncClient.close()))
-      .map(self.createUnsafe(_))
+      .map(this.createUnsafe(_))
   }
 
 
@@ -85,7 +84,7 @@ object Sqs {
         AsyncClientConversions.from(credentialsProvider, region, endpoint, httpClient)
       }
     }(asyncClient => Task.evalAsync(asyncClient.close()))
-      .map(self.createUnsafe(_))
+      .map(this.createUnsafe(_))
   }
 
   /**
@@ -172,9 +171,9 @@ object Sqs {
                     endpoint: Option[String] = None,
                     httpClient: Option[SdkAsyncHttpClient] = None): Sqs = {
     val sqsAsyncClient = AsyncClientConversions.from(credentialsProvider, region, endpoint, httpClient)
-    self.createUnsafe(sqsAsyncClient)
+    createUnsafe(sqsAsyncClient)
   }
 
 }
 
-final case class Sqs private[sqs](consumer: SqsConsumer, producer: SqsProducer, operator: SqsOperator)
+case class Sqs private[sqs](consumer: SqsConsumer, producer: SqsProducer, operator: SqsOperator)
