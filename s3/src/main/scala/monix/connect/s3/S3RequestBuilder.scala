@@ -36,8 +36,7 @@ private[s3] object S3RequestBuilder {
     * A builder for [[DeleteBucketRequest]]
     */
   def deleteBucket(bucket: String): DeleteBucketRequest = {
-    DeleteBucketRequest
-      .builder
+    DeleteBucketRequest.builder
       .bucket(bucket)
       .build
   }
@@ -50,8 +49,7 @@ private[s3] object S3RequestBuilder {
     mfa: Option[String] = None,
     requestPayer: Option[String] = None,
     versionId: Option[String] = None): DeleteObjectRequest = {
-    val request = DeleteObjectRequest
-      .builder
+    val request = DeleteObjectRequest.builder
       .bucket(bucket)
       .key(key)
     bypassGovernanceRetention.map(request.bypassGovernanceRetention(_))
@@ -71,8 +69,7 @@ private[s3] object S3RequestBuilder {
     grantWrite: Option[String] = None,
     grantWriteACP: Option[String] = None,
     objectLockEnabledForBucket: Option[Boolean] = None): CreateBucketRequest = {
-    val request = CreateBucketRequest
-      .builder
+    val request = CreateBucketRequest.builder
       .bucket(bucket)
     acl.map(request.acl)
     grantFullControl.map(request.grantFullControl)
@@ -86,8 +83,7 @@ private[s3] object S3RequestBuilder {
 
   /** A builder for [[CompletedPart]]. */
   def completedPart(partN: Int, uploadPartResp: UploadPartResponse): CompletedPart =
-    CompletedPart
-      .builder
+    CompletedPart.builder
       .partNumber(partN)
       .eTag(uploadPartResp.eTag)
       .build
@@ -100,8 +96,7 @@ private[s3] object S3RequestBuilder {
     completedParts: List[CompletedPart],
     requestPayer: Option[RequestPayer]): CompleteMultipartUploadRequest = {
     val completedMultipartUpload = CompletedMultipartUpload.builder.parts(completedParts.asJava).build()
-    val request: CompleteMultipartUploadRequest.Builder = CompleteMultipartUploadRequest
-      .builder
+    val request: CompleteMultipartUploadRequest.Builder = CompleteMultipartUploadRequest.builder
       .bucket(bucket)
       .key(key)
       .uploadId(uploadId)
@@ -142,8 +137,7 @@ private[s3] object S3RequestBuilder {
     destinationBucket: String,
     destinationKey: String,
     copyObjectSettings: CopyObjectSettings): CopyObjectRequest = {
-    val request = CopyObjectRequest
-      .builder
+    val request = CopyObjectRequest.builder
       .copySource(sourceBucket + "/" + sourceKey)
       .destinationBucket(destinationBucket)
       .destinationKey(destinationKey)
@@ -226,7 +220,7 @@ private[s3] object S3RequestBuilder {
     startAfter: Option[String] = None,
     requestPayer: Option[RequestPayer] = None): ListObjectsV2Request = {
     val request = ListObjectsV2Request.builder().bucket(bucket)
-    fetchOwner.map(request.fetchOwner (_))
+    fetchOwner.map(request.fetchOwner(_))
     startAfter.map(request.startAfter)
     continuationToken.map(request.continuationToken)
     maxKeys.map(request.maxKeys(_))
@@ -236,15 +230,15 @@ private[s3] object S3RequestBuilder {
   }
 
   /** A builder for [[UploadPartRequest]]. */
-  def uploadPartRequest(bucket: String,
-                        key: String,
-                        partN: Int,
-                        uploadId: String,
-                        contentLength: Long,
-                        uploadSettings: UploadSettings = DefaultUploadSettings): UploadPartRequest = {
+  def uploadPartRequest(
+    bucket: String,
+    key: String,
+    partN: Int,
+    uploadId: String,
+    contentLength: Long,
+    uploadSettings: UploadSettings = DefaultUploadSettings): UploadPartRequest = {
     val request =
-      UploadPartRequest
-        .builder
+      UploadPartRequest.builder
         .bucket(bucket)
         .key(key)
         .partNumber(partN)
@@ -258,10 +252,11 @@ private[s3] object S3RequestBuilder {
   }
 
   /** Builder for [[PutObjectRequest]]. */
-  def putObjectRequest(bucket: String,
-                       key: String,
-                       contentLength: Option[Long],
-                       uploadSettings: UploadSettings = DefaultUploadSettings): PutObjectRequest = {
+  def putObjectRequest(
+    bucket: String,
+    key: String,
+    contentLength: Option[Long],
+    uploadSettings: UploadSettings = DefaultUploadSettings): PutObjectRequest = {
     val request = PutObjectRequest
       .builder()
       .bucket(bucket)
