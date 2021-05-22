@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
- * See the project homepage at: https://monix.io
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
+ * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,13 +43,12 @@ object Sqs {
   def fromConfig: Resource[Task, Sqs] = {
     Resource.make {
       for {
-        clientConf <- MonixAwsConf.load
+        clientConf  <- MonixAwsConf.load
         asyncClient <- Task.now(AsyncClientConversions.fromMonixAwsConf(clientConf))
       } yield asyncClient
     }(asyncClient => Task.evalAsync(asyncClient.close()))
       .map(this.createUnsafe(_))
   }
-
 
   /**
     * Creates a [[Resource]] that using passed-by-parameter
@@ -76,10 +75,10 @@ object Sqs {
     */
 
   def create(
-              credentialsProvider: AwsCredentialsProvider,
-              region: Region,
-              endpoint: Option[String] = None,
-              httpClient: Option[SdkAsyncHttpClient] = None): Resource[Task, Sqs] = {
+    credentialsProvider: AwsCredentialsProvider,
+    region: Region,
+    endpoint: Option[String] = None,
+    httpClient: Option[SdkAsyncHttpClient] = None): Resource[Task, Sqs] = {
 
     Resource.make {
       Task.evalAsync {
@@ -125,7 +124,7 @@ object Sqs {
     *     .region(AWS_GLOBAL)
     *     .build()
     *
-    *     val s3: S3 = S3.createUnsafe(s3AsyncClient)
+    *     val sqs: Sqs = Sqs.createUnsafe(sqsAsyncClient)
     * }}}
     *
     * @see [[Sqs.fromConfig]] and [[Sqs.create]] for a pure implementation.
@@ -168,14 +167,14 @@ object Sqs {
     */
   @UnsafeBecauseImpure
   def createUnsafe(
-                    credentialsProvider: AwsCredentialsProvider,
-                    region: Region,
-                    endpoint: Option[String] = None,
-                    httpClient: Option[SdkAsyncHttpClient] = None): Sqs = {
+    credentialsProvider: AwsCredentialsProvider,
+    region: Region,
+    endpoint: Option[String] = None,
+    httpClient: Option[SdkAsyncHttpClient] = None): Sqs = {
     val sqsAsyncClient = AsyncClientConversions.from(credentialsProvider, region, endpoint, httpClient)
     createUnsafe(sqsAsyncClient)
   }
 
 }
 
-case class Sqs private[sqs](consumer: SqsConsumer, producer: SqsProducer, operator: SqsOperator)
+case class Sqs private[sqs] (consumer: SqsConsumer, producer: SqsProducer, operator: SqsOperator)

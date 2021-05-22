@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
- * See the project homepage at: https://monix.io
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
+ * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,10 @@ import software.amazon.awssdk.services.sqs.model.{SendMessageRequest, SendMessag
 
 import scala.concurrent.Future
 
-class SqsSink[In, Request <: SqsRequest, Response <: SqsResponse] private[sqs](preProcessing: In => Request,
-                                                                               sqsOp: SqsOp[Request, Response],
-                                                                               onErrorHandleWith: Throwable => Task[Ack])
-                                                                              (implicit sqsClient: SqsAsyncClient)
+class SqsSink[In, Request <: SqsRequest, Response <: SqsResponse] private[sqs] (
+  preProcessing: In => Request,
+  sqsOp: SqsOp[Request, Response],
+  onErrorHandleWith: Throwable => Task[Ack])(implicit sqsClient: SqsAsyncClient)
   extends Consumer[In, Unit] with StrictLogging {
 
   override def createSubscriber(cb: Callback[Throwable, Unit], s: Scheduler): (Subscriber[In], AssignableCancelable) = {
@@ -42,7 +42,8 @@ class SqsSink[In, Request <: SqsRequest, Response <: SqsResponse] private[sqs](p
       implicit val scheduler: Scheduler = s
 
       def onNext(sqsRequest: In): Future[Ack] = {
-        sqsOp.execute(preProcessing(sqsRequest))(sqsClient)
+        sqsOp
+          .execute(preProcessing(sqsRequest))(sqsClient)
           .onErrorHandleWith(onErrorHandleWith)
           .as(Ack.Continue)
           .runToFuture
@@ -64,10 +65,10 @@ class SqsSink[In, Request <: SqsRequest, Response <: SqsResponse] private[sqs](p
 
 object SqsSink {
 
-  def send(queueUrl: QueueUrl,
-           sqsOp: SqsOp[SendMessageRequest, SendMessageResponse],
-           onErrorHandleWith: Throwable => Task[Ack])
-           (implicit asyncClient: SqsAsyncClient): Consumer[InboundMessage, Unit] = {
+  def send(
+    queueUrl: QueueUrl,
+    sqsOp: SqsOp[SendMessageRequest, SendMessageResponse],
+    onErrorHandleWith: Throwable => Task[Ack])(implicit asyncClient: SqsAsyncClient): Consumer[InboundMessage, Unit] = {
     val toJavaMessage = (message: InboundMessage) => message.toMessageRequest(queueUrl)
     new SqsSink(toJavaMessage, sqsOp, onErrorHandleWith)
   }

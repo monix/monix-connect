@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
+ * See the project homepage at: https://connect.monix.io
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package monix.connect.sqs
 
 import monix.connect.sqs.domain.{QueueName, QueueUrl}
@@ -6,7 +23,29 @@ import monix.execution.internal.InternalApi
 import monix.reactive.Observable.Transformer
 import monix.reactive.Observable
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
-import software.amazon.awssdk.services.sqs.model.{AddPermissionRequest, ChangeMessageVisibilityRequest, CreateQueueRequest, DeleteMessageRequest, DeleteQueueRequest, GetQueueAttributesRequest, GetQueueUrlRequest, ListDeadLetterSourceQueuesRequest, ListQueueTagsRequest, ListQueuesRequest, PurgeQueueRequest, QueueAttributeName, QueueDoesNotExistException, RemovePermissionRequest, SendMessageBatchRequest, SendMessageResponse, SetQueueAttributesRequest, SqsRequest, SqsResponse, TagQueueRequest, UntagQueueRequest}
+import software.amazon.awssdk.services.sqs.model.{
+  AddPermissionRequest,
+  ChangeMessageVisibilityRequest,
+  CreateQueueRequest,
+  DeleteMessageRequest,
+  DeleteQueueRequest,
+  GetQueueAttributesRequest,
+  GetQueueUrlRequest,
+  ListDeadLetterSourceQueuesRequest,
+  ListQueueTagsRequest,
+  ListQueuesRequest,
+  PurgeQueueRequest,
+  QueueAttributeName,
+  QueueDoesNotExistException,
+  RemovePermissionRequest,
+  SendMessageBatchRequest,
+  SendMessageResponse,
+  SetQueueAttributesRequest,
+  SqsRequest,
+  SqsResponse,
+  TagQueueRequest,
+  UntagQueueRequest
+}
 
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
@@ -15,7 +54,7 @@ object SqsOperator {
   def create(implicit asyncClient: SqsAsyncClient) = new SqsOperator(asyncClient)
 }
 
-class SqsOperator private[sqs](asyncClient: SqsAsyncClient) {
+class SqsOperator private[sqs] (asyncClient: SqsAsyncClient) {
 
   /** todo test
     * Adds a permission to a queue for a specific <a href="https://docs.aws.amazon.com/general/latest/gr/glos-chap.html#P">principal</a>.
@@ -58,15 +97,17 @@ class SqsOperator private[sqs](asyncClient: SqsAsyncClient) {
     * @see also the aws sqs api docs, where the above come from ;)
     *
     */
-  def addPermission(queueUrl: QueueUrl,
-                    actions: List[String],
-                    awsAccountIds: List[String],
-                    label: String): Task[Unit] = {
+  def addPermission(
+    queueUrl: QueueUrl,
+    actions: List[String],
+    awsAccountIds: List[String],
+    label: String): Task[Unit] = {
     val addPermissionReq = AddPermissionRequest.builder
       .queueUrl(queueUrl.url)
       .actions(actions: _*)
       .awsAccountIds(awsAccountIds: _*)
-      .label(label).build
+      .label(label)
+      .build
     SqsOp.addPermission.execute(addPermissionReq)(asyncClient).void
   }
 
@@ -78,10 +119,11 @@ class SqsOperator private[sqs](asyncClient: SqsAsyncClient) {
     *              Maximum 80 characters. Allowed characters include alphanumeric
     *              characters, hyphens (-), and underscores (_).
     */
-  def removePermission(queueUrl: QueueUrl,
-                       label: String): Task[Unit] = {
+  def removePermission(queueUrl: QueueUrl, label: String): Task[Unit] = {
     val removePermissionRequest = RemovePermissionRequest.builder
-      .queueUrl(queueUrl.url).label(label).build
+      .queueUrl(queueUrl.url)
+      .label(label)
+      .build
     SqsOp.removePermission.execute(removePermissionRequest)(asyncClient).void
   }
 
@@ -133,14 +175,17 @@ class SqsOperator private[sqs](asyncClient: SqsAsyncClient) {
     *                   See the Amazon Single Queue Service Developer Guide for more details.
     *
     */
-  def createQueue(queueName: QueueName,
-                  tags: Map[String, String] = Map.empty,
-                  attributes: Map[QueueAttributeName, String] = Map.empty): Task[QueueUrl] = {
+  def createQueue(
+    queueName: QueueName,
+    tags: Map[String, String] = Map.empty,
+    attributes: Map[QueueAttributeName, String] = Map.empty): Task[QueueUrl] = {
     val createQueueRequest = CreateQueueRequest.builder
       .queueName(queueName.name)
       .tags(tags.asJava)
-      .attributes(attributes.asJava).build
-    SqsOp.createQueue.execute(createQueueRequest)(asyncClient)
+      .attributes(attributes.asJava)
+      .build
+    SqsOp.createQueue
+      .execute(createQueueRequest)(asyncClient)
       .map(response => QueueUrl(response.queueUrl))
   }
 
@@ -161,8 +206,8 @@ class SqsOperator private[sqs](asyncClient: SqsAsyncClient) {
         } else {
           Task.raiseError(ex)
         }
-      }.map(_.isDefined)
-
+      }
+      .map(_.isDefined)
 
   /**
     * Get the [[QueueUrl]] of an existing Amazon SQS queue.
@@ -174,8 +219,7 @@ class SqsOperator private[sqs](asyncClient: SqsAsyncClient) {
     * @param queueName the name of the queue.
     * @param queueOwnerAWSAccountId the AWS account ID of the account that created the queue.
     */
-  def getQueueUrl(queueName: QueueName,
-                  queueOwnerAWSAccountId: Option[String] = None): Task[QueueUrl] = {
+  def getQueueUrl(queueName: QueueName, queueOwnerAWSAccountId: Option[String] = None): Task[QueueUrl] = {
     val requestBuilder = GetQueueUrlRequest.builder.queueName(queueName.name)
     queueOwnerAWSAccountId.map(requestBuilder.queueOwnerAWSAccountId)
     SqsOp.getQueueUrl.execute(requestBuilder.build)(asyncClient).map(r => QueueUrl(r.queueUrl))
@@ -188,14 +232,16 @@ class SqsOperator private[sqs](asyncClient: SqsAsyncClient) {
     * @return
     */
   def getQueueAttributes(queueUrl: QueueUrl): Task[Map[QueueAttributeName, String]] = {
-    val getAttributesRequest = GetQueueAttributesRequest.builder.queueUrl(queueUrl.url).attributeNames(QueueAttributeName.ALL).build
-    SqsOp.getQueueAttributes.execute(getAttributesRequest)(asyncClient)
+    val getAttributesRequest =
+      GetQueueAttributesRequest.builder.queueUrl(queueUrl.url).attributeNames(QueueAttributeName.ALL).build
+    SqsOp.getQueueAttributes
+      .execute(getAttributesRequest)(asyncClient)
       .map(_.attributes.asScala.toMap)
   }
 
   //todo test
   def isFifoQueue(queueName: QueueName): Task[Boolean] = {
-    if(queueName.name.endsWith(".fifo"))
+    if (queueName.name.endsWith(".fifo"))
       existsQueue(queueName)
     else Task.now(false)
   }
@@ -221,13 +267,12 @@ class SqsOperator private[sqs](asyncClient: SqsAsyncClient) {
     * @param maxResults specify the maximum number of queueUrls to be listed.
     * @return a stream of [[QueueUrl]]s from the current region.
     */
-  def listQueueUrls(queuePrefix: Option[String] = None,
-                    maxResults: Int = 1000): Observable[QueueUrl] = {
+  def listQueueUrls(queuePrefix: Option[String] = None, maxResults: Int = 1000): Observable[QueueUrl] = {
     val listRequestBuilder = ListQueuesRequest.builder
       .maxResults(maxResults)
-      queuePrefix.map(listRequestBuilder.queueNamePrefix)
+    queuePrefix.map(listRequestBuilder.queueNamePrefix)
     for {
-      listResponse <- Observable.fromReactivePublisher{
+      listResponse <- Observable.fromReactivePublisher {
         asyncClient.listQueuesPaginator(listRequestBuilder.build)
       }
       queueUrl <- Observable.fromIterable(listResponse.queueUrls.asScala)
@@ -288,9 +333,9 @@ class SqsOperator private[sqs](asyncClient: SqsAsyncClient) {
     *                 can be obtained from [[getQueueUrl]].
     * @param attributes the map of attributes to be set.
     */
-  def setQueueAttributes(queueUrl: QueueUrl,
-                         attributes: Map[QueueAttributeName, String]): Task[Unit] = {
-    val setAttributesRequest = SetQueueAttributesRequest.builder.queueUrl(queueUrl.url).attributes(attributes.asJava).build
+  def setQueueAttributes(queueUrl: QueueUrl, attributes: Map[QueueAttributeName, String]): Task[Unit] = {
+    val setAttributesRequest =
+      SetQueueAttributesRequest.builder.queueUrl(queueUrl.url).attributes(attributes.asJava).build
     SqsOp.setQueueAttributes.execute(setAttributesRequest)(asyncClient).void
   }
 
@@ -323,10 +368,9 @@ class SqsOperator private[sqs](asyncClient: SqsAsyncClient) {
   }
 
   def transformer[In <: SqsRequest, Out <: SqsResponse](
-                                                         implicit
-                                                         sqsOp: SqsOp[In, Out]): Transformer[In, Out] = { inObservable: Observable[In] =>
+    implicit
+    sqsOp: SqsOp[In, Out]): Transformer[In, Out] = { inObservable: Observable[In] =>
     inObservable.mapEval(in => sqsOp.execute(in)(asyncClient))
   }
-
 
 }

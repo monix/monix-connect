@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2020-2020 by The Monix Connect Project Developers.
- * See the project homepage at: https://monix.io
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
+ * See the project homepage at: https://connect.monix.io
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,46 @@ import monix.eval.Task
 
 import java.util.concurrent.CompletableFuture
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
-import software.amazon.awssdk.services.sqs.model.{AddPermissionRequest, AddPermissionResponse, ChangeMessageVisibilityRequest, ChangeMessageVisibilityResponse, CreateQueueRequest, CreateQueueResponse, DeleteMessageRequest, DeleteMessageResponse, DeleteQueueRequest, DeleteQueueResponse, GetQueueAttributesRequest, GetQueueAttributesResponse, GetQueueUrlRequest, GetQueueUrlResponse, ListDeadLetterSourceQueuesRequest, ListDeadLetterSourceQueuesResponse, ListQueueTagsRequest, ListQueueTagsResponse, ListQueuesRequest, ListQueuesResponse, PurgeQueueRequest, PurgeQueueResponse, ReceiveMessageRequest, ReceiveMessageResponse, RemovePermissionRequest, RemovePermissionResponse, SendMessageBatchRequest, SendMessageBatchResponse, SendMessageRequest, SendMessageResponse, SetQueueAttributesRequest, SetQueueAttributesResponse, SqsRequest, SqsResponse, TagQueueRequest, TagQueueResponse, UntagQueueRequest, UntagQueueResponse}
+import software.amazon.awssdk.services.sqs.model.{
+  AddPermissionRequest,
+  AddPermissionResponse,
+  ChangeMessageVisibilityRequest,
+  ChangeMessageVisibilityResponse,
+  CreateQueueRequest,
+  CreateQueueResponse,
+  DeleteMessageRequest,
+  DeleteMessageResponse,
+  DeleteQueueRequest,
+  DeleteQueueResponse,
+  GetQueueAttributesRequest,
+  GetQueueAttributesResponse,
+  GetQueueUrlRequest,
+  GetQueueUrlResponse,
+  ListDeadLetterSourceQueuesRequest,
+  ListDeadLetterSourceQueuesResponse,
+  ListQueueTagsRequest,
+  ListQueueTagsResponse,
+  ListQueuesRequest,
+  ListQueuesResponse,
+  PurgeQueueRequest,
+  PurgeQueueResponse,
+  ReceiveMessageRequest,
+  ReceiveMessageResponse,
+  RemovePermissionRequest,
+  RemovePermissionResponse,
+  SendMessageBatchRequest,
+  SendMessageBatchResponse,
+  SendMessageRequest,
+  SendMessageResponse,
+  SetQueueAttributesRequest,
+  SetQueueAttributesResponse,
+  SqsRequest,
+  SqsResponse,
+  TagQueueRequest,
+  TagQueueResponse,
+  UntagQueueRequest,
+  UntagQueueResponse
+}
 
 trait SqsOp[Request <: SqsRequest, Response <: SqsResponse] {
   def execute(sqsRequest: Request)(implicit client: SqsAsyncClient): Task[Response]
@@ -67,10 +106,9 @@ object SqsOp {
     SqsOp[UntagQueueRequest, UntagQueueResponse](_.untagQueue(_))
 
   private def apply[Request <: SqsRequest, Response <: SqsResponse](
-                                                             operation: (SqsAsyncClient, Request) => CompletableFuture[Response]): SqsOp[Request, Response] = {
+    operation: (SqsAsyncClient, Request) => CompletableFuture[Response]): SqsOp[Request, Response] = {
     new SqsOp[Request, Response] {
-      def execute(request: Request)(
-        implicit sqsAsyncClient: SqsAsyncClient): Task[Response] = {
+      def execute(request: Request)(implicit sqsAsyncClient: SqsAsyncClient): Task[Response] = {
         Task.from(operation(sqsAsyncClient, request))
       }
     }

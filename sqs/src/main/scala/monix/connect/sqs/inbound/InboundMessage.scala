@@ -1,8 +1,29 @@
+/*
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
+ * See the project homepage at: https://connect.monix.io
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package monix.connect.sqs.inbound
 
 import monix.connect.sqs.MessageAttribute
 import monix.connect.sqs.domain.QueueUrl
-import software.amazon.awssdk.services.sqs.model.{MessageSystemAttributeNameForSends, SendMessageBatchRequestEntry, SendMessageRequest}
+import software.amazon.awssdk.services.sqs.model.{
+  MessageSystemAttributeNameForSends,
+  SendMessageBatchRequestEntry,
+  SendMessageRequest
+}
 
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
@@ -23,12 +44,13 @@ import scala.jdk.CollectionConverters._
   * Thus it enforces the user to use the right attributes for their use case.
   *
   */
-class InboundMessage private[sqs](body: String,
-                                  groupId: Option[String],
-                                  deduplicationId: Option[String] = Option.empty,
-                                  messageAttributes: Map[String, MessageAttribute] = Map.empty,
-                                  awsTraceHeader: Option[MessageAttribute] = Option.empty,
-                                  delayDuration: Option[FiniteDuration] = None) {
+class InboundMessage private[sqs] (
+  body: String,
+  groupId: Option[String],
+  deduplicationId: Option[String] = Option.empty,
+  messageAttributes: Map[String, MessageAttribute] = Map.empty,
+  awsTraceHeader: Option[MessageAttribute] = Option.empty,
+  delayDuration: Option[FiniteDuration] = None) {
 
   private[sqs] def toMessageRequest(queueUrl: QueueUrl): SendMessageRequest = {
     val builder = SendMessageRequest.builder.messageBody(body).queueUrl(queueUrl.url)

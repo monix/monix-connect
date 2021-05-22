@@ -1,7 +1,25 @@
+/*
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
+ * See the project homepage at: https://connect.monix.io
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package monix.connect.sqs.inbound
 
 import monix.connect.sqs.domain.QueueUrl
 import monix.connect.sqs.SqsOp
+import monix.connect.sqs.inbound.SqsParBatchSink.groupMessagesInBatches
 import monix.eval.Task
 import monix.execution.Ack
 import monix.execution.Ack.Stop
@@ -9,11 +27,10 @@ import monix.reactive.Consumer
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.{SendMessageBatchResponse, SendMessageResponse}
 
-class SqsProducer private[sqs](implicit asyncClient: SqsAsyncClient) {
+class SqsProducer private[sqs] (implicit asyncClient: SqsAsyncClient) {
 
   /** Sends a single message to the specified queue. */
-  def sendSingleMessage(message: InboundMessage,
-                        queueUrl: QueueUrl): Task[SendMessageResponse] = {
+  def sendSingleMessage(message: InboundMessage, queueUrl: QueueUrl): Task[SendMessageResponse] = {
     val producerMessage = message.toMessageRequest(queueUrl)
     SqsOp.sendMessage.execute(producerMessage)(asyncClient)
   }
@@ -37,14 +54,11 @@ class SqsProducer private[sqs](implicit asyncClient: SqsAsyncClient) {
     *         - bigger than that it will return as much elements
     *           proportional to the module of 10.
     */
-  def sendParBatch(messages: List[InboundMessage],
-                   queueUrl: QueueUrl): Task[List[SendMessageBatchResponse]] = {
-    if(messages.nonEmpty) {
+  def sendParBatch(messages: List[InboundMessage], queueUrl: QueueUrl): Task[List[SendMessageBatchResponse]] = {
+    if (messages.nonEmpty) {
       Task.parTraverse {
         groupMessagesInBatches(messages, queueUrl)
-      } { batch =>
-        SqsOp.sendMessageBatch.execute(batch)(asyncClient)
-      }
+      } { batch => SqsOp.sendMessageBatch.execute(batch)(asyncClient) }
     } else {
       Task.now(List.empty)
     }
@@ -61,8 +75,9 @@ class SqsProducer private[sqs](implicit asyncClient: SqsAsyncClient) {
     *                          a custom logic that satisfies the business needs, like
     *                          logging the error, increasing failed metrics count, etc.
     */
-  def sendSink(queueUrl: QueueUrl,
-               onErrorHandleWith: Throwable => Task[Ack] = _ => Task.pure(Stop)): Consumer[InboundMessage, Unit] =
+  def sendSink(
+    queueUrl: QueueUrl,
+    onErrorHandleWith: Throwable => Task[Ack] = _ => Task.pure(Stop)): Consumer[InboundMessage, Unit] =
     SqsSink.send(queueUrl, SqsOp.sendMessage, onErrorHandleWith)
 
   /**
@@ -82,8 +97,9 @@ class SqsProducer private[sqs](implicit asyncClient: SqsAsyncClient) {
     *                          a custom logic that satisfies the business needs, like
     *                          logging the error, increasing failed metrics count, etc.
     */
-  def sendParBatchSink(queueUrl: QueueUrl,
-                       onErrorHandleWith: Throwable => Task[Ack] = _ => Task.pure(Stop)): Consumer[List[InboundMessage], Unit] =
+  def sendParBatchSink(
+    queueUrl: QueueUrl,
+    onErrorHandleWith: Throwable => Task[Ack] = _ => Task.pure(Stop)): Consumer[List[InboundMessage], Unit] =
     new SqsParBatchSink(queueUrl, onErrorHandleWith)
 
 }
