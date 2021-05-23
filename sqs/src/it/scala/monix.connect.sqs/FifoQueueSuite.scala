@@ -132,20 +132,19 @@ class FifoQueueSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEa
   it should "respect inFlight message by groupId on the same queue" in {
     val group1 = genGroupId.sample.get
     val group2 = genGroupId.sample.get
-    val messagesGroup1 = Gen.listOfN(11, genFifoMessageWithDeduplication(group1)).sample.get
+    val messagesGroup1 = Gen.listOfN(13, genFifoMessageWithDeduplication(group1)).sample.get
     val messagesGroup2 = Gen.listOfN(6, genFifoMessageWithDeduplication(group2)).sample.get
-
+    val inFlightMessages = 9
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = fifoDeduplicationQueueAttr)
-        _ <- Observable.fromIterable(messagesGroup1).consumeWith(sqs.producer.sendSink(queueUrl))
-        _ <- Observable.fromIterable(messagesGroup2).consumeWith(sqs.producer.sendSink(queueUrl))
-        singleReceiveTask = sqs.consumer.receiveSingleManualDelete(queueUrl, inFlightMessages = 10)
-        result <- Task.sleep(1.second) >> singleReceiveTask.flatMap(a => singleReceiveTask.map((a, _)))
-
+        _ <- sqs.producer.sendParBatch(messagesGroup1, queueUrl)
+        _ <- sqs.producer.sendParBatch(messagesGroup2, queueUrl)
+        _ <- Task.sleep(1.second)
+        receivedMessages <- sqs.consumer.receiveManualDelete(queueUrl, inFlightMessages = inFlightMessages, waitTimeSeconds = 5.seconds)
+          .bufferTimed(5.seconds).firstL
       } yield {
-        result._1.size shouldBe 10
-        result._2.size shouldBe 6
+        receivedMessages.size shouldBe inFlightMessages + messagesGroup2.size
       }
     }.runSyncUnsafe()
   }

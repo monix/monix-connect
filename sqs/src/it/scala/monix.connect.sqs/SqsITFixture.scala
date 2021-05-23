@@ -53,7 +53,7 @@ trait SqsITFixture {
 
   // it must end with `.fifo` prefix, see https://github.com/aws/aws-sdk-php/issues/1331
   val fifoQueueName: QueueName =  QueueName("queue122315141-1.fifo")
-  val genGroupId: Gen[String] = Gen.identifier.map(id => "groupId-" + id.take(10))
+  val genGroupId: Gen[String] = Gen.identifier.map(_.take(10))
   val genId: Gen[String] = Gen.identifier.map(_.take(15))
   val defaultGroupId: String = genGroupId.sample.get
   val genNamePrefix: Gen[String] = Gen.nonEmptyListOf(Gen.alphaChar).map(chars => "test-" + chars.mkString.take(20))
