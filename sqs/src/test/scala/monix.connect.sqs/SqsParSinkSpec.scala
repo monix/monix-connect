@@ -18,7 +18,7 @@
 package monix.connect.sqs
 
 import monix.connect.sqs.domain.QueueUrl
-import monix.connect.sqs.inbound.SqsParBatchSink
+import monix.connect.sqs.inbound.{FifoMessage, SqsParBatchSink}
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
@@ -27,7 +27,10 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.jdk.CollectionConverters._
 
-class SqsParSinkSpec extends AnyFlatSpecLike with Matchers with SqsFixture {
+class SqsParSinkSpec extends AnyFlatSpecLike with Matchers {
+
+  def genFifoMessage(groupId: String = "groupId123", deduplicationId: Option[String] = None): Gen[FifoMessage] =
+    Gen.identifier.map(_.take(10)).map(id => FifoMessage(id, groupId = groupId, deduplicationId = deduplicationId))
 
   "A single inbound message" can "be send as if it was a batch" in {
     val message = genFifoMessage().sample.get

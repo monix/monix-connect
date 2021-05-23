@@ -13,7 +13,6 @@ import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.services.sqs.model.{QueueAttributeName, SqsException}
 
 import scala.concurrent.duration._
-import scala.util.Failure
 
 class FifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with SqsITFixture with Eventually {
 
@@ -187,9 +186,9 @@ class FifoQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures wit
 
   "Delay duration" must "be invalid in fifo queues" in {
     val body: String = genId.sample.get
-    val groupId: Option[String] = Gen.some(genGroupId).sample.get
-    val deduplicationId: Option[String] = Gen.some(genId).sample.get
-    val delayDuration: Option[FiniteDuration] = Some(5.seconds)
+    val groupId = Gen.some(genGroupId).sample.get
+    val deduplicationId = Gen.some(genId).sample.get
+    val delayDuration = Some(5.seconds)
     val queueName = genFifoQueueName.sample.get
     val delayedMessage: InboundMessage = new InboundMessage(body, groupId = groupId, deduplicationId = deduplicationId, delayDuration = delayDuration)
     val attempt =

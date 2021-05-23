@@ -3,9 +3,7 @@ package monix.connect.sqs
 import monix.connect.sqs.domain.{QueueName, QueueUrl}
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
-import org.apache.commons.codec.digest.DigestUtils.{md2Hex, md5Hex}
 import org.scalacheck.Gen
-import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers

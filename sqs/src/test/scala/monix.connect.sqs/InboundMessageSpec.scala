@@ -17,30 +17,29 @@
 
 package monix.connect.sqs
 
+import monix.connect.sqs.domain.QueueUrl
 import monix.connect.sqs.inbound.FifoMessage
 import org.scalacheck.Gen
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.core.SdkBytes
-import software.amazon.awssdk.services.sqs.model.{
-  MessageAttributeValue,
-  MessageSystemAttributeNameForSends,
-  MessageSystemAttributeValue
-}
+import software.amazon.awssdk.services.sqs.model.{MessageAttributeValue, MessageSystemAttributeNameForSends, MessageSystemAttributeValue}
 
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 
-class InboundMessageSpec extends AnyFlatSpecLike with Matchers with SqsFixture {
+class InboundMessageSpec extends AnyFlatSpecLike with Matchers  {
 
-  //todo test delay
+  val genId: Gen[String] = Gen.identifier.map(_.take(15))
+  val genQueueUrl: Gen[QueueUrl] = QueueUrl(genId.sample.get)
+
   "A single fifo message" can "be converted to a java `MessageRequest`" in {
     //given
     val body = genId.sample.get
     val queueUrl = genQueueUrl.sample.get
     val delaySeconds = 10.seconds
     val deduplicationId = Gen.option(genId).sample.get
-    val groupId = genGroupId.sample.get
+    val groupId = genId.sample.get
     val messageAttributes = Map("key" -> StringMessageAttribute("value"))
     val awsTraceHeader = Gen.option(genId).map(_.map(StringMessageAttribute)).sample.get
 
