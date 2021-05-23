@@ -211,4 +211,6 @@ class SqsConsumer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncC
     builder.build
   }
 
+  private[sqs] def close: Task[Unit] = Task.evalAsync(asyncClient.close())
+
 }

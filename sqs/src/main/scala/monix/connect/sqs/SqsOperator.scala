@@ -373,4 +373,6 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
     inObservable.mapEval(in => sqsOp.execute(in)(asyncClient))
   }
 
+  private[sqs] def close: Task[Unit] = Task.evalAsync(asyncClient.close())
+
 }

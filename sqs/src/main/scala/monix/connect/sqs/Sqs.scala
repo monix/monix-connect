@@ -178,5 +178,5 @@ object Sqs {
 }
 
 case class Sqs private[sqs] (consumer: SqsConsumer, producer: SqsProducer, operator: SqsOperator) {
-  def close: Task[Unit] = Task.evalAsync((Task(consumer.asyncClient.close()), producer, operator))
+  def close: Task[Unit] = Task.map3(consumer.close, producer.close, operator.close)((_, _, _) => ())
 }

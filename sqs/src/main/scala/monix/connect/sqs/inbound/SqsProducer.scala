@@ -102,6 +102,8 @@ class SqsProducer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncC
     onErrorHandleWith: Throwable => Task[Ack] = _ => Task.pure(Stop)): Consumer[List[InboundMessage], Unit] =
     new SqsParBatchSink(queueUrl, onErrorHandleWith)
 
+  private[sqs] def close: Task[Unit] = Task.evalAsync(asyncClient.close())
+
 }
 
 private[sqs] object SqsProducer {
