@@ -17,8 +17,8 @@
       "hdfs": {
         "title": "HDFS"
       },
-      "mongodb": {
-        "title": "MongoDB"
+      "mongodb title: MongoDB": {
+        "title": "mongodb title: MongoDB"
       },
       "overview": {
         "title": "Overview"
@@ -31,6 +31,9 @@
       },
       "s3": {
         "title": "AWS S3"
+      },
+      "sqs": {
+        "title": "AWS SQS"
       }
     },
     "links": {
