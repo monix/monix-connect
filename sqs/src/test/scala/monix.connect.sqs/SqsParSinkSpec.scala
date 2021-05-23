@@ -18,6 +18,7 @@
 package monix.connect.sqs
 
 import monix.connect.sqs.domain.QueueUrl
+import monix.connect.sqs.inbound.SqsParBatchSink
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures

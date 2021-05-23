@@ -117,7 +117,7 @@ object Sqs {
     *     .readTimeout(Duration.ofSeconds(60))
     *     .build()
     *
-    *   val sqsAsyncClient: SqsAsyncClient = S3AsyncClient
+    *   val sqsAsyncClient: SqsAsyncClient = SqsAsyncClient
     *     .builder()
     *     .httpClient(httpClient)
     *     .credentialsProvider(DefaultCredentialsProvider.create())
@@ -177,4 +177,6 @@ object Sqs {
 
 }
 
-case class Sqs private[sqs] (consumer: SqsConsumer, producer: SqsProducer, operator: SqsOperator)
+case class Sqs private[sqs] (consumer: SqsConsumer, producer: SqsProducer, operator: SqsOperator) {
+  def close: Task[Unit] = Task.evalAsync((Task(consumer.asyncClient.close()), producer, operator))
+}

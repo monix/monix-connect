@@ -27,7 +27,7 @@ import monix.reactive.Consumer
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.{SendMessageBatchResponse, SendMessageResponse}
 
-class SqsProducer private[sqs] (implicit asyncClient: SqsAsyncClient) {
+class SqsProducer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncClient) {
 
   /** Sends a single message to the specified queue. */
   def sendSingleMessage(message: InboundMessage, queueUrl: QueueUrl): Task[SendMessageResponse] = {

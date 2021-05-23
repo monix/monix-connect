@@ -54,7 +54,7 @@ object SqsOperator {
   def create(implicit asyncClient: SqsAsyncClient) = new SqsOperator(asyncClient)
 }
 
-class SqsOperator private[sqs] (asyncClient: SqsAsyncClient) {
+class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
 
   /** todo test
     * Adds a permission to a queue for a specific <a href="https://docs.aws.amazon.com/general/latest/gr/glos-chap.html#P">principal</a>.

@@ -1,7 +1,24 @@
+/*
+ * Copyright (c) 2020-2021 by The Monix Connect Project Developers.
+ * See the project homepage at: https://connect.monix.io
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package monix.connect.sqs
 
-import monix.connect.sqs.inbound.{FifoMessage, StandardMessage}
 import monix.connect.sqs.domain.{QueueName, QueueUrl}
+import monix.connect.sqs.inbound.{FifoMessage, StandardMessage}
 import org.scalacheck.Gen
 import org.scalatest.TestSuite
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
@@ -20,17 +37,14 @@ trait SqsFixture {
 
   val defaultAwsCredProvider = StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x"))
   val asyncClient =
-    SqsAsyncClient
-      .builder
+    SqsAsyncClient.builder
       .credentialsProvider(defaultAwsCredProvider)
       .endpointOverride(new URI("http://localhost:9324"))
       .region(Region.US_EAST_1)
       .build
 
-  val fifoDeduplicationQueueAttr = Map(
-    QueueAttributeName.FIFO_QUEUE -> "true",
-    QueueAttributeName.CONTENT_BASED_DEDUPLICATION -> "true")
-
+  val fifoDeduplicationQueueAttr =
+    Map(QueueAttributeName.FIFO_QUEUE -> "true", QueueAttributeName.CONTENT_BASED_DEDUPLICATION -> "true")
 
   def queueUrlPrefix(queueName: String) = s"http://localhost:9324/000000000000/${queueName}"
 
@@ -49,7 +63,8 @@ trait SqsFixture {
   def genFifoMessageWithDeduplication(groupId: String = defaultGroupId): Gen[FifoMessage] =
     Gen.identifier.map(_.take(10)).map(id => FifoMessage(id, groupId = groupId, deduplicationId = Some(id)))
 
-  def genFifoMessage(groupId: String = defaultGroupId, deduplicationId: Option[String] = None): Gen[FifoMessage] = Gen.identifier.map(_.take(10)).map(id => FifoMessage(id, groupId = groupId, deduplicationId = deduplicationId))
+  def genFifoMessage(groupId: String = defaultGroupId, deduplicationId: Option[String] = None): Gen[FifoMessage] =
+    Gen.identifier.map(_.take(10)).map(id => FifoMessage(id, groupId = groupId, deduplicationId = deduplicationId))
   val genQueueUrl: Gen[QueueUrl] = QueueUrl(genId.sample.get)
 
   val genStandardMessage: Gen[StandardMessage] = Gen.identifier.map(_.take(10)).map(StandardMessage(_))

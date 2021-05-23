@@ -32,7 +32,7 @@ private[sqs] object SqsConsumer {
   def create(implicit asyncClient: SqsAsyncClient): SqsConsumer = new SqsConsumer()
 }
 
-class SqsConsumer private[sqs] (implicit asyncClient: SqsAsyncClient) extends StrictLogging {
+class SqsConsumer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncClient) extends StrictLogging {
 
   /**
     * Starts the process of consuming deletable messages from the specified `queueUrl`.
@@ -107,13 +107,12 @@ class SqsConsumer private[sqs] (implicit asyncClient: SqsAsyncClient) extends St
       // visibility timeout does not apply to already deleted messages
       visibilityTimeout = 30.seconds,
       waitTimeSeconds = waitTimeSeconds
-    ).onErrorRestart(onErrorMaxRetries)
-      .mapEvalF { deletableMessage =>
-        deletableMessage
-          .deleteFromQueue()
-          .as(deletableMessage)
-          .onErrorRestart(onErrorMaxRetries)
-      }
+    ).onErrorRestart(onErrorMaxRetries).mapEvalF { deletableMessage =>
+      deletableMessage
+        .deleteFromQueue()
+        .as(deletableMessage)
+        .onErrorRestart(onErrorMaxRetries)
+    }
   }
 
   /**
