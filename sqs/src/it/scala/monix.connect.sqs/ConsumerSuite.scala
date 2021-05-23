@@ -11,7 +11,7 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
 
-class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with SqsFixture {
+class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with SqsITFixture {
 
   implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 300.milliseconds)
   implicit val sqsClient: Sqs = Sqs.createUnsafe(asyncClient)

@@ -12,7 +12,7 @@ import software.amazon.awssdk.services.sqs.model._
 import java.net.URI
 import scala.jdk.CollectionConverters._
 
-trait SqsFixture {
+trait SqsITFixture {
   this: TestSuite =>
 
   val nonExistingQueueErrorMsg: String =

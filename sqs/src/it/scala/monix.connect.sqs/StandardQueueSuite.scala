@@ -14,7 +14,7 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
 
-class StandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with SqsFixture with BeforeAndAfterAll {
+class StandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with SqsITFixture with BeforeAndAfterAll {
 
   implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 300.milliseconds)
   implicit val sqsClient: Sqs = Sqs.createUnsafe(asyncClient)

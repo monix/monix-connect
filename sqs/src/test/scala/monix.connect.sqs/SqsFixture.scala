@@ -32,23 +32,8 @@ import scala.jdk.CollectionConverters._
 trait SqsFixture {
   this: TestSuite =>
 
-  val nonExistingQueueErrorMsg: String =
-    """Invalid request: MissingQueryParamRejection(QueueName), MissingFormFieldRejection(QueueUrl); see the SQS docs. (Service: Sqs, Status Code: 400, Request ID: 00000000-0000-0000-0000-000000000000, Extended Request ID: null)""".stripMargin
-
-  val defaultAwsCredProvider = StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x"))
-  val asyncClient =
-    SqsAsyncClient.builder
-      .credentialsProvider(defaultAwsCredProvider)
-      .endpointOverride(new URI("http://localhost:9324"))
-      .region(Region.US_EAST_1)
-      .build
-
-  val fifoDeduplicationQueueAttr =
-    Map(QueueAttributeName.FIFO_QUEUE -> "true", QueueAttributeName.CONTENT_BASED_DEDUPLICATION -> "true")
-
   def queueUrlPrefix(queueName: String) = s"http://localhost:9324/000000000000/${queueName}"
 
-  val genQueueName: Gen[QueueName] = Gen.identifier.map(id => QueueName("queue-" + id.take(30)))
 
   // it must end with `.fifo` prefix, see https://github.com/aws/aws-sdk-php/issues/1331
   val genFifoQueueName: Gen[QueueName] = Gen.identifier.map(id => QueueName("queue-" + id.take(20) + ".fifo"))

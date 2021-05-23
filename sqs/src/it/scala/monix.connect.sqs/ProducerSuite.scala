@@ -15,7 +15,7 @@ import software.amazon.awssdk.services.sqs.model.QueueAttributeName
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 
-class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with SqsFixture with BeforeAndAfterAll {
+class ProducerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with SqsITFixture with BeforeAndAfterAll {
 
   implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 300.milliseconds)
   implicit val sqsClient: Sqs = Sqs.createUnsafe(asyncClient)

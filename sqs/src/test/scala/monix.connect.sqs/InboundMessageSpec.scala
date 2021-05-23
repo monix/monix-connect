@@ -50,7 +50,7 @@ class InboundMessageSpec extends AnyFlatSpecLike with Matchers with SqsFixture {
     val messageRequest = message.toMessageRequest(queueUrl)
 
     //then
-    messageRequest.delaySeconds() shouldBe delaySeconds.toMillis.toInt
+    messageRequest.delaySeconds() shouldBe null
     messageRequest.messageGroupId() shouldBe groupId
     messageRequest.queueUrl() shouldBe queueUrl.url
     Option(messageRequest.messageDeduplicationId()) shouldBe message.deduplicationId

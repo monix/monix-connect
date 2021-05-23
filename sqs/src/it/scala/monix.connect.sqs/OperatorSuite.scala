@@ -13,7 +13,7 @@ import software.amazon.awssdk.services.sqs.model.{QueueAttributeName, QueueDoesN
 
 import scala.concurrent.duration._
 
-class OperatorSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with SqsFixture {
+class OperatorSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with SqsITFixture {
 
   implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 300.milliseconds)
   implicit val sqsClient: Sqs = Sqs.createUnsafe(asyncClient)
