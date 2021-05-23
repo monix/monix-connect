@@ -4,18 +4,12 @@ import monix.connect.sqs.domain.{QueueName, QueueUrl}
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import org.scalacheck.Gen
-import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.services.sqs.model.{QueueAttributeName, QueueDoesNotExistException}
 
-import scala.concurrent.duration._
-
-class OperatorSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with SqsITFixture {
-
-  implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 300.milliseconds)
-  implicit val sqsClient: Sqs = Sqs.createUnsafe(asyncClient)
-  val queueName: QueueName = genQueueName.sample.get
+class OperatorSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEach with SqsITFixture {
 
   s"Sqs" can "create queue and check it exists" in {
     Sqs.fromConfig.use { sqs =>
@@ -31,7 +25,6 @@ class OperatorSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
   }
 
   it can "create tags, add new ones and list them" in {
-    val queueName = genQueueName.sample.get
     Sqs.fromConfig.use { sqs =>
       val initialTags = Map("mode" -> "difficult")
       val tagsByUrl = Map("environment" -> "test")
@@ -51,7 +44,6 @@ class OperatorSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
   }
 
   it can "remove tags from a queue" in {
-    val queueName = genQueueName.sample.get
     Sqs.fromConfig.use { sqs =>
       val queueType = "type"
       val modeTagKey = "mode"
@@ -77,7 +69,6 @@ class OperatorSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
   }
 
   it can "create attributes, add new ones and list them" in {
-    val queueName = genQueueName.sample.get
     Sqs.fromConfig.use { sqs =>
       val initialAttributes = Map(QueueAttributeName.DELAY_SECONDS -> "60")
       val attributesByUrl =  Map(QueueAttributeName.RECEIVE_MESSAGE_WAIT_TIME_SECONDS -> "12345")
@@ -98,7 +89,6 @@ class OperatorSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
   }
 
   it can "get a queue and queue url from its name" in {
-    val queueName = genQueueName.sample.get
     Sqs.fromConfig.use { case Sqs(_, _, operator) =>
       for {
         createdQueueUrl <- operator.createQueue(queueName)
@@ -119,8 +109,6 @@ class OperatorSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
   }
 
   it can "delete queue by url" in {
-    val queueName = genQueueName.sample.get
-
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(queueName)
@@ -144,6 +132,7 @@ class OperatorSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
         queueUrls <- Task.traverse(queueNames)(sqs.operator.createQueue(_))
         fullQueueList <- sqs.operator.listQueueUrls().toListL
       } yield {
+        fullQueueList.size shouldBe queueNames.size
         fullQueueList should contain theSameElementsAs queueUrls
       }
     }.runSyncUnsafe()
@@ -151,9 +140,8 @@ class OperatorSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
 
   it can "list queue by the name prefix name" in {
     val prefix = Gen.identifier.map(id => s"test-${id.take(5)}").sample.get
-    val n = 6
     val nonPrefixedQueueNames = Gen.listOfN(10, genQueueName).sample.get
-    val prefixedQueueNames = Gen.listOfN(n, genQueueName.map(prefix + _.name).map(QueueName)).sample.get
+    val prefixedQueueNames = Gen.listOfN(6, genQueueName.map(_.map(prefix + _))).sample.get
 
     Sqs.fromConfig.use { sqs =>
       for {
@@ -161,8 +149,8 @@ class OperatorSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
         prefixedQueueUrls <- Task.traverse(prefixedQueueNames)(sqs.operator.createQueue(_))
         resultList <- sqs.operator.listQueueUrls(Some(prefix)).toListL
       } yield {
-        resultList.size shouldBe n
-        resultList should contain theSameElementsAs prefixedQueueUrls.map(_.url)
+        resultList.size shouldBe prefixedQueueNames.size
+        resultList should contain theSameElementsAs prefixedQueueUrls
       }
     }.runSyncUnsafe()
   }

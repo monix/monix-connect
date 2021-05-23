@@ -7,25 +7,19 @@ import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
 import org.apache.commons.codec.digest.DigestUtils.md5Hex
 import org.scalacheck.Gen
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
 
-class StandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with SqsITFixture with BeforeAndAfterAll {
-
-  implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 300.milliseconds)
-  implicit val sqsClient: Sqs = Sqs.createUnsafe(asyncClient)
-  val queueName: QueueName = genQueueName.sample.get
+class StandardQueueSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEach with SqsITFixture {
 
   "A standard queue" can "be created and receive messages" in {
-    val queueName = genQueueName.sample.get
     val message = genStandardMessage.sample.get
     Sqs.fromConfig.use { case Sqs(_, producer, operator) =>
       for {
-        queueUrl <- operator.createQueue(queueName)
+        queueUrl <- operator.createQueue(fifoQueueName)
         messageResponse <- producer.sendSingleMessage(message, queueUrl)
       } yield {
         messageResponse.md5OfMessageBody shouldBe md5Hex(message.body)
@@ -34,12 +28,12 @@ class StandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures
   }
 
   it should "not support messages with groupId nor deduplicationId" in {
-    val queueName = genQueueName.sample.get
+
     val messageWithGroupId = new InboundMessage("dummyBody1", groupId = Some("someGroupId"), deduplicationId = None)
     val messageWithDeduplicationId = new InboundMessage("dummyBody2", groupId = None, deduplicationId = Some("123"))
     Sqs.fromConfig.use { case Sqs(_, producer, operator) =>
       for {
-        queueUrl <- operator.createQueue(queueName)
+        queueUrl <- operator.createQueue(fifoQueueName)
         isInvalidGroupId <- producer.sendSingleMessage(messageWithGroupId, queueUrl).as(false)
           .onErrorHandle(ex => if(ex.getMessage.contains("MessageGroupId is invalid")) true else false)
         isInvalidDeduplicationId <- producer.sendSingleMessage(messageWithDeduplicationId, queueUrl)
@@ -52,11 +46,11 @@ class StandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures
   }
 
   it should "respect delayDuration of messages " in {
-    val queueName = genQueueName.sample.get
+
     val delayedMessage =  genStandardMessage.map(_.copy(delayDuration = Some(5.seconds))).sample.get
     Sqs.fromConfig.use { case Sqs(receiver, producer, operator) =>
       for {
-        queueUrl <- operator.createQueue(queueName)
+        queueUrl <- operator.createQueue(fifoQueueName)
         _ <- producer.sendSingleMessage(delayedMessage, queueUrl)
         receivedMessages1 <- Task.sleep(2.seconds) *> receiver.receiveSingleAutoDelete(queueUrl)
         receivedMessages2 <- Task.sleep(5.seconds) *> receiver.receiveSingleAutoDelete(queueUrl)
@@ -69,12 +63,12 @@ class StandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures
   }
 
   "A stream of received messages" can "be atomically consumed with automatic deletes" in {
-    val queueName = genQueueName.sample.get
+
     val n = 10
     val messages = Gen.listOfN(n, genStandardMessage).sample.get
     Sqs.fromConfig.use { case Sqs(receiver, producer, operator) =>
       for {
-        queueUrl <- operator.createQueue(queueName)
+        queueUrl <- operator.createQueue(fifoQueueName)
         _ <- Observable.fromIterable(messages)
           .consumeWith(producer.sendSink(queueUrl))
         receivedMessages <- receiver.receiveAutoDelete(queueUrl)
@@ -86,12 +80,12 @@ class StandardQueueSuite extends AnyFlatSpecLike with Matchers with ScalaFutures
   }
 
   it can "be consumed with manual deletes" in {
-    val queueName = genQueueName.sample.get
+
     val n = 10
     val messages = Gen.listOfN(n, genStandardMessage).sample.get
     Sqs.fromConfig.use { case Sqs(receiver, producer, operator) =>
       for {
-        queueUrl <- operator.createQueue(queueName)
+        queueUrl <- operator.createQueue(fifoQueueName)
         _ <- Observable.fromIterable(messages)
           .consumeWith(producer.sendSink(queueUrl))
         receivedMessages <- receiver.receiveManualDelete(queueUrl)
