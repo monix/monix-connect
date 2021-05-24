@@ -35,14 +35,14 @@ private[s3] object S3RequestBuilder {
   /**
     * A builder for [[DeleteBucketRequest]]
     */
-  def deleteBucket(bucket: String): DeleteBucketRequest = {
+  private[s3] def deleteBucket(bucket: String): DeleteBucketRequest = {
     DeleteBucketRequest.builder
       .bucket(bucket)
       .build
   }
 
   /** A builder for [[DeleteObjectRequest]]. */
-  def deleteObject(
+  private[s3] def deleteObject(
     bucket: String,
     key: String,
     bypassGovernanceRetention: Option[Boolean] = None,
@@ -60,7 +60,7 @@ private[s3] object S3RequestBuilder {
   }
 
   /** A builder for [[CreateBucketRequest]]. */
-  def createBucket(
+  private[s3] def createBucket(
     bucket: String,
     acl: Option[BucketCannedACL] = None,
     grantFullControl: Option[String] = None,
@@ -82,14 +82,14 @@ private[s3] object S3RequestBuilder {
   }
 
   /** A builder for [[CompletedPart]]. */
-  def completedPart(partN: Int, uploadPartResp: UploadPartResponse): CompletedPart =
+  private[s3] def completedPart(partN: Int, uploadPartResp: UploadPartResponse): CompletedPart =
     CompletedPart.builder
       .partNumber(partN)
       .eTag(uploadPartResp.eTag)
       .build
 
   /** A builder for [[CompleteMultipartUploadRequest]]. */
-  def completeMultipartUploadRequest(
+  private[s3] def completeMultipartUploadRequest(
     bucket: String,
     key: String,
     uploadId: String,
@@ -106,7 +106,7 @@ private[s3] object S3RequestBuilder {
   }
 
   /** A builder for [[CreateMultipartUploadRequest]]. */
-  def createMultipartUploadRequest(
+  private[s3] def createMultipartUploadRequest(
     bucket: String,
     key: String,
     uploadSettings: UploadSettings): CreateMultipartUploadRequest = {
@@ -131,7 +131,7 @@ private[s3] object S3RequestBuilder {
   }
 
   /** A builder for [[CopyObjectRequest]]. */
-  def copyObjectRequest(
+  private[s3] def copyObjectRequest(
     sourceBucket: String,
     sourceKey: String,
     destinationBucket: String,
@@ -174,7 +174,7 @@ private[s3] object S3RequestBuilder {
     * A builder that requires accepts the minimum required fields (`bucket`, `key`) and some
     * additional settings to build a [[GetObjectRequest]].
     */
-  def getObjectRequest(
+  private[s3] def getObjectRequest(
     bucket: String,
     key: String,
     range: Option[String] = None,
@@ -195,7 +195,7 @@ private[s3] object S3RequestBuilder {
   }
 
   /** A builder for [[HeadObjectRequest]]. */
-  def headObjectRequest(
+  private[s3] def headObjectRequest(
     bucket: String,
     key: Option[String],
     ifMatch: Option[String] = None,
@@ -211,7 +211,7 @@ private[s3] object S3RequestBuilder {
   }
 
   /** A builder for [[ListObjectsV2Request]]. */
-  def listObjectsV2(
+  private[s3] def listObjectsV2(
     bucket: String,
     continuationToken: Option[String] = None,
     fetchOwner: Option[Boolean] = None,
@@ -230,7 +230,7 @@ private[s3] object S3RequestBuilder {
   }
 
   /** A builder for [[UploadPartRequest]]. */
-  def uploadPartRequest(
+  private[s3] def uploadPartRequest(
     bucket: String,
     key: String,
     partN: Int,
@@ -252,7 +252,7 @@ private[s3] object S3RequestBuilder {
   }
 
   /** Builder for [[PutObjectRequest]]. */
-  def putObjectRequest(
+  private[s3] def putObjectRequest(
     bucket: String,
     key: String,
     contentLength: Option[Long],
