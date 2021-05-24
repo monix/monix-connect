@@ -15,15 +15,10 @@
  * limitations under the License.
  */
 
-package monix.connect.sqs.inbound
+package monix.connect.sqs.producer
 
-import monix.connect.sqs.MessageAttribute
-import monix.connect.sqs.domain.QueueUrl
-import software.amazon.awssdk.services.sqs.model.{
-  MessageSystemAttributeNameForSends,
-  SendMessageBatchRequestEntry,
-  SendMessageRequest
-}
+import monix.connect.sqs.domain.{MessageAttribute, QueueUrl}
+import software.amazon.awssdk.services.sqs.model.{MessageSystemAttributeNameForSends, SendMessageBatchRequestEntry, SendMessageRequest}
 
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
@@ -44,7 +39,7 @@ import scala.jdk.CollectionConverters._
   * Thus it enforces the user to use the right attributes for their use case.
   *
   */
-class InboundMessage private[sqs] (
+class Message private[sqs](
   body: String,
   groupId: Option[String],
   deduplicationId: Option[String] = Option.empty,

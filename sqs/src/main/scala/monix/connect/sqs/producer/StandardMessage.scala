@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-package monix.connect.sqs.inbound
+package monix.connect.sqs.producer
 
-import monix.connect.sqs.MessageAttribute
+import monix.connect.sqs.domain.MessageAttribute
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -56,4 +56,4 @@ final case class StandardMessage(
   messageAttributes: Map[String, MessageAttribute] = Map.empty,
   awsTraceHeader: Option[MessageAttribute] = None,
   delayDuration: Option[FiniteDuration] = None)
-  extends InboundMessage(body, groupId = None, deduplicationId = None, messageAttributes, awsTraceHeader, delayDuration)
+  extends Message(body, groupId = None, deduplicationId = None, messageAttributes, awsTraceHeader, delayDuration)

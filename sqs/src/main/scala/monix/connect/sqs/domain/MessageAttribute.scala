@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package monix.connect.sqs
+package monix.connect.sqs.domain
 
 import software.amazon.awssdk.core.SdkBytes
 import software.amazon.awssdk.services.sqs.model.{MessageAttributeValue, MessageSystemAttributeValue}

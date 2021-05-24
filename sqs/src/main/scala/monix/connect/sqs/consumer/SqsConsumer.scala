@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package monix.connect.sqs.outbound
+package monix.connect.sqs.consumer
 
 import com.typesafe.scalalogging.StrictLogging
 import monix.connect.sqs.domain.QueueUrl
@@ -81,7 +81,7 @@ class SqsConsumer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncC
   /**
     * Starts the process that keeps consuming messages and deleting them right after.
     *
-    * A [[ReceivedMessage]] provides the control over when the message is considered as
+    * A [[ConsumedMessage]] provides the control over when the message is considered as
     * processed, thus can be deleted from the source queue and allow the next message
     * to be consumed.
     *
@@ -98,7 +98,7 @@ class SqsConsumer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncC
   def receiveAutoDelete(
     queueUrl: QueueUrl,
     waitTimeSeconds: FiniteDuration = Duration.Zero,
-    onErrorMaxRetries: Int = 3): Observable[ReceivedMessage] = {
+    onErrorMaxRetries: Int = 3): Observable[ConsumedMessage] = {
     receiveManualDelete(
       queueUrl,
       // 10 as being the maximum configurable that would give
@@ -163,7 +163,7 @@ class SqsConsumer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncC
 
   /**
     * Single receive message task that responds with a list of
-    * **already** deleted messages, aka [[ReceivedMessage]],
+    * **already** deleted messages, aka [[ConsumedMessage]],
     * from the specified `queueUrl`.
     *
     * Meaning that the semantics that this method provides are **at most once**,
@@ -172,7 +172,6 @@ class SqsConsumer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncC
     * it would be lost as it could not be read again from the queue.
     *
     * @see [[receiveSingleManualDelete]] for at least once semantics.
-    *
     * @param queueUrl        source queue url
     * @param waitTimeSeconds The duration (in seconds) for which the call waits for a message to arrive
     *                        in the queue before returning. If a message is available, the call returns
@@ -180,19 +179,18 @@ class SqsConsumer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncC
     *                        the call returns successfully with an empty list of messages.
     *                        Ensure that the HTTP response timeout of the [[NettyNioAsyncHttpClient]]
     *                        is longer than the WaitTimeSeconds parameter to avoid errors.
-    *
-    * @return a list of [[ReceivedMessage]]s of at most 10 messages (maximum configurable per request)
+    * @return a list of [[ConsumedMessage]]s of at most 10 messages (maximum configurable per request)
     */
   def receiveSingleAutoDelete(
     queueUrl: QueueUrl,
-    waitTimeSeconds: FiniteDuration = Duration.Zero): Task[List[ReceivedMessage]] = {
+    waitTimeSeconds: FiniteDuration = Duration.Zero): Task[List[ConsumedMessage]] = {
     receiveSingleAutoDeleteInternal(queueUrl, waitTimeSeconds = waitTimeSeconds)
   }
 
   private[sqs] def receiveSingleAutoDeleteInternal(
     queueUrl: QueueUrl,
     waitTimeSeconds: FiniteDuration = Duration.Zero,
-    visibilityTimeout: FiniteDuration = 30.seconds): Task[List[ReceivedMessage]] = {
+    visibilityTimeout: FiniteDuration = 30.seconds): Task[List[ConsumedMessage]] = {
     receiveSingleManualDelete(queueUrl, waitTimeSeconds = waitTimeSeconds, visibilityTimeout = visibilityTimeout)
       .tapEval(Task.traverse(_)(_.deleteFromQueue()))
   }

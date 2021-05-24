@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-package monix.connect.sqs.inbound
+package monix.connect.sqs.producer
 
-import monix.connect.sqs.MessageAttribute
+import monix.connect.sqs.domain.MessageAttribute
 
 /**
   * The message representation to be sent to a FIFO queue.
@@ -41,7 +41,7 @@ final case class FifoMessage(
   deduplicationId: Option[String] = Option.empty,
   messageAttributes: Map[String, MessageAttribute] = Map.empty,
   awsTraceHeader: Option[MessageAttribute] = Option.empty)
-  extends InboundMessage(
+  extends Message(
     body,
     groupId = Some(groupId),
     deduplicationId = deduplicationId,

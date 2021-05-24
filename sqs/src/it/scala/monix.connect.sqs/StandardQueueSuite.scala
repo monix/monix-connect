@@ -1,6 +1,6 @@
 package monix.connect.sqs
 
-import monix.connect.sqs.inbound.InboundMessage
+import monix.connect.sqs.producer.Message
 import monix.connect.sqs.domain.QueueName
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
@@ -29,8 +29,8 @@ class StandardQueueSuite extends AnyFlatSpecLike with Matchers with BeforeAndAft
 
   it should "not support messages with groupId nor deduplicationId" in {
 
-    val messageWithGroupId = new InboundMessage("dummyBody1", groupId = Some("someGroupId"), deduplicationId = None)
-    val messageWithDeduplicationId = new InboundMessage("dummyBody2", groupId = None, deduplicationId = Some("123"))
+    val messageWithGroupId = new Message("dummyBody1", groupId = Some("someGroupId"), deduplicationId = None)
+    val messageWithDeduplicationId = new Message("dummyBody2", groupId = None, deduplicationId = Some("123"))
     Sqs.fromConfig.use { case Sqs(_, producer, operator) =>
       for {
         queueUrl <- operator.createQueue(fifoQueueName)

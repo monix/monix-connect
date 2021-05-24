@@ -17,22 +17,18 @@
 
 package monix.connect.sqs
 
-import monix.connect.sqs.domain.QueueUrl
-import monix.connect.sqs.inbound.FifoMessage
+import monix.connect.sqs.domain.{BinaryMessageAttribute, QueueUrl, StringMessageAttribute}
+import monix.connect.sqs.producer.FifoMessage
 import org.scalacheck.Gen
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.core.SdkBytes
-import software.amazon.awssdk.services.sqs.model.{
-  MessageAttributeValue,
-  MessageSystemAttributeNameForSends,
-  MessageSystemAttributeValue
-}
+import software.amazon.awssdk.services.sqs.model.{MessageAttributeValue, MessageSystemAttributeNameForSends, MessageSystemAttributeValue}
 
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 
-class InboundMessageSpec extends AnyFlatSpecLike with Matchers {
+class MessageSpec extends AnyFlatSpecLike with Matchers {
 
   val genId: Gen[String] = Gen.identifier.map(_.take(15))
   val genQueueUrl: Gen[QueueUrl] = QueueUrl(genId.sample.get)

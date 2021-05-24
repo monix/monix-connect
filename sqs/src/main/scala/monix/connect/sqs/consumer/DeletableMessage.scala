@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package monix.connect.sqs.outbound
+package monix.connect.sqs.consumer
 
 import monix.connect.sqs.SqsOp
 import monix.connect.sqs.domain.QueueUrl
@@ -32,7 +32,7 @@ import software.amazon.awssdk.services.sqs.model.{DeleteMessageRequest, Message}
   */
 class DeletableMessage private[sqs] (override val queueUrl: QueueUrl, override protected val message: Message)(
   implicit asyncClient: SqsAsyncClient)
-  extends ReceivedMessage(queueUrl, message) {
+  extends ConsumedMessage(queueUrl, message) {
 
   def deleteFromQueue(): Task[Unit] = {
     val deleteMessageRequest = DeleteMessageRequest.builder

@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
-package monix.connect.sqs.inbound
+package monix.connect.sqs.producer
 
 import com.typesafe.scalalogging.StrictLogging
 import monix.connect.sqs.SqsOp
 import monix.connect.sqs.domain.QueueUrl
-import monix.connect.sqs.inbound.SqsParBatchSink.groupMessagesInBatches
+import monix.connect.sqs.producer.SqsParBatchSink.groupMessagesInBatches
 import monix.eval.Task
 import monix.execution.cancelables.AssignableCancelable
 import monix.execution.{Ack, Callback, Scheduler}
@@ -34,18 +34,18 @@ import scala.jdk.CollectionConverters._
 
 private[sqs] class SqsParBatchSink(queueUrl: QueueUrl, onErrorHandleWith: Throwable => Task[Ack])(
   implicit asyncClient: SqsAsyncClient)
-  extends Consumer[List[InboundMessage], Unit] with StrictLogging {
+  extends Consumer[List[Message], Unit] with StrictLogging {
 
   override def createSubscriber(
     cb: Callback[Throwable, Unit],
-    s: Scheduler): (Subscriber[List[InboundMessage]], AssignableCancelable) = {
-    val sub = new Subscriber[List[InboundMessage]] {
+    s: Scheduler): (Subscriber[List[Message]], AssignableCancelable) = {
+    val sub = new Subscriber[List[Message]] {
 
       implicit val scheduler: Scheduler = s
 
-      def onNext(inboundMessages: List[InboundMessage]): Future[Ack] = {
+      def onNext(messages: List[Message]): Future[Ack] = {
         Task
-          .parTraverse(groupMessagesInBatches(inboundMessages, queueUrl))(SqsOp.sendMessageBatch.execute)
+          .parTraverse(groupMessagesInBatches(messages, queueUrl))(SqsOp.sendMessageBatch.execute)
           .onErrorHandleWith(onErrorHandleWith)
           .as(Ack.Continue)
           .runToFuture
@@ -65,15 +65,16 @@ private[sqs] class SqsParBatchSink(queueUrl: QueueUrl, onErrorHandleWith: Throwa
 
 }
 
-object SqsParBatchSink {
+
+private[producer] object SqsParBatchSink {
   def groupMessagesInBatches(
-    inboundMessages: List[InboundMessage],
-    queueUrl: QueueUrl
+                              messages: List[Message],
+                              queueUrl: QueueUrl
   ): List[SendMessageBatchRequest] = {
-    inboundMessages match {
+    messages match {
       case Nil => List.empty
       case _ =>
-        val (firstBatch, nextBatch) = inboundMessages.splitAt(10)
+        val (firstBatch, nextBatch) = messages.splitAt(10)
         val batchEntries = firstBatch.zipWithIndex.map {
           case (message, index) => message.toMessageBatchEntry(index.toString)
         }

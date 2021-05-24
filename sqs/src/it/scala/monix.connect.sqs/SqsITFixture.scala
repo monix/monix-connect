@@ -1,7 +1,7 @@
 package monix.connect.sqs
 
 import monix.execution.Scheduler.Implicits.global
-import monix.connect.sqs.inbound.{FifoMessage, StandardMessage}
+import monix.connect.sqs.producer.{FifoMessage, StandardMessage}
 import monix.connect.sqs.domain.{QueueName, QueueUrl}
 import monix.eval.Task
 import org.scalacheck.Gen

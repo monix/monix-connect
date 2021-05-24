@@ -1,6 +1,6 @@
 package monix.connect.sqs
 
-import monix.connect.sqs.inbound.InboundMessage
+import monix.connect.sqs.producer.Message
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
 import org.apache.commons.codec.digest.DigestUtils.md5Hex
@@ -49,7 +49,7 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEac
   }
 
   it must "not fail when on empty messages list" in {
-    val messages = List.empty[InboundMessage]
+    val messages = List.empty[Message]
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = fifoDeduplicationQueueAttr)
@@ -80,7 +80,7 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEac
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
-        response <- Observable.empty[List[InboundMessage]].consumeWith(sqs.producer.sendParBatchSink(queueUrl))
+        response <- Observable.empty[List[Message]].consumeWith(sqs.producer.sendParBatchSink(queueUrl))
         result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(1.second).firstL
       } yield {
         response shouldBe a [Unit]
@@ -124,7 +124,7 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEac
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
-        response <- Observable.empty[InboundMessage].consumeWith(sqs.producer.sendSink(queueUrl))
+        response <- Observable.empty[Message].consumeWith(sqs.producer.sendSink(queueUrl))
         result <- sqs.consumer.receiveAutoDelete(queueUrl).bufferTimed(1.second).firstL
       } yield {
         response shouldBe a [Unit]

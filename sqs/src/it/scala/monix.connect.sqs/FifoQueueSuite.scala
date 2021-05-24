@@ -1,6 +1,6 @@
 package monix.connect.sqs
 
-import monix.connect.sqs.inbound.{InboundMessage, StandardMessage}
+import monix.connect.sqs.producer.{Message, StandardMessage}
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
@@ -32,7 +32,7 @@ class FifoQueueSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEa
   }
 
   it can "requires group id when a message is produced" in {
-    val message = StandardMessage("body").asInstanceOf[InboundMessage]
+    val message = StandardMessage("body").asInstanceOf[Message]
     Sqs.fromConfig.use { sqs =>
       for {
         queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
@@ -177,7 +177,7 @@ class FifoQueueSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEa
     val groupId = Gen.some(genGroupId).sample.get
     val deduplicationId = Gen.some(genId).sample.get
     val delayDuration = Some(5.seconds)
-    val delayedMessage: InboundMessage = new InboundMessage(body, groupId = groupId, deduplicationId = deduplicationId, delayDuration = delayDuration)
+    val delayedMessage: Message = new Message(body, groupId = groupId, deduplicationId = deduplicationId, delayDuration = delayDuration)
     val attempt =
       Sqs.fromConfig.use { case Sqs(_, producer, operator) =>
         for {

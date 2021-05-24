@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-package monix.connect.sqs.inbound
+package monix.connect.sqs.producer
 
 import monix.connect.sqs.domain.QueueUrl
 import monix.connect.sqs.SqsOp
-import monix.connect.sqs.inbound.SqsParBatchSink.groupMessagesInBatches
+import monix.connect.sqs.producer.SqsParBatchSink.groupMessagesInBatches
 import monix.eval.Task
 import monix.execution.Ack
 import monix.execution.Ack.Stop
@@ -30,7 +30,7 @@ import software.amazon.awssdk.services.sqs.model.{SendMessageBatchResponse, Send
 class SqsProducer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncClient) {
 
   /** Sends a single message to the specified queue. */
-  def sendSingleMessage(message: InboundMessage, queueUrl: QueueUrl): Task[SendMessageResponse] = {
+  def sendSingleMessage(message: Message, queueUrl: QueueUrl): Task[SendMessageResponse] = {
     val producerMessage = message.toMessageRequest(queueUrl)
     SqsOp.sendMessage.execute(producerMessage)(asyncClient)
   }
@@ -54,7 +54,7 @@ class SqsProducer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncC
     *         - bigger than that it will return as much elements
     *           proportional to the module of 10.
     */
-  def sendParBatch(messages: List[InboundMessage], queueUrl: QueueUrl): Task[List[SendMessageBatchResponse]] = {
+  def sendParBatch(messages: List[Message], queueUrl: QueueUrl): Task[List[SendMessageBatchResponse]] = {
     if (messages.nonEmpty) {
       Task.parTraverse {
         groupMessagesInBatches(messages, queueUrl)
@@ -65,7 +65,7 @@ class SqsProducer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncC
   }
 
   /**
-    * [[Consumer]] that listens for [[InboundMessage]]s and produces them at a time
+    * [[Consumer]] that listens for [[Message]]s and produces them at a time
     * to the specified `queueUrl`.
     *
     * @param queueUrl target queue url
@@ -77,16 +77,16 @@ class SqsProducer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncC
     */
   def sendSink(
     queueUrl: QueueUrl,
-    onErrorHandleWith: Throwable => Task[Ack] = _ => Task.pure(Stop)): Consumer[InboundMessage, Unit] =
+    onErrorHandleWith: Throwable => Task[Ack] = _ => Task.pure(Stop)): Consumer[Message, Unit] =
     SqsSink.send(queueUrl, SqsOp.sendMessage, onErrorHandleWith)
 
   /**
-    * [[Consumer]] that listens for lists [[InboundMessage]]s and produces
+    * [[Consumer]] that listens for lists [[Message]]s and produces
     * them in parallel batches to the specified `queueUrl`.
     *
     * The user does not have to worry about the limitation of the
     * aws sdk that restricts the batch size to 10 messages,
-    * since each received list of [[InboundMessage]]s  will be split
+    * since each received list of [[Message]]s  will be split
     * in batches of at most 10 entries, and they will be produced in
     * parallel to sqs.
     *
@@ -99,7 +99,7 @@ class SqsProducer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncC
     */
   def sendParBatchSink(
     queueUrl: QueueUrl,
-    onErrorHandleWith: Throwable => Task[Ack] = _ => Task.pure(Stop)): Consumer[List[InboundMessage], Unit] =
+    onErrorHandleWith: Throwable => Task[Ack] = _ => Task.pure(Stop)): Consumer[List[Message], Unit] =
     new SqsParBatchSink(queueUrl, onErrorHandleWith)
 
   private[sqs] def close: Task[Unit] = Task.evalAsync(asyncClient.close())
