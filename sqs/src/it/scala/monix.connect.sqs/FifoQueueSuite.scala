@@ -130,8 +130,8 @@ class FifoQueueSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEa
   }
 
   it should "respect inFlight message by groupId on the same queue" in {
-    val group1 = genGroupId.sample.get
-    val group2 = genGroupId.sample.get
+    val group1 = "group1"
+    val group2 = "group2"
     val messagesGroup1 = Gen.listOfN(13, genFifoMessageWithDeduplication(group1)).sample.get
     val messagesGroup2 = Gen.listOfN(6, genFifoMessageWithDeduplication(group2)).sample.get
     val inFlightMessages = 9
@@ -141,10 +141,10 @@ class FifoQueueSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEa
         _ <- sqs.producer.sendParBatch(messagesGroup1, queueUrl)
         _ <- sqs.producer.sendParBatch(messagesGroup2, queueUrl)
         _ <- Task.sleep(1.second)
-        receivedMessages <- sqs.consumer.receiveManualDelete(queueUrl, inFlightMessages = inFlightMessages, waitTimeSeconds = 1.seconds)
-          .bufferTimed(8.seconds).firstL
+        receivedMessages <- sqs.consumer.receiveManualDelete(queueUrl, inFlightMessages = inFlightMessages)
+          .bufferTimed(10.seconds).toListL
       } yield {
-        receivedMessages.size shouldBe inFlightMessages + messagesGroup2.size
+        receivedMessages.flatten.size shouldBe inFlightMessages + messagesGroup2.size
       }
     }.runSyncUnsafe()
   }
