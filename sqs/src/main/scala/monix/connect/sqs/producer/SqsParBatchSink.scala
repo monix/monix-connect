@@ -65,11 +65,10 @@ private[sqs] class SqsParBatchSink(queueUrl: QueueUrl, onErrorHandleWith: Throwa
 
 }
 
-
 private[producer] object SqsParBatchSink {
   def groupMessagesInBatches(
-                              messages: List[Message],
-                              queueUrl: QueueUrl
+    messages: List[Message],
+    queueUrl: QueueUrl
   ): List[SendMessageBatchRequest] = {
     messages match {
       case Nil => List.empty

@@ -27,7 +27,7 @@ import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 
 /** Represents the generic implementation of a message consumed from a specific queue. */
-class ConsumedMessage private[sqs](val queueUrl: QueueUrl, protected val message: Message)(
+class ConsumedMessage private[sqs] (val queueUrl: QueueUrl, protected val message: Message)(
   implicit asyncClient: SqsAsyncClient) {
 
   val body: String = message.body()

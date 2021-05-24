@@ -23,10 +23,10 @@ private[sqs] object AsyncClientConversions {
   }
 
   def from(
-            credentialsProvider: AwsCredentialsProvider,
-            region: Region,
-            endpoint: Option[String],
-            httpClient: Option[SdkAsyncHttpClient]): SqsAsyncClient = {
+    credentialsProvider: AwsCredentialsProvider,
+    region: Region,
+    endpoint: Option[String],
+    httpClient: Option[SdkAsyncHttpClient]): SqsAsyncClient = {
     val builder = SqsAsyncClient.builder().credentialsProvider(credentialsProvider).region(region)
     httpClient.map(builder.httpClient)
     endpoint.map(uri => builder.endpointOverride(URI.create(uri)))

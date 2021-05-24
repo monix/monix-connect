@@ -41,9 +41,4 @@ final case class FifoMessage(
   deduplicationId: Option[String] = Option.empty,
   messageAttributes: Map[String, MessageAttribute] = Map.empty,
   awsTraceHeader: Option[MessageAttribute] = Option.empty)
-  extends Message(
-    body,
-    groupId = Some(groupId),
-    deduplicationId = deduplicationId,
-    messageAttributes,
-    awsTraceHeader)
+  extends Message(body, groupId = Some(groupId), deduplicationId = deduplicationId, messageAttributes, awsTraceHeader)
