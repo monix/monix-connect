@@ -15,13 +15,10 @@
  * limitations under the License.
  */
 
-package monix.connect.sqs
+package monix.connect.sqs.producer
 
 import monix.connect.sqs.domain.QueueUrl
-import monix.connect.sqs.producer.{FifoMessage, SqsParBatchSink}
 import org.scalacheck.Gen
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 

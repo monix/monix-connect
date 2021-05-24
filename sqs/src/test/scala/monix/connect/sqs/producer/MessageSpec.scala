@@ -15,19 +15,14 @@
  * limitations under the License.
  */
 
-package monix.connect.sqs
+package monix.connect.sqs.producer
 
 import monix.connect.sqs.domain.{BinaryMessageAttribute, QueueUrl, StringMessageAttribute}
-import monix.connect.sqs.producer.FifoMessage
 import org.scalacheck.Gen
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.core.SdkBytes
-import software.amazon.awssdk.services.sqs.model.{
-  MessageAttributeValue,
-  MessageSystemAttributeNameForSends,
-  MessageSystemAttributeValue
-}
+import software.amazon.awssdk.services.sqs.model.{MessageAttributeValue, MessageSystemAttributeNameForSends, MessageSystemAttributeValue}
 
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
