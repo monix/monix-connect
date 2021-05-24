@@ -141,8 +141,8 @@ class FifoQueueSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEa
         _ <- sqs.producer.sendParBatch(messagesGroup1, queueUrl)
         _ <- sqs.producer.sendParBatch(messagesGroup2, queueUrl)
         _ <- Task.sleep(1.second)
-        receivedMessages <- sqs.consumer.receiveManualDelete(queueUrl, inFlightMessages = inFlightMessages, waitTimeSeconds = 5.seconds)
-          .bufferTimed(5.seconds).firstL
+        receivedMessages <- sqs.consumer.receiveManualDelete(queueUrl, inFlightMessages = inFlightMessages, waitTimeSeconds = 1.seconds)
+          .bufferTimed(8.seconds).firstL
       } yield {
         receivedMessages.size shouldBe inFlightMessages + messagesGroup2.size
       }
