@@ -25,7 +25,7 @@ object Dependencies {
     val Scalatest = "3.2.9"
     val Scalacheck = "1.14.0"
     val Mockito = "1.15.0"
-    val GCNio = "0.122.14"
+    val GCNio = "0.123.0"
   }
 
   private def commonDependencies(hasIt: Boolean = false): Seq[sbt.ModuleID] = {
