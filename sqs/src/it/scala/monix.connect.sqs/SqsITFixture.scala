@@ -67,7 +67,7 @@ trait SqsITFixture {
   def genFifoMessage(groupId: String = defaultGroupId, deduplicationId: Option[String] = None): Gen[FifoMessage] = Gen.identifier.map(_.take(10)).map(id => FifoMessage(id, groupId = groupId, deduplicationId = deduplicationId))
   val genQueueUrl: Gen[QueueUrl] = QueueUrl(genId.sample.get)
 
-  val genStandardMessage: Gen[StandardMessage] = Gen.identifier.map(_.take(10)).map(StandardMessage(_))
+  val genStandardMessage: Gen[StandardMessage] = Gen.identifier.map(_.take(12)).map(StandardMessage(_))
 
   val message: Gen[Message] = for {
     id      <- genMessageId

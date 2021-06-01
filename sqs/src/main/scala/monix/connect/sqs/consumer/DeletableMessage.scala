@@ -34,6 +34,23 @@ class DeletableMessage private[sqs] (override val queueUrl: QueueUrl, override p
   implicit asyncClient: SqsAsyncClient)
   extends ConsumedMessage(queueUrl, message) {
 
+  /**
+    * Deletes the message from the source queue.
+    * Attempting to delete an already removed message
+    * will fail. This could happen in cases where a message is
+    * consumed twice (due the processing taking longer than the
+    * visibilityTimeout), and attempting to delete in both cases.
+    * In order to avoid this situation to happen, you could:
+    * - Increase the `visibilityTimeout`.
+    * - Recover from the failure. I.E using attempt.
+    *
+    * ==Example==
+    * {{{
+    * val deletableMessage: DeletableMessage = ???
+    * deletableMessage.deleteFromQueue().attempt
+    * }}}
+    *
+    */
   def deleteFromQueue(): Task[Unit] = {
     val deleteMessageRequest = DeleteMessageRequest.builder
       .queueUrl(queueUrl.url)

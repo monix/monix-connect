@@ -15,23 +15,26 @@ class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
 
   implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 300.milliseconds)
 
-  "receiveSingleManualDelete" should "consume up to 10 messages at a time" in {
+  "receiveSingleManualDelete" should "respect `inFlightMessages` and process up to 10 messages at a time" in {
     val messages = Gen.listOfN(15, genFifoMessage(defaultGroupId)).sample.get
 
     Sqs.fromConfig.use { sqs =>
       for {
-        queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = fifoDeduplicationQueueAttr)
-        _ <- Task.traverse(messages)(sqs.producer.sendSingleMessage(_, queueUrl))
-        receivedMessages1 <- sqs.consumer.receiveSingleManualDelete(queueUrl, inFlightMessages = 1)
+        fifoQueueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = fifoDeduplicationQueueAttr)
+        _ <- Task.traverse(messages)(sqs.producer.sendSingleMessage(_, fifoQueueUrl))
+        receivedMessages1 <- sqs.consumer.receiveSingleManualDelete(fifoQueueUrl, maxMessages = 1)
           .tapEval(Task.traverse(_)(_.deleteFromQueue()))
-        receivedMessages10 <- sqs.consumer.receiveSingleManualDelete(queueUrl, inFlightMessages = 10)
+        receivedMessages10 <- sqs.consumer.receiveSingleManualDelete(fifoQueueUrl, maxMessages = 10)
           .tapEval(Task.traverse(_)(_.deleteFromQueue()))
-        receivedMessages4 <- sqs.consumer.receiveSingleManualDelete(queueUrl, inFlightMessages = 10)
+        receivedMessages4 <- sqs.consumer.receiveSingleManualDelete(fifoQueueUrl, maxMessages = 10)
           .tapEval(Task.traverse(_)(_.deleteFromQueue()))
+        attemptReceiveMoreThan10 <- sqs.consumer.receiveSingleManualDelete(fifoQueueUrl, maxMessages = 11).attempt
       } yield {
         receivedMessages1.size shouldBe 1
         receivedMessages10.size shouldBe 10
         receivedMessages4.size shouldBe 4
+        attemptReceiveMoreThan10.isLeft shouldBe true
+        attemptReceiveMoreThan10.toTry.failed.get.getMessage should include ("ReadCountOutOfRange")
         (receivedMessages1 ++ receivedMessages10 ++ receivedMessages4).map(_.body) should contain theSameElementsAs messages.map(_.body)
       }
     }.runSyncUnsafe()
@@ -44,15 +47,15 @@ class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
       for {
         queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = fifoDeduplicationQueueAttr)
         _ <- Task.traverse(messages)(sqs.producer.sendSingleMessage(_, queueUrl))
-        receivedMessages1 <- sqs.consumer.receiveSingleManualDelete(queueUrl, inFlightMessages = 10, visibilityTimeout = 15.seconds)
+        receivedMessages1 <- sqs.consumer.receiveSingleManualDelete(queueUrl, maxMessages = 10, visibilityTimeout = 15.seconds)
           .tapEval(Task.traverse(_)(_.deleteFromQueue()).delayExecution(2.seconds).startAndForget)
         //the following receive calls will return empty since the previous messages were not yet processed and deleted
         inFlightMessagesReached1 <- sqs.consumer.receiveSingleManualDelete(queueUrl)
-        inFlightMessagesReached2 <- Task.sleep(1.seconds) >> sqs.consumer.receiveSingleManualDelete(queueUrl)
+        inFlightMessagesReached2 <- Task.sleep(500.millis) >> sqs.consumer.receiveSingleManualDelete(queueUrl)
         receivedMessages2 <- Task.sleep(3.seconds) >> sqs.consumer.receiveSingleManualDelete(queueUrl, visibilityTimeout = 1.second)
           .tapEval(Task.traverse(_)(_.deleteFromQueue()).delayExecution(3.seconds).startAndForget)
         // here already we consumed all messages, but since the deletion of the previous consumption
-        // took longer than the visibility timeout, the messages will be consumed again.
+        // took longer than the visibility timeout, the next messages will be consumed again.
         receivedMessages3 <- Task.sleep(2.seconds) >> sqs.consumer.receiveSingleManualDelete(queueUrl, visibilityTimeout = 15.seconds)
           .tapEval(Task.traverse(_)(_.deleteFromQueue()))
       } yield {
@@ -63,6 +66,25 @@ class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
         receivedMessages3.size shouldBe 5
         (receivedMessages1 ++ receivedMessages2 ++ receivedMessages3).map(_.body).toSet should contain theSameElementsAs messages.map(_.body)
         receivedMessages2.map(_.body) should contain theSameElementsAs receivedMessages3.map(_.body)
+      }
+    }.runSyncUnsafe()
+  }
+
+  it should "not respect the specified `inFlight` messages in standard queues" in {
+    val messages = Gen.listOfN(100, genStandardMessage).sample.get
+
+    Sqs.fromConfig.use { sqs =>
+      for {
+        queueUrl <- sqs.operator.createQueue(queueName)
+        _ <- Task.traverse(messages)(sqs.producer.sendSingleMessage(_, queueUrl))
+        receivedAllMessages <- sqs.consumer.receiveManualDelete(queueUrl, maxMessages = 10, visibilityTimeout = 10.seconds).doOnNext(_.deleteFromQueue())
+          .bufferTimedAndCounted(5.seconds, 100).headL
+        noMoreMessages <- sqs.consumer.receiveSingleManualDelete(queueUrl)
+      } yield {
+        receivedAllMessages.size shouldBe messages.size
+        noMoreMessages shouldBe List.empty
+
+        (receivedAllMessages).map(_.body) should contain theSameElementsAs messages.map(_.body)
       }
     }.runSyncUnsafe()
   }
@@ -134,13 +156,32 @@ class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
         receivedMessages1 <- sqs.consumer.receiveSingleAutoDelete(queueUrl)
         receivedMessages2 <- sqs.consumer.receiveSingleAutoDelete(queueUrl)
         receivedMessages3 <- sqs.consumer.receiveSingleAutoDelete(queueUrl)
-      } yield {
+        attemptReceiveMoreThan10 <- sqs.consumer.receiveSingleManualDelete(queueUrl, maxMessages = 11).attempt
+              } yield {
         receivedMessages1.size shouldBe 10
         receivedMessages2.size shouldBe 5
         receivedMessages3.size shouldBe 0
+        attemptReceiveMoreThan10.isLeft shouldBe true
+        attemptReceiveMoreThan10.toTry.failed.get.getMessage should include ("ReadCountOutOfRange")
         (receivedMessages1 ++ receivedMessages2 ++ receivedMessages3).map(_.body) should contain theSameElementsAs messages.map(_.body)
       }
     }.runSyncUnsafe()
+  }
+
+  it should "fail when consuming more than 10 messages at time" in {
+    val messages = Gen.listOfN(15, genFifoMessage(defaultGroupId)).sample.get
+
+    val resultTask = Sqs.fromConfig.use { sqs =>
+      for {
+        queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = fifoDeduplicationQueueAttr)
+        _ <- Task.traverse(messages)(sqs.producer.sendSingleMessage(_, queueUrl))
+        receivedMessages <- sqs.consumer.receiveSingleAutoDelete(queueUrl, maxMessages = 11)
+      } yield receivedMessages
+    }
+
+    val attempt = resultTask.attempt.runSyncUnsafe()
+    attempt.isLeft shouldBe true
+    attempt.toTry.failed.get.getMessage should include ("ReadCountOutOfRange")
   }
 
   it should "avoid consuming the same message multiple times with short `visibilityTimeout`, since messages are already deleted " in {
@@ -149,7 +190,7 @@ class ConsumerSuite extends AnyFlatSpecLike with Matchers with ScalaFutures with
       for {
         queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = fifoDeduplicationQueueAttr)
         _ <- sqs.producer.sendSingleMessage(message, queueUrl)
-        receivedMessage <- sqs.consumer.receiveSingleAutoDeleteInternal(queueUrl, visibilityTimeout = 1.seconds, waitTimeSeconds = 5.seconds)
+        receivedMessage <- sqs.consumer.receiveSingleAutoDeleteInternal(queueUrl, visibilityTimeout = 1.seconds, waitTimeSeconds = 5.seconds, maxMessages = 10)
       } yield {
         receivedMessage.size shouldBe 1
         receivedMessage.map(_.body) shouldBe List(message.body)

@@ -40,7 +40,6 @@ class MessageSpec extends AnyFlatSpecLike with Matchers {
     //given
     val body = genId.sample.get
     val queueUrl = genQueueUrl.sample.get
-    val delaySeconds = 10.seconds
     val deduplicationId = Gen.option(genId).sample.get
     val groupId = genId.sample.get
     val messageAttributes = Map("key" -> StringMessageAttribute("value"))

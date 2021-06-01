@@ -119,7 +119,7 @@ class FifoQueueSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEa
         _ <- Observable.fromIterable(messages).consumeWith(sqs.producer.sendSink(queueUrl))
         _ <- Observable.fromIterable(messages).consumeWith(sqs.producer.sendSink(queueUrl))
         result <- {
-          val singleReceiveTask = sqs.consumer.receiveSingleManualDelete(queueUrl, inFlightMessages = 7)
+          val singleReceiveTask = sqs.consumer.receiveSingleManualDelete(queueUrl, maxMessages = 7)
           singleReceiveTask.flatMap(a => singleReceiveTask.map((a, _)))
         }
       } yield {
@@ -141,7 +141,7 @@ class FifoQueueSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEa
         _ <- sqs.producer.sendParBatch(messagesGroup1, queueUrl)
         _ <- sqs.producer.sendParBatch(messagesGroup2, queueUrl)
         _ <- Task.sleep(1.second)
-        receivedMessages <- sqs.consumer.receiveManualDelete(queueUrl, inFlightMessages = inFlightMessages)
+        receivedMessages <- sqs.consumer.receiveManualDelete(queueUrl, maxMessages = inFlightMessages)
           .bufferTimed(10.seconds).toListL
       } yield {
         receivedMessages.flatten.size shouldBe inFlightMessages + messagesGroup2.size

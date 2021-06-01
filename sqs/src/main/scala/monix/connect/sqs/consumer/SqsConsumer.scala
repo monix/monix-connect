@@ -19,7 +19,7 @@ package monix.connect.sqs.consumer
 
 import com.typesafe.scalalogging.StrictLogging
 import monix.connect.sqs.domain.QueueUrl
-import monix.connect.sqs.{SqsOp, SqsOperator}
+import monix.connect.sqs.SqsOp
 import monix.eval.Task
 import monix.reactive.Observable
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
@@ -42,40 +42,42 @@ class SqsConsumer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncC
     * to be consumed.
     *
     * @see [[receiveAutoDelete]] for at most once semantics.
-    * @param queueUrl          source queue url, obtained from [[SqsOperator.getQueueUrl]].
-    * @param inFlightMessages  max number of message to be consumed at a time, meaning that
-    *                          we would not be able to consume further message from the same
-    *                          queue and groupId until at least one of the previous batch
-    *                          was deleted from the queue.
+    * @param queueUrl          source queue url
+    * @param maxMessages  max number of message to be consumed per each request,
+    *                     which at most can be set to 10, otherwise it will fail.
     * @param visibilityTimeout The duration (in seconds) that the received messages are hidden
     *                          from subsequent retrieve requests after being retrieved (in case they
     *                          have not been deleted before).
     * @param waitTimeSeconds   The duration (in seconds) for which the call waits for a message
     *                          to arrive in the queue before returning. If a message is available,
-    *                          the call returns sooner than WaitTimeSeconds.
-    *                          If no messages are available and the wait time expires,
-    *                          the call returns successfully with an empty list of messages.
-    *                          Ensure that the HTTP response timeout of the [[NettyNioAsyncHttpClient]]
-    *                          is longer than the WaitTimeSeconds parameter to avoid errors.
+    *                          the call returns sooner than the wait timeout.
+    *                          By default, `waitTimeSeconds` is set to [[Duration.Zero]], aka `short pooling`,
+    *                          which means that it will only consume messages available at that time.
+    *                          On the other hand, the user can switch to `long pooling` by increasing the
+    *                          `waitTimeSeconds` to more than zero, which in that case it will wait for
+    *                          new messages to be available.
+    *                          See more in docs: https://docs.amazonaws.cn/en_us/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-short-and-long-polling.
+    *                          Notice that in `short polling` (default), if there is no available message
+    *                          because the `inFlight` has reached the maximum limits of the queue it will
+    *                          return [[software.amazon.awssdk.services.sqs.model.OverLimitException]],
+    *                          on the other hand, when using long pooling we would just not receive messages.
+    *                          Additionally, ensure that the HTTP response timeout of the [[NettyNioAsyncHttpClient]]
+    *                          is longer than the WaitTimeSeconds parameter to avoid timeout errors.
     */
   def receiveManualDelete(
     queueUrl: QueueUrl,
-    inFlightMessages: Int = 10,
+    maxMessages: Int = 10,
     visibilityTimeout: FiniteDuration = 30.seconds,
     waitTimeSeconds: FiniteDuration = Duration.Zero,
     onErrorMaxRetries: Int = 5): Observable[DeletableMessage] = {
     Observable.repeatEvalF {
       receiveSingleManualDelete(
         queueUrl,
-        inFlightMessages = inFlightMessages,
+        maxMessages = maxMessages,
         visibilityTimeout = visibilityTimeout,
-        waitTimeSeconds = waitTimeSeconds)
-        .onErrorRestart(onErrorMaxRetries)
-        .onErrorHandleWith { ex =>
-          logger.error("Receive manual delete failed unexpectedly.", ex)
-          Task.raiseError(ex)
-        }
-    }.flatMap { deletableMessages => Observable.fromIterable(deletableMessages) }
+        waitTimeSeconds = waitTimeSeconds,
+        onErrorMaxRetries = onErrorMaxRetries)
+    }.flatMap(Observable.fromIterable)
   }
 
   /**
@@ -86,33 +88,31 @@ class SqsConsumer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncC
     * to be consumed.
     *
     * @see [[receiveManualDelete]] for at least once semantics.
-    * @param queueUrl        source queue url, obtained from [[SqsOperator.getQueueUrl]].
+    * @param queueUrl        source queue url
     * @param waitTimeSeconds The duration (in seconds) for which the call waits for a message
     *                        to arrive in the queue before returning. If a message is available,
-    *                        the call returns sooner than WaitTimeSeconds.
-    *                        If no messages are available and the wait time expires,
-    *                        the call returns successfully with an empty list of messages.
-    *                        Ensure that the HTTP response timeout of the [[NettyNioAsyncHttpClient]]
-    *                        is longer than the WaitTimeSeconds parameter to avoid errors.
+    *                        the call returns sooner than the wait timeout.
+    *                        By default, `waitTimeSeconds` is set to [[Duration.Zero]], aka `short pooling`,
+    *                        which means that it will only consume messages available at that time.
+    *                        On the other hand, the user can switch to `long pooling` by increasing the
+    *                        `waitTimeSeconds` to more than zero, which in that case it will wait for
+    *                        new messages to be available.
+    *                        See more in docs: https://docs.amazonaws.cn/en_us/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-short-and-long-polling.
+    *                        Notice that in `short polling` (default), if there is no available message
+    *                        because the `inFlight` has reached the maximum limits of the queue it will
+    *                        return [[software.amazon.awssdk.services.sqs.model.OverLimitException]],
+    *                        on the other hand, when using long pooling we would just not receive messages.
+    *                        Additionally, ensure that the HTTP response timeout of the [[NettyNioAsyncHttpClient]]
+    *                        is longer than the WaitTimeSeconds parameter to avoid timeout errors.
     */
   def receiveAutoDelete(
     queueUrl: QueueUrl,
+    maxMessages: Int = 10,
     waitTimeSeconds: FiniteDuration = Duration.Zero,
     onErrorMaxRetries: Int = 3): Observable[ConsumedMessage] = {
-    receiveManualDelete(
-      queueUrl,
-      // 10 as being the maximum configurable that would give
-      // the highest performance, still transparent to the user.
-      inFlightMessages = 10,
-      // visibility timeout does not apply to already deleted messages
-      visibilityTimeout = 30.seconds,
-      waitTimeSeconds = waitTimeSeconds
-    ).onErrorRestart(onErrorMaxRetries).mapEvalF { deletableMessage =>
-      deletableMessage
-        .deleteFromQueue()
-        .as(deletableMessage)
-        .onErrorRestart(onErrorMaxRetries)
-    }
+    Observable.repeatEvalF {
+      receiveSingleAutoDelete(queueUrl, maxMessages, waitTimeSeconds, onErrorMaxRetries = onErrorMaxRetries)
+    }.flatMap(Observable.fromIterable)
   }
 
   /**
@@ -124,41 +124,63 @@ class SqsConsumer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncC
     * to be consumed.
     *
     * @see [[receiveSingleAutoDelete]] for at most once semantics.
-    * @param queueUrl          source queue url, obtained from [[SqsOperator.getQueueUrl]].
-    * @param inFlightMessages  max number of message to be consumed at a time, at most 10!
-    *                          meaning that we would not be able to consume further message
-    *                          from the same queue and groupId until at least one of the
-    *                          previous batch was deleted from the queue.
-    *                          **Important** the request will fail for numbers higher than 10.
+    * @param queueUrl          source queue url
+    * @param maxMessages  max number of message to be consumed, which at most can be 10, otherwise
+    *                     it will fail.
+    *                     The meaning of `maxMessages` can differ when this parameter is applied
+    *                     against standard or fifo queues.
+    *                     - Standard: it will solely represent the number of messages requested and
+    *                     consumed in the same request.
+    *                     - Fifo: the max messages would actually represented as `inFlight`
+    *                     messages (consumed but not yet deleted), meaning that we would not
+    *                     be able to consume further message from the same queue and groupId
+    *                     until at there is a deletion or the `visibilityTimeout` gets expired.
     * @param visibilityTimeout The duration (in seconds) that the received messages are hidden
     *                          from subsequent retrieve requests after being retrieved (in case they
     *                          have not been deleted before).
-    * @param waitTimeSeconds   The duration (in seconds) for which the call waits for a message to arrive
-    *                          in the queue before returning. If a message is available, the call returns
-    *                          sooner than WaitTimeSeconds. If no messages are available and the wait time expires,
-    *                          the call returns successfully with an empty list of messages.
-    *                          Ensure that the HTTP response timeout of the [[NettyNioAsyncHttpClient]]
-    *                          is longer than the WaitTimeSeconds parameter to avoid errors.
+    * @param waitTimeSeconds   The duration (in seconds) for which the call waits for a message
+    *                          to arrive in the queue before returning. If a message is available,
+    *                          the call returns sooner than the wait timeout.
+    *                          By default, `waitTimeSeconds` is set to [[Duration.Zero]], aka `short pooling`,
+    *                          which means that it will only consume messages available at that time.
+    *                          On the other hand, the user can switch to `long pooling` by increasing the
+    *                          `waitTimeSeconds` to more than zero, which in that case it will wait for
+    *                          new messages to be available.
+    *                          See more in docs: https://docs.amazonaws.cn/en_us/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-short-and-long-polling.
+    *                          Notice that in `short polling` (default), if there is no available message
+    *                          because the `inFlight` has reached the maximum limits of the queue it will
+    *                          return [[software.amazon.awssdk.services.sqs.model.OverLimitException]],
+    *                          on the other hand, when using long pooling we would just not receive messages.
+    *                          Additionally, ensure that the HTTP response timeout of the [[NettyNioAsyncHttpClient]]
+    *                          is longer than the WaitTimeSeconds parameter to avoid timeout errors.
     *
-    * @return a list of [[DeletableMessage]]s limited to `inFlightMessages` and the maximum available
-    *         in the queue at that time.
+    * @return a list of [[DeletableMessage]]s limited to the configured `maxMessages` (at most 10)
+    *         and the maximum available in the queue at the given request time.
     */
   def receiveSingleManualDelete(
     queueUrl: QueueUrl,
-    inFlightMessages: Int = 10,
+    maxMessages: Int = 10,
     visibilityTimeout: FiniteDuration = 30.seconds,
-    waitTimeSeconds: FiniteDuration = Duration.Zero): Task[List[DeletableMessage]] = {
+    waitTimeSeconds: FiniteDuration = Duration.Zero,
+    onErrorMaxRetries: Int = 1): Task[List[DeletableMessage]] = {
     val receiveRequest = singleReceiveRequest(
       queueUrl,
-      maxMessages = inFlightMessages,
+      maxMessages = maxMessages,
       visibilityTimeout = visibilityTimeout,
       waitTimeSeconds = waitTimeSeconds)
-    Task.evalAsync(receiveRequest).flatMap {
-      SqsOp.receiveMessage
-        .execute(_)
-        .map(_.messages.asScala.toList
-          .map(msg => new DeletableMessage(queueUrl, msg)))
-    }
+    Task
+      .evalAsync(receiveRequest)
+      .flatMap {
+        SqsOp.receiveMessage
+          .execute(_)
+          .map(_.messages.asScala.toList
+            .map(msg => new DeletableMessage(queueUrl, msg)))
+      }
+      .onErrorRestart(onErrorMaxRetries)
+      .onErrorHandleWith { ex =>
+        logger.error("Receive manual delete failed unexpectedly.", ex)
+        Task.raiseError(ex)
+      }
   }
 
   /**
@@ -173,6 +195,8 @@ class SqsConsumer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncC
     *
     * @see [[receiveSingleManualDelete]] for at least once semantics.
     * @param queueUrl        source queue url
+    * @param maxMessages  max number of message to be consumed per each request,
+    *                     which at most can be set to 10, otherwise it will fail.
     * @param waitTimeSeconds The duration (in seconds) for which the call waits for a message to arrive
     *                        in the queue before returning. If a message is available, the call returns
     *                        sooner than WaitTimeSeconds. If no messages are available and the wait time expires,
@@ -183,15 +207,27 @@ class SqsConsumer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncC
     */
   def receiveSingleAutoDelete(
     queueUrl: QueueUrl,
-    waitTimeSeconds: FiniteDuration = Duration.Zero): Task[List[ConsumedMessage]] = {
-    receiveSingleAutoDeleteInternal(queueUrl, waitTimeSeconds = waitTimeSeconds)
+    maxMessages: Int = 10,
+    waitTimeSeconds: FiniteDuration = Duration.Zero,
+    onErrorMaxRetries: Int = 1): Task[List[ConsumedMessage]] = {
+    receiveSingleAutoDeleteInternal(queueUrl, maxMessages, waitTimeSeconds = waitTimeSeconds)
+      .onErrorRestart(onErrorMaxRetries)
+      .onErrorHandleWith { ex =>
+        logger.error("Receive auto delete failed unexpectedly.", ex)
+        Task.raiseError(ex)
+      }
   }
 
   private[sqs] def receiveSingleAutoDeleteInternal(
     queueUrl: QueueUrl,
+    maxMessages: Int,
     waitTimeSeconds: FiniteDuration = Duration.Zero,
     visibilityTimeout: FiniteDuration = 30.seconds): Task[List[ConsumedMessage]] = {
-    receiveSingleManualDelete(queueUrl, waitTimeSeconds = waitTimeSeconds, visibilityTimeout = visibilityTimeout)
+    receiveSingleManualDelete(
+      queueUrl,
+      maxMessages,
+      waitTimeSeconds = waitTimeSeconds,
+      visibilityTimeout = visibilityTimeout)
       .tapEval(Task.traverse(_)(_.deleteFromQueue()))
   }
 
