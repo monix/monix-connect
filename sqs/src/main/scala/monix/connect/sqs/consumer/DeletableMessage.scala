@@ -46,8 +46,21 @@ class DeletableMessage private[sqs] (override val queueUrl: QueueUrl, override p
     *
     * ==Example==
     * {{{
-    * val deletableMessage: DeletableMessage = ???
-    * deletableMessage.deleteFromQueue().attempt
+    *   import monix.connect.sqs.consumer.DeletableMessage
+    *   import monix.connect.sqs.domain.QueueName
+    *   import monix.connect.sqs.Sqs
+    *   import cats.effect.Resource
+    *   import monix.eval.Task
+    *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
+    *   import software.amazon.awssdk.regions.Region
+    *   val defaultCredentials = DefaultCredentialsProvider.create()
+    *   Sqs.create(defaultCredentials, Region.AWS_GLOBAL).use{ sqs =>
+    *     for {
+    *       queueUrl <- sqs.operator.getQueueUrl(QueueName("my-queue"))
+    *       messages <- sqs.consumer.receiveSingleManualDelete(queueUrl)
+    *       _ <- Task.parTraverse(messages)(_.deleteFromQueue()).attempt
+    *     } yield ()
+    *   }
     * }}}
     *
     */
