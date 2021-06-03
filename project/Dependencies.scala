@@ -12,7 +12,7 @@ object Dependencies {
     val Hadoop = "3.1.4"
     val MongoScala = "4.1.1"
     val MongoReactiveStreams = "4.2.3"
-    val Lettuce = "6.1.1.RELEASE"
+    val Lettuce = "6.1.2.RELEASE"
     val Parquet = "1.12.0"
     val Elastic4s = "7.12.0"
     val Pureconfig = "0.15.0"
@@ -20,10 +20,10 @@ object Dependencies {
     val ScalaLogging = "3.9.2"
 
     //test
-    val Scalatest = "3.2.8"
+    val Scalatest = "3.2.9"
     val Scalacheck = "1.14.0"
     val Mockito = "1.15.0"
-    val GCNio = "0.122.12"
+    val GCNio = "0.123.1"
   }
 
   private def commonDependencies(hasIt: Boolean = false): Seq[sbt.ModuleID] = {
