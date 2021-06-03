@@ -143,11 +143,14 @@ val protoTestSettings = Seq(
       //Compile / PB.protoSources := Seq(new File("src/test/protobuf"))
   )
 
-lazy val redis = monixConnector("redis", Dependencies.Redis).settings(protoTestSettings)
+lazy val redis = monixConnector("redis", Dependencies.Redis)
+  .settings(protoTestSettings)
 
-lazy val s3 = monixConnector("s3", Dependencies.S3).aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
+lazy val s3 = monixConnector("s3", Dependencies.S3, isMimaEnabled = false)
+  .aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
 
-lazy val sqs = monixConnector("sqs", Dependencies.Sqs).aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
+lazy val sqs = monixConnector("sqs", Dependencies.Sqs, isMimaEnabled = false)
+  .aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
 
 lazy val gcs = monixConnector("gcs", Dependencies.GCS)
 
