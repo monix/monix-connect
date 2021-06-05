@@ -12,7 +12,6 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model._
 
 import java.net.URI
-import scala.jdk.CollectionConverters._
 
 trait SqsITFixture {
   this: TestSuite with BeforeAndAfterEach =>
@@ -48,7 +47,6 @@ trait SqsITFixture {
   // it must end with `.fifo` prefix, see https://github.com/aws/aws-sdk-php/issues/1331
   val genFifoQueueName: Gen[QueueName] = Gen.identifier.map(id => QueueName("queue-" + id.take(20) + ".fifo"))
 
-
   def queueUrlPrefix(queueName: String) = s"http://localhost:9324/000000000000/${queueName}"
 
   val queueName: QueueName = QueueName("queue-1")
@@ -76,36 +74,5 @@ trait SqsITFixture {
     rhandle <- genReceiptHandle
     body    <- genMessageBody
   } yield Message.builder.messageId(id).receiptHandle(rhandle).body(body).build()
-
-  def createQueueRequest(queueName: String): CreateQueueRequest =
-    CreateQueueRequest
-      .builder()
-      .queueName(queueName)
-      .attributes(
-        Map(QueueAttributeName.DELAY_SECONDS -> "60", QueueAttributeName.MESSAGE_RETENTION_PERIOD -> "86400").asJava)
-      .build()
-
-  def listQueuesRequest(name_prefix: String): ListQueuesRequest =
-    ListQueuesRequest.builder().queueNamePrefix(name_prefix).build()
-
-  def getQueueUrlRequest(queueName: String): GetQueueUrlRequest =
-    GetQueueUrlRequest.builder().queueName(queueName).build()
-
-  def deleteQueueRequest(queueUrl: String): DeleteQueueRequest =
-    DeleteQueueRequest.builder().queueUrl(queueUrl).build()
-
-  def sendMessageRequest(queueUrl: String, messageBody: String): SendMessageRequest =
-    SendMessageRequest
-      .builder()
-      .queueUrl(queueUrl)
-      .messageBody(messageBody)
-      .delaySeconds(0)
-      .build()
-
-  def receiveMessageRequest(queueUrl: String): ReceiveMessageRequest =
-    ReceiveMessageRequest.builder().queueUrl(queueUrl).build()
-
-  def deleteMessageRequest(queueUrl: String, message: Message): DeleteMessageRequest =
-    DeleteMessageRequest.builder().queueUrl(queueUrl).receiptHandle(message.receiptHandle()).build()
 
 }
