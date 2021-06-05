@@ -1,5 +1,6 @@
 ---
-id: mongodb title: MongoDB
+id: mongodb 
+title: MongoDB
 ---
 
 ## Introduction
@@ -147,10 +148,11 @@ val employee1 = Employee("Employee1", 21, "Paris")
 val employee2 = Employee("Employee2", 29, "Amsterdam")
 val businessCol = CollectionDocumentRef(database = "myDb", collection = "business_collection")
 val employeesCol =
-  CollectionCodecRef("myDb", "employees_collection", classOf[Employee], createCodecProvider[Employee]())
-val connection = MongoConnection.create2("mongodb://host:27017", (employeesCol, businessCol))
+  CollectionCodecRef("myDb", "employees_collection", classOf[Employee], createCodecProvider[Employee]()) 
 
-connection.use { case (employeesOperator, businessOperator) =>
+// calling `create2` because we want operate with two mongodb collections.
+MongoConnection.create2("mongodb://host:27017", (employeesCol, businessCol))
+  .use { case (employeesOperator, businessOperator) =>
   for {
     //business logic here
     _ <- employeesOperator.single.insertMany(List(employee1, employee2)) >>
@@ -223,7 +225,7 @@ val connection = MongoConnection.create1("mongodb://host:27017", employeesCol).u
     databaseName <- collOperator.db.listDatabases
     collectionName <- collOperator.db.listCollections(databaseName)
     // calling `listCollections` without arguments, would only
-    // return the collections names from the current list 
+    // return the collections names from the current database 
   } yield collectionName
   collections.count
 }
