@@ -52,7 +52,6 @@ class HomeSplash extends React.Component {
 
     return (
       <SplashContainer>
-
         <div className="inner">
           <ProjectTitle siteConfig={siteConfig} />
           <PromoSection>
@@ -97,7 +96,7 @@ class Index extends React.Component {
         background={props.background}
       >
         <GridBlock
-          align="top"
+          align="center"
           contents={props.children}
           layout={props.layout}
         />
@@ -119,12 +118,13 @@ class Index extends React.Component {
             image: `${baseUrl}img/hadoop.png`,
             imageAlign: 'right',
           }
+
         ]}
       </Block>
     );
 
     const Layer1 = () => (
-      <Block layout="threeColumn">
+      <Block layout="fourColumn">
         {[
             {
                     image: `${baseUrl}img/gcs.png`,
@@ -149,15 +149,8 @@ class Index extends React.Component {
       <Block layout="fourColumn">
         {[
           {
-             image: `${baseUrl}img/dynamo.png`,
-             imageAlign: 'left',
-             imageLink: 'https://connect.monix.io/docs/dynamodb'
-           },
-
-          {
-            image: `${baseUrl}img/elasticsearch.png`,
-            imageAlign: 'right',
-            imageLink: 'https://connect.monix.io/docs/elasticsearch'
+            image: `${baseUrl}img/redis.png`,
+            imageAlign: 'left'
           },
           {
             image: `${baseUrl}img/sqs.png`,
@@ -174,21 +167,12 @@ class Index extends React.Component {
 
 
 
-     return (
-          <div>
-
-            <HomeSplash siteConfig={siteConfig} language={language} />
-            <div className="mainContainer">
-
-              <div className="index">
-                <MarkdownBlock>{index}</MarkdownBlock>
-              </div>
-
-              <Layer0 />
-              <Layer1 />
-              <Layer2 />
-
-            </div>
+    return (
+      <div>
+        <HomeSplash siteConfig={siteConfig} language={language} />
+        <div className="mainContainer">
+          <div className="index">
+            <MarkdownBlock>{index}</MarkdownBlock>
           </div>
           <Layer2 />
           <Layer1 />
