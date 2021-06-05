@@ -56,7 +56,7 @@ object SqsOperator {
 
 class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
 
-  /** todo test
+  /**
     * Adds a permission to a queue for a specific <a href="https://docs.aws.amazon.com/general/latest/gr/glos-chap.html#P">principal</a>.
     * This allows sharing access to the queue.
     * When you create a queue, you have full control access rights for the queue.
@@ -77,7 +77,7 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
     * `&amp;AttributeName.1=first`
     * `&amp;AttributeName.2=second`
     *
-    * @param queueUrl      the url of the queue, obtained from [[getQueueUrl]].
+    * @param queueUrl      the url of the queue, it could be obtained from [[getQueueUrl]].
     * @param actions       The action the client wants to allow for the specified principal.
     *                      Valid values: the name of any action or *.
     *                      I.e: SendMessage, DeleteMessage, ChangeMessageVisibility...
@@ -94,7 +94,8 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
     *                      Maximum 80 characters. Allowed characters include
     *                      alphanumeric characters, hyphens (-), and underscores (_).
     *
-    * @see also the aws sqs api docs, where the above come from ;)
+    * @see also the aws sqs api docs, [[https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_AddPermission.html]]
+    *      where the above come from ;)
     *
     */
   def addPermission(
@@ -239,23 +240,16 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
       .map(_.attributes.asScala.toMap)
   }
 
-  //todo test
-  def isFifoQueue(queueName: QueueName): Task[Boolean] = {
-    if (queueName.name.endsWith(".fifo"))
-      existsQueue(queueName)
-    else Task.now(false)
-  }
-
-  //todo test
-  def listDeadLetterQueueUrls(queueUrl: QueueUrl): Observable[QueueUrl] = {
-    val listRequest = ListDeadLetterSourceQueuesRequest.builder.queueUrl(queueUrl.url).build
-    for {
-      listResponse <- Observable.fromReactivePublisher {
-        asyncClient.listDeadLetterSourceQueuesPaginator(listRequest)
-      }
-      queueUrl <- Observable.fromIterable(listResponse.queueUrls.asScala)
-    } yield QueueUrl(queueUrl)
-  }
+  // FIXME: This operation is not supported in local elasticMq
+  //def listDeadLetterQueueUrls(queueUrl: QueueUrl): Observable[QueueUrl] = {
+  //  val listRequest = ListDeadLetterSourceQueuesRequest.builder.queueUrl(queueUrl.url).build
+  //  for {
+  //    listResponse <- Observable.fromReactivePublisher {
+  //      asyncClient.listDeadLetterSourceQueuesPaginator(listRequest)
+  //    }
+  //    queueUrl <- Observable.fromIterable(listResponse.queueUrls.asScala)
+  //  } yield QueueUrl(queueUrl)
+  //}
 
   /**
     * Lists all the existing queue urls from your current region.
@@ -297,7 +291,6 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
     SqsOp.listQueueTags.execute(listRequest)(asyncClient).map(_.tags.asScala.toMap)
   }
 
-  //todo test
   //PurgeQueueInProgressException, QueueDeletedRecentlyException, QueueDoesNotExistException, QueueNameExistsException
   /**
     * Deletes the messages in a queue specified by the [[QueueUrl]].

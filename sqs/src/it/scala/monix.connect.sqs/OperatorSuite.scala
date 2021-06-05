@@ -9,6 +9,8 @@ import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.services.sqs.model.{QueueAttributeName, QueueDoesNotExistException}
 
+import scala.concurrent.duration.DurationInt
+
 class OperatorSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEach with SqsITFixture {
 
   s"Sqs" can "create queue and check it exists" in {
@@ -20,6 +22,22 @@ class OperatorSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEac
       } yield {
         existedBefore shouldBe false
         existsAfter shouldBe true
+      }
+    }.runSyncUnsafe()
+  }
+
+  it can "purge a queue" in {
+    val messages = Gen.listOfN(100, genStandardMessage).sample.get
+    Sqs.fromConfig.use { sqs =>
+      for {
+        queueUrl <- sqs.operator.createQueue(queueName)
+        _ <- sqs.producer.sendParBatch(messages, queueUrl)
+        receiveBeforePurge <- sqs.consumer.receiveSingleAutoDelete(queueUrl, maxMessages = 5)
+        _ <- sqs.operator.purgeQueue(queueUrl) >> Task.sleep(2.seconds)
+        receiveAfterPurge <- sqs.consumer.receiveSingleAutoDelete(queueUrl)
+      } yield {
+        receiveBeforePurge.size shouldBe 5
+        receiveAfterPurge shouldBe List.empty
       }
     }.runSyncUnsafe()
   }
@@ -154,5 +172,21 @@ class OperatorSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEac
       }
     }.runSyncUnsafe()
   }
+
+  // FIXME: This operation is not supported in local elasticMq
+  //it can "list all dlq queue urls" in {
+  //  val queueName = genQueueName.sample.get
+  //  val dlQueueName = genQueueName.sample.get
+  //  Sqs.fromConfig.use { sqs =>
+  //    for {
+  //      queueUrl <- sqs.operator.createQueue(queueName)
+  //      dlQueueUrl <- sqs.operator.createQueue(dlQueueName)
+  //      dlQueueArn <- sqs.operator.getQueueAttributes(dlQueueUrl).map(_.get(QueueAttributeName.QUEUE_ARN))
+  //      _ <- sqs.operator.setQueueAttributes(queueUrl, attributes = dlQueueArn.map(dlqRedrivePolicyAttr).getOrElse(Map.empty))
+  //    } yield {
+  //      //dlQueueList.size shouldBe 1
+  //    }
+  //  }.runSyncUnsafe()
+  //}
 
 }

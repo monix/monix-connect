@@ -24,6 +24,8 @@ trait SqsITFixture {
     Task.parZip3(deleteQueue, deleteFifoQueue, deleteAll).runSyncUnsafe()
   }
 
+  def dlqRedrivePolicyAttr(dlQueueArn: String) = Map(QueueAttributeName.REDRIVE_POLICY -> s"""{"maxReceiveCount":"1", "deadLetterTargetArn": "$dlQueueArn" }""")
+
   val nonExistingQueueErrorMsg: String =
     """Invalid request: MissingQueryParamRejection(QueueName), MissingFormFieldRejection(QueueUrl); see the SQS docs. (Service: Sqs, Status Code: 400, Request ID: 00000000-0000-0000-0000-000000000000, Extended Request ID: null)""".stripMargin
 
