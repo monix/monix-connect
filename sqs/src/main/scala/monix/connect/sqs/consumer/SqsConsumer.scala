@@ -43,8 +43,17 @@ class SqsConsumer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncC
     *
     * @see [[receiveAutoDelete]] for at most once semantics.
     * @param queueUrl          source queue url
-    * @param maxMessages  max number of message to be consumed per each request,
-    *                     which at most can be set to 10, otherwise it will fail.
+    * @param maxMessages  max number of message to be consumed, which at most can be 10, otherwise
+    *                     it will fail.
+    *                     The meaning of `maxMessages` can differ when this parameter is applied
+    *                     against standard or fifo queues.
+    *                     - Standard: it will solely represent the number of messages requested and
+    *                     consumed in the same request.
+    *                     - Fifo: the max messages would actually represented as `inFlight`
+    *                     messages (consumed but not yet deleted), meaning that we would not
+    *                     be able to consume further message from the same queue until there
+    *                     is a deletion or the `visibilityTimeout` gets expired.
+    *                     See the official aws docs for further details.
     * @param visibilityTimeout The duration (in seconds) that the received messages are hidden
     *                          from subsequent retrieve requests after being retrieved (in case they
     *                          have not been deleted before).
@@ -89,6 +98,17 @@ class SqsConsumer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncC
     *
     * @see [[receiveManualDelete]] for at least once semantics.
     * @param queueUrl        source queue url
+    * @param maxMessages  max number of message to be consumed, which at most can be 10, otherwise
+    *                     it will fail.
+    *                     The meaning of `maxMessages` can differ when this parameter is applied
+    *                     against standard or fifo queues.
+    *                     - Standard: it will solely represent the number of messages requested and
+    *                     consumed in the same request.
+    *                     - Fifo: the max messages would actually represented as `inFlight`
+    *                     messages (consumed but not yet deleted), meaning that we would not
+    *                     be able to consume further message from the same queue until there
+    *                     is a deletion or the `visibilityTimeout` gets expired.
+    *                     See the official aws docs for further details.
     * @param waitTimeSeconds The duration (in seconds) for which the call waits for a message
     *                        to arrive in the queue before returning. If a message is available,
     *                        the call returns sooner than the wait timeout.
@@ -133,8 +153,9 @@ class SqsConsumer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncC
     *                     consumed in the same request.
     *                     - Fifo: the max messages would actually represented as `inFlight`
     *                     messages (consumed but not yet deleted), meaning that we would not
-    *                     be able to consume further message from the same queue and groupId
-    *                     until at there is a deletion or the `visibilityTimeout` gets expired.
+    *                     be able to consume further message from the same queue until there
+    *                     is a deletion or the `visibilityTimeout` gets expired.
+    *                     See the official aws docs for further details.
     * @param visibilityTimeout The duration (in seconds) that the received messages are hidden
     *                          from subsequent retrieve requests after being retrieved (in case they
     *                          have not been deleted before).
@@ -195,8 +216,17 @@ class SqsConsumer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncC
     *
     * @see [[receiveSingleManualDelete]] for at least once semantics.
     * @param queueUrl        source queue url
-    * @param maxMessages  max number of message to be consumed per each request,
-    *                     which at most can be set to 10, otherwise it will fail.
+    * @param maxMessages  max number of message to be consumed, which at most can be 10, otherwise
+    *                     it will fail.
+    *                     The meaning of `maxMessages` can differ when this parameter is applied
+    *                     against standard or fifo queues.
+    *                     - Standard: it will solely represent the number of messages requested and
+    *                     consumed in the same request.
+    *                     - Fifo: the max messages would actually represented as `inFlight`
+    *                     messages (consumed but not yet deleted), meaning that we would not
+    *                     be able to consume further message from the same queue until there
+    *                     is a deletion or the `visibilityTimeout` gets expired.
+    *                     See the official aws docs for further details.
     * @param waitTimeSeconds The duration (in seconds) for which the call waits for a message to arrive
     *                        in the queue before returning. If a message is available, the call returns
     *                        sooner than WaitTimeSeconds. If no messages are available and the wait time expires,

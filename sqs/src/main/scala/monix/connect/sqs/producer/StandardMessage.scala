@@ -51,7 +51,7 @@ import scala.concurrent.duration.FiniteDuration
   *                      You can set this parameter only on a queue level.
   *
   */
-final case class StandardMessage(
+final case class StandardMessage (
   body: String,
   messageAttributes: Map[String, MessageAttribute] = Map.empty,
   awsTraceHeader: Option[MessageAttribute] = None,

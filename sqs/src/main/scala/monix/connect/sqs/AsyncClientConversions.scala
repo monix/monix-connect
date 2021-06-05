@@ -32,14 +32,14 @@ import java.time.Duration
 private[sqs] object AsyncClientConversions {
   self =>
 
-  def fromMonixAwsConf(monixAwsConf: MonixAwsConf): SqsAsyncClient = {
+  private[sqs] def fromMonixAwsConf(monixAwsConf: MonixAwsConf): SqsAsyncClient = {
     val builder = SqsAsyncClient.builder().credentialsProvider(monixAwsConf.credentials).region(monixAwsConf.region)
     monixAwsConf.httpClient.map(httpConf => builder.httpClient(self.httpConfToClient(httpConf)))
     monixAwsConf.endpoint.map(builder.endpointOverride)
     builder.build()
   }
 
-  def from(
+  private[sqs] def from(
     credentialsProvider: AwsCredentialsProvider,
     region: Region,
     endpoint: Option[String],

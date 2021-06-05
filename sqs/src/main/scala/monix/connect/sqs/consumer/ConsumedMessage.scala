@@ -26,7 +26,14 @@ import software.amazon.awssdk.services.sqs.model.{ChangeMessageVisibilityRequest
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 
-/** Represents the generic implementation of a message consumed from a specific queue. */
+/**
+  * The representation of a message consumed from a specific queue.
+  * Generally used to represent a message already deleted from the queue, since it
+  * does not implements the capability to be deleted. (At most once)
+  *
+  * See [[DeletableMessage]] for getting over control over when a message is considered
+  * processed, thus deleted form the source queue.
+  */
 class ConsumedMessage private[sqs] (val queueUrl: QueueUrl, protected val message: Message)(
   implicit asyncClient: SqsAsyncClient) {
 

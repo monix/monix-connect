@@ -30,7 +30,7 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEac
     }.runSyncUnsafe()
   }
 
-  it must "allow passing a group of 10 messages by splitting requests in parallel batches of at most 10 entries" in {
+  it must "allow passing a group of `n` messages by splitting requests in parallel batches of at most 10 entries" in {
     val numOfEntries = Gen.choose(11, 199).sample.get
     val messages = Gen.listOfN(numOfEntries, genFifoMessage(defaultGroupId)).sample.get
     Sqs.fromConfig.use { sqs =>
@@ -48,7 +48,7 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEac
     }.runSyncUnsafe()
   }
 
-  it must "not fail when on empty messages list" in {
+  it must "not fail on empty messages list" in {
     val messages = List.empty[Message]
     Sqs.fromConfig.use { sqs =>
       for {
@@ -61,7 +61,7 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEac
     }.runSyncUnsafe()
   }
 
-  "parSink" should "sends in a single batch, a group of less than 10 messages emitted at once" in {
+  "sendParBatchSink" should "send in a single batch, a group of less than 10 messages emitted at once" in {
     val messages = Gen.listOfN(5, genFifoMessage(defaultGroupId)).sample.get
     Sqs.fromConfig.use { sqs =>
       for {
@@ -89,7 +89,7 @@ class ProducerSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEac
     }.runSyncUnsafe()
   }
 
-  it should "send in batches of at most 10 messages, a group of `N` emitted at once" in {
+  it should "send in batches of `n` messages" in {
     val messages =  Gen.choose(11, 100).flatMap(Gen.listOfN(_, genFifoMessage(defaultGroupId))).sample.get
 
     Sqs.fromConfig.use { sqs =>
