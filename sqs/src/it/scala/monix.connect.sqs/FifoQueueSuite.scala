@@ -129,26 +129,6 @@ class FifoQueueSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEa
     }.runSyncUnsafe()
   }
 
-  it should "respect inFlight message by groupId on the same queue" in {
-    val group1 = "group1"
-    val group2 = "group2"
-    val messagesGroup1 = Gen.listOfN(13, genFifoMessageWithDeduplication(group1)).sample.get
-    val messagesGroup2 = Gen.listOfN(6, genFifoMessageWithDeduplication(group2)).sample.get
-    val inFlightMessages = 9
-    Sqs.fromConfig.use { sqs =>
-      for {
-        queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = fifoDeduplicationQueueAttr)
-        _ <- sqs.producer.sendParBatch(messagesGroup1, queueUrl)
-        _ <- sqs.producer.sendParBatch(messagesGroup2, queueUrl)
-        _ <- Task.sleep(1.second)
-        receivedMessages <- sqs.consumer.receiveManualDelete(queueUrl, maxMessages = inFlightMessages)
-          .bufferTimed(10.seconds).toListL
-      } yield {
-        receivedMessages.flatten.size shouldBe inFlightMessages + messagesGroup2.size
-      }
-    }.runSyncUnsafe()
-  }
-
   "Explicit deduplication" should "take preference in front content based one" in {
     val message1 = genFifoMessage(defaultGroupId, deduplicationId = Some("111")).sample.get
     val body = message1.body
