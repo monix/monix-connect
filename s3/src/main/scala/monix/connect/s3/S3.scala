@@ -92,7 +92,7 @@ object S3 {
   self =>
 
   /**
-    * Creates a resource that will use the values from a
+    * Creates a [[Resource]] that will use the values from a
     * configuration file to allocate and release a [[S3]].
     * Thus, the api expects an `application.conf` file to be present
     * in the `resources` folder.

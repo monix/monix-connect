@@ -18,6 +18,7 @@ object MimaFilters {
     exclude[IncompatibleResultTypeProblem]("monix.connect.redis.RedisKey.randomkey")
   )
 
+  // changes for `0.6.1` have been actually skipped.
   lazy val changesFor_0_6_1: Seq[ProblemFilter] = Seq(
     exclude[DirectMissingMethodProblem]("monix.connect.s3.S3RequestBuilder.completeMultipartUploadRquest")
   )
