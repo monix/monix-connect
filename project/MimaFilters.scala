@@ -15,9 +15,13 @@ object MimaFilters {
     exclude[IncompatibleResultTypeProblem]("monix.connect.redis.RedisHash.hgetall"),
     exclude[DirectMissingMethodProblem]("monix.connect.redis.Redis.hgetall"),
     exclude[IncompatibleResultTypeProblem]("monix.connect.redis.Redis.hgetall"),
-
     exclude[IncompatibleResultTypeProblem]("monix.connect.redis.RedisKey.randomkey")
   )
 
-  val allMimaFilters: Seq[ProblemFilter] = changesFor_0_5_3 ++ changesFor_0_6_0
+  // changes for `0.6.1` have been actually skipped.
+  lazy val changesFor_0_6_1: Seq[ProblemFilter] = Seq(
+    exclude[DirectMissingMethodProblem]("monix.connect.s3.S3RequestBuilder.completeMultipartUploadRquest")
+  )
+
+  val allMimaFilters: Seq[ProblemFilter] = changesFor_0_5_3 ++ changesFor_0_6_0 ++ changesFor_0_6_1
 }

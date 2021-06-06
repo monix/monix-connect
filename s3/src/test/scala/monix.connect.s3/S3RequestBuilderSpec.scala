@@ -171,7 +171,7 @@ class S3RequestBuilderSpec
           //when
           val request: CompleteMultipartUploadRequest =
             S3RequestBuilder
-              .completeMultipartUploadRquest(bucket, key, uploadId, completedParts, requestPayer)
+              .completeMultipartUploadRequest(bucket, key, uploadId, completedParts, requestPayer)
 
           //then
           request.bucket shouldBe bucket

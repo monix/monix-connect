@@ -100,7 +100,6 @@ object S3 {
     * @see how does the expected `.conf` file should look like
     *      https://github.com/monix/monix-connect/blob/master/aws-auth/src/main/resources/reference.conf`
     *
-    * @see the cats effect resource data type: https://typelevel.org/cats-effect/datatypes/resource.html
     * @return a [[Resource]] of [[Task]] that allocates and releases [[S3]].
     */
   def fromConfig: Resource[Task, S3] = {
@@ -117,8 +116,9 @@ object S3 {
   }
 
   /**
-    * Creates a [[Resource]] that will use the passed-by-parameter
-    * AWS configurations to acquire and release [[S3]].
+    * Creates a [[Resource]] that using passed-by-parameter
+    * AWS configurations, it encodes the acquisition and release
+    * of the resources needed to instantiate the [[S3]].
     *
     * ==Example==
     *
@@ -193,7 +193,7 @@ object S3 {
     *     val s3: S3 = S3.createUnsafe(s3AsyncClient)
     * }}}
     *
-    * @see [[S3.fromConfig]] and [[S3.create]] for a pure usage of [[S3]].
+    * @see [[S3.fromConfig]] and [[S3.create]] for a pure implementation.
     *      They both will make sure that the s3 connection is created with the required
     *      resources and guarantee that the client was not previously closed.
     *
@@ -213,7 +213,9 @@ object S3 {
     * It provides a fast forward access to the [[S3]] that avoids
     * dealing with [[Resource]], however in this case, the created
     * resources will not be released like in [[create]].
-    * Thus, it is the user's responsability to close the [[S3]] connection.
+    *
+    * Thus, it is the user's responsibility of the user to do a proper resource usage
+    * and closing the connection.
     *
     * ==Example==
     *
@@ -232,7 +234,7 @@ object S3 {
     * @param region              An Amazon Web Services region that hosts a set of Amazon services.
     * @param endpoint            The endpoint with which the SDK should communicate.
     * @param httpClient          Sets the [[SdkAsyncHttpClient]] that the SDK service client will use to make HTTP calls.
-    * @return a [[Resource]] of [[Task]] that allocates and releases [[S3]].
+    * @return a [[Resource]] of [[Task]] that allocates and releases a [[S3]].
     */
   @UnsafeBecauseImpure
   def createUnsafe(

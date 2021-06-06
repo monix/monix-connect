@@ -123,8 +123,8 @@ lazy val monixConnect = (project in file("."))
   .configs(IntegrationTest, IT)
   .settings(sharedSettings)
   .settings(name := "monix-connect")
-  .aggregate(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, elasticsearch, awsAuth)
-  .dependsOn(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, elasticsearch, awsAuth)
+  .aggregate(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, sqs, elasticsearch, awsAuth)
+  .dependsOn(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, sqs, elasticsearch, awsAuth)
 
 lazy val akka = monixConnector("akka", Dependencies.Akka)
 
@@ -142,9 +142,15 @@ val protoTestSettings = Seq(
     )
       //Compile / PB.protoSources := Seq(new File("src/test/protobuf"))
   )
-lazy val redis = monixConnector("redis", Dependencies.Redis).settings(protoTestSettings)
 
-lazy val s3 = monixConnector("s3", Dependencies.S3).aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
+lazy val redis = monixConnector("redis", Dependencies.Redis)
+  .settings(protoTestSettings)
+
+lazy val s3 = monixConnector("s3", Dependencies.S3, isMimaEnabled = false)
+  .aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
+
+lazy val sqs = monixConnector("sqs", Dependencies.Sqs, isMimaEnabled = false)
+  .aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
 
 lazy val gcs = monixConnector("gcs", Dependencies.GCS)
 
@@ -195,7 +201,7 @@ lazy val skipOnPublishSettings = Seq(
 lazy val mdocSettings = Seq(
   scalacOptions --= Seq("-Xfatal-warnings", "-Ywarn-unused"),
   crossScalaVersions := Seq(scalaVersion.value),
-  unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(akka, parquet, dynamodb, s3, elasticsearch, gcs, hdfs, mongodb, redis),
+  unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(akka, parquet, dynamodb, s3, sqs, elasticsearch, gcs, hdfs, mongodb, redis),
   target in (ScalaUnidoc, unidoc) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",
   cleanFiles += (target in (ScalaUnidoc, unidoc)).value,
   docusaurusCreateSite := docusaurusCreateSite

@@ -8,17 +8,15 @@ object Dependencies {
     val Monix = "3.3.0"
     val AwsSdk = "2.15.67"
     val AkkaStreams = "2.6.9"
-    val AWS = "1.11.749"
-    val DynamoDb = "2.10.60"
     val GCS = "1.107.0"
     val Hadoop = "3.1.4"
     val MongoScala = "4.1.1"
     val MongoReactiveStreams = "4.2.3"
-    val S3 = "2.14.21"
     val Lettuce = "6.1.2.RELEASE"
     val Parquet = "1.12.0"
     val Elastic4s = "7.12.0"
     val Pureconfig = "0.15.0"
+    val ScalaLogging = "3.9.2"
     val ScalaCompat = "2.4.4"
 
     //test
@@ -95,6 +93,11 @@ object Dependencies {
     "com.google.cloud"               % "google-cloud-storage" % Versions.GCS,
     "com.google.cloud"               % "google-cloud-nio" % Versions.GCNio % IntegrationTest,
     "commons-io"                     % "commons-io" % "2.6" % Test
+  ) ++ commonDependencies(hasIt = true)
+
+  val Sqs = Seq(
+    "com.typesafe.scala-logging" %% "scala-logging" % Versions.ScalaLogging,
+    "software.amazon.awssdk" % "sqs" % Versions.AwsSdk
   ) ++ commonDependencies(hasIt = true)
 
   val Elasticsearch = Seq(

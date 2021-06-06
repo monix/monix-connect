@@ -36,7 +36,8 @@ import scala.concurrent.Future
   * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
   * @tparam A the type that the [[Consumer]] expects to receive
   */
-@InternalApi private[mongodb] class MongoSinkSubscriber[A, B](op: A => Publisher[B], retryStrategy: RetryStrategy)
+@InternalApi
+private[mongodb] class MongoSinkSubscriber[A, B](op: A => Publisher[B], retryStrategy: RetryStrategy)
   extends Consumer[A, Unit] {
 
   override def createSubscriber(cb: Callback[Throwable, Unit], s: Scheduler): (Subscriber[A], AssignableCancelable) = {

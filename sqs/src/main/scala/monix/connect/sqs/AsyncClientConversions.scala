@@ -15,10 +15,7 @@
  * limitations under the License.
  */
 
-package monix.connect.s3
-
-import java.net.URI
-import java.time.Duration
+package monix.connect.sqs
 
 import monix.connect.aws.auth.{HttpClientConf, MonixAwsConf}
 import monix.execution.internal.InternalApi
@@ -26,27 +23,31 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
 import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.s3.S3AsyncClient
+import software.amazon.awssdk.services.sqs.SqsAsyncClient
+
+import java.net.URI
+import java.time.Duration
 
 @InternalApi
-private[s3] object AsyncClientConversions { self =>
+private[sqs] object AsyncClientConversions {
+  self =>
 
-  private[s3] def fromMonixAwsConf(monixAwsConf: MonixAwsConf): S3AsyncClient = {
-    val builder = S3AsyncClient.builder().credentialsProvider(monixAwsConf.credentials).region(monixAwsConf.region)
+  private[sqs] def fromMonixAwsConf(monixAwsConf: MonixAwsConf): SqsAsyncClient = {
+    val builder = SqsAsyncClient.builder().credentialsProvider(monixAwsConf.credentials).region(monixAwsConf.region)
     monixAwsConf.httpClient.map(httpConf => builder.httpClient(self.httpConfToClient(httpConf)))
     monixAwsConf.endpoint.map(builder.endpointOverride)
     builder.build()
   }
 
-  private[s3] def from(
+  private[sqs] def from(
     credentialsProvider: AwsCredentialsProvider,
     region: Region,
     endpoint: Option[String],
-    httpClient: Option[SdkAsyncHttpClient]): S3AsyncClient = {
-    val builder = S3AsyncClient.builder().credentialsProvider(credentialsProvider).region(region)
+    httpClient: Option[SdkAsyncHttpClient]): SqsAsyncClient = {
+    val builder = SqsAsyncClient.builder().credentialsProvider(credentialsProvider).region(region)
     httpClient.map(builder.httpClient)
     endpoint.map(uri => builder.endpointOverride(URI.create(uri)))
-    builder.build()
+    builder.build
   }
 
   private[this] def httpConfToClient(httpClientConf: HttpClientConf): SdkAsyncHttpClient = {
