@@ -26,6 +26,12 @@ class OperatorSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEac
     }.runSyncUnsafe()
   }
 
+  it must "fail when getting the url of a non existing queue" in {
+   val queueUrl = Sqs.fromConfig.use {_.operator.getQueueUrl(QueueName("randomQueueName"))}.attempt.runSyncUnsafe()
+    queueUrl.isLeft shouldBe true
+    queueUrl.toTry.failed.get shouldBe a[QueueDoesNotExistException]
+  }
+
   it can "purge a queue" in {
     val messages = Gen.listOfN(100, genStandardMessage).sample.get
     Sqs.fromConfig.use { sqs =>
@@ -107,7 +113,7 @@ class OperatorSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEac
   }
 
   it can "get a queue and queue url from its name" in {
-    Sqs.fromConfig.use { case Sqs(_, _, operator) =>
+    Sqs.fromConfig.use { case Sqs(operator, _, _) =>
       for {
         createdQueueUrl <- operator.createQueue(queueName)
         queueUrl <- operator.getQueueUrl(queueName)
@@ -132,12 +138,12 @@ class OperatorSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEac
         queueUrl <- sqs.operator.createQueue(queueName)
         existsBefore <- sqs.operator.existsQueue(queueName)
         existsAfterDelete <- sqs.operator.deleteQueue(queueUrl) >> sqs.operator.existsQueue(queueName)
-        errorMessage <- sqs.operator.deleteQueue(queueUrl).as(None).onErrorHandle(ex => Some(ex.getMessage))
+        deleteWithError <- sqs.operator.deleteQueue(queueUrl).attempt
       } yield {
         existsBefore shouldBe true
         existsAfterDelete shouldBe false
-        errorMessage.isDefined shouldBe true
-        errorMessage.get.contains("AWS.SimpleQueueService.NonExistentQueue") shouldBe true
+        deleteWithError.isLeft shouldBe true
+        deleteWithError.toTry.failed.get shouldBe a[QueueDoesNotExistException]
       }
     }.runSyncUnsafe()
   }

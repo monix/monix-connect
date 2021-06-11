@@ -19,27 +19,21 @@ package monix.connect.sqs
 
 import monix.connect.sqs.domain.{QueueName, QueueUrl}
 import monix.eval.Task
-import monix.execution.internal.InternalApi
 import monix.reactive.Observable.Transformer
 import monix.reactive.Observable
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.{
   AddPermissionRequest,
-  ChangeMessageVisibilityRequest,
   CreateQueueRequest,
-  DeleteMessageRequest,
   DeleteQueueRequest,
   GetQueueAttributesRequest,
   GetQueueUrlRequest,
-  ListDeadLetterSourceQueuesRequest,
   ListQueueTagsRequest,
   ListQueuesRequest,
   PurgeQueueRequest,
   QueueAttributeName,
   QueueDoesNotExistException,
   RemovePermissionRequest,
-  SendMessageBatchRequest,
-  SendMessageResponse,
   SetQueueAttributesRequest,
   SqsRequest,
   SqsResponse,
@@ -47,7 +41,6 @@ import software.amazon.awssdk.services.sqs.model.{
   UntagQueueRequest
 }
 
-import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 
 object SqsOperator {
@@ -131,6 +124,8 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
   /**
     * Deletes a queue.
     *
+    * If queue does not exists it fails with [[QueueDoesNotExistException]].
+    *
     * @param queueUrl the url of the queue to be deleted.
     */
   def deleteQueue(queueUrl: QueueUrl): Task[Unit] = {
@@ -212,6 +207,9 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
 
   /**
     * Get the [[QueueUrl]] of an existing Amazon SQS queue.
+    *
+    * Fails with [[QueueDoesNotExistException]] when the queue does not exist.
+    *
     * To access a queue that belongs to another AWS account,
     * use the QueueOwnerAWSAccountId parameter to specify
     * the account ID of the queue's owner.

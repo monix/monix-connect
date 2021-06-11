@@ -28,7 +28,6 @@ import software.amazon.awssdk.services.sqs.model.{
   MessageSystemAttributeValue
 }
 
-import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 
 class MessageSpec extends AnyFlatSpecLike with Matchers {

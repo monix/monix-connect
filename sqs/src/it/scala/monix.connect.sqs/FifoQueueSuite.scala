@@ -1,7 +1,6 @@
 package monix.connect.sqs
 
 import monix.connect.sqs.producer.{Message, StandardMessage}
-import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
 import org.apache.commons.codec.digest.DigestUtils.md5Hex
@@ -159,7 +158,7 @@ class FifoQueueSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEa
     val delayDuration = Some(5.seconds)
     val delayedMessage: Message = new Message(body, groupId = groupId, deduplicationId = deduplicationId, delayDuration = delayDuration)
     val attempt =
-      Sqs.fromConfig.use { case Sqs(_, producer, operator) =>
+      Sqs.fromConfig.use { case Sqs(operator, producer, _) =>
         for {
           queueUrl <- operator.createQueue(fifoQueueName, attributes = fifoDeduplicationQueueAttr)
           invalidRequest <- producer.sendSingleMessage(delayedMessage, queueUrl)
