@@ -5,11 +5,11 @@ title: AWS SQS
 
 ## Introduction
 
-The _Simple Queue Service (SQS)_  is a managed message queue service offered by Amazon Web Services (AWS).
-It provides an _HTTP API_ over which applications can submit items into and read items out of a queue.
+The **Simple Queue Service** _(SQS)_  is a managed message queue service offered by **AWS**.
+It provides an _HTTP API_ over which applications can produce and consume messages from different queues. 
 A queue itself is fully managed by AWS, which makes _SQS_ an easy solution
 for passing messages between different parts of software systems that run in the cloud, commonly
-used for comunicating between different systems, providing backpressure and retriability.
+used as a message broker to communicate different systems, providing backpressure, availability, fault tolerance and more.
 
 ## Dependency
 
@@ -70,7 +70,7 @@ _http client_ settings are commented out since they are optional, however they c
 }
 ```
 
-This config file should be placed in the `resources` folder, therefore it will be automatically picked up from the method call `Sqs.fromConfig`, which will return a `cats.effect.Resource[Task, S3]`.
+This config file should be placed in the `resources` folder, therefore it will be automatically picked up from the method call `Sqs.fromConfig`, which will return a `cats.effect.Resource[Task, Sqs]`.
 The [resource](https://typelevel.org/cats-effect/datatypes/resource.html) is responsible of the *creation* and *release* of the _Sqs client_.
 
 **Try to reuse** the created **Sqs** client as much as possible in your application multiple times in your application. Otherwise, creating it
@@ -276,7 +276,7 @@ to be sent in two types, `FifoMessage` and `StandardMessage`, which will be used
 
 ```scala
 package monix.connect.sqs.producer
-case class FifoMessage(body: String,
+final case class FifoMessage(body: String,
                        groupId: String,
                        deduplicationId: Option[String] = Option.empty,
                        messageAttributes: Map[String, MessageAttribute] = Map.empty,
