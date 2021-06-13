@@ -199,7 +199,7 @@ Sqs.fromConfig.use { case Sqs(operator: SqsOperator, _, _) =>
 }
 ```
 
-#### Get queue url
+### Get queue url
 
 The queue url is required on all operations, including producing and consuming messages.
 This, the action eventually returns `QueueUrl` given its `QueueName`, however, it will return a failed `task` if queue name does not exist.
@@ -215,7 +215,7 @@ Sqs.fromConfig.use { case Sqs(operator: SqsOperator, _, _) =>
 }.runToFuture
 ```
 
-#### Delete queue
+### Delete queue
 
 Permanently deletes the queue from sqs from the given `QueueName`.
 ```scala
@@ -231,7 +231,7 @@ Sqs.fromConfig.use { sqs =>
 }.runToFuture
 ```
 
-#### Purge queue
+### Purge queue
 
 Use this operation if you don't want to delete a queue instead remove all of its messages.
 The process might take up to 60 seconds regardless of the queue's size.
@@ -249,7 +249,7 @@ Sqs.fromConfig.use { sqs =>
 }.runToFuture
 ```
 
-#### List queues
+### List queues
 
 Emits the queue urls in the current region.
 The list operation can be conditioned with a `queuePrefix`, which then would only return the queues whose name starts with the given string.
