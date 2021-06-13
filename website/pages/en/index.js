@@ -174,9 +174,6 @@ class Index extends React.Component {
           <div className="index">
             <MarkdownBlock>{index}</MarkdownBlock>
           </div>
-            // <Layer2 />
-            // <Layer1 />
-            // <Layer0 />
         </div>
       </div>
     );

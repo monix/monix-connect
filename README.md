@@ -28,11 +28,12 @@ The below list comprehends the current set of available connectors:
 1. [Apache Parquet](https://connect.monix.io/docs/parquet)
 2. [AWS DynamoDB](https://connect.monix.io/docs/dynamodb)
 3. [AWS S3](https://connect.monix.io/docs/s3)
-4. [Elasticsearch](https://connect.monix.io/docs/elasticsearch)
-5. [Google Cloud Storage](https://connect.monix.io/docs/gcs)
-6. [Hdfs](https://connect.monix.io/docs/hdfs)
-7. [MongoDB](https://connect.monix.io/docs/mongodb)
-8. [Redis](https://connect.monix.io/docs/redis)
+4. [AWS SQS](https://connect.monix.io/docs/sqs)
+5. [Elasticsearch](https://connect.monix.io/docs/elasticsearch)
+6. [Google Cloud Storage](https://connect.monix.io/docs/gcs)
+7. [Hdfs](https://connect.monix.io/docs/hdfs)
+8. [MongoDB](https://connect.monix.io/docs/mongodb)
+9. [Redis](https://connect.monix.io/docs/redis)
 
 ## Contributing
 
