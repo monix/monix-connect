@@ -174,7 +174,7 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
   def createQueue(
     queueName: QueueName,
     tags: Map[String, String] = Map.empty,
-    attributes: Map[QueueAttributeName, String] = Map.empty): Task[QueueUrl] = {
+    attributes: Map[QueueAttributeName., String] = Map.empty): Task[QueueUrl] = {
     val createQueueRequest = CreateQueueRequest.builder
       .queueName(queueName.name)
       .tags(tags.asJava)
