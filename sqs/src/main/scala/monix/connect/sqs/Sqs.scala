@@ -136,7 +136,7 @@ object Sqs {
     */
   @UnsafeBecauseImpure
   def createUnsafe(implicit sqsAsyncClient: SqsAsyncClient): Sqs = {
-    Sqs(SqsConsumer.create, SqsProducer.create, SqsOperator.create)
+    Sqs(SqsOperator.create, SqsProducer.create, SqsConsumer.create)
   }
 
   /**
@@ -177,6 +177,6 @@ object Sqs {
 
 }
 
-case class Sqs private[sqs] (consumer: SqsConsumer, producer: SqsProducer, operator: SqsOperator) {
-  def close: Task[Unit] = Task.parZip3(consumer.close, producer.close, operator.close).void
+case class Sqs private[sqs] (operator: SqsOperator, producer: SqsProducer, consumer: SqsConsumer) {
+  def close: Task[Unit] = Task.parZip3(operator.close, producer.close, consumer.close).void
 }

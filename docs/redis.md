@@ -19,7 +19,7 @@ a _non blocking_ Redis client.
 Add the following dependency:
 
 ```scala
-libraryDependencies += "io.monix" %% "monix-redis" % "0.6.0-RC1"
+libraryDependencies += "io.monix" %% "monix-redis" % "0.6.0"
 ```
 
 ## Redis Connection
@@ -60,8 +60,8 @@ servers in the cluster.
 import monix.connect.redis.client.{RedisConnection, RedisUri}
 
 val redisNode1 = RedisUri("my.redis.node.1", 7000)
-val redisNode2 = RedisUri("my.redis.node.1", 7001)
-val redisNode3 = RedisUri("my.redis.node.1", 7002)
+val redisNode2 = RedisUri("my.redis.node.2", 7001)
+val redisNode3 = RedisUri("my.redis.node.3", 7002)
 
 val redisClusterConn: RedisConnection = RedisConnection.cluster(List(redisNode1, redisNode2, redisNode3))
 ```
@@ -487,7 +487,7 @@ And then from the application side you would do:
 import monix.connect.redis.client
 import monix.connect.redis.client.{RedisConnection, RedisUri}
 
-val redisUris: Seq[RedisUri] = (0 to 5).map(n => RedisUri(s"redis://localhost:${(700 + n)}"))
+val redisUris: Seq[RedisUri] = (0 to 5).map(n => RedisUri(s"redis://localhost:${(7000 + n)}"))
 val clusterConn = RedisConnection.cluster(redisUris)
 ``` 
 

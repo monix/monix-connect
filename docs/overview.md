@@ -18,7 +18,7 @@ title: Overview
 Find and fill your release [version](https://github.com/monix/monix-connect/releases)):
  
  ```scala   
- libraryDependencies += "io.monix" %% "monix-connect" % "0.6.0-RC1"
+ libraryDependencies += "io.monix" %% "monix-connect" % "0.6.0"
 ```
 
 ⚠️ **Mind that the project isn't yet stable, so binary compatibility is not guaranteed.** ❗

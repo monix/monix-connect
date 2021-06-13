@@ -75,7 +75,6 @@ class Index extends React.Component {
                     [![Build](https://github.com/monix/monix-connect/workflows/build/badge.svg)](https://github.com/monix/monix-connect/actions?query=branch%3Amaster+workflow%3Abuild)
                     [![Discord](https://img.shields.io/discord/632277896739946517.svg?label=&logo=discord&logoColor=ffffff&color=404244&labelColor=6A7EC2)](https://discord.gg/wsVZSEx4Nw)
                     [![Join the chat](https://badges.gitter.im/monix/monix-connect.svg)](https://gitter.im/monix/monix-connect?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-                    [![Scaladex](https://index.scala-lang.org/monix/monix-connect/latest.svg)](https://index.scala-lang.org/monix/monix-connect/monix-connect)
                     [![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=flat&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=)](https://scala-steward.org)
         `.trim();
 
@@ -108,13 +107,12 @@ class Index extends React.Component {
       <Block layout="fourColumn" >
         {[
           {
-            image: `${baseUrl}img/mongodb.jpg`,
-            imageAlign: 'right',
-          }
-          ,
-          {
-            image: `${baseUrl}img/s3.png`,
+            image: `${baseUrl}img/elasticsearch.png`,
             imageAlign: 'left'
+          },
+          {
+            image: `${baseUrl}img/dynamodb.png`,
+            imageAlign: 'right'
           },
           {
             image: `${baseUrl}img/hadoop.png`,
@@ -128,16 +126,17 @@ class Index extends React.Component {
     const Layer1 = () => (
       <Block layout="fourColumn">
         {[
+            {
+                    image: `${baseUrl}img/gcs.png`,
+                    imageAlign: 'left'
+                  },
+                ,
+                {
+                  image: `${baseUrl}img/s3.png`,
+                  imageAlign: 'left'
+                },
           {
-            image: `${baseUrl}img/gcs.png`,
-            imageAlign: 'left'
-          },
-          {
-            image: `${baseUrl}img/elasticsearch.png`,
-            imageAlign: 'left'
-          },
-          {
-            image: `${baseUrl}img/parquet.jpg`,
+            image: `${baseUrl}img/parquet.png`,
             imageAlign: 'right'
           }
 
@@ -154,10 +153,14 @@ class Index extends React.Component {
             imageAlign: 'left'
           },
           {
-            image: `${baseUrl}img/dynamodb.png`,
+            image: `${baseUrl}img/sqs.png`,
             imageAlign: 'right'
-            }
-            ]}
+          },
+          {
+            image: `${baseUrl}img/mongo.jpeg`,
+            imageAlign: 'right',
+          }
+          ]}
           </Block>
         );
 
@@ -171,9 +174,9 @@ class Index extends React.Component {
           <div className="index">
             <MarkdownBlock>{index}</MarkdownBlock>
           </div>
-          <Layer0 />
-          <Layer1 />
           <Layer2 />
+          <Layer1 />
+          <Layer0 />
         </div>
       </div>
     );

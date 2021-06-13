@@ -16,7 +16,7 @@ class StandardQueueSuite extends AnyFlatSpecLike with Matchers with BeforeAndAft
 
   "A standard queue" can "be created and receive messages" in {
     val message = genStandardMessage.sample.get
-    Sqs.fromConfig.use { case Sqs(_, producer, operator) =>
+    Sqs.fromConfig.use { case Sqs(operator, producer, _) =>
       for {
         queueUrl <- operator.createQueue(fifoQueueName)
         messageResponse <- producer.sendSingleMessage(message, queueUrl)
@@ -30,7 +30,7 @@ class StandardQueueSuite extends AnyFlatSpecLike with Matchers with BeforeAndAft
 
     val messageWithGroupId = new Message("dummyBody1", groupId = Some("someGroupId"), deduplicationId = None)
     val messageWithDeduplicationId = new Message("dummyBody2", groupId = None, deduplicationId = Some("123"))
-    Sqs.fromConfig.use { case Sqs(_, producer, operator) =>
+    Sqs.fromConfig.use { case Sqs(operator, producer, _) =>
       for {
         queueUrl <- operator.createQueue(fifoQueueName)
         isInvalidGroupId <- producer.sendSingleMessage(messageWithGroupId, queueUrl).as(false)
@@ -47,12 +47,12 @@ class StandardQueueSuite extends AnyFlatSpecLike with Matchers with BeforeAndAft
   it should "respect delayDuration of messages " in {
 
     val delayedMessage = genStandardMessage.map(_.copy(delayDuration = Some(5.seconds))).sample.get
-    Sqs.fromConfig.use { case Sqs(receiver, producer, operator) =>
+    Sqs.fromConfig.use { case Sqs(operator: SqsOperator, producer, consumer) =>
       for {
         queueUrl <- operator.createQueue(fifoQueueName)
         _ <- producer.sendSingleMessage(delayedMessage, queueUrl)
-        receivedMessages1 <- Task.sleep(2.seconds) *> receiver.receiveSingleAutoDelete(queueUrl)
-        receivedMessages2 <- Task.sleep(5.seconds) *> receiver.receiveSingleAutoDelete(queueUrl)
+        receivedMessages1 <- Task.sleep(2.seconds) *> consumer.receiveSingleAutoDelete(queueUrl)
+        receivedMessages2 <- Task.sleep(5.seconds) *> consumer.receiveSingleAutoDelete(queueUrl)
       } yield {
         receivedMessages1 shouldBe List.empty
         receivedMessages2.size shouldBe 1
@@ -132,12 +132,12 @@ class StandardQueueSuite extends AnyFlatSpecLike with Matchers with BeforeAndAft
 
     val n = 10
     val messages = Gen.listOfN(n, genStandardMessage).sample.get
-    Sqs.fromConfig.use { case Sqs(receiver, producer, operator) =>
+    Sqs.fromConfig.use { case Sqs(operator, producer, consumer) =>
       for {
         queueUrl <- operator.createQueue(fifoQueueName)
         _ <- Observable.fromIterable(messages)
           .consumeWith(producer.sendSink(queueUrl))
-        receivedMessages <- receiver.receiveAutoDelete(queueUrl)
+        receivedMessages <- consumer.receiveAutoDelete(queueUrl)
           .take(n).toListL
       } yield {
         receivedMessages.map(_.body) should contain theSameElementsAs messages.map(_.body)
@@ -149,12 +149,12 @@ class StandardQueueSuite extends AnyFlatSpecLike with Matchers with BeforeAndAft
 
     val n = 10
     val messages = Gen.listOfN(n, genStandardMessage).sample.get
-    Sqs.fromConfig.use { case Sqs(receiver, producer, operator) =>
+    Sqs.fromConfig.use { case Sqs(operator, producer, consumer) =>
       for {
         queueUrl <- operator.createQueue(fifoQueueName)
         _ <- Observable.fromIterable(messages)
           .consumeWith(producer.sendSink(queueUrl))
-        receivedMessages <- receiver.receiveManualDelete(queueUrl)
+        receivedMessages <- consumer.receiveManualDelete(queueUrl)
           .mapEvalF(deletable => deletable.deleteFromQueue().as(deletable))
           .take(n).toListL
       } yield {

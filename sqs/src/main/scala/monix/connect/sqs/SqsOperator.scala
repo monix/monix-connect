@@ -19,27 +19,21 @@ package monix.connect.sqs
 
 import monix.connect.sqs.domain.{QueueName, QueueUrl}
 import monix.eval.Task
-import monix.execution.internal.InternalApi
 import monix.reactive.Observable.Transformer
 import monix.reactive.Observable
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.{
   AddPermissionRequest,
-  ChangeMessageVisibilityRequest,
   CreateQueueRequest,
-  DeleteMessageRequest,
   DeleteQueueRequest,
   GetQueueAttributesRequest,
   GetQueueUrlRequest,
-  ListDeadLetterSourceQueuesRequest,
   ListQueueTagsRequest,
   ListQueuesRequest,
   PurgeQueueRequest,
   QueueAttributeName,
   QueueDoesNotExistException,
   RemovePermissionRequest,
-  SendMessageBatchRequest,
-  SendMessageResponse,
   SetQueueAttributesRequest,
   SqsRequest,
   SqsResponse,
@@ -47,7 +41,6 @@ import software.amazon.awssdk.services.sqs.model.{
   UntagQueueRequest
 }
 
-import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._
 
 object SqsOperator {
@@ -77,7 +70,7 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
     * `&amp;AttributeName.1=first`
     * `&amp;AttributeName.2=second`
     *
-    * @param queueUrl      the url of the queue, it could be obtained from [[getQueueUrl]].
+    * @param queueUrl      the url of the queue, it could be obtained with [[getQueueUrl]].
     * @param actions       The action the client wants to allow for the specified principal.
     *                      Valid values: the name of any action or *.
     *                      I.e: SendMessage, DeleteMessage, ChangeMessageVisibility...
@@ -115,7 +108,7 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
   /**
     * Removes a permissions in the queue policy that matches the specified label.
     *
-    * @param queueUrl the url of the queue. It can be obtained from [[getQueueUrl]].
+    * @param queueUrl the url of the queue. It can be obtained with [[getQueueUrl]].
     * @param label The unique identification of the permission to be removed.
     *              Maximum 80 characters. Allowed characters include alphanumeric
     *              characters, hyphens (-), and underscores (_).
@@ -130,6 +123,8 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
 
   /**
     * Deletes a queue.
+    *
+    * If queue does not exists it fails with [[QueueDoesNotExistException]].
     *
     * @param queueUrl the url of the queue to be deleted.
     */
@@ -212,6 +207,9 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
 
   /**
     * Get the [[QueueUrl]] of an existing Amazon SQS queue.
+    *
+    * Fails with [[QueueDoesNotExistException]] when the queue does not exist.
+    *
     * To access a queue that belongs to another AWS account,
     * use the QueueOwnerAWSAccountId parameter to specify
     * the account ID of the queue's owner.
@@ -284,7 +282,7 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
     * permissions to a role and a user name in the Amazon Simple
     * Queue Service Developer Guide.
     *
-    * @param queueUrl the url of the queue, obtained from [[getQueueUrl]].
+    * @param queueUrl the url of the queue, obtained with [[getQueueUrl]].
     */
   def listQueueTags(queueUrl: QueueUrl): Task[Map[String, String]] = {
     val listRequest = ListQueueTagsRequest.builder.queueUrl(queueUrl.url).build
@@ -308,7 +306,7 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
     * PurgeQueueInProgressException,QueueDeletedRecentlyException, QueueDoesNotExistException.
     *
     * @param queueUrl the url of the queue to be purged,
-    *                 can be obtained from [[getQueueUrl]].
+    *                 can be obtained with [[getQueueUrl]].
     */
   def purgeQueue(queueUrl: QueueUrl): Task[Unit] = {
     val purgeQueue = PurgeQueueRequest.builder.queueUrl(queueUrl.url).build
@@ -323,7 +321,7 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
     *
     * @see https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_SetQueueAttributes.html
     * @param queueUrl the url of the queue whose attributes are set,
-    *                 can be obtained from [[getQueueUrl]].
+    *                 can be obtained with [[getQueueUrl]].
     * @param attributes the map of attributes to be set.
     */
   def setQueueAttributes(queueUrl: QueueUrl, attributes: Map[QueueAttributeName, String]): Task[Unit] = {
@@ -338,7 +336,7 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
     * @see <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-queue-tags.html">
     *        Tagging Your Amazon SQS Queues </a>.
     * @param queueUrl the url of the queue whose tags are added to,
-    *                 it can be obtained from [[getQueueUrl]].
+    *                 it can be obtained with [[getQueueUrl]].
     * @param tags list of tags to be added to the specified queue.
     */
   def tagQueue(queueUrl: QueueUrl, tags: Map[String, String]): Task[Unit] = {
@@ -352,7 +350,7 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
     * @see <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-queue-tags.html">
     *        Tagging Your Amazon SQS Queues </a>.
     * @param queueUrl the url of the queue whose tags are added to,
-    *                 it can be obtained from [[getQueueUrl]].
+    *                 it can be obtained with [[getQueueUrl]].
     * @param tagKeys list of tags to be removed from the specified queue.
     */
   def untagQueue(queueUrl: QueueUrl, tagKeys: List[String]): Task[Unit] = {

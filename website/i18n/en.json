@@ -31,6 +31,9 @@
       },
       "s3": {
         "title": "AWS S3"
+      },
+      "sqs": {
+        "title": "AWS SQS"
       }
     },
     "links": {
