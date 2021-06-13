@@ -445,6 +445,9 @@ keeps emitting plain `ConsumedMessage`s.
 
 ## Local testing
 
+The recommended way to test an application that relies on Sqs is to use docker. 
+Below are shown two of the most solutions to getting started:
+
 ### Localstack
 [Localstack](https://github.com/localstack/localstack) provides a fully functional local AWS cloud stack that in this case
 the user can use to develop and test locally and offline the integration of the application with SQS.
@@ -462,6 +465,8 @@ services:
 ```
 
 ### Elasticmq
+
+Another alternative that also implements a fully asynchronous Sqs compatible interface, and it is based in akka actors.
 
 ```yaml
 services:
