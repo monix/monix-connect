@@ -70,7 +70,7 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
     * `&amp;AttributeName.1=first`
     * `&amp;AttributeName.2=second`
     *
-    * @param queueUrl      the url of the queue, it could be obtained from [[getQueueUrl]].
+    * @param queueUrl      the url of the queue, it could be obtained with [[getQueueUrl]].
     * @param actions       The action the client wants to allow for the specified principal.
     *                      Valid values: the name of any action or *.
     *                      I.e: SendMessage, DeleteMessage, ChangeMessageVisibility...
@@ -108,7 +108,7 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
   /**
     * Removes a permissions in the queue policy that matches the specified label.
     *
-    * @param queueUrl the url of the queue. It can be obtained from [[getQueueUrl]].
+    * @param queueUrl the url of the queue. It can be obtained with [[getQueueUrl]].
     * @param label The unique identification of the permission to be removed.
     *              Maximum 80 characters. Allowed characters include alphanumeric
     *              characters, hyphens (-), and underscores (_).
@@ -174,7 +174,7 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
   def createQueue(
     queueName: QueueName,
     tags: Map[String, String] = Map.empty,
-    attributes: Map[QueueAttributeName., String] = Map.empty): Task[QueueUrl] = {
+    attributes: Map[QueueAttributeName, String] = Map.empty): Task[QueueUrl] = {
     val createQueueRequest = CreateQueueRequest.builder
       .queueName(queueName.name)
       .tags(tags.asJava)
@@ -282,7 +282,7 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
     * permissions to a role and a user name in the Amazon Simple
     * Queue Service Developer Guide.
     *
-    * @param queueUrl the url of the queue, obtained from [[getQueueUrl]].
+    * @param queueUrl the url of the queue, obtained with [[getQueueUrl]].
     */
   def listQueueTags(queueUrl: QueueUrl): Task[Map[String, String]] = {
     val listRequest = ListQueueTagsRequest.builder.queueUrl(queueUrl.url).build
@@ -306,7 +306,7 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
     * PurgeQueueInProgressException,QueueDeletedRecentlyException, QueueDoesNotExistException.
     *
     * @param queueUrl the url of the queue to be purged,
-    *                 can be obtained from [[getQueueUrl]].
+    *                 can be obtained with [[getQueueUrl]].
     */
   def purgeQueue(queueUrl: QueueUrl): Task[Unit] = {
     val purgeQueue = PurgeQueueRequest.builder.queueUrl(queueUrl.url).build
@@ -321,7 +321,7 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
     *
     * @see https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_SetQueueAttributes.html
     * @param queueUrl the url of the queue whose attributes are set,
-    *                 can be obtained from [[getQueueUrl]].
+    *                 can be obtained with [[getQueueUrl]].
     * @param attributes the map of attributes to be set.
     */
   def setQueueAttributes(queueUrl: QueueUrl, attributes: Map[QueueAttributeName, String]): Task[Unit] = {
@@ -336,7 +336,7 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
     * @see <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-queue-tags.html">
     *        Tagging Your Amazon SQS Queues </a>.
     * @param queueUrl the url of the queue whose tags are added to,
-    *                 it can be obtained from [[getQueueUrl]].
+    *                 it can be obtained with [[getQueueUrl]].
     * @param tags list of tags to be added to the specified queue.
     */
   def tagQueue(queueUrl: QueueUrl, tags: Map[String, String]): Task[Unit] = {
@@ -350,7 +350,7 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
     * @see <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-queue-tags.html">
     *        Tagging Your Amazon SQS Queues </a>.
     * @param queueUrl the url of the queue whose tags are added to,
-    *                 it can be obtained from [[getQueueUrl]].
+    *                 it can be obtained with [[getQueueUrl]].
     * @param tagKeys list of tags to be removed from the specified queue.
     */
   def untagQueue(queueUrl: QueueUrl, tagKeys: List[String]): Task[Unit] = {
