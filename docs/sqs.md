@@ -476,7 +476,7 @@ services:
       - '9324:9324'
 ```
 
-Run the docker command to build, and start the sqs service:
+Run the docker command to build and start the sqs service:
 
 ```shell script
 docker-compose -f docker-compose.yml up -d 
