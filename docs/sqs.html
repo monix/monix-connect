@@ -1,0 +1,464 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>AWS SQS · Monix Connect</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="## Introduction"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="AWS SQS · Monix Connect"/><meta property="og:type" content="website"/><meta property="og:url" content="https://connect.monix.io/"/><meta property="og:description" content="## Introduction"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://connect.monix.io/img/monix-logo.png"/><link rel="shortcut icon" href="/img/monix-logo.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css"/><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/monix-logo.svg" alt="Monix Connect"/><h2 class="headerTitleWithLogo">Monix Connect</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/api/monix/connect/index.html" target="_self">API Docs</a></li><li class="siteNavGroupActive"><a href="/docs/overview" target="_self">Documentation</a></li><li class=""><a href="https://github.com/monix/monix-connect" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Documentation</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Documentation</h3><ul class=""><li class="navListItem"><a class="navItem" href="/docs/overview">Overview</a></li><li class="navListItem"><a class="navItem" href="/docs/parquet">Apache Parquet</a></li><li class="navListItem"><a class="navItem" href="/docs/dynamodb">AWS DynamoDB</a></li><li class="navListItem"><a class="navItem" href="/docs/s3">AWS S3</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/docs/sqs">AWS SQS</a></li><li class="navListItem"><a class="navItem" href="/docs/elasticsearch">Elasticsearch</a></li><li class="navListItem"><a class="navItem" href="/docs/gcs">Google Cloud Storage</a></li><li class="navListItem"><a class="navItem" href="/docs/hdfs">HDFS</a></li><li class="navListItem"><a class="navItem" href="/docs/mongodb">MongoDB</a></li><li class="navListItem"><a class="navItem" href="/docs/redis">Redis</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">AWS SQS</h1></header><article><div><span><h2><a class="anchor" aria-hidden="true" id="introduction"></a><a href="#introduction" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Introduction</h2>
+<p>The <strong>Simple Queue Service</strong> <em>(SQS)</em>  is a managed message queue service offered by <strong>AWS</strong>.
+It provides an <em>HTTP API</em> over which applications can produce and consume messages from different queues.
+A queue itself is fully managed by AWS, which makes <em>SQS</em> an easy solution
+for passing messages between different parts of software systems that run in the cloud, commonly
+used as a message broker to communicate different systems, providing backpressure, availability, fault tolerance and more.</p>
+<h2><a class="anchor" aria-hidden="true" id="dependency"></a><a href="#dependency" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Dependency</h2>
+<p>Add the following dependency to get started:</p>
+<pre><code class="hljs css language-scala">libraryDependencies += <span class="hljs-string">"io.monix"</span> %% <span class="hljs-string">"monix-sqs"</span> % <span class="hljs-string">"0.6.0"</span>
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="async-client"></a><a href="#async-client" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Async Client</h2>
+<p>This connector uses the <em>underlying</em> <code>SqsAsyncClient</code> from the <a href="https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/sqs/package-summary.html">java aws sdk</a>,
+allowing authenticating and interact through a <em>non-blocking</em> HTTP connection, between our application and the <em>AWS SQS</em>.</p>
+<p>This library offers different ways to create the connection, all available from the singleton object <code>monix.connect.sqs.Sqs</code> and explained in more detail in the following sub-sections.</p>
+<h3><a class="anchor" aria-hidden="true" id="from-config"></a><a href="#from-config" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>From config</h3>
+<p>The laziest and recommended way to create the <em>Sqs</em> connection is to do it from configuration file.
+It will return a cats effect <code>Resouce</code> with <code>Task</code>, which will take care of acquiring the aws client and releasing it after its usage.
+To do so, you'd just need to create an <code>application.conf</code> following the template from <a href="https://github.com/monix/monix-connect/tree/master/aws-auth/src/main/resources/reference.conf">reference.conf</a>,
+which also represents the default config in case no additional is provided.</p>
+<p>Below snippet shows an example of the configuration file to authenticate via <code>StaticCredentialsProvider</code> and region <code>EU-WEST-1</code>, as you can appreciate the
+<em>http client</em> settings are commented out since they are optional, however they could have been specified too for a more fine-grained configuration of the underlying <code>NettyNioAsyncHttpClient</code>.</p>
+<pre><code class="hljs css language-hocon">{
+  <span class="hljs-attribute">monix-aws</span>: {
+    credentials {
+      <span class="hljs-comment">// [anonymous, default, environment, instance, system, profile, static]</span>
+      <span class="hljs-attribute">provider</span>: <span class="hljs-string">"static"</span> 
+
+      <span class="hljs-comment">// optional - only required with static credentials</span>
+      static {
+        <span class="hljs-attribute">access-key-id</span>: <span class="hljs-string">"TESTKEY"</span>      
+        <span class="hljs-attribute">secret-access-key</span>: <span class="hljs-string">"TESTSECRET"</span>
+        <span class="hljs-attribute">session-token</span>: <span class="hljs-string">""</span>
+      }
+    }
+  
+    <span class="hljs-comment">// [ap-south-1, us-gov-east-1, af-south-1, eu-west-2, ...]</span>
+    <span class="hljs-attribute">region</span>: <span class="hljs-string">"eu-west-1"</span>
+
+    <span class="hljs-comment">// optional</span>
+    #<span class="hljs-attribute">endpoint</span>: <span class="hljs-string">""</span>
+
+    <span class="hljs-comment">// optional</span>
+    # <span class="hljs-attribute">http-client</span>: {
+    #   <span class="hljs-attribute">max-concurrency</span>: <span class="hljs-number">10</span>
+    #   <span class="hljs-attribute">max-pending-connection-acquires</span>: <span class="hljs-number">1000</span>
+    #   <span class="hljs-attribute">connection-acquisition-timeout</span>: <span class="hljs-number">2</span> minutes
+    #   <span class="hljs-attribute">connection-time-to-live</span>: <span class="hljs-number">1</span> minute
+    #   <span class="hljs-attribute">use-idle-connection-reaper</span>: false
+    #   <span class="hljs-attribute">read-timeout</span>: <span class="hljs-number">100</span> seconds
+    #   <span class="hljs-attribute">write-timeout</span>: <span class="hljs-number">100</span> seconds
+    # }
+  }
+}
+</code></pre>
+<p>This config file should be placed in the <code>resources</code> folder, therefore it will be automatically picked up from the method call <code>Sqs.fromConfig</code>, which will return a <code>cats.effect.Resource[Task, Sqs]</code>.
+The <a href="https://typelevel.org/cats-effect/datatypes/resource.html">resource</a> is responsible of the <em>creation</em> and <em>release</em> of the <em>Sqs client</em>.</p>
+<p><strong>Try to reuse</strong> the created <strong>Sqs</strong> client as much as possible in your application multiple times in your application. Otherwise, creating it
+multiple times will waste precious resources... See below code snippet to understand the concept:</p>
+<pre><code class="hljs css language-scala"> <span class="hljs-keyword">import</span> monix.connect.sqs.<span class="hljs-type">Sqs</span>
+ <span class="hljs-keyword">import</span> monix.connect.sqs.domain.<span class="hljs-type">QueueName</span>
+ <span class="hljs-keyword">import</span> monix.connect.sqs.producer.<span class="hljs-type">StandardMessage</span>
+ <span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+ <span class="hljs-keyword">import</span> scalapb.descriptors.<span class="hljs-type">ScalaType</span>.<span class="hljs-type">Message</span>
+ <span class="hljs-keyword">import</span> software.amazon.awssdk.services.s3.model.<span class="hljs-type">NoSuchKeyException</span>
+ <span class="hljs-keyword">import</span> scala.concurrent.duration._
+ 
+ <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">runSqsApp</span></span>(sqs: <span class="hljs-type">Sqs</span>): <span class="hljs-type">Task</span>[<span class="hljs-type">Array</span>[<span class="hljs-type">Byte</span>]] = {
+   <span class="hljs-keyword">val</span> queueName = <span class="hljs-type">QueueName</span>(<span class="hljs-string">"my-queue"</span>)
+   <span class="hljs-keyword">for</span> {
+     queueUrl &lt;- sqs.operator.createQueue(queueName)
+     standardMessage = <span class="hljs-type">StandardMessage</span>(<span class="hljs-string">"sampleBody"</span>)
+     _ &lt;- sqs.producer.sendSingleMessage(queueUrl, standardMessage)
+     receivedMessage &lt;- sqs.consumer.receiveSingleManualDelete(queueUrl, waitTimeSeconds = <span class="hljs-number">3.</span>seconds)
+   } <span class="hljs-keyword">yield</span> receivedMessage
+ }
+ 
+  <span class="hljs-comment">// the connection gets created and released within the use method and the `Sqs`</span>
+  <span class="hljs-comment">// instance is directly passed and should be reused across our application</span>
+  <span class="hljs-keyword">val</span> f = <span class="hljs-type">Sqs</span>.fromConfig.use(runSqsApp).runToFuture
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="create"></a><a href="#create" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Create</h3>
+<p>An alternative to using a config file is to pass the <em>AWS configurations</em> directly by parameters.
+This is a safe implementation since the method also handles the <em>acquisition</em> and <em>release</em> of the connection within
+<code>Resource</code>. The example below produce exactly the same result as previously using the <em>config</em> file:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
+<span class="hljs-keyword">import</span> monix.connect.sqs.<span class="hljs-type">Sqs</span>
+<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
+<span class="hljs-keyword">import</span> software.amazon.awssdk.auth.credentials.{<span class="hljs-type">AwsBasicCredentials</span>, <span class="hljs-type">StaticCredentialsProvider</span>}
+<span class="hljs-keyword">import</span> software.amazon.awssdk.regions.<span class="hljs-type">Region</span>
+
+<span class="hljs-keyword">val</span> accessKey: <span class="hljs-type">String</span> = <span class="hljs-string">"TESTKEY"</span>
+<span class="hljs-keyword">val</span> secretKey: <span class="hljs-type">String</span> = <span class="hljs-string">"TESTSECRET"</span>
+<span class="hljs-keyword">val</span> basicAWSCredentials = <span class="hljs-type">AwsBasicCredentials</span>.create(accessKey, secretKey)
+<span class="hljs-keyword">val</span> staticCredProvider = <span class="hljs-type">StaticCredentialsProvider</span>.create(basicAWSCredentials)
+
+<span class="hljs-keyword">val</span> sqs: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">Sqs</span>] = <span class="hljs-type">Sqs</span>.create(staticCredProvider, <span class="hljs-type">Region</span>.<span class="hljs-type">AWS_GLOBAL</span>)   
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="create-unsafe"></a><a href="#create-unsafe" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Create Unsafe</h3>
+<p>The last and less recommended alternatively to create the connection is to just pass an already created instance of a <code>software.amazon.awssdk.services.s3.S3AsyncClient</code>,
+which in that case, the returns directly the <code>Sqs</code>, avoiding to dealing with <code>Resource</code>.
+As the same title suggests, this is not a safe way of creating an <code>Sqs</code> since it puts on the developer the responsibility to correctly close the client,
+making it less idiomatic and prone to errors like eagerly closing the connection or on the other hand, never releasing it, thus waisting resources.</p>
+<p>An example:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.sqs.<span class="hljs-type">Sqs</span>
+<span class="hljs-keyword">import</span> software.amazon.awssdk.auth.credentials.<span class="hljs-type">DefaultCredentialsProvider</span>
+<span class="hljs-keyword">import</span> software.amazon.awssdk.services.sqs.<span class="hljs-type">SqsAsyncClient</span>
+<span class="hljs-keyword">import</span> software.amazon.awssdk.regions.<span class="hljs-type">Region</span>
+
+<span class="hljs-keyword">val</span> sqsAsyncClient: <span class="hljs-type">SqsAsyncClient</span> = <span class="hljs-type">SqsAsyncClient</span>
+ .builder()
+ .credentialsProvider(<span class="hljs-type">DefaultCredentialsProvider</span>.create())
+ .region(<span class="hljs-type">Region</span>.<span class="hljs-type">EU_CENTRAL_1</span>)
+ .build()
+
+<span class="hljs-keyword">val</span> sqs: <span class="hljs-type">Sqs</span> = <span class="hljs-type">Sqs</span>.createUnsafe(sqsAsyncClient)
+</code></pre>
+<p>Notice that <code>createUnsafe</code> is an overloaded method that also accepts to pass the settings values separately:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> software.amazon.awssdk.auth.credentials.<span class="hljs-type">DefaultCredentialsProvider</span>
+<span class="hljs-keyword">import</span> software.amazon.awssdk.regions.<span class="hljs-type">Region</span>
+<span class="hljs-keyword">import</span> monix.connect.sqs.<span class="hljs-type">Sqs</span>
+
+<span class="hljs-keyword">val</span> sqs: <span class="hljs-type">Sqs</span> = <span class="hljs-type">Sqs</span>.createUnsafe(<span class="hljs-type">DefaultCredentialsProvider</span>.create(), <span class="hljs-type">Region</span>.<span class="hljs-type">AF_SOUTH_1</span>)
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="core-components"></a><a href="#core-components" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Core Components</h2>
+<p>Once the connection is created, we are ready to start sending and receiving messages to sqs queues.
+Notice that the <code>Sqs</code> instance we created previously is a <code>case class</code> conformed of three basic components <code>Operator</code>, <code>Consumer</code>, <code>Producer</code>.</p>
+<h2><a class="anchor" aria-hidden="true" id="operator"></a><a href="#operator" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Operator</h2>
+<p>This component aggregates the utility operations in the <code>SQS</code> domain, like creating and deleting and listing queues,
+get the url out of the queue name, creating tags, permissions and so on.</p>
+<h3><a class="anchor" aria-hidden="true" id="create-queue"></a><a href="#create-queue" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Create queue</h3>
+<h4><a class="anchor" aria-hidden="true" id="standard"></a><a href="#standard" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Standard</h4>
+<p>Creating a standard queue only requires the queue name and returns its respective generated url, which will be used later
+from other operations to refer to this queue, instead of by using the name. You can alternatively pass some queue attributes
+to that queue like the <code>delaySeconds</code>, <code>visibilityTimeout</code>, etc. Otherwise, it will use their default values.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.sqs.{<span class="hljs-type">Sqs</span>, <span class="hljs-type">SqsOperator</span>}
+<span class="hljs-keyword">import</span> monix.connect.sqs.domain.<span class="hljs-type">QueueName</span>
+
+<span class="hljs-keyword">val</span> sqs: <span class="hljs-type">Sqs</span> = <span class="hljs-type">Sqs</span>.fromConfig.use{ <span class="hljs-keyword">case</span> <span class="hljs-type">Sqs</span>(operator: <span class="hljs-type">SqsOperator</span>, _, _) =&gt;
+  <span class="hljs-keyword">val</span> queueName = <span class="hljs-type">QueueName</span>(<span class="hljs-string">"my-standard-queue"</span>)
+  operator.createQueue(queueName)
+}
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="fifo"></a><a href="#fifo" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Fifo</h4>
+<p>On the other hand, if the application or business logic requires to use a FIFO queue, it would require
+the <code>FIFO_QUEUE</code> queue attribute to be <code>true</code> and the queue name ending with <code>.fifo</code> .</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.sqs.{<span class="hljs-type">Sqs</span>, <span class="hljs-type">SqsOperator</span>}
+<span class="hljs-keyword">import</span> software.amazon.awssdk.services.sqs.model.<span class="hljs-type">QueueAttributeName</span>
+<span class="hljs-keyword">import</span> monix.connect.sqs.domain.<span class="hljs-type">QueueName</span>
+
+<span class="hljs-type">Sqs</span>.fromConfig.use { <span class="hljs-keyword">case</span> <span class="hljs-type">Sqs</span>(operator: <span class="hljs-type">SqsOperator</span>, _, _) =&gt;
+  <span class="hljs-keyword">val</span> fifoQueueName = <span class="hljs-type">QueueName</span>(<span class="hljs-string">"my-fifo-queue.fifo"</span>) <span class="hljs-comment">//important that it ends with fifo </span>
+  <span class="hljs-keyword">val</span> queueAttributes = <span class="hljs-type">Map</span>(<span class="hljs-type">QueueAttributeName</span>.<span class="hljs-type">FIFO_QUEUE</span> -&gt; <span class="hljs-string">"true"</span>)
+  operator.createQueue(fifoQueueName, attributes = queueAttributes)
+}
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="get-queue-url"></a><a href="#get-queue-url" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Get queue url</h4>
+<p>The queue url is required on all operations, including producing and consuming messages.
+This, the action eventually returns <code>QueueUrl</code> given its <code>QueueName</code>, however, it will return a failed <code>task</code> if queue name does not exist.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.sqs.{<span class="hljs-type">Sqs</span>, <span class="hljs-type">SqsOperator</span>}
+<span class="hljs-keyword">import</span> monix.connect.sqs.domain.<span class="hljs-type">QueueName</span>
+
+<span class="hljs-type">Sqs</span>.fromConfig.use { <span class="hljs-keyword">case</span> <span class="hljs-type">Sqs</span>(operator: <span class="hljs-type">SqsOperator</span>, _, _) =&gt;
+  <span class="hljs-keyword">val</span> queueName = <span class="hljs-type">QueueName</span>(<span class="hljs-string">"my-queue"</span>)
+  <span class="hljs-comment">// the queue must already exist, otherwise it will fail </span>
+  queueUrl &lt;- operator.getQueueUrl(queueName)
+}.runToFuture
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="delete-queue"></a><a href="#delete-queue" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Delete queue</h4>
+<p>Permanently deletes the queue from sqs from the given <code>QueueName</code>.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.sqs.<span class="hljs-type">Sqs</span>
+<span class="hljs-keyword">import</span> monix.connect.sqs.domain.<span class="hljs-type">QueueName</span>
+
+<span class="hljs-type">Sqs</span>.fromConfig.use { sqs =&gt;
+  <span class="hljs-keyword">val</span> queueName = <span class="hljs-type">QueueName</span>(<span class="hljs-string">"my-queue"</span>)
+  <span class="hljs-keyword">for</span> {
+    queueUrl &lt;- sqs.operator.getQueueUrl(queueName)
+    _ &lt;- sqs.operator.deleteQUeue(queueUrl)
+  } <span class="hljs-keyword">yield</span> ()
+}.runToFuture
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="purge-queue"></a><a href="#purge-queue" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Purge queue</h4>
+<p>Use this operation if you don't want to delete a queue instead remove all of its messages.
+The process might take up to 60 seconds regardless of the queue's size.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.sqs.<span class="hljs-type">Sqs</span>
+<span class="hljs-keyword">import</span> monix.connect.sqs.domain.<span class="hljs-type">QueueName</span>
+
+<span class="hljs-type">Sqs</span>.fromConfig.use { sqs =&gt;
+  <span class="hljs-keyword">val</span> queueName = <span class="hljs-type">QueueName</span>(<span class="hljs-string">"my-queue"</span>)
+  <span class="hljs-keyword">for</span> {
+    queueUrl &lt;- sqs.operator.getQueueUrl(queueName)
+    _ &lt;- sqs.operator.purgeQueue(queueUrl)
+  } <span class="hljs-keyword">yield</span> ()
+}.runToFuture
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="list-queues"></a><a href="#list-queues" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>List queues</h4>
+<p>Emits the queue urls in the current region.
+The list operation can be conditioned with a <code>queuePrefix</code>, which then would only return the queues whose name starts with the given string.
+Additionally, the number of elements returned can be limited with the <code>maxResults</code> argument.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.sqs.<span class="hljs-type">Sqs</span>
+<span class="hljs-keyword">import</span> monix.connect.sqs.domain.<span class="hljs-type">QueueUrl</span>
+<span class="hljs-keyword">import</span> monix.reactive.<span class="hljs-type">Observable</span>
+
+<span class="hljs-type">Sqs</span>.fromConfig.use { sqs =&gt;
+  <span class="hljs-keyword">val</span> maxResults = <span class="hljs-number">10</span> <span class="hljs-comment">//lists at most 10 queues</span>
+  <span class="hljs-keyword">val</span> queuePrefix = <span class="hljs-string">"some"</span> <span class="hljs-comment">//only list queues that starts with this prefix</span>
+  <span class="hljs-keyword">val</span> queuesObs: <span class="hljs-type">Observable</span>[<span class="hljs-type">QueueUrl</span>] = sqs.operator.listQueueUrls(<span class="hljs-type">Some</span>(queuePrefix), <span class="hljs-type">Some</span>(maxResults))
+  <span class="hljs-comment">//business logic here</span>
+  queuesObs.countL
+}.runToFuture
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="producer"></a><a href="#producer" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Producer</h2>
+<p>This library makes it easier to the user by distinguishing the message abstractions
+to be sent in two types, <code>FifoMessage</code> and <code>StandardMessage</code>, which will be used relatively with the destination queue type.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">package</span> monix.connect.sqs.producer
+<span class="hljs-keyword">final</span> <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">FifoMessage</span>(<span class="hljs-params">body: <span class="hljs-type">String</span>,
+                       groupId: <span class="hljs-type">String</span>,
+                       deduplicationId: <span class="hljs-type">Option</span>[<span class="hljs-type">String</span>] = <span class="hljs-type">Option</span>.empty,
+                       messageAttributes: <span class="hljs-type">Map</span>[<span class="hljs-type">String</span>, <span class="hljs-type">MessageAttribute</span>] = <span class="hljs-type">Map</span>.empty,
+                       awsTraceHeader: <span class="hljs-type">Option</span>[<span class="hljs-type">MessageAttribute</span>]</span>)</span>
+  <span class="hljs-keyword">extends</span> <span class="hljs-type">Message</span>(body, groupId = <span class="hljs-type">Some</span>(groupId), deduplicationId = deduplicationId, messageAttributes, awsTraceHeader)
+</code></pre>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">package</span> monix.connect.sqs.producer
+<span class="hljs-keyword">final</span> <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">StandardMessage</span>(<span class="hljs-params">
+  body: <span class="hljs-type">String</span>,
+  messageAttributes: <span class="hljs-type">Map</span>[<span class="hljs-type">String</span>, <span class="hljs-type">MessageAttribute</span>] = <span class="hljs-type">Map</span>.empty,
+  awsTraceHeader: <span class="hljs-type">Option</span>[<span class="hljs-type">MessageAttribute</span>] = <span class="hljs-type">None</span>,
+  delayDuration: <span class="hljs-type">Option</span>[<span class="hljs-type">FiniteDuration</span>] = <span class="hljs-type">None</span></span>)</span>
+  <span class="hljs-keyword">extends</span> <span class="hljs-type">Message</span>(body, groupId = <span class="hljs-type">None</span>, deduplicationId = <span class="hljs-type">None</span>, messageAttributes, awsTraceHeader, delayDuration)
+</code></pre>
+<p>As you can appreciate in above snippets, the <code>groupId</code> and <code>deduplicationId</code> are unique for <code>FifoMessages</code> whereas the <code>StandardMessage</code> is
+the only one that has <code>delayDuration</code>.</p>
+<p>These slight differences are the reason why they are kept in different classes, otherwise it would be confusing to work directly with,
+and you would have to procure not to create an invalid event to the sqs queue.</p>
+<p>Obviously, each message must be used with its respective queue type. Meaning that when producing a new
+message, we must use <code>FifoMessages</code> for <em>fifo</em> queues and <code>StandardMessage</code> for <em>standard</em> ones.</p>
+<p>In continuation, let's see the different existing signatures to produce message to <code>Sqs</code> queues, all of them can be used with either <code>FifoMessage</code>
+or <code>StandardMessage</code>, as the two of them extend the same class, <code>monix.connect.sqs.producer.Message</code>.</p>
+<h3><a class="anchor" aria-hidden="true" id="send-single-message"></a><a href="#send-single-message" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Send single message</h3>
+<p>This is the most basic produce method operation, in which only one message will be sent to the queue.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.sqs.<span class="hljs-type">Sqs</span>
+<span class="hljs-keyword">import</span> monix.connect.sqs.domain.<span class="hljs-type">QueueName</span>
+<span class="hljs-keyword">import</span> monix.connect.sqs.producer.<span class="hljs-type">StandardMessage</span>
+
+<span class="hljs-type">Sqs</span>.fromConfig.use { <span class="hljs-keyword">case</span> <span class="hljs-type">Sqs</span>(operator, producer, _) =&gt;
+  <span class="hljs-keyword">val</span> queueName = <span class="hljs-type">QueueName</span>(<span class="hljs-string">"my-queue"</span>)
+  <span class="hljs-keyword">for</span> {
+    queueUrl &lt;- operator.getQueueUrl(queueName)
+    message = <span class="hljs-type">StandardMessage</span>(<span class="hljs-string">"Dummy content"</span>)
+    response &lt;- producer.sendSingleMessage(message, queueUrl)
+  } <span class="hljs-keyword">yield</span> response
+}.runToFuture
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="send-parallel-batch"></a><a href="#send-parallel-batch" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Send parallel batch</h3>
+<p>This operation instead of single message, it expects a list that is split in groups of ten and sent in batches in parallel.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.sqs.<span class="hljs-type">Sqs</span>
+<span class="hljs-keyword">import</span> monix.connect.sqs.domain.<span class="hljs-type">QueueName</span>
+<span class="hljs-keyword">import</span> monix.connect.sqs.producer.<span class="hljs-type">StandardMessage</span>
+
+<span class="hljs-type">Sqs</span>.fromConfig.use { <span class="hljs-keyword">case</span> <span class="hljs-type">Sqs</span>(operator, producer, _) =&gt;
+  <span class="hljs-keyword">val</span> queueName = <span class="hljs-type">QueueName</span>(<span class="hljs-string">"my-queue"</span>)
+  <span class="hljs-keyword">for</span> {
+    queueUrl &lt;- operator.getQueueUrl(queueName)
+    messages = <span class="hljs-type">List</span>(<span class="hljs-type">StandardMessage</span>(<span class="hljs-string">"1"</span>), <span class="hljs-type">StandardMessage</span>(<span class="hljs-string">"2"</span>), <span class="hljs-type">StandardMessage</span>(<span class="hljs-string">"3"</span>))
+    response &lt;- producer.sendParBatch(messages, queueUrl)
+  } <span class="hljs-keyword">yield</span> response
+}.runToFuture
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="send-sink"></a><a href="#send-sink" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Send sink</h3>
+<p>A basic sink (aka monix <code>Consumer</code>) that listens to incoming <code>Messages</code> and produces them one by one to the specified queue.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.sqs.{<span class="hljs-type">Sqs</span>, <span class="hljs-type">SqsOperator</span>}
+<span class="hljs-keyword">import</span> monix.connect.sqs.domain.<span class="hljs-type">QueueName</span>
+<span class="hljs-keyword">import</span> monix.connect.sqs.producer.<span class="hljs-type">FifoMessage</span>
+<span class="hljs-keyword">import</span> monix.reactive.<span class="hljs-type">Observable</span>
+<span class="hljs-keyword">import</span> software.amazon.awssdk.services.sqs.model.<span class="hljs-type">QueueAttributeName</span>
+
+<span class="hljs-type">Sqs</span>.fromConfig.use { <span class="hljs-keyword">case</span> <span class="hljs-type">Sqs</span>(operator, producer, _) =&gt;
+  <span class="hljs-keyword">val</span> groupId = <span class="hljs-string">"group-id123"</span>
+  <span class="hljs-keyword">val</span> queueName = <span class="hljs-type">QueueName</span>(<span class="hljs-string">"my-fifo-queue.fifo"</span>)
+  <span class="hljs-keyword">val</span> queueAttributes = <span class="hljs-type">Map</span>(<span class="hljs-type">QueueAttributeName</span>.<span class="hljs-type">FIFO_QUEUE</span> -&gt; <span class="hljs-string">"true"</span>, <span class="hljs-type">QueueAttributeName</span>.<span class="hljs-type">CONTENT_BASED_DEDUPLICATION</span> -&gt; <span class="hljs-string">"true"</span>)
+  <span class="hljs-keyword">for</span> {
+    queueUrl &lt;- operator.createQueue(fifoQueueName, attributes = queueAttributes)
+    messages = <span class="hljs-type">List</span>(<span class="hljs-type">FifoMessage</span>(<span class="hljs-string">"1"</span>, groupId), <span class="hljs-type">FifoMessage</span>(<span class="hljs-string">"2"</span>, groupId))
+    _ &lt;- <span class="hljs-type">Observable</span>.fromIterable(messages).consumeWith(producer.sendSink(queueUrl))
+  } <span class="hljs-keyword">yield</span> ()
+}.runToFuture
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="send-par-batch-sink"></a><a href="#send-par-batch-sink" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Send par batch sink</h3>
+<p>A more advanced and performant version than <code>sendBatch</code>, which listens to lists of <code>Messages</code> to be emitted
+splitting them in groups of at most ten messages that are sent in batches in parallel.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.sqs.<span class="hljs-type">Sqs</span>
+<span class="hljs-keyword">import</span> monix.connect.sqs.domain.<span class="hljs-type">QueueName</span>
+<span class="hljs-keyword">import</span> monix.connect.sqs.producer.<span class="hljs-type">StandardMessage</span>
+<span class="hljs-keyword">import</span> monix.reactive.<span class="hljs-type">Observable</span>
+<span class="hljs-keyword">import</span> software.amazon.awssdk.services.sqs.model.<span class="hljs-type">QueueAttributeName</span>
+
+<span class="hljs-type">Sqs</span>.fromConfig.use { <span class="hljs-keyword">case</span> <span class="hljs-type">Sqs</span>(operator, producer, _) =&gt;
+  <span class="hljs-keyword">val</span> queueName = <span class="hljs-type">QueueName</span>(<span class="hljs-string">"my-queue"</span>)
+  <span class="hljs-comment">// each batch can be of any size</span>
+  <span class="hljs-comment">// the library takes care of splitting them in groups of 10</span>
+  <span class="hljs-comment">// as it is the maximum size allowed in sqs</span>
+  <span class="hljs-keyword">val</span> batch1 = <span class="hljs-type">List</span>(<span class="hljs-type">StandardMessage</span>(<span class="hljs-string">"1"</span>), <span class="hljs-type">StandardMessage</span>(<span class="hljs-string">"2"</span>))
+  <span class="hljs-keyword">val</span> batch2 = <span class="hljs-type">List</span>(<span class="hljs-type">StandardMessage</span>(<span class="hljs-string">"3"</span>), <span class="hljs-type">StandardMessage</span>(<span class="hljs-string">"4"</span>))
+
+  <span class="hljs-keyword">for</span> {
+    queueUrl &lt;- operator.createQueue(fifoQueueName, attributes = queueAttributes)
+    _ &lt;- <span class="hljs-type">Observable</span>.fromIterable(<span class="hljs-type">List</span>(batch1, batch2)).consumeWith(producer.sendParBatchSink(queueUrl))
+  } <span class="hljs-keyword">yield</span> ()
+}.runToFuture
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="consumer"></a><a href="#consumer" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Consumer</h2>
+<p>Messages from sqs queues can be consumed as <code>DeletableMessage</code> or just as plain <code>ConsumedMessage</code>,
+more details about it are to be explained in the following sub sections.</p>
+<h3><a class="anchor" aria-hidden="true" id="deletable-message"></a><a href="#deletable-message" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Deletable message</h3>
+<p>As the name implies, a deletable message provides the user with the ability to delete a messages from its source queue,
+such action is normally performed once the message is considered to be processed. The choice for an application with
+<strong>at least once</strong> messaging semantics.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.sqs.{<span class="hljs-type">Sqs</span>, <span class="hljs-type">SqsOperator</span>}
+<span class="hljs-keyword">import</span> monix.connect.sqs.domain.<span class="hljs-type">QueueName</span>
+<span class="hljs-keyword">import</span> monix.connect.sqs.producer.<span class="hljs-type">DeletableMessage</span>
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">fakeDbInsert</span></span>(deletableMessage: <span class="hljs-type">DeletableMessage</span>): <span class="hljs-type">Task</span>[<span class="hljs-type">Unit</span>]
+
+<span class="hljs-type">Sqs</span>.fromConfig.use { <span class="hljs-keyword">case</span> <span class="hljs-type">Sqs</span>(operator, _, consumer) =&gt;
+  <span class="hljs-keyword">val</span> queueName = <span class="hljs-type">QueueName</span>(<span class="hljs-string">"my-queue"</span>)
+  <span class="hljs-keyword">val</span> groupId = <span class="hljs-string">"groupId123"</span>
+  <span class="hljs-keyword">val</span> deduplicationId = <span class="hljs-string">"deduplicationId123"</span>
+  <span class="hljs-keyword">for</span> {
+    queueUrl &lt;- operator.getQueueUrl(queueName)
+    message = <span class="hljs-type">FifoMessage</span>(body = <span class="hljs-string">"my dummy content"</span>, groupId = groupId, deduplicationId = deduplicationId)
+    _ &lt;- consumer.receiveManualDelete(queueUrl) <span class="hljs-comment">//: Observable[DeletableMessage]</span>
+      .doOnNext(fakeDbInsert)
+      <span class="hljs-comment">// only after the message is inserted in the db we delete the message from the queue </span>
+      .mapEval(deletableMessage =&gt; deletableMessage.deleteFromQueue()) 
+      .completedL
+  } <span class="hljs-keyword">yield</span> response
+}.runToFuture
+</code></pre>
+<p>If you prefer to only perform a single receive request, there is also a method called <code>receiveSingleManualDelete</code>, which will return
+a list of as many messages as specified in the <code>maxMessages</code> argument (max 10), wrapped in a <code>Task</code>.</p>
+<h3><a class="anchor" aria-hidden="true" id="auto-deleted-message"></a><a href="#auto-deleted-message" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Auto deleted message</h3>
+<p>On the other hand there might be cases where it is preferred to implemented our application with <strong>at most one</strong> semantics,
+for instance when it must not process the same message twice, or it's affordable to losing messages.</p>
+<p>In these cases we could just use the auto deleted signatures, which will emit events that
+are already deleted from the queue, so that the user will not have to worry about processing it multiple times nor handling its deletion.</p>
+<p>There are two different signatures for consuming auto/already-deleted messages, the first one performs a single receive request and is called
+<code>receiveSingleAutoDelete</code>, returning a list of at most 10 messages wrapped in <code>Task</code>.
+Therefore, the streaming version of such is just called <code>receiveAutoDelete</code>, which returns an <code>Observable</code> that
+keeps emitting plain <code>ConsumedMessage</code>s.</p>
+<h2><a class="anchor" aria-hidden="true" id="local-testing"></a><a href="#local-testing" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Local testing</h2>
+<p>The recommended way to test an application that relies on Sqs is to use docker.
+Below are shown two of the most solutions to getting started:</p>
+<h3><a class="anchor" aria-hidden="true" id="localstack"></a><a href="#localstack" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Localstack</h3>
+<p><a href="https://github.com/localstack/localstack">Localstack</a> provides a fully functional local AWS cloud stack that in this case
+the user can use to develop and test locally and offline the integration of the application with SQS.</p>
+<p>Add the following service description to your <code>docker-compose.yaml</code> file:</p>
+<pre><code class="hljs css language-yaml"><span class="hljs-attr">services:</span>
+  <span class="hljs-attr">localstack:</span>
+    <span class="hljs-attr">image:</span> <span class="hljs-string">localstack/localstack:0.11.1</span>
+    <span class="hljs-attr">ports:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">'4576:4576'</span>
+  <span class="hljs-attr">environment:</span>
+    <span class="hljs-bullet">-</span> <span class="hljs-string">SERVICES=sqs</span> <span class="hljs-comment">#prevents to start the rest of the aws services</span>
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="elasticmq"></a><a href="#elasticmq" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Elasticmq</h3>
+<p>Another alternative that also implements a fully asynchronous Sqs compatible interface, and it is based in akka actors.</p>
+<pre><code class="hljs css language-yaml"><span class="hljs-attr">services:</span>
+  <span class="hljs-attr">elasticmq:</span>
+    <span class="hljs-attr">image:</span> <span class="hljs-string">softwaremill/elasticmq-native:latest</span>
+    <span class="hljs-attr">ports:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">'9324:9324'</span>
+</code></pre>
+<p>Run the docker command to build and start the sqs service:</p>
+<pre><code class="hljs css language-shell script">docker-compose -f docker-compose.yml up -d 
+</code></pre>
+<p>Check out that the service has started correctly.</p>
+<p>Below snippet shows a sample of the settings used to locally <code>Sqs</code> using a <code>hocoon</code> config file, which should be placed
+under your test resources folder <code>src/test/resources</code>.</p>
+<pre><code class="hljs css language-hocon">{
+ <span class="hljs-attribute">monix-aws</span>: {
+   credentials {
+     <span class="hljs-attribute">provider</span>: <span class="hljs-string">"static"</span>  
+     <span class="hljs-attribute">access-key-id</span>: <span class="hljs-string">"TESTKEY"</span>
+     <span class="hljs-attribute">secret-access-key</span>: <span class="hljs-string">"TESTSECRET"</span>    
+   }
+   <span class="hljs-attribute">endpoint</span>: <span class="hljs-string">"http://localhost:9324"</span>
+   <span class="hljs-attribute">region</span>: <span class="hljs-string">"us-west-2"</span>
+ }
+}
+</code></pre>
+<p>Alternatively you can statically create connection by parameters:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.sqs.<span class="hljs-type">Sqs</span>
+<span class="hljs-keyword">import</span> software.amazon.awssdk.regions.<span class="hljs-type">Region</span>
+<span class="hljs-keyword">import</span> software.amazon.awssdk.auth.credentials.{<span class="hljs-type">AwsBasicCredentials</span>, <span class="hljs-type">StaticCredentialsProvider</span>}
+
+<span class="hljs-keyword">import</span> java.net.<span class="hljs-type">URI</span>
+
+<span class="hljs-keyword">val</span> endPoint: <span class="hljs-type">String</span> = <span class="hljs-string">"http://localhost:9324"</span>
+
+<span class="hljs-keyword">val</span> awsAccessKey: <span class="hljs-type">String</span> = <span class="hljs-string">"TESTKEY"</span> 
+<span class="hljs-keyword">val</span> awsSecretKey: <span class="hljs-type">String</span> = <span class="hljs-string">"TESTSECRET"</span> 
+
+<span class="hljs-keyword">val</span> basicAWSCredentials = <span class="hljs-type">AwsBasicCredentials</span>.create(awsAccessKey, awsSecretKey)
+<span class="hljs-keyword">val</span> staticCredentialsProvider = <span class="hljs-type">StaticCredentialsProvider</span>.create(basicAWSCredentials)
+
+<span class="hljs-keyword">val</span> sqs = <span class="hljs-type">Sqs</span>.create(credentialsProvider = basicAWSCredentials, region = <span class="hljs-type">Region</span>.<span class="hljs-type">EU_WEST_1</span>, endpoint = <span class="hljs-type">Some</span>(endPoint))
+</code></pre>
+<p>Now you are ready to have fun!</p>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/docs/s3"><span class="arrow-prev">← </span><span>AWS S3</span></a><a class="docs-next button" href="/docs/elasticsearch"><span>Elasticsearch</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#introduction">Introduction</a></li><li><a href="#dependency">Dependency</a></li><li><a href="#async-client">Async Client</a><ul class="toc-headings"><li><a href="#from-config">From config</a></li><li><a href="#create">Create</a></li><li><a href="#create-unsafe">Create Unsafe</a></li></ul></li><li><a href="#core-components">Core Components</a></li><li><a href="#operator">Operator</a><ul class="toc-headings"><li><a href="#create-queue">Create queue</a></li></ul></li><li><a href="#producer">Producer</a><ul class="toc-headings"><li><a href="#send-single-message">Send single message</a></li><li><a href="#send-parallel-batch">Send parallel batch</a></li><li><a href="#send-sink">Send sink</a></li><li><a href="#send-par-batch-sink">Send par batch sink</a></li></ul></li><li><a href="#consumer">Consumer</a><ul class="toc-headings"><li><a href="#deletable-message">Deletable message</a></li><li><a href="#auto-deleted-message">Auto deleted message</a></li></ul></li><li><a href="#local-testing">Local testing</a><ul class="toc-headings"><li><a href="#localstack">Localstack</a></li><li><a href="#elasticmq">Elasticmq</a></li></ul></li></ul></nav></div><footer class="nav-footer" id="footer"><hr class="separator"/><section class="copyright">Copyright © 2020-2021 The Monix Connect Developers.</section></footer></div></body></html>
