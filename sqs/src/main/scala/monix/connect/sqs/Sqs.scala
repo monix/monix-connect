@@ -128,7 +128,7 @@ object Sqs {
     */
   def fromConfig(monixAwsConf: MonixAwsConf): Resource[Task, Sqs] = {
     Resource.make {
-     Task.now(AsyncClientConversions.fromMonixAwsConf(monixAwsConf))
+      Task.now(AsyncClientConversions.fromMonixAwsConf(monixAwsConf))
     }(asyncClient => Task.evalAsync(asyncClient.close()))
       .map(this.createUnsafe(_))
   }

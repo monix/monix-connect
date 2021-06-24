@@ -17,7 +17,4 @@
 
 package monix.connect.aws.auth
 
-final case class StaticCredentialsConf(
-  accessKeyId: String,
-  secretAccessKey: String,
-  sessionToken: Option[String])
+final case class StaticCredentialsConf(accessKeyId: String, secretAccessKey: String, sessionToken: Option[String])

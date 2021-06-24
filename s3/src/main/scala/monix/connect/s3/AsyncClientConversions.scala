@@ -32,7 +32,8 @@ import software.amazon.awssdk.services.s3.S3AsyncClient
 private[s3] object AsyncClientConversions { self =>
 
   private[s3] def fromMonixAwsConf(monixAwsConf: MonixAwsConf): S3AsyncClient = {
-    val builder = S3AsyncClient.builder().credentialsProvider(monixAwsConf.credentialsProvider).region(monixAwsConf.region)
+    val builder =
+      S3AsyncClient.builder().credentialsProvider(monixAwsConf.credentialsProvider).region(monixAwsConf.region)
     monixAwsConf.httpClient.map(httpConf => builder.httpClient(self.httpConfToClient(httpConf)))
     monixAwsConf.endpoint.map(builder.endpointOverride)
     builder.build()

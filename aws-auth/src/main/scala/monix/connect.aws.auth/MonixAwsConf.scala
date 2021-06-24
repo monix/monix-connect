@@ -60,10 +60,11 @@ import java.net.URI
   *                   connectionTimeToLive, connectionMaxIdleTime,
   *                   read and write timeouts, etc.
   */
-case class MonixAwsConf private (region: Region,
-                                 credentialsProvider: AwsCredentialsProvider,
-                                 endpoint: Option[URI],
-                                 httpClient: Option[HttpClientConf])
+case class MonixAwsConf private (
+  region: Region,
+  credentialsProvider: AwsCredentialsProvider,
+  endpoint: Option[URI],
+  httpClient: Option[HttpClientConf])
 
 object MonixAwsConf {
 
@@ -86,12 +87,13 @@ object MonixAwsConf {
     *
     */
   def load(namingConvention: NamingConvention = KebabCase): Task[MonixAwsConf] = {
-    implicit val hint: ProductHint[MonixAwsConf] = ProductHint(ConfigFieldMapping(namingConvention, namingConvention), useDefaultArgs = true, allowUnknownKeys = true)
+    implicit val hint: ProductHint[MonixAwsConf] = ProductHint(
+      ConfigFieldMapping(namingConvention, namingConvention),
+      useDefaultArgs = true,
+      allowUnknownKeys = true)
     Task
-      .fromEither[ConfigReaderFailures, AppConf] { ConfigReaderException(_) }(
-        ConfigSource.default.load[AppConf])
+      .fromEither[ConfigReaderFailures, AppConf] { ConfigReaderException(_) }(ConfigSource.default.load[AppConf])
       .map(_.monixAws)
   }
-
 
 }
