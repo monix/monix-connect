@@ -17,11 +17,9 @@
 
 package monix.connect.aws.auth
 
-import monix.execution.internal.InternalApi
 import scala.concurrent.duration.FiniteDuration
 
-@InternalApi
-private[connect] final case class HttpClientConf(
+final case class HttpClientConf(
   maxConcurrency: Option[Int],
   maxPendingConnectionAcquires: Option[Int],
   connectionAcquisitionTimeout: Option[FiniteDuration],

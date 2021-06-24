@@ -33,7 +33,7 @@ private[dynamodb] object AsyncClientConversions { self =>
 
   def fromMonixAwsConf(monixAwsConf: MonixAwsConf): DynamoDbAsyncClient = {
     val builder =
-      DynamoDbAsyncClient.builder().credentialsProvider(monixAwsConf.credentials).region(monixAwsConf.region)
+      DynamoDbAsyncClient.builder().credentialsProvider(monixAwsConf.credentialsProvider).region(monixAwsConf.region)
     monixAwsConf.httpClient.map(httpConf => builder.httpClient(self.httpConfToClient(httpConf)))
     monixAwsConf.endpoint.map(builder.endpointOverride(_))
     builder.build()

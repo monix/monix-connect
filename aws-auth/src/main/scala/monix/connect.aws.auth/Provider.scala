@@ -20,12 +20,12 @@ package monix.connect.aws.auth
 import monix.execution.internal.InternalApi
 
 @InternalApi
-private[connect] object Provider extends Enumeration {
+private[connect] object Providers extends Enumeration {
 
-  type Type = Value
+  type Provider = Value
   val Anonymous, Default, Environment, Instance, System, Profile, Static = Value
 
-  def fromString(str: String): Provider.Value = {
+  def fromString(str: String): Providers.Provider = {
     str.toLowerCase match {
       case "anonymous" => Anonymous
       case "default" => Default

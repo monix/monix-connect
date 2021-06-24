@@ -19,43 +19,17 @@ package monix.connect.s3
 
 import cats.effect.Resource
 import monix.connect.aws.auth.MonixAwsConf
-import monix.connect.s3.domain.{
-  awsMinChunkSize,
-  CopyObjectSettings,
-  DefaultCopyObjectSettings,
-  DefaultDownloadSettings,
-  DefaultUploadSettings,
-  DownloadSettings,
-  UploadSettings
-}
+import monix.connect.s3.domain.{CopyObjectSettings, DefaultCopyObjectSettings, DefaultDownloadSettings, DefaultUploadSettings, DownloadSettings, UploadSettings, awsMinChunkSize}
 import monix.reactive.{Consumer, Observable}
 import monix.eval.Task
 import monix.execution.annotations.{Unsafe, UnsafeBecauseImpure}
+import pureconfig.{KebabCase, NamingConvention}
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
 import software.amazon.awssdk.core.async.{AsyncRequestBody, AsyncResponseTransformer}
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient
-import software.amazon.awssdk.services.s3.model.{
-  Bucket,
-  BucketCannedACL,
-  CompleteMultipartUploadResponse,
-  CopyObjectRequest,
-  CopyObjectResponse,
-  CreateBucketRequest,
-  CreateBucketResponse,
-  DeleteBucketRequest,
-  DeleteBucketResponse,
-  DeleteObjectRequest,
-  DeleteObjectResponse,
-  GetObjectRequest,
-  GetObjectResponse,
-  NoSuchKeyException,
-  PutObjectRequest,
-  PutObjectResponse,
-  RequestPayer,
-  S3Object
-}
+import software.amazon.awssdk.services.s3.model.{Bucket, BucketCannedACL, CompleteMultipartUploadResponse, CopyObjectRequest, CopyObjectResponse, CreateBucketRequest, CreateBucketResponse, DeleteBucketRequest, DeleteBucketResponse, DeleteObjectRequest, DeleteObjectResponse, GetObjectRequest, GetObjectResponse, NoSuchKeyException, PutObjectRequest, PutObjectResponse, RequestPayer, S3Object}
 
 import scala.jdk.CollectionConverters._
 
@@ -92,24 +66,142 @@ object S3 {
   self =>
 
   /**
-    * Creates a [[Resource]] that will use the values from a
-    * configuration file to allocate and release a [[S3]].
-    * Thus, the api expects an `application.conf` file to be present
-    * in the `resources` folder.
+    * Provides a resource that uses the values from the
+    * config file to acquire and release a [[S3]] instance.
     *
-    * @see how does the expected `.conf` file should look like
-    *      https://github.com/monix/monix-connect/blob/master/aws-auth/src/main/resources/reference.conf`
+    * It does not requires any input parameter as it expect the
+    * aws config to be set from `application.conf`, which has to be
+    * placed under the `resources` folder and will overwrite the
+    * defaults values from:
+    * `https://github.com/monix/monix-connect/blob/master/aws-auth/src/main/resources/reference.conf`.
     *
-    * @return a [[Resource]] of [[Task]] that allocates and releases [[S3]].
+    * ==Example==
+    * {{{
+    *   import monix.connect.aws.auth.MonixAwsConf
+    *   import monix.connect.s3.S3
+    *
+    *   S3.fromConfig.use { s3 =>
+    *      //business logic here
+    *      Task.unit
+    *   }
+    * }}}
+    *
+    * @return a [[Resource]] of [[Task]] that acquires and releases [[S3]].
     */
+  @deprecated("Use `fromConfig(namingConvention)`", "0.6.1")
   def fromConfig: Resource[Task, S3] = {
     Resource.make {
       for {
-        monixAwsConf <- Task.from(MonixAwsConf.load)
+        monixAwsConf <- Task.from(MonixAwsConf.load())
         asyncClient  <- Task.now(AsyncClientConversions.fromMonixAwsConf(monixAwsConf))
       } yield {
         self.createUnsafe(asyncClient)
       }
+    } {
+      _.close
+    }
+  }
+
+  /**
+    * Provides a resource that uses the values from the
+    * config file to acquire and release a [[S3]] instance.
+    *
+    * It does not requires any input parameter as it expect the
+    * aws config to be set from `application.conf`, which has to be
+    * placed under the `resources` folder and will overwrite the
+    * defaults values from:
+    * `https://github.com/monix/monix-connect/blob/master/aws-auth/src/main/resources/reference.conf`.
+    *
+    * ==Example==
+    * {{{
+    *   import monix.connect.aws.auth.MonixAwsConf
+    *   import monix.connect.s3.S3
+    *
+    *   S3.fromConfig.use { s3 =>
+    *      //business logic here
+    *      Task.unit
+    *   }
+    * }}}
+    *
+    * @return a [[Resource]] of [[Task]] that acquires and releases [[S3]].
+    */
+  def fromConfig(namingConvention: NamingConvention = KebabCase): Resource[Task, S3] = {
+    Resource.make {
+      for {
+        monixAwsConf <- Task.from(MonixAwsConf.load(namingConvention))
+        asyncClient  <- Task.now(AsyncClientConversions.fromMonixAwsConf(monixAwsConf))
+      } yield {
+        self.createUnsafe(asyncClient)
+      }
+    } {
+      _.close
+    }
+  }
+
+  /**
+    * Provides a resource that uses the values from the
+    * config file to acquire and release a [[S3]] instance.
+    *
+    * The config will come from [[MonixAwsConf]] which it is
+    * actually obtained from the `application.conf` file present
+    * under the `resources` folder.
+    *
+    * ==Example==
+    * {{{
+    *   import monix.connect.aws.auth.MonixAwsConf
+    *   import monix.connect.s3.S3
+    *   import software.amazon.awssdk.regions.Region
+    *
+    *   MonixAwsConf.load().flatMap{ awsConf =>
+    *       // you can update your config from code too
+    *       val updatedAwsConf = awsConf.copy(region = Region.AP_SOUTH_1)
+    *       S3.fromConfig(updatedAwsConf).use { s3 =>
+    *          //business logic here
+    *          Task.unit
+    *       }
+    *   }
+    * }}}
+    *
+    * @param monixAwsConf the monix aws config read from config file.
+    *
+    * @return a [[Resource]] of [[Task]] that acquires and releases [[S3]].
+    */
+  def fromConfig(monixAwsConf: MonixAwsConf): Resource[Task, S3] = {
+    Resource.make {
+       Task.now(AsyncClientConversions.fromMonixAwsConf(monixAwsConf)).map(this.createUnsafe)
+    } {
+      _.close
+    }
+  }
+
+  /**
+    * Provides a resource that uses the values from the
+    * config file to acquire and release a [[S3]] instance.
+    *
+    * The config will come from [[MonixAwsConf]] which it is
+    * actually obtained from the `application.conf` file present
+    * under the `resources` folder.
+    *
+    * ==Example==
+    * {{{
+    *   import monix.connect.aws.auth.MonixAwsConf
+    *   import monix.eval.Task
+    *   import monix.connect.s3.S3
+    *   val monixAwsConf: Task[MonixAwsConf] = MonixAwsConf.load()
+    *   Sqs.fromConfig(awsConf).use { s3 =>
+    *          //business logic here
+    *          Task.unit
+    *    }
+    * }}}
+    *
+    * @param monixAwsConf a task containing the monix aws config
+    *                     read from config file.
+    *
+    * @return a [[Resource]] of [[Task]] that acquires and releases [[S3]].
+    */
+  def fromConfig(monixAwsConf: Task[MonixAwsConf]): Resource[Task, S3] = {
+    Resource.make {
+      monixAwsConf.map(AsyncClientConversions.fromMonixAwsConf).map(this.createUnsafe)
     } {
       _.close
     }

@@ -21,23 +21,23 @@ import java.net.URI
 import org.scalatest.flatspec.AnyFlatSpec
 import pureconfig.ConfigSource
 import pureconfig.generic.auto._
-import MonixAwsConf._
 import monix.connect.aws.auth.MonixAwsConf.AppConf
 import org.scalatest.matchers.should.Matchers
 import pureconfig.error.ConfigReaderException
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.regions.Region
-
+import monix.connect.aws.auth.MonixAwsConf._
 import scala.util.Try
 
 class MonixAwsConfigSpec extends AnyFlatSpec with Matchers {
 
   "MonixAwsConf" should "load from default config file" in {
     //given/when
-    val monixAwsConf = MonixAwsConf.loadOrThrow
+    import monix.execution.Scheduler.Implicits.global
+    val monixAwsConf = MonixAwsConf.load.runSyncUnsafe()
 
     //then
-    monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
+    monixAwsConf.credentialsProvider shouldBe a[DefaultCredentialsProvider]
     monixAwsConf.endpoint.isDefined shouldBe false
     monixAwsConf.region shouldBe Region.EU_WEST_1
   }
@@ -62,7 +62,7 @@ class MonixAwsConfigSpec extends AnyFlatSpec with Matchers {
     val monixAwsConf = configSource.loadOrThrow[AppConf].monixAws
 
     //then
-    monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
+    monixAwsConf.credentialsProvider shouldBe a[DefaultCredentialsProvider]
     monixAwsConf.endpoint shouldBe Some(URI.create("localhost:4566"))
     monixAwsConf.httpClient.isDefined shouldBe false
     monixAwsConf.region shouldBe Region.AWS_GLOBAL
@@ -87,7 +87,7 @@ class MonixAwsConfigSpec extends AnyFlatSpec with Matchers {
     val monixAwsConf = configSource.loadOrThrow[AppConf].monixAws
 
     //then
-    monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
+    monixAwsConf.credentialsProvider shouldBe a[DefaultCredentialsProvider]
     monixAwsConf.endpoint.isDefined shouldBe false
     monixAwsConf.httpClient.isDefined shouldBe false
     monixAwsConf.region shouldBe Region.AWS_GLOBAL

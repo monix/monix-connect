@@ -1,5 +1,6 @@
 package monix.connect.dynamodb
 
+import monix.connect.aws.auth.MonixAwsConf
 import monix.connect.dynamodb.domain.RetryStrategy
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
@@ -18,7 +19,7 @@ class DynamoDbSuite extends AnyFlatSpec with Matchers with DynamoDbFixture with 
 
   import monix.connect.dynamodb.DynamoDbOp.Implicits._
 
-  s"${DynamoDbOp}" can "be created from config" in {
+  s"$DynamoDbOp" can "be created from config" in {
     //given
     import monix.connect.dynamodb.DynamoDbOp.Implicits.listTablesOp
     val listRequest = ListTablesRequest.builder.build
@@ -30,6 +31,33 @@ class DynamoDbSuite extends AnyFlatSpec with Matchers with DynamoDbFixture with 
     val listedTables = t.runSyncUnsafe()
     listedTables shouldBe a[ListTablesResponse]
     listedTables.tableNames().asScala.contains(tableName) shouldBe true
+  }
+
+  it can "be created from monix aws config" in {
+    //given
+    import monix.connect.dynamodb.DynamoDbOp.Implicits.listTablesOp
+    val listRequest = ListTablesRequest.builder.build
+
+    //when
+    val listTables: ListTablesResponse = MonixAwsConf.load.memoizeOnSuccess.flatMap(DynamoDb.fromConfig(_).use(_.single(listRequest))).runSyncUnsafe()
+
+    //then
+    listTables shouldBe a[ListTablesResponse]
+    listTables.tableNames().asScala.contains(tableName) shouldBe true
+  }
+
+  it can "be created from task with monix aws config" in {
+    //given
+    import monix.connect.dynamodb.DynamoDbOp.Implicits.listTablesOp
+    val listRequest = ListTablesRequest.builder.build
+
+    //when
+    val monixAwsConf = MonixAwsConf.load.memoizeOnSuccess
+    val listTables: ListTablesResponse = DynamoDb.fromConfig(monixAwsConf).use(_.single(listRequest)).runSyncUnsafe()
+
+    //then
+    listTables shouldBe a[ListTablesResponse]
+    listTables.tableNames().asScala.contains(tableName) shouldBe true
   }
 
   it can "be safely created from the parameter configurations" in {

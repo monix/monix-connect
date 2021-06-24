@@ -22,25 +22,25 @@ import org.scalatest.matchers.should.Matchers
 
 class ProviderSpec extends AnyFlatSpec with Matchers {
 
-  s"$Provider" should "be parsed from anonymous,chain, default, environment, instance, profile, static and system" in {
-    Provider.fromString("anonymous") shouldBe Provider.Anonymous
-    Provider.fromString("default") shouldBe Provider.Default
-    Provider.fromString("environment") shouldBe Provider.Environment
-    Provider.fromString("instance") shouldBe Provider.Instance
-    Provider.fromString("profile") shouldBe Provider.Profile
-    Provider.fromString("static") shouldBe Provider.Static
-    Provider.fromString("system") shouldBe Provider.System
-    Provider.fromString("malformed") shouldBe Provider.Default
+  s"$Providers" should "be parsed from anonymous,chain, default, environment, instance, profile, static and system" in {
+    Providers.fromString("anonymous") shouldBe Providers.Anonymous
+    Providers.fromString("default") shouldBe Providers.Default
+    Providers.fromString("environment") shouldBe Providers.Environment
+    Providers.fromString("instance") shouldBe Providers.Instance
+    Providers.fromString("profile") shouldBe Providers.Profile
+    Providers.fromString("static") shouldBe Providers.Static
+    Providers.fromString("system") shouldBe Providers.System
+    Providers.fromString("malformed") shouldBe Providers.Default
   }
 
   it should "not be case sensitive" in {
-    Provider.fromString("Anonymous") shouldBe Provider.Anonymous
-    Provider.fromString("DEFAULT") shouldBe Provider.Default
-    Provider.fromString("ENVironment") shouldBe Provider.Environment
-    Provider.fromString("instancE") shouldBe Provider.Instance
-    Provider.fromString("Profile") shouldBe Provider.Profile
-    Provider.fromString("StatiC") shouldBe Provider.Static
-    Provider.fromString("SYStem") shouldBe Provider.System
+    Providers.fromString("Anonymous") shouldBe Providers.Anonymous
+    Providers.fromString("DEFAULT") shouldBe Providers.Default
+    Providers.fromString("ENVironment") shouldBe Providers.Environment
+    Providers.fromString("instancE") shouldBe Providers.Instance
+    Providers.fromString("Profile") shouldBe Providers.Profile
+    Providers.fromString("StatiC") shouldBe Providers.Static
+    Providers.fromString("SYStem") shouldBe Providers.System
   }
 
 }
