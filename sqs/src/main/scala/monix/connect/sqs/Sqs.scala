@@ -147,7 +147,7 @@ object Sqs {
     *   import monix.eval.Task
     *   import monix.connect.sqs.Sqs
     *
-    *   val monixAwsConf: Task[MonixAwsConf] = MonixAwsConf.load()
+    *   val awsConf: Task[MonixAwsConf] = MonixAwsConf.load()
     *   Sqs.fromConfig(awsConf).use { sqs =>
     *          //business logic here
     *          Task.unit
