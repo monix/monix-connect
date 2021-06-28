@@ -36,7 +36,6 @@ Below snippet shows an example of the configuration file to authenticate via `St
 _http client_ settings are commented out since they are optional, however they could have been specified too for a more fine-grained configuration of the underlying `NettyNioAsyncHttpClient`.
 
 ```hocon
-{
   monix-aws: {
     credentials {
       // [anonymous, default, environment, instance, system, profile, static]
@@ -67,7 +66,6 @@ _http client_ settings are commented out since they are optional, however they c
     #   write-timeout: 100 seconds
     # }
   }
-}
 ```
 
 This config file should be placed in the `resources` folder, therefore it will be automatically picked up from the method call `Sqs.fromConfig`, which will return a `cats.effect.Resource[Task, Sqs]`.

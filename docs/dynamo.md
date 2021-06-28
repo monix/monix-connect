@@ -44,7 +44,6 @@ libraryDependencies += "io.monix" %% "monix-dynamodb" % "0.6.0"
   _http client_ settings are commented out since they are optional, however they could have been specified too for a more fine grained configuration of the underlying `NettyNioAsyncHttpClient`.
     
 ```hocon
-{
   monix-aws: {
     credentials {
       // [anonymous, default, environment, instance, system, profile, static]
@@ -75,7 +74,6 @@ libraryDependencies += "io.monix" %% "monix-dynamodb" % "0.6.0"
     #   write-timeout: 100 seconds
     # }
   }
-}
 ```
 
 This config file should be placed in the `resources` folder, therefore it will be automatically picked up from the method call `S3.fromConfig`, which will return a `cats.effect.Resource[Task, S3]`.
@@ -90,7 +88,6 @@ import monix.connect.dynamodb.DynamoDbOp.Implicits._
 import software.amazon.awssdk.services.dynamodb.model._
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import monix.eval.Task
-import pureconfig.KebabCase
 
 def runDynamoDbApp(dynamoDb: DynamoDb): Task[Array[Byte]] = {
   val tableName = "my-table"
@@ -103,11 +100,11 @@ def runDynamoDbApp(dynamoDb: DynamoDb): Task[Array[Byte]] = {
 }
 
 // It allows to specify the [[pureconfig.NamingConvention]] 
-// from its argument, by default it uses the [[KebabCase]].
+// from its argument, by default it uses the [[pureconfig.KebabCase]].
 val f = DynamoDb.fromConfig(KebabCase).use(runDynamoDbApp).runToFuture
 // the connection gets created and released within the use method and the `DynamoDb`
 // instance is directly passed to our application for an easier interoperability
-```  
+```
 
 There is an alternative way to use `fromConfig` which is to load the config first and then passing it to
 the method. The difference is that in this case we will be able to override a specific configuration

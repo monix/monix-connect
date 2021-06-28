@@ -34,7 +34,7 @@ private[sqs] object AsyncClientConversions {
 
   private[sqs] def fromMonixAwsConf(monixAwsConf: MonixAwsConf): SqsAsyncClient = {
     val builder =
-      SqsAsyncClient.builder().credentialsProvider(monixAwsConf.credentialsProvider).region(monixAwsConf.region)
+      SqsAsyncClient.builder().credentialsProvider(monixAwsConf.credentials).region(monixAwsConf.region)
     monixAwsConf.httpClient.map(httpConf => builder.httpClient(self.httpConfToClient(httpConf)))
     monixAwsConf.endpoint.map(builder.endpointOverride)
     builder.build()
