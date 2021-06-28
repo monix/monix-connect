@@ -160,7 +160,7 @@ object DynamoDb { self =>
     *   import monix.eval.Task
     *   import monix.connect.dynamodb.DynamoDb
     *
-    *   val monixAwsConf: Task[MonixAwsConf] = MonixAwsConf.load()
+    *   val awsConf: Task[MonixAwsConf] = MonixAwsConf.load()
     *   DynamoDb.fromConfig(awsConf).use { dynamoDb =>
     *          //business logic here
     *          Task.unit

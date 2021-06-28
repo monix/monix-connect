@@ -214,7 +214,7 @@ object S3 {
     *   import monix.connect.aws.auth.MonixAwsConf
     *   import monix.eval.Task
     *   import monix.connect.s3.S3
-    *   val monixAwsConf: Task[MonixAwsConf] = MonixAwsConf.load()
+    *   val awsConf: Task[MonixAwsConf] = MonixAwsConf.load()
     *   Sqs.fromConfig(awsConf).use { s3 =>
     *          //business logic here
     *          Task.unit
