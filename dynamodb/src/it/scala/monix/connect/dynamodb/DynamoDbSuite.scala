@@ -39,7 +39,7 @@ class DynamoDbSuite extends AnyFlatSpec with Matchers with DynamoDbFixture with 
     val listRequest = ListTablesRequest.builder.build
 
     //when
-    val listTables: ListTablesResponse = MonixAwsConf.load.memoizeOnSuccess.flatMap(DynamoDb.fromConfig(_).use(_.single(listRequest))).runSyncUnsafe()
+    val listTables: ListTablesResponse = MonixAwsConf.load().memoizeOnSuccess.flatMap(DynamoDb.fromConfig(_).use(_.single(listRequest))).runSyncUnsafe()
 
     //then
     listTables shouldBe a[ListTablesResponse]
@@ -52,7 +52,7 @@ class DynamoDbSuite extends AnyFlatSpec with Matchers with DynamoDbFixture with 
     val listRequest = ListTablesRequest.builder.build
 
     //when
-    val monixAwsConf = MonixAwsConf.load.memoizeOnSuccess
+    val monixAwsConf = MonixAwsConf.load().memoizeOnSuccess
     val listTables: ListTablesResponse = DynamoDb.fromConfig(monixAwsConf).use(_.single(listRequest)).runSyncUnsafe()
 
     //then

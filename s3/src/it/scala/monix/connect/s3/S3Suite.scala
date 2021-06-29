@@ -50,7 +50,7 @@ class S3Suite
 
   it can "be created from a raw monix aws conf" in {
     //given
-    val monixAwsConf = MonixAwsConf.load
+    val monixAwsConf = MonixAwsConf.load()
     val s3FromConf = monixAwsConf.map(S3.fromConfig).memoizeOnSuccess
     val (k1, k2) = (Gen.identifier.sample.get, Gen.identifier.sample.get)
 
@@ -74,7 +74,7 @@ class S3Suite
 
   it can "be created from task monix aws conf" in {
     //given
-    val monixAwsConf = MonixAwsConf.load.memoizeOnSuccess
+    val monixAwsConf = MonixAwsConf.load().memoizeOnSuccess
     val s3FromConf =S3.fromConfig(monixAwsConf)
     val (k1, k2) = (Gen.identifier.sample.get, Gen.identifier.sample.get)
 
