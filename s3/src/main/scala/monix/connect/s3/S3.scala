@@ -106,6 +106,7 @@ object S3 {
     * {{{
     *   import monix.connect.aws.auth.MonixAwsConf
     *   import monix.connect.s3.S3
+    *   import monix.eval.Task
     *
     *   S3.fromConfig.use { s3 =>
     *      //business logic here
@@ -143,6 +144,7 @@ object S3 {
     * {{{
     *   import monix.connect.aws.auth.MonixAwsConf
     *   import monix.connect.s3.S3
+    *   import monix.eval.Task
     *
     *   S3.fromConfig.use { s3 =>
     *      //business logic here
@@ -177,6 +179,7 @@ object S3 {
     * {{{
     *   import monix.connect.aws.auth.MonixAwsConf
     *   import monix.connect.s3.S3
+    *   import monix.eval.Task
     *   import software.amazon.awssdk.regions.Region
     *
     *   MonixAwsConf.load().flatMap{ awsConf =>
@@ -214,6 +217,7 @@ object S3 {
     *   import monix.connect.aws.auth.MonixAwsConf
     *   import monix.eval.Task
     *   import monix.connect.s3.S3
+    *
     *   val awsConf: Task[MonixAwsConf] = MonixAwsConf.load()
     *   Sqs.fromConfig(awsConf).use { s3 =>
     *          //business logic here

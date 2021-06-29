@@ -45,6 +45,7 @@ object Sqs {
     * {{{
     *   import monix.connect.aws.auth.MonixAwsConf
     *   import monix.connect.sqs.Sqs
+    *   import monix.eval.Task
     *
     *   Sqs.fromConfig.use { sqs =>
     *      //business logic here
@@ -79,6 +80,7 @@ object Sqs {
     * {{{
     *   import monix.connect.aws.auth.MonixAwsConf
     *   import monix.connect.sqs.Sqs
+    *   import monix.eval.Task
     *
     *   Sqs.fromConfig.use { sqs =>
     *      //business logic here
@@ -110,6 +112,7 @@ object Sqs {
     * {{{
     *   import monix.connect.aws.auth.MonixAwsConf
     *   import monix.connect.sqs.Sqs
+    *   import monix.eval.Task
     *   import software.amazon.awssdk.regions.Region
     *
     *   MonixAwsConf.load().flatMap{ awsConf =>
@@ -268,6 +271,7 @@ object Sqs {
     *   import monix.execution.Scheduler.Implicits.global
     *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
     *   import software.amazon.awssdk.regions.Region
+    *   import monix.eval.Task
     *
     *   val defaultCred = DefaultCredentialsProvider.create()
     *   val sqs: Sqs = Sqs.createUnsafe(defaultCred, Region.AWS_GLOBAL)

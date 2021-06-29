@@ -55,6 +55,7 @@ object DynamoDb { self =>
     * {{{
     *   import monix.connect.aws.auth.MonixAwsConf
     *   import monix.connect.dynamodb.DynamoDb
+    *   import monix.eval.Task
     *
     *   DynamoDb.fromConfig.use { dynamoDb =>
     *      //business logic here
@@ -90,6 +91,7 @@ object DynamoDb { self =>
     * {{{
     *   import monix.connect.aws.auth.MonixAwsConf
     *   import monix.connect.dynamodb.DynamoDb
+    *   import monix.eval.Task
     *
     *   DynamoDb.fromConfig.use { dynamoDb =>
     *      //business logic here
@@ -122,6 +124,7 @@ object DynamoDb { self =>
     * {{{
     *   import monix.connect.aws.auth.MonixAwsConf
     *   import monix.connect.dynamodb.DynamoDb
+    *   import monix.eval.Task
     *   import software.amazon.awssdk.regions.Region
 
     *   MonixAwsConf.load().flatMap{ awsConf =>
