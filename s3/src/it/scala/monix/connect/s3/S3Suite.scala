@@ -422,7 +422,7 @@ class S3Suite
     S3.fromConfig.use { s3 =>
       for {
         //when
-        _ <- Task.traverse(keys) { key => S3.fromConfig.use(_.upload(bucketName, key, "dummyContent".getBytes())) }
+        _ <- Task.traverse(keys) { key => s3.upload(bucketName, key, "dummyContent".getBytes()) }
         latest <- s3.listLatestObject(bucketName, prefix = Some(prefix))
         latestFive <- s3.listLatestNObjects(bucketName, 5, prefix = Some(prefix)).toListL
         all <- s3.listObjects(bucketName, prefix = Some(prefix)).toListL
@@ -447,7 +447,7 @@ class S3Suite
     S3.fromConfig.use { s3 =>
       for {
         _ <- Task
-          .traverse(keys) { key => S3.fromConfig.use(_.upload(bucketName, key, "dummyContent".getBytes())) }
+          .traverse(keys) { key => s3.upload(bucketName, key, "dummyContent".getBytes()) }
         oldest <- s3.listOldestObject(bucketName, prefix = Some(prefix))
         oldestFive <- s3.listOldestNObjects(bucketName, 5, prefix = Some(prefix)).toListL
         all <- s3.listObjects(bucketName, prefix = Some(prefix)).toListL
@@ -471,7 +471,7 @@ class S3Suite
     S3.fromConfig.use { s3 =>
       for {
         _ <- Task
-          .traverse(keys) { key => S3.fromConfig.use(_.upload(bucketName, key, "dummyContent".getBytes())) }
+          .traverse(keys) { key => s3.upload(bucketName, key, "dummyContent".getBytes()) }
         all <- s3.listObjects(bucketName, prefix = Some(prefix)).toListL
         listNObjects <- s3.listOldestNObjects(bucketName, all.size + 10, prefix = Some(prefix)).toListL
       } yield {
