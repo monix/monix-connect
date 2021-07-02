@@ -62,7 +62,7 @@ import java.net.URI
   *                   connectionTimeToLive, connectionMaxIdleTime,
   *                   read and write timeouts, etc.
   */
-case class MonixAwsConf private (
+final case class MonixAwsConf private (
   region: Region,
   credentials: AwsCredentialsProvider,
   endpoint: Option[URI],
@@ -79,6 +79,7 @@ object MonixAwsConf {
   implicit val uriReader: ConfigReader[URI] = ConfigReader[String].map(URI.create)
   val customHint: NamingConvention => ProductHint[AppConf] = namingConvention =>
     ProductHint(ConfigFieldMapping(CamelCase, namingConvention), useDefaultArgs = false, allowUnknownKeys = true)
+
   /**
     * Loads the aws auth configuration from the config file with the specified naming
     * convention, being [[KebabCase]] the default one.
