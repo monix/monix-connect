@@ -36,7 +36,6 @@ Below snippet shows an example of the configuration file to authenticate via `St
 _http client_ settings are commented out since they are optional, however they could have been specified too for a more fine-grained configuration of the underlying `NettyNioAsyncHttpClient`.
 
 ```hocon
-{
   monix-aws: {
     credentials {
       // [anonymous, default, environment, instance, system, profile, static]
@@ -67,7 +66,6 @@ _http client_ settings are commented out since they are optional, however they c
     #   write-timeout: 100 seconds
     # }
   }
-}
 ```
 
 This config file should be placed in the `resources` folder, therefore it will be automatically picked up from the method call `Sqs.fromConfig`, which will return a `cats.effect.Resource[Task, Sqs]`.
@@ -83,6 +81,8 @@ multiple times will waste precious resources... See below code snippet to unders
  import monix.eval.Task
  import scalapb.descriptors.ScalaType.Message
  import software.amazon.awssdk.services.s3.model.NoSuchKeyException
+ import pureconfig.KebabCase
+
  import scala.concurrent.duration._
  
  def runSqsApp(sqs: Sqs): Task[Array[Byte]] = {
@@ -94,16 +94,35 @@ multiple times will waste precious resources... See below code snippet to unders
      receivedMessage <- sqs.consumer.receiveSingleManualDelete(queueUrl, waitTimeSeconds = 3.seconds)
    } yield receivedMessage
  }
- 
-  // the connection gets created and released within the use method and the `Sqs`
+
+  // It allows to specify the [[pureconfig.NamingConvention]]
+  // from its argument, by default it uses the [[KebabCase]].  
+  val f = Sqs.fromConfig(KebabCase).use(runSqsApp).runToFuture
+  // The connection gets created and released within the use method and the `Sqs`
   // instance is directly passed and should be reused across our application
-  val f = Sqs.fromConfig.use(runSqsApp).runToFuture
 ```  
 
-### Create
+There is an alternative way to use `fromConfig` which is to load the config first and then passing it to
+the method. The difference is that in this case we will be able to override a specific configuration
+from the code, whereas before we were reading it and creating the client straight after.
 
-An alternative to using a config file is to pass the _AWS configurations_ directly by parameters.
-This is a safe implementation since the method also handles the _acquisition_ and _release_ of the connection within
+```scala
+ import monix.connect.aws.auth.MonixAwsConf
+ import monix.connect.sqs.Sqs
+ import monix.eval.Task
+ import software.amazon.awssdk.services.s3.model.NoSuchKeyException
+ import pureconfig.KebabCase
+ import software.amazon.awssdk.regions.Region
+
+ val f = MonixAwsConf.load(KebabCase).memoizeOnSuccess.flatMap{ awsConf =>
+   val updatedAwsConf = awsConf.copy(region = Region.EU_CENTRAL_1)
+   Sqs.fromConfig(updatedAwsConf).use(runSqsApp)
+ }.runToFuture
+```
+
+## Create
+
+On the other hand, one can pass the _AWS configurations_ by parameters, and that is safe since the method also handles the _acquisition_ and _release_ of the connection with
 `Resource`. The example below produce exactly the same result as previously using the _config_ file:
 
  ```scala

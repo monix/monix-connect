@@ -24,6 +24,7 @@ import monix.connect.dynamodb.domain.DefaultRetryStrategy
 import monix.eval.Task
 import monix.execution.annotations.UnsafeBecauseImpure
 import monix.reactive.{Consumer, Observable}
+import pureconfig.{KebabCase, NamingConvention}
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
 import software.amazon.awssdk.regions.Region
@@ -41,27 +42,145 @@ import scala.concurrent.duration.{Duration, FiniteDuration}
 object DynamoDb { self =>
 
   /**
-    * Creates a [[Resource]] that will use the values from a
-    * configuration file to allocate and release a [[DynamoDb]].
-    * Thus, the api expects an `application.conf` file to be present
-    * in the `resources` folder.
+    * Provides a resource that uses the values from the
+    * config file to acquire and release a [[DynamoDb]] instance.
     *
-    * @see how does the expected `.conf` file should look like
-    *      https://github.com/monix/monix-connect/blob/master/aws-auth/src/main/resources/reference.conf`
+    * It does not requires any input parameter as it expect the
+    * aws config to be set from `application.conf`, which has to be
+    * placed under the `resources` folder and will overwrite the
+    * defaults values from:
+    * `https://github.com/monix/monix-connect/blob/master/aws-auth/src/main/resources/reference.conf`.
     *
-    * @see the cats effect resource data type: https://typelevel.org/cats-effect/datatypes/resource.html
+    * ==Example==
+    * {{{
+    *   import monix.connect.aws.auth.MonixAwsConf
+    *   import monix.connect.dynamodb.DynamoDb
+    *   import monix.eval.Task
+    *
+    *   DynamoDb.fromConfig.use { dynamoDb =>
+    *      //business logic here
+    *      Task.unit
+    *   }
+    * }}}
     *
     * @return a [[Resource]] of [[Task]] that allocates and releases a Monix [[DynamoDb]] client.
     */
+  @deprecated("Use `fromConfig(namingConvention)`", "0.6.1")
   def fromConfig: Resource[Task, DynamoDb] = {
     Resource.make {
       for {
-        monixAwsConf <- Task.from(MonixAwsConf.load)
+        monixAwsConf <- Task.from(MonixAwsConf.load())
         asyncClient  <- Task.now(AsyncClientConversions.fromMonixAwsConf(monixAwsConf))
       } yield {
         self.createUnsafe(asyncClient)
       }
     } { _.close }
+  }
+
+  /**
+    * Provides a resource that uses the values from the
+    * config file to acquire and release a [[DynamoDb]] instance.
+    *
+    * It does not requires any input parameter as it expect the
+    * aws config to be set from `application.conf`, which has to be
+    * placed under the `resources` folder and will overwrite the
+    * defaults values from:
+    * `https://github.com/monix/monix-connect/blob/master/aws-auth/src/main/resources/reference.conf`.
+    *
+    * ==Example==
+    * {{{
+    *   import monix.connect.aws.auth.MonixAwsConf
+    *   import monix.connect.dynamodb.DynamoDb
+    *   import monix.eval.Task
+    *
+    *   DynamoDb.fromConfig.use { dynamoDb =>
+    *      //business logic here
+    *      Task.unit
+    *   }
+    * }}}
+    *
+    * @return a [[Resource]] of [[Task]] that allocates and releases a Monix [[DynamoDb]] client.
+    */
+  def fromConfig(namingConvention: NamingConvention = KebabCase): Resource[Task, DynamoDb] = {
+    Resource.make {
+      for {
+        monixAwsConf <- Task.from(MonixAwsConf.load(namingConvention))
+        asyncClient  <- Task.now(AsyncClientConversions.fromMonixAwsConf(monixAwsConf))
+      } yield {
+        self.createUnsafe(asyncClient)
+      }
+    } { _.close }
+  }
+
+  /**
+    * Provides a resource that uses the values from the
+    * config file to acquire and release a [[DynamoDb]] instance.
+    *
+    * The config will come from [[MonixAwsConf]] which it is
+    * actually obtained from the `application.conf` file present
+    * under the `resources` folder.
+    *
+    * ==Example==
+    * {{{
+    *   import monix.connect.aws.auth.MonixAwsConf
+    *   import monix.connect.dynamodb.DynamoDb
+    *   import monix.eval.Task
+    *   import software.amazon.awssdk.regions.Region
+
+    *   MonixAwsConf.load().flatMap{ awsConf =>
+    *       // you can update your config from code too
+    *       val updatedAwsConf = awsConf.copy(region = Region.AP_SOUTH_1)
+    *       DynamoDb.fromConfig(updatedAwsConf).use { dynamoDb =>
+    *          //business logic here
+    *          Task.unit
+    *       }
+    *   }
+    * }}}
+    *
+    * @param monixAwsConf the monix aws config read from config file.
+    *
+    * @return a [[Resource]] of [[Task]] that acquires and releases [[DynamoDb]].
+    */
+  def fromConfig(monixAwsConf: MonixAwsConf): Resource[Task, DynamoDb] = {
+    Resource.make {
+      Task.now(AsyncClientConversions.fromMonixAwsConf(monixAwsConf)).map(this.createUnsafe)
+    } {
+      _.close
+    }
+  }
+
+  /**
+    * Provides a resource that uses the values from the
+    * config file to acquire and release a [[DynamoDb]] instance.
+    *
+    * The config will come from [[MonixAwsConf]] which it is
+    * actually obtained from the `application.conf` file present
+    * under the `resources` folder.
+    *
+    * ==Example==
+    * {{{
+    *   import monix.connect.aws.auth.MonixAwsConf
+    *   import monix.eval.Task
+    *   import monix.connect.dynamodb.DynamoDb
+    *
+    *   val awsConf: Task[MonixAwsConf] = MonixAwsConf.load()
+    *   DynamoDb.fromConfig(awsConf).use { dynamoDb =>
+    *          //business logic here
+    *          Task.unit
+    *    }
+    * }}}
+    *
+    * @param monixAwsConf a task containing the monix aws config
+    *                     read from config file.
+    *
+    * @return a [[Resource]] of [[Task]] that acquires and releases [[DynamoDb]].
+    */
+  def fromConfig(monixAwsConf: Task[MonixAwsConf]): Resource[Task, DynamoDb] = {
+    Resource.make {
+      monixAwsConf.map(AsyncClientConversions.fromMonixAwsConf).map(this.createUnsafe)
+    } {
+      _.close
+    }
   }
 
   /**

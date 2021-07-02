@@ -17,10 +17,4 @@
 
 package monix.connect.aws.auth
 
-import monix.execution.internal.InternalApi
-
-@InternalApi
-private[connect] final case class StaticCredentialsConf(
-  accessKeyId: String,
-  secretAccessKey: String,
-  sessionToken: Option[String])
+final case class StaticCredentialsConf(accessKeyId: String, secretAccessKey: String, sessionToken: Option[String])

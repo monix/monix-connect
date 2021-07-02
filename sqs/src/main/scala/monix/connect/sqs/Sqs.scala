@@ -24,6 +24,7 @@ import monix.connect.aws.auth.MonixAwsConf
 import monix.connect.sqs.producer.SqsProducer
 import monix.connect.sqs.consumer.SqsConsumer
 import monix.execution.annotations.UnsafeBecauseImpure
+import pureconfig.{KebabCase, NamingConvention}
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
 import software.amazon.awssdk.regions.Region
@@ -34,16 +35,31 @@ object Sqs {
     * Provides a resource that uses the values from the
     * config file to acquire and release a [[Sqs]] instance.
     *
-    * The config can be overwritten from an `application.conf` file
-    * present under the `resources` folder. Which it should look like:
+    * It does not requires any input parameter as it expect the
+    * aws config to be set from `application.conf`, which has to be
+    * placed under the `resources` folder and will overwrite the
+    * defaults values from:
     * `https://github.com/monix/monix-connect/blob/master/aws-auth/src/main/resources/reference.conf`.
     *
-    * @return a [[Resource]] of [[Task]] that acquires and releases [[Sqs]].
+    * ==Example==
+    * {{{
+    *   import monix.connect.aws.auth.MonixAwsConf
+    *   import monix.connect.sqs.Sqs
+    *   import monix.eval.Task
+    *
+    *   Sqs.fromConfig.use { sqs =>
+    *      //business logic here
+    *      Task.unit
+    *   }
+    * }}}
+    *
+    * @return a [[Resource]] of [[Task]] that acquires and releases a [[Sqs]] connection.
     */
+  @deprecated("Use `fromConfig(namingConvention)`", "0.6.1")
   def fromConfig: Resource[Task, Sqs] = {
     Resource.make {
       for {
-        clientConf  <- MonixAwsConf.load
+        clientConf  <- MonixAwsConf.load()
         asyncClient <- Task.now(AsyncClientConversions.fromMonixAwsConf(clientConf))
       } yield asyncClient
     }(asyncClient => Task.evalAsync(asyncClient.close()))
@@ -51,9 +67,112 @@ object Sqs {
   }
 
   /**
+    * Provides a resource that uses the values from the
+    * config file to acquire and release a [[Sqs]] instance.
+    *
+    * It does not requires any input parameter as it expect the
+    * aws config to be set from `application.conf`, which has to be
+    * placed under the `resources` folder and will overwrite the
+    * defaults values from:
+    * `https://github.com/monix/monix-connect/blob/master/aws-auth/src/main/resources/reference.conf`.
+    *
+    * ==Example==
+    * {{{
+    *   import monix.connect.aws.auth.MonixAwsConf
+    *   import monix.connect.sqs.Sqs
+    *   import monix.eval.Task
+    *
+    *   Sqs.fromConfig.use { sqs =>
+    *      //business logic here
+    *      Task.unit
+    *   }
+    * }}}
+    *
+    * @return a [[Resource]] of [[Task]] that acquires and releases a [[Sqs]] connection.
+    */
+  def fromConfig(namingConvention: NamingConvention = KebabCase): Resource[Task, Sqs] = {
+    Resource.make {
+      for {
+        clientConf  <- MonixAwsConf.load(namingConvention)
+        asyncClient <- Task.now(AsyncClientConversions.fromMonixAwsConf(clientConf))
+      } yield asyncClient
+    }(asyncClient => Task.evalAsync(asyncClient.close()))
+      .map(this.createUnsafe(_))
+  }
+
+  /**
+    * Provides a resource that uses the values from the
+    * config file to acquire and release a [[Sqs]] instance.
+    *
+    * The config will come from [[MonixAwsConf]] which it is
+    * actually obtained from the `application.conf` file present
+    * under the `resources` folder.
+    *
+    * ==Example==
+    * {{{
+    *   import monix.connect.aws.auth.MonixAwsConf
+    *   import monix.connect.sqs.Sqs
+    *   import monix.eval.Task
+    *   import software.amazon.awssdk.regions.Region
+    *
+    *   MonixAwsConf.load().flatMap{ awsConf =>
+    *       // you can update your config from code too
+    *       val updatedAwsConf = awsConf.copy(region = Region.AP_SOUTH_1)
+    *       Sqs.fromConfig(updatedAwsConf).use { sqs =>
+    *          //business logic here
+    *          Task.unit
+    *       }
+    *   }
+    * }}}
+    *
+    * @param monixAwsConf the monix aws config read from config file.
+    *
+    * @return a [[Resource]] of [[Task]] that acquires and releases a [[Sqs]] connection.
+    */
+  def fromConfig(monixAwsConf: MonixAwsConf): Resource[Task, Sqs] = {
+    Resource.make {
+      Task.now(AsyncClientConversions.fromMonixAwsConf(monixAwsConf))
+    }(asyncClient => Task.evalAsync(asyncClient.close()))
+      .map(this.createUnsafe(_))
+  }
+
+  /**
+    * Provides a resource that uses the values from the
+    * config file to acquire and release a [[Sqs]] instance.
+    *
+    * The config will come from [[MonixAwsConf]] which it is
+    * actually obtained from the `application.conf` file present
+    * under the `resources` folder.
+    *
+    * ==Example==
+    * {{{
+    *   import monix.connect.aws.auth.MonixAwsConf
+    *   import monix.eval.Task
+    *   import monix.connect.sqs.Sqs
+    *
+    *   val awsConf: Task[MonixAwsConf] = MonixAwsConf.load()
+    *   Sqs.fromConfig(awsConf).use { sqs =>
+    *          //business logic here
+    *          Task.unit
+    *    }
+    * }}}
+    *
+    * @param monixAwsConf a task containing the monix aws config
+    *                     read from config file.
+    *
+    * @return a [[Resource]] of [[Task]] that acquires and releases a [[Sqs]] connection.
+    */
+  def fromConfig(monixAwsConf: Task[MonixAwsConf]): Resource[Task, Sqs] = {
+    Resource.make {
+      monixAwsConf.map(AsyncClientConversions.fromMonixAwsConf)
+    }(asyncClient => Task.evalAsync(asyncClient.close()))
+      .map(this.createUnsafe(_))
+  }
+
+  /**
     * Creates a [[Resource]] that using passed-by-parameter
     * AWS configurations, it encodes the acquisition and release
-    * of the resources needed to instantiate the [[S3]].
+    * of the resources needed to instantiate the [[Sqs]].
     *
     * ==Example==
     *
@@ -67,11 +186,11 @@ object Sqs {
     *   val sqsResource: Resource[Task, Sqs] = Sqs.create(defaultCredentials, Region.AWS_GLOBAL)
     * }}}
     *
-    * @param credentialsProvider strategy for loading credentials and authenticate to AWS S3
+    * @param credentialsProvider strategy for loading credentials and authenticate to AWS Sqs
     * @param region              an Amazon Web Services region that hosts a set of Amazon services.
     * @param endpoint            the endpoint with which the SDK should communicate.
     * @param httpClient          sets the [[SdkAsyncHttpClient]] that the SDK service client will use to make HTTP calls.
-    * @return a [[Resource]] of [[Task]] that acquires and releases [[Sqs]] instance.
+    * @return a [[Resource]] of [[Task]] that acquires and releases [[Sqs]] connection.
     */
 
   def create(
@@ -152,6 +271,7 @@ object Sqs {
     *   import monix.execution.Scheduler.Implicits.global
     *   import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
     *   import software.amazon.awssdk.regions.Region
+    *   import monix.eval.Task
     *
     *   val defaultCred = DefaultCredentialsProvider.create()
     *   val sqs: Sqs = Sqs.createUnsafe(defaultCred, Region.AWS_GLOBAL)
