@@ -185,6 +185,9 @@ class Index extends React.Component {
           <Layer2 />
           <Layer1 />
           <Layer0 />
+          <br></br>
+          <br></br>
+        <p className="trademark"> Above images are subject to their respective trademarks.™ </p>
         </div>
       </div>
     );
