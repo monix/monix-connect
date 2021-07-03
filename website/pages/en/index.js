@@ -108,15 +108,18 @@ class Index extends React.Component {
         {[
           {
             image: `${baseUrl}img/elasticsearch.png`,
-            imageAlign: 'left'
+            imageAlign: 'left',
+            imageLink: siteConfig.url + '/docs/elasticsearch'
           },
           {
             image: `${baseUrl}img/dynamodb.png`,
-            imageAlign: 'right'
+            imageAlign: 'right',
+            imageLink: siteConfig.url + '/docs/dynamodb'
           },
           {
             image: `${baseUrl}img/hadoop.png`,
             imageAlign: 'right',
+            imageLink: siteConfig.url + '/docs/hdfs'
           }
 
         ]}
@@ -127,19 +130,21 @@ class Index extends React.Component {
       <Block layout="fourColumn">
         {[
             {
-                    image: `${baseUrl}img/gcs.png`,
-                    imageAlign: 'left'
-                  },
-                ,
-                {
-                  image: `${baseUrl}img/s3.png`,
-                  imageAlign: 'left'
-                },
-          {
-            image: `${baseUrl}img/parquet.png`,
-            imageAlign: 'right'
-          }
+              image: `${baseUrl}img/gcs.png`,
+              imageAlign: 'left',
+              imageLink: siteConfig.url + '/docs/gcs'
+            },
+            {
+              image: `${baseUrl}img/s3.png`,
+              imageAlign: 'left',
+              imageLink: siteConfig.url + '/docs/s3'
+            },
+            {
+              image: `${baseUrl}img/parquet.png`,
+              imageAlign: 'right',
+              imageLink: siteConfig.url + '/docs/parquet'
 
+            }
         ]}
       </Block>
     );
@@ -150,15 +155,18 @@ class Index extends React.Component {
         {[
           {
             image: `${baseUrl}img/redis.png`,
-            imageAlign: 'left'
+            imageAlign: 'left',
+            imageLink: siteConfig.url + '/docs/redis'
           },
           {
             image: `${baseUrl}img/sqs.png`,
-            imageAlign: 'right'
+            imageAlign: 'right',
+            imageLink: siteConfig.url + '/docs/sqs'
           },
           {
             image: `${baseUrl}img/mongo.jpeg`,
             imageAlign: 'right',
+            imageLink: siteConfig.url + '/docs/mongodb'
           }
           ]}
           </Block>
@@ -174,6 +182,9 @@ class Index extends React.Component {
           <div className="index">
             <MarkdownBlock>{index}</MarkdownBlock>
           </div>
+          <Layer2 />
+          <Layer1 />
+          <Layer0 />
         </div>
       </div>
     );
