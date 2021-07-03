@@ -71,7 +71,7 @@ _http client_ settings are commented out since they are optional, however they c
 This config file should be placed in the `resources` folder, therefore it will be automatically picked up from the method call `Sqs.fromConfig`, which will return a `cats.effect.Resource[Task, Sqs]`.
 The [resource](https://typelevel.org/cats-effect/datatypes/resource.html) is responsible of the *creation* and *release* of the _Sqs client_.
 
-**Try to reuse** the created **Sqs** client as much as possible in your application multiple times in your application. Otherwise, creating it
+**Try to reuse** the created **Sqs** client as much as possible in your application, otherwise, creating it
 multiple times will waste precious resources... See below code snippet to understand the concept:
 
 ```scala

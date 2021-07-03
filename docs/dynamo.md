@@ -79,8 +79,8 @@ libraryDependencies += "io.monix" %% "monix-dynamodb" % "0.6.0"
 This config file should be placed in the `resources` folder, therefore it will be automatically picked up from the method call `S3.fromConfig`, which will return a `cats.effect.Resource[Task, S3]`.
 The [resource](https://typelevel.org/cats-effect/datatypes/resource.html) is responsible of the *creation* and *release* of the _S3 client_. 
 
-We recommend using it transparently in your application, meaning that your methods and classes will directly expect an instance of _S3_, which will be called from within the 
-_usage_ of the _Resource_. See below code snippet to understand the concept:
+**Try to reuse** the created **Sqs** client as much as possible in your application, otherwise, creating it
+multiple times will waste precious resources... See below code snippet to understand the concept:
 
 ```scala
 import monix.connect.dynamodb.DynamoDb
