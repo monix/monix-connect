@@ -6,24 +6,24 @@ object Dependencies {
 
     //main
     val Monix = "3.4.0"
-    val AwsSdk = "2.16.104"
+    val AwsSdk = "2.16.93"
     val AkkaStreams = "2.6.9"
     val GCS = "1.107.0"
     val Hadoop = "3.3.1"
     val MongoScala = "4.1.1"
     val MongoReactiveStreams = "4.2.3"
-    val Lettuce = "6.1.2.RELEASE"
+    val Lettuce = "6.1.4.RELEASE"
     val Parquet = "1.12.0"
     val Elastic4s = "7.12.0"
     val Pureconfig = "0.16.0"
     val ScalaLogging = "3.9.3"
-    val ScalaCompat = "2.4.4"
+    val ScalaCompat = "2.5.0"
 
     //test
     val Scalatest = "3.2.9"
     val Scalacheck = "1.14.0"
     val Mockito = "1.15.0"
-    val GCNio = "0.123.1"
+    val GCNio = "0.123.3"
   }
 
   private def commonDependencies(hasIt: Boolean = false): Seq[sbt.ModuleID] = {
