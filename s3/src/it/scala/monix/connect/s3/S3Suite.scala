@@ -1,14 +1,15 @@
 package monix.connect.s3
 
-import java.io.FileInputStream
+import monix.connect.aws.auth.MonixAwsConf
 
+import java.io.FileInputStream
 import monix.eval.Task
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
 import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadResponse, CopyObjectResponse, NoSuchBucketException, NoSuchKeyException, PutObjectResponse}
 import org.scalatest.matchers.should.Matchers
-import Thread.sleep
 
+import Thread.sleep
 import scala.concurrent.duration._
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.{Consumer, Observable}
@@ -32,7 +33,7 @@ class S3Suite
     }
   }
 
-  s"${S3}" can "be created from config files" in {
+  "S3" can "be created from config file" in {
     //given
     val s3FromConf = S3.fromConfig
     val (k1, k2) = (Gen.identifier.sample.get, Gen.identifier.sample.get)
@@ -45,6 +46,51 @@ class S3Suite
     val (exists1, exists2) = s3FromConf.use(s3 => Task.parZip2(s3.existsObject(bucketName, k1), s3.existsObject(bucketName, k2))).runSyncUnsafe()
     exists1 shouldBe true
     exists2 shouldBe true
+  }
+
+  it can "be created from a raw monix aws conf" in {
+    //given
+    val monixAwsConf = MonixAwsConf.load()
+    val s3FromConf = monixAwsConf.map(S3.fromConfig).memoizeOnSuccess
+    val (k1, k2) = (Gen.identifier.sample.get, Gen.identifier.sample.get)
+
+    //when
+    s3FromConf.map(resource =>
+      resource.use { s3 =>
+        for {
+          _ <- s3.upload(bucketName, k1, k1.getBytes()) >>
+            s3.upload(bucketName, k2, k2.getBytes())
+          existsKey1 <- s3.existsObject(bucketName, k1)
+          existsKey2 <- s3.existsObject(bucketName, k2)
+        } yield {
+          //then
+          existsKey1 shouldBe true
+          existsKey2 shouldBe true
+        }
+      }
+    ).runSyncUnsafe()
+
+  }
+
+  it can "be created from task monix aws conf" in {
+    //given
+    val monixAwsConf = MonixAwsConf.load().memoizeOnSuccess
+    val s3FromConf =S3.fromConfig(monixAwsConf)
+    val (k1, k2) = (Gen.identifier.sample.get, Gen.identifier.sample.get)
+
+    //when
+    s3FromConf.use { s3 =>
+      for {
+        _ <- s3.upload(bucketName, k1, k1.getBytes()) >>
+          s3.upload(bucketName, k2, k2.getBytes())
+        existsKey1 <- s3.existsObject(bucketName, k1)
+        existsKey2 <- s3.existsObject(bucketName, k2)
+      } yield {
+        //then
+        existsKey1 shouldBe true
+        existsKey2 shouldBe true
+      }
+    }.runSyncUnsafe()
   }
 
   it should "implement upload method" in {
@@ -376,7 +422,7 @@ class S3Suite
     S3.fromConfig.use { s3 =>
       for {
         //when
-        _ <- Task.traverse(keys) { key => S3.fromConfig.use(_.upload(bucketName, key, "dummyContent".getBytes())) }
+        _ <- Task.traverse(keys) { key => s3.upload(bucketName, key, "dummyContent".getBytes()) }
         latest <- s3.listLatestObject(bucketName, prefix = Some(prefix))
         latestFive <- s3.listLatestNObjects(bucketName, 5, prefix = Some(prefix)).toListL
         all <- s3.listObjects(bucketName, prefix = Some(prefix)).toListL
@@ -401,7 +447,7 @@ class S3Suite
     S3.fromConfig.use { s3 =>
       for {
         _ <- Task
-          .traverse(keys) { key => S3.fromConfig.use(_.upload(bucketName, key, "dummyContent".getBytes())) }
+          .traverse(keys) { key => s3.upload(bucketName, key, "dummyContent".getBytes()) }
         oldest <- s3.listOldestObject(bucketName, prefix = Some(prefix))
         oldestFive <- s3.listOldestNObjects(bucketName, 5, prefix = Some(prefix)).toListL
         all <- s3.listObjects(bucketName, prefix = Some(prefix)).toListL
@@ -425,7 +471,7 @@ class S3Suite
     S3.fromConfig.use { s3 =>
       for {
         _ <- Task
-          .traverse(keys) { key => S3.fromConfig.use(_.upload(bucketName, key, "dummyContent".getBytes())) }
+          .traverse(keys) { key => s3.upload(bucketName, key, "dummyContent".getBytes()) }
         all <- s3.listObjects(bucketName, prefix = Some(prefix)).toListL
         listNObjects <- s3.listOldestNObjects(bucketName, all.size + 10, prefix = Some(prefix)).toListL
       } yield {

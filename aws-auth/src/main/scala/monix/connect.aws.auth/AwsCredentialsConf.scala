@@ -33,22 +33,22 @@ import software.amazon.awssdk.auth.credentials.{
 
 @InternalApi
 private[connect] final case class AwsCredentialsConf(
-  provider: Provider.Type,
+  provider: Providers.Provider,
   profileName: Option[String],
   static: Option[StaticCredentialsConf]) {
   val credentialsProvider: AwsCredentialsProvider = {
     provider match {
-      case Provider.Anonymous => AnonymousCredentialsProvider.create()
-      case Provider.Default => DefaultCredentialsProvider.create()
-      case Provider.Environment => EnvironmentVariableCredentialsProvider.create()
-      case Provider.Instance => InstanceProfileCredentialsProvider.create()
-      case Provider.Profile => {
+      case Providers.Anonymous => AnonymousCredentialsProvider.create()
+      case Providers.Default => DefaultCredentialsProvider.create()
+      case Providers.Environment => EnvironmentVariableCredentialsProvider.create()
+      case Providers.Instance => InstanceProfileCredentialsProvider.create()
+      case Providers.Profile => {
         profileName match {
           case Some(name) => ProfileCredentialsProvider.create(name)
           case None => ProfileCredentialsProvider.create()
         }
       }
-      case Provider.Static =>
+      case Providers.Static =>
         static match {
           case Some(creeds) =>
             StaticCredentialsProvider.create {
@@ -59,7 +59,7 @@ private[connect] final case class AwsCredentialsConf(
             }
           case None => DefaultCredentialsProvider.create()
         }
-      case Provider.System => SystemPropertyCredentialsProvider.create()
+      case Providers.System => SystemPropertyCredentialsProvider.create()
       case _ => DefaultCredentialsProvider.create()
     }
   }

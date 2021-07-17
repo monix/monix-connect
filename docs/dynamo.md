@@ -44,7 +44,6 @@ libraryDependencies += "io.monix" %% "monix-dynamodb" % "0.6.0"
   _http client_ settings are commented out since they are optional, however they could have been specified too for a more fine grained configuration of the underlying `NettyNioAsyncHttpClient`.
     
 ```hocon
-{
   monix-aws: {
     credentials {
       // [anonymous, default, environment, instance, system, profile, static]
@@ -75,17 +74,15 @@ libraryDependencies += "io.monix" %% "monix-dynamodb" % "0.6.0"
     #   write-timeout: 100 seconds
     # }
   }
-}
 ```
 
 This config file should be placed in the `resources` folder, therefore it will be automatically picked up from the method call `S3.fromConfig`, which will return a `cats.effect.Resource[Task, S3]`.
 The [resource](https://typelevel.org/cats-effect/datatypes/resource.html) is responsible of the *creation* and *release* of the _S3 client_. 
 
-We recommend using it transparently in your application, meaning that your methods and classes will directly expect an instance of _S3_, which will be called from within the 
-_usage_ of the _Resource_. See below code snippet to understand the concept:
+**Try to reuse** the created **Sqs** client as much as possible in your application, otherwise, creating it
+multiple times will waste precious resources... See below code snippet to understand the concept:
 
 ```scala
- 
 import monix.connect.dynamodb.DynamoDb
 import monix.connect.dynamodb.DynamoDbOp.Implicits._
 import software.amazon.awssdk.services.dynamodb.model._
@@ -102,16 +99,35 @@ def runDynamoDbApp(dynamoDb: DynamoDb): Task[Array[Byte]] = {
   } yield ()
 }
 
+// It allows to specify the [[pureconfig.NamingConvention]] 
+// from its argument, by default it uses the [[pureconfig.KebabCase]].
+val f = DynamoDb.fromConfig(KebabCase).use(runDynamoDbApp).runToFuture
 // the connection gets created and released within the use method and the `DynamoDb`
 // instance is directly passed to our application for an easier interoperability
-val f = DynamoDb.fromConfig.use(runDynamoDbApp(_)).runToFuture
-```  
-    
- ### Create
- 
- An alternative to using a config file is to pass the _AWS configurations_ by parameters.
- This is a safe implementation since the method, again, handles the _creation_ and _release_ of the connection with the _cats effect_ 
- `Resource` data type. The example below produce exactly the same result as previously using the _config_ file:
+```
+
+There is an alternative way to use `fromConfig` which is to load the config first and then passing it to
+the method. The difference is that in this case we will be able to override a specific configuration
+from the code, whereas before we were reading it and creating the client straight after.
+
+```scala
+ import monix.connect.aws.auth.MonixAwsConf
+ import monix.connect.dynamodb.DynamoDb
+ import monix.eval.Task
+ import software.amazon.awssdk.services.s3.model.NoSuchKeyException
+ import pureconfig.KebabCase
+ import software.amazon.awssdk.regions.Region
+
+ val f = MonixAwsConf.load(KebabCase).memoizeOnSuccess.flatMap{ awsConf =>
+   val updatedAwsConf = awsConf.copy(region = Region.EU_CENTRAL_1)
+   DynamoDb.fromConfig(updatedAwsConf).use(runDynamoDbApp)
+ }.runToFuture
+```
+
+## Create
+
+On the other hand, one can pass the _AWS configurations_ by parameters, and that is safe since the method also handles the _acquisition_ and _release_ of the connection with
+`Resource`. The example below produce exactly the same result as previously using the _config_ file:
  
  ```scala
  import cats.effect.Resource
