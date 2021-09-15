@@ -56,13 +56,12 @@ class OperatorSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEac
       for {
         queueUrl <- sqs.operator.createQueue(queueName, tags = initialTags)
         _ <- sqs.operator.tagQueue(queueUrl, tags = tagsByUrl) //tagging by url
-        errorMessage <- sqs.operator.tagQueue(QueueUrl("nonExistingQueue"), tags = tagsByUrl)
-          .as(None).onErrorHandle(ex => Some(ex.getMessage))
+        nonExistingQueue <- sqs.operator.tagQueue(QueueUrl("nonExistingQueue"), tags = tagsByUrl).attempt
         appliedTags <- sqs.operator.listQueueTags(queueUrl)
       } yield {
         appliedTags shouldBe initialTags ++ tagsByUrl
-        errorMessage.isDefined shouldBe true
-        errorMessage shouldBe Some(nonExistingQueueErrorMsg)
+        nonExistingQueue.isLeft shouldBe true
+        nonExistingQueue.left.get.getMessage should include(invalidRequestErrorMsg)
       }
     }.runSyncUnsafe()
   }
@@ -81,13 +80,12 @@ class OperatorSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEac
           sqs.operator.listQueueTags(queueUrl)
         untagByName <- sqs.operator.untagQueue(queueUrl, tagKeys = List(modeTagKey, environmentTagKey)) >> //tagging by queue name
           sqs.operator.listQueueTags(queueUrl)
-        errorMessage <- sqs.operator.untagQueue(QueueUrl("nonExistingQueue"), tagKeys = List(dummyTagKey))
-          .as(None).onErrorHandle(ex => Some(ex.getMessage))
+        nonExistingQueue <- sqs.operator.untagQueue(QueueUrl("nonExistingQueue"), tagKeys = List(dummyTagKey)).attempt
       } yield {
         untagByUrl shouldBe initialTags.filterNot(kv => kv._1 == queueType)
         untagByName shouldBe Map(dummyTagKey -> "123")
-        errorMessage.isDefined shouldBe true
-        errorMessage shouldBe Some(nonExistingQueueErrorMsg)
+        nonExistingQueue.isLeft shouldBe true
+        nonExistingQueue.left.get.getMessage should include(invalidRequestErrorMsg)
       }
     }.runSyncUnsafe()
   }
@@ -100,14 +98,13 @@ class OperatorSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEac
       for {
         queueUrl <- sqs.operator.createQueue(queueName, attributes = initialAttributes)
         _ <- sqs.operator.setQueueAttributes(queueUrl, attributes = attributesByUrl)
-        errorMessage <- sqs.operator.setQueueAttributes(QueueUrl("randomUrl"), attributes = attributesByUrl)
-          .as(None).onErrorHandle(ex => Some(ex.getMessage))
+        nonExistingQueue <- sqs.operator.setQueueAttributes(QueueUrl("randomUrl"), attributes = attributesByUrl).attempt
         attributes <- sqs.operator.getQueueAttributes(queueUrl)
       } yield {
         val expectedAttributes = initialAttributes ++ attributesByUrl
         attributes.filter(kv => expectedAttributes.keys.toList.contains(kv._1)) should contain theSameElementsAs expectedAttributes
-        errorMessage.isDefined shouldBe true
-        errorMessage shouldBe Some(nonExistingQueueErrorMsg)
+        nonExistingQueue.isLeft shouldBe true
+        nonExistingQueue.left.get.getMessage should include(invalidRequestErrorMsg)
       }
     }.runSyncUnsafe()
   }
@@ -117,17 +114,12 @@ class OperatorSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEac
       for {
         createdQueueUrl <- operator.createQueue(queueName)
         queueUrl <- operator.getQueueUrl(queueName)
-        emptyQueueUrl <- operator.getQueueUrl(QueueName("randomName123")).onErrorHandleWith { ex =>
-          if (ex.isInstanceOf[QueueDoesNotExistException]) {
-            Task.now(Option.empty)
-          } else {
-            Task.raiseError(ex)
-          }
-        }
+        nonExistingQueue <- operator.getQueueUrl(QueueName("randomName123")).attempt
       } yield {
         createdQueueUrl shouldBe QueueUrl(queueUrlPrefix(queueName.name))
         queueUrl shouldBe QueueUrl(queueUrlPrefix(queueName.name))
-        emptyQueueUrl shouldBe None
+        nonExistingQueue.isLeft shouldBe true
+        nonExistingQueue.left.get.isInstanceOf[QueueDoesNotExistException] shouldBe true
       }
     }.runSyncUnsafe()
   }
