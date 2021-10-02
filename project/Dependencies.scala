@@ -15,7 +15,7 @@ object Dependencies {
     val Lettuce = "6.1.4.RELEASE"
     val Parquet = "1.12.0"
     val Elastic4s = "7.12.0"
-    val Pureconfig = "0.16.0"
+    val Pureconfig = "0.17.0"
     val ScalaLogging = "3.9.3"
     val ScalaCompat = "2.5.0"
 
