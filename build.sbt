@@ -173,7 +173,6 @@ def monixConnector(
     .settings(if(isMimaEnabled) mimaSettings(s"monix-$connectorName") else Seq.empty)
 }
 
-
 //=> non published modules
 
 lazy val benchmarks = monixConnector("benchmarks", Dependencies.Benchmarks, isMimaEnabled = false)
