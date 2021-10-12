@@ -18,123 +18,90 @@
 package monix.connect.s3
 
 import java.io.FileInputStream
-
 import monix.eval.Task
-import monix.execution.Scheduler.Implicits.global
+import monix.execution.Scheduler
 import monix.reactive.Observable
+import monix.testing.scalatest.MonixTaskSpec
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
-import org.scalatest.concurrent.{Eventually, ScalaFutures}
-import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.services.s3.model.NoSuchBucketException
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
 class MultipartDownloadObservableSuite
-  extends AnyFlatSpec with Matchers with BeforeAndAfterAll with ScalaFutures with S3Fixture with Eventually {
+  extends AsyncFlatSpec with Matchers with MonixTaskSpec with BeforeAndAfterAll with S3Fixture {
 
   private val bucketName = "download-test"
-
-  override implicit val patienceConfig = PatienceConfig(10.seconds, 100.milliseconds)
+  override implicit val scheduler = Scheduler.io("multipart-download-observable-suite")
 
   override def beforeAll(): Unit = {
     super.beforeAll()
-    Try(s3Resource.use(_.createBucket(bucketName)).runSyncUnsafe()) match {
-      case Success(_) => info(s"Created s3 bucket ${bucketName} ")
-      case Failure(e) => info(s"Failed to create s3 bucket ${bucketName} with exception: ${e.getMessage}")
+    Try(s3Resource.use(_.createBucket(bucketName))) match {
+      case Success(_) => info(s"Created s3 bucket $bucketName")
+      case Failure(e) => info(s"Failed to create s3 bucket $bucketName with exception: ${e.getMessage}")
     }
   }
 
   "MultipartDownloadObservable" should "downloadMultipart of small chunk size" in {
-      //given
       val key: String = genKey.sample.get
       val content: String = Gen.identifier.sample.get
-      s3Resource.use(_.upload(bucketName, key, content.getBytes)).runSyncUnsafe()
 
-      //when
-      val actualContent: Array[Byte] =
-        s3Resource.use(_.downloadMultipart(bucketName, key, 2).toListL.map(_.flatten.toArray)).runSyncUnsafe()
-
-      //then
-      s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe() shouldBe true
-      actualContent shouldBe content.getBytes()
+      for {
+        _ <- unsafeS3.upload(bucketName, key, content.getBytes)
+        actualContent <- unsafeS3.downloadMultipart(bucketName, key, 2).toListL.map(_.flatten.toArray)
+        existsObject <- unsafeS3.existsObject(bucketName, key)
+      } yield {
+        existsObject shouldBe true
+        actualContent shouldBe content.getBytes()
+      }
     }
 
   it should "download 'multipart' in a single part" in {
-      //given
-      val key: String = genKey.sample.get
-      val content: String = Gen.identifier.sample.get
-      s3Resource.use(_.upload(bucketName, key, content.getBytes)).runSyncUnsafe()
+    val key: String = genKey.sample.get
+    val content: String = Gen.identifier.sample.get
+    for {
+      _ <- unsafeS3.upload(bucketName, key, content.getBytes)
+      actualContent <- unsafeS3.downloadMultipart(bucketName, key, 52428).toListL.map(_.flatten.toArray)
 
-      //when
-      val actualContent: Array[Byte] =
-        s3Resource.use(_.downloadMultipart(bucketName, key, 52428).toListL).map(_.flatten.toArray).runSyncUnsafe()
-
-      //then
-      s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe() shouldBe true
+      existsObject <- unsafeS3.existsObject(bucketName, key)
+    } yield {
+      existsObject shouldBe true
       actualContent shouldBe content.getBytes()
     }
+  }
 
   it should "download a big object in multiparts" in {
-      //given
       val key: String = genKey.sample.get
       val inputStream = Task(new FileInputStream(resourceFile("244KB.csv")))
-      val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
-      s3Resource.use(s3 => ob.consumeWith(s3.uploadMultipart(bucketName, key))).runSyncUnsafe()
-
-      //when
-      val downloadedChunks: List[Array[Byte]] =
-        s3Resource.use(_.downloadMultipart(bucketName, key, 25000).toListL).runSyncUnsafe()
-
-      //then
-      val expectedArrayByte: Array[Byte] =
-        ob.foldLeftL(Array.emptyByteArray)((acc, bytes) => acc ++ bytes).runSyncUnsafe()
-      downloadedChunks.size shouldBe 10
-      expectedArrayByte shouldBe downloadedChunks.flatten
-    }
+      val fileData = Observable.fromInputStream(inputStream)
+      for {
+        expectedArrayByte <- fileData.foldLeftL(Array.emptyByteArray)((acc, bytes) => acc ++ bytes)
+        _ <- fileData.consumeWith(unsafeS3.uploadMultipart(bucketName, key))
+        downloadedChunks <- unsafeS3.downloadMultipart(bucketName, key, 25000).toListL
+      } yield {
+        downloadedChunks.size shouldBe 10
+        expectedArrayByte shouldBe downloadedChunks.flatten
+      }
+  }
 
   it should "fail when donwloading from a non existing object" in {
-      //given
       val bucket: String = "non-existing-bucket"
       val key: String = "non/existing/key"
 
-      //when
-      val f = s3Resource.use(_.downloadMultipart(bucket, key).toListL).runToFuture
-
-      //then
-      Await.ready(f, 1.seconds)
-      f.value.get.isFailure shouldBe true
-      f.value.get.failed.get shouldBe a[NoSuchBucketException]
-      s3Resource.use(_.existsObject(bucket, key)).runSyncUnsafe() shouldBe false
-    }
+       unsafeS3.downloadMultipart(bucket, key).toListL.assertThrows[NoSuchBucketException] >>
+         unsafeS3.existsObject(bucket, key).asserting(_ shouldBe false)
+  }
 
   it should "fail if the `chunkSize` is negative" in {
-      //given
-      val negativeNum = Gen.chooseNum(-10, -1).sample.get
-
-      //when
-      val f = s3Resource.use(_.download("no-bucket", "no-key", Some(negativeNum)))
-        .runToFuture
-
-      //then
-      Await.ready(f, 3.seconds)
-      f.value.get.isFailure shouldBe true
+    val negativeNum = Gen.chooseNum(-10, -1).sample.get
+    unsafeS3.download("no-bucket", "no-key", Some(negativeNum)).assertThrows[IllegalArgumentException]
   }
 
   it should "fail if the `chunkSize` is zero" in {
-    //given
     val chunkSize = 0
-
-    //when
-    val f = s3Resource.use(_.download("no-bucket", "no-key", Some(chunkSize)))
-      .runToFuture
-
-    //then
-    Await.ready(f, 3.seconds)
-    f.value.get.isFailure shouldBe true
+    unsafeS3.download("no-bucket", "no-key", Some(chunkSize)).assertThrows[IllegalArgumentException]
   }
 
 }

@@ -3,12 +3,11 @@ package monix.connect.s3
 import java.io.{File, FileInputStream}
 import java.net.URI
 import java.time.Duration
-
 import monix.eval.Task
 import monix.execution.Scheduler
 import monix.reactive.Observable
 import org.scalacheck.Gen
-import org.scalatest.TestSuite
+import org.scalatest.{AsyncTestSuite, TestSuite}
 import software.amazon.awssdk.regions.Region.AWS_GLOBAL
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
@@ -17,7 +16,6 @@ import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
 import software.amazon.awssdk.regions.Region
 
 trait S3Fixture {
-  this: TestSuite =>
 
   val genBucketName = Gen.identifier.map("test-"+ _.take(15).toLowerCase) //buckets have to be in a range of 3-63 chars long
   val genKey = Gen.identifier.map("test-"+ _.take(10).toLowerCase) //buckets have to be in a range of 3-63 chars long
@@ -46,11 +44,12 @@ trait S3Fixture {
     .build
 
   protected val s3Resource = S3.create(staticCredProvider, Region.AWS_GLOBAL, Some(minioEndPoint), Some(httpClient))
+  protected val unsafeS3 = S3.createUnsafe(staticCredProvider, Region.AWS_GLOBAL, Some(minioEndPoint), Some(httpClient))
 
   def getRequest(bucket: String, key: String): GetObjectRequest =
     GetObjectRequest.builder().bucket(bucket).key(key).build()
 
-  def download(bucket: String, key: String)(implicit scheduler: Scheduler): Option[Array[Byte]] = {
+  def unsafeDownload(bucket: String, key: String)(implicit scheduler: Scheduler): Option[Array[Byte]] = {
     val s3LocalPath = s"minio/data/${bucket}/${key}"
     downloadFromFile(s3LocalPath)
   }
