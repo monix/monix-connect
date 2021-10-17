@@ -474,8 +474,9 @@ object S3 {
     val range = firstNBytes.map(n => s"bytes=0-${n - 1}")
     val request: GetObjectRequest = S3RequestBuilder.getObjectRequest(bucket, key, range, downloadSettings)
     Task(require(firstNBytes.getOrElse(1) > 0, "The number of bytes if defined, must be a positive number.")) >>
-      Task.from(s3AsyncClient.getObject(request, AsyncResponseTransformer.toBytes[GetObjectResponse]))
-      .map(r => r.asByteArray())
+      Task
+        .from(s3AsyncClient.getObject(request, AsyncResponseTransformer.toBytes[GetObjectResponse]))
+        .map(r => r.asByteArray())
   }
 
   @deprecated("Use one of the builders like `S3.create`", "0.5.0")
@@ -819,8 +820,9 @@ trait S3 {
     val range = firstNBytes.map(n => s"bytes=0-${n - 1}")
     val request: GetObjectRequest = S3RequestBuilder.getObjectRequest(bucket, key, range, downloadSettings)
     Task(require(firstNBytes.getOrElse(1) > 0, "The number of bytes if defined, must be positive.")) >>
-      Task.from(s3Client.getObject(request, AsyncResponseTransformer.toBytes[GetObjectResponse]))
-      .map(r => r.asByteArray())
+      Task
+        .from(s3Client.getObject(request, AsyncResponseTransformer.toBytes[GetObjectResponse]))
+        .map(r => r.asByteArray())
   }
 
   /**

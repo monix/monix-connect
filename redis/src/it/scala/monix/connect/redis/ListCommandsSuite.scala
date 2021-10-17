@@ -1,10 +1,11 @@
 package monix.connect.redis
 
+import monix.eval.Task
 import monix.execution.Scheduler
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatest.{Assertion, BeforeAndAfterAll, BeforeAndAfterEach}
 
 import scala.concurrent.duration._
 
@@ -21,12 +22,10 @@ class ListCommandsSuite
   }
 
   "lIndex" should "get an element from a list by its index" in {
-    //given
     val k: K = genRedisKey.sample.get
     val values: List[String] = genRedisValues.sample.get
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion]  { cmd =>
       for {
         _ <- cmd.list.lPush(k, values)
         head <- cmd.list.lIndex(k, values.size - 1)
@@ -37,15 +36,13 @@ class ListCommandsSuite
         last shouldBe values.lastOption
         outOfRange shouldBe None
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "lInsert" should "insert an element before or after another element in a list" in {
-    //given
     val k: K = genRedisKey.sample.get
     val values: List[String] = List("A", "B", "C", "D", "E")
 
-    //when
     utfConnection.use { cmd =>
       for {
         _ <- cmd.list.lPush(k, values)
@@ -61,16 +58,14 @@ class ListCommandsSuite
         pivotNotFound shouldBe -1L
         range should contain theSameElementsAs values :+ ("BC") :+ ("CD")
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "lInsertBefore" should "insert an element before the pivot element in the list" in {
-    //given
     val k: K = genRedisKey.sample.get
     val values: List[String] = List("A", "B", "C", "D", "E")
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion] { cmd =>
       for {
         _ <- cmd.list.lPush(k, values)
         pivotNotFoundBefore <- cmd.list.lInsertBefore(k, "Z", "X")
@@ -83,16 +78,14 @@ class ListCommandsSuite
         isInsertedBefore shouldBe true
         range should contain theSameElementsAs values :+ ("BC")
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "lInsertAfter" should "insert an element before the pivot element in the list" in {
-    //given
     val k: K = genRedisKey.sample.get
     val values: List[String] = List("A", "B", "C", "D", "E")
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion]  { cmd =>
       for {
         _ <- cmd.list.lPush(k, values)
         pivotNotFoundAfter <- cmd.list.lInsertAfter(k, "Z", "X")
@@ -105,15 +98,13 @@ class ListCommandsSuite
         isInsertedAfter shouldBe true
         range should contain theSameElementsAs values :+ ("CD")
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "lPop" should "remove and get the first element in a list." in {
-    //given
     val k: K = genRedisKey.sample.get
     val values: List[String] = List("A", "B", "C")
 
-    //when
     utfConnection.use { cmd =>
       for {
         _ <- cmd.list.lPush(k, values)
@@ -127,16 +118,14 @@ class ListCommandsSuite
         c shouldBe Some("A")
         none shouldBe None
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "lPush" should "prepend one or multiple values to a list" in {
-    //given
     val k: K = genRedisKey.sample.get
     val values: List[String] = List("A", "B", "C")
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion] { cmd =>
       for {
         size <- cmd.list.lPush(k, values)
         elements <- cmd.list.lRange(k, 0, size).toListL
@@ -144,7 +133,7 @@ class ListCommandsSuite
         size shouldBe values.size
         elements shouldBe values.reverse
       }
-    }.runSyncUnsafe()
+    }
   }
 
   //todo it does not behaves as expected
@@ -169,12 +158,10 @@ class ListCommandsSuite
   //}
 
   "lRange" should "get a range of elements from a list" in {
-    //given
     val k: K = genRedisKey.sample.get
     val values: List[String] = List("A", "B", "C")
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion]  { cmd =>
       for {
         size <- cmd.list.lPush(k, values)
         elements1 <- cmd.list.lRange(k, 0, size).toListL
@@ -184,16 +171,14 @@ class ListCommandsSuite
         elements1 should contain theSameElementsAs values
         elements2 should contain theSameElementsAs values
       }
-    }.runSyncUnsafe()
+    }
   }
 
 
   "lGetAll" should "get a range of elements from a list" in {
-    //given
     val k: K = genRedisKey.sample.get
     val values: List[String] = List("A", "B", "C")
 
-    //when
     utfConnection.use { cmd =>
       for {
         elements <- cmd.list.lPush(k, values) >> cmd.list.lGetAll(k).toListL
@@ -203,16 +188,14 @@ class ListCommandsSuite
         elements should contain theSameElementsAs values
         noElements shouldBe List.empty
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "lRem" should "remove elements from a list" in {
-    //given
     val k: K = genRedisKey.sample.get
     val values: List[String] = List("a", "a", "a", "b")
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion]  { cmd =>
       for {
         size <- cmd.list.lPush(k, values)
         removed <- cmd.list.lRem(k, 2, "a")
@@ -226,16 +209,14 @@ class ListCommandsSuite
         nonRemoved2 shouldBe 0L
         elements should contain theSameElementsAs List("a", "b")
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "lSet" should "set the value of an element in a list by its index" in {
-    //given
     val k: K = genRedisKey.sample.get
     val values: List[String] = List("a", "a", "a", "d")
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion]  { cmd =>
       for {
         _ <- cmd.list.lPush(k, values)
         set1 <- cmd.list.lSet(k, 1, "b")
@@ -250,16 +231,14 @@ class ListCommandsSuite
         notExistingKey shouldBe false
         elements should contain theSameElementsAs List("a", "b", "c", "d")
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "lTrim" should "trim a list to the specified range" in {
-    //given
     val k: K = genRedisKey.sample.get
     val values: List[String] = List("a", "b", "c", "d", "e", "f", "g")
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion]  { cmd =>
       for {
         _ <- cmd.list.lPush(k, values)
         _ <- cmd.list.lTrim(k, 1, 4)
@@ -276,16 +255,14 @@ class ListCommandsSuite
         thirdTrim should contain theSameElementsAs List("f", "e")
         fourthTrim should contain theSameElementsAs List.empty
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "rPop" should "remove and get the last element in a list" in {
-    //given
     val k: K = genRedisKey.sample.get
     val values: List[String] = List("A", "B", "C")
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion]  { cmd =>
       for {
         _ <- cmd.list.rPush(k, values)
         a <- cmd.list.rPop(k)
@@ -298,17 +275,15 @@ class ListCommandsSuite
         c shouldBe Some("A")
         none shouldBe None
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "rPopLPush" should "remove the last element in a list, prepend it to another list and return it" in {
-    //given
     val k1: K = genRedisKey.sample.get
     val k2: K = genRedisKey.sample.get
     val values: List[String] = List("a", "b", "c")
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion]  { cmd =>
       for {
         _ <- cmd.list.rPush(k1, values)
         c <- cmd.list.rPopLPush(k1, k2)
@@ -325,16 +300,14 @@ class ListCommandsSuite
         elements1 shouldBe List.empty
         elements2 shouldBe values
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "rPush" should "append one or multiple values to a list" in {
-    //given
     val k: K = genRedisKey.sample.get
     val values: List[String] = List("A", "B", "C")
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion]  { cmd =>
       for {
         size <- cmd.list.rPush(k, values)
         elements <- cmd.list.lRange(k, 0, size).toListL
@@ -342,15 +315,13 @@ class ListCommandsSuite
         size shouldBe values.size
         elements shouldBe values
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "rPushX" should "rPushX" in {
-    //given
     val k: K = genRedisKey.sample.get
     val values: List[String] = List("A", "B", "C")
 
-    //when
     utfConnection.use { cmd =>
       for {
         first <- cmd.list.rPushX(k, values)
@@ -362,7 +333,7 @@ class ListCommandsSuite
         second shouldBe values.size + 1
         elements should contain theSameElementsAs (".") :: values
       }
-    }.runSyncUnsafe()
+    }
   }
 
 }

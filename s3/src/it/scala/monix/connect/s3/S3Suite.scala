@@ -184,9 +184,10 @@ class S3Suite
   }
 
   it can "download in multipart" in {
-    val key: String = Gen.identifier.sample.get
-    val content: String = Gen.identifier.sample.get
+
     for {
+      key <- Task.from(Gen.identifier)
+      content <- Task.from(Gen.identifier)
       _ <- unsafeS3.upload(bucketName, key, content.getBytes)
       existsObject <- unsafeS3.existsObject(bucketName, key)
       actualContent <- unsafeS3.downloadMultipart(bucketName, key, 2).toListL.map(_.flatten.toArray)
@@ -197,10 +198,10 @@ class S3Suite
   }
 
   it can "copy an object to a different location within the same bucket" in {
-    val sourceKey = genKey.sample.get
-    val content = Gen.identifier.sample.get.getBytes()
-    val destinationKey = genKey.sample.get
     for {
+      sourceKey <- Task.from(genKey)
+      content <- Task.from(Gen.identifier).map(_.getBytes)
+      destinationKey <- Task.from(genKey)
       _ <- unsafeS3.upload(bucketName, sourceKey, content)
       copyObjectResponse <- unsafeS3.copyObject(bucketName, sourceKey, bucketName, destinationKey)
       actualContent <- unsafeS3.download(bucketName, destinationKey)
@@ -211,9 +212,9 @@ class S3Suite
   }
 
   it can "copy an object to a different location in a different bucket" in {
-    val sourceKey = genKey.sample.get
-    val content = Gen.identifier.sample.get.getBytes()
     for {
+      sourceKey <- Task.from(genKey)
+      content <- Task.from(Gen.identifier).map(_.getBytes)
       _ <- unsafeS3.upload(bucketName, sourceKey, content)
       destinationBucket = genBucketName.sample.get
       destinationKey = genKey.sample.get
@@ -226,8 +227,8 @@ class S3Suite
   }
 
   it can "create and delete a bucket" in {
-    val bucket = genBucketName.sample.get
     for {
+      bucket <- Task.from(genBucketName)
       _ <- unsafeS3.createBucket(bucket)
       existedBefore <- unsafeS3.existsBucket(bucket)
       _ <- unsafeS3.deleteBucket(bucket)
@@ -239,8 +240,8 @@ class S3Suite
   }
 
   it should "fail with `NoSuchBucketException` trying to delete a non existing bucket" in {
-    val bucket = genBucketName.sample.get
     for {
+      bucket <- Task.from(genBucketName)
       existedBefore <- unsafeS3.existsBucket(bucket)
       deleteAttempt <- unsafeS3.deleteBucket(bucket).attempt
       existsAfterDeletion <- unsafeS3.existsBucket(bucket)
@@ -253,9 +254,9 @@ class S3Suite
   }
 
   it can "delete a object" in {
-    val key = genKey.sample.get
-    val content = Gen.identifier.sample.get.getBytes()
      for {
+       key <- Task.from(genKey)
+       content <- Task.from(Gen.identifier).map(_.getBytes)
        _ <- unsafeS3.upload(bucketName, key, content)
        existedBeforeDeletion <- unsafeS3.existsObject(bucketName, key)
        _ <- unsafeS3.deleteObject(bucketName, key)
@@ -295,20 +296,17 @@ class S3Suite
   }
 
   it can "check if an object exists" in {
-    //given
     val prefix = s"test-exists-object/${Gen.identifier.sample.get}/"
     val key: String = prefix + genKey.sample.get
 
-    //and
-    s3Resource.use(_.upload(bucketName, key, "dummy content".getBytes())).runSyncUnsafe()
-
-    //when
-    val isPresent1 = s3Resource.use(_.existsObject(bucketName, key = key)).runSyncUnsafe()
-    val isPresent2 = s3Resource.use(_.existsObject(bucketName, key = "non existing key")).runSyncUnsafe()
-
-    //then
-    isPresent1 shouldBe true
-    isPresent2 shouldBe false
+    for {
+      _ <- unsafeS3.upload(bucketName, key, "dummy content".getBytes())
+      isPresent1 <- unsafeS3.existsObject(bucketName, key = key)
+      isPresent2 <- unsafeS3.existsObject(bucketName, key =  "non existing key")
+    } yield {
+      isPresent1 shouldBe true
+      isPresent2 shouldBe false
+    }
   }
 
   it can "list all objects" in {
@@ -326,7 +324,6 @@ class S3Suite
   }
 
   it should "list the latest object" in {
-    //given
     val n = 10
     val prefix = s"test-latest/${genKey.sample.get}"
     val keys: List[String] =
@@ -334,13 +331,11 @@ class S3Suite
 
     S3.fromConfig.use { s3 =>
       for {
-        //when
         _ <- Task.traverse(keys) { key => s3.upload(bucketName, key, "dummyContent".getBytes()) }
         latest <- s3.listLatestObject(bucketName, prefix = Some(prefix))
         latestFive <- s3.listLatestNObjects(bucketName, 5, prefix = Some(prefix)).toListL
         all <- s3.listObjects(bucketName, prefix = Some(prefix)).toListL
       } yield {
-        //then
         all.map(_.key()) should contain theSameElementsAs keys
         latest.map(_.key()) shouldBe keys.lastOption
         latest shouldBe all.sortBy(_.lastModified()).reverse.headOption
@@ -350,13 +345,11 @@ class S3Suite
   }
 
     it should "list the oldest object" in {
-    //given
     val n = 20
     val prefix = s"test-oldest/${genKey.sample.get}"
     val keys: List[String] =
       Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + str)).sample.get
 
-    //when
     S3.fromConfig.use { s3 =>
       for {
         _ <- Task
@@ -365,7 +358,6 @@ class S3Suite
         oldestFive <- s3.listOldestNObjects(bucketName, 5, prefix = Some(prefix)).toListL
         all <- s3.listObjects(bucketName, prefix = Some(prefix)).toListL
       } yield {
-        //then
         all.map(_.key()) should contain theSameElementsAs keys
         oldest.map(_.key()) shouldBe keys.headOption
         oldest shouldBe all.sortBy(_.lastModified()).headOption

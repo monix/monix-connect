@@ -4,6 +4,7 @@ import monix.connect.redis.client.{RedisConnection, RedisUri}
 import monix.connect.redis.domain.VScore
 import org.scalacheck.Gen
 import monix.connect.redis.test.protobuf.{Person, PersonPk}
+import monix.eval.{Task, TaskLike}
 
 trait RedisIntegrationFixture {
   val redisUrl = "redis://localhost:6379"
@@ -58,6 +59,12 @@ trait RedisIntegrationFixture {
     for {
       id <- Gen.identifier
     } yield PersonPk(id)
+  }
+
+  implicit val fromGen: TaskLike[Gen] = {
+    new TaskLike[Gen] {
+      def apply[A](fa: Gen[A]): Task[A] = Task(fa.sample.get)
+    }
   }
 
 }

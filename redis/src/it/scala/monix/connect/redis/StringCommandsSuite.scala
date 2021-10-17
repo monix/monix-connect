@@ -1,20 +1,19 @@
 package monix.connect.redis
 
 import monix.eval.Task
-import monix.execution.Scheduler.Implicits.global
+import monix.execution.Scheduler
+import monix.testing.scalatest.MonixTaskSpec
 import org.scalacheck.Gen
-import org.scalatest.concurrent.Eventually
-import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatest.{Assertion, BeforeAndAfterAll, BeforeAndAfterEach}
 
 import scala.concurrent.duration._
 
 class StringCommandsSuite
-  extends AnyFlatSpec with RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll
-    with Eventually {
+  extends AsyncFlatSpec with MonixTaskSpec with RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll {
 
-  override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
+  override implicit val scheduler: Scheduler = Scheduler.io("string-commands-suite")
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -22,13 +21,11 @@ class StringCommandsSuite
   }
 
   "append" should "append a value to a key" in {
-    //given
     val k1: K = genRedisKey.sample.get
     val v1: String = genRedisValue.sample.get
     val v2: String = genRedisValue.sample.get
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion] { cmd =>
      for {
      append1 <- cmd.string.append(k1, v1)
      append2 <- cmd.string.append(k1, v2)
@@ -36,16 +33,14 @@ class StringCommandsSuite
        append1 shouldBe v1.length
        append2 shouldBe v1.length + v2.length
      }
-    }.runSyncUnsafe()
+    }
   }
 
   "bitCount" should "count set bits in a string" in {
-    //given
     val k1: K = genRedisKey.sample.get
     val word: String = "Pau" //01010000 01100001 01110101
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion] { cmd =>
       for {
         bitCount0 <- cmd.string.bitCount(k1)
         bitCount1 <- cmd.string.set(k1, word) >> cmd.string.bitCount(k1)
@@ -55,18 +50,16 @@ class StringCommandsSuite
         bitCount1 shouldBe 10L
         bitCount2 shouldBe 5L
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "bitPosOne and bitPosZero" should "find the position of the first bit set or clear in a string respectively" in {
-    //given
     val k1: K = genRedisKey.sample.get
     val k2: K = genRedisKey.sample.get
     val k3: K = genRedisKey.sample.get
     val word1: String = "you" //01111001 01101111 01110101
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion] { cmd =>
       for {
         _ <- cmd.string.set(k1, word1) >>
           cmd.string.setBit(k2, 0L, 1) >>
@@ -91,11 +84,10 @@ class StringCommandsSuite
         noStateBitPos2 shouldBe Some(4)
         noStateBitPos3 shouldBe Some(0)
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "bitOp" should "support (AND, OR, NOT and XOR)" in {
-    //given
     val k1: K = genRedisKey.sample.get
     val k2: K = genRedisKey.sample.get
     val bitAndK: K = genRedisKey.sample.get
@@ -103,8 +95,7 @@ class StringCommandsSuite
     val bitNotK: K = genRedisKey.sample.get
     val bitXorK: K = genRedisKey.sample.get
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion] { cmd =>
       for {
         _ <- cmd.string.setBit(k1, 0L, 0) >>
           cmd.string.setBit(k1, 1L, 1)
@@ -124,48 +115,39 @@ class StringCommandsSuite
         or shouldBe (Some(1L), Some(1L))
         xor shouldBe (Some(1L), Some(0L))
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "decr" should "decrement the integer value of a key by one" in {
-    //given
     val k1: K = genRedisKey.sample.get
     val v1: Int = Gen.choose(50, 100).sample.get
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion] { cmd =>
       for {
         _ <- cmd.string.append(k1, v1.toString)
         decr <- cmd.string.decr(k1)
       } yield {
         decr shouldBe Some(v1 - 1)
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "decrBy" should "decrement the integer value of a key by the given number" in {
-    //given
     val k1: K = genRedisKey.sample.get
     val n: Int = Gen.choose(0, 20).sample.get
     val v1: Int = Gen.choose(n + 1, 100).sample.get
-    //when
+
     utfConnection.use { cmd =>
-      for {
-        _ <- cmd.string.append(k1, v1.toString)
-        decrBy <- cmd.string.decrBy(k1, n)
-      } yield {
-        decrBy shouldBe Some(v1 - n)
-      }
-    }.runSyncUnsafe()
+      cmd.string.append(k1, v1.toString) *>
+        cmd.string.decrBy(k1, n)
+    }.asserting(_ shouldBe Some(v1 - n))
   }
 
   "set and get" should "set and then get the value of a key respectively" in {
-    //given
     val k: K = genRedisKey.sample.get
     val v: V = genRedisValue.sample.get
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion] { cmd =>
       for {
         _ <- cmd.string.set(k, v)
         value <- cmd.string.get(k)
@@ -174,16 +156,13 @@ class StringCommandsSuite
         value shouldBe Some(v)
         nonExists shouldBe None
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "setBit and getBit" should "set and get the values of a key respectively" in {
-    //given
     val k: K = genRedisKey.sample.get
-    val v: V = genRedisValue.sample.get
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion]  { cmd =>
       for {
         _ <- cmd.string.setBit(k, 0, 1) >> cmd.string.setBit(k, 1, 0) >> cmd.string.setBit(k, 2, 1)
         value <- Task.parZip3(cmd.string.getBit(k, 0), cmd.string.getBit(k, 1), cmd.string.getBit(k, 2))
@@ -192,16 +171,14 @@ class StringCommandsSuite
         value shouldBe (Some(1), Some(0), Some(1))
         nonExists shouldBe None
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "getRange" should "get a substring of the string stored at a key" in {
-    //given
     val k: K = genRedisKey.sample.get
     val v: V = "thisIsARandomString"
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion] { cmd =>
       for {
         _ <- cmd.string.set(k, v)
         range1 <- cmd.string.getRange(k, 0, 5)
@@ -212,17 +189,15 @@ class StringCommandsSuite
         range2 shouldBe Some("ARandomString")
         nonExists shouldBe Some("")
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "getSet" should "set the string value of a key and return its old value." in {
-    //given
     val k: K = genRedisKey.sample.get
     val initialValue: V = genRedisValue.sample.get
     val finalValue: V = genRedisValue.sample.get
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion] { cmd =>
       for {
         initialGetSet <- cmd.string.getSet(k, initialValue)
         finalGetSet <- cmd.string.getSet(k, finalValue)
@@ -230,65 +205,49 @@ class StringCommandsSuite
         initialGetSet shouldBe None
         finalGetSet shouldBe Some(initialValue)
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "incr" should "increment the integer value of a key by one." in {
-    //given
     val k1: K = genRedisKey.sample.get
     val v1: Int = Gen.choose(50, 100).sample.get
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion] { cmd =>
       for {
         _ <- cmd.string.append(k1, v1.toString)
         incr <- cmd.string.incr(k1)
       } yield {
         incr shouldBe Some(v1 + 1)
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "incrBy" should "increment the integer value of a key by the given amount" in {
-    //given
     val k1: K = genRedisKey.sample.get
     val n: Int = Gen.choose(0, 20).sample.get
     val v1: Int = Gen.choose(n + 1, 100).sample.get
-    //when
+
     utfConnection.use { cmd =>
-      for {
-        _ <- cmd.string.append(k1, v1.toString)
-        incrBy <- cmd.string.incrBy(k1, n)
-      } yield {
-        incrBy shouldBe Some(v1 + n)
-      }
-    }.runSyncUnsafe()
+      cmd.string.append(k1, v1.toString) *>
+        cmd.string.incrBy(k1, n)
+    }.asserting(_ shouldBe Some(v1 + n))
   }
 
   "incrByFloat" should "increment the float value of a key by the given amount" in {
-    //given
     val k1: K = genRedisKey.sample.get
     val n: Double = BigDecimal(Gen.choose(0, 20).sample.get).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
     val v1: Double = BigDecimal(Gen.choose(n + 1, 100).sample.get).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
 
-    //when
     utfConnection.use { cmd =>
-      for {
-        _ <- cmd.string.append(k1, v1.toString)
-        incrBy <- cmd.string.incrByFloat(k1, n)
-      } yield {
-        incrBy shouldBe Some(v1 + n)
-      }
-    }.runSyncUnsafe()
+      cmd.string.append(k1, v1.toString) *> cmd.string.incrByFloat(k1, n)
+      }.asserting(_ shouldBe Some(v1 + n))
   }
 
   "mGet" should "get the values of all the given keys" in {
-    //given
     val kV: List[(K, Option[V])] = List.fill(10)(genRedisKey, genRedisValue).map{ case (k, v) => (k.sample.get, Some(v.sample.get)) }
     val nonExistingKey = genRedisKey.sample.get
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion] { cmd =>
       for {
         _ <- Task.traverse(kV){ case (k, v) => cmd.string.set(k, v.get) }
         mGet <- cmd.string.mGet(kV.map(_._1): _*).toListL
@@ -297,34 +256,27 @@ class StringCommandsSuite
         mGet should contain theSameElementsAs kV
         mGetL should contain theSameElementsAs kV:+(nonExistingKey, None)
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "mSet" should "set multiple keys to multiple values" in {
-    //given
     val kV: Map[K, V] = List.fill(10)(genRedisKey, genRedisValue).map{ case (k, v) => (k.sample.get, v.sample.get) }.toMap
 
-    //when
     utfConnection.use { cmd =>
-      for {
-        _ <- cmd.string.mSet(kV)
-        result <- cmd.string.mGet(kV.keys.toList).toListL
-      } yield {
-        result should contain theSameElementsAs kV.mapValues(Some(_)).toList
-      }
-    }.runSyncUnsafe()
+      cmd.string.mSet(kV) *>
+        cmd.string.mGet(kV.keys.toList).toListL
+    }.asserting(_ should contain theSameElementsAs kV.mapValues(Some(_)).toList)
   }
 
   "mSetNx" should "set multiple keys to multiple values, only if none of the keys exist" in {
-    //given
     val k1: K = genRedisKey.sample.get
     val k2: K = genRedisKey.sample.get
     val k3: K = genRedisKey.sample.get
     val k4: K = genRedisKey.sample.get
     val map1: Map[K, V] = Map(k1 -> "1", k2 -> "2", k3 -> "3a")
     val map2: Map[K, V] = Map(k3 -> "3b", k4 -> "4")
-    //when
-    utfConnection.use { cmd =>
+
+    utfConnection.use[Task, Assertion] { cmd =>
       for {
         mSet1 <- cmd.string.mSetNx(map1)
         mSet2 <- cmd.string.mSetNx(map2)
@@ -334,16 +286,14 @@ class StringCommandsSuite
         mSet2 shouldBe false
         result should contain theSameElementsAs Map(k1 -> Some("1"), k2 -> Some("2"), k3 -> Some("3a"), k4 -> None).toList
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "setEx" should "set the value and expiration of a key" in {
-    //given
     val k1: K = genRedisKey.sample.get
     val v1: V = genRedisValue.sample.get
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion] { cmd =>
       for {
         _ <- cmd.string.setEx(k1, 1.seconds, v1)
         ttl <- cmd.key.pttl(k1)
@@ -353,16 +303,14 @@ class StringCommandsSuite
         ttl.toMillis should be > 0L
         existsAfterTimeout shouldBe false
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "setNx" should "set the value of a key, only if the key does not exist" in {
-    //given
     val k1: K = genRedisKey.sample.get
     val v1: V = genRedisValue.sample.get
     val v2: V = genRedisValue.sample.get
 
-    //when
     utfConnection.use { cmd =>
       for {
         set1 <- cmd.string.setNx(k1, v1)
@@ -377,13 +325,11 @@ class StringCommandsSuite
   }
 
   "setRange" should "overwrite part of a string at key starting at the specified offset" in {
-    //given
     val k1: K = genRedisKey.sample.get
     val v1: V = "thisIsSetRangeTest"
     val expected: V = "thisIsSetRangeExample"
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion] { cmd =>
       for {
         set1 <- cmd.string.setRange(k1, 1L, v1)
         set2 <- cmd.string.setRange(k1, 15L, "Example")
@@ -394,18 +340,16 @@ class StringCommandsSuite
         //`\u0000` is present since we used an offset of 1L
         result shouldBe Some("\u0000" + expected)
       }
-    }.runSyncUnsafe()
+    }
   }
 
   "strLen" should "get the length of the value stored in a key" in {
-    //given
     val k1: K = genRedisKey.sample.get
     val k2: K = genRedisKey.sample.get
     val v1: V = genRedisValue.sample.get
     val v2: V = genRedisValue.sample.get
 
-    //when
-    utfConnection.use { cmd =>
+    utfConnection.use[Task, Assertion] { cmd =>
       for {
         _ <- cmd.string.set(k1, v1) >> cmd.string.set(k2, v2)
         strLen1 <- cmd.string.strLen(k1)
@@ -417,7 +361,7 @@ class StringCommandsSuite
         strLen2 shouldBe v2.length
         strLenEmpty shouldBe 0L
       }
-    }.runSyncUnsafe()
+    }
   }
 
 }

@@ -3,140 +3,108 @@ package monix.connect.redis
 import monix.connect.redis.client.{BytesCodec, Codec, RedisConnection}
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatest.concurrent.Eventually
-import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
 import org.scalacheck.Gen
 
 import scala.concurrent.duration._
 import monix.connect.redis.test.protobuf.{Person, PersonPk}
+import monix.execution.Scheduler
+import monix.testing.scalatest.MonixTaskSpec
 
-class CodecSuite extends AnyFlatSpec with RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll with Eventually {
+class CodecSuite extends AsyncFlatSpec with MonixTaskSpec with  RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll with Eventually {
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
-
-  val connection = RedisConnection.standalone(redisUri)
+  override implicit val scheduler: Scheduler = Scheduler.io("codec-suite")
+  val redis = RedisConnection.standalone(redisUri)
   override def beforeEach(): Unit = {
     super.beforeEach()
-    connection.connectUtf.use(_.server.flushAll).runSyncUnsafe()
+    redis.connectUtf.use(_.server.flushAll).runSyncUnsafe()
   }
 
   "A byte array codec" should "encode and decode protobuf keys and values" in {
     implicit val personPkCodec: BytesCodec[PersonPk] = Codec.byteArray(pk => PersonPk.toByteArray(pk), bytes => PersonPk.parseFrom(bytes))
     implicit val personCodec: BytesCodec[Person] = Codec.byteArray(person => Person.toByteArray(person), bytes => Person.parseFrom(bytes))
-
-    //given
     val personPk = genPersonPk.sample.get
     val person = genPerson.sample.get
 
-    //when
-    connection.connectByteArray[PersonPk, Person].use(_.list.lPush(personPk, person)).runSyncUnsafe()
-
-    //then
-    val r = connection.connectByteArray[PersonPk, Person].use(_.list.lPop(personPk)).runSyncUnsafe()
-    Some(person) shouldBe r
+    redis.connectByteArray[PersonPk, Person].use{ cmd =>
+      cmd.list.lPush(personPk, person) >>
+        cmd.list.lPop(personPk)
+    }.asserting(_ shouldBe Some(person))
   }
 
   it should "connect to the cluster en/decoding keys and values as byte array" in {
-    //given
     val key = genRedisKey.sample.get
     val value = genRedisValue.sample.get
 
-    //when
-    connection.connectByteArray.use(_.list.lPush(key.getBytes, value.getBytes)).runSyncUnsafe()
-
-    //then
-    val r = connection.connectByteArray.use(_.list.lPop(key.getBytes)).runSyncUnsafe()
-    r.get shouldBe value.getBytes
+    redis.connectByteArray.use { cmd =>
+      cmd.list.lPush(key.getBytes, value.getBytes) >>
+        cmd.list.lPop(key.getBytes)
+    }.asserting(_.get shouldBe value.getBytes)
   }
 
   "An utf codec" should "encode and decode int numbers" in {
-    //given
     val key: Int = Gen.chooseNum(1, 1000).sample.get
     val value: Int = Gen.chooseNum(1, 1000).sample.get
-    implicitly(intUtfCodec) // used implicitly
+    implicitly(intUtfCodec)
 
-    //when
-    connection.connectUtf[Int, Int](intUtfCodec, intUtfCodec).use(_.list.lPush(key, value)).runSyncUnsafe()
-
-    //then
-    val r = connection.connectUtf[Int, Int].use(_.list.lPop(key)).runSyncUnsafe()
-    Some(value) shouldBe r
+    redis.connectUtf[Int, Int](intUtfCodec, intUtfCodec).use { cmd =>
+      cmd.list.lPush(key, value) >>
+        cmd.list.lPop(key)
+    }.asserting(_ shouldBe Some(value))
   }
 
   it should "encode and decode int keys with strings api" in {
-    //given
     val key: Int = Gen.chooseNum(1, 10000).sample.get
     val n: Int = Gen.chooseNum(1, 99).sample.get
     implicitly(intUtfCodec) // used implicitly
 
-    //when
-    val r = connection.connectUtf[Int, Int].use(cmd =>
-      for {
-        _ <- Observable(n, n, n).mapEval(cmd.string.append(key, _)).completedL
-        r <- cmd.string.get(key)
-      } yield r
-    ).runSyncUnsafe()
-
-    //then
-    r shouldBe Some(s"$n$n$n".toInt)
+    redis.connectUtf[Int, Int].use(cmd =>
+      Observable(n, n, n).mapEval(cmd.string.append(key, _)).completedL >>
+        cmd.string.get(key)
+    ).asserting(_ shouldBe Some(s"$n$n$n".toInt))
   }
 
   it should "encode and decode float numbers" in {
-    //given
     val key: Float = Gen.chooseNum[Float](1, 1000).sample.get
     val value: Float = Gen.chooseNum[Float](1, 1000).sample.get
     implicitly(floatUtfCodec) // used implicitly
 
-    //when
-    connection.connectUtf[Float, Float].use(_.list.lPush(key, value)).runSyncUnsafe()
-
-    //then
-    val r = connection.connectUtf[Float, Float].use(_.list.lPop(key)).runSyncUnsafe()
-    Some(value) shouldBe r
+    redis.connectUtf[Float, Float].use(cmd =>
+      cmd.list.lPush(key, value) >>
+        cmd.list.lPop(key)
+    ).asserting(_ shouldBe Some(value))
   }
 
   it should "encode and decode double numbers" in {
-    //given
     val key: Double = Gen.chooseNum[Double](1, 1000).sample.get
     val value: Double = Gen.chooseNum[Double](1, 1000).sample.get
     implicitly(doubleUtfCodec) // used implicitly
 
-    //when
-    connection.connectUtf[Double, Double].use(_.list.lPush(key, value)).runSyncUnsafe()
-
-    //then
-    val r = connection.connectUtf[Double, Double].use(_.list.lPop(key)).runSyncUnsafe()
-    Some(value) shouldBe r
+    redis.connectUtf[Double, Double].use(cmd =>
+      cmd.list.lPush(key, value) >> cmd.list.lPop(key)
+    ).asserting(_ shouldBe Some(value))
   }
 
   it should "encode and decode big ints" in {
-    //given
     val key: BigInt = BigInt(Gen.chooseNum(1, 1000).sample.get)
     val value: BigInt = BigInt.apply(Gen.chooseNum(1, 1000).sample.get)
     implicitly(bigIntUtfCodec) // used implicitly
 
-    //when
-    connection.connectUtf[BigInt, BigInt].use(_.list.lPush(key, value)).runSyncUnsafe()
-
-    //then
-    val r = connection.connectUtf[BigInt, BigInt].use(_.list.lPop(key)).runSyncUnsafe()
-    Some(value) shouldBe r
+    redis.connectUtf[BigInt, BigInt].use(cmd =>
+      cmd.list.lPush(key, value) >> cmd.list.lPop(key)).asserting(_ shouldBe Some(value))
   }
 
   it should "encode and decode big decimals" in {
-    //given
     val key: BigDecimal = BigDecimal(Gen.chooseNum[Double](1, 1000).sample.get)
     val value: BigDecimal = BigDecimal(Gen.chooseNum[Double](1, 1000).sample.get)
     implicitly(bigDecimalUtfCodec) // used implicitly
 
-    //when
-    connection.connectUtf[BigDecimal, BigDecimal].use(_.list.lPush(key, value)).runSyncUnsafe()
-
-    //then
-    val r = connection.connectUtf[BigDecimal, BigDecimal].use(_.list.lPop(key)).runSyncUnsafe()
-    Some(value) shouldBe r
+    redis.connectUtf[BigDecimal, BigDecimal].use(cmd =>
+      cmd.list.lPush(key, value) >> cmd.list.lPop(key)
+    ).asserting(_  shouldBe Some(value))
   }
 
 }

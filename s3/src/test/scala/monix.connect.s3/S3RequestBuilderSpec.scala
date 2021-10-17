@@ -314,7 +314,7 @@ class S3RequestBuilderSpec
           request.grantRead shouldBe uploadSettings.grantRead.orNull
           request.grantReadACP shouldBe uploadSettings.grantReadACP.orNull
           request.grantWriteACP shouldBe uploadSettings.grantWriteACP.orNull
-          request.requestPayer() shouldBe uploadSettings.requestPayer.orNull
+          request.requestPayer shouldBe uploadSettings.requestPayer.orNull
           request.serverSideEncryptionAsString shouldBe uploadSettings.serverSideEncryption.orNull
           request.sseCustomerAlgorithm shouldBe uploadSettings.sseCustomerAlgorithm.orNull
           request.sseCustomerKey shouldBe uploadSettings.sseCustomerKey.orNull

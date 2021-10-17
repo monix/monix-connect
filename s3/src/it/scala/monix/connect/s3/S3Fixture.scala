@@ -3,7 +3,7 @@ package monix.connect.s3
 import java.io.{File, FileInputStream}
 import java.net.URI
 import java.time.Duration
-import monix.eval.Task
+import monix.eval.{Task, TaskLike}
 import monix.execution.Scheduler
 import monix.reactive.Observable
 import org.scalacheck.Gen
@@ -16,6 +16,7 @@ import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
 import software.amazon.awssdk.regions.Region
 
 trait S3Fixture {
+  this: AsyncTestSuite =>
 
   val genBucketName = Gen.identifier.map("test-"+ _.take(15).toLowerCase) //buckets have to be in a range of 3-63 chars long
   val genKey = Gen.identifier.map("test-"+ _.take(10).toLowerCase) //buckets have to be in a range of 3-63 chars long
@@ -67,4 +68,8 @@ trait S3Fixture {
     }
   }
 
+  implicit val fromGen: TaskLike[Gen] =
+    new TaskLike[Gen] {
+      def apply[A](fa: Gen[A]): Task[A] = Task(fa.sample.get)
+    }
 }
