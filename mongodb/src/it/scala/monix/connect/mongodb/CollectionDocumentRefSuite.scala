@@ -22,16 +22,19 @@ import com.mongodb.client.model.Filters
 import com.mongodb.reactivestreams.client.MongoClients
 import monix.connect.mongodb.client.{CollectionCodecRef, CollectionDocumentRef, CollectionOperator, MongoConnection}
 import monix.eval.Task
-import monix.execution.Scheduler.Implicits.global
+import monix.execution.Scheduler
+import monix.testing.scalatest.MonixTaskSpec
 import org.bson.Document
 import org.bson.conversions.Bson
 import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
 import org.scalacheck.Gen
-import org.scalatest.BeforeAndAfterEach
-import org.scalatest.flatspec.AnyFlatSpecLike
+import org.scalatest.{Assertion, BeforeAndAfterEach}
+import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class CollectionDocumentRefSuite extends AnyFlatSpecLike with Fixture with Matchers with BeforeAndAfterEach {
+class CollectionDocumentRefSuite extends AsyncFlatSpec with MonixTaskSpec with Fixture with Matchers with BeforeAndAfterEach {
+
+  override implicit val scheduler: Scheduler = Scheduler.io("collection-document-ref-suite")
 
   override def beforeEach() = {
     super.beforeEach()
@@ -42,7 +45,6 @@ class CollectionDocumentRefSuite extends AnyFlatSpecLike with Fixture with Match
   }
 
   "A single bson collection" should "be created given the url endpoint" in {
-    //given
     val collectionName = Gen.identifier.sample.get
     val name = "Alice"
     val age = 22
@@ -56,18 +58,13 @@ class CollectionDocumentRefSuite extends AnyFlatSpecLike with Fixture with Match
           collectionName)
       )
 
-    //when
-    val r = connection.use {
+    connection.use {
       case CollectionOperator(_, source, single, _) =>
         single.insertOne(person).flatMap(_ => source.find(Filters.eq("name", name)).headL)
-    }.runSyncUnsafe()
-
-    //then
-    r shouldBe person
+    }.asserting(_ shouldBe person)
   }
 
   it should "be created given the mongo client settings" in {
-    //given
     val name = "Margaret"
     val age = 54
     val margaret: Document = Document.parse(s"""{"name":"$name", "age":$age }""")
@@ -76,44 +73,33 @@ class CollectionDocumentRefSuite extends AnyFlatSpecLike with Fixture with Match
       mongoClientSettings,
       bsonCol1)
 
-    //when
-    val r = bsonConnection.use {
+    bsonConnection.use {
       case CollectionOperator(_, source, single, _) =>
         single.insertOne(margaret).flatMap(_ => source.find(Filters.eq("name", name)).headL)
-    }.runSyncUnsafe()
-
-    //then
-    r shouldBe margaret
+    }.asserting(_ shouldBe margaret)
   }
 
   it should "be created unsafely given a mongo client" in {
-    //given
     val name = "Greg"
     val age = 41
     val greg: Document = Document.parse(s"""{"name":"$name", "age":$age }""")
 
     val connection = MongoConnection.createUnsafe1(MongoClients.create(mongoEndpoint), bsonCol1)
 
-    //when
-    val r = connection.flatMap {
+    connection.flatMap {
       case CollectionOperator(_, source, single, _) =>
         single.insertOne(greg).flatMap(_ => source.find(Filters.eq("name", name)).headL)
-    }.runSyncUnsafe()
-
-    //then
-    r shouldBe greg
+    }.asserting(_ shouldBe greg)
   }
 
   "Two generic document collections" can "be created within the same connection" in {
-    //given
     val personName = "Adrian"
     val filmName = "Jumanji"
     val connection = MongoConnection.create2(mongoEndpoint, (bsonCol1, bsonCol2))
     val person: Document = Document.parse(s"""{"person_name":"$personName", "age": 23 }""")
     val film: Document = Document.parse(s"""{"film_name":"$filmName", "year": 1995}""")
 
-    //when
-    connection.use {
+    connection.use[Task, Assertion] {
       case (personOperator, filmOperator) =>
         for {
           r1 <- personOperator.single.insertOne(person) >>
@@ -124,11 +110,10 @@ class CollectionDocumentRefSuite extends AnyFlatSpecLike with Fixture with Match
           r1 shouldBe person
           r2 shouldBe film
         }
-    }.runSyncUnsafe()
+    }
   }
 
   "Two mixed collections" can "be created within the same connection" in {
-    //given
     val filmName = "Jumanji"
     val film: Document = Document.parse(s"""{"film_name":"$filmName", "year": 1995}""")
     val employee1 = Employee("Employee1", 21, "Paris", "Company1")
@@ -138,8 +123,7 @@ class CollectionDocumentRefSuite extends AnyFlatSpecLike with Fixture with Match
       CollectionCodecRef("myDb", "employees_collection", classOf[Employee], createCodecProvider[Employee]())
     val connection = MongoConnection.create2(mongoEndpoint, (employeesCol, filmsCol))
 
-    //when
-    connection.use { case (employeesOperator, filmsOperator) =>
+    connection.use[Task, Assertion] { case (employeesOperator, filmsOperator) =>
         for {
           _ <- employeesOperator.single.insertMany(List(employee1, employee2)) >> filmsOperator.single.insertOne(film)
           parisEmployeesCount <- employeesOperator.source.count(Filters.eq("city", "Paris"))
@@ -148,12 +132,11 @@ class CollectionDocumentRefSuite extends AnyFlatSpecLike with Fixture with Match
           parisEmployeesCount shouldBe 1L
           myOnlyFilm shouldBe film
         }
-    }.runSyncUnsafe()
+    }
   }
 
   "Three mixed collections" should "be created within the same connection" in {
-    //given
-    val personName = "Jim Carry"
+    val personName = "Jim Carrey"
     val filmName = "The Mask"
     val person: Document = Document.parse(s"""{"person_name":"$personName", "age": 23 }""")
     val film: Document = Document.parse(s"""{"film_name":"$filmName", "year": 1995}""")
@@ -163,8 +146,7 @@ class CollectionDocumentRefSuite extends AnyFlatSpecLike with Fixture with Match
       CollectionCodecRef(dbName, employeesColName, classOf[Employee], createCodecProvider[Employee]())
     val connection = MongoConnection.create3(mongoEndpoint, (bsonCol1, bsonCol2, employeesCol))
 
-    //when
-    connection.use {
+    connection.use[Task, Assertion] {
       case (
         bson1Operator,
         bson2Operator,
@@ -180,7 +162,7 @@ class CollectionDocumentRefSuite extends AnyFlatSpecLike with Fixture with Match
           foundPerson shouldBe person
           foundFilm shouldBe film
         }
-    }.runSyncUnsafe()
+    }
 
   }
 
