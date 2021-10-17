@@ -55,3 +55,5 @@ benchmarks/data/*
 project/metals.sbt
 
 website/.docusaurus/
+
+gcs/tmp/
