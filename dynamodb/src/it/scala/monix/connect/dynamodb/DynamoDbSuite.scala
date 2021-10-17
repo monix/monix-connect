@@ -23,40 +23,31 @@ class DynamoDbSuite extends AsyncFlatSpec with Matchers with MonixTaskSpec with 
   override implicit val scheduler = Scheduler.io("dynamodb-suite")
 
   s"$DynamoDbOp" can "be created from config" in {
-    //given
     import monix.connect.dynamodb.DynamoDbOp.Implicits.listTablesOp
     val listRequest = ListTablesRequest.builder.build
 
-    //when
-    DynamoDb.fromConfig.use(_.single(listRequest)).map { listedTables =>
-      //then
+    DynamoDb.fromConfig.use(_.single(listRequest)).asserting { listedTables =>
       listedTables shouldBe a[ListTablesResponse]
       listedTables.tableNames().asScala.contains(tableName) shouldBe true
     }
   }
 
   it can "be created from monix aws config" in {
-    //given
     import monix.connect.dynamodb.DynamoDbOp.Implicits.listTablesOp
     val listRequest = ListTablesRequest.builder.build
 
-    //when
-    MonixAwsConf.load().memoizeOnSuccess.flatMap(DynamoDb.fromConfig(_).use(_.single(listRequest))).map { listTables =>
-      //then
+    MonixAwsConf.load().memoizeOnSuccess.flatMap(DynamoDb.fromConfig(_).use(_.single(listRequest))).asserting { listTables =>
       listTables shouldBe a[ListTablesResponse]
       listTables.tableNames().asScala.contains(tableName) shouldBe true
     }
   }
 
   it can "be created from task with monix aws config" in {
-    //given
     import monix.connect.dynamodb.DynamoDbOp.Implicits.listTablesOp
     val listRequest = ListTablesRequest.builder.build
 
-    //when
     val monixAwsConf = MonixAwsConf.load().memoizeOnSuccess
-    DynamoDb.fromConfig(monixAwsConf).use(_.single(listRequest)).map { listTables =>
-      //then
+    DynamoDb.fromConfig(monixAwsConf).use(_.single(listRequest)).asserting { listTables =>
       listTables shouldBe a[ListTablesResponse]
       listTables.tableNames().asScala.contains(tableName) shouldBe true
     }
@@ -94,7 +85,6 @@ class DynamoDbSuite extends AsyncFlatSpec with Matchers with MonixTaskSpec with 
     val citizens = Gen.listOfN(3, genCitizen).sample.get
     val putItemRequests: List[PutItemRequest] = citizens.map(putItemRequest(tableName, _))
 
-
     for {
       _ <- DynamoDb.fromConfig.use { dynamoDb =>
         Observable
@@ -108,11 +98,9 @@ class DynamoDbSuite extends AsyncFlatSpec with Matchers with MonixTaskSpec with 
       val actualCitizens = getResponses.map(_.item().values().asScala.head.n().toDouble)
       actualCitizens should contain theSameElementsAs citizens.map(_.age)
     }
-
   }
 
   it can "transform multiple incoming requests" in {
-    //given
     import monix.connect.dynamodb.DynamoDbOp.Implicits.getItemOp
     val citizens = List(Citizen("citizen1", "Rome", 52), Citizen("citizen2", "Rome", 43))
     val putItemRequests: List[PutItemRequest] = citizens.map(putItemRequest(tableName, _))
@@ -125,12 +113,10 @@ class DynamoDbSuite extends AsyncFlatSpec with Matchers with MonixTaskSpec with 
           .transform(dynamoDb.transformer(RetryStrategy(retries = 3, backoffDelay = 1.second)))
           .toListL
       }.map { result =>
-        //then
         val actualCitizens = result.map(_.item().values().asScala.head.n().toInt)
         actualCitizens should contain theSameElementsAs citizens.map(_.age)
       }
   }
-
 
   override def beforeAll(): Unit = {
     createTable(tableName).runSyncUnsafe()

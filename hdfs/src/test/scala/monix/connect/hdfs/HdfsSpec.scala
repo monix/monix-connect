@@ -18,21 +18,19 @@
 package monix.connect.hdfs
 
 import java.io.File
-
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpecLike
+import org.scalatest.wordspec.AsyncWordSpec
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.apache.hadoop.hdfs.{HdfsConfiguration, MiniDFSCluster}
 import monix.reactive.{Consumer, Observable}
-import org.scalatest.concurrent.ScalaFutures
-import monix.execution.Scheduler.Implicits.global
+import monix.execution.Scheduler
+import monix.testing.scalatest.MonixTaskSpec
 
-import scala.util.Try
+class HdfsSpec extends AsyncWordSpec with MonixTaskSpec with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with HdfsFixture  {
 
-class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with ScalaFutures {
-
+  override implicit val scheduler = Scheduler.io("hdfs-spec")
   private var miniHdfs: MiniDFSCluster = _
   private val dir = "./temp/hadoop"
   private val port: Int = 54310
@@ -45,187 +43,158 @@ class HdfsSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterAll with
   ) //needed for performing append operation on hadoop-minicluster
   val fs: FileSystem = FileSystem.get(conf)
 
-  s"${Hdfs}" should {
+  s"$Hdfs" should {
 
-    "write and read back a single chunk of bytes" in new HdfsFixture {
-      //given
+    "write and read back a single chunk of bytes" in {
       val path: Path = new Path(genFileName.sample.get)
       val hdfsWriter: Consumer[Array[Byte], Long] = Hdfs.write(fs, path)
       val chunk: Array[Byte] = genChunk.sample.get
 
-      //when
-      val offset = Observable
-        .pure(chunk)
-        .consumeWith(hdfsWriter)
-        .runSyncUnsafe()
-
-      //then
-      val r: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
-      r shouldBe chunk
-      offset shouldBe chunk.size
+      for {
+        offset <- Observable
+          .pure(chunk)
+          .consumeWith(hdfsWriter)
+        result <- Hdfs.read(fs, path).headL
+      } yield {
+        result shouldBe chunk
+        offset shouldBe chunk.size
+      }
     }
 
-    "write and read back multiple chunks" in new HdfsFixture {
-      //given
+    "write and read back multiple chunks" in {
       val path: Path = new Path(genFileName.sample.get)
       val hdfsWriter: Consumer[Array[Byte], Long] = Hdfs.write(fs, path)
       val chunks: List[Array[Byte]] = genChunks.sample.get
 
-      //when
-      val offset: Long = Observable
-        .from(chunks)
-        .consumeWith(hdfsWriter)
-        .runSyncUnsafe()
-
-      //then
-      val r: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
-      r shouldBe chunks.flatten
-      offset shouldBe chunks.flatten.size
+      for {
+        offset <- Observable
+          .from(chunks)
+          .consumeWith(hdfsWriter)
+        result <- Hdfs.read(fs, path).headL
+      } yield {
+        result shouldBe chunks.flatten
+        offset shouldBe chunks.flatten.size
+      }
     }
 
-    "write and read back multiple chunks with a line separator" in new HdfsFixture {
-      //given
+    "write and read back multiple chunks with a line separator" in {
       val path: Path = new Path(genFileName.sample.get)
       val hdfsWriter: Consumer[Array[Byte], Long] = Hdfs.write(fs, path)
       val chunks: List[Array[Byte]] = genChunks.sample.get
-      val nChunks = chunks.size
 
-      //when
-      val offset: Long = Observable
-        .from(chunks)
-        .consumeWith(hdfsWriter)
-        .runSyncUnsafe()
-
-      //then
-      val r: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
-      val expectedResult: List[Byte] = chunks.flatten
-
-      r shouldBe expectedResult
-      offset shouldBe chunks.flatten.size
+      for {
+        offset <- Observable
+          .from(chunks)
+          .consumeWith(hdfsWriter)
+        result <- Hdfs.read(fs, path).headL
+        expectedResult: List[Byte] = chunks.flatten
+      } yield {
+        offset shouldBe chunks.flatten.size
+        result shouldBe expectedResult
+      }
     }
 
-    "allow to overwrite if enabled" in new HdfsFixture {
-      //given
+    "allow to overwrite if enabled" in {
       val path: Path = new Path(genFileName.sample.get)
       val hdfsWriter: Consumer[Array[Byte], Long] = Hdfs.write(fs, path, overwrite = true)
       val chunksA: List[Array[Byte]] = genChunks.sample.get
       val chunksB: List[Array[Byte]] = genChunks.sample.get
       val existedBefore: Boolean = fs.exists(path)
 
-      //when
-      val offsetA: Long = Observable
-        .from(chunksA)
-        .consumeWith(hdfsWriter)
-        .runSyncUnsafe()
+      for {
+        offsetA <- Observable.from(chunksA).consumeWith(hdfsWriter)
+        resultA <- Hdfs.read(fs, path).headL
+        existsA = fs.exists(path)
+        offsetB <- Observable
+          .from(chunksB)
+          .consumeWith(hdfsWriter)
+        resultB <- Hdfs.read(fs, path).headL
+      } yield {
+        existedBefore shouldBe false
+        existsA shouldBe true
+        resultA shouldBe chunksA.flatten
+        offsetA shouldBe chunksA.flatten.size
 
-      //then
-      val resultA: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
-      existedBefore shouldBe false
-      fs.exists(path) shouldBe true
-      resultA shouldBe chunksA.flatten
-      offsetA shouldBe chunksA.flatten.size
-
-      //and when
-      val offsetB: Long = Observable
-        .from(chunksB)
-        .consumeWith(hdfsWriter)
-        .runSyncUnsafe()
-
-      //and then
-      val resultB: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
-      fs.exists(path) shouldBe true
-      resultB shouldBe chunksB.flatten
-      offsetB shouldBe chunksB.flatten.size
+        fs.exists(path) shouldBe true
+        resultB shouldBe chunksB.flatten
+        offsetB shouldBe chunksB.flatten.size
+      }
     }
 
-    "fail (throwing FileAlreadyExistsException) when trying to overwrite when the option is disabled, leaving the original file untouched" in new HdfsFixture {
-      //given
+    "fail trying to overwrite when in config is disabled, leaving the original file untouched" in {
       val path: Path = new Path(genFileName.sample.get)
       val hdfsWriter: Consumer[Array[Byte], Long] = Hdfs.write(fs, path, overwrite = false)
       val chunksA: List[Array[Byte]] = genChunks.sample.get
       val chunksB: List[Array[Byte]] = genChunks.sample.get
       val existedBefore: Boolean = fs.exists(path)
 
-      //when
-      val offsetA: Long = Observable
-        .from(chunksA)
-        .consumeWith(hdfsWriter)
-        .runSyncUnsafe()
-
-      //then
-      val resultA: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
-      existedBefore shouldBe false
-      fs.exists(path) shouldBe true
-      resultA shouldBe chunksA.flatten
-      offsetA shouldBe chunksA.flatten.size
-
-      //and when
-      val failedOverwriteAttemt: Try[Long] = Try {
-        Observable
-          .from(chunksB)
-          .consumeWith(hdfsWriter)
-          .runSyncUnsafe() //it should throw an `org.apache.hadoop.fs.FileAlreadyExistsException`
-      }
-
-      //and then
-      val overwritten: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
-      failedOverwriteAttemt.isFailure shouldBe true
-      fs.exists(path) shouldBe true
-      overwritten shouldBe chunksA.flatten
-      overwritten.size shouldBe chunksA.flatten.size
+       for {
+         offsetA <- Observable
+           .from(chunksA)
+           .consumeWith(hdfsWriter)
+         resultA <- Hdfs.read(fs, path).headL
+         failedOverwriteAttempt <- Observable
+             .from(chunksB)
+             .consumeWith(hdfsWriter)
+             .attempt
+         resultAfterOverwriteAttempt <- Hdfs.read(fs, path).headL
+       } yield {
+         existedBefore shouldBe false
+         fs.exists(path) shouldBe true
+         resultA shouldBe chunksA.flatten
+         offsetA shouldBe chunksA.flatten.size
+         failedOverwriteAttempt.isLeft shouldBe true
+         failedOverwriteAttempt.left.get shouldBe a[org.apache.hadoop.fs.FileAlreadyExistsException]
+         fs.exists(path) shouldBe true
+         resultAfterOverwriteAttempt shouldBe chunksA.flatten
+         resultAfterOverwriteAttempt.length shouldBe chunksA.flatten.size
+       }
     }
 
-    "allow appending to existing files" in new HdfsFixture {
-      //given
+    "allow appending to existing files" in {
       val path: Path = new Path(genFileName.sample.get)
       val chunksA: List[Array[Byte]] = genChunks.sample.get
       val chunksB: List[Array[Byte]] = genChunks.sample.get
       val existedBefore: Boolean = fs.exists(path)
       val expectedContent: List[Byte] = (chunksA ++ chunksB).flatten
 
-      //when
-      val offsetA: Long = Observable
-        .from(chunksA)
-        .consumeWith(Hdfs.write(fs, path))
-        .runSyncUnsafe()
+      for {
+        offsetA <- Observable
+          .from(chunksA)
+          .consumeWith(Hdfs.write(fs, path))
+        resultA <- Hdfs.read(fs, path).headL
+        fileExistsA = fs.exists(path)
 
-      //then
-      val resultA: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
-      existedBefore shouldBe false
-      fs.exists(path) shouldBe true
-      resultA shouldBe chunksA.flatten
-      offsetA shouldBe chunksA.flatten.size
+          finalOffset <- Observable
+          .from(chunksB)
+          .consumeWith(Hdfs.append(fs, path))
+        finalResult <- Hdfs.read(fs, path).headL
+        finalExists = fs.exists(path)
 
-      //and when
-      val finalOffset: Long = Observable
-        .from(chunksB)
-        .consumeWith(Hdfs.append(fs, path))
-        .runSyncUnsafe()
-
-      //and then
-      val finalResult: Array[Byte] = Hdfs.read(fs, path).headL.runSyncUnsafe()
-      fs.exists(path) shouldBe true
-      finalResult shouldBe expectedContent
-      finalOffset shouldBe chunksB.flatten.size
+      } yield {
+        existedBefore shouldBe false
+        fileExistsA shouldBe true
+        resultA shouldBe chunksA.flatten
+        offsetA shouldBe chunksA.flatten.size
+        finalExists shouldBe true
+        finalResult shouldBe expectedContent
+        finalOffset shouldBe chunksB.flatten.size
+      }
     }
 
-    "fail when appending to a non existing file" in new HdfsFixture {
-      //given
+    "fail when appending to a non existing file" in {
       val path: Path = new Path(genFileName.sample.get)
       val chunksA: List[Array[Byte]] = genChunks.sample.get
       val existed: Boolean = fs.exists(path)
 
-      //when
-      val appendingFailure: Try[Long] = Try {
-        Observable
-          .from(chunksA)
-          .consumeWith(Hdfs.append(fs, path))
-          .runSyncUnsafe()
-      }
-
-      //then
-      existed shouldBe false
-      appendingFailure.isFailure shouldBe true
+      Observable
+        .from(chunksA)
+        .consumeWith(Hdfs.append(fs, path))
+        .attempt
+        .asserting{appendAttempt =>
+          existed shouldBe false
+          appendAttempt.isLeft shouldBe true
+        }
     }
 
   }
