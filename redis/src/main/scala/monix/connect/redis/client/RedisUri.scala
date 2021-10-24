@@ -98,7 +98,18 @@ class RedisUri(
     socket: Option[String] = this.socket,
     sentinelMasterId: Option[String] = this.sentinelMasterId,
     clientName: Option[String] = this.clientName): RedisUri = {
-    this
+    new RedisUri(
+      uri,
+      database,
+      password,
+      ssl,
+      verifyPeer,
+      startTls,
+      timeout,
+      sentinels,
+      socket,
+      sentinelMasterId,
+      clientName)
   }
 }
 
