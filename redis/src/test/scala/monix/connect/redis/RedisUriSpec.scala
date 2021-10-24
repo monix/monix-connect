@@ -37,7 +37,6 @@ class RedisUriSpec
 
   implicit val connection: StatefulRedisConnection[String, Int] = mock[StatefulRedisConnection[String, Int]]
 
-
   s"$RedisUri" should "allow to update its properties" in {
     val password = "password"
     val database = 123
