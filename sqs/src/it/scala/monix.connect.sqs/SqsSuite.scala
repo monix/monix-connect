@@ -4,12 +4,12 @@ import monix.connect.aws.auth.MonixAwsConf
 import monix.eval.Task
 import monix.execution.Scheduler
 import monix.testing.scalatest.MonixTaskSpec
-import org.scalatest.BeforeAndAfterEach
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import pureconfig.KebabCase
 
-class SqsSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with BeforeAndAfterEach with SqsITFixture {
+class SqsSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with BeforeAndAfterAll with SqsITFixture {
 
   implicit val scheduler = Scheduler.io("sqs-suite")
 

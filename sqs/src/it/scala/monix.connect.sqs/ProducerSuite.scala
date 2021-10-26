@@ -7,7 +7,7 @@ import monix.reactive.Observable
 import monix.testing.scalatest.MonixTaskSpec
 import org.apache.commons.codec.digest.DigestUtils.md5Hex
 import org.scalacheck.Gen
-import org.scalatest.BeforeAndAfterEach
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.services.sqs.model.QueueAttributeName
@@ -15,14 +15,14 @@ import software.amazon.awssdk.services.sqs.model.QueueAttributeName
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 
-class ProducerSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with BeforeAndAfterEach with SqsITFixture {
+class ProducerSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with BeforeAndAfterAll with SqsITFixture {
 
   implicit val scheduler = Scheduler.io("sqs-producer-suite")
 
   "parSendMessage" must "send a group of 10 message in the same batch" in {
     val messages = Gen.listOfN(10, genFifoMessage(defaultGroupId)).sample.get
       for {
-        sqs <- Task(unsafeSqsAsyncClient)
+        sqs <- unsafeSqsAsyncClient
         fifoQueueName <- Task.from(genFifoQueueName)
         queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = fifoDeduplicationQueueAttr)
         response <- sqs.producer.sendParBatch(messages, queueUrl)
@@ -38,7 +38,7 @@ class ProducerSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with 
     val numOfEntries = Gen.choose(11, 199).sample.get
     val messages = Gen.listOfN(numOfEntries, genFifoMessage(defaultGroupId)).sample.get
       for {
-        sqs <- Task(unsafeSqsAsyncClient)
+        sqs <- unsafeSqsAsyncClient
         fifoQueueName <- Task.from(genFifoQueueName)
         queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = fifoDeduplicationQueueAttr)
         responses <- sqs.producer.sendParBatch(messages, queueUrl)
@@ -55,7 +55,7 @@ class ProducerSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with 
   it must "not fail on empty messages list" in {
     val messages = List.empty[Message]
       for {
-        sqs <- Task(unsafeSqsAsyncClient)
+        sqs <- unsafeSqsAsyncClient
         fifoQueueName <- Task.from(genFifoQueueName)
         queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = fifoDeduplicationQueueAttr)
         response <- sqs.producer.sendParBatch(messages, queueUrl)
@@ -68,7 +68,7 @@ class ProducerSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with 
   "sendParBatchSink" should "send in a single batch, a group of less than 10 messages emitted at once" in {
     val messages = Gen.listOfN(5, genFifoMessage(defaultGroupId)).sample.get
       for {
-        sqs <- Task(unsafeSqsAsyncClient)
+        sqs <- unsafeSqsAsyncClient
         fifoQueueName <- Task.from(genFifoQueueName)
         queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = fifoDeduplicationQueueAttr)
         response <- Observable.now(messages).consumeWith(sqs.producer.sendParBatchSink(queueUrl))
@@ -81,7 +81,7 @@ class ProducerSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with 
 
   it should "do nothing when consuming an empty observable, and gracefully terminate on completion" in {
      for {
-       sqs <- Task(unsafeSqsAsyncClient)
+       sqs <- unsafeSqsAsyncClient
        fifoQueueName <- Task.from(genFifoQueueName)
        queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
         response <- Observable.empty[List[Message]].consumeWith(sqs.producer.sendParBatchSink(queueUrl))
@@ -95,7 +95,7 @@ class ProducerSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with 
   it should "send in batches of `n` messages" in {
     val messages =  Gen.choose(11, 100).flatMap(Gen.listOfN(_, genFifoMessage(defaultGroupId))).sample.get
      for {
-       sqs <- Task(unsafeSqsAsyncClient)
+       sqs <- unsafeSqsAsyncClient
        fifoQueueName <- Task.from(genFifoQueueName)
        queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = fifoDeduplicationQueueAttr)
         response <- Observable.now(messages).consumeWith(sqs.producer.sendParBatchSink(queueUrl))
@@ -110,7 +110,7 @@ class ProducerSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with 
 
     val messages = Gen.choose(1, 100).flatMap(Gen.listOfN(_, genFifoMessage(defaultGroupId))).sample.get
       for {
-        sqs <- Task(unsafeSqsAsyncClient)
+        sqs <- unsafeSqsAsyncClient
         fifoQueueName <- Task.from(genFifoQueueName)
         queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = fifoDeduplicationQueueAttr)
         response <- Observable.fromIterable(messages).consumeWith(sqs.producer.sendSink(queueUrl))
@@ -124,7 +124,7 @@ class ProducerSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with 
   it should "do nothing when consuming an empty observable, and gracefully terminate `onCompletion` " in {
 
     for {
-      sqs <- Task(unsafeSqsAsyncClient)
+      sqs <- unsafeSqsAsyncClient
       fifoQueueName <- Task.from(genFifoQueueName)
       queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
         response <- Observable.empty[Message].consumeWith(sqs.producer.sendSink(queueUrl))

@@ -15,12 +15,13 @@ import monix.testing.scalatest.MonixTaskSpec
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
 import org.apache.commons.io.FileUtils
+import scala.concurrent.duration._
 
 class GcsBlobSuite extends AsyncWordSpec with MonixTaskSpec with IdiomaticMockito with Matchers with ArgumentMatchersSugar with BeforeAndAfterAll {
 
   override implicit val scheduler: Scheduler = Scheduler.io("gcs-blob-suite")
   val storage: Storage = LocalStorageHelper.getOptions.getService
-  val dir = new File("gcs/tmp").toPath
+  val dir = new File("gcs/blob-test").toPath
   val genLocalPath = Gen.identifier.map(s => dir.toAbsolutePath.toString + "/" + s)
   val testBucketName = Gen.identifier.sample.get
 
@@ -100,8 +101,8 @@ class GcsBlobSuite extends AsyncWordSpec with MonixTaskSpec with IdiomaticMockit
       val gcsBlob = new GcsBlob(blob)
 
       for {
-        _ <- gcsBlob.downloadToFile(filePath)
-        exists = gcsBlob.exists()
+        _ <- gcsBlob.downloadToFile(filePath) >> Task.sleep(2.seconds)
+        exists <- gcsBlob.exists()
         r = Files.readAllBytes(filePath)
       } yield {
         exists shouldBe true

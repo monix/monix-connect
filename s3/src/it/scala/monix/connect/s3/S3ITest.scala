@@ -4,7 +4,7 @@ import java.io.FileInputStream
 import monix.eval.Task
 import monix.execution.Scheduler
 import org.scalacheck.Gen
-import org.scalatest.BeforeAndAfterAll
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadResponse, CopyObjectResponse, DeleteBucketResponse, DeleteObjectResponse, NoSuchBucketException, NoSuchKeyException, PutObjectResponse}
 import org.scalatest.wordspec.{AnyWordSpecLike, AsyncWordSpec}
 import org.scalatest.matchers.should.Matchers
@@ -23,7 +23,7 @@ import scala.util.{Failure, Success, Try}
 class S3ITest
   extends AsyncWordSpec with MonixTaskSpec with Matchers with BeforeAndAfterAll with S3Fixture {
 
-  private val bucketName = "sample-bucket"
+  private val bucketName = "s3-it-test-bucket"
   override implicit val scheduler = Scheduler.io("s3-it-test")
 
   override def beforeAll(): Unit = {

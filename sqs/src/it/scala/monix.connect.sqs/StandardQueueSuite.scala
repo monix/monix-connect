@@ -7,20 +7,20 @@ import monix.reactive.Observable
 import monix.testing.scalatest.MonixTaskSpec
 import org.apache.commons.codec.digest.DigestUtils.md5Hex
 import org.scalacheck.Gen
-import org.scalatest.BeforeAndAfterEach
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
 
-class StandardQueueSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with BeforeAndAfterEach with SqsITFixture {
+class StandardQueueSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with BeforeAndAfterAll with SqsITFixture {
 
   implicit val scheduler = Scheduler.io("sqs-standard-queue-suite")
 
   "A standard queue" can "be created and receive messages" in {
     val message = genStandardMessage.sample.get
       for {
-        sqs <- Task(unsafeSqsAsyncClient)
+        sqs <- unsafeSqsAsyncClient
         fifoQueueName <- Task.from(genFifoQueueName)
         queueUrl <- sqs.operator.createQueue(fifoQueueName)
         messageResponse <- sqs.producer.sendSingleMessage(message, queueUrl)
@@ -34,7 +34,7 @@ class StandardQueueSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers 
     val messageWithGroupId = new Message("dummyBody1", groupId = Some("someGroupId"), deduplicationId = None)
     val messageWithDeduplicationId = new Message("dummyBody2", groupId = None, deduplicationId = Some("123"))
       for {
-        sqs <- Task(unsafeSqsAsyncClient)
+        sqs <- unsafeSqsAsyncClient
         fifoQueueName <- Task.from(genFifoQueueName)
         queueUrl <- sqs.operator.createQueue(fifoQueueName)
         isInvalidGroupId <- sqs.producer.sendSingleMessage(messageWithGroupId, queueUrl).as(false)
@@ -51,7 +51,7 @@ class StandardQueueSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers 
 
     val delayedMessage = genStandardMessage.map(_.copy(delayDuration = Some(5.seconds))).sample.get
       for {
-        sqs <- Task(unsafeSqsAsyncClient)
+        sqs <- unsafeSqsAsyncClient
         fifoQueueName <- Task.from(genFifoQueueName)
         queueUrl <- sqs.operator.createQueue(fifoQueueName)
         _ <- sqs.producer.sendSingleMessage(delayedMessage, queueUrl)
@@ -67,7 +67,7 @@ class StandardQueueSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers 
   it should "not respect `maxMessages` and process more than 10 `inFlight`" in {
     val messages = Gen.listOfN(15, genStandardMessage).sample.get
      for {
-        sqs <- Task(unsafeSqsAsyncClient)
+        sqs <- unsafeSqsAsyncClient
         queueUrl <- sqs.operator.createQueue(queueName)
         _ <- Task.traverse(messages)(sqs.producer.sendSingleMessage(_, queueUrl))
         receivedMessages1 <- sqs.consumer.receiveSingleManualDelete(queueUrl, maxMessages = 1)
@@ -86,7 +86,7 @@ class StandardQueueSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers 
     val messages = Gen.listOfN(10, genStandardMessage).sample.get
 
       for {
-        sqs <- Task(unsafeSqsAsyncClient)
+        sqs <- unsafeSqsAsyncClient
         queueUrl <- sqs.operator.createQueue(queueName)
         _ <- Task.traverse(messages)(sqs.producer.sendSingleMessage(_, queueUrl))
         receivedMessages1 <-
@@ -109,7 +109,7 @@ class StandardQueueSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers 
     val messages = Gen.listOfN(10, genStandardMessage).sample.get
 
       for {
-        sqs <- Task(unsafeSqsAsyncClient)
+        sqs <- unsafeSqsAsyncClient
         queueUrl <- sqs.operator.createQueue(queueName)
         _ <- Task.traverse(messages)(sqs.producer.sendSingleMessage(_, queueUrl))
         receivedMessages1 <-
@@ -132,7 +132,7 @@ class StandardQueueSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers 
     val n = 10
     val messages = Gen.listOfN(n, genStandardMessage).sample.get
       for {
-        sqs <- Task(unsafeSqsAsyncClient)
+        sqs <- unsafeSqsAsyncClient
         fifoQueueName <- Task.from(genFifoQueueName)
         queueUrl <- sqs.operator.createQueue(fifoQueueName)
         _ <- Observable.fromIterable(messages)
@@ -149,7 +149,7 @@ class StandardQueueSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers 
     val n = 10
     val messages = Gen.listOfN(n, genStandardMessage).sample.get
       for {
-        sqs <- Task(unsafeSqsAsyncClient)
+        sqs <- unsafeSqsAsyncClient
         fifoQueueName <- Task.from(genFifoQueueName)
         queueUrl <- sqs.operator.createQueue(fifoQueueName)
         _ <- Observable.fromIterable(messages)

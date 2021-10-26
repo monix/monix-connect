@@ -2,7 +2,6 @@ package monix.connect.redis
 
 import monix.connect.redis.client.{BytesCodec, Codec, RedisConnection, RedisUri}
 import monix.connect.redis.test.protobuf.{Person, PersonPk}
-import monix.eval.Task
 import monix.execution.Scheduler
 import monix.testing.scalatest.MonixTaskSpec
 import org.scalacheck.Gen
@@ -19,11 +18,6 @@ class SingleConnectionSuite extends AsyncFlatSpec with MonixTaskSpec with RedisI
   override implicit val scheduler: Scheduler = Scheduler.io("single-connection-suite")
 
   val singleConnection = RedisConnection.standalone(redisUri)
-
-  override def beforeEach(): Unit = {
-    super.beforeEach()
-    singleConnection.connectUtf.use(_.server.flushAll).runSyncUnsafe()
-  }
 
   "RedisStandaloneConnection" should "connect through the uri" in {
     val key: String = Gen.identifier.sample.get

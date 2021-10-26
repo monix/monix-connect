@@ -22,57 +22,44 @@ import com.mongodb.client.model.Filters
 import com.mongodb.reactivestreams.client.MongoClients
 import monix.connect.mongodb.client.{CollectionCodecRef, CollectionOperator, CollectionRef, MongoConnection}
 import monix.connect.mongodb.domain.{Tuple4F, Tuple5F, Tuple6F, Tuple7F, Tuple8F}
+import monix.eval.Task
 import monix.execution.Scheduler
 import monix.testing.scalatest.MonixTaskSpec
 import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
-import org.scalacheck.Gen
-import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
+import scala.concurrent.duration._
 
-
-class MongoConnectionSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with BeforeAndAfterEach with MongoConnectionFixture {
+class MongoConnectionSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with MongoConnectionFixture {
 
   override implicit val scheduler: Scheduler = Scheduler.io("mongo-connection-suite")
 
-  override def beforeEach() = {
-    super.beforeEach()
-    MongoDb.dropDatabase(db).runSyncUnsafe()
-    MongoDb.dropCollection(db, employeesColName).runSyncUnsafe()
-    MongoDb.dropCollection(db, companiesColName).runSyncUnsafe()
-    MongoDb.dropCollection(db, investorsColName).runSyncUnsafe()
-  }
-
   "A single collection" should "be created given the url endpoint" in {
-    val collectionName = Gen.identifier.sample.get
     val investor = genInvestor.sample.get
     val connection = MongoConnection
       .create1(
         mongoEndpoint,
         CollectionCodecRef(
           dbName,
-          collectionName,
+          randomInvestorsColName,
           classOf[Investor],
           createCodecProvider[Employee](),
           createCodecProvider[Company](),
           createCodecProvider[Investor]())
       )
 
-    val r = connection.use {
+    connection.use {
       case CollectionOperator(_, source, single, _) =>
-        single.insertOne(investor).flatMap(_ => source.find(Filters.eq("name", investor.name)).headL)
-    }.runSyncUnsafe()
-
-    r shouldBe investor
+        single.insertOne(investor) >> Task.sleep(1.second) >> source.find(Filters.eq("name", investor.name)).headL
+    }.asserting(_ shouldBe investor)
   }
 
   it should "be created given the mongo client settings" in {
-    val collectionName = Gen.identifier.sample.get
     val employee = genEmployee.sample.get
 
     val connection = MongoConnection.create1(
       mongoClientSettings,
-      CollectionCodecRef(dbName, collectionName, classOf[Employee], createCodecProvider[Employee]()))
+      CollectionCodecRef(dbName, randomEmployeesColName, classOf[Employee], createCodecProvider[Employee]()))
 
     connection.use {
       case CollectionOperator(_, source, single, _) =>
@@ -81,9 +68,8 @@ class MongoConnectionSuite extends AsyncFlatSpec with MonixTaskSpec with Matcher
   }
 
   it should "be created unsafely given a mongo client" in {
-    val collectionName = Gen.identifier.sample.get
     val employee = genEmployee.sample.get
-    val col = CollectionCodecRef(dbName, collectionName, classOf[Employee], createCodecProvider[Employee]())
+    val col = CollectionCodecRef(dbName, randomEmployeesColName, classOf[Employee], createCodecProvider[Employee]())
     val connection = MongoConnection.createUnsafe1(MongoClients.create(mongoEndpoint), col)
 
     connection.flatMap {

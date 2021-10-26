@@ -16,11 +16,6 @@ class ListCommandsSuite
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
   implicit val io = Scheduler.io()
 
-  override def beforeEach(): Unit = {
-    super.beforeEach()
-    utfConnection.use(cmd => cmd.server.flushAll).runSyncUnsafe()
-  }
-
   "lIndex" should "get an element from a list by its index" in {
     val k: K = genRedisKey.sample.get
     val values: List[String] = genRedisValues.sample.get

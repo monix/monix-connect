@@ -63,7 +63,7 @@ class MonixAwsConfigSpec extends AsyncFlatSpec with MonixTaskSpec with Matchers 
            |}
            |""".stripMargin)
 
-    Task(configSource.loadOrThrow[AppConf].monixAws).asserting{ monixAwsConf =>
+    Task(configSource.loadOrThrow[AppConf].monixAws).asserting { monixAwsConf =>
       monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
       monixAwsConf.endpoint shouldBe Some(URI.create("localhost:4566"))
       monixAwsConf.httpClient.isDefined shouldBe false
@@ -132,12 +132,11 @@ class MonixAwsConfigSpec extends AsyncFlatSpec with MonixTaskSpec with Matchers 
   }
 
   it can "read config in kebabCase" in {
-      MonixAwsConf.file(new File("aws-auth/src/test/resources/kebab-case.conf"), KebabCase)
-        .asserting{ monixAwsConf =>
-          monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
-          monixAwsConf.endpoint shouldBe Some(URI.create("kebab-case:12345"))
-          monixAwsConf.region shouldBe Region.EU_WEST_1
-        }
+    MonixAwsConf.file(new File("aws-auth/src/test/resources/kebab-case.conf"), KebabCase).asserting { monixAwsConf =>
+      monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
+      monixAwsConf.endpoint shouldBe Some(URI.create("kebab-case:12345"))
+      monixAwsConf.region shouldBe Region.EU_WEST_1
+    }
   }
 
   it can "read config in snake_case" in {

@@ -1295,7 +1295,6 @@ trait S3 {
     key: String,
     minChunkSize: Int = awsMinChunkSize,
     uploadSettings: UploadSettings = DefaultUploadSettings): Consumer[Array[Byte], CompleteMultipartUploadResponse] = {
-    require(minChunkSize >= domain.awsMinChunkSize, "minChunkSize >= 5242880")
     new MultipartUploadSubscriber(bucket, key, minChunkSize, uploadSettings, s3Client)
   }
 

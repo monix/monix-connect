@@ -38,7 +38,8 @@ import scala.concurrent.duration._
 import scala.util.Failure
 
 class ParquetSinkUnsafeSpec
-  extends AsyncWordSpec with MonixTaskSpec with IdiomaticMockito with Matchers with AvroParquetFixture with BeforeAndAfterAll {
+  extends AsyncWordSpec with MonixTaskSpec with IdiomaticMockito with Matchers with AvroParquetFixture
+  with BeforeAndAfterAll {
 
   override implicit val scheduler: Scheduler = Scheduler.io("parquet-sync-unsafe-spec")
   override def afterAll(): Unit = {
@@ -58,10 +59,10 @@ class ParquetSinkUnsafeSpec
       Observable
         .fromIterable(records)
         .consumeWith(ParquetSink.fromWriterUnsafe(w)) >>
-        Task.eval(fromParquet[GenericRecord](filePath, conf, avroParquetReader(filePath, conf)))
-        .asserting { parquetContent =>
-          parquetContent.length shouldEqual n
-          parquetContent should contain theSameElementsAs records
+        Task.eval(fromParquet[GenericRecord](filePath, conf, avroParquetReader(filePath, conf))).asserting {
+          parquetContent =>
+            parquetContent.length shouldEqual n
+            parquetContent should contain theSameElementsAs records
         }
     }
 
@@ -72,7 +73,7 @@ class ParquetSinkUnsafeSpec
       for {
         writtenRecords <- Observable
           .empty[GenericRecord]
-        .consumeWith(ParquetSink.fromWriterUnsafe(writer))
+          .consumeWith(ParquetSink.fromWriterUnsafe(writer))
         file = new File(filePath)
         parquetContent = fromParquet[GenericRecord](filePath, conf, avroParquetReader(filePath, conf))
       } yield {
@@ -88,15 +89,15 @@ class ParquetSinkUnsafeSpec
       val filePath: String = genFilePath()
       val records: List[GenericRecord] = genAvroUsers(n).sample.get.map(personToRecord)
 
-        Observable
-          .fromIterable(records)
-          .consumeWith(ParquetSink.fromWriterUnsafe(null))
-          .attempt
-          .asserting { writeAttempt =>
-            writeAttempt.isLeft shouldBe true
-            val file = new File(filePath)
-            file.exists() shouldBe false
-          }
+      Observable
+        .fromIterable(records)
+        .consumeWith(ParquetSink.fromWriterUnsafe(null))
+        .attempt
+        .asserting { writeAttempt =>
+          writeAttempt.isLeft shouldBe true
+          val file = new File(filePath)
+          file.exists() shouldBe false
+        }
     }
 
     "signals error when the underlying parquet writer throws an error" in {
@@ -107,15 +108,15 @@ class ParquetSinkUnsafeSpec
       val parquetWriter = mock[ParquetWriter[GenericRecord]]
       when(parquetWriter.write(record)).thenThrow(ex)
 
-        Observable
-          .now(record)
-          .consumeWith(ParquetSink.fromWriterUnsafe(parquetWriter))
-          .attempt
-          .asserting { writeAttempt =>
-            writeAttempt.isLeft shouldBe true
-            val file = new File(filePath)
-            file.exists() shouldBe false
-          }
+      Observable
+        .now(record)
+        .consumeWith(ParquetSink.fromWriterUnsafe(parquetWriter))
+        .attempt
+        .asserting { writeAttempt =>
+          writeAttempt.isLeft shouldBe true
+          val file = new File(filePath)
+          file.exists() shouldBe false
+        }
     }
 
   }

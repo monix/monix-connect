@@ -2,22 +2,20 @@ package monix.connect.elasticsearch
 
 import monix.eval.Task
 import monix.execution.Scheduler
-import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
 import monix.testing.scalatest.MonixTaskSpec
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.flatspec.{AnyFlatSpecLike, AsyncFlatSpec}
+import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-
-import scala.util.Try
 
 class ElasticsearchSinkSuite extends AsyncFlatSpec with MonixTaskSpec with Fixture with Matchers with BeforeAndAfterEach {
   import com.sksamuel.elastic4s.ElasticDsl._
 
   override implicit val scheduler: Scheduler = Scheduler.io("elasticsearch-sink-suite")
+
   "ElasticsearchSink" should "execute update requests in batches" in {
-    val updateRequests = Gen.listOfN(10, genUpdateRequest).sample.get
+    val updateRequests = Gen.listOfN(5, genUpdateRequest).sample.get
 
     esResource.use { es =>
       Observable
@@ -25,11 +23,11 @@ class ElasticsearchSinkSuite extends AsyncFlatSpec with MonixTaskSpec with Fixtu
         .bufferTumbling(5)
         .consumeWith(es.bulkRequestSink()) *>
         Task
-          .parSequence(updateRequests.map { request =>
+          .parTraverse(updateRequests){ request =>
             getById(request.index.name, request.id)
               .map(_.sourceAsString)
-          })
-    }.asserting(_ should contain theSameElementsAs updateRequests.flatMap(_.documentSource))
+          }
+    }.asserting(_ should contain allElementsOf updateRequests.flatMap(_.documentSource))
   }
 
   it should "execute delete requests in batches" in {
@@ -50,7 +48,7 @@ class ElasticsearchSinkSuite extends AsyncFlatSpec with MonixTaskSpec with Fixtu
             getById(request.index.name, request.id)
               .map(_.sourceAsString)
           })
-    }.asserting(_ should contain theSameElementsAs List.fill(5)("{}") ++ updateRequests.takeRight(5).flatMap(_.documentSource))
+    }.asserting(_ should contain allElementsOf List.fill(5)("{}") ++ updateRequests.takeRight(5).flatMap(_.documentSource))
   }
 
   it should "execute index requests batches" in {
@@ -62,11 +60,11 @@ class ElasticsearchSinkSuite extends AsyncFlatSpec with MonixTaskSpec with Fixtu
         .bufferTumbling(5)
         .consumeWith(es.bulkRequestSink()) *>
         Task
-          .parSequence(indexRequests.map { request =>
+          .parTraverse(indexRequests){ request =>
             getById(request.index.name, request.id.get)
               .map(_.sourceAsString)
-          })
-    }.asserting{ _ should contain theSameElementsAs indexRequests.flatMap(_.source) }
+          }
+    }.asserting{ _ should contain allElementsOf indexRequests.flatMap(_.source) }
   }
 
   it should "fails when the es index not exists" in {

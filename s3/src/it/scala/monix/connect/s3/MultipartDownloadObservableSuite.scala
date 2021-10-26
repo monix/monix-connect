@@ -33,14 +33,14 @@ import scala.util.{Failure, Success, Try}
 class MultipartDownloadObservableSuite
   extends AsyncFlatSpec with Matchers with MonixTaskSpec with BeforeAndAfterAll with S3Fixture {
 
-  private val bucketName = "download-test"
+  private val bucketName = "multipart-download-test-bucket"
   override implicit val scheduler = Scheduler.io("multipart-download-observable-suite")
 
   override def beforeAll(): Unit = {
     super.beforeAll()
-    Try(s3Resource.use(_.createBucket(bucketName))) match {
-      case Success(_) => info(s"Created s3 bucket $bucketName")
-      case Failure(e) => info(s"Failed to create s3 bucket $bucketName with exception: ${e.getMessage}")
+    s3Resource.use(_.createBucket(bucketName)).attempt.runSyncUnsafe() match {
+      case Right(_) => info(s"Created s3 bucket $bucketName")
+      case Left(e) => info(s"Failed to create s3 bucket $bucketName with exception: ${e.getMessage}")
     }
   }
 

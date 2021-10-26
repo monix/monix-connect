@@ -18,11 +18,6 @@ class HashCommandsSuite
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
   override implicit val scheduler: Scheduler = Scheduler.io("hash-commands-suite")
 
-  override def beforeEach(): Unit = {
-    super.beforeEach()
-    utfConnection.use(cmd => cmd.server.flushAll).runSyncUnsafe()
-  }
-
   "hDel" should "delete single hash field" in {
     utfConnection.use[Task, Assertion]{ cmd =>
       for {
@@ -101,7 +96,7 @@ class HashCommandsSuite
     val f2: K = genRedisKey.sample.get
     val v: V = "1"
 
-    utfConnection.use[Task, Assertion] { cmd =>
+    redis.connectUtf.use[Task, Assertion] { cmd =>
       for {
         _ <- cmd.hash.hSet(k, f1, v)
         inc0 <- cmd.hash.hIncrBy(k, f1, 0)
@@ -129,6 +124,8 @@ class HashCommandsSuite
     val f1: K = genRedisKey.sample.get
     val f2: K = genRedisKey.sample.get
     val v: V = "1"
+    val randomNonExistingKey = genRedisKey.sample.get
+    val randomNonExistingField = genRedisKey.sample.get
 
     utfConnection.use[Task, Assertion] { cmd =>
       for {
@@ -139,8 +136,8 @@ class HashCommandsSuite
         inc3 <- cmd.hash.hIncrBy(k, f1, 3.1)
         _ <- cmd.hash.hSet(k, f2, "someString")
         incNonNumber <- cmd.hash.hIncrBy(k, f2, 1.1).onErrorHandleWith(ex => if (ex.getMessage.contains(" not a float")) Task.now(-10.10) else Task.now(-11.11))
-        incNotExistingField <- cmd.hash.hIncrBy(k, "none", 1.1)
-        incNotExistingKey <- cmd.hash.hIncrBy("none", "none", 0.1)
+        incNotExistingField <- cmd.hash.hIncrBy(k, genRedisKey.sample.get, 1.1)
+        incNotExistingKey <- cmd.hash.hIncrBy(randomNonExistingKey, randomNonExistingField, 0.1)
       } yield {
         inc0 shouldBe v.toDouble
         inc1 shouldBe 2.1
@@ -161,12 +158,12 @@ class HashCommandsSuite
       for {
         _ <- cmd.hash.hMSet(k, mSet)
         getAll <- cmd.hash.hGetAll(k).toListL
-        emptyHash <- cmd.hash.hGetAll("none").toListL
+        emptyHash <- cmd.hash.hGetAll("nothing").toListL
       } yield {
-        getAll should contain theSameElementsAs mSet.toList.map{ case (k, v) => (k, v) }
+        getAll should contain theSameElementsAs mSet.toList.map { case (k, v) => (k, v) }
         emptyHash shouldBe List.empty
       }
-    }.assertNoException
+    }
   }
 
   "hKeys" should "get all the fields in a hash" in {
@@ -176,7 +173,7 @@ class HashCommandsSuite
       for {
         _ <- cmd.hash.hMSet(k, mSet)
         keys <- cmd.hash.hKeys(k).toListL
-        emptyKeys <- cmd.hash.hKeys("none").toListL
+        emptyKeys <- cmd.hash.hKeys("not exists").toListL
       } yield {
         keys should contain theSameElementsAs mSet.toList.map(_._1)
         emptyKeys shouldBe List.empty

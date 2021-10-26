@@ -37,7 +37,8 @@ import scala.concurrent.duration._
 import scala.util.Failure
 
 class ParquetSinkCoevalSpec
-  extends AsyncWordSpec with MonixTaskSpec with IdiomaticMockito with Matchers with AvroParquetFixture with BeforeAndAfterAll {
+  extends AsyncWordSpec with MonixTaskSpec with IdiomaticMockito with Matchers with AvroParquetFixture
+  with BeforeAndAfterAll {
 
   override implicit val scheduler: Scheduler = Scheduler.io("parquet-sink-coeval-spec")
 
@@ -58,7 +59,7 @@ class ParquetSinkCoevalSpec
       Observable
         .fromIterable(records)
         .consumeWith(ParquetSink.fromWriter(Coeval(w)))
-        .asserting{ _ =>
+        .asserting { _ =>
           val parquetContent: List[GenericRecord] =
             fromParquet[GenericRecord](filePath, conf, avroParquetReader(filePath, conf))
           parquetContent.length shouldEqual n
@@ -70,17 +71,17 @@ class ParquetSinkCoevalSpec
       val filePath: String = genFilePath()
       val writer: ParquetWriter[GenericRecord] = parquetWriter(filePath, conf, schema)
 
-        Observable
-          .empty[GenericRecord]
-          .consumeWith(ParquetSink.fromWriter(Coeval(writer)))
-          .asserting{writtenRecords =>
-            writtenRecords shouldBe 0
-            val file = new File(filePath)
-            val parquetContent: List[GenericRecord] =
-              fromParquet[GenericRecord](filePath, conf, avroParquetReader(filePath, conf))
-            file.exists() shouldBe true
-            parquetContent.length shouldEqual 0
-          }
+      Observable
+        .empty[GenericRecord]
+        .consumeWith(ParquetSink.fromWriter(Coeval(writer)))
+        .asserting { writtenRecords =>
+          writtenRecords shouldBe 0
+          val file = new File(filePath)
+          val parquetContent: List[GenericRecord] =
+            fromParquet[GenericRecord](filePath, conf, avroParquetReader(filePath, conf))
+          file.exists() shouldBe true
+          parquetContent.length shouldEqual 0
+        }
     }
 
     "signals error when a malformed parquet writer was passed" in {
@@ -88,16 +89,16 @@ class ParquetSinkCoevalSpec
       val filePath: String = genFilePath()
       val records: List[GenericRecord] = genAvroUsers(n).sample.get.map(personToRecord)
 
-        Observable
-          .fromIterable(records)
-          .consumeWith(ParquetSink.fromWriter(Coeval(null)))
-          .attempt
-          .asserting{ attempt =>
-            attempt.isLeft shouldBe true
+      Observable
+        .fromIterable(records)
+        .consumeWith(ParquetSink.fromWriter(Coeval(null)))
+        .attempt
+        .asserting { attempt =>
+          attempt.isLeft shouldBe true
 
-            val file = new File(filePath)
-            file.exists() shouldBe false
-          }
+          val file = new File(filePath)
+          file.exists() shouldBe false
+        }
     }
 
     "signals error when the underlying parquet writer throws an error" in {
@@ -108,15 +109,15 @@ class ParquetSinkCoevalSpec
       val parquetWriter = mock[ParquetWriter[GenericRecord]]
       when(parquetWriter.write(record)).thenThrow(ex)
 
-        Observable
-          .now(record)
-          .consumeWith(ParquetSink.fromWriter(Coeval(parquetWriter)))
-          .attempt
-          .asserting{ attempt =>
-            attempt.isLeft shouldBe true
-            val file = new File(filePath)
-            file.exists() shouldBe false
-          }
+      Observable
+        .now(record)
+        .consumeWith(ParquetSink.fromWriter(Coeval(parquetWriter)))
+        .attempt
+        .asserting { attempt =>
+          attempt.isLeft shouldBe true
+          val file = new File(filePath)
+          file.exists() shouldBe false
+        }
     }
 
   }

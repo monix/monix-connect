@@ -18,11 +18,6 @@ class KeyCommandsSuite
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
   override implicit val scheduler: Scheduler = Scheduler.io("key-commands-suite")
 
-  override def beforeEach(): Unit = {
-    super.beforeEach()
-    utfConnection.use(cmd => cmd.server.flushAll).runSyncUnsafe()
-  }
-
   "del" should "delete key" in {
     val k1: K = genRedisKey.sample.get
     val k2: K = genRedisKey.sample.get
@@ -301,7 +296,7 @@ class KeyCommandsSuite
     utfConnection
       .use[Task, Assertion](cmd =>
         for {
-          _ <- cmd.server.flushAll
+          _ <- cmd.server.flushDb
           r1 <- cmd.key.randomKey()
           _ <- cmd.string.set(k1, value) >> cmd.string.set(k2, value)
           r2 <- cmd.key.randomKey()

@@ -15,18 +15,11 @@ import scala.concurrent.duration._
 class ClusterConnectionSuite extends AsyncFlatSpec with MonixTaskSpec
   with RedisIntegrationFixture
   with Matchers
-  with BeforeAndAfterEach
-  with BeforeAndAfterAll
   with Eventually {
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
   override implicit val scheduler: Scheduler = Scheduler.io("cluster-connection-suite")
   private val clusterRedisUris = List(7000, 7001, 7002, 7003, 7004, 7005).map(port => RedisUri("127.0.0.1", port))
-
-  override def beforeEach(): Unit = {
-    super.beforeEach()
-    RedisConnection.cluster(clusterRedisUris).connectUtf.use(_.server.flushAll).runSyncUnsafe()
-  }
 
   "ClusterConnection" should "can connect to multiple uri" in {
     val key = genRedisKey.sample.get
@@ -51,7 +44,7 @@ class ClusterConnectionSuite extends AsyncFlatSpec with MonixTaskSpec
     val key = genRedisKey.sample.get
     val value = genRedisValue.sample.get
     val clusterUri = RedisUri("127.0.0.1", 7005)
-    RedisConnection.cluster(List(clusterUri)).connectUtf.use {cmd =>
+    RedisConnection.cluster(List(clusterUri)).connectUtf.use { cmd =>
       cmd.list.lPush(key, value) >>
         cmd.list.lPop(key)
     }.asserting(_ shouldBe Some(value))

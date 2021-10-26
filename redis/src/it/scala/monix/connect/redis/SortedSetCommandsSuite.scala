@@ -20,10 +20,6 @@ class SortedSetCommandsSuite
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
   override implicit val scheduler: Scheduler = Scheduler.io("sorted-set-commands-suite")
 
-  override def beforeEach(): Unit = {
-    super.beforeEach()
-    utfConnection.use(cmd => cmd.server.flushAll).runSyncUnsafe()
-  }
 
   s"zAdd" should "insert elements with no order and reading back sorted" in {
     val k: K = genRedisKey.sample.get

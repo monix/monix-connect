@@ -57,3 +57,5 @@ project/metals.sbt
 website/.docusaurus/
 
 gcs/tmp/
+
+gcs/blob-test/

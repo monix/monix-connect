@@ -8,14 +8,14 @@ import monix.reactive.Observable
 import monix.testing.scalatest.MonixTaskSpec
 import org.apache.commons.codec.digest.DigestUtils.md5Hex
 import org.scalacheck.Gen
-import org.scalatest.BeforeAndAfterEach
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.services.sqs.model.{QueueAttributeName, SqsException}
 
 import scala.concurrent.duration._
 
-class FifoQueueSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with BeforeAndAfterEach with SqsITFixture {
+class FifoQueueSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with BeforeAndAfterAll with SqsITFixture {
 
   implicit val scheduler: Scheduler = Scheduler.io("sqs-fifo-queue-suite")
 
@@ -24,7 +24,7 @@ class FifoQueueSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with
   "A fifo queue" can "be created and used to receive and produce messages" in {
     val message = genFifoMessage(defaultGroupId, deduplicationId = Some("123")).sample.get
     for {
-      sqs <- Task(unsafeSqsAsyncClient)
+      sqs <- unsafeSqsAsyncClient
       fifoQueueName <- Task.from(genFifoQueueName)
       queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
       messageResponse <- sqs.producer.sendSingleMessage(message, queueUrl)
@@ -39,7 +39,7 @@ class FifoQueueSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with
   it can "requires group id when a message is produced" in {
     val message = StandardMessage("body").asInstanceOf[Message]
       for {
-        sqs <- Task(unsafeSqsAsyncClient)
+        sqs <- unsafeSqsAsyncClient
         fifoQueueName <- Task.from(genFifoQueueName)
         queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
         isGroupIdRequired <- sqs.producer.sendSingleMessage(message, queueUrl)
@@ -52,7 +52,7 @@ class FifoQueueSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with
   it can "requires either explicit deduplication ids or content based one" in {
     val messageWithoutDeduplicationId = genFifoMessage(defaultGroupId, deduplicationId = None).sample.get
       for {
-        sqs <- Task(unsafeSqsAsyncClient)
+        sqs <- unsafeSqsAsyncClient
         fifoQueueName <- Task.from(genFifoQueueName)
         manualDedupQueueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
         failsWithoutDedupMechanism <- sqs.producer.sendSingleMessage(messageWithoutDeduplicationId, manualDedupQueueUrl)
@@ -69,7 +69,7 @@ class FifoQueueSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with
     val duplicatedMessageId2 = message1.copy(body = Gen.identifier.sample.get)
 
       for {
-        sqs <- Task(unsafeSqsAsyncClient)
+        sqs <- unsafeSqsAsyncClient
         fifoQueueName <- Task.from(genFifoQueueName)
         queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = Map(QueueAttributeName.FIFO_QUEUE -> "true"))
         response1 <- sqs.producer.sendSingleMessage(message1, queueUrl)
@@ -93,7 +93,7 @@ class FifoQueueSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with
     val message2 = genFifoMessage(defaultGroupId, deduplicationId = None).sample.get
 
       for {
-        sqs <- Task(unsafeSqsAsyncClient)
+        sqs <- unsafeSqsAsyncClient
         fifoQueueName <- Task.from(genFifoQueueName)
         queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = fifoDeduplicationQueueAttr)
         response1 <- sqs.producer.sendSingleMessage(message1, queueUrl)
@@ -118,7 +118,7 @@ class FifoQueueSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with
     val messages = Gen.listOfN(10, genFifoMessageWithDeduplication(defaultGroupId)).sample.get
 
       for {
-        sqs <- Task(unsafeSqsAsyncClient)
+        sqs <- unsafeSqsAsyncClient
         fifoQueueName <- Task.from(genFifoQueueName)
         queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = fifoDeduplicationQueueAttr)
         _ <- Observable.fromIterable(messages).consumeWith(sqs.producer.sendSink(queueUrl))
@@ -139,7 +139,7 @@ class FifoQueueSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with
     val message2 = message1.copy(deduplicationId = Some("222"))
     val message3 = message1.copy(deduplicationId = Some("333"))
       for {
-        sqs <- Task(unsafeSqsAsyncClient)
+        sqs <- unsafeSqsAsyncClient
         fifoQueueName <- Task.from(genFifoQueueName)
         queueUrl <- sqs.operator.createQueue(fifoQueueName, attributes = fifoDeduplicationQueueAttr)
         response1 <- sqs.producer.sendSingleMessage(message1, queueUrl)

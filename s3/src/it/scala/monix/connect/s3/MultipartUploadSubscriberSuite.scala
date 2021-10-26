@@ -37,7 +37,7 @@ import scala.util.{Failure, Success, Try}
 class MultipartUploadSubscriberSuite
   extends AsyncFlatSpec with Matchers with MonixTaskSpec with BeforeAndAfterAll with S3Fixture {
 
-  private val bucketName = "multipart-upload-test"
+  private val bucketName = "multipart-upload-test-bucket"
   override implicit val scheduler = Scheduler.io("multipart-download-observable-suite")
 
   override def beforeAll(): Unit = {
@@ -149,7 +149,7 @@ class MultipartUploadSubscriberSuite
     }
   }
 
-  it should "fails to upload in multipart when min chunk size is lower than (5MB)" in {
+  it should "fail to upload in multipart when min chunk size is lower than (5MB)" in {
     val minChunkSize = 5242879 //minimum is 5242880
 
    Observable.now(Array.emptyByteArray)

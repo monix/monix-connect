@@ -6,6 +6,7 @@ import monix.connect.mongodb.client.{CollectionCodecRef, CollectionOperator, Col
 import monix.connect.mongodb.domain.{Tuple2F, Tuple3F, Tuple4F, Tuple5F, Tuple6F, Tuple7F, Tuple8F}
 import monix.eval.Task
 import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
+import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{Assertion, AsyncTestSuite}
 
@@ -21,7 +22,7 @@ trait MongoConnectionFixture extends Fixture {
         CollectionRef[Company]) => Resource[Task, Tuple2F[CollectionOperator, Employee, Company]]): Task[Assertion] = {
       val employee = genEmployee.sample.get
       val company = genCompany.sample.get
-      val connection = makeResource(employeesCol, companiesCol)
+      val connection = makeResource(randomEmployeesColRef, randomCompaniesColRef)
 
       connection.use {
         case (
@@ -47,52 +48,43 @@ trait MongoConnectionFixture extends Fixture {
         CollectionRef[Employee],
         CollectionRef[Investor]) => Resource[Task, Tuple3F[CollectionOperator, Company, Employee, Investor]])
       : Task[Assertion] = {
-      val employees = List(Employee("Caroline", 21, "Barcelona", "OldCompany"))
-      val company = Company("OldCompany", employees, 0)
-      val investor1 = Investor("MyInvestor1", 10001, List(company))
-      val investor2 = Investor("MyInvestor2", 20001, List(company))
-      val companiesCol = CollectionCodecRef(
-        dbName,
-        companiesColName,
-        classOf[Company],
-        createCodecProvider[Company](),
-        createCodecProvider[Employee]())
-      val employeesCol =
-        CollectionCodecRef(dbName, employeesColName, classOf[Employee], createCodecProvider[Employee]())
-      val investorsCol = CollectionCodecRef(
-        dbName,
-        investorsColName,
-        classOf[Investor],
-        createCodecProvider[Investor](),
-        createCodecProvider[Company](),
-        createCodecProvider[Employee]())
+      val newCompanyName = randomName("NewCompany")
+      val oldCompanyName = randomName("OldCompany")
+      val investorName1 = randomName("MyInvestor1")
+      val investorName2 = randomName("MyInvestor2")
 
-      makeResource(companiesCol, employeesCol, investorsCol).use {      case (
+      val employees = List(Employee("Caroline", 21, "Barcelona", oldCompanyName))
+      val oldCompany = Company(oldCompanyName, employees, 0)
+      val investor1 = Investor(investorName1, 10001, List(oldCompany))
+      val investor2 = Investor(investorName2, 20001, List(oldCompany))
+      val newCompany = Company(newCompanyName, employees = List.empty, investment = 0)
+
+      makeResource(randomCompaniesColRef, randomEmployeesColRef, randomInvestorsColRef).use {      case (
         CollectionOperator(_, companySource, companySingle, companySink),
         CollectionOperator(_, employeeSource, employeeSingle, employeeSink),
         CollectionOperator(_, investorSource, investorSingle, _)) =>
         for {
-        _ <- MongoSingle.insertMany(investorsMongoCol, List(investor1, investor2))
-        _ <- MongoSingle.insertMany(employeesMongoCol, employees)
-        _ <- MongoSingle.insertOne(companiesMongoCol, company)
-        _ <- companySingle.insertOne(Company("NewCompany", employees = List.empty, investment = 0))
+        _ <- investorSingle.insertMany(List(investor1, investor2))
+        _ <- employeeSingle.insertMany(employees)
+        _ <- companySingle.insertOne(oldCompany)
+        _ <- companySingle.insertOne(newCompany)
               .delayResult(1.second)
         _ <- {
               employeeSource
-                .find(Filters.eq("companyName", "OldCompany")) //read employees from old company
+                .find(Filters.eq("companyName", oldCompanyName)) //read employees from old company
                 .bufferTimedAndCounted(2.seconds, 15)
                 .map { employees =>
                   // pushes them into the new one
-                  (Filters.eq("name", "NewCompany"), Updates.pushEach("employees", employees.asJava))
+                  (Filters.eq("name", newCompanyName), Updates.pushEach("employees", employees.asJava))
                 }
                 .consumeWith(companySink.updateOne())
             }
             //aggregates all the
-            investment <- investorSource.find(Filters.in("companies.name", "OldCompany")).map(_.funds).sumL
+            investment <- investorSource.find(Filters.in("companies.name", oldCompanyName)).map(_.funds).sumL
             updateResult <- companySingle.updateMany(
-              Filters.eq("name", "NewCompany"),
+              Filters.eq("name", newCompanyName),
               Updates.set("investment", investment))
-            newCompany <- MongoSource.find(companiesMongoCol, Filters.eq("name", "NewCompany")).headL
+            newCompany <- Task.sleep(1.second) >> companySource.find(Filters.eq("name", newCompanyName)).headL
           } yield {
             updateResult.wasAcknowledged shouldBe true
             updateResult.matchedCount shouldBe 1
@@ -109,7 +101,7 @@ trait MongoConnectionFixture extends Fixture {
     ): Task[Assertion] = {
       val company = genCompany.sample.get
       val (employee1, employee2, employee3) = (genEmployee.sample.get, genEmployee.sample.get, genEmployee.sample.get)
-      val connection = makeResource((employeesCol, employeesCol, employeesCol, companiesCol))
+      val connection = makeResource((randomEmployeesColRef, randomEmployeesColRef, randomEmployeesColRef, randomCompaniesColRef))
 
       connection.use {
         case (employees1, employees2, employees3, companies) =>
@@ -143,7 +135,7 @@ trait MongoConnectionFixture extends Fixture {
     val company = genCompany.sample.get
     val (employee1, employee2, employee3, employee4) =
       (genEmployee.sample.get, genEmployee.sample.get, genEmployee.sample.get, genEmployee.sample.get)
-    val connection = makeResource((employeesCol, employeesCol, employeesCol, employeesCol, companiesCol))
+    val connection = makeResource((randomEmployeesColRef, randomEmployeesColRef, randomEmployeesColRef, randomEmployeesColRef, randomCompaniesColRef))
 
     connection.use {
       case (employees1, employees2, employees3, employees4, companies) =>
@@ -187,7 +179,7 @@ trait MongoConnectionFixture extends Fixture {
         genEmployee.sample.get,
         genEmployee.sample.get,
         genEmployee.sample.get)
-    val connection = makeResource((employeesCol, employeesCol, employeesCol, employeesCol, employeesCol, companiesCol))
+    val connection = makeResource((randomEmployeesColRef, randomEmployeesColRef, randomEmployeesColRef, randomEmployeesColRef, randomEmployeesColRef, randomCompaniesColRef))
 
     connection.use {
       case (employees1, employees2, employees3, employees4, employees5, companies) =>
@@ -244,7 +236,7 @@ trait MongoConnectionFixture extends Fixture {
         genEmployee.sample.get,
         genEmployee.sample.get)
     val connection =
-      makeResource((employeesCol, employeesCol, employeesCol, employeesCol, employeesCol, employeesCol, companiesCol))
+      makeResource((randomEmployeesColRef, randomEmployeesColRef, randomEmployeesColRef, randomEmployeesColRef, randomEmployeesColRef, randomEmployeesColRef, randomCompaniesColRef))
 
     connection.use {
       case (employees1, employees2, employees3, employees4, employees5, employees6, companies) =>
@@ -307,14 +299,14 @@ trait MongoConnectionFixture extends Fixture {
         genEmployee.sample.get,
         genEmployee.sample.get)
     val connection = makeResource((
-      employeesCol,
-      employeesCol,
-      employeesCol,
-      employeesCol,
-      employeesCol,
-      employeesCol,
-      employeesCol,
-      companiesCol))
+      randomEmployeesColRef,
+      randomEmployeesColRef,
+      randomEmployeesColRef,
+      randomEmployeesColRef,
+      randomEmployeesColRef,
+      randomEmployeesColRef,
+      randomEmployeesColRef,
+      randomCompaniesColRef))
 
     connection.use {
       case (employees1, employees2, employees3, employees4, employees5, employees6, employees7, companies) =>

@@ -28,7 +28,9 @@ import monix.reactive.{Consumer, Observable}
 import monix.execution.Scheduler
 import monix.testing.scalatest.MonixTaskSpec
 
-class HdfsSpec extends AsyncWordSpec with MonixTaskSpec with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with HdfsFixture  {
+class HdfsSpec
+  extends AsyncWordSpec with MonixTaskSpec with Matchers with BeforeAndAfterAll with BeforeAndAfterEach
+  with HdfsFixture {
 
   override implicit val scheduler = Scheduler.io("hdfs-spec")
   private var miniHdfs: MiniDFSCluster = _
@@ -128,27 +130,27 @@ class HdfsSpec extends AsyncWordSpec with MonixTaskSpec with Matchers with Befor
       val chunksB: List[Array[Byte]] = genChunks.sample.get
       val existedBefore: Boolean = fs.exists(path)
 
-       for {
-         offsetA <- Observable
-           .from(chunksA)
-           .consumeWith(hdfsWriter)
-         resultA <- Hdfs.read(fs, path).headL
-         failedOverwriteAttempt <- Observable
-             .from(chunksB)
-             .consumeWith(hdfsWriter)
-             .attempt
-         resultAfterOverwriteAttempt <- Hdfs.read(fs, path).headL
-       } yield {
-         existedBefore shouldBe false
-         fs.exists(path) shouldBe true
-         resultA shouldBe chunksA.flatten
-         offsetA shouldBe chunksA.flatten.size
-         failedOverwriteAttempt.isLeft shouldBe true
-         failedOverwriteAttempt.left.get shouldBe a[org.apache.hadoop.fs.FileAlreadyExistsException]
-         fs.exists(path) shouldBe true
-         resultAfterOverwriteAttempt shouldBe chunksA.flatten
-         resultAfterOverwriteAttempt.length shouldBe chunksA.flatten.size
-       }
+      for {
+        offsetA <- Observable
+          .from(chunksA)
+          .consumeWith(hdfsWriter)
+        resultA <- Hdfs.read(fs, path).headL
+        failedOverwriteAttempt <- Observable
+          .from(chunksB)
+          .consumeWith(hdfsWriter)
+          .attempt
+        resultAfterOverwriteAttempt <- Hdfs.read(fs, path).headL
+      } yield {
+        existedBefore shouldBe false
+        fs.exists(path) shouldBe true
+        resultA shouldBe chunksA.flatten
+        offsetA shouldBe chunksA.flatten.size
+        failedOverwriteAttempt.isLeft shouldBe true
+        failedOverwriteAttempt.left.get shouldBe a[org.apache.hadoop.fs.FileAlreadyExistsException]
+        fs.exists(path) shouldBe true
+        resultAfterOverwriteAttempt shouldBe chunksA.flatten
+        resultAfterOverwriteAttempt.length shouldBe chunksA.flatten.size
+      }
     }
 
     "allow appending to existing files" in {
@@ -165,7 +167,7 @@ class HdfsSpec extends AsyncWordSpec with MonixTaskSpec with Matchers with Befor
         resultA <- Hdfs.read(fs, path).headL
         fileExistsA = fs.exists(path)
 
-          finalOffset <- Observable
+        finalOffset <- Observable
           .from(chunksB)
           .consumeWith(Hdfs.append(fs, path))
         finalResult <- Hdfs.read(fs, path).headL
@@ -191,7 +193,7 @@ class HdfsSpec extends AsyncWordSpec with MonixTaskSpec with Matchers with Befor
         .from(chunksA)
         .consumeWith(Hdfs.append(fs, path))
         .attempt
-        .asserting{appendAttempt =>
+        .asserting { appendAttempt =>
           existed shouldBe false
           appendAttempt.isLeft shouldBe true
         }

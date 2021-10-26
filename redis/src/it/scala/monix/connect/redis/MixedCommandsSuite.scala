@@ -17,11 +17,6 @@ class MixedCommandsSuite extends AsyncFlatSpec with MonixTaskSpec
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
   override implicit val scheduler: Scheduler = Scheduler.io("mixed-commands-suite")
 
-  override def beforeEach(): Unit = {
-    super.beforeEach()
-    utfConnection.use(cmd => cmd.server.flushAll).runSyncUnsafe()
-  }
-
   "Redis" should "allow to composition of different Redis submodules" in {
     val k1: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get
@@ -31,7 +26,7 @@ class MixedCommandsSuite extends AsyncFlatSpec with MonixTaskSpec
 
       utfConnection.use[Task, Assertion] { case RedisCmd(_, keys, list, server, _, _, string) =>
         for {
-          _ <- server.flushAll
+          _ <- server.flushDb
           _ <- keys.touch(k1)
           _ <- string.set(k1, value)
           _ <- keys.rename(k1, k2)

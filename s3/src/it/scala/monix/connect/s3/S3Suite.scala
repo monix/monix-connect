@@ -8,8 +8,8 @@ import monix.execution.Scheduler
 import monix.reactive.Observable
 import monix.testing.scalatest.MonixTaskSpec
 import org.scalacheck.Gen
-import org.scalatest.BeforeAndAfterAll
-import software.amazon.awssdk.services.s3.model.{ CopyObjectResponse, NoSuchBucketException, NoSuchKeyException, PutObjectResponse}
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import software.amazon.awssdk.services.s3.model.{CopyObjectResponse, NoSuchBucketException, NoSuchKeyException, PutObjectResponse}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AsyncFlatSpec
@@ -17,7 +17,7 @@ import org.scalatest.flatspec.AsyncFlatSpec
 class S3Suite
   extends AsyncFlatSpec with MonixTaskSpec with Matchers with BeforeAndAfterAll with S3Fixture with Eventually {
 
-  private val bucketName = "sample-bucket"
+  private val bucketName = "s3-suite-test-bucket"
   override implicit val scheduler = Scheduler.io("multipart-download-observable-suite")
 
   override def beforeAll(): Unit = {

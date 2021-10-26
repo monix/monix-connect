@@ -33,16 +33,16 @@ import scala.util.{Failure, Success, Try}
 class ListObjectsObservableSuite
   extends AsyncFlatSpec with Matchers with MonixTaskSpec with BeforeAndAfterAll with ScalaFutures with S3Fixture with Eventually {
 
-  private val bucketName = "list-observable-test"
+  private val bucketName = "list-observable-test-bucket"
 
   override implicit val scheduler = Scheduler.io("list-objects-observable-suite")
   override implicit val patienceConfig = PatienceConfig(10.seconds, 100.milliseconds)
 
   override def beforeAll(): Unit = {
     super.beforeAll()
-    Try(s3Resource.use(_.createBucket(bucketName)).runSyncUnsafe()) match {
-      case Success(_) => info(s"Created S3 bucket ${bucketName} ")
-      case Failure(e) => info(s"Failed to create S3 bucket ${bucketName} with exception: ${e.getMessage}")
+    s3Resource.use(_.createBucket(bucketName)).attempt.runSyncUnsafe() match {
+      case Right(_) => info(s"Created S3 bucket $bucketName ")
+      case Left(e) => info(s"Failed to create S3 bucket $bucketName with exception: ${e.getMessage}")
     }
   }
 

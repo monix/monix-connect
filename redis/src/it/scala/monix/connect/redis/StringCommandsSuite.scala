@@ -15,11 +15,6 @@ class StringCommandsSuite
 
   override implicit val scheduler: Scheduler = Scheduler.io("string-commands-suite")
 
-  override def beforeEach(): Unit = {
-    super.beforeEach()
-    utfConnection.use(cmd => cmd.server.flushAll).runSyncUnsafe()
-  }
-
   "append" should "append a value to a key" in {
     val k1: K = genRedisKey.sample.get
     val v1: String = genRedisValue.sample.get

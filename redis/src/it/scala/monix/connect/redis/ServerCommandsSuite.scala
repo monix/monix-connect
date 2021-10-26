@@ -1,5 +1,6 @@
 package monix.connect.redis
 
+import monix.connect.redis.client.RedisConnection
 import monix.eval.Task
 import monix.execution.Scheduler
 import monix.testing.scalatest.MonixTaskSpec
@@ -7,7 +8,7 @@ import org.scalacheck.Gen
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.{Assertion, BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatest.{Assertion, BeforeAndAfterAll, BeforeAndAfterEach, Ignore}
 
 import java.time.Instant
 import java.util.Date
@@ -19,11 +20,6 @@ class ServerCommandsSuite
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
   override implicit val scheduler: Scheduler = Scheduler.io("server-commands-suite")
-
-  override def beforeEach(): Unit = {
-    super.beforeEach()
-    utfConnection.use(cmd => cmd.server.flushAll).runSyncUnsafe()
-  }
 
   "client name" can "be set and fetch back" in {
     val name = Gen.identifier.sample.get
@@ -73,41 +69,44 @@ class ServerCommandsSuite
       })
   }
 
-  "dbSize" can "return the number of keys in the selected database" in {
-    val key1 = Gen.identifier.sample.get
-    val key2 = Gen.identifier.sample.get
-    val value = Gen.identifier.sample.get
+  //todo
+ //"dbSize" can "return the number of keys in the selected database" in {
+ //  val key1 = Gen.identifier.sample.get
+ //  val key2 = Gen.identifier.sample.get
+ //  val value = Gen.identifier.sample.get
 
-    utfConnection.use[Task, Assertion](cmd =>
-      for {
-        _ <- cmd.string.set(key1, value) >> cmd.string.set(key2, value)
-        dbSize <- cmd.server.dbSize
-        _ <- cmd.server.flushDb
-        dbSizeAfterFlush <- cmd.server.dbSize
-      } yield {
-        dbSize shouldBe 2
-        dbSizeAfterFlush shouldBe 0
-      })
-  }
+ //  RedisConnection.standalone(redisUri.withDatabase(0)).connectUtf
+ //    .use[Task, Assertion](cmd =>
+ //    for {
+ //      _ <- cmd.server.flushDb
+ //      _ <- cmd.string.set(key1, value) >> cmd.string.set(key2, value)
+ //      dbSize <- cmd.server.dbSize
+ //      _ <- cmd.server.flushDb
+ //      dbSizeAfterFlush <- cmd.server.dbSize
+ //    } yield {
+ //      dbSize shouldBe 2
+ //      dbSizeAfterFlush shouldBe 0
+ //    })
+ //}
 
   // todo: it should "configResetStat" in {}
 
-  it should "flushAll" in {
-    val key: K = genRedisKey.sample.get
-    val value: String = genRedisValue.sample.get
+   it should "flushAll" in {
+     val key: K = genRedisKey.sample.get
+     val value: String = genRedisValue.sample.get
 
-    utfConnection.use[Task, Assertion]{ cmd =>
-      for {
-        _ <- cmd.string.set(key, value)
-        existsBeforeFlush <- cmd.key.exists(key)
-        _ <- cmd.server.flushAll
-        existsAfterFlush <- cmd.key.exists(key)
-      } yield {
-        existsBeforeFlush shouldEqual true
-        existsAfterFlush shouldEqual false
-      }
-    }
-  }
+     utfConnection.use[Task, Assertion]{ cmd =>
+       for {
+         _ <- cmd.string.set(key, value)
+         existsBeforeFlush <- cmd.key.exists(key)
+         _ <- cmd.server.flushAll
+         existsAfterFlush <- cmd.key.exists(key)
+       } yield {
+         existsBeforeFlush shouldEqual true
+         existsAfterFlush shouldEqual false
+       }
+     }
+   }
 
   it should "flushDb" in {
     val key: K = genRedisKey.sample.get

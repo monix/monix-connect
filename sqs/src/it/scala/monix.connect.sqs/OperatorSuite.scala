@@ -5,20 +5,21 @@ import monix.eval.Task
 import monix.execution.Scheduler
 import monix.testing.scalatest.MonixTaskSpec
 import org.scalacheck.Gen
-import org.scalatest.BeforeAndAfterEach
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.services.sqs.model.{QueueAttributeName, QueueDoesNotExistException}
 
 import scala.concurrent.duration.DurationInt
 
-class OperatorSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with BeforeAndAfterEach with SqsITFixture {
+class OperatorSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with BeforeAndAfterAll with SqsITFixture {
 
   implicit val scheduler = Scheduler.io("sqs-operator-suite")
 
   s"Sqs" can "create queue and check it exists" in {
+    val queueName = randomQueueName
     for {
-      sqs <- Task(unsafeSqsAsyncClient)
+      sqs <- unsafeSqsAsyncClient
       existedBefore <- sqs.operator.existsQueue(queueName)
       _ <- sqs.operator.createQueue(queueName)
       existsAfter <- sqs.operator.existsQueue(queueName)
@@ -29,7 +30,7 @@ class OperatorSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with 
   }
 
   it must "fail when getting the url of a non existing queue" in {
-   Task(unsafeSqsAsyncClient).flatMap(_.operator.getQueueUrl(QueueName("randomQueueName")))
+   unsafeSqsAsyncClient.flatMap(_.operator.getQueueUrl(randomQueueName))
      .attempt.asserting{ queueUrl =>
      queueUrl.isLeft shouldBe true
      queueUrl.toTry.failed.get shouldBe a[QueueDoesNotExistException]
@@ -39,8 +40,8 @@ class OperatorSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with 
   it can "purge a queue" in {
     val messages = Gen.listOfN(100, genStandardMessage).sample.get
     for {
-      sqs <- Task(unsafeSqsAsyncClient)
-      queueUrl <- sqs.operator.createQueue(queueName)
+      sqs <- unsafeSqsAsyncClient
+      queueUrl <- sqs.operator.createQueue(randomQueueName)
       _ <- sqs.producer.sendParBatch(messages, queueUrl)
       receiveBeforePurge <- sqs.consumer.receiveSingleAutoDelete(queueUrl, maxMessages = 5)
       _ <- sqs.operator.purgeQueue(queueUrl) >> Task.sleep(2.seconds)
@@ -56,8 +57,8 @@ class OperatorSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with 
       val tagsByUrl = Map("environment" -> "test")
 
       for {
-        sqs <- Task(unsafeSqsAsyncClient)
-        queueUrl <- sqs.operator.createQueue(queueName, tags = initialTags)
+        sqs <- unsafeSqsAsyncClient
+        queueUrl <- sqs.operator.createQueue(randomQueueName, tags = initialTags)
         _ <- sqs.operator.tagQueue(queueUrl, tags = tagsByUrl) //tagging by url
         nonExistingQueue <- sqs.operator.tagQueue(QueueUrl("nonExistingQueue"), tags = tagsByUrl).attempt
         appliedTags <- sqs.operator.listQueueTags(queueUrl)
@@ -76,8 +77,8 @@ class OperatorSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with 
       val initialTags = Map(queueType -> "1", modeTagKey -> "difficult",
         environmentTagKey -> "test", dummyTagKey -> "123")
       for {
-        sqs <- Task(unsafeSqsAsyncClient)
-        queueUrl <- sqs.operator.createQueue(queueName, tags = initialTags)
+        sqs <- unsafeSqsAsyncClient
+        queueUrl <- sqs.operator.createQueue(randomQueueName, tags = initialTags)
         untagByUrl <- sqs.operator.untagQueue(queueUrl, tagKeys = List(queueType)) >>
           sqs.operator.listQueueTags(queueUrl)
         untagByName <- sqs.operator.untagQueue(queueUrl, tagKeys = List(modeTagKey, environmentTagKey)) >> //tagging by queue name
@@ -95,8 +96,8 @@ class OperatorSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with 
       val initialAttributes = Map(QueueAttributeName.DELAY_SECONDS -> "60")
       val attributesByUrl =  Map(QueueAttributeName.RECEIVE_MESSAGE_WAIT_TIME_SECONDS -> "12345")
       for {
-        sqs <- Task(unsafeSqsAsyncClient)
-        queueUrl <- sqs.operator.createQueue(queueName, attributes = initialAttributes)
+        sqs <- unsafeSqsAsyncClient
+        queueUrl <- sqs.operator.createQueue(randomQueueName, attributes = initialAttributes)
         _ <- sqs.operator.setQueueAttributes(queueUrl, attributes = attributesByUrl)
         nonExistingQueue <- sqs.operator.setQueueAttributes(QueueUrl("randomUrl"), attributes = attributesByUrl).attempt
         attributes <- sqs.operator.getQueueAttributes(queueUrl)
@@ -109,11 +110,12 @@ class OperatorSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with 
   }
 
   it can "get a queue and queue url from its name" in {
+    val queueName = randomQueueName
       for {
-        sqs <- Task(unsafeSqsAsyncClient)
+        sqs <- unsafeSqsAsyncClient
         createdQueueUrl <- sqs.operator.createQueue(queueName)
         queueUrl <- sqs.operator.getQueueUrl(queueName)
-        nonExistingQueue <- sqs.operator.getQueueUrl(QueueName("randomName123")).attempt
+        nonExistingQueue <- sqs.operator.getQueueUrl(randomQueueName).attempt
       } yield {
         createdQueueUrl shouldBe QueueUrl(queueUrlPrefix(queueName.name))
         queueUrl shouldBe QueueUrl(queueUrlPrefix(queueName.name))
@@ -123,8 +125,9 @@ class OperatorSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with 
   }
 
   it can "delete queue by url" in {
-      for {
-        sqs <- Task(unsafeSqsAsyncClient)
+    val queueName = randomQueueName
+    for {
+        sqs <- unsafeSqsAsyncClient
         queueUrl <- sqs.operator.createQueue(queueName)
         existsBefore <- sqs.operator.existsQueue(queueName)
         existsAfterDelete <- sqs.operator.deleteQueue(queueUrl) >> sqs.operator.existsQueue(queueName)
@@ -139,13 +142,13 @@ class OperatorSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with 
 
   it can "list all queue urls" in {
     for {
-      sqs <- Task(unsafeSqsAsyncClient)
+      sqs <- unsafeSqsAsyncClient
       queueNames <- Task.from(Gen.listOfN(10, genFifoQueueName))
       queueUrls <- Task.traverse(queueNames)(a => sqs.operator.createQueue(a))
       fullQueueList <- sqs.operator.listQueueUrls().toListL
     } yield {
-      fullQueueList.size shouldBe queueNames.size
-      fullQueueList should contain theSameElementsAs queueUrls
+      fullQueueList.size should be >= queueNames.size
+      fullQueueList should contain allElementsOf queueUrls
     }
   }
 
@@ -155,7 +158,7 @@ class OperatorSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with 
     val prefixedQueueNames = Gen.listOfN(6, genFifoQueueName.map(_.map(prefix + _))).sample.get
 
       for {
-        sqs <- Task(unsafeSqsAsyncClient)
+        sqs <- unsafeSqsAsyncClient
         _ <- Task.traverse(nonPrefixedQueueNames)(sqs.operator.createQueue(_))
         prefixedQueueUrls <- Task.traverse(prefixedQueueNames)(sqs.operator.createQueue(_))
         resultList <- sqs.operator.listQueueUrls(Some(prefix)).toListL

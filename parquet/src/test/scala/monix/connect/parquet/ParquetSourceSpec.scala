@@ -30,7 +30,8 @@ import org.scalatest.wordspec.AsyncWordSpec
 
 import scala.reflect.io.Directory
 
-class ParquetSourceSpec extends AsyncWordSpec with MonixTaskSpec with Matchers with AvroParquetFixture with BeforeAndAfterAll {
+class ParquetSourceSpec
+  extends AsyncWordSpec with MonixTaskSpec with Matchers with AvroParquetFixture with BeforeAndAfterAll {
 
   override implicit val scheduler: Scheduler = Scheduler.io("parquet-source-spec")
   override def afterAll(): Unit = {
@@ -63,8 +64,8 @@ class ParquetSourceSpec extends AsyncWordSpec with MonixTaskSpec with Matchers w
 
       for {
         _ <- Observable
-        .fromIterable(records)
-        .consumeWith(ParquetSink.fromWriterUnsafe(parquetWriter(file, conf, schema)))
+          .fromIterable(records)
+          .consumeWith(ParquetSink.fromWriterUnsafe(parquetWriter(file, conf, schema)))
         safeReader = Task(avroParquetReader(file, conf))
         result <- ParquetSource.fromReader(safeReader).toListL: Task[List[GenericRecord]]
       } yield {
@@ -77,7 +78,7 @@ class ParquetSourceSpec extends AsyncWordSpec with MonixTaskSpec with Matchers w
       val file = genFilePath()
       val safeReader = Task(avroParquetReader(file, conf))
 
-     ParquetSource.fromReader(safeReader).toListL.assertThrows[FileNotFoundException]
+      ParquetSource.fromReader(safeReader).toListL.assertThrows[FileNotFoundException]
     }
 
     "signals failure when reading from a malformed reader" in {

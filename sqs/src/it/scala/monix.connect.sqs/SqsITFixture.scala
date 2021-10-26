@@ -1,26 +1,17 @@
 package monix.connect.sqs
 
-import monix.execution.Scheduler.Implicits.global
 import monix.connect.sqs.producer.{FifoMessage, StandardMessage}
 import monix.connect.sqs.domain.{QueueName, QueueUrl}
 import monix.eval.{Task, TaskLike}
 import org.scalacheck.Gen
-import org.scalatest.{BeforeAndAfterEach, TestSuite}
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model._
 
 import java.net.URI
-import scala.concurrent.Future
 
 trait SqsITFixture {
-  this: BeforeAndAfterEach =>
-
-  override def beforeEach(): Unit = {
-    val deleteAll = unsafeSqsAsyncClient.operator.listQueueUrls().mapEvalF(unsafeSqsAsyncClient.operator.deleteQueue).completedL.attempt
-    deleteAll.runSyncUnsafe()
-  }
 
   def dlqRedrivePolicyAttr(dlQueueArn: String) = Map(QueueAttributeName.REDRIVE_POLICY -> s"""{"maxReceiveCount":"1", "deadLetterTargetArn": "$dlQueueArn" }""")
 
@@ -35,7 +26,7 @@ trait SqsITFixture {
       .region(Region.US_EAST_1)
       .build
 
-  implicit val unsafeSqsAsyncClient: Sqs = Sqs.createUnsafe(asyncClient)
+  implicit val unsafeSqsAsyncClient: Task[Sqs] = Task.eval(Sqs.createUnsafe(asyncClient))
 
   val fifoDeduplicationQueueAttr = Map(
     QueueAttributeName.FIFO_QUEUE -> "true",
@@ -44,9 +35,11 @@ trait SqsITFixture {
   // it must end with `.fifo` prefix, see https://github.com/aws/aws-sdk-php/issues/1331
   protected val genFifoQueueName: Gen[QueueName] = Gen.uuid.map(id => QueueName(s"queue-${id.toString}.fifo"))
 
-  def queueUrlPrefix(queueName: String) = s"http://localhost:9324/000000000000/${queueName}"
+  def queueUrlPrefix(queueName: String) = s"http://localhost:9324/queue/${queueName}"
 
-  val queueName: QueueName = QueueName("queue-1")
+  def randomQueueName: QueueName = genFifoQueueName.sample.get
+
+  val queueName: QueueName = randomQueueName
 
   // it must end with `.fifo` prefix, see https://github.com/aws/aws-sdk-php/issues/1331
   val genGroupId: Gen[String] = Gen.identifier.map(_.take(10))

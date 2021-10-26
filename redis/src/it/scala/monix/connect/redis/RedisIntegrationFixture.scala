@@ -1,6 +1,7 @@
 package monix.connect.redis
 
-import monix.connect.redis.client.{RedisConnection, RedisUri}
+import cats.effect.Resource
+import monix.connect.redis.client.{RedisCmd, RedisConnection, RedisUri}
 import monix.connect.redis.domain.VScore
 import org.scalacheck.Gen
 import monix.connect.redis.test.protobuf.{Person, PersonPk}
@@ -11,8 +12,10 @@ trait RedisIntegrationFixture {
   type K = String
   type V = String
 
-  val redisUri = RedisUri("localhost", 6379)
-  val utfConnection = RedisConnection.standalone(RedisUri("localhost", 6379)).connectUtf
+  val redisUri = RedisUri("localhost", 6379).withDatabase(2000)
+  def redis: RedisConnection = Gen.chooseNum(1, 9999)
+    .map(dbNum => RedisConnection.standalone(redisUri.withDatabase(dbNum))).sample.get
+  def utfConnection: Resource[Task, RedisCmd[String, String]] = redis.connectUtf
 
   val genRedisKey: Gen[K] = Gen.identifier.map(_.take(30))
   val genRedisValue: Gen[V] = Gen.choose(0, 10000).map(_.toString)

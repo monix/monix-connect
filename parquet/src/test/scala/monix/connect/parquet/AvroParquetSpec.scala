@@ -29,7 +29,8 @@ import monix.testing.scalatest.MonixTaskSpec
 import org.scalatest.BeforeAndAfterAll
 
 @deprecated("", "0.5.0")
-class AvroParquetSpec extends AsyncWordSpec with MonixTaskSpec with Matchers with AvroParquetFixture with BeforeAndAfterAll {
+class AvroParquetSpec
+  extends AsyncWordSpec with MonixTaskSpec with Matchers with AvroParquetFixture with BeforeAndAfterAll {
 
   override implicit val scheduler: Scheduler = Scheduler.io("avro-parquet-spec")
   override def afterAll(): Unit = {

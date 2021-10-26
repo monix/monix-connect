@@ -19,7 +19,7 @@ import org.scalatest.wordspec.{AnyWordSpecLike, AsyncWordSpec}
 class GcsUploaderSuite extends AsyncWordSpec with MonixTaskSpec with IdiomaticMockito with Matchers with ArgumentMatchersSugar with BeforeAndAfterAll {
 
   val storage = LocalStorageHelper.getOptions.getService
-  val dir = new File("gcs/tmp").toPath
+  val dir = new File("gcs/uploader-test").toPath
   val genLocalPath = Gen.identifier.map(s => dir.toAbsolutePath.toString + "/" + s)
   val testBucketName = Gen.identifier.sample.get
   override implicit val scheduler: Scheduler = Scheduler.io("gcs-storage-suite")
@@ -32,6 +32,7 @@ class GcsUploaderSuite extends AsyncWordSpec with MonixTaskSpec with IdiomaticMo
 
   override def afterAll(): Unit = {
     super.beforeAll()
+
   }
 
   s"$GcsUploader consumer implementation" should {

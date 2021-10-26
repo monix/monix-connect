@@ -13,15 +13,10 @@ import monix.connect.redis.test.protobuf.{Person, PersonPk}
 import monix.execution.Scheduler
 import monix.testing.scalatest.MonixTaskSpec
 
-class CodecSuite extends AsyncFlatSpec with MonixTaskSpec with  RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll with Eventually {
+class CodecSuite extends AsyncFlatSpec with MonixTaskSpec with  RedisIntegrationFixture with Matchers with Eventually {
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
   override implicit val scheduler: Scheduler = Scheduler.io("codec-suite")
-  val redis = RedisConnection.standalone(redisUri)
-  override def beforeEach(): Unit = {
-    super.beforeEach()
-    redis.connectUtf.use(_.server.flushAll).runSyncUnsafe()
-  }
 
   "A byte array codec" should "encode and decode protobuf keys and values" in {
     implicit val personPkCodec: BytesCodec[PersonPk] = Codec.byteArray(pk => PersonPk.toByteArray(pk), bytes => PersonPk.parseFrom(bytes))
@@ -46,7 +41,7 @@ class CodecSuite extends AsyncFlatSpec with MonixTaskSpec with  RedisIntegration
   }
 
   "An utf codec" should "encode and decode int numbers" in {
-    val key: Int = Gen.chooseNum(1, 1000).sample.get
+    val key: Int = Gen.chooseNum(1, 1000000).sample.get
     val value: Int = Gen.chooseNum(1, 1000).sample.get
     implicitly(intUtfCodec)
 
@@ -57,7 +52,7 @@ class CodecSuite extends AsyncFlatSpec with MonixTaskSpec with  RedisIntegration
   }
 
   it should "encode and decode int keys with strings api" in {
-    val key: Int = Gen.chooseNum(1, 10000).sample.get
+    val key: Int = Gen.chooseNum(1, 10000000).sample.get
     val n: Int = Gen.chooseNum(1, 99).sample.get
     implicitly(intUtfCodec) // used implicitly
 
@@ -68,8 +63,8 @@ class CodecSuite extends AsyncFlatSpec with MonixTaskSpec with  RedisIntegration
   }
 
   it should "encode and decode float numbers" in {
-    val key: Float = Gen.chooseNum[Float](1, 1000).sample.get
-    val value: Float = Gen.chooseNum[Float](1, 1000).sample.get
+    val key: Float = Gen.chooseNum[Float](1, 10000000).sample.get
+    val value: Float = Gen.chooseNum[Float](1, 100000).sample.get
     implicitly(floatUtfCodec) // used implicitly
 
     redis.connectUtf[Float, Float].use(cmd =>
@@ -79,8 +74,8 @@ class CodecSuite extends AsyncFlatSpec with MonixTaskSpec with  RedisIntegration
   }
 
   it should "encode and decode double numbers" in {
-    val key: Double = Gen.chooseNum[Double](1, 1000).sample.get
-    val value: Double = Gen.chooseNum[Double](1, 1000).sample.get
+    val key: Double = Gen.chooseNum[Double](1, 100000000).sample.get
+    val value: Double = Gen.chooseNum[Double](1, 10000).sample.get
     implicitly(doubleUtfCodec) // used implicitly
 
     redis.connectUtf[Double, Double].use(cmd =>
@@ -89,8 +84,8 @@ class CodecSuite extends AsyncFlatSpec with MonixTaskSpec with  RedisIntegration
   }
 
   it should "encode and decode big ints" in {
-    val key: BigInt = BigInt(Gen.chooseNum(1, 1000).sample.get)
-    val value: BigInt = BigInt.apply(Gen.chooseNum(1, 1000).sample.get)
+    val key: BigInt = BigInt(Gen.chooseNum(1, 100000000).sample.get)
+    val value: BigInt = BigInt.apply(Gen.chooseNum(1, 10000).sample.get)
     implicitly(bigIntUtfCodec) // used implicitly
 
     redis.connectUtf[BigInt, BigInt].use(cmd =>
@@ -98,7 +93,7 @@ class CodecSuite extends AsyncFlatSpec with MonixTaskSpec with  RedisIntegration
   }
 
   it should "encode and decode big decimals" in {
-    val key: BigDecimal = BigDecimal(Gen.chooseNum[Double](1, 1000).sample.get)
+    val key: BigDecimal = BigDecimal(Gen.chooseNum[Double](1, 10000000).sample.get)
     val value: BigDecimal = BigDecimal(Gen.chooseNum[Double](1, 1000).sample.get)
     implicitly(bigDecimalUtfCodec) // used implicitly
 
