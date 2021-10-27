@@ -470,12 +470,13 @@ object S3 {
     downloadSettings: DownloadSettings = DefaultDownloadSettings)(
     implicit
     s3AsyncClient: S3AsyncClient): Task[Array[Byte]] = {
-    require(firstNBytes.getOrElse(1) > 0, "The number of bytes if defined, must be a positive number.")
+
     val range = firstNBytes.map(n => s"bytes=0-${n - 1}")
     val request: GetObjectRequest = S3RequestBuilder.getObjectRequest(bucket, key, range, downloadSettings)
-    Task
-      .from(s3AsyncClient.getObject(request, AsyncResponseTransformer.toBytes[GetObjectResponse]))
-      .map(r => r.asByteArray())
+    Task(require(firstNBytes.getOrElse(1) > 0, "The number of bytes if defined, must be a positive number.")) >>
+      Task
+        .from(s3AsyncClient.getObject(request, AsyncResponseTransformer.toBytes[GetObjectResponse]))
+        .map(r => r.asByteArray())
   }
 
   @deprecated("Use one of the builders like `S3.create`", "0.5.0")
@@ -816,12 +817,12 @@ trait S3 {
     key: String,
     firstNBytes: Option[Int] = None,
     downloadSettings: DownloadSettings = DefaultDownloadSettings): Task[Array[Byte]] = {
-    require(firstNBytes.getOrElse(1) > 0, "The number of bytes if defined, must be positive.")
     val range = firstNBytes.map(n => s"bytes=0-${n - 1}")
     val request: GetObjectRequest = S3RequestBuilder.getObjectRequest(bucket, key, range, downloadSettings)
-    Task
-      .from(s3Client.getObject(request, AsyncResponseTransformer.toBytes[GetObjectResponse]))
-      .map(r => r.asByteArray())
+    Task(require(firstNBytes.getOrElse(1) > 0, "The number of bytes if defined, must be positive.")) >>
+      Task
+        .from(s3Client.getObject(request, AsyncResponseTransformer.toBytes[GetObjectResponse]))
+        .map(r => r.asByteArray())
   }
 
   /**
@@ -1294,7 +1295,6 @@ trait S3 {
     key: String,
     minChunkSize: Int = awsMinChunkSize,
     uploadSettings: UploadSettings = DefaultUploadSettings): Consumer[Array[Byte], CompleteMultipartUploadResponse] = {
-    require(minChunkSize >= domain.awsMinChunkSize, "minChunkSize >= 5242880")
     new MultipartUploadSubscriber(bucket, key, minChunkSize, uploadSettings, s3Client)
   }
 

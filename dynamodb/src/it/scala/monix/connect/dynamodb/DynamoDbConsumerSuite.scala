@@ -20,7 +20,7 @@ class DynamoDbConsumerSuite
 
   implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 300.milliseconds)
 
-  s"${DynamoDb}.consumer() creates a ${Consumer}" that {
+  s"$DynamoDb.consumer() creates a ${Consumer}" that {
 
     s"given an implicit instance of ${DynamoDbOp.Implicits.createTableOp} in the scope" must {
 

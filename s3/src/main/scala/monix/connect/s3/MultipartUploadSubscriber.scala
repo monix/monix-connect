@@ -60,8 +60,6 @@ private[s3] class MultipartUploadSubscriber(
     s: Scheduler): (Subscriber[Array[Byte]], AssignableCancelable) = {
     val out = new Subscriber[Array[Byte]] {
 
-      require(minChunkSize >= domain.awsMinChunkSize, "minChunkSize >= 5242880")
-
       implicit val scheduler = s
       private[this] val createRequest: CreateMultipartUploadRequest =
         S3RequestBuilder.createMultipartUploadRequest(bucket, key, uploadSettings)
@@ -70,7 +68,11 @@ private[s3] class MultipartUploadSubscriber(
         Task
           .from(s3Client.createMultipartUpload(createRequest))
           .map(_.uploadId())
-          .memoize // memoized since it must be the same for all future uploaded parts.
+          .memoize
+
+      if (minChunkSize < domain.awsMinChunkSize) {
+        callback.onError(new IllegalArgumentException("minChunkSize can not be smaller than 5MB"))
+      }
 
       private[this] var buffer: Array[Byte] = Array.emptyByteArray
       private[this] var completedParts: List[CompletedPart] = List.empty[CompletedPart]

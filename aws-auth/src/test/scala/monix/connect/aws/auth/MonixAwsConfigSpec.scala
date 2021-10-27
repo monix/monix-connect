@@ -18,7 +18,7 @@
 package monix.connect.aws.auth
 
 import java.net.URI
-import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.flatspec.AsyncFlatSpec
 import pureconfig.{CamelCase, ConfigFieldMapping, ConfigSource, KebabCase, PascalCase, SnakeCase}
 import pureconfig.generic.auto._
 import org.scalatest.matchers.should.Matchers
@@ -26,27 +26,28 @@ import pureconfig.error.ConfigReaderException
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import monix.connect.aws.auth.MonixAwsConf._
-import monix.execution.Scheduler.Implicits.global
+import monix.eval.Task
+import monix.execution.Scheduler
+import monix.testing.scalatest.MonixTaskSpec
 import pureconfig.generic.ProductHint
 
 import java.io.File
 import scala.util.Try
 
-class MonixAwsConfigSpec extends AnyFlatSpec with Matchers {
+class MonixAwsConfigSpec extends AsyncFlatSpec with MonixTaskSpec with Matchers {
+
+  override implicit val scheduler: Scheduler = Scheduler.io("monix-aws-config-spec")
 
   "MonixAwsConf" should "load from default config file" in {
-    //given/when
-    val monixAwsConf = MonixAwsConf.load().runSyncUnsafe()
-
-    //then
-    monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
-    monixAwsConf.endpoint.isDefined shouldBe true
-    monixAwsConf.region shouldBe Region.EU_WEST_1
+    MonixAwsConf.load().asserting { monixAwsConf =>
+      monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
+      monixAwsConf.endpoint.isDefined shouldBe true
+      monixAwsConf.region shouldBe Region.EU_WEST_1
+    }
   }
 
   it should "read the local endpoint as a uri" in {
 
-    //given
     implicit val hint: ProductHint[AppConf] =
       ProductHint(ConfigFieldMapping(CamelCase, KebabCase), useDefaultArgs = false, allowUnknownKeys = true)
 
@@ -62,18 +63,15 @@ class MonixAwsConfigSpec extends AnyFlatSpec with Matchers {
            |}
            |""".stripMargin)
 
-    //when
-    val monixAwsConf = configSource.loadOrThrow[AppConf].monixAws
-
-    //then
-    monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
-    monixAwsConf.endpoint shouldBe Some(URI.create("localhost:4566"))
-    monixAwsConf.httpClient.isDefined shouldBe false
-    monixAwsConf.region shouldBe Region.AWS_GLOBAL
+    Task(configSource.loadOrThrow[AppConf].monixAws).asserting { monixAwsConf =>
+      monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
+      monixAwsConf.endpoint shouldBe Some(URI.create("localhost:4566"))
+      monixAwsConf.httpClient.isDefined shouldBe false
+      monixAwsConf.region shouldBe Region.AWS_GLOBAL
+    }
   }
 
   it should "not require endpoint nor http client settings" in {
-    //given
     val configSource = ConfigSource.string(
       "" +
         s"""
@@ -87,18 +85,15 @@ class MonixAwsConfigSpec extends AnyFlatSpec with Matchers {
            |}
            |""".stripMargin)
 
-    //when
-    val monixAwsConf = configSource.loadOrThrow[AppConf].monixAws
-
-    //then
-    monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
-    monixAwsConf.endpoint.isDefined shouldBe false
-    monixAwsConf.httpClient.isDefined shouldBe false
-    monixAwsConf.region shouldBe Region.AWS_GLOBAL
+    Task(configSource.loadOrThrow[AppConf].monixAws).asserting { monixAwsConf =>
+      monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
+      monixAwsConf.endpoint.isDefined shouldBe false
+      monixAwsConf.httpClient.isDefined shouldBe false
+      monixAwsConf.region shouldBe Region.AWS_GLOBAL
+    }
   }
 
   it should "fail when credentials are not present" in {
-    //given
     val configSource = ConfigSource.string(
       "" +
         s"""
@@ -109,17 +104,14 @@ class MonixAwsConfigSpec extends AnyFlatSpec with Matchers {
            |}
            |""".stripMargin)
 
-    //when
     val monixAwsConf = Try(configSource.loadOrThrow[AppConf]).map(_.monixAws)
 
-    //then
     monixAwsConf.isFailure shouldBe true
     monixAwsConf.failed.get shouldBe a[ConfigReaderException[_]]
     monixAwsConf.failed.get.getMessage should include("Key not found: 'credentials'")
   }
 
   it should "fail when credentials region is not present" in {
-    //given
     val configSource = ConfigSource.string(
       "" +
         s"""
@@ -132,77 +124,60 @@ class MonixAwsConfigSpec extends AnyFlatSpec with Matchers {
            |}
            |""".stripMargin)
 
-    //when
-    val monixAwsConf = Try(configSource.loadOrThrow[AppConf]).map(_.monixAws)
-
-    //then
-    monixAwsConf.isFailure shouldBe true
-    monixAwsConf.failed.get shouldBe a[ConfigReaderException[_]]
-    monixAwsConf.failed.get.getMessage should include("Key not found: 'region'")
+    Task(configSource.loadOrThrow[AppConf]).map(_.monixAws).attempt.asserting { monixAwsConf =>
+      monixAwsConf.isLeft shouldBe true
+      monixAwsConf.left.get shouldBe a[ConfigReaderException[_]]
+      monixAwsConf.left.get.getMessage should include("Key not found: 'region'")
+    }
   }
 
   it can "read config in kebabCase" in {
-    //given/when
-    val monixAwsConf =
-      MonixAwsConf.file(new File("aws-auth/src/test/resources/kebab-case.conf"), KebabCase).runSyncUnsafe()
-
-    //then
-    monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
-    monixAwsConf.endpoint shouldBe Some(URI.create("kebab-case:12345"))
-    monixAwsConf.region shouldBe Region.EU_WEST_1
+    MonixAwsConf.file(new File("aws-auth/src/test/resources/kebab-case.conf"), KebabCase).asserting { monixAwsConf =>
+      monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
+      monixAwsConf.endpoint shouldBe Some(URI.create("kebab-case:12345"))
+      monixAwsConf.region shouldBe Region.EU_WEST_1
+    }
   }
 
   it can "read config in snake_case" in {
-    //given/when
-    val monixAwsConf =
-      MonixAwsConf.file(new File("aws-auth/src/test/resources/snake_case.conf"), SnakeCase).runSyncUnsafe()
-
-    //then
-    monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
-    monixAwsConf.endpoint shouldBe Some(URI.create("snake:12345"))
-    monixAwsConf.region shouldBe Region.EU_WEST_1
+    MonixAwsConf.file(new File("aws-auth/src/test/resources/snake_case.conf"), SnakeCase).asserting { monixAwsConf =>
+      monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
+      monixAwsConf.endpoint shouldBe Some(URI.create("snake:12345"))
+      monixAwsConf.region shouldBe Region.EU_WEST_1
+    }
   }
 
   it can "read config in PascalCase" in {
-    //given/when
-    val monixAwsConf =
-      MonixAwsConf.file(new File("aws-auth/src/test/resources/PascalCase.conf"), PascalCase).runSyncUnsafe()
-
-    //then
-    monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
-    monixAwsConf.endpoint shouldBe Some(URI.create("PascalCase:12345"))
-    monixAwsConf.region shouldBe Region.EU_WEST_1
+    MonixAwsConf.file(new File("aws-auth/src/test/resources/PascalCase.conf"), PascalCase).asserting { monixAwsConf =>
+      monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
+      monixAwsConf.endpoint shouldBe Some(URI.create("PascalCase:12345"))
+      monixAwsConf.region shouldBe Region.EU_WEST_1
+    }
   }
 
   it can "read config in camelCase" in {
-    //given/when
-    val monixAwsConf =
-      MonixAwsConf.file(new File("aws-auth/src/test/resources/camelCase.conf"), CamelCase).runSyncUnsafe()
-
-    //then
-    monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
-    monixAwsConf.endpoint shouldBe Some(URI.create("camelCase:12345"))
-    monixAwsConf.region shouldBe Region.EU_WEST_1
+    MonixAwsConf.file(new File("aws-auth/src/test/resources/camelCase.conf"), CamelCase).asserting { monixAwsConf =>
+      monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
+      monixAwsConf.endpoint shouldBe Some(URI.create("camelCase:12345"))
+      monixAwsConf.region shouldBe Region.EU_WEST_1
+    }
   }
 
   it should "read config in kebab-case by default from reference.conf " in {
-    //given/when
-    val monixAwsConf = MonixAwsConf.load().runSyncUnsafe()
-
-    //then
-    monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
-    monixAwsConf.endpoint shouldBe Some(URI.create("localhost:4566"))
-    monixAwsConf.region shouldBe Region.EU_WEST_1
+    MonixAwsConf.load().asserting { monixAwsConf =>
+      monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
+      monixAwsConf.endpoint shouldBe Some(URI.create("localhost:4566"))
+      monixAwsConf.region shouldBe Region.EU_WEST_1
+    }
   }
 
   it should "read config in camelCase by default when reading from path" in {
-    //given/when
-    val monixAwsConf = MonixAwsConf.file(new File("aws-auth/src/test/resources/kebab-case.conf")).runSyncUnsafe()
+    MonixAwsConf.file(new File("aws-auth/src/test/resources/kebab-case.conf")).asserting { monixAwsConf =>
+      monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
+      monixAwsConf.endpoint shouldBe Some(URI.create("kebab-case:12345"))
+      monixAwsConf.region shouldBe Region.EU_WEST_1
+    }
 
-    //then
-    monixAwsConf.credentials shouldBe a[DefaultCredentialsProvider]
-    monixAwsConf.endpoint shouldBe Some(URI.create("kebab-case:12345"))
-    monixAwsConf.region shouldBe Region.EU_WEST_1
   }
 
 }

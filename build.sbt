@@ -66,13 +66,11 @@ lazy val sharedSettings = Seq(
     "-sourcepath",
     file(".").getAbsolutePath.replaceAll("[.]$", "")
   ),
-  parallelExecution in Test             := false,
-  parallelExecution in IntegrationTest  := false,
-  parallelExecution in ThisBuild        := false,
-  testForkedParallel in Test            := false,
-  testForkedParallel in IntegrationTest := false,
-  testForkedParallel in ThisBuild       := false,
-  concurrentRestrictions in Global += Tags.limit(Tags.Test, 1),
+  parallelExecution in Test             := true,
+  parallelExecution in ThisBuild        := true,
+  testForkedParallel in Test            := true,
+  testForkedParallel in ThisBuild       := true,
+  concurrentRestrictions in Global += Tags.limit(Tags.Test, 3),
   logBuffered in Test            := false,
   logBuffered in IntegrationTest := false,
   //dependencyClasspath in IntegrationTest := (dependencyClasspath in IntegrationTest).value ++ (exportedProducts in Test).value,
@@ -132,7 +130,7 @@ lazy val dynamodb = monixConnector("dynamodb", Dependencies.DynamoDb).aggregate(
 
 lazy val hdfs = monixConnector("hdfs", Dependencies.Hdfs)
 
-lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb, isMimaEnabled = false)
+lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb, isMimaEnabled = false, isITParallelExecution = true)
 
 lazy val parquet = monixConnector("parquet", Dependencies.Parquet)
 
@@ -143,18 +141,18 @@ val protoTestSettings = Seq(
       //Compile / PB.protoSources := Seq(new File("src/test/protobuf"))
   )
 
-lazy val redis = monixConnector("redis", Dependencies.Redis)
+lazy val redis = monixConnector("redis", Dependencies.Redis, isITParallelExecution = false)
   .settings(protoTestSettings)
 
-lazy val s3 = monixConnector("s3", Dependencies.S3, isMimaEnabled = false)
+lazy val s3 = monixConnector("s3", Dependencies.S3, isMimaEnabled = false, isITParallelExecution = true)
   .aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
 
-lazy val sqs = monixConnector("sqs", Dependencies.Sqs, isMimaEnabled = false)
+lazy val sqs = monixConnector("sqs", Dependencies.Sqs, isMimaEnabled = false, isITParallelExecution = true)
   .aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
 
-lazy val gcs = monixConnector("gcs", Dependencies.GCS)
+lazy val gcs = monixConnector("gcs", Dependencies.GCS, isITParallelExecution = false)
 
-lazy val elasticsearch =  monixConnector("elasticsearch", Dependencies.Elasticsearch)
+lazy val elasticsearch =  monixConnector("elasticsearch", Dependencies.Elasticsearch, isITParallelExecution = true)
 
 //internal
 
@@ -163,16 +161,18 @@ lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth, isMimaEnable
 def monixConnector(
   connectorName: String,
   projectDependencies: Seq[ModuleID],
-  isMimaEnabled: Boolean = true): Project = {
+  isMimaEnabled: Boolean = true,
+  isITParallelExecution: Boolean = false): Project = {
   Project(id = connectorName, base = file(connectorName))
     .enablePlugins(AutomateHeaderPlugin)
-    .settings(name := s"monix-$connectorName", libraryDependencies ++= projectDependencies, Defaults.itSettings)
+    .settings(name := s"monix-$connectorName", libraryDependencies ++= projectDependencies, Defaults.itSettings,
+      IntegrationTest / parallelExecution := isITParallelExecution,
+      IntegrationTest / testForkedParallel := isITParallelExecution)
     .settings(sharedSettings)
     .configs(IntegrationTest, IT)
     .enablePlugins(AutomateHeaderPlugin)
     .settings(if(isMimaEnabled) mimaSettings(s"monix-$connectorName") else Seq.empty)
 }
-
 
 //=> non published modules
 

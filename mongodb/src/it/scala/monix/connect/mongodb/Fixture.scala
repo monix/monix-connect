@@ -47,29 +47,42 @@ trait Fixture {
       .applyToClusterSettings(builder => builder.hosts(List(new ServerAddress("localhost", 27017)).asJava))
       .build()
 
-  val dbName = "myDb"
+  def randomName(prefix: String): String = Gen.uuid.map(prefix + _.toString.take(10)).sample.get
+
+  def randomDbName: String = randomName("myDb-")
+  def randomEmployeesColName: String = randomName("employees-")
+  def randomCompaniesColName: String = randomName("companies-")
+  def randomInvestorsColName: String = randomName("investors-")
+  def randomBsonColName: String = randomName("bson-")
+
+  val dbName = randomName("myDb")
   val db: MongoDatabase = client.getDatabase(dbName)
+  val employeesColName = randomName("employees")
+  val companiesColName = randomName("companies")
+  val investorsColName = randomName("investors")
+  val bsonColName = randomName("bson")
 
-  val employeesColName = "employees"
-  val companiesColName = "companies"
-  val bsonColName = "bson"
-  val investorsColName = "investors"
-  val employeesMongoCol: MongoCollection[Employee] = db.getCollection(employeesColName, classOf[Employee])
+  def randomEmployeesMongoCol: MongoCollection[Employee] = db.getCollection(randomEmployeesColName, classOf[Employee])
     .withCodecRegistry(codecRegistry)
-  val companiesMongoCol: MongoCollection[Company] = db.getCollection(companiesColName, classOf[Company])
+  val employeesMongoCol: MongoCollection[Employee] = randomEmployeesMongoCol
+  def randomCompaniesMongoCol: MongoCollection[Company] = db.getCollection(randomCompaniesColName, classOf[Company])
     .withCodecRegistry(codecRegistry)
-  val investorsMongoCol: MongoCollection[Investor] = db.getCollection(investorsColName, classOf[Investor])
+  val companiesMongoCol = randomCompaniesMongoCol
+  def randomInvestorsMongoCol: MongoCollection[Investor] = db.getCollection(randomInvestorsColName, classOf[Investor])
     .withCodecRegistry(codecRegistry)
+  val investorsMongoCol: MongoCollection[Investor] = randomInvestorsMongoCol
 
-  val employeesCol = CollectionCodecRef(dbName, employeesColName, classOf[Employee], createCodecProvider[Employee]())
-  val companiesCol = CollectionCodecRef(dbName, companiesColName, classOf[Company], createCodecProvider[Company](), createCodecProvider[Employee]())
-  val investorsCol = CollectionCodecRef(dbName, companiesColName, classOf[Company], createCodecProvider[Investor](), createCodecProvider[Company](), createCodecProvider[Employee]())
-  val bsonCol1: CollectionRef[Document] = CollectionDocumentRef(
-    dbName,
-    bsonColName)
-  val bsonCol2 = CollectionDocumentRef(
-    dbName,
-    bsonColName)
+  def randomEmployeesColRef: CollectionCodecRef[Employee] = CollectionCodecRef(dbName, randomEmployeesColName, classOf[Employee], createCodecProvider[Employee](), createCodecProvider[UnwoundEmployee])
+  def randomCompaniesColRef: CollectionCodecRef[Company] = CollectionCodecRef(dbName, randomCompaniesColName, classOf[Company], createCodecProvider[Company](), createCodecProvider[Employee]())
+  def randomInvestorsColRef: CollectionCodecRef[Investor] = CollectionCodecRef(dbName, randomInvestorsColName, classOf[Investor], createCodecProvider[Investor](), createCodecProvider[Company](), createCodecProvider[Employee]())
+  def randomBsonColRef: CollectionRef[Document] = CollectionDocumentRef(
+    randomDbName,
+    randomBsonColName)
+
+  val employeesCol = CollectionCodecRef(dbName, randomEmployeesColName, classOf[Employee], createCodecProvider[Employee]())
+  val companiesCol = CollectionCodecRef(dbName, randomCompaniesColName, classOf[Company], createCodecProvider[Company](), createCodecProvider[Employee]())
+
+
   protected val genNonEmptyStr = Gen.identifier.map(_.take(10))
 
   val genInvestor = for {
