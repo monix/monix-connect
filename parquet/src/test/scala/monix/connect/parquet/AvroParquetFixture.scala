@@ -25,8 +25,10 @@ import org.apache.parquet.avro.{AvroParquetReader, AvroParquetWriter, AvroReadSu
 import org.apache.parquet.hadoop.{ParquetReader, ParquetWriter}
 import org.apache.parquet.hadoop.util.HadoopInputFile
 import org.scalacheck.Gen
+import org.scalatest.AsyncTestSuite
 
 trait AvroParquetFixture extends ParquetFixture {
+  this: AsyncTestSuite =>
 
   case class Person(id: Int, name: String)
   val schema: Schema = new Schema.Parser().parse(

@@ -8,8 +8,10 @@ import com.sksamuel.elastic4s.requests.update.UpdateRequest
 import com.sksamuel.elastic4s.{RequestFailure, RequestSuccess}
 import monix.eval.Task
 import org.scalacheck.Gen
+import org.scalatest.AsyncTestSuite
 
 trait Fixture {
+  this: AsyncTestSuite =>
   import com.sksamuel.elastic4s.ElasticDsl._
   protected val esResource: Resource[Task, Elasticsearch] = Elasticsearch.create("http://localhost:9200")
 

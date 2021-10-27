@@ -2,59 +2,63 @@ package monix.connect.sqs
 
 import monix.connect.sqs.domain.{QueueName, QueueUrl}
 import monix.eval.Task
-import monix.execution.Scheduler.Implicits.global
+import monix.execution.Scheduler
+import monix.testing.scalatest.MonixTaskSpec
 import org.scalacheck.Gen
-import org.scalatest.BeforeAndAfterEach
-import org.scalatest.flatspec.AnyFlatSpecLike
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.services.sqs.model.{QueueAttributeName, QueueDoesNotExistException}
 
 import scala.concurrent.duration.DurationInt
 
-class OperatorSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEach with SqsITFixture {
+class OperatorSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with BeforeAndAfterAll with SqsITFixture {
+
+  implicit val scheduler = Scheduler.io("sqs-operator-suite")
 
   s"Sqs" can "create queue and check it exists" in {
-    Sqs.fromConfig.use { sqs =>
-      for {
-        existedBefore <- sqs.operator.existsQueue(queueName)
-        _ <- sqs.operator.createQueue(queueName)
-        existsAfter <- sqs.operator.existsQueue(queueName)
-      } yield {
-        existedBefore shouldBe false
-        existsAfter shouldBe true
-      }
-    }.runSyncUnsafe()
+    val queueName = randomQueueName
+    for {
+      sqs <- unsafeSqsAsyncClient
+      existedBefore <- sqs.operator.existsQueue(queueName)
+      _ <- sqs.operator.createQueue(queueName)
+      existsAfter <- sqs.operator.existsQueue(queueName)
+    } yield {
+      existedBefore shouldBe false
+      existsAfter shouldBe true
+    }
   }
 
   it must "fail when getting the url of a non existing queue" in {
-   val queueUrl = Sqs.fromConfig.use {_.operator.getQueueUrl(QueueName("randomQueueName"))}.attempt.runSyncUnsafe()
-    queueUrl.isLeft shouldBe true
-    queueUrl.toTry.failed.get shouldBe a[QueueDoesNotExistException]
+   unsafeSqsAsyncClient.flatMap(_.operator.getQueueUrl(randomQueueName))
+     .attempt.asserting{ queueUrl =>
+     queueUrl.isLeft shouldBe true
+     queueUrl.toTry.failed.get shouldBe a[QueueDoesNotExistException]
+   }
   }
 
   it can "purge a queue" in {
     val messages = Gen.listOfN(100, genStandardMessage).sample.get
-    Sqs.fromConfig.use { sqs =>
-      for {
-        queueUrl <- sqs.operator.createQueue(queueName)
-        _ <- sqs.producer.sendParBatch(messages, queueUrl)
-        receiveBeforePurge <- sqs.consumer.receiveSingleAutoDelete(queueUrl, maxMessages = 5)
-        _ <- sqs.operator.purgeQueue(queueUrl) >> Task.sleep(2.seconds)
-        receiveAfterPurge <- sqs.consumer.receiveSingleAutoDelete(queueUrl)
-      } yield {
-        receiveBeforePurge.size shouldBe 5
-        receiveAfterPurge shouldBe List.empty
-      }
-    }.runSyncUnsafe()
+    for {
+      sqs <- unsafeSqsAsyncClient
+      queueUrl <- sqs.operator.createQueue(randomQueueName)
+      _ <- sqs.producer.sendParBatch(messages, queueUrl)
+      receiveBeforePurge <- sqs.consumer.receiveSingleAutoDelete(queueUrl, maxMessages = 5)
+      _ <- sqs.operator.purgeQueue(queueUrl) >> Task.sleep(2.seconds)
+      receiveAfterPurge <- sqs.consumer.receiveSingleAutoDelete(queueUrl)
+    } yield {
+      receiveBeforePurge.size shouldBe 5
+      receiveAfterPurge shouldBe List.empty
+    }
   }
 
   it can "create tags, add new ones and list them" in {
-    Sqs.fromConfig.use { sqs =>
       val initialTags = Map("mode" -> "difficult")
       val tagsByUrl = Map("environment" -> "test")
 
       for {
-        queueUrl <- sqs.operator.createQueue(queueName, tags = initialTags)
+        sqs <- unsafeSqsAsyncClient
+        queueUrl <- sqs.operator.createQueue(randomQueueName, tags = initialTags)
         _ <- sqs.operator.tagQueue(queueUrl, tags = tagsByUrl) //tagging by url
         nonExistingQueue <- sqs.operator.tagQueue(QueueUrl("nonExistingQueue"), tags = tagsByUrl).attempt
         appliedTags <- sqs.operator.listQueueTags(queueUrl)
@@ -63,11 +67,9 @@ class OperatorSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEac
         nonExistingQueue.isLeft shouldBe true
         nonExistingQueue.left.get.getMessage should include(invalidRequestErrorMsg)
       }
-    }.runSyncUnsafe()
   }
 
   it can "remove tags from a queue" in {
-    Sqs.fromConfig.use { sqs =>
       val queueType = "type"
       val modeTagKey = "mode"
       val environmentTagKey = "environment"
@@ -75,7 +77,8 @@ class OperatorSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEac
       val initialTags = Map(queueType -> "1", modeTagKey -> "difficult",
         environmentTagKey -> "test", dummyTagKey -> "123")
       for {
-        queueUrl <- sqs.operator.createQueue(queueName, tags = initialTags)
+        sqs <- unsafeSqsAsyncClient
+        queueUrl <- sqs.operator.createQueue(randomQueueName, tags = initialTags)
         untagByUrl <- sqs.operator.untagQueue(queueUrl, tagKeys = List(queueType)) >>
           sqs.operator.listQueueTags(queueUrl)
         untagByName <- sqs.operator.untagQueue(queueUrl, tagKeys = List(modeTagKey, environmentTagKey)) >> //tagging by queue name
@@ -87,16 +90,14 @@ class OperatorSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEac
         nonExistingQueue.isLeft shouldBe true
         nonExistingQueue.left.get.getMessage should include(invalidRequestErrorMsg)
       }
-    }.runSyncUnsafe()
   }
 
   it can "create attributes, add new ones and list them" in {
-    Sqs.fromConfig.use { sqs =>
       val initialAttributes = Map(QueueAttributeName.DELAY_SECONDS -> "60")
       val attributesByUrl =  Map(QueueAttributeName.RECEIVE_MESSAGE_WAIT_TIME_SECONDS -> "12345")
-
       for {
-        queueUrl <- sqs.operator.createQueue(queueName, attributes = initialAttributes)
+        sqs <- unsafeSqsAsyncClient
+        queueUrl <- sqs.operator.createQueue(randomQueueName, attributes = initialAttributes)
         _ <- sqs.operator.setQueueAttributes(queueUrl, attributes = attributesByUrl)
         nonExistingQueue <- sqs.operator.setQueueAttributes(QueueUrl("randomUrl"), attributes = attributesByUrl).attempt
         attributes <- sqs.operator.getQueueAttributes(queueUrl)
@@ -106,27 +107,27 @@ class OperatorSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEac
         nonExistingQueue.isLeft shouldBe true
         nonExistingQueue.left.get.getMessage should include(invalidRequestErrorMsg)
       }
-    }.runSyncUnsafe()
   }
 
   it can "get a queue and queue url from its name" in {
-    Sqs.fromConfig.use { case Sqs(operator, _, _) =>
+    val queueName = randomQueueName
       for {
-        createdQueueUrl <- operator.createQueue(queueName)
-        queueUrl <- operator.getQueueUrl(queueName)
-        nonExistingQueue <- operator.getQueueUrl(QueueName("randomName123")).attempt
+        sqs <- unsafeSqsAsyncClient
+        createdQueueUrl <- sqs.operator.createQueue(queueName)
+        queueUrl <- sqs.operator.getQueueUrl(queueName)
+        nonExistingQueue <- sqs.operator.getQueueUrl(randomQueueName).attempt
       } yield {
         createdQueueUrl shouldBe QueueUrl(queueUrlPrefix(queueName.name))
         queueUrl shouldBe QueueUrl(queueUrlPrefix(queueName.name))
         nonExistingQueue.isLeft shouldBe true
         nonExistingQueue.left.get.isInstanceOf[QueueDoesNotExistException] shouldBe true
       }
-    }.runSyncUnsafe()
   }
 
   it can "delete queue by url" in {
-    Sqs.fromConfig.use { sqs =>
-      for {
+    val queueName = randomQueueName
+    for {
+        sqs <- unsafeSqsAsyncClient
         queueUrl <- sqs.operator.createQueue(queueName)
         existsBefore <- sqs.operator.existsQueue(queueName)
         existsAfterDelete <- sqs.operator.deleteQueue(queueUrl) >> sqs.operator.existsQueue(queueName)
@@ -137,30 +138,27 @@ class OperatorSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEac
         deleteWithError.isLeft shouldBe true
         deleteWithError.toTry.failed.get shouldBe a[QueueDoesNotExistException]
       }
-    }.runSyncUnsafe()
   }
 
   it can "list all queue urls" in {
-    val queueNames = Gen.listOfN(10, genQueueName).sample.get
-
-    Sqs.fromConfig.use { sqs =>
-      for {
-        queueUrls <- Task.traverse(queueNames)(sqs.operator.createQueue(_))
-        fullQueueList <- sqs.operator.listQueueUrls().toListL
-      } yield {
-        fullQueueList.size shouldBe queueNames.size
-        fullQueueList should contain theSameElementsAs queueUrls
-      }
-    }.runSyncUnsafe()
+    for {
+      sqs <- unsafeSqsAsyncClient
+      queueNames <- Task.from(Gen.listOfN(10, genFifoQueueName))
+      queueUrls <- Task.traverse(queueNames)(a => sqs.operator.createQueue(a))
+      fullQueueList <- sqs.operator.listQueueUrls().toListL
+    } yield {
+      fullQueueList.size should be >= queueNames.size
+      fullQueueList should contain allElementsOf queueUrls
+    }
   }
 
   it can "list queue by the name prefix name" in {
     val prefix = Gen.identifier.map(id => s"test-${id.take(5)}").sample.get
-    val nonPrefixedQueueNames = Gen.listOfN(10, genQueueName).sample.get
-    val prefixedQueueNames = Gen.listOfN(6, genQueueName.map(_.map(prefix + _))).sample.get
+    val nonPrefixedQueueNames = Gen.listOfN(10, genFifoQueueName).sample.get
+    val prefixedQueueNames = Gen.listOfN(6, genFifoQueueName.map(_.map(prefix + _))).sample.get
 
-    Sqs.fromConfig.use { sqs =>
       for {
+        sqs <- unsafeSqsAsyncClient
         _ <- Task.traverse(nonPrefixedQueueNames)(sqs.operator.createQueue(_))
         prefixedQueueUrls <- Task.traverse(prefixedQueueNames)(sqs.operator.createQueue(_))
         resultList <- sqs.operator.listQueueUrls(Some(prefix)).toListL
@@ -168,7 +166,6 @@ class OperatorSuite extends AnyFlatSpecLike with Matchers with BeforeAndAfterEac
         resultList.size shouldBe prefixedQueueNames.size
         resultList should contain theSameElementsAs prefixedQueueUrls
       }
-    }.runSyncUnsafe()
   }
 
   // FIXME: This operation is not supported in local elasticMq

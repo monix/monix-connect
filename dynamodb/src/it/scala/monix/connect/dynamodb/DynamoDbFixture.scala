@@ -1,11 +1,10 @@
 package monix.connect.dynamodb
 
 import java.net.URI
-
 import monix.eval.Task
 import monix.execution.Scheduler
 import org.scalacheck.Gen
-import org.scalatest.TestSuite
+import org.scalatest.{AsyncTestSuite, TestSuite}
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
@@ -15,7 +14,6 @@ import scala.jdk.CollectionConverters._
 import scala.concurrent.duration._
 
 trait DynamoDbFixture {
-  this: TestSuite =>
 
   case class Citizen(citizenId: String, city: String, age: Int)
   val strAttr: String => AttributeValue = value => AttributeValue.builder.s(value).build

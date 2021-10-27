@@ -74,9 +74,11 @@ final class HashCommands[K, V] private[redis] (reactiveCmd: RedisHashReactiveCom
     * @return Value of the field after the increment operation.
     */
   def hIncrBy(key: K, field: K, amount: Long): Task[Long] =
-    Task
-      .fromReactivePublisher(reactiveCmd.hincrby(key, field, amount))
-      .map(_.map(_.longValue).getOrElse(0L))
+    Task.suspend {
+      Task
+        .fromReactivePublisher(reactiveCmd.hincrby(key, field, amount))
+        .map(_.map(_.longValue).getOrElse(0L))
+    }
 
   /**
     * Increment the float value of a hash field by the given amount.

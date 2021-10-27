@@ -36,7 +36,6 @@ private[s3] class ListObjectsObservable(
   s3AsyncClient: S3AsyncClient)
   extends Observable[ListObjectsV2Response] {
 
-  require(maxTotalKeys.getOrElse(1) > 0, "The max number of keys, if defined, needs to be higher or equal than 1.")
   //if the max num. of keys is empty, it lets the aws library to default it, otherwise it will be maximum 1000
   private[this] val firstRequestSize = maxTotalKeys.map(maxKeys => math.min(maxKeys, domain.awsDefaultMaxKeysList))
   private[this] val initialRequest: ListObjectsV2Request =
@@ -44,7 +43,13 @@ private[s3] class ListObjectsObservable(
 
   def unsafeSubscribeFn(subscriber: Subscriber[ListObjectsV2Response]): Cancelable = {
     val s = subscriber.scheduler
-    nextListRequest(subscriber, maxTotalKeys, initialRequest).runToFuture(s)
+    if (maxTotalKeys.getOrElse(1) > 0) {
+      nextListRequest(subscriber, maxTotalKeys, initialRequest).runToFuture(s)
+    } else {
+      subscriber.onError(
+        new IllegalArgumentException(s"The max number of keys, if defined, needs to be higher or equal than 1."))
+      Cancelable.empty
+    }
   }
 
   private[this] def prepareNextRequest(continuationToken: String, pendingKeys: Option[Int]): ListObjectsV2Request = {

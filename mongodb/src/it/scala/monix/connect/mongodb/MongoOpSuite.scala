@@ -27,23 +27,18 @@ import org.scalatest.matchers.should.Matchers
 @deprecated("0.5.3")
 class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with BeforeAndAfterEach {
 
-  override def beforeEach(): Unit = {
-    super.beforeEach()
-    MongoDb.dropDatabase(db).runSyncUnsafe()
-    MongoDb.dropCollection(db, employeesColName).runSyncUnsafe()
-  }
-
   "deleteOne" should "delete one single element by filtering" in {
+    val collection = randomEmployeesMongoCol
     //given
     val exampleName = "deleteOneExample"
     val employees = genEmployeesWith(name = Some(exampleName)).sample.get
-    MongoOp.insertMany(employeesMongoCol, employees).runSyncUnsafe()
+    MongoOp.insertMany(collection, employees).runSyncUnsafe()
 
     //when
-    val r = MongoOp.deleteOne(employeesMongoCol, docNameFilter(exampleName)).runSyncUnsafe()
+    val r = MongoOp.deleteOne(collection, docNameFilter(exampleName)).runSyncUnsafe()
 
     //then
-    val finalElements = MongoSource.count(employeesMongoCol, docNameFilter(exampleName)).runSyncUnsafe()
+    val finalElements = MongoSource.count(collection, docNameFilter(exampleName)).runSyncUnsafe()
     r.deleteCount shouldBe 1L
     r.wasAcknowledged shouldBe true
     finalElements shouldBe employees.size - 1
@@ -51,13 +46,14 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
 
   it should "delete one single element when it does not exists" in {
     //given
+    val collection = randomEmployeesMongoCol
     val filter = Filters.eq("name", "deleteWhenNoExists")
 
     //when
-    val r = MongoOp.deleteOne(employeesMongoCol, filter).runSyncUnsafe()
+    val r = MongoOp.deleteOne(collection, filter).runSyncUnsafe()
 
     //then
-    val finalElements = MongoSource.countAll(employeesMongoCol).runSyncUnsafe()
+    val finalElements = MongoSource.countAll(collection).runSyncUnsafe()
     r.deleteCount shouldBe 0L
     r.wasAcknowledged shouldBe true
     finalElements shouldBe 0
@@ -65,20 +61,21 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
 
   it should "delete one single element with delete options" in {
     //given
+    val collection = randomEmployeesMongoCol
     val uppercaseNat = "Japanese"
     val lowercaseNat = "japanese"
     val collation = Collation.builder().collationCaseFirst(CollationCaseFirst.UPPER).locale("es").build()
     val deleteOptions = new DeleteOptions().collation(collation)
     val employee = genEmployeeWith(city = Some(uppercaseNat)).sample.get
     val employees = genEmployeesWith(city = Some(lowercaseNat)).sample.get
-    MongoOp.insertOne(employeesMongoCol, employee).runSyncUnsafe()
-    MongoOp.insertMany(employeesMongoCol, employees).runSyncUnsafe()
+    MongoOp.insertOne(collection, employee).runSyncUnsafe()
+    MongoOp.insertMany(collection, employees).runSyncUnsafe()
 
     //when
-    val r = MongoOp.deleteOne(employeesMongoCol, Filters.in("city", lowercaseNat, uppercaseNat), deleteOptions).runSyncUnsafe()
+    val r = MongoOp.deleteOne(collection, Filters.in("city", lowercaseNat, uppercaseNat), deleteOptions).runSyncUnsafe()
 
     //then
-    val nUppercaseNat = MongoSource.count(employeesMongoCol, Filters.eq("city", uppercaseNat)).runSyncUnsafe()
+    val nUppercaseNat = MongoSource.count(collection, Filters.eq("city", uppercaseNat)).runSyncUnsafe()
     r.deleteCount shouldBe 1L
     r.wasAcknowledged shouldBe true
     nUppercaseNat shouldBe 0L
@@ -86,15 +83,16 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
 
   "deleteMany" should "delete many elements by filter" in { //todo
     //given
+    val collection = randomEmployeesMongoCol
     val exampleName = "deleteManyExample"
     val employees = genEmployeesWith(name = Some(exampleName)).sample.get
-    MongoOp.insertMany(employeesMongoCol, employees).runSyncUnsafe()
+    MongoOp.insertMany(collection, employees).runSyncUnsafe()
 
     //when
-    val r = MongoOp.deleteMany(employeesMongoCol, Filters.eq("name", exampleName)).runSyncUnsafe()
+    val r = MongoOp.deleteMany(collection, Filters.eq("name", exampleName)).runSyncUnsafe()
 
     //then
-    val finalElements = MongoSource.count(employeesMongoCol, docNameFilter(exampleName)).runSyncUnsafe()
+    val finalElements = MongoSource.count(collection, docNameFilter(exampleName)).runSyncUnsafe()
     r.deleteCount shouldBe employees.length
     r.wasAcknowledged shouldBe true
     finalElements shouldBe 0L
@@ -102,69 +100,73 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
 
   "insertOne"  should "insert one single element" in {
     //given
+    val collection = randomEmployeesMongoCol
     val e = genEmployee.sample.get
 
     //when
-    val r = MongoOp.insertOne(employeesMongoCol, e).runSyncUnsafe()
+    val r = MongoOp.insertOne(collection, e).runSyncUnsafe()
 
     //then
     r.insertedId.isDefined shouldBe true
     r.wasAcknowledged shouldBe true
 
     //and
-    MongoSource.findAll(employeesMongoCol).headL.runSyncUnsafe() shouldBe e
+    MongoSource.findAll(collection).headL.runSyncUnsafe() shouldBe e
   }
 
   "insertMany" should "insert many elements" in {
     //given
+    val collection = randomEmployeesMongoCol
     val nationality = "Vancouver"
     val employees = genEmployeesWith(city = Some(nationality)).sample.get
 
     //when
-    val r = MongoOp.insertMany(employeesMongoCol, employees).runSyncUnsafe()
+    val r = MongoOp.insertMany(collection, employees).runSyncUnsafe()
 
     //then
     r.insertedIds.size shouldBe employees.size
     r.wasAcknowledged shouldBe true
 
     //and
-    val elements = MongoSource.findAll(employeesMongoCol).toListL.runSyncUnsafe()
+    val elements = MongoSource.findAll(collection).toListL.runSyncUnsafe()
     elements shouldBe employees
   }
 
   "replaceOne" should "replace one single element" in {
     //given
+    val collection = randomEmployeesMongoCol
     val employeeName = "Humberto"
     val e = genEmployeeWith(name = Option(employeeName)).sample.get
     val filter: Bson = Filters.eq("name", employeeName)
 
     //and
-    MongoOp.insertOne(employeesMongoCol, e).runSyncUnsafe()
+    MongoOp.insertOne(collection, e).runSyncUnsafe()
 
     //when
-    val r = MongoOp.replaceOne(employeesMongoCol, filter, e.copy(age = e.age + 1)).runSyncUnsafe()
+    val r = MongoOp.replaceOne(collection, filter, e.copy(age = e.age + 1)).runSyncUnsafe()
 
     //then
     r.modifiedCount shouldBe 1L
 
     //and
-    val updated = MongoSource.find(employeesMongoCol, filter).headL.runSyncUnsafe()
+    val updated = MongoSource.find(collection, filter).headL.runSyncUnsafe()
     updated.age shouldBe e.age + 1
   }
 
   "updateOne" should "update one single element" in {
     //given
+    val collection = randomEmployeesMongoCol
     val cambridge = "Cambridge"
     val oxford = "Oxford"
     val employees = genEmployeesWith(city = Some(cambridge)).sample.get
-    MongoOp.insertMany(employeesMongoCol, employees).runSyncUnsafe()
+    MongoOp.insertMany(collection, employees).runSyncUnsafe()
 
     //when
-    val updateResult = MongoOp.updateOne(employeesMongoCol, nationalityDocument(cambridge), Updates.set("city", oxford)).runSyncUnsafe()
+    val updateResult = MongoOp.updateOne(collection, nationalityDocument(cambridge), Updates.set("city", oxford)).runSyncUnsafe()
 
     //then
-    val cambridgeEmployeesCount = MongoSource.count(employeesMongoCol, nationalityDocument(cambridge)).runSyncUnsafe()
-    val oxfordEmployeesCount = MongoSource.count(employeesMongoCol, nationalityDocument(oxford)).runSyncUnsafe()
+    val cambridgeEmployeesCount = MongoSource.count(collection, nationalityDocument(cambridge)).runSyncUnsafe()
+    val oxfordEmployeesCount = MongoSource.count(collection, nationalityDocument(oxford)).runSyncUnsafe()
     cambridgeEmployeesCount shouldBe employees.size - 1
     oxfordEmployeesCount shouldBe 1
     updateResult.matchedCount shouldBe 1
@@ -174,16 +176,17 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
 
   it should  "update one single element list" in {
     //given
+    val collection = randomEmployeesMongoCol
     val employee = genEmployeeWith(city = Some("Galway"), activities = List("Cricket")).sample.get
-    MongoOp.insertOne(employeesMongoCol, employee).runSyncUnsafe()
+    MongoOp.insertOne(collection, employee).runSyncUnsafe()
 
     //when
     val filter = Filters.eq("city", "Galway")
     val update = Updates.push("activities", "Ping Pong")
-    val updateResult = MongoOp.updateOne(employeesMongoCol, filter, update).runSyncUnsafe()
+    val updateResult = MongoOp.updateOne(collection, filter, update).runSyncUnsafe()
 
     //then
-    val r = MongoSource.find(employeesMongoCol, filter).headL.runSyncUnsafe()
+    val r = MongoSource.find(collection, filter).headL.runSyncUnsafe()
     r.activities.contains("Ping Pong") shouldBe true
     updateResult.matchedCount shouldBe 1
     updateResult.modifiedCount shouldBe 1
@@ -192,13 +195,14 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
 
   "updateMany" should "update many elements" in {
     //given
+    val collection = randomEmployeesMongoCol
     val bogota = "Bogota"
     val rio = "Rio"
     val employees = genEmployeesWith(city = Some(bogota)).sample.get
-    MongoOp.insertMany(employeesMongoCol, employees).runSyncUnsafe()
+    MongoOp.insertMany(collection, employees).runSyncUnsafe()
 
     //when
-    val updateResult = MongoOp.updateMany(employeesMongoCol, nationalityDocument(bogota), Updates.set("city", rio)).runSyncUnsafe()
+    val updateResult = MongoOp.updateMany(collection, nationalityDocument(bogota), Updates.set("city", rio)).runSyncUnsafe()
 
     //then
     updateResult.matchedCount shouldBe employees.size
@@ -206,8 +210,8 @@ class MongoOpSuite extends AnyFlatSpecLike with Fixture with Matchers with Befor
     updateResult.wasAcknowledged shouldBe true
 
     //and
-    val colombians = MongoSource.count(employeesMongoCol, nationalityDocument(bogota)).runSyncUnsafe()
-    val brazilians = MongoSource.count(employeesMongoCol, nationalityDocument(rio)).runSyncUnsafe()
+    val colombians = MongoSource.count(collection, nationalityDocument(bogota)).runSyncUnsafe()
+    val brazilians = MongoSource.count(collection, nationalityDocument(rio)).runSyncUnsafe()
     colombians shouldBe 0
     brazilians shouldBe employees.size
   }

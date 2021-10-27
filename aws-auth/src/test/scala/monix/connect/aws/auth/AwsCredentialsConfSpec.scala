@@ -194,11 +194,11 @@ class AwsCredentialsConfSpec extends AnyFlatSpec with Matchers {
 
     //then
     credentialsConf.credentialsProvider shouldBe a[StaticCredentialsProvider]
-    val staticCreds = credentialsConf.credentialsProvider.asInstanceOf[StaticCredentialsProvider]
-    val sessionCreds = staticCreds.resolveCredentials().asInstanceOf[AwsSessionCredentials]
-    sessionCreds.sessionToken() shouldBe sessionToken
-    sessionCreds.accessKeyId() shouldBe accessKeyId
-    sessionCreds.secretAccessKey() shouldBe secretAccessKey
+    val staticCreeds = credentialsConf.credentialsProvider.asInstanceOf[StaticCredentialsProvider]
+    val sessionCreeds = staticCreeds.resolveCredentials().asInstanceOf[AwsSessionCredentials]
+    sessionCreeds.sessionToken() shouldBe sessionToken
+    sessionCreeds.accessKeyId() shouldBe accessKeyId
+    sessionCreeds.secretAccessKey() shouldBe secretAccessKey
   }
 
   it should "fallback to default when provider was set to static but there was no static credentials" in {
