@@ -93,7 +93,7 @@ class ProducerSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with 
   }
 
   it should "send in batches of `n` messages" in {
-    val messages =  Gen.choose(11, 100).flatMap(Gen.listOfN(_, genFifoMessage(defaultGroupId))).sample.get
+    val messages =  Gen.choose(11, 21).flatMap(Gen.listOfN(_, genFifoMessage(defaultGroupId))).sample.get
      for {
        sqs <- unsafeSqsAsyncClient
        fifoQueueName <- Task.from(genFifoQueueName)
