@@ -73,16 +73,16 @@ class RedisUri(
     val redisUri = uri.map { case (host, port) => RedisURI.create(host, port) }.left
       .map(uri => RedisURI.create(uri))
       .merge
-    database.map(_ => redisUri.setDatabase(_))
-    password.map(pass => redisUri.setPassword(pass))
-    ssl.map(_ => redisUri.setSsl(_))
-    verifyPeer.map(redisUri.setVerifyPeer(_))
-    startTls.map(_ => redisUri.setStartTls(_))
-    timeout.map(timeout => redisUri.setTimeout(Duration.ofMillis(timeout.toMillis)))
-    sentinels.map(_ => redisUri.setSentinelMasterId(_)) //todo add sentinel host and port
-    socket.map(_ => redisUri.setSocket(_))
-    sentinelMasterId.map(_ => redisUri.setSentinelMasterId(_))
-    clientName.map(_ => redisUri.setClientName(_))
+    database.foreach(_ => redisUri.setDatabase(_))
+    password.foreach(pass => redisUri.setPassword(pass))
+    ssl.foreach(_ => redisUri.setSsl(_))
+    verifyPeer.foreach(redisUri.setVerifyPeer)
+    startTls.foreach(_ => redisUri.setStartTls(_))
+    timeout.foreach(timeout => redisUri.setTimeout(Duration.ofMillis(timeout.toMillis)))
+    sentinels.foreach(_ => redisUri.setSentinelMasterId(_)) //todo add sentinel host and port
+    socket.foreach(_ => redisUri.setSocket(_))
+    sentinelMasterId.foreach(_ => redisUri.setSentinelMasterId(_))
+    clientName.foreach(_ => redisUri.setClientName(_))
     redisUri
   }
 
@@ -98,7 +98,18 @@ class RedisUri(
     socket: Option[String] = this.socket,
     sentinelMasterId: Option[String] = this.sentinelMasterId,
     clientName: Option[String] = this.clientName): RedisUri = {
-    this
+    new RedisUri(
+      uri,
+      database,
+      password,
+      ssl,
+      verifyPeer,
+      startTls,
+      timeout,
+      sentinels,
+      socket,
+      sentinelMasterId,
+      clientName)
   }
 }
 

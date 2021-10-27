@@ -20,8 +20,11 @@ package monix.connect.parquet
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.ParquetReader
 import org.scalacheck.Gen
+import org.scalatest.AsyncTestSuite
 
 trait ParquetFixture {
+
+  this: AsyncTestSuite =>
 
   val folder: String = "./results/" + Gen.alphaLowerStr.sample.get
   val genFilePath: () => String = () => folder + "/" + Gen.alphaLowerStr.sample.get + ".parquet"
@@ -29,7 +32,6 @@ trait ParquetFixture {
   val conf = new Configuration()
 
   def fromParquet[T](file: String, configuration: Configuration, reader: ParquetReader[T]): List[T] = {
-
     var record: T = reader.read()
 
     var result: List[T] = List.empty[T]

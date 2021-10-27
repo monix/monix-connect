@@ -185,7 +185,7 @@ final class StringCommands[K, V] private[redis] (reactiveCmd: RedisStringReactiv
 
   /**
     * Get a substring of the string stored at a key.
-    *
+    * Fixme: return None on empty strings
     * @see <a href="https://redis.io/commands/getrange">GETRANGE</a>.
     */
   def getRange(key: K, start: Long, end: Long): Task[Option[V]] =

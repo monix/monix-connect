@@ -1,11 +1,9 @@
 package monix.connect.sqs
 
-import monix.execution.Scheduler.Implicits.global
 import monix.connect.sqs.producer.{FifoMessage, StandardMessage}
 import monix.connect.sqs.domain.{QueueName, QueueUrl}
-import monix.eval.Task
+import monix.eval.{Task, TaskLike}
 import org.scalacheck.Gen
-import org.scalatest.{BeforeAndAfterEach, TestSuite}
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
@@ -14,14 +12,6 @@ import software.amazon.awssdk.services.sqs.model._
 import java.net.URI
 
 trait SqsITFixture {
-  this: TestSuite with BeforeAndAfterEach =>
-
-  override def beforeEach(): Unit = {
-    val deleteAll = sqsClient.operator.listQueueUrls().mapEvalF(sqsClient.operator.deleteQueue).completedL.attempt
-    val deleteQueue = sqsClient.operator.getQueueUrl(queueName).flatMap(sqsClient.operator.deleteQueue).attempt
-    val deleteFifoQueue = sqsClient.operator.getQueueUrl(fifoQueueName).flatMap(sqsClient.operator.deleteQueue).attempt
-    Task.parZip3(deleteQueue, deleteFifoQueue, deleteAll).runSyncUnsafe()
-  }
 
   def dlqRedrivePolicyAttr(dlQueueArn: String) = Map(QueueAttributeName.REDRIVE_POLICY -> s"""{"maxReceiveCount":"1", "deadLetterTargetArn": "$dlQueueArn" }""")
 
@@ -36,22 +26,22 @@ trait SqsITFixture {
       .region(Region.US_EAST_1)
       .build
 
-  implicit val sqsClient: Sqs = Sqs.createUnsafe(asyncClient)
+  implicit val unsafeSqsAsyncClient: Task[Sqs] = Task.eval(Sqs.createUnsafe(asyncClient))
 
   val fifoDeduplicationQueueAttr = Map(
     QueueAttributeName.FIFO_QUEUE -> "true",
     QueueAttributeName.CONTENT_BASED_DEDUPLICATION -> "true")
 
-  val genQueueName: Gen[QueueName] = Gen.identifier.map(id => QueueName("queue-" + id.take(30)))
   // it must end with `.fifo` prefix, see https://github.com/aws/aws-sdk-php/issues/1331
-  val genFifoQueueName: Gen[QueueName] = Gen.identifier.map(id => QueueName("queue-" + id.take(20) + ".fifo"))
+  protected val genFifoQueueName: Gen[QueueName] = Gen.uuid.map(id => QueueName(s"queue-${id.toString}.fifo"))
 
-  def queueUrlPrefix(queueName: String) = s"http://localhost:9324/000000000000/${queueName}"
+  def queueUrlPrefix(queueName: String) = s"http://localhost:9324/queue/${queueName}"
 
-  val queueName: QueueName = QueueName("queue-1")
+  def randomQueueName: QueueName = genFifoQueueName.sample.get
+
+  val queueName: QueueName = randomQueueName
 
   // it must end with `.fifo` prefix, see https://github.com/aws/aws-sdk-php/issues/1331
-  val fifoQueueName: QueueName =  QueueName("queue122315141-1.fifo")
   val genGroupId: Gen[String] = Gen.identifier.map(_.take(10))
   val genId: Gen[String] = Gen.identifier.map(_.take(15))
   val defaultGroupId: String = genGroupId.sample.get
@@ -74,4 +64,9 @@ trait SqsITFixture {
     body    <- genMessageBody
   } yield Message.builder.messageId(id).receiptHandle(rhandle).body(body).build()
 
+  implicit val fromGen: TaskLike[Gen] =
+    new TaskLike[Gen] {
+      def apply[A](fa: Gen[A]): Task[A] =
+        Task(fa.sample.get)
+    }
 }

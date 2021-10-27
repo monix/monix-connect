@@ -19,14 +19,15 @@ package monix.connect.s3
 
 import java.io.{File, FileInputStream}
 import java.nio.file.Files
-
 import monix.eval.Task
+import monix.execution.Scheduler
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.{Consumer, Observable}
+import monix.testing.scalatest.MonixTaskSpec
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
-import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.flatspec.{AnyFlatSpec, AsyncFlatSpec}
 import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadResponse
 
@@ -34,53 +35,46 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
 class MultipartUploadSubscriberSuite
-  extends AnyFlatSpec with Matchers with BeforeAndAfterAll with ScalaFutures with S3Fixture with Eventually {
+  extends AsyncFlatSpec with Matchers with MonixTaskSpec with BeforeAndAfterAll with S3Fixture {
 
-  private val bucketName = "multipart-upload-test"
-
-  override implicit val patienceConfig = PatienceConfig(10.seconds, 100.milliseconds)
+  private val bucketName = "multipart-upload-test-bucket"
+  override implicit val scheduler = Scheduler.io("multipart-download-observable-suite")
 
   override def beforeAll(): Unit = {
     super.beforeAll()
-    Try(s3Resource.use(_.createBucket(bucketName)).runSyncUnsafe()) match {
-      case Success(_) => info(s"Created s3 bucket ${bucketName} ")
-      case Failure(e) => info(s"Failed to create s3 bucket ${bucketName} with exception: ${e.getMessage}")
+    unsafeS3.createBucket(bucketName).attempt.runSyncUnsafe() match {
+      case Right(_) => info(s"Created s3 bucket $bucketName ")
+      case Left(e) => info(s"Failed to create s3 bucket $bucketName with exception: ${e.getMessage}")
     }
   }
 
   "MultipartUploadSubscriber" should "upload multipart when only a single chunk was emitted" in {
-    //given
     val key = genKey.sample.get
     val content: Array[Byte] = Gen.alphaUpperStr.sample.get.getBytes
 
-    //when
-    val t = s3Resource.use { s3 => Observable.pure(content).consumeWith(s3.uploadMultipart(bucketName, key)) }
-
-    //then
-    whenReady(t.runToFuture) { completeMultipartUpload =>
-      val s3Object: Array[Byte] = download(bucketName, key).get
-      s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe() shouldBe true
+    for {
+      completeMultipartUpload <- Observable.pure(content).consumeWith(unsafeS3.uploadMultipart(bucketName, key))
+      s3Object: Array[Byte] = unsafeDownload(bucketName, key).get
+      existsObject <- unsafeS3.existsObject(bucketName, key)
+    } yield {
+      existsObject shouldBe true
       completeMultipartUpload shouldBe a[CompleteMultipartUploadResponse]
       s3Object shouldBe content
     }
   }
 
   it can "upload chunks (of less than minimum size) are passed" in {
-    //given
     val key: String = genKey.sample.get
     val chunks: List[Array[Byte]] = Gen.listOfN(10, Gen.alphaUpperStr).map(_.map(_.getBytes)).sample.get
 
-    //when
-    val t = s3Resource.use { s3 => Observable.fromIterable(chunks).consumeWith(s3.uploadMultipart(bucketName, key)) }
-
-    //then
-    whenReady(t.runToFuture) { response =>
-      eventually {
-        val s3Object: Array[Byte] = download(bucketName, key).get
-        s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe() shouldBe true
-        response shouldBe a[CompleteMultipartUploadResponse]
-        s3Object shouldBe chunks.flatten
-      }
+    for {
+      completeMultipartUpload <- Observable.fromIterable(chunks).consumeWith(unsafeS3.uploadMultipart(bucketName, key))
+      s3Object: Array[Byte] = unsafeDownload(bucketName, key).get
+      existsObject <- unsafeS3.existsObject(bucketName, key)
+    } yield {
+      existsObject shouldBe true
+      completeMultipartUpload shouldBe a[CompleteMultipartUploadResponse]
+      s3Object shouldBe chunks.flatten
     }
   }
 
@@ -88,20 +82,14 @@ class MultipartUploadSubscriberSuite
     //given
     val key = genKey.sample.get
     val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
-    val ob: Observable[Array[Byte]] = Observable.fromInputStream(inputStream)
-
-    //when
-    val t = s3Resource.use { s3 =>
-      val consumer: Consumer[Array[Byte], CompleteMultipartUploadResponse] =
-        s3.uploadMultipart(bucketName, key)
-      ob.consumeWith(consumer)
-    }
-
-    //then
-    val expectedArrayByte = ob.foldLeft(Array.emptyByteArray)((acc, bytes) => acc ++ bytes).headL.runSyncUnsafe()
-    whenReady(t.runToFuture) { completeMultipartUpload =>
-      val s3Object: Array[Byte] = download(bucketName, key).get
-      s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe() shouldBe true
+    val fileData = Observable.fromInputStream(inputStream)
+    for {
+      completeMultipartUpload <- fileData.consumeWith(unsafeS3.uploadMultipart(bucketName, key))
+      s3Object: Array[Byte] = unsafeDownload(bucketName, key).get
+      existsObject <- unsafeS3.existsObject(bucketName, key)
+      expectedArrayByte <- fileData.foldLeft(Array.emptyByteArray)((acc, bytes) => acc ++ bytes).headL
+    } yield {
+      existsObject shouldBe true
       completeMultipartUpload shouldBe a[CompleteMultipartUploadResponse]
       s3Object shouldBe expectedArrayByte
     }
@@ -114,75 +102,59 @@ class MultipartUploadSubscriberSuite
     val chunks = Array.fill(24)(chunk) // at the 21th chunk (5MB) the upload should be triggered
 
     //when
-    val response = s3Resource.use { s3 =>
-      Observable.fromIterable(chunks).consumeWith(s3.uploadMultipart(bucketName, key))
-    }.runSyncUnsafe()
-
-    //then
-    eventually {
-      val s3Object: Array[Byte] = download(bucketName, key).get
-      s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe() shouldBe true
-      response shouldBe a[CompleteMultipartUploadResponse]
+    for {
+      completeMultipartUpload <- Observable.fromIterable(chunks).consumeWith(unsafeS3.uploadMultipart(bucketName, key))
+     s3Object: Array[Byte] = unsafeDownload(bucketName, key).get
+      existsObject <- unsafeS3.existsObject(bucketName, key)
+    } yield {
+      completeMultipartUpload shouldBe a[CompleteMultipartUploadResponse]
       s3Object shouldBe chunks.flatten
+      existsObject shouldBe true
     }
   }
 
   it should "upload in two (aggregated) parts emitted from chunks smaller than the min size" in {
-    //given
     val key = genKey.sample.get
     val chunk = Files.readAllBytes(new File(resourceFile("244KB.csv")).toPath) //test.csv ~= 244Kb
     val chunks = Array.fill(48)(chunk) // two part uploads will be triggered at th 21th and 42th chunks
 
-    //when
-    val response = s3Resource.use { s3 =>
-      Observable.fromIterable(chunks).consumeWith(s3.uploadMultipart(bucketName, key))
-    }.runSyncUnsafe()
+    for {
+       completeMultipartUpload <- Observable.fromIterable(chunks).consumeWith(unsafeS3.uploadMultipart(bucketName, key))
+       existsObject <- unsafeS3.existsObject(bucketName, key)
+       s3Object: Array[Byte] = unsafeDownload(bucketName, key).get
+     } yield {
+       completeMultipartUpload shouldBe a[CompleteMultipartUploadResponse]
+       s3Object shouldBe chunks.flatten
+       existsObject shouldBe true
+     }
 
-    //then
-    eventually {
-      val s3Object: Array[Byte] = download(bucketName, key).get
-      s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe() shouldBe true
-      response shouldBe a[CompleteMultipartUploadResponse]
-      s3Object shouldBe chunks.flatten
-    }
   }
 
   it should "upload big chunks" in {
-    //given
     val key = genKey.sample.get
     val inputStream = Task(new FileInputStream(resourceFile("test.csv")))
-    val ob: Observable[Array[Byte]] = Observable
+    val testData: Observable[Array[Byte]] = Observable
       .fromInputStream(inputStream)
       .foldLeft(Array.emptyByteArray)((acc, chunk) => acc ++ chunk ++ chunk ++ chunk ++ chunk ++ chunk) //each chunk * 5
 
-    //when
-    val response = s3Resource.use { s3 =>
-      ob.consumeWith(s3.uploadMultipart(bucketName, key))
-    }.runSyncUnsafe()
-
-    //then
-    val expectedArrayByte = ob.foldLeft(Array.emptyByteArray)((acc, bytes) => acc ++ bytes).headL.runSyncUnsafe()
-    eventually {
-      val s3Object: Array[Byte] = download(bucketName, key).get
-      s3Resource.use(_.existsObject(bucketName, key)).runSyncUnsafe() shouldBe true
-      response shouldBe a[CompleteMultipartUploadResponse]
+    for {
+      completeMultipartUpload <- testData.consumeWith(unsafeS3.uploadMultipart(bucketName, key))
+      expectedArrayByte <- testData.foldLeft(Array.emptyByteArray)((acc, bytes) => acc ++ bytes).headL
+      s3Object: Array[Byte] = unsafeDownload(bucketName, key).get
+      existsObject <- unsafeS3.existsObject(bucketName, key)
+    } yield {
+      completeMultipartUpload shouldBe a[CompleteMultipartUploadResponse]
       s3Object shouldBe expectedArrayByte
+      existsObject shouldBe true
     }
   }
 
-  it should "fails to upload in multipart when min chunk size is lower than (5MB)" in {
-    //given
+  it should "fail to upload in multipart when min chunk size is lower than (5MB)" in {
     val minChunkSize = 5242879 //minimum is 5242880
 
-    //when
-    val f = s3Resource.use { s3 =>
-      Observable.now(Array.emptyByteArray)
-        .consumeWith(s3.uploadMultipart("no-bucket", "no-key", minChunkSize = minChunkSize))
-    }.runToFuture
-
-    //then
-    f.value.get.isFailure shouldBe true
-    f.value.get.failed.get shouldBe a[IllegalArgumentException]
+   Observable.now(Array.emptyByteArray)
+     .consumeWith(unsafeS3.uploadMultipart("no-bucket", "no-key", minChunkSize = minChunkSize))
+     .assertThrows[IllegalArgumentException]
   }
 
 }

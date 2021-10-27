@@ -2,36 +2,31 @@ package monix.connect.redis
 
 import monix.connect.redis.client.RedisCmd
 import monix.eval.Task
-import monix.execution.Scheduler.Implicits.global
+import monix.execution.Scheduler
+import monix.testing.scalatest.MonixTaskSpec
 import org.scalatest.concurrent.Eventually
-import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatest.{Assertion, BeforeAndAfterAll, BeforeAndAfterEach}
 
 import scala.concurrent.duration._
 
-class MixedCommandsSuite extends AnyFlatSpec
+class MixedCommandsSuite extends AsyncFlatSpec with MonixTaskSpec
   with RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll with Eventually {
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
-
-  override def beforeEach(): Unit = {
-    super.beforeEach()
-    utfConnection.use(cmd => cmd.server.flushAll).runSyncUnsafe()
-  }
+  override implicit val scheduler: Scheduler = Scheduler.io("mixed-commands-suite")
 
   "Redis" should "allow to composition of different Redis submodules" in {
-    //given
     val k1: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get
     val k2: K = genRedisKey.sample.get
     val values: List[String] = genRedisValues.sample.get
     val k3: K = genRedisKey.sample.get
 
-    val (v: Option[String], len: Long, list, keys: List[String]) = {
-      utfConnection.use { case RedisCmd(_, keys, list, server, _, _, string) =>
+      utfConnection.use[Task, Assertion] { case RedisCmd(_, keys, list, server, _, _, string) =>
         for {
-          _ <- server.flushAll
+          _ <- server.flushDb
           _ <- keys.touch(k1)
           _ <- string.set(k1, value)
           _ <- keys.rename(k1, k2)
@@ -45,15 +40,14 @@ class MixedCommandsSuite extends AnyFlatSpec
           len <- list.lLen(k3)
           l <- list.lRange(k3, 0, -1).toListL
           keys <- keys.keys("*").toListL // unsafe operation
-        } yield (v, len, l, keys)
-      }
-    }.runSyncUnsafe()
-
-    v shouldBe Some(value)
-    len shouldBe values.size + 1
-    list should contain theSameElementsAs value :: values
-    keys.size shouldBe 1
-    keys.head shouldBe k3
+        } yield {
+          v shouldBe Some(value)
+          len shouldBe values.size + 1
+          l should contain theSameElementsAs value :: values
+          keys.size shouldBe 1
+          keys.head shouldBe k3
+        }
+    }
   }
 
 }

@@ -37,13 +37,16 @@ jobs:
 
       - name: Run checks
         run:  sbt scalafmtCheckAll
-      - name: Run Unit Tests for Java ${{ matrix.java }}, Scala ${{ matrix.scala }}
-        run: sbt test
+        
       - name: Start docker dependencies
         run:  sh start-dependencies.sh
+        
       - name: Run Functional Tests for Java ${{ matrix.java }}, Scala ${{ matrix.scala }}
         run: sbt it:test
- 
+        
+      - name: Run Unit Tests for Java ${{ matrix.java }}, Scala ${{ matrix.scala }}
+        run: sbt test
+
   mima:
     name: Mima binary compatibility test
     needs: tests
