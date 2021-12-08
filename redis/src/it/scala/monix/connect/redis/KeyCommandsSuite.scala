@@ -151,7 +151,7 @@ class KeyCommandsSuite
     val key2: K = genRedisKey.sample.get
     val value: String = genRedisValue.sample.get
 
-    utfConnection.use[Task, Assertion] { case RedisCmd(_, keys, _, _, _, _, strings) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, keys, _, _, _, _, strings, _) =>
       for {
         _ <- strings.set(key1, value)
         ttlEmptyKey <- keys.pttl("non-existing-key")

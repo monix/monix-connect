@@ -24,7 +24,7 @@ class MixedCommandsSuite extends AsyncFlatSpec with MonixTaskSpec
     val values: List[String] = genRedisValues.sample.get
     val k3: K = genRedisKey.sample.get
 
-      utfConnection.use[Task, Assertion] { case RedisCmd(_, keys, list, server, _, _, string) =>
+      utfConnection.use[Task, Assertion] { case RedisCmd(_, keys, list, server, _, _, string, _) =>
         for {
           _ <- server.flushDb
           _ <- keys.touch(k1)

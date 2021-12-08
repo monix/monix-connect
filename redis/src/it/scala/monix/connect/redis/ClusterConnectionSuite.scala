@@ -8,7 +8,6 @@ import org.scalacheck.Gen
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 import scala.concurrent.duration._
 
@@ -19,7 +18,6 @@ class ClusterConnectionSuite extends AsyncFlatSpec with MonixTaskSpec
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
   override implicit val scheduler: Scheduler = Scheduler.io("cluster-connection-suite")
-  private val clusterRedisUris = List(7000, 7001, 7002, 7003, 7004, 7005).map(port => RedisUri("127.0.0.1", port))
 
   "ClusterConnection" should "can connect to multiple uri" in {
     val key = genRedisKey.sample.get

@@ -21,6 +21,7 @@ import cats.effect.Resource
 import io.lettuce.core.RedisClient
 import io.lettuce.core.api.StatefulRedisConnection
 import io.lettuce.core.codec.{ByteArrayCodec, StringCodec}
+import io.lettuce.core.pubsub.StatefulRedisPubSubConnection
 import monix.eval.Task
 
 /**
@@ -33,10 +34,10 @@ private[redis] class StandaloneConnection(uri: RedisUri) extends RedisConnection
 
   def connectUtf: Resource[Task, RedisCmd[String, String]] = {
     RedisCmd
-      .createResource[String, String, StatefulRedisConnection[String, String]] {
+      .createResource[String, String, StatefulRedisPubSubConnection[String, String]] {
         for {
           client <- Task.evalAsync(RedisClient.create(uri.toJava))
-          conn   <- Task.from(client.connectAsync(StringCodec.UTF8, uri.toJava).toCompletableFuture)
+          conn   <- Task(client.connectPubSub(StringCodec.UTF8, uri.toJava))
         } yield (client, conn)
       }
       .evalMap(RedisCmd.single)
@@ -44,11 +45,10 @@ private[redis] class StandaloneConnection(uri: RedisUri) extends RedisConnection
 
   def connectUtf[K, V](implicit keyCodec: UtfCodec[K], valueCodec: UtfCodec[V]): Resource[Task, RedisCmd[K, V]] = {
     RedisCmd
-      .createResource[K, V, StatefulRedisConnection[K, V]] {
+      .createResource[K, V, StatefulRedisPubSubConnection[K, V]] {
         for {
           client <- Task.evalAsync(RedisClient.create(uri.toJava))
-          conn <- Task.from(
-            client.connectAsync(Codec(keyCodec, valueCodec, StringCodec.UTF8), uri.toJava).toCompletableFuture)
+          conn   <- Task(client.connectPubSub(Codec(keyCodec, valueCodec, StringCodec.UTF8), uri.toJava))
         } yield (client, conn)
       }
       .evalMap(RedisCmd.single)
@@ -56,11 +56,11 @@ private[redis] class StandaloneConnection(uri: RedisUri) extends RedisConnection
 
   def connectByteArray: Resource[Task, RedisCmd[Array[Byte], Array[Byte]]] = {
     RedisCmd
-      .createResource[Array[Byte], Array[Byte], StatefulRedisConnection[Array[Byte], Array[Byte]]] {
+      .createResource[Array[Byte], Array[Byte], StatefulRedisPubSubConnection[Array[Byte], Array[Byte]]] {
         for {
           client <- Task.evalAsync(RedisClient.create(uri.toJava))
-          conn <- Task.from {
-            client.connectAsync(new ByteArrayCodec(), uri.toJava).toCompletableFuture
+          conn <- Task {
+            client.connectPubSub(new ByteArrayCodec(), uri.toJava)
           }
         } yield (client, conn)
       }
@@ -71,11 +71,11 @@ private[redis] class StandaloneConnection(uri: RedisUri) extends RedisConnection
     implicit keyCodec: BytesCodec[K],
     valueCodec: BytesCodec[V]): Resource[Task, RedisCmd[K, V]] = {
     RedisCmd
-      .createResource[K, V, StatefulRedisConnection[K, V]] {
+      .createResource[K, V, StatefulRedisPubSubConnection[K, V]] {
         for {
           client <- Task.evalAsync(RedisClient.create(uri.toJava))
-          conn <- Task.from {
-            client.connectAsync(Codec(keyCodec, valueCodec, new ByteArrayCodec()), uri.toJava).toCompletableFuture
+          conn <- Task {
+            client.connectPubSub(Codec(keyCodec, valueCodec, new ByteArrayCodec()), uri.toJava)
           }
         } yield (client, conn)
       }

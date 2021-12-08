@@ -21,10 +21,13 @@ import cats.effect.Resource
 import io.lettuce.core.AbstractRedisClient
 import io.lettuce.core.api.{StatefulConnection, StatefulRedisConnection}
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection
+import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection
+import io.lettuce.core.pubsub.StatefulRedisPubSubConnection
 import monix.connect.redis.commands.{
   HashCommands,
   KeyCommands,
   ListCommands,
+  PubSubCommands,
   ServerCommands,
   SetCommands,
   SortedSetCommands,
@@ -51,21 +54,22 @@ case class RedisCmd[K, V](
   server: ServerCommands[K, V],
   set: SetCommands[K, V],
   sortedSet: SortedSetCommands[K, V],
-  string: StringCommands[K, V])
+  string: StringCommands[K, V],
+  pubSub: PubSubCommands[K, V])
 
 @InternalApi
 private[redis] object RedisCmd { self =>
 
-  private[redis] def single[K, V](conn: StatefulRedisConnection[K, V]): Task[RedisCmd[K, V]] = self.makeCmd(conn)
+  private[redis] def single[K, V](conn: StatefulRedisPubSubConnection[K, V]): Task[RedisCmd[K, V]] = self.makeCmd(conn)
 
-  private[redis] def cluster[K, V](conn: StatefulRedisClusterConnection[K, V]): Task[RedisCmd[K, V]] =
+  private[redis] def cluster[K, V](conn: StatefulRedisClusterPubSubConnection[K, V]): Task[RedisCmd[K, V]] =
     self.makeCmd(conn)
 
   private[this] def makeCmd[K, V](conn: StatefulConnection[K, V]): Task[RedisCmd[K, V]] = {
     {
       conn match {
-        case serverConn: StatefulRedisConnection[K, V] => Task(serverConn.reactive)
-        case serverConn: StatefulRedisClusterConnection[K, V] => Task(serverConn.reactive)
+        case serverConn: StatefulRedisPubSubConnection[K, V] => Task(serverConn.reactive)
+        case serverConn: StatefulRedisClusterPubSubConnection[K, V] => Task(serverConn.reactive)
         case _ => Task.raiseError(new NotImplementedError("Redis configuration yet supported."))
       }
     }.map { cmd =>
@@ -76,7 +80,8 @@ private[redis] object RedisCmd { self =>
         server = ServerCommands(cmd),
         set = SetCommands(cmd),
         sortedSet = SortedSetCommands(cmd),
-        string = StringCommands(cmd)
+        string = StringCommands(cmd),
+        pubSub = PubSubCommands(cmd)
       )
     }
   }

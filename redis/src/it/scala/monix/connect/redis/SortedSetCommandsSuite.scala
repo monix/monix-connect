@@ -31,7 +31,7 @@ class SortedSetCommandsSuite
     val maxScore: Double = 4
     val incrby: Double = 2
 
-    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         _ <- sortedSet.zAdd(k, minScore, v0)
         _ <- sortedSet.zAdd(k, middleScore, v1)
@@ -59,7 +59,7 @@ class SortedSetCommandsSuite
     val vScore5 = VScore("e", 5)
 
 
-    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         _ <- sortedSet.zAdd(k1, vScore1, vScore2, vScore4, vScore5)
         _ <- sortedSet.zAdd(k2, vScore3)
@@ -89,7 +89,7 @@ class SortedSetCommandsSuite
     val vScore3 = genVScore(3).sample.get
     val vScore5 = genVScore(5).sample.get
 
-    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         _ <- sortedSet.zAdd(k1, vScore1, vScore5)
         _ <- sortedSet.zAdd(k2, vScore3)
@@ -108,7 +108,7 @@ class SortedSetCommandsSuite
 
   "zAdd" should "add a single scored values to the sorted set" in {
     val k1 = genRedisKey.sample.get
-    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         add1 <- sortedSet.zAdd(k1, 1, k1)
         add2 <- sortedSet.zAdd(k1, 5, k1)
@@ -129,7 +129,7 @@ class SortedSetCommandsSuite
     val vScore1 = genVScore(1).sample.get
     val vScore2 = genVScore(2).sample.get
     val vScore3 = genVScore(3).sample.get
-    utfConnection.use[Task, Assertion]  { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion]  { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         add1 <- sortedSet.zAdd(k1, vScore1)
         add2 <- sortedSet.zAdd(k2, vScore2, vScore3)
@@ -151,7 +151,7 @@ class SortedSetCommandsSuite
     val vA = genRedisValue.sample.get
     val vB = genRedisValue.sample.get
 
-    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         addFirst <- sortedSet.zAdd(k1, ZArgs.NX, 1, vA)
         addSameScore <- sortedSet.zAdd(k1, ZArgs.NX, 1, vA)
@@ -182,7 +182,7 @@ class SortedSetCommandsSuite
     val vScoreB1 = VScore(vB, 3)
     val vScoreC1 = VScore(vC, 4)
 
-    utfConnection.use[Task, Assertion]{ case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion]{ case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         add1 <- sortedSet.zAdd(k1, ZArgs.NX, vScoreA1)
         add2 <- sortedSet.zAdd(k1, ZArgs.NX, List(vScoreA2, vScoreB1, vScoreC1))
@@ -204,7 +204,7 @@ class SortedSetCommandsSuite
     val vScoreB1 = VScore(vB, 3)
     val vScoreC1 = VScore(vC, 4)
 
-    utfConnection.use[Task, Assertion]  { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion]  { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         add1 <- sortedSet.zAdd(k1, ZArgs.CH, 1, vA)
         add2 <- sortedSet.zAdd(k1, ZArgs.CH, List(vScoreA2, vScoreB1, vScoreC1))
@@ -231,7 +231,7 @@ class SortedSetCommandsSuite
     val vScoreB2 = VScore(vB, 2)
     val vScoreC1 = VScore(vC, 1)
 
-    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         add1 <- sortedSet.zAdd(k1, ZArgs.XX, 1, vA)
         elems1 <- sortedSet.zRevGetAll(k1).toListL
@@ -255,7 +255,7 @@ class SortedSetCommandsSuite
     val k1 = genRedisKey.sample.get
     val vA = genRedisValue.sample.get
 
-    utfConnection.use[Task, Assertion]  { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion]  { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         add1 <- sortedSet.zAddIncr(k1, 1, vA)
         elems1 <- sortedSet.zRevGetAll(k1).toListL
@@ -274,7 +274,7 @@ class SortedSetCommandsSuite
     val k1 = genRedisKey.sample.get
     val vA = genRedisValue.sample.get
 
-    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         add1 <- sortedSet.zAddIncr(k1, ZArgs.NX, 1, vA)
         elems1 <- sortedSet.zRevGetAll(k1).toListL
@@ -294,7 +294,7 @@ class SortedSetCommandsSuite
     val k1 = genRedisKey.sample.get
     val vA = genRedisValue.sample.get
 
-    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         add1 <- sortedSet.zAddIncr(k1, ZArgs.CH, 1, vA)
         elems1 <- sortedSet.zRevGetAll(k1).toListL
@@ -317,7 +317,7 @@ class SortedSetCommandsSuite
     val k1 = genRedisKey.sample.get
     val vA = genRedisValue.sample.get
 
-    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         add1 <- sortedSet.zAddIncr(k1, ZArgs.XX, 1, vA)
         elems1 <- sortedSet.zRevGetAll(k1).toListL
@@ -341,7 +341,7 @@ class SortedSetCommandsSuite
     val k1 = genRedisKey.sample.get
     val vScores = Gen.listOfN(4, genVScore).sample.get
 
-    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       sortedSet.zAdd(k1, vScores) >>
         sortedSet.zCard(k1)
     }.asserting(_ shouldBe vScores.size)
@@ -357,7 +357,7 @@ class SortedSetCommandsSuite
     val vScoreC = VScore("C", 6)
     val vScoreD = VScore("D", 7)
 
-    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       sortedSet.zAdd(k1, vScore1, vScore2, vScore3, vScoreA, vScoreB, vScoreC, vScoreD) *>
         sortedSet.zCount(k1, ZRange(2, 5))
     }.asserting(_ shouldBe 4)
@@ -368,7 +368,7 @@ class SortedSetCommandsSuite
     val k1 = genRedisKey.sample.get
     val vA = genRedisValue.sample.get
 
-    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         incr1 <- sortedSet.zIncrBy(k1, 1.1, vA)
         incr2 <- sortedSet.zIncrBy(k1, 3, vA)
@@ -395,7 +395,7 @@ class SortedSetCommandsSuite
     val vScoreB2 = VScore(vB, 2)
     val vScoreC1 = VScore(vC, 1)
 
-    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         intersec0 <- sortedSet.zAdd(k1, vScoreA1) >> sortedSet.zInterStore(k1, k2)
         intersec1 <- sortedSet.zAdd(k2, vScoreA2) >> sortedSet.zInterStore(k1, k2)
@@ -423,7 +423,7 @@ class SortedSetCommandsSuite
     val vScore2 = VScore("2", 1)
     val vScore3 = VScore("3", 1)
 
-    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         _ <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScoreC, vScoreD, vScore1, vScore2, vScore3)
         rangeAd <- sortedSet.zLexCount(k1, ZRange("A", "D"))
@@ -443,7 +443,7 @@ class SortedSetCommandsSuite
     val k1 = genRedisKey.sample.get
     val vScores = List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).map(n => VScore(n.toString, n))
 
-    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         _ <- sortedSet.zAdd(k1, vScores)
         min1 <- sortedSet.zPopMin(k1)
@@ -467,7 +467,7 @@ class SortedSetCommandsSuite
     val k1 = genRedisKey.sample.get
     val vScores = List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).map(n => VScore(n.toString, n))
 
-    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         _ <- sortedSet.zAdd(k1, vScores)
         max1 <- sortedSet.zPopMax(k1)
@@ -497,7 +497,7 @@ class SortedSetCommandsSuite
     val vScore2 = VScore("2", 2)
     val vScore3 = VScore("3", 4)
 
-    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         _ <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScoreC, vScoreD, vScore1, vScore2, vScore3)
         range01 <- sortedSet.zRange(k1, 0, 1).toListL
@@ -524,7 +524,7 @@ class SortedSetCommandsSuite
     val vScore2 = VScore("2", 1)
     val vScore3 = VScore("3", 1)
 
-    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         _ <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScoreC, vScoreD, vScore1, vScore2, vScore3)
         rangeAd <- sortedSet.zRangeByLex(k1, ZRange("A", "D")).toListL
@@ -555,7 +555,7 @@ class SortedSetCommandsSuite
     val vScore2 = VScore("2", 3)
     val vScore3 = VScore("3", 1)
 
-    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         _ <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScoreC, vScoreD, vScore1, vScore2, vScore3)
         rangeAll <- sortedSet.zRangeByScore(k1, ZRange.unbounded()).toListL
@@ -588,7 +588,7 @@ class SortedSetCommandsSuite
     val vScore1 = VScore("1", 6)
     val vScore2 = VScore("2", 3)
     val vScore3 = VScore("3", 1)
-    utfConnection.use[Task, Assertion]  { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion]  { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         _ <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScoreC, vScoreD, vScore1, vScore2, vScore3)
         rangeAll <- sortedSet.zRangeByScoreWithScores(k1, ZRange.unbounded()).toListL
@@ -620,7 +620,7 @@ class SortedSetCommandsSuite
     //since it is a number will be ranked first then `B` although having the same score
     val vScore2 = VScore("2", 2)
 
-    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         _ <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScore1, vScore2)
         rA <- sortedSet.zRank(k1, "A")
@@ -645,7 +645,7 @@ class SortedSetCommandsSuite
     val vScore1 = VScore("1", 6)
     val vScore2 = VScore("2", 3)
 
-    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         count1 <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScore1, vScore2) >> sortedSet.zCard(k1)
         removed1 <- sortedSet.zRem(k1, "A", "1")
@@ -667,7 +667,7 @@ class SortedSetCommandsSuite
     val k1 = genRedisKey.sample.get
     val vScores = List("1", "2", "3", "a", "b", "c", "g").map(VScore(_, 0))
 
-    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         _ <- sortedSet.zAdd(k1, vScores)
         removed <- sortedSet.zRemRangeByLex(k1, ZRange("3", "f")) //removes "3" and "f"
@@ -687,7 +687,7 @@ class SortedSetCommandsSuite
     val vScore1 = VScore("1", 5)
     val vScore2 = VScore("2", 0)
 
-    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         count1 <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScoreC, vScore1, vScore2) >> sortedSet.zCard(k1)
         removed1 <- sortedSet.zRemRangeByScore(k1, ZRange(0, 2))
@@ -707,7 +707,7 @@ class SortedSetCommandsSuite
     val k1 = genRedisKey.sample.get
     val vScores = List("a", "b", "c", "d", "e", "f", "g").map(VScore(_, 0))
 
-    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         _ <- sortedSet.zAdd(k1, vScores)
         rev1 <- sortedSet.zRevRangeByLex(k1, ZRange.lte("c")).toListL
@@ -732,7 +732,7 @@ class SortedSetCommandsSuite
     val vScore2 = VScore("2", 0)
     val vScore3 = VScore("3", 2)
 
-    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         _ <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScoreC, vScore1, vScore2, vScore3)
         l0 <- sortedSet.zRevRangeByScore(k1, ZRange.unbounded()).toListL
@@ -761,7 +761,7 @@ class SortedSetCommandsSuite
     val vScore2 = VScore("2", 0)
     val vScore3 = VScore("3", 2)
 
-    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         _ <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScoreC, vScore1, vScore2, vScore3)
         l0 <- sortedSet.zRevRangeByScoreWithScores(k1, ZRange.unbounded()).toListL
@@ -792,7 +792,7 @@ class SortedSetCommandsSuite
       VScore("F", 6)
     )
 
-    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         _ <- sortedSet.zAdd(k1, vScores)
         members <- sortedSet.zMembers(k1).toListL
@@ -820,7 +820,7 @@ class SortedSetCommandsSuite
       VScore("F", 6)
     )
 
-    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         _ <- sortedSet.zAdd(k1, vScores)
         getAllVScores <- sortedSet.zGetAll(k1).toListL
@@ -841,7 +841,7 @@ class SortedSetCommandsSuite
     val vScores = Gen.listOfN(15, genVScore).sample.get
     val nonExistingMember = Gen.identifier.sample.get
 
-    utfConnection.use { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         _ <- sortedSet.zAdd(k1, vScores)
         scores <- Task.traverse(vScores)(vScore => sortedSet.zScore(k1, vScore.value.get))
@@ -863,7 +863,7 @@ class SortedSetCommandsSuite
     val vScores2 = List("1", "2", "3").map(VScore(_, 1))
     val vScoresDuplicated = List("1", "2").map(VScore(_, 3))
 
-    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
+    utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _, _) =>
       for {
         _ <- sortedSet.zAdd(k1, vScores1) >> sortedSet.zAdd(k2, vScores2) >> sortedSet.zAdd(k3, vScoresDuplicated)
         union <- sortedSet.zUnionStore(k4, k1, k2, k3)
