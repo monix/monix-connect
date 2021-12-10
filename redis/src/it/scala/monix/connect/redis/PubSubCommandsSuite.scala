@@ -23,7 +23,7 @@ class PubSubCommandsSuite
 
     utfClusterConnection.use[Task, Assertion] { subscribeCmd =>
       utfClusterConnection.use[Task, Assertion] { publishCmd =>
-      val receive = subscribeCmd.pubSub.observeChannels.map(_.getMessage).timeoutOnSlowUpstreamTo(4.seconds, Observable.empty).toListL
+      val receive = subscribeCmd.pubSub.observeChannels.map(_.message).timeoutOnSlowUpstreamTo(4.seconds, Observable.empty).toListL
         val publish = subscribeCmd.pubSub.subscribe(channel) >>
           Task.sleep(3.second) >> publishCmd.pubSub.publish(channel, v1) >>
           publishCmd.pubSub.publish(channel, v2)
@@ -45,7 +45,7 @@ class PubSubCommandsSuite
 
     utfConnection.use[Task, Assertion] { subscribeCmd =>
       utfConnection.use[Task, Assertion] { publishCmd =>
-        val receive = subscribeCmd.pubSub.observeChannels.map(_.getMessage).timeoutOnSlowUpstreamTo(4.seconds, Observable.empty).toListL
+        val receive = subscribeCmd.pubSub.observeChannels.map(_.message).timeoutOnSlowUpstreamTo(4.seconds, Observable.empty).toListL
         val publish = subscribeCmd.pubSub.subscribe(List(channel1, channel2)) >>
           Task.sleep(3.second) >> publishCmd.pubSub.publish(channel1, v1) >>
           publishCmd.pubSub.publish(channel2, v2) >>
@@ -112,7 +112,7 @@ class PubSubCommandsSuite
 
     utfClusterConnection.use[Task, Assertion] { subscribeCmd =>
       utfClusterConnection.use[Task, Assertion] { publishCmd =>
-        val receive = subscribeCmd.pubSub.observePatterns.map(_.getMessage).timeoutOnSlowUpstreamTo(4.seconds, Observable.empty).toListL
+        val receive = subscribeCmd.pubSub.observePatterns.map(_.message).timeoutOnSlowUpstreamTo(4.seconds, Observable.empty).toListL
         val publish = subscribeCmd.pubSub.pSubscribe(pattern) >>
           Task.sleep(3.second) >> publishCmd.pubSub.publish(channelPattern, v1) >>
           publishCmd.pubSub.publish(nonChannelPattern, v2)
@@ -147,10 +147,10 @@ class PubSubCommandsSuite
           publishCmd.pubSub.publish(channel2, v3)
 
         Task.parZip4(receiveAll, receivePattern1, receivePattern2, publish).asserting { case (all, p1, p2, _) =>
-          all.map(_.getMessage) shouldBe List(v1, v2, v3)
+          all.map(_.message) shouldBe List(v1, v2, v3)
 
-          Option(p1.head).map(p => (p.getPattern, p.getChannel, p.getMessage)) shouldBe Some(pattern1, channel1, v1)
-          p2.map(p => (p.getPattern, p.getChannel, p.getMessage)) shouldBe List((pattern2, channel2, v2), (pattern2, channel2, v3))
+          Option(p1.head).map(p => (p.pattern, p.channel, p.message)) shouldBe Some(pattern1, channel1, v1)
+          p2.map(p => (p.pattern, p.channel, p.message)) shouldBe List((pattern2, channel2, v2), (pattern2, channel2, v3))
         }
       }
     }
@@ -163,7 +163,7 @@ class PubSubCommandsSuite
 
     utfConnection.use[Task, Assertion] { subscribeCmd =>
       utfConnection.use[Task, Assertion] { publishCmd =>
-        val receive = subscribeCmd.pubSub.observeChannels.map(_.getMessage).timeoutOnSlowUpstreamTo(4.seconds, Observable.empty).toListL
+        val receive = subscribeCmd.pubSub.observeChannels.map(_.message).timeoutOnSlowUpstreamTo(4.seconds, Observable.empty).toListL
         val publish = subscribeCmd.pubSub.subscribe(channel) >>
           Task.sleep(3.second) >> publishCmd.pubSub.publish(channel, v1) >>
           publishCmd.pubSub.publish(channel, v2)

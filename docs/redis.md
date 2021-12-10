@@ -330,6 +330,95 @@ RedisConnection.standalone(redisUri)
   }.runToFuture
 ```
 
+### __Pub/Sub__
+
+The [redis Pub/Sub module](https://redis.io/topics/pubsub) is characterized for being design as a message paradigm where messages are 
+sent by publishers into channels, without knowledge of what subscribers there might be. 
+Published messages are not going to be consumed if there are no subscribers, thus lost.
+
+The api is very concise, consisting in two main functions components:
+
+## Publisher
+
+The `publisher` interface is simple, since it only is in charge of sending messages to specific channels.
+
+```scala
+import monix.connect.redis.client.{RedisCmd, RedisConnection, RedisUri}
+import monix.eval.Task
+
+import scala.concurrent.duration._
+
+val channel: String = "channelXYZ"
+val message: String = "hello world"
+val redisUri = RedisUri("redis://localhost:6379")
+
+RedisConnection.standalone(redisUri)
+        .connectUtf
+        .use { cmd =>
+         cmd.pubSub.publish(channel, message)
+        }
+```
+
+## Subscriber
+
+On the other hand, the `subscriber` consists in two parts, the subscription and the actual consumption of the messages.
+Subscription can be done by `channel` or `pattern` level.
+
+See an example of subscribing to a channel in below code snippet:
+
+```scala
+import monix.connect.redis.client.{RedisCmd, RedisConnection, RedisUri}
+import monix.connect.redis.domain.ChannelMsg
+import monix.eval.Task
+
+import scala.concurrent.duration._
+
+val channelX: String = "channel/x"
+val channelY: String = "channel/y"
+val channelZ: String = "channel/z"
+val message: String = "hello world"
+val redisUri = RedisUri("redis://localhost:6379")
+
+def handleChannelMsg[K, V](msg: ChannelMsg[K, V]): Task[Unit] = ???
+
+RedisConnection.standalone(redisUri)
+        .connectUtf
+        .use { cmd =>
+         cmd.pubSub.subscribe(List(channelX, channelY, channelZ)) >> 
+                 cmd.pubSub.observeChannels
+                 .mapEvalF(handleChannelMsg)
+                 .completedL
+        }
+```
+
+
+Sometimes our apps need to send messages to different channels dynamically, 
+in those cases it might be useful to subscribe to a pattern, 
+which will apply to all channels that match the pattern.   
+
+```scala
+import monix.connect.redis.client.{RedisCmd, RedisConnection, RedisUri}
+import monix.connect.redis.domain.PatternMsg
+import monix.eval.Task
+
+import scala.concurrent.duration._
+
+val pattern: String = "channel/*/xyz"
+val message: String = "hello world"
+val redisUri = RedisUri("redis://localhost:6379")
+
+def handlePatternMsg[K, V](msg: PatternMsg[K, V]): Task[Unit] = ???
+
+RedisConnection.standalone(redisUri)
+        .connectUtf
+        .use { cmd =>
+         cmd.pubSub.pSubscribe(pattern) >> 
+                 cmd.pubSub.observePatterns
+                 .mapEvalF(handlePatternMsg)
+                 .completedL
+        }
+```
+
 ### __Server__
 
 The following code shows how to remove all keys from all dbs in redis using the server api `RedisServer` a very basic
@@ -494,4 +583,4 @@ val clusterConn = RedisConnection.cluster(redisUris)
 ## Yet to come
 
 - _Master Replica_ connection.
-- _Pub/sub_, _Streams_, _Transactions_, _HyperLogLog_, _Geolocation_, _Scripting_ commands.
+- _Streams_, _Transactions_, _HyperLogLog_, _Geolocation_, _Scripting_ commands.

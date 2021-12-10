@@ -17,67 +17,113 @@
 
 package monix.connect.redis.commands
 
-import io.lettuce.core.api.reactive.{RedisSetReactiveCommands, RedisStringReactiveCommands}
-import io.lettuce.core.cluster.pubsub.api.reactive.RedisClusterPubSubReactiveCommands
-import io.lettuce.core.pubsub.RedisPubSubListener
-import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands
-import io.lettuce.core.pubsub.api.reactive.{ChannelMessage, PatternMessage, RedisPubSubReactiveCommands}
-import monix.connect.redis.kvToTuple
+import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands
+import monix.connect.redis.domain.{ChannelMsg, PatternMsg}
 import monix.eval.Task
 import monix.reactive.Observable
-import reactor.core.publisher.FluxSink.OverflowStrategy
-import reactor.core.publisher.Mono
-
-import java.lang
-import scala.concurrent.duration.FiniteDuration
-import scala.jdk.CollectionConverters._
 
 /**
-  * Exposes the set of redis string commands available.
-  * @see <a href="https://redis.io/commands#string">String commands reference</a>.
-  *
-  * @note Does not support `bitfield`.
+  * Exposes the set of redis pub/sub commands available.
+  * @see <a href="https://redis.io/commands#pubsub">Pub/Sub commands reference</a>.
   */
 final class PubSubCommands[K, V] private[redis] (reactiveCmd: RedisPubSubReactiveCommands[K, V]) {
 
-  def subscribe(channel: K): Task[Unit] = {
-    Task.fromReactivePublisher(reactiveCmd.subscribe(channel)).void
-  }
+  /**
+    * Subscribes to the specific [[channel]] to listen for new events.
+    * The subscription is necessary to later on start consuming messages
+    * published to the given channel with [[observeChannel]].
+    *
+    * @return A [[Task]] that completes as soon as the subscription is registered.
+    */
+  def subscribe(channel: K): Task[Unit] = Task.fromReactivePublisher(reactiveCmd.subscribe(channel)).void
 
+  /**
+    * Subscribes to the specific [[channels]] to listen for new events.
+    * The subscription is necessary to later on start consuming messages
+    * published to the given channels with [[observeChannels]].
+    *
+    * @return A [[Task]] that completes as soon as the subscription is registered.
+    */
   def subscribe(channels: List[K]): Task[Unit] = {
     Task.fromReactivePublisher(reactiveCmd.subscribe(channels: _*)).void
   }
 
+  /**
+    * Subscribes to the specific [[pattern]] to listen for new events.
+    * The subscription is  necessary to later on start consuming messages published
+    * to the given pattern with [[observePattern]] or [[observeChannel]].
+    *
+    * @return A [[Task]] that completes as soon as the subscription is registered.
+    */
   def pSubscribe(pattern: K): Task[Unit] = {
     Task.fromReactivePublisher(reactiveCmd.psubscribe(pattern)).void
   }
 
-  def pSubscribe(pattern: List[K]): Task[Unit] = {
-    Task.fromReactivePublisher(reactiveCmd.psubscribe(pattern: _*)).void
+  /**
+    * Subscribes to the specific [[patterns]] to listen for new events.
+    * The subscription is necessary to later on start consuming messages published
+    * to the given patterns with [[observePatterns]] or [[observeChannels]].
+    *
+    * @return A [[Task]] that completes as soon as the subscription is registered.
+    */
+  def pSubscribe(patterns: List[K]): Task[Unit] = {
+    Task.fromReactivePublisher(reactiveCmd.psubscribe(patterns: _*)).void
   }
 
-  def observeChannels: Observable[ChannelMessage[K, V]] = {
-    Observable.fromReactivePublisher(reactiveCmd.observeChannels())
+  /**
+    * Starts listening for all channel messages which
+    * the redis client is [[subscribe]]d to.
+    *
+    * @return An [[Observable]] that emits [[ChannelMsg]]s.
+    */
+  def observeChannels: Observable[ChannelMsg[K, V]] = {
+    Observable.fromReactivePublisher(reactiveCmd.observeChannels()).map(ChannelMsg.from)
   }
 
+  /**
+    * Starts consuming channel messages only from the specified channel.
+    *
+    * @return An [[Observable]] that emits messages of type [[V]].
+    */
   def observeChannel(channel: K): Observable[V] = {
-    Observable.fromReactivePublisher(reactiveCmd.observeChannels()).filter(_.getChannel == channel).map(_.getMessage)
+    Observable
+      .fromReactivePublisher(reactiveCmd.observeChannels())
+      .filter(_.getChannel == channel)
+      .map(_.getMessage)
   }
 
-  def observePatterns: Observable[PatternMessage[K, V]] = {
-    Observable.fromReactivePublisher(reactiveCmd.observePatterns())
+  /**
+    * Starts consuming all pattern messages which
+    * the redis client is [[subscribe]]d to.
+    *
+    * @return An [[Observable]] that emits [[PatternMsg]].
+    */
+  def observePatterns: Observable[PatternMsg[K, V]] = {
+    Observable.fromReactivePublisher(reactiveCmd.observePatterns()).map(PatternMsg.from)
   }
 
-  def observePattern(pattern: K): Observable[PatternMessage[K, V]] = {
-    Observable.fromReactivePublisher(reactiveCmd.observePatterns()).filter(_.getPattern == pattern)
+  /**
+    * Starts consuming pattern messages only from the specified pattern.
+    *
+    * @return An [[Observable]] that emits [[PatternMsg]].
+    */
+  def observePattern(pattern: K): Observable[PatternMsg[K, V]] = {
+    Observable
+      .fromReactivePublisher(reactiveCmd.observePatterns())
+      .filter(_.getPattern == pattern)
+      .map(PatternMsg.from)
   }
 
+  /**
+    * Publishes a new message to the specified channel.
+    */
   def publish(channel: K, message: V): Task[Long] = {
     Task.fromReactivePublisher(reactiveCmd.publish(channel, message)).flatMap {
       case Some(v) => Task.pure(v)
-      case None => Task.raiseError(new IllegalStateException(s"Failed publishing to channel $channel."))
+      case None => Task.raiseError(new IllegalStateException(s"Unknown failure publishing to channel $channel."))
     }
   }
+
 }
 
 private[redis] object PubSubCommands {
