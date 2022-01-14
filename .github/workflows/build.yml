@@ -54,7 +54,7 @@ jobs:
     strategy:
       matrix:
         java: [ 8 ]
-        scala: [ 2.12.11, 2.13.7 ]
+        scala: [ 2.12.11, 2.13.8 ]
 
     steps:
       - uses: actions/checkout@v2
