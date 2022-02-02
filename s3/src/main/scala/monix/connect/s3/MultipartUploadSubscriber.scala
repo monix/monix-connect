@@ -76,7 +76,7 @@ private[s3] class MultipartUploadSubscriber(
 
       private[this] var buffer: Array[Byte] = Array.emptyByteArray
       private[this] var completedParts: List[CompletedPart] = List.empty[CompletedPart]
-      private[this] val partNMVarEval: Task[MVar[Task, Int]] = MVar[Task].of(0).memoize
+      private[this] val partNMVarEval: Task[MVar[Task, Int]] = MVar[Task].of(1).memoize
 
       /**
         * If the chunk length is bigger than the minimum size, perfom the part request [[software.amazon.awssdk.services.s3.model.UploadPartRequest]],
