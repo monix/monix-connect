@@ -9,7 +9,6 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
-      fail-fast: true
       matrix:
         java: [8, 11]
         scala: [2.12.11, 2.13.1]
