@@ -18,7 +18,7 @@
 package monix.connect.mongodb
 
 import org.scalatest.flatspec.AsyncFlatSpec
-import com.mongodb.client.model.{Collation, CollationCaseFirst, DeleteOptions, Filters, Updates}
+import com.mongodb.client.model.{Collation, CollationCaseFirst, CreateIndexOptions, DeleteOptions, Filters, IndexModel, IndexOptions, Indexes, Updates}
 import monix.connect.mongodb.client.MongoConnection
 import monix.eval.Task
 import monix.execution.Scheduler
@@ -26,6 +26,8 @@ import monix.testing.scalatest.MonixTaskSpec
 import org.bson.conversions.Bson
 import org.scalatest.{Assertion, BeforeAndAfterEach}
 import org.scalatest.matchers.should.Matchers
+
+import java.util.concurrent.TimeUnit
 
 class MongoSingleSuite extends AsyncFlatSpec with MonixTaskSpec with Fixture with Matchers with BeforeAndAfterEach {
 
@@ -256,6 +258,39 @@ class MongoSingleSuite extends AsyncFlatSpec with MonixTaskSpec with Fixture wit
       r.matchedCount shouldBe 0L
       r.modifiedCount shouldBe 0L
       r.wasAcknowledged shouldBe true
+    }
+  }
+
+  "createIndex" should "silently create the index" in {
+    MongoConnection
+      .create1(mongoEndpoint, randomEmployeesColRef).use[Task, Assertion] { operator =>
+      for {
+        createIndexResult <- operator.single.createIndex(
+          new IndexModel(Indexes.ascending("companyName")).getKeys)
+      } yield {
+        createIndexResult shouldBe ()
+      }
+    }
+  }
+
+  "createIndexes" should "silently create the indexes" in {
+    MongoConnection
+      .create1(mongoEndpoint, randomEmployeesColRef).use[Task, Assertion] { operator =>
+      for {
+        createIndexResult <- operator.single.createIndexes(
+          List(
+            new IndexModel(
+              Indexes.hashed("companyName")
+            ),
+            new IndexModel(
+              Indexes.ascending("city"),
+              new IndexOptions().background(true).unique(true)
+            )
+          ), new CreateIndexOptions().maxTime(10, TimeUnit.MINUTES)
+        )
+      } yield {
+        createIndexResult shouldBe ()
+      }
     }
   }
 
