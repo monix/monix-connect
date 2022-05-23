@@ -764,6 +764,49 @@ connection.use { operator =>
 }.runToFuture
 ```
 
+### Indexing
+
+#### createIndex
+
+Creates an index on the collection according to the specified arguments.
+
+_Single_:
+
+```scala
+import cats.effect.Resource
+import com.mongodb.client.model.{Filters, IndexModel, Indexes, Updates}
+import monix.connect.mongodb.domain.UpdateResult
+import monix.connect.mongodb.client.CollectionOperator
+import monix.eval.Task
+
+val connection: Resource[Task, CollectionOperator[Employee]]
+val key = new IndexModel(Indexes.ascending("name")).getKeys
+val t: Task[UpdateResult] = connection.use(_.single.createIndex(key))
+```
+
+#### createIndexes
+
+Create multiple indexes on the collection according to the specified arguments.
+
+_Single_:
+
+```scala
+import cats.effect.Resource
+import com.mongodb.client.model.{CreateIndexOptions, Filters, IndexModel, IndexOptions, Indexes, Updates}
+import monix.connect.mongodb.domain.UpdateResult
+import monix.connect.mongodb.client.CollectionOperator
+import monix.eval.Task
+
+import java.util.concurrent.TimeUnit
+
+val connection: Resource[Task, CollectionOperator[Employee]]
+val indexes = List(
+  new IndexModel(Indexes.descending("name")),
+  new IndexModel(Indexes.ascending("city"), new IndexOptions().background(true).unique(false))
+)
+val options = new CreateIndexOptions().maxTime(5, TimeUnit.SECONDS)
+val t: Task[UpdateResult] = connection.use(_.single.createIndexes(indexes, options))
+```
 
 
  
