@@ -299,7 +299,7 @@ class ServerCommandsSuite
         stringMemSize <- cmd.server.memoryUsage(intKey)
       } yield {
         stringMemSize should be >= 50L
-        stringMemSize should be <= 54L
+        stringMemSize should be <= 56L
       }
     )
   }
