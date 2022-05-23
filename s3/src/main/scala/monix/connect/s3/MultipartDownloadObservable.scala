@@ -64,7 +64,7 @@ private[s3] class MultipartDownloadObservable(
     totalSize: Long,
     chunkSize: Long,
     getRequest: GetObjectRequest,
-    offset: Int): Task[Unit] = {
+    offset: Long): Task[Unit] = {
 
     for {
       chunk <- {
@@ -77,7 +77,7 @@ private[s3] class MultipartDownloadObservable(
       nextChunk <- {
         ack match {
           case Ack.Continue => {
-            val nextOffset = offset + chunk.size
+            val nextOffset = offset + chunk.length
             if (nextOffset < totalSize) {
               val nextRange = s"bytes=${nextOffset}-${nextOffset + chunkSize}"
               val nextRequest = getRequest.toBuilder.range(nextRange).build()

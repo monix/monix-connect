@@ -128,9 +128,23 @@ private[mongodb] class MongoSingleImpl {
     filter: Bson,
     update: Bson,
     updateOptions: UpdateOptions,
-    retryStrategy: RetryStrategy): Task[UpdateResult] = {
+    retryStrategy: RetryStrategy): Task[UpdateResult] =
     retryOnFailure(collection.updateMany(filter, update, updateOptions), retryStrategy)
       .map(_.map(ResultConverter.fromJava).getOrElse(DefaultUpdateResult))
-  }
 
+  protected[this] def createIndex[Doc](
+    collection: MongoCollection[Doc],
+    key: Bson,
+    indexOptions: IndexOptions): Task[Unit] =
+    Task
+      .fromReactivePublisher(collection.createIndex(key, indexOptions))
+      .flatMap(_ => Task.unit)
+
+  protected[this] def createIndexes[Doc](
+    collection: MongoCollection[Doc],
+    indexes: List[IndexModel],
+    createIndexOptions: CreateIndexOptions): Task[Unit] =
+    Task
+      .fromReactivePublisher(collection.createIndexes(indexes.asJava, createIndexOptions))
+      .flatMap(_ => Task.unit)
 }

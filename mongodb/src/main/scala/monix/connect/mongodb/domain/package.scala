@@ -19,10 +19,12 @@ package monix.connect.mongodb
 
 import com.mongodb.client.model.{
   CountOptions,
+  CreateIndexOptions,
   DeleteOptions,
   FindOneAndDeleteOptions,
   FindOneAndReplaceOptions,
   FindOneAndUpdateOptions,
+  IndexOptions,
   InsertManyOptions,
   InsertOneOptions,
   ReplaceOptions,
@@ -42,6 +44,8 @@ package object domain {
   @InternalApi private[mongodb] val DefaultInsertManyOptions = new InsertManyOptions()
   @InternalApi private[mongodb] val DefaultUpdateOptions = new UpdateOptions()
   @InternalApi private[mongodb] val DefaultReplaceOptions = new ReplaceOptions()
+  @InternalApi private[mongodb] val DefaultIndexOptions = new IndexOptions()
+  @InternalApi private[mongodb] val DefaultCreateIndexesOptions = new CreateIndexOptions()
 
   //default result instances
   @InternalApi private[mongodb] val DefaultDeleteResult = DeleteResult(deleteCount = 0L, wasAcknowledged = false)
