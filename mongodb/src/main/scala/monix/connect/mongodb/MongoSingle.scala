@@ -19,7 +19,21 @@ package monix.connect.mongodb
 
 import com.mongodb.client.model._
 import com.mongodb.reactivestreams.client.MongoCollection
-import monix.connect.mongodb.domain.{DefaultCreateIndexesOptions, DefaultDeleteOptions, DefaultIndexOptions, DefaultInsertManyOptions, DefaultInsertOneOptions, DefaultReplaceOptions, DefaultRetryStrategy, DefaultUpdateOptions, DeleteResult, InsertManyResult, InsertOneResult, RetryStrategy, UpdateResult}
+import monix.connect.mongodb.domain.{
+  DefaultCreateIndexesOptions,
+  DefaultDeleteOptions,
+  DefaultIndexOptions,
+  DefaultInsertManyOptions,
+  DefaultInsertOneOptions,
+  DefaultReplaceOptions,
+  DefaultRetryStrategy,
+  DefaultUpdateOptions,
+  DeleteResult,
+  InsertManyResult,
+  InsertOneResult,
+  RetryStrategy,
+  UpdateResult
+}
 import monix.connect.mongodb.internal.MongoSingleImpl
 import monix.eval.Task
 import org.bson.conversions.Bson
@@ -291,9 +305,9 @@ object MongoSingle extends MongoSingleImpl {
     * @return an empty [[Task]] or a failed one
     */
   override def createIndex[Doc](
-     collection: MongoCollection[Doc],
-     key: Bson,
-     indexOptions: IndexOptions = DefaultIndexOptions): Task[Unit] =
+    collection: MongoCollection[Doc],
+    key: Bson,
+    indexOptions: IndexOptions = DefaultIndexOptions): Task[Unit] =
     super.createIndex(collection, key, indexOptions)
 
   /**
@@ -307,9 +321,9 @@ object MongoSingle extends MongoSingleImpl {
     * @return an empty [[Task]] or a failed one
     */
   override def createIndexes[Doc](
-     collection: MongoCollection[Doc],
-     indexes: List[IndexModel],
-     createIndexOptions: CreateIndexOptions = DefaultCreateIndexesOptions): Task[Unit] =
+    collection: MongoCollection[Doc],
+    indexes: List[IndexModel],
+    createIndexOptions: CreateIndexOptions = DefaultCreateIndexesOptions): Task[Unit] =
     super.createIndexes(collection, indexes, createIndexOptions)
 }
 
@@ -538,9 +552,7 @@ class MongoSingle[Doc](private[mongodb] val collection: MongoCollection[Doc]) ex
     * @param indexOptions the options for the index
     * @return an empty [[Task]] or a failed one
     */
-  def createIndex(
-     key: Bson,
-     indexOptions: IndexOptions = DefaultIndexOptions): Task[Unit] =
+  def createIndex(key: Bson, indexOptions: IndexOptions = DefaultIndexOptions): Task[Unit] =
     super.createIndex(collection, key, indexOptions)
 
   /**
@@ -552,7 +564,7 @@ class MongoSingle[Doc](private[mongodb] val collection: MongoCollection[Doc]) ex
     * @return an empty [[Task]] or a failed one
     */
   def createIndexes(
-     indexes: List[IndexModel],
-     createIndexOptions: CreateIndexOptions = DefaultCreateIndexesOptions): Task[Unit] =
+    indexes: List[IndexModel],
+    createIndexOptions: CreateIndexOptions = DefaultCreateIndexesOptions): Task[Unit] =
     super.createIndexes(collection, indexes, createIndexOptions)
 }
