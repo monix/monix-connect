@@ -17,7 +17,7 @@
 
 package monix.connect.mongodb
 
-import com.mongodb.client.model.{Filters, Updates}
+import com.mongodb.client.model.{CreateIndexOptions, Filters, IndexModel, IndexOptions, Indexes, Updates}
 import com.mongodb.client.result.{
   DeleteResult => MongoDeleteResult,
   InsertManyResult => MongoInsertManyResult,
@@ -42,6 +42,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 import scala.util.Failure
@@ -553,4 +554,129 @@ class MongoSingleSpec
     f.value.get shouldBe util.Failure(ex)
   }
 
+  "createIndex" should "create index on collection" in {
+    //given
+    val s = TestScheduler()
+    val index = new IndexModel(Indexes.ascending("name")).getKeys
+    val publisher = Task("empty").toReactivePublisher(s)
+    when(col.createIndex(index, DefaultIndexOptions)).thenReturn(publisher)
+
+    //when
+    val f = MongoSingle.createIndex(col, index).runToFuture(s)
+
+    //then
+    s.tick(1.second)
+    verify(col).createIndex(index, DefaultIndexOptions)
+    f.value.get shouldBe util.Success(())
+  }
+
+  it should "create index on collection with options" in {
+    //given
+    val s = TestScheduler()
+    val index = new IndexModel(Indexes.ascending("name")).getKeys
+    val options = new IndexOptions().background(true);
+    val publisher = Task("empty").toReactivePublisher(s)
+
+    when(col.createIndex(index, options)).thenReturn(publisher)
+
+    //when
+    val f = MongoSingle.createIndex(col, index, options).runToFuture(s)
+
+    //then
+    s.tick(1.second)
+    verify(col).createIndex(index, options)
+    f.value.get shouldBe util.Success(())
+  }
+
+  it should "return a failed task whenever the underlying publisher signaled error" in {
+    //given
+    val s = TestScheduler()
+    val index = new IndexModel(Indexes.ascending("age")).getKeys
+    val ex = DummyException("Create index failed")
+    val publisher: Publisher[String] = Task.raiseError[String](ex).toReactivePublisher(s)
+    when(col.createIndex(index, DefaultIndexOptions)).thenReturn(publisher)
+
+    //when
+    val f = MongoSingle.createIndex(col, index).runToFuture(s)
+
+    //then
+    s.tick(1.second)
+    verify(col).createIndex(index, DefaultIndexOptions)
+    f.value.get shouldBe util.Failure(ex)
+  }
+
+  "createIndexes" should "create index on collection" in {
+    //given
+    val s = TestScheduler()
+    val indexes = List(
+      new IndexModel(
+        Indexes.ascending("name")
+      ),
+      new IndexModel(
+        Indexes.ascending("age"),
+        new IndexOptions().background(false).unique(true)
+      )
+    )
+    val publisher = Task("empty").toReactivePublisher(s)
+    when(col.createIndexes(indexes.asJava, DefaultCreateIndexesOptions)).thenReturn(publisher)
+
+    //when
+    val f = MongoSingle.createIndexes(col, indexes).runToFuture(s)
+
+    //then
+    s.tick(1.second)
+    verify(col).createIndexes(indexes.asJava, DefaultCreateIndexesOptions)
+    f.value.get shouldBe util.Success(())
+  }
+
+  it should "create index on collection with options" in {
+    //given
+    val s = TestScheduler()
+    val indexes = List(
+      new IndexModel(
+        Indexes.ascending("name")
+      ),
+      new IndexModel(
+        Indexes.ascending("age"),
+        new IndexOptions().background(true).unique(true)
+      )
+    )
+    val options = new CreateIndexOptions().maxTime(500, TimeUnit.MILLISECONDS);
+    val publisher = Task("empty").toReactivePublisher(s)
+
+    when(col.createIndexes(indexes.asJava, options)).thenReturn(publisher)
+
+    //when
+    val f = MongoSingle.createIndexes(col, indexes, options).runToFuture(s)
+
+    //then
+    s.tick(1.second)
+    verify(col).createIndexes(indexes.asJava, options)
+    f.value.get shouldBe util.Success(())
+  }
+
+  it should "return a failed task whenever the underlying publisher signaled error" in {
+    //given
+    val s = TestScheduler()
+    val indexes = List(
+      new IndexModel(
+        Indexes.ascending("name")
+      ),
+      new IndexModel(
+        Indexes.ascending("age"),
+        new IndexOptions().background(true).unique(true)
+      )
+    )
+    val ex = DummyException("Create index failed")
+    val publisher: Publisher[String] = Task.raiseError[String](ex).toReactivePublisher(s)
+    when(col.createIndexes(indexes.asJava, DefaultCreateIndexesOptions)).thenReturn(publisher)
+
+    //when
+    val f = MongoSingle.createIndexes(col, indexes).runToFuture(s)
+
+    //then
+    s.tick(1.second)
+    verify(col).createIndexes(indexes.asJava, DefaultCreateIndexesOptions)
+    f.value.get shouldBe util.Failure(ex)
+  }
 }
