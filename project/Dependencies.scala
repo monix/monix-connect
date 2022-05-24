@@ -7,7 +7,7 @@ object Dependencies {
     //main
     val Monix = "3.4.0"
     val AwsSdk = "2.17.193"
-    val AkkaStreams = "2.6.9"
+    val AkkaStreams = "2.6.19"
     val GCS = "1.107.0"
     val Hadoop = "3.3.1"
     val MongoScala = "4.1.1"
