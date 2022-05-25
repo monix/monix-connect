@@ -342,4 +342,41 @@ class MongoSourceSuite extends AsyncFlatSpec with MonixTaskSpec with Fixture wit
       }
     }
   }
+
+  "findOne" should "find first encountered item that matches the filter" in {
+    val employeeGlen1 = genEmployeeWith(name = Some("Glen"), age = Some(30)).sample.get
+    val employeeGlen2 = genEmployeeWith(name = Some("Glen"), age = Some(40)).sample.get
+    val employeeGlen3 = genEmployeeWith(name = Some("Glen"), age = Some(50)).sample.get
+    val employeeMike1 = genEmployeeWith(name = Some("Mike"), age = Some(30)).sample.get
+    val employeeMike2 = genEmployeeWith(name = Some("Mike"), age = Some(40)).sample.get
+
+    val filter = Filters.eq("name", "Glen")
+
+    MongoConnection.create1(mongoEndpoint, randomEmployeesColRef).use[Task, Assertion] { operator =>
+      for {
+        _ <- operator.single.insertMany(List(employeeMike1, employeeGlen1, employeeGlen2, employeeMike2, employeeGlen3))
+        findResult <- operator.source.findOne(filter)
+      } yield {
+        findResult.isDefined shouldBe true
+        findResult.get.name shouldBe "Glen"
+        List(employeeGlen1, employeeGlen2, employeeGlen3) should contain (findResult.get)
+      }
+    }
+  }
+
+  it should "not find result when filter didn't find matches" in {
+    val employeeGlen1 = genEmployeeWith(name = Some("Glen"), age = Some(30)).sample.get
+    val employeeGlen2 = genEmployeeWith(name = Some("Glen"), age = Some(40)).sample.get
+
+    val filter = Filters.eq("name", "John")
+
+    MongoConnection.create1(mongoEndpoint, randomEmployeesColRef).use[Task, Assertion] { operator =>
+      for {
+        _ <- operator.single.insertMany(List(employeeGlen1, employeeGlen2))
+        findResult <- operator.source.findOne(filter)
+      } yield {
+        findResult.isDefined shouldBe false
+      }
+    }
+  }
 }
