@@ -18,6 +18,7 @@
 package monix.connect.mongodb.internal
 
 import monix.connect.mongodb.domain.RetryStrategy
+import monix.eval.Task
 import monix.execution.{Ack, Callback, Scheduler}
 import monix.execution.cancelables.AssignableCancelable
 import monix.execution.internal.InternalApi
@@ -27,26 +28,21 @@ import org.reactivestreams.Publisher
 
 import scala.concurrent.Future
 
-/**
-  * A pre-built Monix [[Consumer]] implementation representing a Sink that expects events
-  * of type [[A]] and executes the mongodb operation [[op]] passed to the class constructor.
-  *
-  * @param op                the mongodb operation defined as that expects an event of type [[A]] and
-  *                          returns a reactivestreams [[Publisher]] of [[Any]].
-  * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
-  * @tparam A the type that the [[Consumer]] expects to receive
-  */
+//todo mszmal: add doc
 @InternalApi
-private[mongodb] class MongoSinkSubscriber[A, B](op: A => Publisher[B], retryStrategy: RetryStrategy)
-  extends Consumer[A, Unit] {
+private[mongodb] class MongoSinkParSubscriber[A, B](op: A => Publisher[B], retryStrategy: RetryStrategy)
+  extends Consumer[List[A], Unit] {
 
-  override def createSubscriber(cb: Callback[Throwable, Unit], s: Scheduler): (Subscriber[A], AssignableCancelable) = {
-    val sub = new Subscriber[A] {
+  override def createSubscriber(
+    cb: Callback[Throwable, Unit],
+    s: Scheduler): (Subscriber[List[A]], AssignableCancelable) = {
+    val sub = new Subscriber[List[A]] {
 
       implicit val scheduler: Scheduler = s
 
-      def onNext(request: A): Future[Ack] = {
-        retryOnFailure(op(request), retryStrategy)
+      def onNext(requests: List[A]): Future[Ack] =
+        Task
+          .parTraverse(requests)(req => retryOnFailure(op(req), retryStrategy))
           .redeem(ex => {
             onError(ex)
             Ack.Stop
@@ -54,7 +50,6 @@ private[mongodb] class MongoSinkSubscriber[A, B](op: A => Publisher[B], retryStr
             Ack.Continue
           })
           .runToFuture
-      }
 
       def onComplete(): Unit = {
         cb.onSuccess(())

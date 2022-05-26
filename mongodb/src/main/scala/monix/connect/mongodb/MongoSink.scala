@@ -61,6 +61,13 @@ object MongoSink extends MongoSinkImpl {
     super.deleteOne(collection, deleteOptions, retryStrategy)
   }
 
+  //todo mszmal: add doc
+  override def deleteOnePar[Doc](
+                                  collection: MongoCollection[Doc],
+                                  deleteOptions: DeleteOptions = DefaultDeleteOptions,
+                                  retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[List[Bson], Unit] =
+    super.deleteOnePar(collection, deleteOptions, retryStrategy)
+
   /**
     * Provides a sink implementation for [[MongoSingle.deleteMany]] that per each element
     * removes all documents from the collection that matched the given query filter.
@@ -96,6 +103,13 @@ object MongoSink extends MongoSinkImpl {
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[Doc, Unit] = {
     super.insertOne(collection, insertOneOptions, retryStrategy)
   }
+
+  //todo mszmal: add doc
+  override def insertOnePar[Doc](
+                                  collection: MongoCollection[Doc],
+                                  insertOneOptions: InsertOneOptions = DefaultInsertOneOptions,
+                                  retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[List[Doc], Unit] =
+    super.insertOnePar(collection, insertOneOptions, retryStrategy)
 
   /**
     * Provides a sink implementation for [[MongoSingle.insertMany]] that expects
@@ -196,6 +210,13 @@ class MongoSink[Doc](private[mongodb] val collection: MongoCollection[Doc]) exte
     super.deleteOne(collection, deleteOptions, retryStrategy)
   }
 
+  //todo mszmal: add doc
+  def deleteOnePar(
+                 deleteOptions: DeleteOptions = DefaultDeleteOptions,
+                 retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[List[Bson], Unit] = {
+    super.deleteOnePar(collection, deleteOptions, retryStrategy)
+  }
+
   /**
     * Provides a sink implementation for [[MongoSingle.deleteMany]] that per each element
     * removes all documents from the collection that matched the given query filter.
@@ -224,6 +245,13 @@ class MongoSink[Doc](private[mongodb] val collection: MongoCollection[Doc]) exte
     insertOneOptions: InsertOneOptions = DefaultInsertOneOptions,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[Doc, Unit] = {
     super.insertOne(collection, insertOneOptions, retryStrategy)
+  }
+
+  //todo mszmal: add doc
+  def insertOnePar(
+                 insertOneOptions: InsertOneOptions = DefaultInsertOneOptions,
+                 retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[List[Doc], Unit] = {
+    super.insertOnePar(collection, insertOneOptions, retryStrategy)
   }
 
   /**

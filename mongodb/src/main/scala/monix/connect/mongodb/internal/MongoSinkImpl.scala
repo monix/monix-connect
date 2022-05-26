@@ -38,6 +38,14 @@ private[mongodb] class MongoSinkImpl {
     new MongoSinkSubscriber(deleteOneOp, retryStrategy)
   }
 
+  protected[this] def deleteOnePar[Doc](
+    collection: MongoCollection[Doc],
+    deleteOptions: DeleteOptions,
+    retryStrategy: RetryStrategy): Consumer[List[Bson], Unit] = {
+    val deleteOneOp = (filter: Bson) => collection.deleteOne(filter, deleteOptions)
+    new MongoSinkParSubscriber(deleteOneOp, retryStrategy)
+  }
+
   protected[this] def deleteMany[Doc](
     collection: MongoCollection[Doc],
     deleteOptions: DeleteOptions,
@@ -52,6 +60,14 @@ private[mongodb] class MongoSinkImpl {
     retryStrategy: RetryStrategy): Consumer[Doc, Unit] = {
     val insertOneOp = (document: Doc) => collection.insertOne(document, insertOneOptions)
     new MongoSinkSubscriber(insertOneOp, retryStrategy)
+  }
+
+  protected[this] def insertOnePar[Doc](
+                                      collection: MongoCollection[Doc],
+                                      insertOneOptions: InsertOneOptions,
+                                      retryStrategy: RetryStrategy): Consumer[List[Doc], Unit] = {
+    val insertOneOp = (document: Doc) => collection.insertOne(document, insertOneOptions)
+    new MongoSinkParSubscriber(insertOneOp, retryStrategy)
   }
 
   protected[this] def insertMany[Doc](
