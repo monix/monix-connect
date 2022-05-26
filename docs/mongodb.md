@@ -418,6 +418,25 @@ connection.use { operator =>
 }.runToFuture
 ```
 
+#### findOne
+
+Finds the first encountered document in the collection that matched the query filter if exists, or the empty 
+option if does not.
+```scala
+import cats.effect.Resource
+import com.mongodb.client.model.Filters
+import monix.connect.mongodb.client.CollectionOperator
+import monix.eval.Task
+import monix.reactive.Observable
+
+val connection: Resource[Task, CollectionOperator[Employee]]
+connection.use { operator =>
+  val rioEmployee: Task[Option[Employee]] = operator.source.findOne(Filters.eq("city", "Rio"))
+  //business logic here
+  rioEmployee
+}.runToFuture
+```
+
 #### findOneAndDelete
 
 Atomically _find_ a document and _remove_ it.
