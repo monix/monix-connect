@@ -107,6 +107,13 @@ private[mongodb] class MongoSourceImpl {
     Observable.fromReactivePublisher(collection.find(filter))
 
   /**
+    * Finds the first encountered document in the collection that matched the query filter
+    * if exists, or the empty option if does not.
+    */
+  protected[this] def findOne[Doc](collection: MongoCollection[Doc], filter: Bson): Task[Option[Doc]] =
+    Task.fromReactivePublisher(collection.find(filter))
+
+  /**
     * Atomically find a document and remove it.
     */
   protected[this] def findOneAndDelete[Doc](collection: MongoCollection[Doc], filter: Bson): Task[Option[Doc]] =

@@ -332,7 +332,7 @@ class SetCommandsSuite
           moved shouldBe true
           s1 shouldNot contain theSameElementsAs m1
           s2 shouldNot contain theSameElementsAs m2
-          union should contain theSameElementsAs m1 ++ m2
+          union should contain theSameElementsAs (m1 ++ m2).toSet
           //although the list are not equal as at the beginning because of the move operation, its union still is the same
           diff should contain theSameElementsAs List(m1.head)
           //the difference between the k3 and k1 is equal to the element that was moved
