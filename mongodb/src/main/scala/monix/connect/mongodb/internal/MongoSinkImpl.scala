@@ -41,7 +41,7 @@ private[mongodb] class MongoSinkImpl {
   protected[this] def deleteOnePar[Doc](
     collection: MongoCollection[Doc],
     deleteOptions: DeleteOptions,
-    retryStrategy: RetryStrategy): Consumer[List[Bson], Unit] = {
+    retryStrategy: RetryStrategy): Consumer[Seq[Bson], Unit] = {
     val deleteOneOp = (filter: Bson) => collection.deleteOne(filter, deleteOptions)
     new MongoSinkParSubscriber(deleteOneOp, retryStrategy)
   }
@@ -54,6 +54,14 @@ private[mongodb] class MongoSinkImpl {
     new MongoSinkSubscriber(deleteManyOnNext, retryStrategy)
   }
 
+  protected[this] def deleteManyPar[Doc](
+    collection: MongoCollection[Doc],
+    deleteOptions: DeleteOptions,
+    retryStrategy: RetryStrategy): Consumer[Seq[Bson], Unit] = {
+    val deleteManyOnNext = (filter: Bson) => collection.deleteMany(filter, deleteOptions)
+    new MongoSinkParSubscriber(deleteManyOnNext, retryStrategy)
+  }
+
   protected[this] def insertOne[Doc](
     collection: MongoCollection[Doc],
     insertOneOptions: InsertOneOptions,
@@ -63,9 +71,9 @@ private[mongodb] class MongoSinkImpl {
   }
 
   protected[this] def insertOnePar[Doc](
-                                      collection: MongoCollection[Doc],
-                                      insertOneOptions: InsertOneOptions,
-                                      retryStrategy: RetryStrategy): Consumer[List[Doc], Unit] = {
+    collection: MongoCollection[Doc],
+    insertOneOptions: InsertOneOptions,
+    retryStrategy: RetryStrategy): Consumer[Seq[Doc], Unit] = {
     val insertOneOp = (document: Doc) => collection.insertOne(document, insertOneOptions)
     new MongoSinkParSubscriber(insertOneOp, retryStrategy)
   }
@@ -86,6 +94,14 @@ private[mongodb] class MongoSinkImpl {
     new MongoSinkSubscriber(replaceOp, retryStrategy)
   }
 
+  protected[this] def replaceOnePar[Doc](
+    collection: MongoCollection[Doc],
+    replaceOptions: ReplaceOptions,
+    retryStrategy: RetryStrategy): Consumer[Seq[(Bson, Doc)], Unit] = {
+    val replaceOp = (t: (Bson, Doc)) => collection.replaceOne(t._1, t._2, replaceOptions)
+    new MongoSinkParSubscriber(replaceOp, retryStrategy)
+  }
+
   protected[this] def updateOne[Doc](
     collection: MongoCollection[Doc],
     updateOptions: UpdateOptions,
@@ -94,12 +110,28 @@ private[mongodb] class MongoSinkImpl {
     new MongoSinkSubscriber(updateOp, retryStrategy)
   }
 
+  protected[this] def updateOnePar[Doc](
+    collection: MongoCollection[Doc],
+    updateOptions: UpdateOptions,
+    retryStrategy: RetryStrategy): Consumer[Seq[(Bson, Bson)], Unit] = {
+    val updateOp = (t: (Bson, Bson)) => collection.updateOne(t._1, t._2, updateOptions)
+    new MongoSinkParSubscriber(updateOp, retryStrategy)
+  }
+
   protected[this] def updateMany[Doc](
     collection: MongoCollection[Doc],
     updateOptions: UpdateOptions,
     retryStrategy: RetryStrategy): Consumer[(Bson, Bson), Unit] = {
     val updateOp = (t: (Bson, Bson)) => collection.updateMany(t._1, t._2, updateOptions)
     new MongoSinkSubscriber(updateOp, retryStrategy)
+  }
+
+  protected[this] def updateManyPar[Doc](
+    collection: MongoCollection[Doc],
+    updateOptions: UpdateOptions,
+    retryStrategy: RetryStrategy): Consumer[Seq[(Bson, Bson)], Unit] = {
+    val updateOp = (t: (Bson, Bson)) => collection.updateMany(t._1, t._2, updateOptions)
+    new MongoSinkParSubscriber(updateOp, retryStrategy)
   }
 
 }

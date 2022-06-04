@@ -28,19 +28,27 @@ import org.reactivestreams.Publisher
 
 import scala.concurrent.Future
 
-//todo mszmal: add doc
+/**
+  * A pre-built Monix [[Consumer]] implementation representing a Sink that expects sequence of events
+  * of type [[A]] and executes the mongodb operation [[op]] passed to the class constructor.
+  *
+  * @param op                the mongodb operation defined as that expects an event of type [[A]] and
+  *                          returns a reactivestreams [[Publisher]] of [[Any]].
+  * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
+  * @tparam A the type that the [[Consumer]] expects to receive
+  */
 @InternalApi
 private[mongodb] class MongoSinkParSubscriber[A, B](op: A => Publisher[B], retryStrategy: RetryStrategy)
-  extends Consumer[List[A], Unit] {
+  extends Consumer[Seq[A], Unit] {
 
   override def createSubscriber(
     cb: Callback[Throwable, Unit],
-    s: Scheduler): (Subscriber[List[A]], AssignableCancelable) = {
-    val sub = new Subscriber[List[A]] {
+    s: Scheduler): (Subscriber[Seq[A]], AssignableCancelable) = {
+    val sub = new Subscriber[Seq[A]] {
 
       implicit val scheduler: Scheduler = s
 
-      def onNext(requests: List[A]): Future[Ack] =
+      def onNext(requests: Seq[A]): Future[Ack] =
         Task
           .parTraverse(requests)(req => retryOnFailure(op(req), retryStrategy))
           .redeem(ex => {
