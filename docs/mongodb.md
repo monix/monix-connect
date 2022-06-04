@@ -500,8 +500,8 @@ connection.use(_.source.findOneAndUpdate(filter, update)).runToFuture
 The `Single` and `Sink` components are documented together since they both implement exactly the same set of
 operations _insert_, _delete_, _replace_ and _update_, although with the difference that the first executes the
 operation in single task and the latter pipes the elements of the stream to a _Monix_ `Consumer` to execute them.
-Most of the `Sink` consumers have an alternative method with the suffix `Par`, which executes requests grouped in lists 
-in a parallel fashion as a batch operation.
+Most of the `Sink` consumers have an alternative method with the suffix `Par`, which executes requests grouped
+in sequences in a parallel fashion as batch operations.
 
 The following sub-sections represent the list of different _operations_ and _sinks_ available to use, with a small
 example on each one.
