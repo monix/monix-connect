@@ -273,15 +273,16 @@ class MongoSinkSuite extends AsyncFlatSpec with MonixTaskSpec with Fixture with 
 
   "updateManyPar" should "update many documents per each received request whereas requests are grouped in lists. " +
     "Requests from a single group are executed at once in parallel." in {
-    val name1 = "Name1"
-    val name2 = "Name2"
-    val name3 = "Name3"
+    val name1 = "Name4"
+    val name2 = "Name5"
+    val name3 = "Name6"
+    val name4 = "Name7"
     val e1 = genEmployeesWith(name = Some(name1), n = 10).sample.get
     val e2 = genEmployeesWith(name = Some(name2), age = Some(31), n = 20).sample.get
     val e3 = genEmployeesWith(name = Some(name3), n = 30).sample.get
 
     val u1 = (Filters.eq("name", name1), Updates.set("name", name3))
-    val u2 = (Filters.eq("name", name2), Updates.combine(Updates.set("name", name1), Updates.inc("age", 10)))
+    val u2 = (Filters.eq("name", name2), Updates.combine(Updates.set("name", name4), Updates.inc("age", 10)))
     val updates: Seq[(Bson, Bson)] = List(u1, u2)
 
     MongoConnection
@@ -292,9 +293,10 @@ class MongoSinkSuite extends AsyncFlatSpec with MonixTaskSpec with Fixture with 
     }.asserting { employees =>
       employees.size shouldBe e1.size + e2.size + e3.size
       employees.count(_.name == name3) shouldBe (e1 ++ e3).size
-      employees.count(_.name == name1) shouldBe e2.map(_.copy(name = name1)).size
-      employees.filter(_.name == name1) should contain theSameElementsAs e2
-        .map(_.copy(name = name1))
+      employees.count(_.name == name1) shouldBe 0
+      employees.count(_.name == name4) shouldBe e2.map(_.copy(name = name4)).size
+      employees.filter(_.name == name4) should contain theSameElementsAs e2
+        .map(_.copy(name = name4))
         .map(e => e.copy(age = e.age + 10))
     }
   }
