@@ -46,6 +46,23 @@ class MongoSinkSuite extends AsyncFlatSpec with MonixTaskSpec with Fixture with 
         .asserting(_ should contain theSameElementsAs e2)
   }
 
+  "deleteOnePar" should "delete single elements by grouped filters, the single group of filters is executed " +
+    "at once in parallel" in {
+    val e1 = Gen.nonEmptyListOf(genEmployee).sample.get
+    val e2 = Gen.nonEmptyListOf(genEmployee).sample.get
+    val e3 = Gen.nonEmptyListOf(genEmployee).sample.get
+
+    val employeesColRef = randomEmployeesMongoCol
+    MongoSingle.insertMany(employeesColRef, e1 ++ e2 ++ e3) *>
+      Observable
+        .from(List(e1, e2))
+        .map(es => es.map(e => Filters.eq("name", e.name)))
+        .consumeWith(MongoSink.deleteOnePar(employeesColRef)) *>
+      MongoSource.findAll(employeesColRef)
+        .toListL
+        .asserting(_ should contain theSameElementsAs e3)
+  }
+
     "deleteMany" should "delete multiple documents per each emitted filter" in {
       val germans = genEmployeesWith(city = Some("Munich")).sample.get
       val italians = genEmployeesWith(city = Some("Rome")).sample.get
@@ -63,6 +80,24 @@ class MongoSinkSuite extends AsyncFlatSpec with MonixTaskSpec with Fixture with 
           .asserting(_ should contain theSameElementsAs egyptians)
   }
 
+  "deleteManyPar" should "delete multiple documents per each emitted grouped filters, the single group " +
+    "of filters is executed at once in parallel" in {
+    val germans = genEmployeesWith(city = Some("Munich")).sample.get
+    val italians = genEmployeesWith(city = Some("Rome")).sample.get
+    val turks = genEmployeesWith(city = Some("Istanbul")).sample.get
+    val egyptians = genEmployeesWith(city = Some("El Caire")).sample.get
+    val employeesCol = randomEmployeesMongoCol
+
+    MongoSingle.insertMany(employeesCol, germans ++ italians ++ turks ++ egyptians) *>
+      Observable
+        .from(List(List("Munich", "Rome", "Istanbul")))
+        .map(cityList => cityList.map(city => Filters.eq("city", city)))
+        .consumeWith(MongoSink.deleteManyPar(employeesCol)) *>
+      MongoSource.findAll(employeesCol)
+        .toListL
+        .asserting(_ should contain theSameElementsAs egyptians)
+  }
+
   "insertOne" should "insert a single document per each received element" in {
     val employees = Gen.nonEmptyListOf(genEmployee).sample.get
     MongoConnection
@@ -78,6 +113,16 @@ class MongoSinkSuite extends AsyncFlatSpec with MonixTaskSpec with Fixture with 
       Observable.empty.consumeWith(operator.sink.insertOne()) *>
         operator.source.countAll
     }.asserting(_ shouldBe 0L)
+  }
+
+  "insertOnePar" should "insert a single document per each received element from a group where " +
+    "elements from a single group are inserted at once in parallel" in {
+    val employees = Gen.listOfN(15, genEmployee).sample.get.grouped(3).toList
+    MongoConnection
+      .create1(mongoEndpoint, randomEmployeesColRef).use { operator =>
+      Observable.from(employees).consumeWith(operator.sink.insertOnePar()) *>
+        operator.source.findAll.toListL
+    }.asserting(_ should contain theSameElementsAs employees.flatten)
   }
 
   "insertMany" should "insert documents in batches" in {
@@ -115,6 +160,29 @@ class MongoSinkSuite extends AsyncFlatSpec with MonixTaskSpec with Fixture with 
     }
   }
 
+  "updateOnePar" should "update a single document per each received element whereas elements are grouped in lists. " +
+    "Elements from a single group are executed at once in parallel." in {
+    val porto = "Porto"
+    val lisbon = "Lisbon"
+    val age = 45
+    val employees = genEmployeesWith(city = Some(porto), age = Some(age), n = 10).sample.get
+    val filter = Filters.eq("city", porto)
+    val update = Updates.set("city", lisbon)
+    val updates: Seq[(Bson, Bson)] = List.fill(4)((filter, update))
+
+    MongoConnection
+      .create1(mongoEndpoint, randomEmployeesColRef).use { operator =>
+      operator.single.insertMany(employees) *>
+        Observable.from(List(updates.take(2), updates.drop(2))).consumeWith(operator.sink.updateOnePar()) *>
+        operator.source.findAll
+          .toListL
+    } .asserting { employees =>
+      employees.size shouldBe employees.size
+      employees.count(_.city == porto) shouldBe employees.size - updates.size
+      employees.count(_.city == lisbon) shouldBe updates.size
+    }
+  }
+
   "replaceOne" should "replace a single document per each received element" in {
     val e1 = Employee("Employee1", 45, "Rio")
     val e2 = Employee("Employee2", 34, "Rio")
@@ -126,6 +194,25 @@ class MongoSinkSuite extends AsyncFlatSpec with MonixTaskSpec with Fixture with 
       .create1(mongoEndpoint, randomEmployeesColRef).use { operator =>
       operator.single.insertMany(List(e1, e2)) *>
         Observable.from(replacements).consumeWith(operator.sink.replaceOne()) *>
+        operator.source.findAll.toListL
+    }.asserting { employees =>
+      employees.size shouldBe replacements.size
+      employees should contain theSameElementsAs replacements.map(_._2)
+    }
+  }
+
+  "replaceOnePar" should "replace a single document per each received element whereas elements are grouped in lists. " +
+    "Elements from a single group are executed at once in parallel." in {
+    val e1 = Employee("Employee1", 45, "Rio")
+    val e2 = Employee("Employee2", 34, "Rio")
+    val t1 = (Filters.eq("name", "Employee1"), Employee("Employee3", 43, "Rio"))
+    val t2 = (Filters.eq("name", "Employee2"), Employee("Employee4", 37, "Rio"))
+    val replacements: Seq[(Bson, Employee)] = List(t1, t2)
+
+    MongoConnection
+      .create1(mongoEndpoint, randomEmployeesColRef).use { operator =>
+      operator.single.insertMany(List(e1, e2)) *>
+        Observable.from(List(replacements)).consumeWith(operator.sink.replaceOnePar()) *>
         operator.source.findAll.toListL
     }.asserting { employees =>
       employees.size shouldBe replacements.size
@@ -181,6 +268,36 @@ class MongoSinkSuite extends AsyncFlatSpec with MonixTaskSpec with Fixture with 
     }.asserting { employees =>
       employees.size shouldBe e.size
       employees.filter(_.activities.contains("Table Tennis")) shouldBe empty
+    }
+  }
+
+  "updateManyPar" should "update many documents per each received request whereas requests are grouped in lists. " +
+    "Requests from a single group are executed at once in parallel." in {
+    val name1 = "Name1"
+    val name2 = "Name2"
+    val name3 = "Name3"
+    val name4 = "Name4"
+    val e1 = genEmployeesWith(name = Some(name1), n = 10).sample.get
+    val e2 = genEmployeesWith(name = Some(name2), age = Some(31), n = 20).sample.get
+    val e3 = genEmployeesWith(name = Some(name3), n = 30).sample.get
+
+    val u1 = (Filters.eq("name", name1), Updates.set("name", name3))
+    val u2 = (Filters.eq("name", name2), Updates.combine(Updates.set("name", name4), Updates.inc("age", 10)))
+    val updates: Seq[(Bson, Bson)] = List(u1, u2)
+
+    MongoConnection
+      .create1(mongoEndpoint, randomEmployeesColRef).use { operator =>
+      operator.single.insertMany(e1 ++ e2 ++ e3) *>
+        Observable.from(List(updates)).consumeWith(operator.sink.updateManyPar()) *>
+        operator.source.findAll.toListL
+    }.asserting { employees =>
+      employees.size shouldBe e1.size + e2.size + e3.size
+      employees.count(_.name == name3) shouldBe (e1 ++ e3).size
+      employees.count(_.name == name1) shouldBe 0
+      employees.count(_.name == name4) shouldBe e2.map(_.copy(name = name4)).size
+      employees.filter(_.name == name4) should contain theSameElementsAs e2
+        .map(_.copy(name = name4))
+        .map(e => e.copy(age = e.age + 10))
     }
   }
 
