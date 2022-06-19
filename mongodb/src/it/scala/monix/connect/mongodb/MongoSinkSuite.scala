@@ -273,10 +273,10 @@ class MongoSinkSuite extends AsyncFlatSpec with MonixTaskSpec with Fixture with 
 
   "updateManyPar" should "update many documents per each received request whereas requests are grouped in lists. " +
     "Requests from a single group are executed at once in parallel." in {
-    val name1 = "Name4"
-    val name2 = "Name5"
-    val name3 = "Name6"
-    val name4 = "Name7"
+    val name1 = "Name1"
+    val name2 = "Name2"
+    val name3 = "Name3"
+    val name4 = "Name4"
     val e1 = genEmployeesWith(name = Some(name1), n = 10).sample.get
     val e2 = genEmployeesWith(name = Some(name2), age = Some(31), n = 20).sample.get
     val e3 = genEmployeesWith(name = Some(name3), n = 30).sample.get
