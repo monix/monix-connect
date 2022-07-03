@@ -58,9 +58,10 @@ object Dependencies {
   ) ++ commonDependencies(hasIt = false)
 
   val MongoDb = Seq(
-    "org.mongodb"                               % "mongodb-driver-reactivestreams" % Versions.MongoReactiveStreams,
-    "org.mongodb.scala" %% "mongo-scala-bson"   % Versions.MongoScala,
-    "org.mongodb.scala" %% "mongo-scala-driver" % Versions.MongoScala
+    "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat,
+    "org.mongodb"                                         % "mongodb-driver-reactivestreams" % Versions.MongoReactiveStreams,
+    "org.mongodb.scala" %% "mongo-scala-bson"             % Versions.MongoScala,
+    "org.mongodb.scala" %% "mongo-scala-driver"           % Versions.MongoScala
   ) ++ commonDependencies(hasIt = true)
 
   val Parquet = Seq(
@@ -84,14 +85,16 @@ object Dependencies {
   ) ++ commonDependencies(hasIt = true)
 
   val GCS = Seq(
-    "com.google.cloud" % "google-cloud-storage" % Versions.GCS,
-    "com.google.cloud" % "google-cloud-nio"     % Versions.GCNio % IntegrationTest,
-    "commons-io"       % "commons-io"           % "2.6" % Test
+    "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat,
+    "com.google.cloud"                                    % "google-cloud-storage" % Versions.GCS,
+    "com.google.cloud"                                    % "google-cloud-nio" % Versions.GCNio % IntegrationTest,
+    "commons-io"                                          % "commons-io" % "2.6" % Test
   ) ++ commonDependencies(hasIt = true)
 
   val Sqs = Seq(
-    "com.typesafe.scala-logging" %% "scala-logging" % Versions.ScalaLogging,
-    "software.amazon.awssdk"                        % "sqs" % Versions.AwsSdk
+    "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat,
+    "com.typesafe.scala-logging" %% "scala-logging"       % Versions.ScalaLogging,
+    "software.amazon.awssdk"                              % "sqs" % Versions.AwsSdk
   ) ++ commonDependencies(hasIt = true)
 
   val Elasticsearch = Seq(
