@@ -111,8 +111,8 @@ which also represents the default config in case no additional is provided.</p>
 </code></pre>
 <p>This config file should be placed in the <code>resources</code> folder, therefore it will be automatically picked up from the method call <code>S3.fromConfig</code>, which will return a <code>cats.effect.Resource[Task, S3]</code>.
 The <a href="https://typelevel.org/cats-effect/datatypes/resource.html">resource</a> is responsible of the <em>creation</em> and <em>release</em> of the <em>S3 client</em>.</p>
-<p>We recommend using it transparently in your application, meaning that your methods and classes will directly expect an instance of <em>S3</em>, which will be called from within the
-<em>usage</em> of the <em>Resource</em>. See below code snippet to understand the concept:</p>
+<p><strong>Try to reuse</strong> the created <strong>Sqs</strong> client as much as possible in your application, otherwise, creating it
+multiple times will waste precious resources... See below code snippet to understand the concept:</p>
 <pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> monix.connect.dynamodb.<span class="hljs-type">DynamoDb</span>
 <span class="hljs-keyword">import</span> monix.connect.dynamodb.<span class="hljs-type">DynamoDbOp</span>.<span class="hljs-type">Implicits</span>._
 <span class="hljs-keyword">import</span> software.amazon.awssdk.services.dynamodb.model._
