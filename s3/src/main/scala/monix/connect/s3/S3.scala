@@ -51,6 +51,7 @@ import software.amazon.awssdk.services.s3.model.{
   DeleteObjectResponse,
   GetObjectRequest,
   GetObjectResponse,
+  HeadObjectResponse,
   NoSuchKeyException,
   PutObjectRequest,
   PutObjectResponse,
@@ -326,7 +327,7 @@ object S3 {
   @UnsafeBecauseImpure
   def createUnsafe(s3AsyncClient: S3AsyncClient): S3 = {
     new S3 {
-      override val s3Client: S3AsyncClient = s3AsyncClient
+      override val underlying: S3AsyncClient = s3AsyncClient
     }
   }
 
@@ -551,7 +552,7 @@ object S3 {
 trait S3 {
   self =>
 
-  private[s3] val s3Client: S3AsyncClient
+  private[s3] val underlying: S3AsyncClient
 
   /**
     * Creates a bucket.
@@ -587,7 +588,7 @@ trait S3 {
     grantWriteACP: Option[String] = None,
     objectLockEnabledForBucket: Option[Boolean] = None): Task[CreateBucketResponse] = {
     Task.from(
-      s3Client.createBucket(
+      underlying.createBucket(
         S3RequestBuilder.createBucket(
           bucket,
           acl,
@@ -607,7 +608,7 @@ trait S3 {
     * @return a [[Task]] with the create bucket response [[CreateBucketResponse]] .
     */
   def createBucket(request: CreateBucketRequest): Task[CreateBucketResponse] = {
-    Task.from(s3Client.createBucket(request))
+    Task.defer(Task.from(underlying.createBucket(request)))
   }
 
   /**
@@ -647,7 +648,7 @@ trait S3 {
     * @return a [[Task]] containing the result of the CopyObject operation returned by the service.
     */
   def copyObject(request: CopyObjectRequest): Task[CopyObjectResponse] =
-    Task.from(s3Client.copyObject(request))
+    Task.from(underlying.copyObject(request))
 
   /**
     * Deletes the specified bucket. Which will only happen when it is empty.
@@ -658,7 +659,7 @@ trait S3 {
     * @return a [[Task]] with the delete bucket response [[DeleteBucketResponse]] .
     */
   def deleteBucket(bucket: String): Task[DeleteBucketResponse] = {
-    Task.from(s3Client.deleteBucket(S3RequestBuilder.deleteBucket(bucket)))
+    Task.from(underlying.deleteBucket(S3RequestBuilder.deleteBucket(bucket)))
   }
 
   /**
@@ -670,7 +671,7 @@ trait S3 {
     * @return a [[Task]] with the delete bucket response [[DeleteBucketResponse]] .
     */
   def deleteBucket(request: DeleteBucketRequest): Task[DeleteBucketResponse] = {
-    Task.from(s3Client.deleteBucket(request))
+    Task.from(underlying.deleteBucket(request))
   }
 
   /**
@@ -712,7 +713,7 @@ trait S3 {
     * @return a [[Task]] with the delete object response [[DeleteObjectResponse]] .
     */
   def deleteObject(request: DeleteObjectRequest): Task[DeleteObjectResponse] =
-    Task.from(s3Client.deleteObject(request))
+    Task.from(underlying.deleteObject(request))
 
   /**
     * Check whether the specified bucket exists or not.
@@ -745,7 +746,7 @@ trait S3 {
   def existsObject(bucket: String, key: String): Task[Boolean] = {
     val headObjectRequest = S3RequestBuilder.headObjectRequest(bucket, Some(key))
     Task
-      .from(s3Client.headObject(headObjectRequest))
+      .from(underlying.headObject(headObjectRequest))
       .redeemWith(
         ex =>
           if (ex.isInstanceOf[NoSuchKeyException]) falseTask
@@ -821,7 +822,7 @@ trait S3 {
     val request: GetObjectRequest = S3RequestBuilder.getObjectRequest(bucket, key, range, downloadSettings)
     Task(require(firstNBytes.getOrElse(1) > 0, "The number of bytes if defined, must be positive.")) >>
       Task
-        .from(s3Client.getObject(request, AsyncResponseTransformer.toBytes[GetObjectResponse]))
+        .from(underlying.getObject(request, AsyncResponseTransformer.toBytes[GetObjectResponse]))
         .map(r => r.asByteArray())
   }
 
@@ -835,7 +836,7 @@ trait S3 {
   @Unsafe("OOM risk, use `downloadMultipart` for big downloads.")
   def download(request: GetObjectRequest): Task[Array[Byte]] = {
     Task
-      .from(s3Client.getObject(request, AsyncResponseTransformer.toBytes[GetObjectResponse]))
+      .from(underlying.getObject(request, AsyncResponseTransformer.toBytes[GetObjectResponse]))
       .map(_.asByteArray())
   }
 
@@ -898,6 +899,19 @@ trait S3 {
   }
 
   /**
+    * The head action retrieves metadata from an object without returning the object itself.
+    *
+    * @param bucket  the bucket in which to search the object
+    * @param key  scope for object to retreive the metadata from
+    * @return response from the head object as [[HeadObjectResponse]]
+
+    */
+  def headObject(bucket: String, key: String): Task[HeadObjectResponse] = {
+    val request = S3RequestBuilder.headObjectRequest(bucket, Some(key))
+    Task.defer(Task.from(underlying.headObject(request)))
+  }
+
+  /**
     * Lists all of the buckets owned by the authenticated sender of the request.
     *
     * ==Example==
@@ -942,7 +956,7 @@ trait S3 {
     */
   def listBuckets(): Observable[Bucket] = {
     for {
-      response <- Observable.fromTaskLike(s3Client.listBuckets())
+      response <- Observable.fromTaskLike(underlying.listBuckets())
       bucket   <- Observable.from(response.buckets().asScala.toList)
     } yield bucket
   }
@@ -1009,7 +1023,7 @@ trait S3 {
     maxTotalKeys: Option[Int] = None,
     requestPayer: Option[RequestPayer] = None): Observable[S3Object] = {
     for {
-      listResponse <- ListObjectsObservable(bucket, prefix, maxTotalKeys, requestPayer, this.s3Client)
+      listResponse <- ListObjectsObservable(bucket, prefix, maxTotalKeys, requestPayer, this.underlying)
       s3Object     <- Observable.fromIterable(listResponse.contents.asScala)
     } yield s3Object
   }
@@ -1055,7 +1069,7 @@ trait S3 {
     prefix: Option[String] = None,
     requestPayer: Option[RequestPayer] = None): Observable[S3Object] = {
     val sorted: (S3Object, S3Object) => Boolean = (x, y) => x.lastModified().compareTo(y.lastModified()) < 0
-    ListObjectsObservable.listNHelper(bucket, n, sorted, prefix, requestPayer, this.s3Client)
+    ListObjectsObservable.listNHelper(bucket, n, sorted, prefix, requestPayer, this.underlying)
   }
 
   /** Returns latest N objects in bucket.
@@ -1099,7 +1113,7 @@ trait S3 {
     prefix: Option[String] = None,
     requestPayer: Option[RequestPayer] = None): Observable[S3Object] = {
     val sorted: (S3Object, S3Object) => Boolean = (x, y) => x.lastModified().compareTo(y.lastModified()) > 0
-    ListObjectsObservable.listNHelper(bucket, n, sorted, prefix, requestPayer, this.s3Client)
+    ListObjectsObservable.listNHelper(bucket, n, sorted, prefix, requestPayer, this.underlying)
   }
 
   /**
@@ -1233,7 +1247,7 @@ trait S3 {
     val actualLength: Long = content.length.toLong
     val request: PutObjectRequest =
       S3RequestBuilder.putObjectRequest(bucket, key, Some(actualLength), uploadSettings)
-    Task.from(s3Client.putObject(request, AsyncRequestBody.fromBytes(content)))
+    Task.from(underlying.putObject(request, AsyncRequestBody.fromBytes(content)))
   }
 
   /**
@@ -1245,7 +1259,7 @@ trait S3 {
     * @return the response from the http put object request as [[PutObjectResponse]].
     */
   def upload(request: PutObjectRequest, content: Array[Byte]): Task[PutObjectResponse] =
-    Task.from(s3Client.putObject(request, AsyncRequestBody.fromBytes(content)))
+    Task.from(underlying.putObject(request, AsyncRequestBody.fromBytes(content)))
 
   /**
     * Uploads an S3 object by making multiple http requests (parts) of the received chunks of bytes.
@@ -1295,12 +1309,12 @@ trait S3 {
     key: String,
     minChunkSize: Int = awsMinChunkSize,
     uploadSettings: UploadSettings = DefaultUploadSettings): Consumer[Array[Byte], CompleteMultipartUploadResponse] = {
-    new MultipartUploadSubscriber(bucket, key, minChunkSize, uploadSettings, s3Client)
+    new MultipartUploadSubscriber(bucket, key, minChunkSize, uploadSettings, underlying)
   }
 
   /**
     * Closes the underlying [[S3AsyncClient]].
     */
-  def close: Task[Unit] = Task.evalOnce(s3Client.close())
+  def close: Task[Unit] = Task.evalOnce(underlying.close())
 
 }
