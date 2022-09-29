@@ -1,7 +1,11 @@
 name: build
 
-on: [push, pull_request]
-
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+    types: [ opened, reopened, synchronize ]
 jobs:
   
   tests:
@@ -13,7 +17,11 @@ jobs:
       matrix:
         java: [8, 11]
         scala: [2.12.11, 2.13.1]
-
+        exclude:
+          - java: 8
+            scala: 2.13.1
+          - java: 11
+            scala: 2.12.11
     steps:
       - uses: actions/checkout@v2
       - uses: olafurpg/setup-scala@v10
