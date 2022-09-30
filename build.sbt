@@ -20,7 +20,7 @@ skip in publish := true //requered by sbt-ci-release
 
 lazy val sharedSettings = Seq(
   scalaVersion       := "2.13.8",
-  crossScalaVersions := Seq("2.12.14", "2.13.8"),
+  crossScalaVersions := Seq("2.12.17", "2.13.8"),
   scalafmtOnCompile  := false,
   scalacOptions ++= Seq(
     // warnings
