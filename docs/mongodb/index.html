@@ -379,22 +379,6 @@ connection.use { operator =&gt;
   rioEmployees.completedL
 }.runToFuture
 </code></pre>
-<h4><a class="anchor" aria-hidden="true" id="findone"></a><a href="#findone" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>findOne</h4>
-<p>Finds the first encountered document in the collection that matched the query filter if exists, or the empty
-option if does not.</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
-<span class="hljs-keyword">import</span> com.mongodb.client.model.<span class="hljs-type">Filters</span>
-<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
-<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
-<span class="hljs-keyword">import</span> monix.reactive.<span class="hljs-type">Observable</span>
-
-<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
-connection.use { operator =&gt;
-  <span class="hljs-keyword">val</span> rioEmployee: <span class="hljs-type">Task</span>[<span class="hljs-type">Option</span>[<span class="hljs-type">Employee</span>]] = operator.source.findOne(<span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"city"</span>, <span class="hljs-string">"Rio"</span>))
-  <span class="hljs-comment">//business logic here</span>
-  rioEmployee
-}.runToFuture
-</code></pre>
 <h4><a class="anchor" aria-hidden="true" id="findoneanddelete"></a><a href="#findoneanddelete" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>findOneAndDelete</h4>
 <p>Atomically <em>find</em> a document and <em>remove</em> it.</p>
 <pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
@@ -444,9 +428,7 @@ connection.use(_.source.findOneAndUpdate(filter, update)).runToFuture
 <h2><a class="anchor" aria-hidden="true" id="single--sinks"></a><a href="#single--sinks" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Single &amp; Sinks</h2>
 <p>The <code>Single</code> and <code>Sink</code> components are documented together since they both implement exactly the same set of
 operations <em>insert</em>, <em>delete</em>, <em>replace</em> and <em>update</em>, although with the difference that the first executes the
-operation in single task and the latter pipes the elements of the stream to a <em>Monix</em> <code>Consumer</code> to execute them.
-Most of the <code>Sink</code> consumers have an alternative method with the suffix <code>Par</code>, which executes requests grouped
-in sequences in a parallel fashion as batch operations.</p>
+operation in single task and the latter pipes the elements of the stream to a <em>Monix</em> <code>Consumer</code> to execute them.</p>
 <p>The following sub-sections represent the list of different <em>operations</em> and <em>sinks</em> available to use, with a small
 example on each one.</p>
 <h3><a class="anchor" aria-hidden="true" id="insert"></a><a href="#insert" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Insert</h3>
@@ -468,18 +450,11 @@ example on each one.</p>
 <span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
 <span class="hljs-keyword">import</span> monix.reactive.<span class="hljs-type">Observable</span>
 
-<span class="hljs-keyword">val</span> employee = <span class="hljs-type">List</span>(<span class="hljs-type">Employee</span>(<span class="hljs-string">"Luke"</span>, <span class="hljs-string">"London"</span>, <span class="hljs-number">41</span>))
+<span class="hljs-keyword">val</span> employees = <span class="hljs-type">List</span>(<span class="hljs-type">Employee</span>(<span class="hljs-string">"Luke"</span>, <span class="hljs-string">"London"</span>, <span class="hljs-number">41</span>))
 <span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
 connection.use { operator =&gt;
-  <span class="hljs-type">Observable</span>.from(employee) <span class="hljs-comment">// Observable[Employee]</span>
+  <span class="hljs-type">Observable</span>.from(employees) <span class="hljs-comment">// Observable[Employee]</span>
     .consumeWith(operator.sink.insertOne())
-}.runToFuture
-
-<span class="hljs-keyword">val</span> employees = <span class="hljs-type">List</span>(<span class="hljs-type">Employee</span>(<span class="hljs-string">"Luke"</span>, <span class="hljs-string">"London"</span>, <span class="hljs-number">41</span>), <span class="hljs-type">Employee</span>(<span class="hljs-string">"Matt"</span>, <span class="hljs-string">"Warsaw"</span>, <span class="hljs-number">23</span>), 
-  <span class="hljs-type">Employee</span>(<span class="hljs-string">"Jack"</span>, <span class="hljs-string">"Berlin"</span>, <span class="hljs-number">24</span>), <span class="hljs-type">Employee</span>(<span class="hljs-string">"John"</span>, <span class="hljs-string">"London"</span>, <span class="hljs-number">41</span>))
-connection.use { operator =&gt;
-  <span class="hljs-type">Observable</span>.from(employees.grouped(<span class="hljs-number">2</span>).toList) <span class="hljs-comment">// Observable[List[Employee]]</span>
-    .consumeWith(operator.sink.insertOnePar())
 }.runToFuture
 </code></pre>
 <h4><a class="anchor" aria-hidden="true" id="insertmany"></a><a href="#insertmany" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>insertMany</h4>
@@ -542,13 +517,6 @@ connection.use { operator =&gt;
     .map(name =&gt; <span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"name"</span>, name)) <span class="hljs-comment">// Observable[Bson]</span>
     .consumeWith(operator.sink.deleteOne())
 }.runToFuture
-
-connection.use { operator =&gt;
-  <span class="hljs-comment">// employees to be deleted from the collection</span>
-  <span class="hljs-type">Observable</span>.from(<span class="hljs-type">List</span>(<span class="hljs-string">"Lauren"</span>, <span class="hljs-string">"Marie"</span>, <span class="hljs-string">"Simon"</span>, <span class="hljs-string">"Matt"</span>).grouped(<span class="hljs-number">2</span>).toList) <span class="hljs-comment">// Observable[List[String]] </span>
-    .map(names =&gt; names.map(name =&gt; <span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"name"</span>, name))) <span class="hljs-comment">// Observable[List[Bson]]</span>
-    .consumeWith(operator.sink.deleteOnePar())
-}.runToFuture
 </code></pre>
 <h4><a class="anchor" aria-hidden="true" id="deletemany"></a><a href="#deletemany" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>deleteMany</h4>
 <p>Removes all documents from the <em>collection</em> that match the given query filter. Again if no <em>documents</em> match, the _
@@ -578,13 +546,6 @@ connection.use { operator =&gt;
   <span class="hljs-type">Observable</span>.from(<span class="hljs-type">List</span>(<span class="hljs-string">"Germany"</span>, <span class="hljs-string">"Italy"</span>, <span class="hljs-string">"Turkey"</span>)) <span class="hljs-comment">// Observable[String] </span>
     .map(city =&gt; <span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"city"</span>, city)) <span class="hljs-comment">// Observable[Bson]</span>
     .consumeWith(operator.sink.deleteMany())
-}.runToFuture
-
-connection.use { operator =&gt;
-  <span class="hljs-comment">// all employees from `Germany`, `Italy` or `Turkey` were fired (deleted)</span>
-  <span class="hljs-type">Observable</span>.from(<span class="hljs-type">List</span>(<span class="hljs-string">"Germany"</span>, <span class="hljs-string">"Italy"</span>, <span class="hljs-string">"Turkey"</span>).grouped(<span class="hljs-number">2</span>).toList) <span class="hljs-comment">// Observable[List[String]] </span>
-    .map(cities =&gt; cities.map(city =&gt; <span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"city"</span>, city))) <span class="hljs-comment">// Observable[List[Bson]]</span>
-    .consumeWith(operator.sink.deleteManyPar())
 }.runToFuture
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="replace"></a><a href="#replace" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Replace</h3>
@@ -623,18 +584,6 @@ connection.use { operator =&gt;
   <span class="hljs-type">Observable</span>.from(replacements) <span class="hljs-comment">// Observable[(Bson, Employee)]</span>
     .consumeWith(operator.sink.replaceOne())
 }.runToFuture
-
-<span class="hljs-keyword">val</span> replacements2: <span class="hljs-type">Seq</span>[(<span class="hljs-type">Bson</span>, <span class="hljs-type">Employee</span>)] =
-  <span class="hljs-type">List</span>(
-    (<span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"name"</span>, <span class="hljs-string">"Employee1"</span>), <span class="hljs-type">Employee</span>(<span class="hljs-string">"Employee5"</span>, <span class="hljs-number">43</span>, <span class="hljs-string">"Rio"</span>)),
-    (<span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"name"</span>, <span class="hljs-string">"Employee2"</span>), <span class="hljs-type">Employee</span>(<span class="hljs-string">"Employee6"</span>, <span class="hljs-number">37</span>, <span class="hljs-string">"Rio"</span>)),
-    (<span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"name"</span>, <span class="hljs-string">"Employee3"</span>), <span class="hljs-type">Employee</span>(<span class="hljs-string">"Employee7"</span>, <span class="hljs-number">43</span>, <span class="hljs-string">"Rio"</span>)),
-    (<span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"name"</span>, <span class="hljs-string">"Employee4"</span>), <span class="hljs-type">Employee</span>(<span class="hljs-string">"Employee8"</span>, <span class="hljs-number">37</span>, <span class="hljs-string">"Rio"</span>))
-  )
-connection.use { operator =&gt;
-  <span class="hljs-type">Observable</span>.from(replacements2.grouped(<span class="hljs-number">2</span>).toList) <span class="hljs-comment">// Observable[List[(Bson, Employee)]]</span>
-    .consumeWith(operator.sink.replaceOnePar())
-}.runToFuture
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="update"></a><a href="#update" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Update</h3>
 <h4><a class="anchor" aria-hidden="true" id="updateone"></a><a href="#updateone" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>updateOne</h4>
@@ -670,16 +619,6 @@ connection.use { operator =&gt;
   <span class="hljs-type">Observable</span>.from(updateElements) <span class="hljs-comment">// Observable[(Bson, Bson)]</span>
     .consumeWith(operator.sink.updateOne())
 }.runToFuture
-
-connection.use { operator =&gt;
-    <span class="hljs-keyword">val</span> filter = <span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"city"</span>, <span class="hljs-string">"Porto"</span>)
-    <span class="hljs-keyword">val</span> update = <span class="hljs-type">Updates</span>.set(<span class="hljs-string">"city"</span>, <span class="hljs-string">"Lisbon"</span>)
-    <span class="hljs-keyword">val</span> updateElements: <span class="hljs-type">List</span>[<span class="hljs-type">List</span>[(<span class="hljs-type">Bson</span>, <span class="hljs-type">Bson</span>)]] = <span class="hljs-type">List</span>.fill(<span class="hljs-number">4</span>)((filter, update)).grouped(<span class="hljs-number">2</span>).toList
-    <span class="hljs-comment">// imagine that a company wants to send four of its employees from Porto to Lisbon</span>
-    <span class="hljs-type">Observable</span>.from(updateElements) <span class="hljs-comment">// Observable[List[(Bson, Bson)]]</span>
-      .consumeWith(operator.sink.updateOnePar())
-  }.runToFuture
-
 </code></pre>
 <h4><a class="anchor" aria-hidden="true" id="updatemany"></a><a href="#updatemany" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>updateMany</h4>
 <p>Update all documents in the collection according to the specified arguments.</p>
@@ -710,48 +649,5 @@ connection.use { operator =&gt;
     .map(city =&gt; (<span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"city"</span>, city), <span class="hljs-type">Updates</span>.pull(<span class="hljs-string">"hobbies"</span>, <span class="hljs-string">"Table Tennis"</span>))) <span class="hljs-comment">// Observable[(Bson, Bson)]</span>
     .consumeWith(operator.sink.updateMany())
 }.runToFuture
-
-connection.use { operator =&gt;
-  <span class="hljs-keyword">val</span> cities: <span class="hljs-type">Set</span>[<span class="hljs-type">String</span>] = <span class="hljs-type">Set</span>(<span class="hljs-string">"Seattle"</span>, <span class="hljs-string">"Nairobi"</span>, <span class="hljs-string">"Dakar"</span>)
-  <span class="hljs-type">Observable</span>.from(cities.grouped(<span class="hljs-number">2</span>).toList) <span class="hljs-comment">// Observable[String]</span>
-    .map(cities =&gt; cities.map(city =&gt; (
-      <span class="hljs-type">Filters</span>.eq(<span class="hljs-string">"city"</span>, city),
-      <span class="hljs-type">Updates</span>.pull(<span class="hljs-string">"hobbies"</span>, <span class="hljs-string">"Table Tennis"</span>)
-    )).toList) <span class="hljs-comment">// Observable[List[(Bson, Bson)]]</span>
-    .consumeWith(operator.sink.updateManyPar())
-}.runToFuture
 </code></pre>
-<h3><a class="anchor" aria-hidden="true" id="indexing"></a><a href="#indexing" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Indexing</h3>
-<h4><a class="anchor" aria-hidden="true" id="createindex"></a><a href="#createindex" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>createIndex</h4>
-<p>Creates an index on the collection according to the specified arguments.</p>
-<p><em>Single</em>:</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
-<span class="hljs-keyword">import</span> com.mongodb.client.model.{<span class="hljs-type">Filters</span>, <span class="hljs-type">IndexModel</span>, <span class="hljs-type">Indexes</span>, <span class="hljs-type">Updates</span>}
-<span class="hljs-keyword">import</span> monix.connect.mongodb.domain.<span class="hljs-type">UpdateResult</span>
-<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
-<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
-
-<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
-<span class="hljs-keyword">val</span> key = <span class="hljs-keyword">new</span> <span class="hljs-type">IndexModel</span>(<span class="hljs-type">Indexes</span>.ascending(<span class="hljs-string">"name"</span>)).getKeys
-<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">UpdateResult</span>] = connection.use(_.single.createIndex(key))
-</code></pre>
-<h4><a class="anchor" aria-hidden="true" id="createindexes"></a><a href="#createindexes" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>createIndexes</h4>
-<p>Create multiple indexes on the collection according to the specified arguments.</p>
-<p><em>Single</em>:</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> cats.effect.<span class="hljs-type">Resource</span>
-<span class="hljs-keyword">import</span> com.mongodb.client.model.{<span class="hljs-type">CreateIndexOptions</span>, <span class="hljs-type">Filters</span>, <span class="hljs-type">IndexModel</span>, <span class="hljs-type">IndexOptions</span>, <span class="hljs-type">Indexes</span>, <span class="hljs-type">Updates</span>}
-<span class="hljs-keyword">import</span> monix.connect.mongodb.domain.<span class="hljs-type">UpdateResult</span>
-<span class="hljs-keyword">import</span> monix.connect.mongodb.client.<span class="hljs-type">CollectionOperator</span>
-<span class="hljs-keyword">import</span> monix.eval.<span class="hljs-type">Task</span>
-
-<span class="hljs-keyword">import</span> java.util.concurrent.<span class="hljs-type">TimeUnit</span>
-
-<span class="hljs-keyword">val</span> connection: <span class="hljs-type">Resource</span>[<span class="hljs-type">Task</span>, <span class="hljs-type">CollectionOperator</span>[<span class="hljs-type">Employee</span>]]
-<span class="hljs-keyword">val</span> indexes = <span class="hljs-type">List</span>(
-  <span class="hljs-keyword">new</span> <span class="hljs-type">IndexModel</span>(<span class="hljs-type">Indexes</span>.descending(<span class="hljs-string">"name"</span>)),
-  <span class="hljs-keyword">new</span> <span class="hljs-type">IndexModel</span>(<span class="hljs-type">Indexes</span>.ascending(<span class="hljs-string">"city"</span>), <span class="hljs-keyword">new</span> <span class="hljs-type">IndexOptions</span>().background(<span class="hljs-literal">true</span>).unique(<span class="hljs-literal">false</span>))
-)
-<span class="hljs-keyword">val</span> options = <span class="hljs-keyword">new</span> <span class="hljs-type">CreateIndexOptions</span>().maxTime(<span class="hljs-number">5</span>, <span class="hljs-type">TimeUnit</span>.<span class="hljs-type">SECONDS</span>)
-<span class="hljs-keyword">val</span> t: <span class="hljs-type">Task</span>[<span class="hljs-type">UpdateResult</span>] = connection.use(_.single.createIndexes(indexes, options))
-</code></pre>
-</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/docs/hdfs"><span class="arrow-prev">← </span><span>HDFS</span></a><a class="docs-next button" href="/docs/redis"><span>Redis</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#introduction">Introduction</a></li><li><a href="#dependency">Dependency</a></li><li><a href="#collection-reference">Collection Reference</a><ul class="toc-headings"><li><a href="#collectioncodecref">CollectionCodecRef</a></li><li><a href="#collectiondocumentref">CollectionDocumentRef</a></li></ul></li><li><a href="#connection">Connection</a><ul class="toc-headings"><li><a href="#connection-string">Connection String</a></li><li><a href="#client-settings">Client Settings</a></li></ul></li><li><a href="#collectionoperator">CollectionOperator</a><ul class="toc-headings"><li><a href="#multiple-collections">Multiple Collections</a></li></ul></li><li><a href="#database">Database</a><ul class="toc-headings"><li><a href="#exists">Exists</a></li><li><a href="#create">Create</a></li><li><a href="#list">List</a></li><li><a href="#rename">Rename</a></li><li><a href="#drop">Drop</a></li></ul></li><li><a href="#source">Source</a><ul class="toc-headings"><li><a href="#aggregate">Aggregate</a></li><li><a href="#count">Count</a></li><li><a href="#distinct">Distinct</a></li><li><a href="#find">Find</a></li></ul></li><li><a href="#single--sinks">Single &amp; Sinks</a><ul class="toc-headings"><li><a href="#insert">Insert</a></li><li><a href="#delete">Delete</a></li><li><a href="#replace">Replace</a></li><li><a href="#update">Update</a></li><li><a href="#indexing">Indexing</a></li></ul></li></ul></nav></div><footer class="nav-footer" id="footer"><hr class="separator"/><section class="copyright">Copyright © 2020-2022 The Monix Connect Developers.</section></footer></div></body></html>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/docs/hdfs"><span class="arrow-prev">← </span><span>HDFS</span></a><a class="docs-next button" href="/docs/redis"><span>Redis</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#introduction">Introduction</a></li><li><a href="#dependency">Dependency</a></li><li><a href="#collection-reference">Collection Reference</a><ul class="toc-headings"><li><a href="#collectioncodecref">CollectionCodecRef</a></li><li><a href="#collectiondocumentref">CollectionDocumentRef</a></li></ul></li><li><a href="#connection">Connection</a><ul class="toc-headings"><li><a href="#connection-string">Connection String</a></li><li><a href="#client-settings">Client Settings</a></li></ul></li><li><a href="#collectionoperator">CollectionOperator</a><ul class="toc-headings"><li><a href="#multiple-collections">Multiple Collections</a></li></ul></li><li><a href="#database">Database</a><ul class="toc-headings"><li><a href="#exists">Exists</a></li><li><a href="#create">Create</a></li><li><a href="#list">List</a></li><li><a href="#rename">Rename</a></li><li><a href="#drop">Drop</a></li></ul></li><li><a href="#source">Source</a><ul class="toc-headings"><li><a href="#aggregate">Aggregate</a></li><li><a href="#count">Count</a></li><li><a href="#distinct">Distinct</a></li><li><a href="#find">Find</a></li></ul></li><li><a href="#single--sinks">Single &amp; Sinks</a><ul class="toc-headings"><li><a href="#insert">Insert</a></li><li><a href="#delete">Delete</a></li><li><a href="#replace">Replace</a></li><li><a href="#update">Update</a></li></ul></li></ul></nav></div><footer class="nav-footer" id="footer"><hr class="separator"/><section class="copyright">Copyright © 2020-2022 The Monix Connect Developers.</section></footer></div></body></html>
