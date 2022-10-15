@@ -26,7 +26,7 @@ import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-import software.amazon.awssdk.services.s3.model.NoSuchBucketException
+import software.amazon.awssdk.services.s3.model.{NoSuchBucketException, NoSuchKeyException}
 
 import scala.util.{Failure, Success, Try}
 
@@ -90,7 +90,7 @@ class MultipartDownloadObservableSuite
       val bucket: String = "non-existing-bucket"
       val key: String = "non/existing/key"
 
-       unsafeS3.downloadMultipart(bucket, key).toListL.assertThrows[NoSuchBucketException] >>
+       unsafeS3.downloadMultipart(bucket, key).toListL.assertThrows[NoSuchKeyException] >>
          unsafeS3.existsObject(bucket, key).asserting(_ shouldBe false)
   }
 

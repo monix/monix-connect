@@ -6,21 +6,21 @@ object Dependencies {
 
     //main
     val Monix = "3.4.1"
-    val AwsSdk = "2.17.193"
+    val AwsSdk = "2.17.276"
     val AkkaStreams = "2.6.9"
     val GCS = "1.107.0"
-    val Hadoop = "3.3.1"
+    val Hadoop = "3.3.4"
     val MongoScala = "4.1.1"
-    val Lettuce = "6.1.8.RELEASE"
-    val MongoReactiveStreams = "4.6.0"
-    val Parquet = "1.12.0"
+    val Lettuce = "6.1.9.RELEASE"
+    val MongoReactiveStreams = "4.6.1"
+    val Parquet = "1.12.3"
     val Elastic4s = "7.12.0"
     val Pureconfig = "0.17.1"
     val ScalaLogging = "3.9.5"
-    val ScalaCompat = "2.6.0"
+    val ScalaCompat = "2.8.1"
 
     //test
-    val Scalatest = "3.2.12"
+    val Scalatest = "3.2.13"
     val MonixTestingScalatest = "0.2.0"
     val Scalacheck = "1.14.0"
     val Mockito = "1.15.0"
