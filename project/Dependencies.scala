@@ -21,7 +21,7 @@ object Dependencies {
 
     //test
     val Scalatest = "3.2.13"
-    val MonixTestingScalatest = "0.2.0"
+    val MonixTestingScalatest = "0.3.0"
     val Scalacheck = "1.14.0"
     val Mockito = "1.15.0"
     val GCNio = "0.123.14"
