@@ -20,7 +20,7 @@ object Dependencies {
     val ScalaCompat = "2.8.1"
 
     //test
-    val Scalatest = "3.2.13"
+    val Scalatest = "3.2.14"
     val MonixTestingScalatest = "0.2.0"
     val Scalacheck = "1.14.0"
     val Mockito = "1.15.0"
