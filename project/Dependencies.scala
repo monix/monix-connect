@@ -5,22 +5,22 @@ object Dependencies {
   object Versions {
 
     //main
-    val Monix = "3.4.0"
-    val AwsSdk = "2.17.159"
+    val Monix = "3.4.1"
+    val AwsSdk = "2.17.276"
     val AkkaStreams = "2.6.9"
     val GCS = "1.107.0"
-    val Hadoop = "3.3.1"
+    val Hadoop = "3.3.4"
     val MongoScala = "4.1.1"
-    val MongoReactiveStreams = "4.3.3"
-    val Lettuce = "6.1.6.RELEASE"
-    val Parquet = "1.12.0"
+    val Lettuce = "6.1.9.RELEASE"
+    val MongoReactiveStreams = "4.6.1"
+    val Parquet = "1.12.3"
     val Elastic4s = "7.12.0"
     val Pureconfig = "0.17.1"
-    val ScalaLogging = "3.9.3"
-    val ScalaCompat = "2.6.0"
+    val ScalaLogging = "3.9.5"
+    val ScalaCompat = "2.8.1"
 
     //test
-    val Scalatest = "3.2.12"
+    val Scalatest = "3.2.13"
     val MonixTestingScalatest = "0.2.0"
     val Scalacheck = "1.14.0"
     val Mockito = "1.15.0"
@@ -58,9 +58,10 @@ object Dependencies {
   ) ++ commonDependencies(hasIt = false)
 
   val MongoDb = Seq(
-    "org.mongodb"                               % "mongodb-driver-reactivestreams" % Versions.MongoReactiveStreams,
-    "org.mongodb.scala" %% "mongo-scala-bson"   % Versions.MongoScala,
-    "org.mongodb.scala" %% "mongo-scala-driver" % Versions.MongoScala
+    "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat,
+    "org.mongodb"                                         % "mongodb-driver-reactivestreams" % Versions.MongoReactiveStreams,
+    "org.mongodb.scala" %% "mongo-scala-bson"             % Versions.MongoScala,
+    "org.mongodb.scala" %% "mongo-scala-driver"           % Versions.MongoScala
   ) ++ commonDependencies(hasIt = true)
 
   val Parquet = Seq(
@@ -84,14 +85,16 @@ object Dependencies {
   ) ++ commonDependencies(hasIt = true)
 
   val GCS = Seq(
-    "com.google.cloud" % "google-cloud-storage" % Versions.GCS,
-    "com.google.cloud" % "google-cloud-nio"     % Versions.GCNio % IntegrationTest,
-    "commons-io"       % "commons-io"           % "2.6" % Test
+    "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat,
+    "com.google.cloud"                                    % "google-cloud-storage" % Versions.GCS,
+    "com.google.cloud"                                    % "google-cloud-nio" % Versions.GCNio % IntegrationTest,
+    "commons-io"                                          % "commons-io" % "2.6" % Test
   ) ++ commonDependencies(hasIt = true)
 
   val Sqs = Seq(
-    "com.typesafe.scala-logging" %% "scala-logging" % Versions.ScalaLogging,
-    "software.amazon.awssdk"                        % "sqs" % Versions.AwsSdk
+    "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat,
+    "com.typesafe.scala-logging" %% "scala-logging"       % Versions.ScalaLogging,
+    "software.amazon.awssdk"                              % "sqs" % Versions.AwsSdk
   ) ++ commonDependencies(hasIt = true)
 
   val Elasticsearch = Seq(

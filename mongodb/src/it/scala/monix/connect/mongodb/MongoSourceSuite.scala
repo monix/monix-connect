@@ -342,4 +342,37 @@ class MongoSourceSuite extends AsyncFlatSpec with MonixTaskSpec with Fixture wit
       }
     }
   }
+
+  "findOne" should "find first encountered item that matches the filter" in {
+    val cracowEmployees = List.tabulate(3)(_ => genEmployeeWith(city = Some("Cracow")).sample.get)
+    val warsawEmployees = List.tabulate(2)(_ => genEmployeeWith(city = Some("Warsaw")).sample.get)
+
+    val filter = Filters.eq("city", "Cracow")
+
+    MongoConnection.create1(mongoEndpoint, randomEmployeesColRef).use[Task, Assertion] { operator =>
+      for {
+        _ <- operator.single.insertMany(cracowEmployees ::: warsawEmployees)
+        findResult <- operator.source.findOne(filter)
+      } yield {
+        findResult.isDefined shouldBe true
+        findResult.get.city shouldBe "Cracow"
+        cracowEmployees should contain (findResult.get)
+      }
+    }
+  }
+
+  it should "not find result when filter didn't find matches" in {
+    val cracowEmployees = List.tabulate(2)(_ => genEmployeeWith(city = Some("Cracow")).sample.get)
+
+    val filter = Filters.eq("city", "Wroclaw")
+
+    MongoConnection.create1(mongoEndpoint, randomEmployeesColRef).use[Task, Assertion] { operator =>
+      for {
+        _ <- operator.single.insertMany(cracowEmployees)
+        findResult <- operator.source.findOne(filter)
+      } yield {
+        findResult.isDefined shouldBe false
+      }
+    }
+  }
 }

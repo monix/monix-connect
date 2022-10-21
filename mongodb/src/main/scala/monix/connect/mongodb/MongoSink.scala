@@ -51,7 +51,7 @@ object MongoSink extends MongoSinkImpl {
     *                          it is not passed by the user
     * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
     * @tparam Doc the type of the collection
-    * @return a [[Consumer]] that expects query filters to apply the the delete operations.
+    * @return a [[Consumer]] that expects query filters to apply the delete operations.
     * @see [[com.mongodb.client.model.Filters]] and [[com.mongodb.client.model.Updates]]
     */
   override def deleteOne[Doc](
@@ -62,6 +62,25 @@ object MongoSink extends MongoSinkImpl {
   }
 
   /**
+    *  Provides a sink implementation for [[MongoSingle.deleteOne]] that consumes a sequence of elements.
+    *  The elements inside a single sequence will be executed in parallel as a batch operation.
+    *  For each incoming element will remove at most one document from the collection that matches the given filter.
+    *
+    * @param collection        the abstraction to work with a determined MongoDB Collection
+    * @param deleteOptions     the options to apply to all the delete operations, it will use default ones in case
+    *                          it is not passed by the user
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
+    * @tparam Doc the type of the collection
+    * @return a [[Consumer]] that expects sequences of query filters to apply the delete operations.
+    * @see [[com.mongodb.client.model.Filters]] and [[com.mongodb.client.model.Updates]]
+    */
+  override def deleteOnePar[Doc](
+    collection: MongoCollection[Doc],
+    deleteOptions: DeleteOptions = DefaultDeleteOptions,
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[Seq[Bson], Unit] =
+    super.deleteOnePar(collection, deleteOptions, retryStrategy)
+
+  /**
     * Provides a sink implementation for [[MongoSingle.deleteMany]] that per each element
     * removes all documents from the collection that matched the given query filter.
     *
@@ -70,7 +89,7 @@ object MongoSink extends MongoSinkImpl {
     *                          it is not passed by the user.
     * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
     * @tparam Doc the type of the collection
-    * @return a [[Consumer]] that expects query filters to apply the the delete many operations.
+    * @return a [[Consumer]] that expects query filters to apply the delete many operations.
     * @see [[com.mongodb.client.model.Filters]]
     */
   override def deleteMany[Doc](
@@ -78,6 +97,26 @@ object MongoSink extends MongoSinkImpl {
     deleteOptions: DeleteOptions = DefaultDeleteOptions,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[Bson, Unit] =
     super.deleteMany(collection, deleteOptions, retryStrategy)
+
+  /**
+    * Provides a sink implementation for [[MongoSingle.deleteMany]] that per each element
+    * removes all documents from the collection that matched the given query filter.
+    * The sink requires a sequence of elements, whereas elements from a single sequence will
+    * be executed in parallel as a batch operation.
+    *
+    * @param collection        the abstraction to work with a determined MongoDB Collection
+    * @param deleteOptions     the options to apply to the delete operation, it will use default ones in case
+    *                          it is not passed by the user.
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
+    * @tparam Doc the type of the collection
+    * @return a [[Consumer]] that expects query filter sequences to apply the delete many operations.
+    * @see [[com.mongodb.client.model.Filters]]
+    */
+  override def deleteManyPar[Doc](
+    collection: MongoCollection[Doc],
+    deleteOptions: DeleteOptions = DefaultDeleteOptions,
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[Seq[Bson], Unit] =
+    super.deleteManyPar(collection, deleteOptions, retryStrategy)
 
   /**
     * Provides a sink implementation for [[MongoSingle.insertOne]] that
@@ -96,6 +135,23 @@ object MongoSink extends MongoSinkImpl {
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[Doc, Unit] = {
     super.insertOne(collection, insertOneOptions, retryStrategy)
   }
+
+  /**
+    * Provides a sink implementation for [[MongoSingle.insertOne]] that expects sequences of documents to be
+    * passed and inserts all documents from a single sequence in parallel as a batch operation.
+    * If the document is missing an identifier, the driver should generate one.
+    *
+    * @param collection        the abstraction to work with the determined mongodb collection
+    * @param insertOneOptions  the options to apply all the insert operations
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
+    * @tparam Doc the type of the collection and the incoming documents
+    * @return a [[Consumer]] that expects documents in batches of type [[Doc]] to be inserted.
+    */
+  override def insertOnePar[Doc](
+    collection: MongoCollection[Doc],
+    insertOneOptions: InsertOneOptions = DefaultInsertOneOptions,
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[Seq[Doc], Unit] =
+    super.insertOnePar(collection, insertOneOptions, retryStrategy)
 
   /**
     * Provides a sink implementation for [[MongoSingle.insertMany]] that expects
@@ -137,6 +193,28 @@ object MongoSink extends MongoSinkImpl {
   }
 
   /**
+    * Provides a sink implementation for [[MongoSingle.replaceOne]] that expects sequences of
+    * [[Tuple2]] of a filter and the document replacement that for each element
+    * will execute the replace operation to a single filtered element.
+    * All elements inside a single sequence will be executed in parallel as a batch operation.
+    *
+    * @see [[com.mongodb.client.model.Filters]]
+    *
+    *      If the documents is missing an identifier, the driver should generate one.
+    * @param collection        the abstraction to work with the determined mongodb collection
+    * @param replaceOptions    the options to apply to the replace operation
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
+    * @tparam Doc the type of the collection
+    * @return a [[Consumer]] that expects [[Tuple2]] of filters and documents in batches of type [[Doc]] to be replaced.
+    */
+  override def replaceOnePar[Doc](
+    collection: MongoCollection[Doc],
+    replaceOptions: ReplaceOptions = DefaultReplaceOptions,
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[Seq[(Bson, Doc)], Unit] = {
+    super.replaceOnePar(collection, replaceOptions, retryStrategy)
+  }
+
+  /**
     * Provides a sink implementation for [[MongoSingle.updateOne]] that expects [[Tuple2]]
     * of a filter and a update that will be executed against the single filtered element.
     *
@@ -154,6 +232,28 @@ object MongoSink extends MongoSinkImpl {
     updateOptions: UpdateOptions = DefaultUpdateOptions,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[(Bson, Bson), Unit] = {
     super.updateOne(collection, updateOptions, retryStrategy)
+  }
+
+  /**
+    * Provides a sink implementation for [[MongoSingle.updateOne]] that expects sequences of [[Tuple2]]
+    * of a filter and a update that will be executed against the single filtered element.
+    * All elements inside a single sequence will be executed in parallel as a batch operation.
+    *
+    * @see [[com.mongodb.client.model.Filters]] and [[com.mongodb.client.model.Updates]]
+    *
+    *      If the documents is missing an identifier, the driver should generate one.
+    * @param collection        the abstraction to work with the determined mongodb collection
+    * @param updateOptions     the options to apply to the update operation
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
+    * @tparam Doc the type of the collection
+    * @return a [[Consumer]] that per each element expects a batch of [[Tuple2]] of a filter and the update
+    *         in form of [[Bson]].
+    */
+  override def updateOnePar[Doc](
+    collection: MongoCollection[Doc],
+    updateOptions: UpdateOptions = DefaultUpdateOptions,
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[Seq[(Bson, Bson)], Unit] = {
+    super.updateOnePar(collection, updateOptions, retryStrategy)
   }
 
   /**
@@ -176,6 +276,28 @@ object MongoSink extends MongoSinkImpl {
     super.updateMany(collection, updateOptions, retryStrategy)
   }
 
+  /**
+    * Provides a sink implementation for [[MongoSingle.updateOne]] that expects sequences of [[Tuple2]]
+    * of a filter and update that will be executed against all the filtered elements.
+    * All elements inside a single sequence will be executed in parallel as a batch operation.
+    *
+    * @see [[com.mongodb.client.model.Filters]] and [[com.mongodb.client.model.Updates]]
+    *
+    *      If the documents is missing an identifier, the driver should generate one.
+    * @param collection        the abstraction to work with the determined mongodb collection
+    * @param updateOptions     the options to apply to the update operation
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
+    * @tparam Doc the type of the collection
+    * @return a [[Consumer]] that per each element expects a batch of [[Tuple2]] of a filter and the update
+    *         in form of [[Bson]].
+    */
+  override def updateManyPar[Doc](
+    collection: MongoCollection[Doc],
+    updateOptions: UpdateOptions = DefaultUpdateOptions,
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[Seq[(Bson, Bson)], Unit] = {
+    super.updateManyPar(collection, updateOptions, retryStrategy)
+  }
+
 }
 
 class MongoSink[Doc](private[mongodb] val collection: MongoCollection[Doc]) extends MongoSinkImpl {
@@ -187,7 +309,7 @@ class MongoSink[Doc](private[mongodb] val collection: MongoCollection[Doc]) exte
     * @param deleteOptions     the options to apply to all the delete operations, it will use default ones in case
     *                          it is not passed by the user
     * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
-    * @return a [[Consumer]] that expects query filters to apply the the delete operations.
+    * @return a [[Consumer]] that expects query filters to apply the delete operations.
     * @see [[com.mongodb.client.model.Filters]] and [[com.mongodb.client.model.Updates]]
     */
   def deleteOne(
@@ -197,19 +319,53 @@ class MongoSink[Doc](private[mongodb] val collection: MongoCollection[Doc]) exte
   }
 
   /**
+    *  Provides a sink implementation for [[MongoSingle.deleteOne]] that consumes a sequence of elements.
+    *  The elements inside a single sequence will be executed in parallel as a batch operation.
+    *  For each incoming element will remove at most one document from the collection that matches the given filter.
+    *
+    * @param deleteOptions     the options to apply to all the delete operations, it will use default ones in case
+    *                          it is not passed by the user
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
+    * @return a [[Consumer]] that expects sequences of query filters to apply the delete operations.
+    * @see [[com.mongodb.client.model.Filters]] and [[com.mongodb.client.model.Updates]]
+    */
+  def deleteOnePar(
+    deleteOptions: DeleteOptions = DefaultDeleteOptions,
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[Seq[Bson], Unit] = {
+    super.deleteOnePar(collection, deleteOptions, retryStrategy)
+  }
+
+  /**
     * Provides a sink implementation for [[MongoSingle.deleteMany]] that per each element
     * removes all documents from the collection that matched the given query filter.
     *
     * @param deleteOptions     the options to apply to the delete operation, it will use default ones in case
     *                          it is not passed by the user.
     * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
-    * @return a [[Consumer]] that expects query filters to apply the the delete many operations.
+    * @return a [[Consumer]] that expects query filters to apply the delete many operations.
     * @see [[com.mongodb.client.model.Filters]]
     */
   def deleteMany(
     deleteOptions: DeleteOptions = DefaultDeleteOptions,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[Bson, Unit] =
     super.deleteMany(collection, deleteOptions, retryStrategy)
+
+  /**
+    * Provides a sink implementation for [[MongoSingle.deleteMany]] that per each element
+    * removes all documents from the collection that matched the given query filter.
+    * The sink requires a sequence of elements, whereas elements from a single sequence will
+    * be executed in parallel as a batch operation.
+    *
+    * @param deleteOptions     the options to apply to the delete operation, it will use default ones in case
+    *                          it is not passed by the user.
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
+    * @return a [[Consumer]] that expects query filter sequences to apply the delete many operations.
+    * @see [[com.mongodb.client.model.Filters]]
+    */
+  def deleteManyPar(
+    deleteOptions: DeleteOptions = DefaultDeleteOptions,
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[Seq[Bson], Unit] =
+    super.deleteManyPar(collection, deleteOptions, retryStrategy)
 
   /**
     * Provides a sink implementation for [[MongoSingle.insertOne]] that
@@ -224,6 +380,21 @@ class MongoSink[Doc](private[mongodb] val collection: MongoCollection[Doc]) exte
     insertOneOptions: InsertOneOptions = DefaultInsertOneOptions,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[Doc, Unit] = {
     super.insertOne(collection, insertOneOptions, retryStrategy)
+  }
+
+  /**
+    * Provides a sink implementation for [[MongoSingle.insertOne]] that expects sequences of documents to be
+    * passed and inserts all documents from a single sequence in parallel as a batch operation.
+    * If the document is missing an identifier, the driver should generate one.
+    *
+    * @param insertOneOptions  the options to apply all the insert operations
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
+    * @return a [[Consumer]] that expects documents in batches of type [[Doc]] to be inserted.
+    */
+  def insertOnePar(
+    insertOneOptions: InsertOneOptions = DefaultInsertOneOptions,
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[Seq[Doc], Unit] = {
+    super.insertOnePar(collection, insertOneOptions, retryStrategy)
   }
 
   /**
@@ -260,6 +431,25 @@ class MongoSink[Doc](private[mongodb] val collection: MongoCollection[Doc]) exte
   }
 
   /**
+    * Provides a sink implementation for [[MongoSingle.replaceOne]] that expects sequences of
+    * [[Tuple2]] of a filter and the document replacement that for each element
+    * will execute the replace operation to a single filtered element.
+    * All elements inside a single sequence will be executed in parallel as a batch operation.
+    *
+    * @see [[com.mongodb.client.model.Filters]]
+    *
+    *      If the documents is missing an identifier, the driver should generate one.
+    * @param replaceOptions    the options to apply to the replace operation
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
+    * @return a [[Consumer]] that expects [[Tuple2]] of filters and documents in batches of type [[Doc]] to be replaced.
+    */
+  def replaceOnePar(
+    replaceOptions: ReplaceOptions = DefaultReplaceOptions,
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[Seq[(Bson, Doc)], Unit] = {
+    super.replaceOnePar(collection, replaceOptions, retryStrategy)
+  }
+
+  /**
     * Provides a sink implementation for [[MongoSingle.updateOne]] that expects [[Tuple2]]
     * of a filter and a update that will be executed against the single filtered element.
     *
@@ -277,6 +467,25 @@ class MongoSink[Doc](private[mongodb] val collection: MongoCollection[Doc]) exte
   }
 
   /**
+    * Provides a sink implementation for [[MongoSingle.updateOne]] that expects sequences of [[Tuple2]]
+    * of a filter and a update that will be executed against the single filtered element.
+    * All elements inside a single sequence will be executed in parallel as a batch operation.
+    *
+    * @see [[com.mongodb.client.model.Filters]] and [[com.mongodb.client.model.Updates]]
+    *
+    *      If the documents is missing an identifier, the driver should generate one.
+    * @param updateOptions     the options to apply to the update operation
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
+    * @return a [[Consumer]] that per each element expects a batch of [[Tuple2]] of a filter and the update
+    *         in form of [[Bson]].
+    */
+  def updateOnePar(
+    updateOptions: UpdateOptions = DefaultUpdateOptions,
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[Seq[(Bson, Bson)], Unit] = {
+    super.updateOnePar(collection, updateOptions, retryStrategy)
+  }
+
+  /**
     * Provides a sink implementation for [[MongoSingle.updateOne]] that expects [[Tuple2]]
     * of a filter and update that will be executed against all the filtered elements.
     *
@@ -291,6 +500,25 @@ class MongoSink[Doc](private[mongodb] val collection: MongoCollection[Doc]) exte
     updateOptions: UpdateOptions = DefaultUpdateOptions,
     retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[(Bson, Bson), Unit] = {
     super.updateMany(collection, updateOptions, retryStrategy)
+  }
+
+  /**
+    * Provides a sink implementation for [[MongoSingle.updateOne]] that expects sequences of [[Tuple2]]
+    * of a filter and update that will be executed against all the filtered elements.
+    * All elements inside a single sequence will be executed in parallel as a batch operation.
+    *
+    * @see [[com.mongodb.client.model.Filters]] and [[com.mongodb.client.model.Updates]]
+    *
+    *      If the documents is missing an identifier, the driver should generate one.
+    * @param updateOptions     the options to apply to the update operation
+    * @param retryStrategy defines the amount of retries and backoff delays for failed requests.
+    * @return a [[Consumer]] that per each element expects a batch of [[Tuple2]] of a filter and the update
+    *         in form of [[Bson]].
+    */
+  def updateManyPar(
+    updateOptions: UpdateOptions = DefaultUpdateOptions,
+    retryStrategy: RetryStrategy = DefaultRetryStrategy): Consumer[Seq[(Bson, Bson)], Unit] = {
+    super.updateManyPar(collection, updateOptions, retryStrategy)
   }
 
 }

@@ -186,6 +186,19 @@ object MongoSource extends MongoSourceImpl {
     super.find(collection, filter)
 
   /**
+    * Finds the first encountered document in the collection that matched the query filter
+    * if exists, or the empty option if does not.
+    *
+    * @param collection the abstraction to work with a determined mongodb collection
+    * @param filter a document describing the query filter.
+    *               @see [[com.mongodb.client.model.Filters]]
+    * @tparam Doc the type of the collection
+    * @return the optional document that matched with the given filter
+    */
+  override def findOne[Doc](collection: MongoCollection[Doc], filter: Bson): Task[Option[Doc]] =
+    super.findOne(collection, filter)
+
+  /**
     * Atomically find a document and remove it.
     *
     * @param collection the abstraction to work with the determined mongodb collection
@@ -408,6 +421,17 @@ class MongoSource[Doc](private[mongodb] val collection: MongoCollection[Doc]) ex
     */
   def find(filter: Bson): Observable[Doc] =
     super.find(collection, filter)
+
+  /**
+    * Finds the first encountered document in the collection that matched the query filter
+    * if exists, or the empty option if does not.
+    *
+    * @param filter a document describing the query filter.
+    *               @see [[com.mongodb.client.model.Filters]]
+    * @return the optional document that matched with the given filter
+    */
+  def findOne(filter: Bson): Task[Option[Doc]] =
+    super.findOne(collection, filter)
 
   /**
     * Atomically find a document and remove it.

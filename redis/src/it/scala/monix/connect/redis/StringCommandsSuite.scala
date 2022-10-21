@@ -229,13 +229,14 @@ class StringCommandsSuite
   }
 
   "incrByFloat" should "increment the float value of a key by the given amount" in {
+    def truncateAt2AndRound(n: Double) = {BigDecimal(n).setScale(2, BigDecimal.RoundingMode.FLOOR).toDouble}
     val k1: K = genRedisKey.sample.get
     val n: Double = BigDecimal(Gen.choose(0, 20).sample.get).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
     val v1: Double = BigDecimal(Gen.choose(n + 1, 100).sample.get).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
 
     utfConnection.use { cmd =>
       cmd.string.append(k1, v1.toString) *> cmd.string.incrByFloat(k1, n)
-      }.asserting(_ shouldBe Some(v1 + n))
+      }.asserting(_.map(truncateAt2AndRound) shouldBe Some(v1 + n).map(truncateAt2AndRound))
   }
 
   "mGet" should "get the values of all the given keys" in {
