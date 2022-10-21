@@ -11,7 +11,7 @@ object Dependencies {
     val GCS = "1.107.0"
     val Hadoop = "3.3.4"
     val MongoScala = "4.1.1"
-    val Lettuce = "6.1.9.RELEASE"
+    val Lettuce = "6.1.10.RELEASE"
     val MongoReactiveStreams = "4.6.1"
     val Parquet = "1.12.3"
     val Elastic4s = "7.12.0"
