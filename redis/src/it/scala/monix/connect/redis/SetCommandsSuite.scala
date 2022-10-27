@@ -314,7 +314,7 @@ class SetCommandsSuite
     val m2: List[String] = genRedisValues.sample.get
     val k3: K = genRedisKey.sample.get
 
-      utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, set, _, _) =>
+      utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, set, _, _, _) =>
         for {
           size1 <- set.sAdd(k1, m1: _*)
           size2 <- set.sAdd(k2, m2: _*)

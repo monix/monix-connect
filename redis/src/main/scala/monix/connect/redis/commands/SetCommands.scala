@@ -201,5 +201,4 @@ final class SetCommands[K, V] private[redis] (reactiveCmd: RedisSetReactiveComma
 private[redis] object SetCommands {
   def apply[K, V](reactiveCmd: RedisSetReactiveCommands[K, V]): SetCommands[K, V] =
     new SetCommands[K, V](reactiveCmd)
-
 }
