@@ -37,16 +37,16 @@ object Dependencies {
 
   private val CommonTestDependencies = Seq(
     "org.scalatest" %% "scalatest"          % Versions.Scalatest,
-    "org.scalacheck" %% "scalacheck"        % Versions.Scalacheck,
-    "org.mockito" %% "mockito-scala"        % Versions.Mockito,
-    "io.monix" %% "monix-testing-scalatest" % Versions.MonixTestingScalatest
+    "org.scalacheck" %% "scalacheck"        % Versions.Scalacheck cross CrossVersion.for3Use2_13,
+    "org.mockito" %% "mockito-scala"        % Versions.Mockito cross CrossVersion.for3Use2_13,
+    "io.monix" %% "monix-testing-scalatest" % Versions.MonixTestingScalatest cross CrossVersion.for3Use2_13
   )
 
   val Akka = Seq("com.typesafe.akka" %% "akka-stream" % Versions.AkkaStreams) ++ commonDependencies(hasIt = false)
 
   val AwsAuth = Seq(
-    "software.amazon.awssdk"                % "auth" % Versions.AwsSdk,
-    "com.github.pureconfig" %% "pureconfig" % Versions.Pureconfig) ++ commonDependencies(hasIt = false)
+    "software.amazon.awssdk"                     % "auth" % Versions.AwsSdk,
+    "com.github.pureconfig" %% "pureconfig-core" % Versions.Pureconfig) ++ commonDependencies(hasIt = false)
 
   val DynamoDb = Seq("software.amazon.awssdk" % "dynamodb" % Versions.AwsSdk) ++ commonDependencies(hasIt = true)
 

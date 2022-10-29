@@ -21,8 +21,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import pureconfig.ConfigSource
 import pureconfig.error.ConfigReaderException
-import pureconfig.generic.auto._
-import MonixAwsConf._
+import monix.connect.aws.auth.configreader.KebabConfigReader
 import software.amazon.awssdk.auth.credentials.{
   AnonymousCredentialsProvider,
   AwsSessionCredentials,
@@ -37,7 +36,7 @@ import software.amazon.awssdk.auth.credentials.{
 import scala.util.Try
 
 class AwsCredentialsConfSpec extends AnyFlatSpec with Matchers {
-
+  import KebabConfigReader._
   s"$AwsCredentialsConf" should "allow to set aws default credentials" in {
     //given
     val configSource = ConfigSource.string(

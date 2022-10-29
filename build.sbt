@@ -18,10 +18,13 @@ inThisBuild(List(
 
 skip in publish := true //requered by sbt-ci-release
 
-lazy val sharedSettings = Seq(
-  scalaVersion       := "2.13.8",
-  crossScalaVersions := Seq("2.12.17", "2.13.8"),
-  scalafmtOnCompile  := false,
+def sharedSettings(scala3Support: Boolean= true) = {
+  Seq(
+    scalaVersion := "2.13.8",
+    crossScalaVersions := Seq("2.12.17", "2.13.8") ++ (if (scala3Support) Seq("3.0.0") else Seq.empty)
+  ,
+  scalafmtOnCompile := false
+  ,
   scalacOptions ++= Seq(
     // warnings
     "-unchecked", // able additional warnings where generated code depends on assumptions
@@ -31,10 +34,12 @@ lazy val sharedSettings = Seq(
     "-language:higherKinds",
     "-language:implicitConversions",
     "-language:experimental.macros"
-  ),
+  )
+  ,
   //warnUnusedImports
-  scalacOptions in (Compile, console) ++= Seq("-Ywarn-unused:imports"),
-    // Linter
+  scalacOptions in(Compile, console) ++= Seq("-Ywarn-unused:imports")
+  ,
+  // Linter
   scalacOptions ++= Seq(
     "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
     "-Ywarn-dead-code", // Warn when dead code is identified.
@@ -52,11 +57,14 @@ lazy val sharedSettings = Seq(
     "-Xlint:option-implicit", // Option.apply used implicit view
     "-Xlint:delayedinit-select", // Selecting member of DelayedInit
     //"-Xlint:package-object-classes" // Class or object defined in package object
-  ),
+  )
+  ,
 
   // ScalaDoc settings
-  scalacOptions in (Compile, doc) ++= Seq("-no-link-warnings"),
-  autoAPIMappings := true,
+  scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings")
+  ,
+  autoAPIMappings := true
+  ,
   scalacOptions in ThisBuild ++= Seq(
     // Note, this is used by the doc-source-url feature to determine the
     // relative path of a given source file. If it's not a prefix of a the
@@ -65,22 +73,34 @@ lazy val sharedSettings = Seq(
     // definitely not what we want.
     "-sourcepath",
     file(".").getAbsolutePath.replaceAll("[.]$", "")
-  ),
-  parallelExecution in Test             := true,
-  parallelExecution in ThisBuild        := true,
-  testForkedParallel in Test            := true,
-  testForkedParallel in ThisBuild       := true,
-  concurrentRestrictions in Global += Tags.limit(Tags.Test, 3),
-  logBuffered in Test            := false,
-  logBuffered in IntegrationTest := false,
+  )
+  ,
+  parallelExecution in Test := true
+  ,
+  parallelExecution in ThisBuild := true
+  ,
+  testForkedParallel in Test := true
+  ,
+  testForkedParallel in ThisBuild := true
+  ,
+  concurrentRestrictions in Global += Tags.limit(Tags.Test, 3)
+  ,
+  logBuffered in Test := false
+  ,
+  logBuffered in IntegrationTest := false
+  ,
   //dependencyClasspath in IntegrationTest := (dependencyClasspath in IntegrationTest).value ++ (exportedProducts in Test).value,
   // https://github.com/sbt/sbt/issues/2654
-  incOptions := incOptions.value.withLogRecompileOnMacro(false),
-  pomIncludeRepository    := { _ => false }, // removes optional dependencies
+  incOptions := incOptions.value.withLogRecompileOnMacro(false)
+  ,
+  pomIncludeRepository := { _ => false }
+  , // removes optional dependencies
 
   // ScalaDoc settings
-  autoAPIMappings := true,
-  apiURL := Some(url("https://monix.github.io/monix-connect/api/")),
+  autoAPIMappings := true
+  ,
+  apiURL := Some(url("https://monix.github.io/monix-connect/api/"))
+  ,
 
   headerLicense := Some(HeaderLicense.Custom(
     """|Copyright (c) 2020-2021 by The Monix Connect Project Developers.
@@ -97,12 +117,16 @@ lazy val sharedSettings = Seq(
        |WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
        |See the License for the specific language governing permissions and
        |limitations under the License."""
-      .stripMargin)),
+      .stripMargin))
+  ,
 
-  doctestTestFramework      := DoctestTestFramework.ScalaTest,
-  doctestTestFramework      := DoctestTestFramework.ScalaCheck,
+  doctestTestFramework := DoctestTestFramework.ScalaTest
+  ,
+  doctestTestFramework := DoctestTestFramework.ScalaCheck
+  ,
   doctestOnlyCodeBlocksMode := true
-)
+  )
+}
 
 def mimaSettings(projectName: String) = Seq(
   mimaPreviousArtifacts := Set("io.monix" %% projectName % monixConnectSeries),
@@ -119,7 +143,7 @@ val IT = config("it") extend Test
 //=> published modules
 lazy val monixConnect = (project in file("."))
   .configs(IntegrationTest, IT)
-  .settings(sharedSettings)
+  .settings(sharedSettings())
   .settings(name := "monix-connect")
   .aggregate(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, sqs, elasticsearch, awsAuth)
   .dependsOn(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, sqs, elasticsearch, awsAuth)
@@ -130,7 +154,7 @@ lazy val dynamodb = monixConnector("dynamodb", Dependencies.DynamoDb).aggregate(
 
 lazy val hdfs = monixConnector("hdfs", Dependencies.Hdfs)
 
-lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb, isMimaEnabled = false, isITParallelExecution = true)
+lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb, isMimaEnabled = false, isITParallelExecution = true, scala3Support = false)
 
 lazy val parquet = monixConnector("parquet", Dependencies.Parquet)
 
@@ -162,13 +186,14 @@ def monixConnector(
   connectorName: String,
   projectDependencies: Seq[ModuleID],
   isMimaEnabled: Boolean = true,
-  isITParallelExecution: Boolean = false): Project = {
+  isITParallelExecution: Boolean = false,
+  scala3Support: Boolean = true): Project = {
   Project(id = connectorName, base = file(connectorName))
     .enablePlugins(AutomateHeaderPlugin)
     .settings(name := s"monix-$connectorName", libraryDependencies ++= projectDependencies, Defaults.itSettings,
       IntegrationTest / parallelExecution := isITParallelExecution,
       IntegrationTest / testForkedParallel := isITParallelExecution)
-    .settings(sharedSettings)
+    .settings(sharedSettings(scala3Support))
     .configs(IntegrationTest, IT)
     .enablePlugins(AutomateHeaderPlugin)
     .settings(if(isMimaEnabled) mimaSettings(s"monix-$connectorName") else Seq.empty)
@@ -187,7 +212,7 @@ lazy val docs = project
   .settings(
     moduleName := "monix-connect-docs",
     name := moduleName.value,
-    sharedSettings,
+    sharedSettings(scala3Support = false),
     skipOnPublishSettings,
     mdocSettings
   )
