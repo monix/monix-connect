@@ -99,10 +99,10 @@ class GcsBucket private (underlying: Bucket) extends GcsDownloader with FileIO w
   @Unsafe("Risk of downloading large amounts of data into the local filesystem.")
   def downloadToFile(blobName: String, path: Path, chunkSize: Int = 4096): Task[Unit] = {
     val blobId = BlobId.of(underlying.getName, blobName)
-    (for {
+    (for
       bos   <- openFileOutputStream(path)
       bytes <- download(underlying.getStorage, blobId, chunkSize)
-    } yield bos.write(bytes)).completedL
+    yield bos.write(bytes)).completedL
   }
 
   /**

@@ -23,7 +23,7 @@ import monix.eval.Task
 import monix.execution.Scheduler
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.{Consumer, Observable}
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
@@ -35,7 +35,7 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
 class MultipartUploadSubscriberSuite
-  extends AsyncFlatSpec with Matchers with MonixTaskSpec with BeforeAndAfterAll with S3Fixture {
+  extends AsyncFlatSpec with Matchers with MonixTaskTest with BeforeAndAfterAll with S3Fixture {
 
   private val bucketName = "multipart-upload-test-bucket"
   override implicit val scheduler = Scheduler.io("multipart-download-observable-suite")

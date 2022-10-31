@@ -102,10 +102,10 @@ private[storage] final class GcsBlob(val underlying: Blob) extends GcsDownloader
     */
   def downloadToFile(path: Path, chunkSize: Int = 4096): Task[Unit] = {
     val blobId: BlobId = BlobId.of(underlying.getBucket, underlying.getName)
-    (for {
+    (for
       bos   <- openFileOutputStream(path)
       bytes <- download(underlying.getStorage, blobId, chunkSize)
-    } yield bos.write(bytes)).completedL
+    yield bos.write(bytes)).completedL
   }
 
   /** Checks if this blob exists. */

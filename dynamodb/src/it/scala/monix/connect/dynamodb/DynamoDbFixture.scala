@@ -35,7 +35,6 @@ trait DynamoDbFixture {
 
   def citizenItem(citizenId: String, city: String, age: Int) =  Map("citizenId" -> strAttr(citizenId), "city" -> strAttr(city)) ++ Map("age" -> doubleAttr(age))
 
-
   def putItemRequest(tableName: String, citizen: Citizen): PutItemRequest = putItemRequest(tableName, citizen.citizenId, citizen.city, citizen.age)
 
   def putItemRequest(tableName: String, citizenId: String, city: String, age: Int): PutItemRequest =

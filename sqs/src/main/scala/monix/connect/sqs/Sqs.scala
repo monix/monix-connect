@@ -58,10 +58,10 @@ object Sqs {
   @deprecated("Use `fromConfig(namingConvention)`", "0.6.1")
   def fromConfig: Resource[Task, Sqs] = {
     Resource.make {
-      for {
+      for
         clientConf  <- MonixAwsConf.load()
         asyncClient <- Task.now(AsyncClientConversions.fromMonixAwsConf(clientConf))
-      } yield asyncClient
+      yield asyncClient
     }(asyncClient => Task.evalAsync(asyncClient.close()))
       .map(this.createUnsafe(_))
   }
@@ -92,10 +92,10 @@ object Sqs {
     */
   def fromConfig(namingConvention: NamingConvention = KebabCase): Resource[Task, Sqs] = {
     Resource.make {
-      for {
+      for
         clientConf  <- MonixAwsConf.load(namingConvention)
         asyncClient <- Task.now(AsyncClientConversions.fromMonixAwsConf(clientConf))
-      } yield asyncClient
+      yield asyncClient
     }(asyncClient => Task.evalAsync(asyncClient.close()))
       .map(this.createUnsafe(_))
   }

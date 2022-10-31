@@ -21,7 +21,7 @@ import com.mongodb.client.model.{Accumulators, Aggregates, CountOptions, Filters
 import monix.connect.mongodb.client.{CollectionCodecRef, CollectionOperator, MongoConnection}
 import monix.eval.Task
 import monix.execution.Scheduler
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
@@ -30,7 +30,7 @@ import org.scalatest.{Assertion, BeforeAndAfterEach}
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class MongoSourceSuite extends AsyncFlatSpec with MonixTaskSpec with Fixture with Matchers with BeforeAndAfterEach {
+class MongoSourceSuite extends AsyncFlatSpec with MonixTaskTest with Fixture with Matchers with BeforeAndAfterEach {
 
   override implicit val scheduler: Scheduler = Scheduler.io("mongo-source-suite")
 

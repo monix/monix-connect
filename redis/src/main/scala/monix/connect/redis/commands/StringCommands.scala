@@ -71,7 +71,7 @@ final class StringCommands[K, V] private[redis] (reactiveCmd: RedisStringReactiv
   private[this] def bitPos(key: K, state: Boolean): Task[Option[Long]] =
     Task
       .fromReactivePublisher(reactiveCmd.bitpos(key, state))
-      .map(_.flatMap(pos => if (pos == -1L) Option.empty else Some(pos)))
+      .map(_.flatMap(pos => if pos == -1L then Option.empty else Some(pos)))
 
   /**
     * Find the position of the first bit set in a string.

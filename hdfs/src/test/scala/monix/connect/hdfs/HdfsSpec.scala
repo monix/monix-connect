@@ -26,10 +26,10 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.apache.hadoop.hdfs.{HdfsConfiguration, MiniDFSCluster}
 import monix.reactive.{Consumer, Observable}
 import monix.execution.Scheduler
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 
 class HdfsSpec
-  extends AsyncWordSpec with MonixTaskSpec with Matchers with BeforeAndAfterAll with BeforeAndAfterEach
+  extends AsyncWordSpec with MonixTaskTest with Matchers with BeforeAndAfterAll with BeforeAndAfterEach
   with HdfsFixture {
 
   override implicit val scheduler = Scheduler.io("hdfs-spec")

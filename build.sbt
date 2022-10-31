@@ -20,8 +20,8 @@ skip in publish := true //requered by sbt-ci-release
 
 def sharedSettings(scala3Support: Boolean= true) = {
   Seq(
-    scalaVersion := "2.13.8",
-    crossScalaVersions := Seq("2.12.17", "2.13.8") ++ (if (scala3Support) Seq("3.0.0") else Seq.empty)
+    scalaVersion := "3.1.2",
+    crossScalaVersions := Seq("2.12.17", "2.13.8") ++ (if (scala3Support) Seq("3.1.2") else Seq.empty)
   ,
   scalafmtOnCompile := false
   ,
@@ -34,8 +34,19 @@ def sharedSettings(scala3Support: Boolean= true) = {
     "-language:higherKinds",
     "-language:implicitConversions",
     "-language:experimental.macros"
-  )
-  ,
+  ) ++
+    (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((3, _)) => Seq(
+        "-unchecked",
+        "-source:3.0-migration",
+        "-new-syntax", "-rewrite"
+      )
+      case _ => Seq(
+        "-deprecation",
+        "-Wunused:imports,privates,locals",
+        "-Wvalue-discard"
+      )
+    }),
   //warnUnusedImports
   scalacOptions in(Compile, console) ++= Seq("-Ywarn-unused:imports")
   ,

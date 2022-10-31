@@ -21,7 +21,7 @@ import java.io.{File, FileNotFoundException}
 import monix.eval.Task
 import monix.execution.Scheduler
 import monix.reactive.Observable
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.apache.avro.generic.GenericRecord
 import org.apache.parquet.hadoop.ParquetReader
 import org.scalatest.BeforeAndAfterAll
@@ -31,7 +31,7 @@ import org.scalatest.wordspec.AsyncWordSpec
 import scala.reflect.io.Directory
 
 class ParquetSourceSpec
-  extends AsyncWordSpec with MonixTaskSpec with Matchers with AvroParquetFixture with BeforeAndAfterAll {
+  extends AsyncWordSpec with MonixTaskTest with Matchers with AvroParquetFixture with BeforeAndAfterAll {
 
   override implicit val scheduler: Scheduler = Scheduler.io("parquet-source-spec")
   override def afterAll(): Unit = {

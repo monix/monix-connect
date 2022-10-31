@@ -54,7 +54,7 @@ private[storage] final class GcsUploader(
       private[this] var isDone = false
 
       override def onNext(chunk: Array[Byte]): Ack = {
-        if (chunk.isEmpty) {
+        if chunk.isEmpty then {
           onComplete()
           Ack.Stop
         } else {
@@ -71,7 +71,7 @@ private[storage] final class GcsUploader(
       }
 
       override def onComplete(): Unit = {
-        if (!isDone) {
+        if !isDone then {
           isDone = true
           try {
             writer.close()
@@ -85,7 +85,7 @@ private[storage] final class GcsUploader(
       }
 
       override def onError(ex: Throwable): Unit = {
-        if (!isDone) {
+        if !isDone then {
           isDone = true
           try {
             writer.close()

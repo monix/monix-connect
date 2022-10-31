@@ -11,13 +11,13 @@ import com.google.cloud.storage.contrib.nio.testing.LocalStorageHelper
 import monix.reactive.Observable
 import monix.eval.Task
 import monix.execution.Scheduler
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
 import org.apache.commons.io.FileUtils
 import scala.concurrent.duration._
 
-class GcsBlobSuite extends AsyncWordSpec with MonixTaskSpec with IdiomaticMockito with Matchers with ArgumentMatchersSugar with BeforeAndAfterAll {
+class GcsBlobSuite extends AsyncWordSpec with MonixTaskTest with IdiomaticMockito with Matchers with ArgumentMatchersSugar with BeforeAndAfterAll {
 
   override implicit val scheduler: Scheduler = Scheduler.io("gcs-blob-suite")
   val storage: Storage = LocalStorageHelper.getOptions.getService

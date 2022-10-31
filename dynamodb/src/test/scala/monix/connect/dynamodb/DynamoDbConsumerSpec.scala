@@ -17,54 +17,69 @@
 
 package monix.connect.dynamodb
 
+import cats.effect.concurrent.Ref
+import monix.catnap.MVar
 import monix.connect.dynamodb.domain.RetryStrategy
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.execution.exceptions.DummyException
 import monix.reactive.Observable
-import org.mockito.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model._
 import org.mockito.MockitoSugar.{times, verify, when}
+import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 
+import java.util.concurrent.CompletableFuture
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
+import scala.jdk.FutureConverters._
 
-class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers with IdiomaticMockito {
+class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers {
 
-  implicit val client: DynamoDbAsyncClient = mock[DynamoDbAsyncClient]
+  def withOperationStub(f: Int => Task[GetItemResponse]) =
+  new DynamoDbOp[GetItemRequest, GetItemResponse] {
+    override def apply(dynamoDbRequest: GetItemRequest)(implicit client: DynamoDbAsyncClient): Task[GetItemResponse] =
+      Task.defer(Task.from(execute(dynamoDbRequest)))
+    val counterMvarTask: Task[MVar[Task, Int]] = MVar[Task].of(1).memoize
+    def incWithF(): Task[GetItemResponse] = counterMvarTask.flatMap(counterMvar => counterMvar.take.flatMap(value =>
+      counterMvar.put(value + 1) >> f(value)))
 
+    override def execute(dynamoDbRequest: GetItemRequest)(implicit client: DynamoDbAsyncClient): CompletableFuture[GetItemResponse] = {
+      incWithF.runToFuture.flatMap(r =>
+        Future.successful(r)).asJava.toCompletableFuture
+    }
+  }
+  val client: DynamoDbAsyncClient = new DynamoDbAsyncClient{
+    override def serviceName(): String = ???
+    override def close(): Unit = ???
+  }
   s"A $DynamoDb Consumer" when {
 
     s"three operations are passed" must {
 
       "execute each one exactly once" in {
+
         //given
         val n = 3
-        val req = mock[DynamoDbRequest]
-        val resp = mock[DynamoDbResponse]
-        val op = mock[DynamoDbOp[DynamoDbRequest, DynamoDbResponse]]
+        val req = GetItemRequest.builder().build()
+        val resp = GetItemResponse.builder().build()
+        val op = withOperationStub(_ => Task.pure(resp))
 
-        //when
-        when(op.apply(req)(client)).thenReturn(Task(resp))
+        //when/then
         Observable
           .fromIterable(List.fill(n)(req))
           .consumeWith(DynamoDb.createUnsafe(client).sink()(op))
           .runSyncUnsafe()
-
-        //when
-        verify(op, times(n)).apply(req)
       }
 
       "supports an empty observable" in {
         //given
-        val req = mock[DynamoDbRequest]
-        val resp = mock[DynamoDbResponse]
-        val op = mock[DynamoDbOp[DynamoDbRequest, DynamoDbResponse]]
+        val req = GetItemRequest.builder().build()
+        val resp = GetItemResponse.builder().build()
+        val op = withOperationStub(_ => Task.pure(resp))
 
         //when
-        when(op.apply(req)(client)).thenReturn(Task(resp))
         val t: Task[Unit] =
           Observable.empty.consumeWith(DynamoDb.createUnsafe(client).sink()(op))
 
@@ -75,64 +90,56 @@ class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers with IdiomaticM
       "correctly reports error on failure" in {
         //given
         val n = 3
-        val req = mock[DynamoDbRequest]
-        val resp = mock[DynamoDbResponse]
-        val op = mock[DynamoDbOp[DynamoDbRequest, DynamoDbResponse]]
+        val req = GetItemRequest.builder().build()
         val ex = DummyException("DynamoDB is busy.")
-        when(op.apply(req)(client)).thenReturn(Task(resp), Task.raiseError(ex), Task(resp))
+        val op = withOperationStub(_ => Task.raiseError(ex))
 
         //when
         val f =
           Observable
             .fromIterable(List.fill(n)(req))
             .consumeWith(DynamoDb.createUnsafe(client).sink(RetryStrategy(retries = 0))(op))
-            .runToFuture
 
         //then
-        verify(op, times(2)).apply(req)
-        f.value shouldBe Some(Failure(ex))
+        f.attempt.runSyncUnsafe() shouldBe Left(ex)
       }
 
-      "retries the operation if there were a failure" in {
+
+      "retries the operation if there was a failure" in {
+
         //given
         val n = 3
-        val req = mock[DynamoDbRequest]
-        val resp = mock[DynamoDbResponse]
-        val op = mock[DynamoDbOp[DynamoDbRequest, DynamoDbResponse]]
+        val req = GetItemRequest.builder().build()
+        val resp = GetItemResponse.builder().build()
         val ex = DummyException("DynamoDB is busy.")
-        when(op.apply(req)(client)).thenReturn(Task(resp), Task.raiseError(ex), Task(resp))
+        val op = withOperationStub(i => if(i<2) Task.raiseError(ex) else Task.pure(resp))
 
         //when
-        val f =
+        val t =
           Observable
             .fromIterable(List.fill(n)(req))
             .consumeWith(DynamoDb.createUnsafe(client).sink(RetryStrategy(retries = 1))(op))
-            .runToFuture
 
         //then
-        verify(op, times(n + 1)).apply(req)
-        f.value shouldBe Some(Success(()))
+        t.attempt.runSyncUnsafe() shouldBe Right(())
       }
 
       "reports failure after all retries were exhausted" in {
         //given
         val n = 3
-        val req = mock[DynamoDbRequest]
-        val resp = mock[DynamoDbResponse]
-        val op = mock[DynamoDbOp[DynamoDbRequest, DynamoDbResponse]]
+        val req = GetItemRequest.builder().build()
+        val resp = GetItemResponse.builder().build()
         val ex = DummyException("DynamoDB is busy.")
-        when(op.apply(req)(client)).thenReturn(Task(resp), Task.raiseError(ex), Task.raiseError(ex), Task(resp))
+        val op = withOperationStub(i => if(i<4) Task.raiseError(ex) else Task.pure(resp))
 
         //when
-        val f =
+        val t =
           Observable
             .fromIterable(List.fill(n)(req))
             .consumeWith(DynamoDb.createUnsafe(client).sink(RetryStrategy(retries = 1))(op))
-            .runToFuture
 
         //then
-        verify(op, times(3)).apply(req)
-        f.value shouldBe Some(Failure(ex))
+        t.attempt.runSyncUnsafe() shouldBe Left(ex)
       }
 
     }

@@ -19,7 +19,7 @@ package monix.connect.s3
 
 import monix.eval.Task
 import monix.execution.Scheduler
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
@@ -31,7 +31,7 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
 class ListObjectsObservableSuite
-  extends AsyncFlatSpec with Matchers with MonixTaskSpec with BeforeAndAfterAll with ScalaFutures with S3Fixture with Eventually {
+  extends AsyncFlatSpec with Matchers with MonixTaskTest with BeforeAndAfterAll with ScalaFutures with S3Fixture with Eventually {
 
   private val bucketName = "list-observable-test-bucket"
 

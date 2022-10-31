@@ -24,9 +24,9 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
 
 object CamelCaseConfigReader {
   private[auth] implicit val staticCreedsConfConfigReader: ConfigReader[StaticCredentialsConf] =
-    ConfigReader.forProduct3("accessKeyId", "secretAccessKey", "sessionToken")(StaticCredentialsConf)
+    ConfigReader.forProduct3("accessKeyId", "secretAccessKey", "sessionToken")(StaticCredentialsConf(_, _, _))
   private[auth] implicit val awsCredentialsConfConfigReader: ConfigReader[AwsCredentialsConf] =
-    ConfigReader.forProduct3("provider", "profileName", "static")(AwsCredentialsConf)
+    ConfigReader.forProduct3("provider", "profileName", "static")(AwsCredentialsConf(_, _, _))
   private[auth] implicit val credentialsProviderReader: ConfigReader[AwsCredentialsProvider] =
     ConfigReader[AwsCredentialsConf].map(_.credentialsProvider)
   private[auth] implicit val httpClientConfConfigReader: ConfigReader[HttpClientConf] = ConfigReader.forProduct8(
@@ -38,8 +38,8 @@ object CamelCaseConfigReader {
     "useIdleConnectionReaper",
     "readTimeout",
     "writeTimeout"
-  )(HttpClientConf)
+  )(HttpClientConf(_, _, _, _, _, _, _, _))
   private[auth] implicit val monixAwsConfConfigReader: ConfigReader[MonixAwsConf] =
     ConfigReader.forProduct4("region", "credentials", "endpoint", "httpClient")(MonixAwsConf(_, _, _, _))
-  implicit val appConfConfigReader = ConfigReader.forProduct1("monixAws")(AppConf)
+  implicit val appConfConfigReader: ConfigReader[AppConf] = ConfigReader.forProduct1("monixAws")(AppConf(_))
 }

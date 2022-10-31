@@ -8,7 +8,7 @@ import monix.connect.gcp.storage.components.GcsUploader
 import monix.execution.Scheduler
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.apache.commons.io.FileUtils
 import org.mockito.{ArgumentMatchersSugar, IdiomaticMockito}
 import org.scalacheck.Gen
@@ -16,7 +16,7 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.{AnyWordSpecLike, AsyncWordSpec}
 
-class GcsUploaderSuite extends AsyncWordSpec with MonixTaskSpec with IdiomaticMockito with Matchers with ArgumentMatchersSugar with BeforeAndAfterAll {
+class GcsUploaderSuite extends AsyncWordSpec with MonixTaskTest with IdiomaticMockito with Matchers with ArgumentMatchersSugar with BeforeAndAfterAll {
 
   val storage = LocalStorageHelper.getOptions.getService
   val dir = new File("gcs/uploader-test").toPath

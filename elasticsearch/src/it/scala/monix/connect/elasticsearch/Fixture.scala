@@ -18,36 +18,36 @@ trait Fixture {
   def genIndex: Gen[String] = Gen.listOfN(8, Gen.alphaLowerChar).map(_.mkString)
   def getDocString(a: String, b: String) = s"""{"a":"$a","b":"$b"}"""
   def genDoc: Gen[String] =
-    for {
+    for
       a <- Gen.identifier
       b <- Gen.identifier
-    } yield getDocString(a, b)
+    yield getDocString(a, b)
 
   def genUpdateRequest: Gen[UpdateRequest] =
-    for {
+    for
       index <- genIndex
       id    <- Gen.identifier
       doc   <- genDoc
-    } yield updateById(index, id).docAsUpsert(doc)
+    yield updateById(index, id).docAsUpsert(doc)
 
   def genUpdateRequest(index: String): Gen[UpdateRequest] =
-    for {
+    for
       id  <- Gen.identifier
       doc <- genDoc
-    } yield updateById(index, id).docAsUpsert(doc)
+    yield updateById(index, id).docAsUpsert(doc)
 
   def genDeleteRequest: Gen[DeleteByIdRequest] =
-    for {
+    for
       index <- genIndex
       id    <- Gen.identifier
-    } yield deleteById(index, id)
+    yield deleteById(index, id)
 
   def genIndexRequest: Gen[IndexRequest] =
-    for {
+    for
       index <- genIndex
       id    <- Gen.identifier
       doc   <- genDoc
-    } yield indexInto(index).id(id).doc(doc)
+    yield indexInto(index).id(id).doc(doc)
 
   def getById(index: String, id: String): Task[GetResponse] = {
     esResource.use { es =>

@@ -11,9 +11,9 @@ import org.scalacheck.Gen
 import scala.concurrent.duration._
 import monix.connect.redis.test.protobuf.{Person, PersonPk}
 import monix.execution.Scheduler
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 
-class CodecSuite extends AsyncFlatSpec with MonixTaskSpec with  RedisIntegrationFixture with Matchers with Eventually {
+class CodecSuite extends AsyncFlatSpec with MonixTaskTest with  RedisIntegrationFixture with Matchers with Eventually {
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
   override implicit val scheduler: Scheduler = Scheduler.io("codec-suite")

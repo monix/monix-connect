@@ -13,7 +13,7 @@ import Thread.sleep
 import scala.concurrent.duration._
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.{Consumer, Observable}
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 
 import scala.concurrent.Future
@@ -21,7 +21,7 @@ import scala.util.{Failure, Success, Try}
 
 @deprecated("0.5.0")
 class S3ITest
-  extends AsyncWordSpec with MonixTaskSpec with Matchers with BeforeAndAfterAll with S3Fixture {
+  extends AsyncWordSpec with MonixTaskTest with Matchers with BeforeAndAfterAll with S3Fixture {
 
   private val bucketName = "s3-it-test-bucket"
   override implicit val scheduler = Scheduler.io("s3-it-test")

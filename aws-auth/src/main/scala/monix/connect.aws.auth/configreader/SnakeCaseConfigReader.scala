@@ -24,9 +24,9 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
 
 object SnakeCaseConfigReader {
   private[auth] implicit val staticCreedsConfConfigReader: ConfigReader[StaticCredentialsConf] =
-    ConfigReader.forProduct3("access_key_id", "secret_access_key", "session-token")(StaticCredentialsConf)
+    ConfigReader.forProduct3("access_key_id", "secret_access_key", "session-token")(StaticCredentialsConf(_, _, _))
   private[auth] implicit val awsCredentialsConfConfigReader: ConfigReader[AwsCredentialsConf] =
-    ConfigReader.forProduct3("provider", "profile_name", "static")(AwsCredentialsConf)
+    ConfigReader.forProduct3("provider", "profile_name", "static")(AwsCredentialsConf(_, _, _))
   private[auth] implicit val credentialsProviderReader: ConfigReader[AwsCredentialsProvider] =
     ConfigReader[AwsCredentialsConf].map(_.credentialsProvider)
   private[auth] implicit val httpClientConfConfigReader: ConfigReader[HttpClientConf] = ConfigReader.forProduct8(
@@ -38,8 +38,8 @@ object SnakeCaseConfigReader {
     "use_idle_connection_reaper",
     "read_timeout",
     "write_timeout"
-  )(HttpClientConf)
+  )(HttpClientConf(_, _, _, _, _, _, _, _))
   private[auth] implicit val monixAwsConfConfigReader: ConfigReader[MonixAwsConf] =
     ConfigReader.forProduct4("region", "credentials", "endpoint", "http_client")(MonixAwsConf(_, _, _, _))
-  implicit val appConfConfigReader = ConfigReader.forProduct1("monix_aws")(AppConf)
+  implicit val appConfConfigReader: ConfigReader[AppConf] = ConfigReader.forProduct1("monix_ws")(AppConf(_))
 }

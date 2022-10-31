@@ -38,10 +38,10 @@ private[storage] trait FileIO {
       Task(new BufferedOutputStream(new FileOutputStream(path.toFile)))
     } {
       case (fos, ExitCase.Completed) =>
-        for {
+        for
           _ <- Task(fos.flush())
           _ <- Task(fos.close())
-        } yield ()
+        yield ()
 
       case (fos, _) =>
         Task(fos.close())

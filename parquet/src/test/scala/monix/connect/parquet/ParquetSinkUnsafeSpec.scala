@@ -21,24 +21,21 @@ import monix.eval.Task
 import monix.execution.Scheduler
 
 import java.io.File
-import monix.execution.Scheduler.Implicits.global
 import monix.execution.exceptions.DummyException
 import monix.execution.schedulers.TestScheduler
 import monix.reactive.Observable
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.apache.avro.generic.GenericRecord
 import org.apache.parquet.hadoop.ParquetWriter
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.{AnyWordSpecLike, AsyncWordSpec}
+import org.scalatest.wordspec.AsyncWordSpec
 import org.mockito.IdiomaticMockito
 import org.mockito.MockitoSugar.when
 
-import scala.concurrent.duration._
-import scala.util.Failure
 
 class ParquetSinkUnsafeSpec
-  extends AsyncWordSpec with MonixTaskSpec with IdiomaticMockito with Matchers with AvroParquetFixture
+  extends AsyncWordSpec with MonixTaskTest with IdiomaticMockito with Matchers with AvroParquetFixture
   with BeforeAndAfterAll {
 
   override implicit val scheduler: Scheduler = Scheduler.io("parquet-sync-unsafe-spec")

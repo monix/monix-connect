@@ -21,7 +21,7 @@ import java.io.FileInputStream
 import monix.eval.Task
 import monix.execution.Scheduler
 import monix.reactive.Observable
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AsyncFlatSpec
@@ -31,7 +31,7 @@ import software.amazon.awssdk.services.s3.model.{NoSuchBucketException, NoSuchKe
 import scala.util.{Failure, Success, Try}
 
 class MultipartDownloadObservableSuite
-  extends AsyncFlatSpec with Matchers with MonixTaskSpec with BeforeAndAfterAll with S3Fixture {
+  extends AsyncFlatSpec with Matchers with MonixTaskTest with BeforeAndAfterAll with S3Fixture {
 
   private val bucketName = "multipart-download-test-bucket"
   override implicit val scheduler = Scheduler.io("multipart-download-observable-suite")

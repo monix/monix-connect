@@ -37,7 +37,7 @@ import scala.util.Try
 
 class AwsCredentialsConfSpec extends AnyFlatSpec with Matchers {
   import KebabConfigReader._
-  s"$AwsCredentialsConf" should "allow to set aws default credentials" in {
+  s"AwsCredentialsConf" should "allow to set aws default credentials" in {
     //given
     val configSource = ConfigSource.string(
       "" +

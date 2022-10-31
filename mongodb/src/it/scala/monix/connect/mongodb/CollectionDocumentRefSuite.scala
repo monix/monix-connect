@@ -23,7 +23,7 @@ import com.mongodb.reactivestreams.client.MongoClients
 import monix.connect.mongodb.client.{CollectionCodecRef, CollectionDocumentRef, CollectionOperator, MongoConnection}
 import monix.eval.Task
 import monix.execution.Scheduler
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.bson.Document
 import org.bson.conversions.Bson
 import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
@@ -32,7 +32,7 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import scala.concurrent.duration._
 
-class CollectionDocumentRefSuite extends AsyncFlatSpec with MonixTaskSpec with Fixture with Matchers {
+class CollectionDocumentRefSuite extends AsyncFlatSpec with MonixTaskTest with Fixture with Matchers {
 
   override implicit val scheduler: Scheduler = Scheduler.io("collection-document-ref-suite")
 

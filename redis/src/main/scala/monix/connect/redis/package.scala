@@ -41,7 +41,7 @@ package object redis {
   private[redis] implicit val fromMono: TaskLike[Mono] = new TaskLike[Mono] {
     def apply[A](m: Mono[A]): Task[A] =
       Task.fromReactivePublisher(m).flatMap { op =>
-        if (op.nonEmpty) Task.now(op.get)
+        if op.nonEmpty then Task.now(op.get)
         else Task.raiseError(new NoSuchElementException("The result from the executed redis operation was empty."))
       }
   }

@@ -19,7 +19,7 @@ package monix.connect.aws.auth
 
 import java.net.URI
 import org.scalatest.flatspec.AsyncFlatSpec
-import pureconfig.{CamelCase, ConfigFieldMapping, ConfigSource, KebabCase, PascalCase, SnakeCase}
+import pureconfig.{CamelCase, ConfigSource, KebabCase, PascalCase, SnakeCase}
 import org.scalatest.matchers.should.Matchers
 import pureconfig.error.ConfigReaderException
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
@@ -28,12 +28,12 @@ import monix.connect.aws.auth.MonixAwsConf._
 import monix.connect.aws.auth.configreader.KebabConfigReader
 import monix.eval.Task
 import monix.execution.Scheduler
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 
 import java.io.File
 import scala.util.Try
 
-class MonixAwsConfigSpec extends AsyncFlatSpec with MonixTaskSpec with Matchers {
+class MonixAwsConfigSpec extends AsyncFlatSpec with MonixTaskTest with Matchers {
 
   override implicit val scheduler: Scheduler = Scheduler.io("monix-aws-config-spec")
 

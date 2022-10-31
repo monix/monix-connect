@@ -3,7 +3,7 @@ package monix.connect.redis
 import monix.connect.redis.client.{BytesCodec, Codec, RedisConnection, RedisUri}
 import monix.connect.redis.test.protobuf.{Person, PersonPk}
 import monix.execution.Scheduler
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.scalacheck.Gen
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AsyncFlatSpec
@@ -12,7 +12,7 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 import scala.concurrent.duration._
 
-class ClusterConnectionSuite extends AsyncFlatSpec with MonixTaskSpec
+class ClusterConnectionSuite extends AsyncFlatSpec with MonixTaskTest
   with RedisIntegrationFixture
   with Matchers
   with Eventually {
