@@ -17,8 +17,6 @@
 
 package monix.connect.dynamodb
 
-import cats.effect.concurrent.Ref
-import monix.catnap.MVar
 import monix.connect.dynamodb.domain.RetryStrategy
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
@@ -27,33 +25,12 @@ import monix.reactive.Observable
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import software.amazon.awssdk.services.dynamodb.model._
-import org.mockito.MockitoSugar.{times, verify, when}
-import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 
-import java.util.concurrent.CompletableFuture
-import scala.concurrent.Future
-import scala.util.{Failure, Success}
-import scala.jdk.FutureConverters._
+import scala.util.Success
 
-class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers {
+class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers with Fixture {
 
-  def withOperationStub(f: Int => Task[GetItemResponse]) =
-  new DynamoDbOp[GetItemRequest, GetItemResponse] {
-    override def apply(dynamoDbRequest: GetItemRequest)(implicit client: DynamoDbAsyncClient): Task[GetItemResponse] =
-      Task.defer(Task.from(execute(dynamoDbRequest)))
-    val counterMvarTask: Task[MVar[Task, Int]] = MVar[Task].of(1).memoize
-    def incWithF(): Task[GetItemResponse] = counterMvarTask.flatMap(counterMvar => counterMvar.take.flatMap(value =>
-      counterMvar.put(value + 1) >> f(value)))
 
-    override def execute(dynamoDbRequest: GetItemRequest)(implicit client: DynamoDbAsyncClient): CompletableFuture[GetItemResponse] = {
-      incWithF.runToFuture.flatMap(r =>
-        Future.successful(r)).asJava.toCompletableFuture
-    }
-  }
-  val client: DynamoDbAsyncClient = new DynamoDbAsyncClient{
-    override def serviceName(): String = ???
-    override def close(): Unit = ???
-  }
   s"A $DynamoDb Consumer" when {
 
     s"three operations are passed" must {
@@ -62,8 +39,7 @@ class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers {
 
         //given
         val n = 3
-        val req = GetItemRequest.builder().build()
-        val resp = GetItemResponse.builder().build()
+
         val op = withOperationStub(_ => Task.pure(resp))
 
         //when/then
@@ -75,8 +51,6 @@ class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers {
 
       "supports an empty observable" in {
         //given
-        val req = GetItemRequest.builder().build()
-        val resp = GetItemResponse.builder().build()
         val op = withOperationStub(_ => Task.pure(resp))
 
         //when
@@ -109,8 +83,6 @@ class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers {
 
         //given
         val n = 3
-        val req = GetItemRequest.builder().build()
-        val resp = GetItemResponse.builder().build()
         val ex = DummyException("DynamoDB is busy.")
         val op = withOperationStub(i => if(i<2) Task.raiseError(ex) else Task.pure(resp))
 
@@ -127,8 +99,7 @@ class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers {
       "reports failure after all retries were exhausted" in {
         //given
         val n = 3
-        val req = GetItemRequest.builder().build()
-        val resp = GetItemResponse.builder().build()
+
         val ex = DummyException("DynamoDB is busy.")
         val op = withOperationStub(i => if(i<4) Task.raiseError(ex) else Task.pure(resp))
 

@@ -46,8 +46,7 @@ object Dependencies {
     "software.amazon.awssdk"                     % "auth" % Versions.AwsSdk,
     "com.github.pureconfig" %% "pureconfig-core" % Versions.Pureconfig) ++ commonDependencies(hasIt = false)
 
-  val DynamoDb = Seq("software.amazon.awssdk" % "dynamodb" % Versions.AwsSdk,
-    "org.mockito" %% "mockito-scala" % Versions.Mockito % Test cross CrossVersion.for3Use2_13) ++ commonDependencies(hasIt = true)
+  val DynamoDb = Seq("software.amazon.awssdk" % "dynamodb" % Versions.AwsSdk) ++ commonDependencies(hasIt = true)
 
   val Hdfs = Seq(
     "org.apache.hadoop" % "hadoop-client"      % Versions.Hadoop,
