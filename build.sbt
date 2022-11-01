@@ -1,3 +1,4 @@
+import Dependencies.{Versions, commonDependencies}
 import sbt.Keys.version
 
 val monixConnectSeries = "0.5.1"
@@ -18,12 +19,18 @@ inThisBuild(List(
 
 skip in publish := true //requered by sbt-ci-release
 
-def sharedSettings(scala3Support: Boolean= true) = {
+
+
+def sharedSettings(publishForScala3: Boolean= true, testScala3: Boolean = true) = {
   Seq(
     scalaVersion := "3.1.2",
-    crossScalaVersions := Seq("2.12.17", "2.13.8") ++ (if (scala3Support) Seq("3.1.2") else Seq.empty)
+    crossScalaVersions := Seq("2.12.17", "2.13.8") ++ (if (publishForScala3) Seq("3.1.2") else Seq.empty)
   ,
-  scalafmtOnCompile := false
+    publishArtifact := (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((3, _)) => publishForScala3
+      case _ => true
+    }),
+    scalafmtOnCompile := false
   ,
   scalacOptions ++= Seq(
     // warnings
@@ -41,11 +48,7 @@ def sharedSettings(scala3Support: Boolean= true) = {
         "-source:3.0-migration",
         "-new-syntax", "-rewrite"
       )
-      case _ => Seq(
-        "-deprecation",
-        "-Wunused:imports,privates,locals",
-        "-Wvalue-discard"
-      )
+      case _ => Seq.empty
     }),
   //warnUnusedImports
   scalacOptions in(Compile, console) ++= Seq("-Ywarn-unused:imports")
@@ -135,7 +138,8 @@ def sharedSettings(scala3Support: Boolean= true) = {
   ,
   doctestTestFramework := DoctestTestFramework.ScalaCheck
   ,
-  doctestOnlyCodeBlocksMode := true
+  doctestOnlyCodeBlocksMode := true,
+
   )
 }
 
@@ -165,9 +169,9 @@ lazy val dynamodb = monixConnector("dynamodb", Dependencies.DynamoDb).aggregate(
 
 lazy val hdfs = monixConnector("hdfs", Dependencies.Hdfs)
 
-lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb, isMimaEnabled = false, isITParallelExecution = true, scala3Support = false)
+lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb, isMimaEnabled = false, isITParallelExecution = true, scala3Publish = false, scala3Test = false)
 
-lazy val parquet = monixConnector("parquet", Dependencies.Parquet)
+lazy val parquet = monixConnector("parquet", Dependencies.Parquet, scala3Publish = false, scala3Test = false)
 
 val protoTestSettings = Seq(
     Compile / PB.targets := Seq(
@@ -185,7 +189,9 @@ lazy val s3 = monixConnector("s3", Dependencies.S3, isMimaEnabled = false, isITP
 lazy val sqs = monixConnector("sqs", Dependencies.Sqs, isMimaEnabled = false, isITParallelExecution = true)
   .aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
 
-lazy val gcs = monixConnector("gcs", Dependencies.GCS, isITParallelExecution = false)
+
+
+lazy val gcs = monixConnector("gcs", Dependencies.GCS , isITParallelExecution = false, scala3Test = false)
 
 lazy val elasticsearch =  monixConnector("elasticsearch", Dependencies.Elasticsearch, isITParallelExecution = true)
 
@@ -193,18 +199,40 @@ lazy val elasticsearch =  monixConnector("elasticsearch", Dependencies.Elasticse
 
 lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth, isMimaEnabled = false)
 
+lazy val testScala3 = taskKey[Unit]("Dynamic tests for scala3 compatibility.")
+
 def monixConnector(
-  connectorName: String,
-  projectDependencies: Seq[ModuleID],
-  isMimaEnabled: Boolean = true,
-  isITParallelExecution: Boolean = false,
-  scala3Support: Boolean = true): Project = {
+                    connectorName: String,
+                    projectDependencies: Seq[ModuleID],
+                    isMimaEnabled: Boolean = true,
+                    isITParallelExecution: Boolean = false,
+                    scala3Publish: Boolean = true,
+                    scala3Test: Boolean = true): Project = {
   Project(id = connectorName, base = file(connectorName))
     .enablePlugins(AutomateHeaderPlugin)
-    .settings(name := s"monix-$connectorName", libraryDependencies ++= projectDependencies, Defaults.itSettings,
+    .settings(name := s"monix-$connectorName",
+      libraryDependencies ++= projectDependencies,
+      Defaults.itSettings,
       IntegrationTest / parallelExecution := isITParallelExecution,
-      IntegrationTest / testForkedParallel := isITParallelExecution)
-    .settings(sharedSettings(scala3Support))
+      IntegrationTest / testForkedParallel := isITParallelExecution,
+      testScala3 := {
+        Def.taskDyn {
+          val s: TaskStreams = streams.value
+          CrossVersion.partialVersion(scalaVersion.value) match {
+            case Some((3, _)) => {
+              if (scala3Test) {
+                Def.sequential(Def.task(s.log.info("Scala3 tests.")), (Test / test))
+              }
+              else {
+                Def.task(s.log.info("Ignoring scala3 tests."))
+              }
+            }
+            case _ => Def.sequential(Def.task(s.log.info("Scala2 tests.")), (Test / test))
+          }}.value
+      }
+
+    )
+    .settings(sharedSettings(scala3Publish, scala3Test))
     .configs(IntegrationTest, IT)
     .enablePlugins(AutomateHeaderPlugin)
     .settings(if(isMimaEnabled) mimaSettings(s"monix-$connectorName") else Seq.empty)
@@ -223,7 +251,7 @@ lazy val docs = project
   .settings(
     moduleName := "monix-connect-docs",
     name := moduleName.value,
-    sharedSettings(scala3Support = false),
+    sharedSettings(publishForScala3 = false),
     skipOnPublishSettings,
     mdocSettings
   )
@@ -270,6 +298,7 @@ def minorVersion(version: String): String = {
     CrossVersion.partialVersion(version).get
   s"$major.$minor"
 }
+
 
 val updateSiteVariables = taskKey[Unit]("Update site variables")
 updateSiteVariables in ThisBuild := {

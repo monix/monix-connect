@@ -37,7 +37,7 @@ import scala.jdk.CollectionConverters._
   * handling null values with [[Option]] where applicable, as well as wrapping all side-effectful calls
   * in [[monix.eval.Task]] or [[monix.reactive.Observable]].
   */
-class GcsBucket private (underlying: Bucket) extends GcsDownloader with FileIO with Paging {
+class GcsBucket private (val underlying: Bucket) extends GcsDownloader with FileIO with Paging {
   self =>
 
   /** Checks if this bucket exists. */
@@ -99,10 +99,10 @@ class GcsBucket private (underlying: Bucket) extends GcsDownloader with FileIO w
   @Unsafe("Risk of downloading large amounts of data into the local filesystem.")
   def downloadToFile(blobName: String, path: Path, chunkSize: Int = 4096): Task[Unit] = {
     val blobId = BlobId.of(underlying.getName, blobName)
-    (for
-      bos   <- openFileOutputStream(path)
+    (for {
+      bos <- openFileOutputStream(path)
       bytes <- download(underlying.getStorage, blobId, chunkSize)
-    yield bos.write(bytes)).completedL
+    } yield bos.write(bytes)).completedL
   }
 
   /**

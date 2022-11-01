@@ -1,3 +1,4 @@
+import sbt.Keys.scalaVersion
 import sbt._
 
 object Dependencies {
@@ -24,10 +25,10 @@ object Dependencies {
     val MonixTestingScalatest = "0.4.0"
     val Scalacheck = "1.16.0"
     val Mockito = "1.16.37"
-    val GCNio = "0.123.14"
+    val GCNio = "0.123.19"
   }
 
-  private def commonDependencies(hasIt: Boolean = false): Seq[sbt.ModuleID] = {
+   def commonDependencies(hasIt: Boolean = false): Seq[sbt.ModuleID] = {
     val common: Seq[ModuleID] = MonixDependency ++ CommonTestDependencies.map(_ % Test)
     if (hasIt) common ++ CommonTestDependencies.map(_                           % IntegrationTest)
     else common

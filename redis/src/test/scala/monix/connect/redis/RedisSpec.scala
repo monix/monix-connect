@@ -17,15 +17,12 @@
 
 package monix.connect.redis
 
-import io.lettuce.core.api.StatefulRedisConnection
-import org.mockito.IdiomaticMockito
-import org.mockito.MockitoSugar.when
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 class RedisSpec
-  extends AnyWordSpecLike with Matchers with IdiomaticMockito with BeforeAndAfterEach with BeforeAndAfterAll {
+  extends AnyWordSpecLike with Matchers with BeforeAndAfterEach with BeforeAndAfterAll {
 
   s"${Redis} " should {
     " implement RedisKey" in {
