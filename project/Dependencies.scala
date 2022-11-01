@@ -82,7 +82,6 @@ object Dependencies {
     "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat,
     "com.thesamet.scalapb" %% "scalapb-runtime-grpc"      % scalapb.compiler.Version.scalapbVersion % IntegrationTest,
     "com.thesamet.scalapb" %% "scalapb-runtime"           % scalapb.compiler.Version.scalapbVersion % IntegrationTest,
-    "org.mockito" %% "mockito-scala" % Versions.Mockito % Test cross CrossVersion.for3Use2_13
   ) ++ commonDependencies(hasIt = true)
 
   val GCS = Seq(

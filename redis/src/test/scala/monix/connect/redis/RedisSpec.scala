@@ -25,20 +25,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 class RedisSpec
-  extends AnyWordSpecLike with Matchers with IdiomaticMockito with BeforeAndAfterEach with BeforeAndAfterAll
-  with RedisFixture {
-
-  implicit val connection: StatefulRedisConnection[String, Int] = mock[StatefulRedisConnection[String, Int]]
-
-  override def beforeAll(): Unit = {
-    when(connection.reactive()).thenAnswer(reactiveRedisCommands)
-    super.beforeAll()
-  }
-
-  override def beforeEach(): Unit = {
-    reset(reactiveRedisCommands)
-    reset(reactiveRedisCommands)
-  }
+  extends AnyWordSpecLike with Matchers with IdiomaticMockito with BeforeAndAfterEach with BeforeAndAfterAll {
 
   s"${Redis} " should {
     " implement RedisKey" in {
