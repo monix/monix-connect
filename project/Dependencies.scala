@@ -1,4 +1,3 @@
-import sbt.Keys.scalaVersion
 import sbt._
 
 object Dependencies {
@@ -89,8 +88,7 @@ object Dependencies {
     "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat,
     "com.google.cloud"                                    % "google-cloud-storage" % Versions.GCS,
     "com.google.cloud"                                    % "google-cloud-nio" % Versions.GCNio % IntegrationTest,
-    "commons-io"                                          % "commons-io" % "2.6" % Test,
-    "org.mockito" %% "mockito-scala" % Versions.Mockito % Test cross CrossVersion.for3Use2_13
+    "commons-io"                                          % "commons-io" % "2.6" % Test
   ) ++ commonDependencies(hasIt = true)
 
   val Sqs = Seq(

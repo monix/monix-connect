@@ -102,7 +102,7 @@ class GcsBucket private (val underlying: Bucket) extends GcsDownloader with File
     (for {
       bos <- openFileOutputStream(path)
       bytes <- download(underlying.getStorage, blobId, chunkSize)
-    } yield bos.write(bytes)).completedL
+   } yield bos.write(bytes)).completedL
   }
 
   /**

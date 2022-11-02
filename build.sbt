@@ -21,7 +21,7 @@ skip in publish := true //requered by sbt-ci-release
 
 
 
-def sharedSettings(publishForScala3: Boolean= true, testScala3: Boolean = true) = {
+def sharedSettings(publishForScala3: Boolean= true) = {
   Seq(
     scalaVersion := "3.1.2",
     crossScalaVersions := Seq("2.12.17", "2.13.8") ++ (if (publishForScala3) Seq("3.1.2") else Seq.empty)
@@ -41,15 +41,7 @@ def sharedSettings(publishForScala3: Boolean= true, testScala3: Boolean = true) 
     "-language:higherKinds",
     "-language:implicitConversions",
     "-language:experimental.macros"
-  ) ++
-    (CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((3, _)) => Seq(
-        "-unchecked",
-        "-source:3.0-migration",
-        "-new-syntax", "-rewrite"
-      )
-      case _ => Seq.empty
-    }),
+  ),
   //warnUnusedImports
   scalacOptions in(Compile, console) ++= Seq("-Ywarn-unused:imports")
   ,
@@ -169,9 +161,9 @@ lazy val dynamodb = monixConnector("dynamodb", Dependencies.DynamoDb).aggregate(
 
 lazy val hdfs = monixConnector("hdfs", Dependencies.Hdfs)
 
-lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb, isMimaEnabled = false, isITParallelExecution = true, scala3Publish = false, scala3Test = false)
+lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb, isMimaEnabled = false, isITParallelExecution = true, scala3Publish = false)
 
-lazy val parquet = monixConnector("parquet", Dependencies.Parquet, scala3Publish = false, scala3Test = false)
+lazy val parquet = monixConnector("parquet", Dependencies.Parquet, scala3Publish = false)
 
 val protoTestSettings = Seq(
     Compile / PB.targets := Seq(
@@ -191,7 +183,11 @@ lazy val sqs = monixConnector("sqs", Dependencies.Sqs, isMimaEnabled = false, is
 
 
 
-lazy val gcs = monixConnector("gcs", Dependencies.GCS , isITParallelExecution = false, scala3Test = false)
+lazy val gcs = monixConnector("gcs", Dependencies.GCS , isITParallelExecution = false)
+  .settings(libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+    case Some((3, _)) => Seq.empty
+    case _ => Seq("org.mockito" %% "mockito-scala" % Versions.Mockito % Test)
+  }))
 
 lazy val elasticsearch =  monixConnector("elasticsearch", Dependencies.Elasticsearch, isITParallelExecution = true)
 
@@ -199,40 +195,21 @@ lazy val elasticsearch =  monixConnector("elasticsearch", Dependencies.Elasticse
 
 lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth, isMimaEnabled = false)
 
-lazy val testScala3 = taskKey[Unit]("Dynamic tests for scala3 compatibility.")
-
 def monixConnector(
                     connectorName: String,
                     projectDependencies: Seq[ModuleID],
                     isMimaEnabled: Boolean = true,
                     isITParallelExecution: Boolean = false,
-                    scala3Publish: Boolean = true,
-                    scala3Test: Boolean = true): Project = {
+                    scala3Publish: Boolean = true) = {
   Project(id = connectorName, base = file(connectorName))
     .enablePlugins(AutomateHeaderPlugin)
     .settings(name := s"monix-$connectorName",
       libraryDependencies ++= projectDependencies,
       Defaults.itSettings,
       IntegrationTest / parallelExecution := isITParallelExecution,
-      IntegrationTest / testForkedParallel := isITParallelExecution,
-      testScala3 := {
-        Def.taskDyn {
-          val s: TaskStreams = streams.value
-          CrossVersion.partialVersion(scalaVersion.value) match {
-            case Some((3, _)) => {
-              if (scala3Test) {
-                Def.sequential(Def.task(s.log.info("Scala3 tests.")), (Test / test))
-              }
-              else {
-                Def.task(s.log.info("Ignoring scala3 tests."))
-              }
-            }
-            case _ => Def.sequential(Def.task(s.log.info("Scala2 tests.")), (Test / test))
-          }}.value
-      }
-
+      IntegrationTest / testForkedParallel := isITParallelExecution
     )
-    .settings(sharedSettings(scala3Publish, scala3Test))
+    .settings(sharedSettings(scala3Publish))
     .configs(IntegrationTest, IT)
     .enablePlugins(AutomateHeaderPlugin)
     .settings(if(isMimaEnabled) mimaSettings(s"monix-$connectorName") else Seq.empty)

@@ -17,10 +17,8 @@
 
 package monix.connect.gcp.storage.configuration
 
-import com.google.cloud.ReadChannel
-import com.google.cloud.storage.{BlobInfo, Storage, Blob => GoogleBlob, Option => _}
+import com.google.cloud.storage.{BlobInfo, Option => _}
 import monix.connect.gcp.storage.GscFixture
-import org.mockito.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalacheck.Gen
 import org.scalatest.{Assertion, BeforeAndAfterEach}
@@ -29,15 +27,10 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import scala.jdk.CollectionConverters._
 
 class GcsBlobInfoSpec
-  extends AnyWordSpecLike with IdiomaticMockito with Matchers with GscFixture with BeforeAndAfterEach {
-
-  val underlying: GoogleBlob = mock[GoogleBlob]
-  val mockStorage: Storage = mock[Storage]
-  val readChannel: ReadChannel = mock[ReadChannel]
+  extends AnyWordSpecLike with Matchers with GscFixture with BeforeAndAfterEach {
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    reset(underlying)
   }
 
   s"$GcsBlobInfo" can {
