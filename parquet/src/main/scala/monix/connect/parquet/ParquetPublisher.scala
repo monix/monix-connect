@@ -50,7 +50,7 @@ private[parquet] final class ParquetPublisher[T](reader: ParquetReader[T]) exten
     val ack =
       try {
         val r = reader.read()
-        if r != null then o.onNext(r)
+        if (r != null) o.onNext(r)
         else {
           o.onComplete()
           Stop
@@ -61,14 +61,15 @@ private[parquet] final class ParquetPublisher[T](reader: ParquetReader[T]) exten
       }
 
     val nextIndex =
-      if ack == Continue then em.nextFrameIndex(syncIndex)
-      else if ack == Stop then -1
+      if (ack == Continue) em.nextFrameIndex(syncIndex)
+      else if (ack == Stop) -1
       else 0
 
-    if nextIndex > 0 then
+    if (nextIndex > 0)
       fastLoop(o, c, em, nextIndex)
-    else if nextIndex == 0 && !c.isCanceled then
+    else if (nextIndex == 0 && !c.isCanceled) {
       reschedule(ack, o, c, em)
+    }
   }
 
   def reschedule(ack: Future[Ack], o: Subscriber[T], c: BooleanCancelable, em: ExecutionModel)(
@@ -76,7 +77,7 @@ private[parquet] final class ParquetPublisher[T](reader: ParquetReader[T]) exten
     s: Scheduler): Unit =
     ack.onComplete {
       case Success(success) =>
-        if success == Continue then fastLoop(o, c, em, 0)
+        if (success == Continue) fastLoop(o, c, em, 0)
       case Failure(ex) =>
         o.onError(ex)
         s.reportFailure(ex)

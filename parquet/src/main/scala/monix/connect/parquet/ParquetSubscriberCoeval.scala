@@ -60,7 +60,7 @@ private[parquet] class ParquetSubscriberCoeval[T](parquetWriter: Coeval[ParquetW
       }
 
       override def onComplete(): Unit =
-        if !isDone then {
+        if (!isDone) {
           isDone = true
           memoizedWriter.map { writer =>
             writer.close()
@@ -69,7 +69,7 @@ private[parquet] class ParquetSubscriberCoeval[T](parquetWriter: Coeval[ParquetW
         }
 
       override def onError(ex: Throwable): Unit =
-        if !isDone then {
+        if (!isDone) {
           isDone = true
           memoizedWriter.map { writer =>
             writer.close()

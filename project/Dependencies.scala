@@ -57,10 +57,7 @@ object Dependencies {
 
   val MongoDb = Seq(
     "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat,
-    "org.mongodb"                                         % "mongodb-driver-reactivestreams" % Versions.MongoReactiveStreams,
-    "org.mongodb.scala" %% "mongo-scala-bson"             % Versions.MongoScala % Test,
-    "org.mongodb.scala" %% "mongo-scala-driver"           % Versions.MongoScala % Test,
-    "org.mockito" %% "mockito-scala" % Versions.Mockito % Test cross CrossVersion.for3Use2_13
+    "org.mongodb"                                         % "mongodb-driver-reactivestreams" % Versions.MongoReactiveStreams
   ) ++ commonDependencies(hasIt = true)
 
   val Parquet = Seq(
@@ -68,7 +65,6 @@ object Dependencies {
     "org.apache.parquet" % "parquet-hadoop" % Versions.Parquet,
     "org.apache.hadoop"  % "hadoop-client"  % Versions.Hadoop,
     "org.apache.hadoop"  % "hadoop-common"  % Versions.Hadoop % Test,
-    "org.mockito" %% "mockito-scala" % Versions.Mockito %Test cross CrossVersion.for3Use2_13
   ) ++ commonDependencies(hasIt = false)
 
   val S3 = Seq(

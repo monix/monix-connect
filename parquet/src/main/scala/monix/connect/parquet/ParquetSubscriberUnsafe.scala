@@ -59,7 +59,7 @@ private[parquet] class ParquetSubscriberUnsafe[T](parquetWriter: ParquetWriter[T
       }
 
       override def onComplete(): Unit =
-        if !isDone then {
+        if (!isDone) {
           isDone = true
           try {
             parquetWriter.close()
@@ -71,7 +71,7 @@ private[parquet] class ParquetSubscriberUnsafe[T](parquetWriter: ParquetWriter[T
         }
 
       override def onError(ex: Throwable): Unit =
-        if !isDone then {
+        if (!isDone) {
           isDone = true
           try {
             parquetWriter.close()

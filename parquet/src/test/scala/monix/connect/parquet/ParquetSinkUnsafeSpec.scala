@@ -22,20 +22,17 @@ import monix.execution.Scheduler
 
 import java.io.File
 import monix.execution.exceptions.DummyException
-import monix.execution.schedulers.TestScheduler
 import monix.reactive.Observable
 import monix.testing.scalatest.MonixTaskTest
+import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.parquet.hadoop.ParquetWriter
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
-import org.mockito.IdiomaticMockito
-import org.mockito.MockitoSugar.when
-
 
 class ParquetSinkUnsafeSpec
-  extends AsyncWordSpec with MonixTaskTest with IdiomaticMockito with Matchers with AvroParquetFixture
+  extends AsyncWordSpec with MonixTaskTest with Matchers with AvroParquetFixture
   with BeforeAndAfterAll {
 
   override implicit val scheduler: Scheduler = Scheduler.io("parquet-sync-unsafe-spec")
@@ -89,25 +86,6 @@ class ParquetSinkUnsafeSpec
       Observable
         .fromIterable(records)
         .consumeWith(ParquetSink.fromWriterUnsafe(null))
-        .attempt
-        .asserting { writeAttempt =>
-          writeAttempt.isLeft shouldBe true
-          val file = new File(filePath)
-          file.exists() shouldBe false
-        }
-    }
-
-    "signals error when the underlying parquet writer throws an error" in {
-      val testScheduler = TestScheduler()
-      val filePath: String = genFilePath()
-      val record: GenericRecord = personToRecord(genPerson.sample.get)
-      val ex = DummyException("Boom!")
-      val parquetWriter = mock[ParquetWriter[GenericRecord]]
-      when(parquetWriter.write(record)).thenThrow(ex)
-
-      Observable
-        .now(record)
-        .consumeWith(ParquetSink.fromWriterUnsafe(parquetWriter))
         .attempt
         .asserting { writeAttempt =>
           writeAttempt.isLeft shouldBe true
