@@ -14,7 +14,7 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.model.{GetItemRequest, ListTablesRequest, ListTablesResponse, PutItemRequest}
 
 import scala.concurrent.duration._
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
 class DynamoDbSuite extends AsyncFlatSpec with Matchers with MonixTaskTest with DynamoDbFixture with BeforeAndAfterAll {
 

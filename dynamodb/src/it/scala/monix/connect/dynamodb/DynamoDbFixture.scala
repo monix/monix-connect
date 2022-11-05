@@ -4,13 +4,12 @@ import java.net.URI
 import monix.eval.Task
 import monix.execution.Scheduler
 import org.scalacheck.Gen
-import org.scalatest.{AsyncTestSuite, TestSuite}
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.{AttributeDefinition, AttributeValue, BillingMode, CreateTableRequest, CreateTableResponse, DeleteTableRequest, DeleteTableResponse, GetItemRequest, KeySchemaElement, KeyType, ProvisionedThroughput, PutItemRequest, ScalarAttributeType}
 
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 
 trait DynamoDbFixture {
