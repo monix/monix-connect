@@ -36,7 +36,7 @@ private[redis] class StandaloneConnection(uri: RedisUri) extends RedisConnection
       .createResource[String, String, StatefulRedisConnection[String, String]] {
         for {
           client <- Task.evalAsync(RedisClient.create(uri.toJava))
-          conn <- Task.from(client.connectAsync(StringCodec.UTF8, uri.toJava).toCompletableFuture)
+          conn   <- Task.from(client.connectAsync(StringCodec.UTF8, uri.toJava).toCompletableFuture)
         } yield (client, conn)
       }
       .evalMap(RedisCmd.single)

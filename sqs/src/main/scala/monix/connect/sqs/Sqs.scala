@@ -59,7 +59,7 @@ object Sqs {
   def fromConfig: Resource[Task, Sqs] = {
     Resource.make {
       for {
-        clientConf <- MonixAwsConf.load()
+        clientConf  <- MonixAwsConf.load()
         asyncClient <- Task.now(AsyncClientConversions.fromMonixAwsConf(clientConf))
       } yield asyncClient
     }(asyncClient => Task.evalAsync(asyncClient.close()))
@@ -93,7 +93,7 @@ object Sqs {
   def fromConfig(namingConvention: NamingConvention = KebabCase): Resource[Task, Sqs] = {
     Resource.make {
       for {
-        clientConf <- MonixAwsConf.load(namingConvention)
+        clientConf  <- MonixAwsConf.load(namingConvention)
         asyncClient <- Task.now(AsyncClientConversions.fromMonixAwsConf(clientConf))
       } yield asyncClient
     }(asyncClient => Task.evalAsync(asyncClient.close()))

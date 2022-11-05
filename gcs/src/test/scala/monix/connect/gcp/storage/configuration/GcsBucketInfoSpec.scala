@@ -26,8 +26,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 
 import scala.jdk.CollectionConverters._
 
-class GcsBucketInfoSpec
-  extends AnyWordSpecLike  with Matchers with GscFixture with BeforeAndAfterEach {
+class GcsBucketInfoSpec extends AnyWordSpecLike with Matchers with GscFixture with BeforeAndAfterEach {
 
   override def beforeEach(): Unit = {
     super.beforeEach()

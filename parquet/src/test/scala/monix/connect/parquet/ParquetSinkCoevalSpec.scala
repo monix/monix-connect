@@ -29,8 +29,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
 
 class ParquetSinkCoevalSpec
-  extends AsyncWordSpec with MonixTaskTest with Matchers with AvroParquetFixture
-  with BeforeAndAfterAll {
+  extends AsyncWordSpec with MonixTaskTest with Matchers with AvroParquetFixture with BeforeAndAfterAll {
 
   override implicit val scheduler: Scheduler = Scheduler.io("parquet-sink-coeval-spec")
 
@@ -90,7 +89,6 @@ class ParquetSinkCoevalSpec
           file.exists() shouldBe false
         }
     }
-
 
   }
 

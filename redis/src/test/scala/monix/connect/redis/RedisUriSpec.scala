@@ -24,8 +24,7 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
-class RedisUriSpec
-  extends AnyFlatSpec with Matchers with BeforeAndAfterEach with BeforeAndAfterAll {
+class RedisUriSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach with BeforeAndAfterAll {
 
   s"$RedisUri" should "allow to update its properties" in {
     val password = "password"

@@ -21,8 +21,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
-class RedisSpec
-  extends AnyWordSpecLike with Matchers with BeforeAndAfterEach with BeforeAndAfterAll {
+class RedisSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterEach with BeforeAndAfterAll {
 
   s"${Redis} " should {
     " implement RedisKey" in {

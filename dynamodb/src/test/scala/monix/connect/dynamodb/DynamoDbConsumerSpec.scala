@@ -30,7 +30,6 @@ import scala.util.Success
 
 class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers with Fixture {
 
-
   s"A $DynamoDb Consumer" when {
 
     s"three operations are passed" must {
@@ -78,13 +77,12 @@ class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers with Fixture {
         f.attempt.runSyncUnsafe() shouldBe Left(ex)
       }
 
-
       "retries the operation if there was a failure" in {
 
         //given
         val n = 3
         val ex = DummyException("DynamoDB is busy.")
-        val op = withOperationStub(i => if(i<2) Task.raiseError(ex) else Task.pure(resp))
+        val op = withOperationStub(i => if (i < 2) Task.raiseError(ex) else Task.pure(resp))
 
         //when
         val t =
@@ -101,7 +99,7 @@ class DynamoDbConsumerSpec extends AnyWordSpecLike with Matchers with Fixture {
         val n = 3
 
         val ex = DummyException("DynamoDB is busy.")
-        val op = withOperationStub(i => if(i<4) Task.raiseError(ex) else Task.pure(resp))
+        val op = withOperationStub(i => if (i < 4) Task.raiseError(ex) else Task.pure(resp))
 
         //when
         val t =

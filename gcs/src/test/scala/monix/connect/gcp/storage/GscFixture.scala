@@ -41,7 +41,7 @@ trait GscFixture {
 
   val genBlobId: Gen[BlobId] = for {
     bucket <- genNonEmtyStr
-    name <- genNonEmtyStr
+    name   <- genNonEmtyStr
   } yield BlobId.of(bucket, name)
 
   val genStorageClass: Gen[StorageClass] = Gen.oneOf(
@@ -55,22 +55,22 @@ trait GscFixture {
   )
 
   val genBlobInfo: Gen[BlobInfo] = for {
-    bucket <- Gen.alphaLowerStr
-    name <- Gen.alphaLowerStr
-    contentType <- Gen.option(Gen.alphaLowerStr)
-    contentDisposition <- Gen.option(Gen.alphaLowerStr)
-    contentLanguage <- Gen.option(Gen.alphaLowerStr)
-    contentEncoding <- Gen.option(Gen.alphaLowerStr)
-    cacheControl <- Gen.option(Gen.alphaLowerStr)
-    crc32c <- Gen.option(Gen.alphaLowerStr.map(_.hashCode.toString))
+    bucket              <- Gen.alphaLowerStr
+    name                <- Gen.alphaLowerStr
+    contentType         <- Gen.option(Gen.alphaLowerStr)
+    contentDisposition  <- Gen.option(Gen.alphaLowerStr)
+    contentLanguage     <- Gen.option(Gen.alphaLowerStr)
+    contentEncoding     <- Gen.option(Gen.alphaLowerStr)
+    cacheControl        <- Gen.option(Gen.alphaLowerStr)
+    crc32c              <- Gen.option(Gen.alphaLowerStr.map(_.hashCode.toString))
     crc32cFromHexString <- Gen.option("1100")
-    md5 <- Gen.option(Gen.alphaLowerStr.map(_.hashCode.toString))
-    md5FromHexString <- Gen.some("0001")
-    storageClass <- Gen.option(genStorageClass)
-    temporaryHold <- Gen.option(Gen.oneOf(true, false))
-    eventBasedHold <- Gen.option(Gen.oneOf(true, false))
-    acl <- Gen.listOf(genAcl)
-    metadata <- Gen.mapOfN(3, ("k", "v"))
+    md5                 <- Gen.option(Gen.alphaLowerStr.map(_.hashCode.toString))
+    md5FromHexString    <- Gen.some("0001")
+    storageClass        <- Gen.option(genStorageClass)
+    temporaryHold       <- Gen.option(Gen.oneOf(true, false))
+    eventBasedHold      <- Gen.option(Gen.oneOf(true, false))
+    acl                 <- Gen.listOf(genAcl)
+    metadata            <- Gen.mapOfN(3, ("k", "v"))
   } yield {
     val builder = BlobInfo.newBuilder(BlobId.of(bucket, name))
     contentType.foreach(builder.setContentType)
@@ -91,16 +91,16 @@ trait GscFixture {
   }
 
   val genBlobInfoMetadata: Gen[GcsBlobInfo.Metadata] = for {
-    contentType <- Gen.option(Gen.alphaLowerStr)
+    contentType        <- Gen.option(Gen.alphaLowerStr)
     contentDisposition <- Gen.option(Gen.alphaLowerStr)
-    contentLanguage <- Gen.option(Gen.alphaLowerStr)
-    contentEncoding <- Gen.option(Gen.alphaLowerStr)
-    cacheControl <- Gen.option(Gen.alphaLowerStr)
-    crc32c <- Gen.option(Gen.alphaLowerStr)
-    md5 <- Gen.option(Gen.alphaLowerStr)
-    storageClass <- Gen.option(genStorageClass)
-    temporaryHold <- Gen.option(Gen.oneOf(true, false))
-    eventBasedHold <- Gen.option(Gen.oneOf(true, false))
+    contentLanguage    <- Gen.option(Gen.alphaLowerStr)
+    contentEncoding    <- Gen.option(Gen.alphaLowerStr)
+    cacheControl       <- Gen.option(Gen.alphaLowerStr)
+    crc32c             <- Gen.option(Gen.alphaLowerStr)
+    md5                <- Gen.option(Gen.alphaLowerStr)
+    storageClass       <- Gen.option(genStorageClass)
+    temporaryHold      <- Gen.option(Gen.oneOf(true, false))
+    eventBasedHold     <- Gen.option(Gen.oneOf(true, false))
   } yield {
     GcsBlobInfo.Metadata(
       contentType = contentType,
@@ -124,21 +124,21 @@ trait GscFixture {
   val genLifeCycleRules = Gen.nonEmptyListOf(genDeleteLifeCycleRule)
   val genCors = Gen.nonEmptyListOf(Cors.newBuilder().build())
   val genBucketInfoMetadata = for {
-    storageClass <- Gen.option(genStorageClass)
-    logging <- Gen.option(Logging.newBuilder().setLogBucket("WARN").build())
-    retentionPeriod <- Gen.option(Gen.choose(1, 1000).map(_.seconds))
+    storageClass      <- Gen.option(genStorageClass)
+    logging           <- Gen.option(Logging.newBuilder().setLogBucket("WARN").build())
+    retentionPeriod   <- Gen.option(Gen.choose(1, 1000).map(_.seconds))
     versioningEnabled <- Gen.option(genBool)
-    requesterPays <- Gen.option(genBool)
-    eventBasedHold <- Gen.option(genBool)
-    acl <- Gen.listOf(genAcl)
-    defaultAcl <- Gen.listOf(genAcl)
-    cors <- genCors
-    lifecycleRules <- genLifeCycleRules
-    iamConfiguration <- Gen.option(genIamConf)
+    requesterPays     <- Gen.option(genBool)
+    eventBasedHold    <- Gen.option(genBool)
+    acl               <- Gen.listOf(genAcl)
+    defaultAcl        <- Gen.listOf(genAcl)
+    cors              <- genCors
+    lifecycleRules    <- genLifeCycleRules
+    iamConfiguration  <- Gen.option(genIamConf)
     defaultKmsKeyName <- Gen.option(Gen.alphaLowerStr)
-    labels <- Gen.mapOfN(3, ("labelKey", "labelValue"))
-    indexPage <- Gen.option(Gen.alphaLowerStr)
-    notFoundPage <- Gen.option(Gen.alphaLowerStr)
+    labels            <- Gen.mapOfN(3, ("labelKey", "labelValue"))
+    indexPage         <- Gen.option(Gen.alphaLowerStr)
+    notFoundPage      <- Gen.option(Gen.alphaLowerStr)
   } yield {
     GcsBucketInfo.Metadata(
       storageClass = storageClass,

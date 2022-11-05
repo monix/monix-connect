@@ -24,7 +24,6 @@ import monix.execution.Scheduler.Implicits.global
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
-
 class DynamoDbOpSpec extends AnyWordSpecLike with Matchers with Fixture {
 
   s"$DynamoDbOp" should {
@@ -42,7 +41,7 @@ class DynamoDbOpSpec extends AnyWordSpecLike with Matchers with Fixture {
         val t = DynamoDb.createUnsafe(client).single(req, retryStrategy)(op)
 
         //then
-        t.attempt.runSyncUnsafe()  shouldBe Right(resp)
+        t.attempt.runSyncUnsafe() shouldBe Right(resp)
       }
 
       "retries failed executions and correctly returns the last error when retries were exhausted" in {

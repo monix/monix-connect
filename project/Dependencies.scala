@@ -27,7 +27,7 @@ object Dependencies {
     val GCNio = "0.123.19"
   }
 
-   def commonDependencies(hasIt: Boolean = false): Seq[sbt.ModuleID] = {
+  def commonDependencies(hasIt: Boolean = false): Seq[sbt.ModuleID] = {
     val common: Seq[ModuleID] = MonixDependency ++ CommonTestDependencies.map(_ % Test)
     if (hasIt) common ++ CommonTestDependencies.map(_                           % IntegrationTest)
     else common
@@ -64,7 +64,7 @@ object Dependencies {
     "org.apache.parquet" % "parquet-avro"   % Versions.Parquet,
     "org.apache.parquet" % "parquet-hadoop" % Versions.Parquet,
     "org.apache.hadoop"  % "hadoop-client"  % Versions.Hadoop,
-    "org.apache.hadoop"  % "hadoop-common"  % Versions.Hadoop % Test,
+    "org.apache.hadoop"  % "hadoop-common"  % Versions.Hadoop % Test
   ) ++ commonDependencies(hasIt = false)
 
   val S3 = Seq(
@@ -75,7 +75,7 @@ object Dependencies {
     "io.lettuce"                                          % "lettuce-core" % Versions.Lettuce,
     "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat,
     "com.thesamet.scalapb" %% "scalapb-runtime-grpc"      % scalapb.compiler.Version.scalapbVersion % IntegrationTest,
-    "com.thesamet.scalapb" %% "scalapb-runtime"           % scalapb.compiler.Version.scalapbVersion % IntegrationTest,
+    "com.thesamet.scalapb" %% "scalapb-runtime"           % scalapb.compiler.Version.scalapbVersion % IntegrationTest
   ) ++ commonDependencies(hasIt = true)
 
   val GCS = Seq(
@@ -97,7 +97,7 @@ object Dependencies {
 
   val Benchmarks = Seq(
     "com.lightbend.akka" %% "akka-stream-alpakka-s3" % "2.0.2",
-    "org.scalacheck" %% "scalacheck"                 % Versions.Scalacheck  cross CrossVersion.for3Use2_13,
+    "org.scalacheck" %% "scalacheck"                 % Versions.Scalacheck cross CrossVersion.for3Use2_13,
     "dev.profunktor" %% "redis4cats-effects"         % "0.10.3",
     "io.chrisdavenport" %% "rediculous"              % "0.0.8",
     "io.laserdisc" %% "laserdisc-fs2"                % "0.4.1"
