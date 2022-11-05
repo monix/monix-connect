@@ -82,7 +82,7 @@ class MultipartDownloadObservableSuite
         downloadedChunks <- unsafeS3.downloadMultipart(bucketName, key, 25000).toListL
       } yield {
         downloadedChunks.size shouldBe 10
-        expectedArrayByte shouldBe downloadedChunks.flatten
+        expectedArrayByte shouldBe downloadedChunks.flatten.toArray
       }
   }
 

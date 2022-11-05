@@ -22,7 +22,7 @@ trait DynamoDbFixture {
   val staticAwsCredProvider = StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x"))
   val tableName = "citizens"
 
-  protected implicit val client = DynamoDbAsyncClient
+  protected implicit val client: DynamoDbAsyncClient = DynamoDbAsyncClient
     .builder
     .credentialsProvider(staticAwsCredProvider)
     .endpointOverride(new URI("http://localhost:4569"))

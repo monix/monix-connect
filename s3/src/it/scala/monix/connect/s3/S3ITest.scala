@@ -4,20 +4,14 @@ import java.io.FileInputStream
 import monix.eval.Task
 import monix.execution.Scheduler
 import org.scalacheck.Gen
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatest.BeforeAndAfterAll
 import software.amazon.awssdk.services.s3.model.{CompleteMultipartUploadResponse, CopyObjectResponse, DeleteBucketResponse, DeleteObjectResponse, NoSuchBucketException, NoSuchKeyException, PutObjectResponse}
-import org.scalatest.wordspec.{AnyWordSpecLike, AsyncWordSpec}
+import org.scalatest.wordspec.AsyncWordSpec
 import org.scalatest.matchers.should.Matchers
 
-import Thread.sleep
-import scala.concurrent.duration._
-import monix.execution.Scheduler.Implicits.global
 import monix.reactive.{Consumer, Observable}
 import monix.testing.scalatest.MonixTaskTest
-import org.scalatest.concurrent.{Eventually, ScalaFutures}
 
-import scala.concurrent.Future
-import scala.util.{Failure, Success, Try}
 
 @deprecated("0.5.0")
 class S3ITest
@@ -239,7 +233,7 @@ class S3ITest
         } yield {
           completeMultipartUpload shouldBe a[CompleteMultipartUploadResponse]
           existsObject shouldBe true
-          s3Object shouldBe chunks.flatten
+          s3Object.toList shouldBe chunks.flatten
         }
       }
 

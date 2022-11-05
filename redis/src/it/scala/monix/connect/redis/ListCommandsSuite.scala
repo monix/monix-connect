@@ -14,7 +14,7 @@ class ListCommandsSuite
     with Eventually {
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
-  implicit val io = Scheduler.io()
+  implicit val io: Scheduler = Scheduler.io()
 
   "lIndex" should "get an element from a list by its index" in {
     val k: K = genRedisKey.sample.get

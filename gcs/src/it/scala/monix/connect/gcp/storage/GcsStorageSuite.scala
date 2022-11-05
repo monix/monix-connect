@@ -1,20 +1,15 @@
 package monix.connect.gcp.storage
 
-import com.google.cloud.storage.Bucket.BucketSourceOption
 import com.google.cloud.storage.contrib.nio.testing.LocalStorageHelper
 import com.google.cloud.storage.{BlobId, BlobInfo, Option => _}
-import monix.connect.gcp.storage.configuration.GcsBucketInfo.Locations
-import monix.eval.Task
 import monix.execution.Scheduler
-import monix.execution.exceptions.DummyException
 import monix.testing.scalatest.MonixTaskTest
-import org.mockito.{ArgumentMatchersSugar, IdiomaticMockito}
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
 
-class GcsStorageSuite extends AsyncWordSpec with MonixTaskTest with IdiomaticMockito with Matchers with ArgumentMatchersSugar with BeforeAndAfterAll {
+class GcsStorageSuite extends AsyncWordSpec with MonixTaskTest with Matchers with BeforeAndAfterAll {
 
   override implicit val scheduler: Scheduler = Scheduler.io("gcs-storage-suite")
   private val storage = LocalStorageHelper.getOptions.getService

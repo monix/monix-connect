@@ -18,8 +18,6 @@ import scala.jdk.CollectionConverters._
 
 class DynamoDbSuite extends AsyncFlatSpec with Matchers with MonixTaskTest with DynamoDbFixture with BeforeAndAfterAll {
 
-  import monix.execution.Scheduler.Implicits.global
-
   override implicit val scheduler = Scheduler.io("dynamodb-suite")
 
   s"$DynamoDbOp" can "be created from config" in {
