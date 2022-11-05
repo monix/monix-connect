@@ -169,9 +169,10 @@ lazy val hdfs = monixConnector("hdfs", Dependencies.Hdfs)
 lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb, isMimaEnabled = false, isITParallelExecution = true, scala3Publish = false)
   .settings(libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
     case Some((3, _)) => Seq.empty
-    case _ => Seq("org.mongodb.scala" %% "mongo-scala-driver"           % Versions.MongoScala,
+    case _ => Seq(
+      "org.mongodb.scala" %% "mongo-scala-driver"           % Versions.MongoScala,
       "org.mongodb.scala" %% "mongo-scala-bson"             % Versions.MongoScala % Test,
-  "org.mockito" %% "mockito-scala" % Versions.Mockito % Test cross CrossVersion.for3Use2_13)
+      "org.mockito" %% "mockito-scala" % Versions.Mockito % Test cross CrossVersion.for3Use2_13)
   }))
 
 lazy val parquet = monixConnector("parquet", Dependencies.Parquet, scala3Publish = false)

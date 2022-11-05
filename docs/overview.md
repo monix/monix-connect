@@ -11,7 +11,7 @@ title: Overview
  Therefore, the aim of this project is to provide with a set of predefined functionalities to work with the most common connectors,
  these would basically reduce boilerplate code and furthermore, will let them to greatly save time and complexity on implementing projects.
 
- The latest stable version of `monix-connect` is compatible with _Monix 3.3.x_, _Scala 2.12.x_ and _2.13.x_, 
+ The latest stable version of `monix-connect` is compatible with _Monix 3.3.x_, _Scala 2.12.x_, _2.13.x_ and Scala 3  
  we always recommend to be in the latest version, as it might contain the latest features and bugfixes as well as documentation 
  that reflects them. 
  
