@@ -197,7 +197,7 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
     getQueueUrl(queueName, queueOwnerAWSAccountId)
       .map(Option(_))
       .onErrorHandleWith { ex =>
-        if ex.isInstanceOf[QueueDoesNotExistException] then {
+        if (ex.isInstanceOf[QueueDoesNotExistException]) {
           Task.now(Option.empty)
         } else {
           Task.raiseError(ex)
@@ -263,12 +263,12 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
     val listRequestBuilder = ListQueuesRequest.builder
       .maxResults(maxResults)
     queuePrefix.map(listRequestBuilder.queueNamePrefix)
-    for
+    for {
       listResponse <- Observable.fromReactivePublisher {
         asyncClient.listQueuesPaginator(listRequestBuilder.build)
       }
       queueUrl <- Observable.fromIterable(listResponse.queueUrls.asScala)
-    yield QueueUrl(queueUrl)
+    } yield QueueUrl(queueUrl)
   }
 
   /**

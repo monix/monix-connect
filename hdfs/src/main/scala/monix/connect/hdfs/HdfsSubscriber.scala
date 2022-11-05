@@ -74,7 +74,7 @@ private[hdfs] class HdfsSubscriber(
       }
 
       def onComplete(): Unit = {
-        if !isDone then {
+        if (!isDone) {
           isDone = true
           try {
             out.close()
@@ -88,7 +88,7 @@ private[hdfs] class HdfsSubscriber(
       }
 
       def onError(ex: Throwable): Unit = {
-        if !isDone then {
+        if (!isDone) {
           isDone = true
           try {
             out.close()
@@ -115,7 +115,7 @@ private[hdfs] class HdfsSubscriber(
     bufferSize: Int,
     replication: Short,
     blockSize: Int): FSDataOutputStream = {
-    if appendEnabled then {
+    if (appendEnabled) {
       fs.append(path, bufferSize)
     } else fs.create(path, overwrite, bufferSize, replication, blockSize)
   }

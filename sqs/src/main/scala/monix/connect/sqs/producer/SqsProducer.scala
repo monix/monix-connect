@@ -55,7 +55,7 @@ class SqsProducer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncC
     *           proportional to the module of 10.
     */
   def sendParBatch(messages: List[Message], queueUrl: QueueUrl): Task[List[SendMessageBatchResponse]] = {
-    if messages.nonEmpty then {
+    if (messages.nonEmpty) {
       Task.parTraverse {
         groupMessagesInBatches(messages, queueUrl)
       } { batch => SqsOp.sendMessageBatch.execute(batch)(asyncClient) }

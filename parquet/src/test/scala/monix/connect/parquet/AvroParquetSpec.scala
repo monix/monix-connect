@@ -34,9 +34,7 @@ class AvroParquetSpec
 
   override implicit val scheduler: Scheduler = Scheduler.io("avro-parquet-spec")
   override def afterAll(): Unit = {
-    import scala.reflect.io.Directory
-    val directory = new Directory(new File(folder))
-    directory.deleteRecursively()
+    deleteRecursively(new File(folder))
   }
 
   s"$Parquet" should {

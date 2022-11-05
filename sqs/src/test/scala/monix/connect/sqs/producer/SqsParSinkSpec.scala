@@ -54,7 +54,7 @@ class SqsParSinkSpec extends AnyFlatSpecLike with Matchers {
     val n = Gen.choose(21, 1000).sample.get
     val messages = Gen.listOfN(n, genFifoMessage()).sample.get
     val batches = SqsParBatchSink.groupMessagesInBatches(messages, QueueUrl(""))
-    batches.size shouldBe (n / 10) + (if n % 10 == 0 then 0 else 1)
+    batches.size shouldBe (n / 10) + (if (n % 10 == 0) 0 else 1)
     batches.flatten(_.entries().asScala).size shouldBe messages.size
   }
 

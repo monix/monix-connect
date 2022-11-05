@@ -28,15 +28,13 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
 
-import scala.reflect.io.Directory
 
 class ParquetSourceSpec
   extends AsyncWordSpec with MonixTaskTest with Matchers with AvroParquetFixture with BeforeAndAfterAll {
 
   override implicit val scheduler: Scheduler = Scheduler.io("parquet-source-spec")
   override def afterAll(): Unit = {
-    val directory = new Directory(new File(folder))
-    directory.deleteRecursively()
+    deleteRecursively(new File(folder))
   }
 
   s"$ParquetSource" should {

@@ -20,18 +20,13 @@ package monix.connect.parquet
 import java.io.File
 import monix.eval.Coeval
 import monix.execution.Scheduler
-import monix.execution.exceptions.DummyException
-import monix.execution.schedulers.TestScheduler
 import monix.reactive.Observable
 import monix.testing.scalatest.MonixTaskTest
-import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
-import org.apache.hadoop.fs.Path
-import org.apache.parquet.avro.AvroParquetWriter
 import org.apache.parquet.hadoop.ParquetWriter
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.{AnyWordSpecLike, AsyncWordSpec}
+import org.scalatest.wordspec.AsyncWordSpec
 
 class ParquetSinkCoevalSpec
   extends AsyncWordSpec with MonixTaskTest with Matchers with AvroParquetFixture
@@ -40,9 +35,7 @@ class ParquetSinkCoevalSpec
   override implicit val scheduler: Scheduler = Scheduler.io("parquet-sink-coeval-spec")
 
   override def afterAll(): Unit = {
-    import scala.reflect.io.Directory
-    val directory = new Directory(new File(folder))
-    directory.deleteRecursively()
+    deleteRecursively(new File(folder))
   }
 
   s"$ParquetSink" should {

@@ -69,9 +69,7 @@ object Dependencies {
 
   val S3 = Seq(
     "software.amazon.awssdk"                              % "s3" % Versions.AwsSdk,
-    "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat,
-    "org.scalatestplus" %% "scalacheck-1-14"              % "3.1.4.0" % Test cross CrossVersion.for3Use2_13
-  ) ++ commonDependencies(hasIt = true)
+    "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat) ++ commonDependencies(hasIt = true)
 
   val Redis = Seq(
     "io.lettuce"                                          % "lettuce-core" % Versions.Lettuce,

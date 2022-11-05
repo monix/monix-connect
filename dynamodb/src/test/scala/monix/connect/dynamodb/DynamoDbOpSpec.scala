@@ -21,12 +21,11 @@ import monix.connect.dynamodb.domain.RetryStrategy
 import monix.eval.Task
 import monix.execution.exceptions.DummyException
 import monix.execution.Scheduler.Implicits.global
-import org.mockito.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
 
-class DynamoDbOpSpec extends AnyWordSpecLike with Matchers with IdiomaticMockito with Fixture {
+class DynamoDbOpSpec extends AnyWordSpecLike with Matchers with Fixture {
 
   s"$DynamoDbOp" should {
 

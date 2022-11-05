@@ -19,13 +19,13 @@ package monix.connect.dynamodb
 
 import monix.catnap.MVar
 import monix.eval.Task
+import monix.execution.FutureUtils.Java8Extensions
 import monix.execution.Scheduler
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.{GetItemRequest, GetItemResponse}
 
 import java.util.concurrent.CompletableFuture
 import scala.concurrent.Future
-import scala.jdk.FutureConverters._
 
 trait Fixture {
 

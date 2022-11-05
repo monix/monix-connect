@@ -41,5 +41,5 @@ object SnakeCaseConfigReader {
   )(HttpClientConf(_, _, _, _, _, _, _, _))
   private[auth] implicit val monixAwsConfConfigReader: ConfigReader[MonixAwsConf] =
     ConfigReader.forProduct4("region", "credentials", "endpoint", "http_client")(MonixAwsConf(_, _, _, _))
-  implicit val appConfConfigReader: ConfigReader[AppConf] = ConfigReader.forProduct1("monix_ws")(AppConf(_))
+  implicit val appConfConfigReader: ConfigReader[AppConf] = ConfigReader.forProduct1("monix_aws")(AppConf(_))
 }

@@ -36,7 +36,6 @@ package monix.connect.s3
 
 import monix.connect.s3.domain.{CopyObjectSettings, DownloadSettings, UploadSettings}
 import org.scalacheck.Gen
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
@@ -60,8 +59,7 @@ import software.amazon.awssdk.services.s3.model.{
 import scala.jdk.CollectionConverters._
 
 class S3RequestBuilderSpec
-  extends AnyWordSpecLike with BeforeAndAfterEach with Matchers with BeforeAndAfterAll
-  with ScalaCheckDrivenPropertyChecks with S3RequestGenerators {
+  extends AnyWordSpecLike with BeforeAndAfterEach with Matchers with BeforeAndAfterAll with S3RequestGenerators {
 
   override def beforeAll(): Unit = {
     super.beforeAll()
@@ -73,15 +71,13 @@ class S3RequestBuilderSpec
 
     s"correctly build `CreateBucketRequest`" in {
       //given
-      forAll(genCreateBucketParams) {
-        case (
-            bucket: String,
+           val  (bucket: String,
             acl: Option[BucketCannedACL],
             grantFullControl: Option[String],
             grantRead: Option[String],
             grantReadACP: Option[String],
             grantWrite: Option[String],
-            grantWriteACP: Option[String]) =>
+            grantWriteACP: Option[String]) = genCreateBucketParams.sample.get
           //when
           val request: CreateBucketRequest =
             S3RequestBuilder
@@ -100,13 +96,12 @@ class S3RequestBuilderSpec
 
     s"builds `CopyObjectRequest`" in {
       //given
-      forAll(genCopyObjectParams) {
-        case (
+     val (
             sourceBucket: String,
             sourceKey: String,
             destinationBucket: String,
             destinationKey: String,
-            copyObjectSettings: CopyObjectSettings) =>
+            copyObjectSettings: CopyObjectSettings) = genCopyObjectParams.sample.get
           //when
           val request: CopyObjectRequest =
             S3RequestBuilder
@@ -141,7 +136,6 @@ class S3RequestBuilderSpec
           request.objectLockRetainUntilDate shouldBe copyObjectSettings.objectLockRetainUntilDate.orNull
           request.objectLockLegalHoldStatus shouldBe copyObjectSettings.objectLockLegalHoldStatus.orNull
           request.requestPayer shouldBe copyObjectSettings.requestPayer.orNull
-      }
     }
 
     s"correctly build `CompletedPart`" in {
@@ -161,13 +155,12 @@ class S3RequestBuilderSpec
     }
 
     s"correctly build `CompleteMultipartUploadRequest`" in {
-      forAll(genCompleteMultipartUploadParams) {
-        case (
+        val (
             bucket: String,
             key: String,
             uploadId: String,
             completedParts: List[CompletedPart],
-            requestPayer: Option[RequestPayer]) =>
+            requestPayer: Option[RequestPayer]) = genCompleteMultipartUploadParams.sample.get
           //when
           val request: CompleteMultipartUploadRequest =
             S3RequestBuilder
@@ -179,12 +172,10 @@ class S3RequestBuilderSpec
           request.uploadId shouldBe uploadId
           request.multipartUpload.parts shouldBe completedParts.asJava
           request.requestPayer() shouldBe requestPayer.orNull
-      }
     }
 
     s"correctly build `CreateMultipartUploadRequest`" in {
-      forAll(genCreateMultipartUploadParams) {
-        case (bucket: String, key: String, uploadSettings: UploadSettings) =>
+        val (bucket: String, key: String, uploadSettings: UploadSettings) = genCreateMultipartUploadParams.sample.get
           //when
           val request: CreateMultipartUploadRequest =
             S3RequestBuilder
@@ -204,7 +195,6 @@ class S3RequestBuilderSpec
           request.sseCustomerKey shouldBe uploadSettings.sseCustomerKey.orNull
           request.sseCustomerKeyMD5 shouldBe uploadSettings.sseCustomerKeyMD5.orNull
           request.ssekmsEncryptionContext shouldBe uploadSettings.ssekmsEncryptionContext.orNull
-      }
     }
 
     s"correctly build `DeleteBucketRequest`s" in {
@@ -220,14 +210,13 @@ class S3RequestBuilderSpec
 
     s"correctly build `DeleteObjectRequest`s" in {
       //given
-      forAll(genDeleteObjectParams) {
-        case (
+        val (
             bucket: String,
             key: String,
             bypassGovernanceRetention: Option[Boolean],
             mfa: Option[String],
             requestPayer: Option[String],
-            versionId: Option[String]) =>
+            versionId: Option[String]) = genDeleteObjectParams.sample.get
           //when
           val request: DeleteObjectRequest =
             S3RequestBuilder
@@ -240,14 +229,13 @@ class S3RequestBuilderSpec
           request.mfa shouldBe mfa.orNull
           request.requestPayerAsString shouldBe requestPayer.orNull
           request.versionId shouldBe versionId.orNull
-      }
     }
 
     s"correctly build `GetObjectRequest`s" in {
       //given
-      forAll(genGetObjectParams) {
-        case (bucket: String, key: String, nBytes: Option[String], downloadSettings: DownloadSettings) =>
-          //when
+      val (bucket: String, key: String, nBytes: Option[String], downloadSettings: DownloadSettings) = genGetObjectParams.sample.get
+
+      //when
           val request: GetObjectRequest =
             S3RequestBuilder
               .getObjectRequest(bucket, key, nBytes, downloadSettings)
@@ -265,20 +253,18 @@ class S3RequestBuilderSpec
           request.sseCustomerKey shouldBe downloadSettings.sseCustomerKey.orNull
           request.sseCustomerKeyMD5 shouldBe downloadSettings.sseCustomerKeyMD5.orNull
           request.versionId shouldBe downloadSettings.versionId.orNull
-      }
     }
 
     s"correctly build `UploadPartRequest`" in {
       //given
-      forAll(genUploadPartParams) {
-        case (
+        val (
             bucket: String,
             key: String,
             partN: Int,
             uploadId: String,
             contentLenght: Long,
             uploadSettings: UploadSettings
-            ) =>
+            ) = genUploadPartParams.sample.get
           //when
           val request: UploadPartRequest =
             S3RequestBuilder
@@ -294,12 +280,10 @@ class S3RequestBuilderSpec
           request.sseCustomerAlgorithm shouldBe uploadSettings.sseCustomerAlgorithm.orNull
           request.sseCustomerKey shouldBe uploadSettings.sseCustomerKey.orNull
           request.sseCustomerKeyMD5 shouldBe uploadSettings.sseCustomerKeyMD5.orNull
-      }
     }
 
     s"correctly build `PutObjectRequest`" in {
-      forAll(genPutObjectParams) {
-        case (bucket: String, key: String, contentLenght: Option[Long], uploadSettings: UploadSettings) =>
+        val (bucket: String, key: String, contentLenght: Option[Long], uploadSettings: UploadSettings) = genPutObjectParams.sample.get
           //when
           val request: PutObjectRequest =
             S3RequestBuilder
@@ -320,8 +304,5 @@ class S3RequestBuilderSpec
           request.sseCustomerKey shouldBe uploadSettings.sseCustomerKey.orNull
           request.sseCustomerKeyMD5 shouldBe uploadSettings.sseCustomerKeyMD5.orNull
           request.ssekmsEncryptionContext shouldBe uploadSettings.ssekmsEncryptionContext.orNull
-      }
-    }
-
   }
 }

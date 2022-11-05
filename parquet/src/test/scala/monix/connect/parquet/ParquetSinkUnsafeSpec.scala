@@ -21,10 +21,8 @@ import monix.eval.Task
 import monix.execution.Scheduler
 
 import java.io.File
-import monix.execution.exceptions.DummyException
 import monix.reactive.Observable
 import monix.testing.scalatest.MonixTaskTest
-import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.parquet.hadoop.ParquetWriter
 import org.scalatest.BeforeAndAfterAll
@@ -37,9 +35,7 @@ class ParquetSinkUnsafeSpec
 
   override implicit val scheduler: Scheduler = Scheduler.io("parquet-sync-unsafe-spec")
   override def afterAll(): Unit = {
-    import scala.reflect.io.Directory
-    val directory = new Directory(new File(folder))
-    directory.deleteRecursively()
+    deleteRecursively(new File(folder))
   }
 
   s"$ParquetSink" should {

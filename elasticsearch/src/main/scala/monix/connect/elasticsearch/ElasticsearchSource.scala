@@ -49,7 +49,8 @@ private[elasticsearch] class ElasticsearchSource(request: SearchRequest)(implici
   }
 
   private def fastLoop(buffer: mutable.Queue[SearchHit], sub: Subscriber[SearchHit]): Task[Unit] = {
-    fetch(buffer, sub).flatMap { _ =>buffer.nonEmpty then
+    fetch(buffer, sub).flatMap { _ =>
+      if(buffer.nonEmpty)
         Task.deferFuture(sub.onNext(buffer.dequeue()))
       else
         Task.now(Ack.Stop)
@@ -76,7 +77,7 @@ private[elasticsearch] class ElasticsearchSource(request: SearchRequest)(implici
             sub.onError(new RuntimeException("Search response did not include a scroll id"))
           case Some(id) =>
             scrollId = Some(id)
-            if result.hits.hits.length == 0 && buffer.isEmpty then {
+            if (result.hits.hits.length == 0 && buffer.isEmpty) {
               sub.onComplete()
             } else {
               buffer ++= result.hits.hits
@@ -86,7 +87,7 @@ private[elasticsearch] class ElasticsearchSource(request: SearchRequest)(implici
   }
 
   private def fetch(buffer: mutable.Queue[SearchHit], sub: Subscriber[SearchHit]): Task[Unit] = {
-    if buffer.isEmpty then {
+    if (buffer.isEmpty) {
       scrollId match {
         case Some(id) => client.execute(searchScroll(id).keepAlive(keepAlive)).map(populateHandler(_, buffer, sub))
         case None => client.execute(request.keepAlive(keepAlive)).map(populateHandler(_, buffer, sub))

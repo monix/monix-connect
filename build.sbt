@@ -160,6 +160,11 @@ lazy val akka = monixConnector("akka", Dependencies.Akka)
 lazy val dynamodb = monixConnector("dynamodb", Dependencies.DynamoDb).aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
 
 lazy val hdfs = monixConnector("hdfs", Dependencies.Hdfs)
+  .settings(libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+    case Some((3, _)) => Seq.empty
+    case _ => Seq("org.mockito" %% "mockito-scala" % Versions.Mockito % Test)
+  }))
+
 
 lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb, isMimaEnabled = false, isITParallelExecution = true, scala3Publish = false)
   .settings(libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {

@@ -271,7 +271,7 @@ class SqsConsumer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncC
       .maxNumberOfMessages(maxMessages)
       .attributeNames(QueueAttributeName.ALL)
       .visibilityTimeout(visibilityTimeout.toSeconds.toInt)
-    if waitTimeSeconds.toSeconds > 0L then builder.waitTimeSeconds(waitTimeSeconds.toSeconds.toInt)
+    if (waitTimeSeconds.toSeconds > 0L) builder.waitTimeSeconds(waitTimeSeconds.toSeconds.toInt)
     builder.build
   }
 
