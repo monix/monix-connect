@@ -28,7 +28,6 @@ import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.services.s3.model._
 
 import scala.concurrent.duration._
-import scala.util.{Failure, Success, Try}
 
 class ListObjectsObservableSuite
   extends AsyncFlatSpec with Matchers with MonixTaskTest with BeforeAndAfterAll with ScalaFutures with S3Fixture with Eventually {

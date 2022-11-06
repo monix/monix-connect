@@ -1,7 +1,7 @@
-import Dependencies.{Versions, commonDependencies}
+import Dependencies.Versions
 import sbt.Keys.version
 
-val monixConnectSeries = "0.5.1"
+val monixConnectSeries = "0.7.0"
 
 inThisBuild(List(
   organization := "io.monix",
@@ -17,9 +17,7 @@ inThisBuild(List(
   )
 ))
 
-skip in publish := true //requered by sbt-ci-release
-
-
+skip in publish := true //required by sbt-ci-release
 
 def sharedSettings(publishForScala3: Boolean= true) = {
   Seq(
@@ -32,7 +30,8 @@ def sharedSettings(publishForScala3: Boolean= true) = {
     }),
     scalafmtOnCompile := false
   ,
-  scalacOptions ++= Seq(
+    mimaFailOnNoPrevious := false,
+    scalacOptions ++= Seq(
     // warnings
     "-unchecked", // able additional warnings where generated code depends on assumptions
     "-deprecation", // emit warning for usages of deprecated APIs
@@ -136,7 +135,19 @@ def sharedSettings(publishForScala3: Boolean= true) = {
 }
 
 def mimaSettings(projectName: String) = Seq(
-  mimaPreviousArtifacts := Set("io.monix" %% projectName % monixConnectSeries),
+  mimaPreviousArtifacts := {
+    /**
+      * Needed in order to avoid running mima compatibility checks when compatibility series is equal to the project
+      * version. Because in such case the compatibility series version does not exist and the mima checks would
+      * otherwise fail.
+      */
+    val isFirstCompatibilitySeriesRelease = monixConnectSeries.endsWith("0")
+    if (isFirstCompatibilitySeriesRelease) {
+      Set.empty
+    } else {
+      Set("io.monix" %% projectName % monixConnectSeries)
+    }
+  },
   mimaBinaryIssueFilters ++= MimaFilters.allMimaFilters
 )
 
@@ -274,7 +285,7 @@ lazy val mdocSettings = Seq(
       .value,
   scalacOptions in (ScalaUnidoc, unidoc) ++= Seq(
     "-doc-source-url", s"https://github.com/monix/monix-connect/tree/v${version.value}€{FILE_PATH}.scala",
-    "-sourcepath", baseDirectory.in(LocalRootProject).value.getAbsolutePath,
+    baseDirectory.in(LocalRootProject).value.getAbsolutePath,
     "-doc-title", "Monix Connect",
     "-doc-version", s"v${version.value}",
     "-groups"
@@ -323,3 +334,4 @@ updateSiteVariables in ThisBuild := {
 
   IO.write(file, fileContents)
 }
+

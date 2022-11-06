@@ -26,9 +26,7 @@ import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-import software.amazon.awssdk.services.s3.model.{NoSuchBucketException, NoSuchKeyException}
-
-import scala.util.{Failure, Success, Try}
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException
 
 class MultipartDownloadObservableSuite
   extends AsyncFlatSpec with Matchers with MonixTaskTest with BeforeAndAfterAll with S3Fixture {

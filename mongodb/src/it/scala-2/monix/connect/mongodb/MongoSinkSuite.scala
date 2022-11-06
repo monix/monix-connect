@@ -18,7 +18,7 @@
 package monix.connect.mongodb
 
 import com.mongodb.client.model.{Filters, Updates}
-import monix.connect.mongodb.client.{CollectionOperator, MongoConnection}
+import monix.connect.mongodb.client.MongoConnection
 import monix.execution.Scheduler
 import monix.reactive.Observable
 import monix.testing.scalatest.MonixTaskTest

@@ -1,7 +1,6 @@
 package monix.connect.redis
 
-import monix.connect.redis.client.{BytesCodec, Codec, RedisConnection}
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import monix.connect.redis.client.{BytesCodec, Codec}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
