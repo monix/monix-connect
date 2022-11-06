@@ -70,12 +70,10 @@ a {
 }
 
 .onPageNav a:hover {
-  color: #E9F1FF;
+  color: #122932;
 }
 
 .mainContainer {
-color: #A9A9A9;
-  font-size: 12px;
+  font-size: 16px;
   text-align: center;
-  font-style: italic;
 }

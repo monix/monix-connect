@@ -360,7 +360,7 @@ class SqsOperator private[sqs] (private[sqs] val asyncClient: SqsAsyncClient) {
 
   def transformer[In <: SqsRequest, Out <: SqsResponse](
     implicit
-    sqsOp: SqsOp[In, Out]): Transformer[In, Out] = { inObservable: Observable[In] =>
+    sqsOp: SqsOp[In, Out]): Transformer[In, Out] = { (inObservable: Observable[In]) =>
     inObservable.mapEval(in => sqsOp.execute(in)(asyncClient))
   }
 

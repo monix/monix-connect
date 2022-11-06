@@ -12,14 +12,13 @@ import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
 import org.apache.commons.io.FileUtils
-import org.mockito.{ArgumentMatchersSugar, IdiomaticMockito}
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfterAll, Ignore}
 
 @Ignore //this class aggregates some of the examples used for the documentation to easily track and modify them accordingly,
-class GcsExamples extends AnyWordSpecLike with IdiomaticMockito with Matchers with ArgumentMatchersSugar with BeforeAndAfterAll {
+class GcsExamples extends AnyWordSpecLike with Matchers with BeforeAndAfterAll {
 
   val underlying = LocalStorageHelper.getOptions.getService
   val dir = new File("gcs/tmp").toPath

@@ -5,7 +5,7 @@ import monix.connect.sqs.producer.{Message, StandardMessage}
 import monix.eval.Task
 import monix.execution.Scheduler
 import monix.reactive.Observable
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.apache.commons.codec.digest.DigestUtils.md5Hex
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
@@ -15,9 +15,9 @@ import software.amazon.awssdk.services.sqs.model.{QueueAttributeName, SqsExcepti
 
 import scala.concurrent.duration._
 
-class FifoQueueSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with BeforeAndAfterAll with SqsITFixture {
+class FifoQueueSuite extends AsyncFlatSpec with MonixTaskTest with Matchers with BeforeAndAfterAll with SqsITFixture {
 
-  implicit val scheduler: Scheduler = Scheduler.io("sqs-fifo-queue-suite")
+  override implicit val scheduler: Scheduler = Scheduler.io("sqs-fifo-queue-suite")
 
   val t: Bracket[Task, Throwable] = Bracket.apply
 

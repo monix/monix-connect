@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
 set -e
-sbt ++2.13.8 ci-release
+sbt ++3.1.2 ci-release

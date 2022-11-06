@@ -3,21 +3,20 @@ package monix.connect.gcp.storage
 import java.io.File
 import java.nio.file.{Files, Path}
 import com.google.cloud.storage.{Blob, BlobId, BlobInfo, Storage, Option => _}
-import monix.execution.Scheduler.Implicits.global
-import org.mockito.{ArgumentMatchersSugar, IdiomaticMockito}
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.{AnyWordSpecLike, AsyncWordSpec}
+import org.scalatest.wordspec.{AsyncWordSpec}
 import com.google.cloud.storage.contrib.nio.testing.LocalStorageHelper
 import monix.reactive.Observable
 import monix.eval.Task
 import monix.execution.Scheduler
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
 import org.apache.commons.io.FileUtils
+
 import scala.concurrent.duration._
 
-class GcsBlobSuite extends AsyncWordSpec with MonixTaskSpec with IdiomaticMockito with Matchers with ArgumentMatchersSugar with BeforeAndAfterAll {
+class GcsBlobSuite extends AsyncWordSpec with MonixTaskTest with Matchers with BeforeAndAfterAll {
 
   override implicit val scheduler: Scheduler = Scheduler.io("gcs-blob-suite")
   val storage: Storage = LocalStorageHelper.getOptions.getService
@@ -227,7 +226,8 @@ class GcsBlobSuite extends AsyncWordSpec with MonixTaskSpec with IdiomaticMockit
       r1 shouldBe userAcl
       r2 shouldBe groupAcl
       l should contain theSameElementsAs List(userAcl, groupAcl)
-    }*/
+    }
+     */
 
   }
 

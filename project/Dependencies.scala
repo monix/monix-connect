@@ -7,7 +7,7 @@ object Dependencies {
     //main
     val Monix = "3.4.1"
     val AwsSdk = "2.17.276"
-    val AkkaStreams = "2.6.9"
+    val AkkaStreams = "2.6.18"
     val GCS = "1.107.0"
     val Hadoop = "3.3.4"
     val MongoScala = "4.1.1"
@@ -20,14 +20,14 @@ object Dependencies {
     val ScalaCompat = "2.8.1"
 
     //test
-    val Scalatest = "3.2.13"
-    val MonixTestingScalatest = "0.2.0"
-    val Scalacheck = "1.14.0"
-    val Mockito = "1.15.0"
-    val GCNio = "0.123.14"
+    val Scalatest = "3.2.12"
+    val MonixTestingScalatest = "0.4.0"
+    val Scalacheck = "1.16.0"
+    val Mockito = "1.16.37"
+    val GCNio = "0.123.19"
   }
 
-  private def commonDependencies(hasIt: Boolean = false): Seq[sbt.ModuleID] = {
+  def commonDependencies(hasIt: Boolean = false): Seq[sbt.ModuleID] = {
     val common: Seq[ModuleID] = MonixDependency ++ CommonTestDependencies.map(_ % Test)
     if (hasIt) common ++ CommonTestDependencies.map(_                           % IntegrationTest)
     else common
@@ -36,17 +36,15 @@ object Dependencies {
   private val MonixDependency = Seq("io.monix" %% "monix-reactive" % Versions.Monix)
 
   private val CommonTestDependencies = Seq(
-    "org.scalatest" %% "scalatest"          % Versions.Scalatest,
     "org.scalacheck" %% "scalacheck"        % Versions.Scalacheck,
-    "org.mockito" %% "mockito-scala"        % Versions.Mockito,
     "io.monix" %% "monix-testing-scalatest" % Versions.MonixTestingScalatest
   )
 
   val Akka = Seq("com.typesafe.akka" %% "akka-stream" % Versions.AkkaStreams) ++ commonDependencies(hasIt = false)
 
   val AwsAuth = Seq(
-    "software.amazon.awssdk"                % "auth" % Versions.AwsSdk,
-    "com.github.pureconfig" %% "pureconfig" % Versions.Pureconfig) ++ commonDependencies(hasIt = false)
+    "software.amazon.awssdk"                     % "auth" % Versions.AwsSdk,
+    "com.github.pureconfig" %% "pureconfig-core" % Versions.Pureconfig) ++ commonDependencies(hasIt = false)
 
   val DynamoDb = Seq("software.amazon.awssdk" % "dynamodb" % Versions.AwsSdk) ++ commonDependencies(hasIt = true)
 
@@ -59,9 +57,7 @@ object Dependencies {
 
   val MongoDb = Seq(
     "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat,
-    "org.mongodb"                                         % "mongodb-driver-reactivestreams" % Versions.MongoReactiveStreams,
-    "org.mongodb.scala" %% "mongo-scala-bson"             % Versions.MongoScala,
-    "org.mongodb.scala" %% "mongo-scala-driver"           % Versions.MongoScala
+    "org.mongodb"                                         % "mongodb-driver-reactivestreams" % Versions.MongoReactiveStreams
   ) ++ commonDependencies(hasIt = true)
 
   val Parquet = Seq(
@@ -73,9 +69,7 @@ object Dependencies {
 
   val S3 = Seq(
     "software.amazon.awssdk"                              % "s3" % Versions.AwsSdk,
-    "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat,
-    "org.scalatestplus" %% "scalacheck-1-14"              % "3.1.4.0" % Test
-  ) ++ commonDependencies(hasIt = true)
+    "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat) ++ commonDependencies(hasIt = true)
 
   val Redis = Seq(
     "io.lettuce"                                          % "lettuce-core" % Versions.Lettuce,
@@ -98,12 +92,12 @@ object Dependencies {
   ) ++ commonDependencies(hasIt = true)
 
   val Elasticsearch = Seq(
-    "com.sksamuel.elastic4s" %% "elastic4s-client-esjava" % Versions.Elastic4s
+    "com.sksamuel.elastic4s" %% "elastic4s-client-esjava" % Versions.Elastic4s cross CrossVersion.for3Use2_13
   ) ++ commonDependencies(hasIt = true)
 
   val Benchmarks = Seq(
     "com.lightbend.akka" %% "akka-stream-alpakka-s3" % "2.0.2",
-    "org.scalacheck" %% "scalacheck"                 % Versions.Scalacheck,
+    "org.scalacheck" %% "scalacheck"                 % Versions.Scalacheck cross CrossVersion.for3Use2_13,
     "dev.profunktor" %% "redis4cats-effects"         % "0.10.3",
     "io.chrisdavenport" %% "rediculous"              % "0.0.8",
     "io.laserdisc" %% "laserdisc-fs2"                % "0.4.1"

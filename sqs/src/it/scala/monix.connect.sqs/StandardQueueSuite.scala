@@ -4,7 +4,7 @@ import monix.connect.sqs.producer.Message
 import monix.eval.Task
 import monix.execution.Scheduler
 import monix.reactive.Observable
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.apache.commons.codec.digest.DigestUtils.md5Hex
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
@@ -13,9 +13,9 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
 
-class StandardQueueSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with BeforeAndAfterAll with SqsITFixture {
+class StandardQueueSuite extends AsyncFlatSpec with MonixTaskTest with Matchers with BeforeAndAfterAll with SqsITFixture {
 
-  implicit val scheduler = Scheduler.io("sqs-standard-queue-suite")
+  override implicit val scheduler = Scheduler.io("sqs-standard-queue-suite")
 
   "A standard queue" can "be created and receive messages" in {
     val message = genStandardMessage.sample.get

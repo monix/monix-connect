@@ -5,7 +5,7 @@ import monix.connect.dynamodb.domain.RetryStrategy
 import monix.eval.Task
 import monix.execution.Scheduler
 import monix.reactive.Observable
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AsyncFlatSpec
@@ -14,11 +14,9 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.model.{GetItemRequest, ListTablesRequest, ListTablesResponse, PutItemRequest}
 
 import scala.concurrent.duration._
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
-class DynamoDbSuite extends AsyncFlatSpec with Matchers with MonixTaskSpec with DynamoDbFixture with BeforeAndAfterAll {
-
-  import monix.execution.Scheduler.Implicits.global
+class DynamoDbSuite extends AsyncFlatSpec with Matchers with MonixTaskTest with DynamoDbFixture with BeforeAndAfterAll {
 
   override implicit val scheduler = Scheduler.io("dynamodb-suite")
 

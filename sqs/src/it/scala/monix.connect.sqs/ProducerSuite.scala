@@ -4,7 +4,7 @@ import monix.connect.sqs.producer.Message
 import monix.eval.Task
 import monix.execution.Scheduler
 import monix.reactive.Observable
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.apache.commons.codec.digest.DigestUtils.md5Hex
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
@@ -15,9 +15,9 @@ import software.amazon.awssdk.services.sqs.model.QueueAttributeName
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 
-class ProducerSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with BeforeAndAfterAll with SqsITFixture {
+class ProducerSuite extends AsyncFlatSpec with MonixTaskTest with Matchers with BeforeAndAfterAll with SqsITFixture {
 
-  implicit val scheduler = Scheduler.io("sqs-producer-suite")
+  override implicit val scheduler = Scheduler.io("sqs-producer-suite")
 
   "parSendMessage" must "send a group of 10 message in the same batch" in {
     val messages = Gen.listOfN(10, genFifoMessage(defaultGroupId)).sample.get
