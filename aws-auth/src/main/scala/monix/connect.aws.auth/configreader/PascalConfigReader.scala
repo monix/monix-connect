@@ -17,29 +17,8 @@
 
 package monix.connect.aws.auth.configreader
 
-import monix.connect.aws.auth.MonixAwsConf.AppConf
-import monix.connect.aws.auth.{AwsCredentialsConf, HttpClientConf, MonixAwsConf, StaticCredentialsConf}
-import pureconfig.ConfigReader
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
+import pureconfig.PascalCase
 
-object PascalConfigReader {
-  private[auth] implicit val staticCreedsConfConfigReader: ConfigReader[StaticCredentialsConf] =
-    ConfigReader.forProduct3("AccessKeyId", "SecretAccessKey", "SessionToken")(StaticCredentialsConf(_, _, _))
-  private[auth] implicit val awsCredentialsConfConfigReader: ConfigReader[AwsCredentialsConf] =
-    ConfigReader.forProduct3("Provider", "ProfileName", "Static")(AwsCredentialsConf(_, _, _))
-  private[auth] implicit val credentialsProviderReader: ConfigReader[AwsCredentialsProvider] =
-    ConfigReader[AwsCredentialsConf].map(_.credentialsProvider)
-  private[auth] implicit val httpClientConfConfigReader: ConfigReader[HttpClientConf] = ConfigReader.forProduct8(
-    "MaxConcurrency",
-    "MaxPendingConnectionAcquires",
-    "ConnectionAcquisitionTimeout",
-    "ConnectionMaxIdleTime",
-    "ConnectionTimeToLive",
-    "UseIdleConnectionReaper",
-    "ReadTimeout",
-    "WriteTimeout"
-  )(HttpClientConf(_, _, _, _, _, _, _, _))
-  private[auth] implicit val monixAwsConfConfigReader: ConfigReader[MonixAwsConf] =
-    ConfigReader.forProduct4("Region", "Credentials", "Endpoint", "HttpClient")(MonixAwsConf(_, _, _, _))
-  implicit val appConfConfigReader: ConfigReader[AppConf] = ConfigReader.forProduct1("MonixAws")(AppConf(_))
+private[auth] object PascalConfigReader extends BaseConfigReader {
+  override def cased(sequence: String*): String = PascalCase.fromTokens(sequence)
 }

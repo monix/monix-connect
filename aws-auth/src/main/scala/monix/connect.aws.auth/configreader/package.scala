@@ -24,8 +24,9 @@ import java.net.URI
 
 package object configreader {
 
-  implicit val providerReader: ConfigReader[Providers.Provider] = ConfigReader[String].map(Providers.fromString)
-  implicit val regionReader: ConfigReader[Region] = ConfigReader[String].map(Region.of)
-  implicit val uriReader: ConfigReader[URI] = ConfigReader[String].map(URI.create)
+  private[configreader] implicit val providerReader: ConfigReader[Providers.Provider] =
+    ConfigReader[String].map(Providers.fromString)
+  private[configreader] implicit val regionReader: ConfigReader[Region] = ConfigReader[String].map(Region.of)
+  private[configreader] implicit val uriReader: ConfigReader[URI] = ConfigReader[String].map(URI.create)
 
 }
