@@ -21,7 +21,7 @@ skip in publish := true //required by sbt-ci-release
 
 def sharedSettings(publishForScala3: Boolean= true) = {
   Seq(
-    scalaVersion := "3.1.2",
+    scalaVersion := "2.13.8",
     crossScalaVersions := Seq("2.12.17", "2.13.8") ++ (if (publishForScala3) Seq("3.1.2") else Seq.empty)
   ,
     publishArtifact := (CrossVersion.partialVersion(scalaVersion.value) match {
@@ -221,7 +221,6 @@ lazy val gcs = monixConnector("gcs", Dependencies.GCS , isITParallelExecution = 
 lazy val elasticsearch =  monixConnector("elasticsearch", Dependencies.Elasticsearch, isITParallelExecution = true)
 
 //internal
-
 lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth, isMimaEnabled = false)
 
 def monixConnector(
@@ -241,7 +240,13 @@ def monixConnector(
     .settings(sharedSettings(scala3Publish))
     .configs(IntegrationTest, IT)
     .enablePlugins(AutomateHeaderPlugin)
-    .settings(if(isMimaEnabled) mimaSettings(s"monix-$connectorName") else Seq.empty)
+    .settings(
+      if(isMimaEnabled) {
+        mimaSettings(s"monix-$connectorName")
+      } else { Seq.empty },
+      Compile / doc / sources := { if (scalaVersion.value.startsWith("3.")) Seq.empty else (Compile / doc / sources).value },
+      Test / doc / sources := { if (scalaVersion.value.startsWith("3.")) Seq.empty else (Compile / doc / sources).value }
+    )
 }
 
 //=> non published modules
@@ -285,7 +290,7 @@ lazy val mdocSettings = Seq(
       .value,
   scalacOptions in (ScalaUnidoc, unidoc) ++= Seq(
     "-doc-source-url", s"https://github.com/monix/monix-connect/tree/v${version.value}€{FILE_PATH}.scala",
-    baseDirectory.in(LocalRootProject).value.getAbsolutePath,
+    "-sourcepath", baseDirectory.in(LocalRootProject).value.getAbsolutePath,
     "-doc-title", "Monix Connect",
     "-doc-version", s"v${version.value}",
     "-groups"

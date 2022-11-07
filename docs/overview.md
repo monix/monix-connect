@@ -18,7 +18,7 @@ title: Overview
 Find all release [versions](https://github.com/monix/monix-connect/releases)).
  
  ```scala   
- libraryDependencies += "io.monix" %% "monix-connect" % "0.7.0"
+ libraryDependencies += "io.monix" %% "monix-connect" % "0.9.0"
 ```
 
 ⚠️ **Mind that the project isn't yet stable, so binary compatibility is not guaranteed.** ❗
