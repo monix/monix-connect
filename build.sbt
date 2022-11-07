@@ -21,7 +21,7 @@ skip in publish := true //required by sbt-ci-release
 
 def sharedSettings(publishForScala3: Boolean= true) = {
   Seq(
-    scalaVersion := "3.1.2",
+    scalaVersion := "2.13.8",
     crossScalaVersions := Seq("2.12.17", "2.13.8") ++ (if (publishForScala3) Seq("3.1.2") else Seq.empty)
   ,
     publishArtifact := (CrossVersion.partialVersion(scalaVersion.value) match {
@@ -285,7 +285,7 @@ lazy val mdocSettings = Seq(
       .value,
   scalacOptions in (ScalaUnidoc, unidoc) ++= Seq(
     "-doc-source-url", s"https://github.com/monix/monix-connect/tree/v${version.value}€{FILE_PATH}.scala",
-    baseDirectory.in(LocalRootProject).value.getAbsolutePath,
+    "-sourcepath", baseDirectory.in(LocalRootProject).value.getAbsolutePath,
     "-doc-title", "Monix Connect",
     "-doc-version", s"v${version.value}",
     "-groups"
