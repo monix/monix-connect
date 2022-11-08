@@ -24,7 +24,7 @@ object Dependencies {
     val MonixTestingScalatest = "0.4.0"
     val Scalacheck = "1.16.0"
     val Mockito = "1.16.37"
-    val GCNio = "0.123.19"
+    val GCNio = "0.123.28"
   }
 
   def commonDependencies(hasIt: Boolean = false): Seq[sbt.ModuleID] = {
