@@ -1,7 +1,6 @@
 package monix.connect.redis
 
-import monix.connect.redis.client.{BytesCodec, Codec, RedisConnection}
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import monix.connect.redis.client.{BytesCodec, Codec}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -11,9 +10,9 @@ import org.scalacheck.Gen
 import scala.concurrent.duration._
 import monix.connect.redis.test.protobuf.{Person, PersonPk}
 import monix.execution.Scheduler
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 
-class CodecSuite extends AsyncFlatSpec with MonixTaskSpec with  RedisIntegrationFixture with Matchers with Eventually {
+class CodecSuite extends AsyncFlatSpec with MonixTaskTest with  RedisIntegrationFixture with Matchers with Eventually {
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
   override implicit val scheduler: Scheduler = Scheduler.io("codec-suite")

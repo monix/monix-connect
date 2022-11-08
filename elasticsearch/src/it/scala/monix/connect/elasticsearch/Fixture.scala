@@ -32,21 +32,21 @@ trait Fixture {
 
   def genUpdateRequest(index: String): Gen[UpdateRequest] =
     for {
-      id  <- Gen.identifier
+      id <- Gen.identifier
       doc <- genDoc
     } yield updateById(index, id).docAsUpsert(doc)
 
   def genDeleteRequest: Gen[DeleteByIdRequest] =
     for {
       index <- genIndex
-      id    <- Gen.identifier
+      id <- Gen.identifier
     } yield deleteById(index, id)
 
   def genIndexRequest: Gen[IndexRequest] =
     for {
       index <- genIndex
-      id    <- Gen.identifier
-      doc   <- genDoc
+      id <- Gen.identifier
+      doc <- genDoc
     } yield indexInto(index).id(id).doc(doc)
 
   def getById(index: String, id: String): Task[GetResponse] = {
@@ -60,3 +60,4 @@ trait Fixture {
     }
   }
 }
+

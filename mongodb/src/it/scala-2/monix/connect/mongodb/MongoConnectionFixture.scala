@@ -2,11 +2,9 @@ package monix.connect.mongodb
 
 import cats.effect.Resource
 import com.mongodb.client.model.{Filters, Updates}
-import monix.connect.mongodb.client.{CollectionCodecRef, CollectionOperator, CollectionRef}
+import monix.connect.mongodb.client.{CollectionOperator, CollectionRef}
 import monix.connect.mongodb.domain.{Tuple2F, Tuple3F, Tuple4F, Tuple5F, Tuple6F, Tuple7F, Tuple8F}
 import monix.eval.Task
-import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
-import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{Assertion, AsyncTestSuite}
 

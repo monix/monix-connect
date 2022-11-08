@@ -37,7 +37,7 @@ import scala.jdk.CollectionConverters._
   * handling null values with [[Option]] where applicable, as well as wrapping all side-effectful calls
   * in [[monix.eval.Task]] or [[monix.reactive.Observable]].
   */
-class GcsBucket private (underlying: Bucket) extends GcsDownloader with FileIO with Paging {
+class GcsBucket private (val underlying: Bucket) extends GcsDownloader with FileIO with Paging {
   self =>
 
   /** Checks if this bucket exists. */

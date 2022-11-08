@@ -22,14 +22,14 @@ import com.mongodb.client.model.{Collation, CollationCaseFirst, CreateIndexOptio
 import monix.connect.mongodb.client.MongoConnection
 import monix.eval.Task
 import monix.execution.Scheduler
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.bson.conversions.Bson
 import org.scalatest.{Assertion, BeforeAndAfterEach}
 import org.scalatest.matchers.should.Matchers
 
 import java.util.concurrent.TimeUnit
 
-class MongoSingleSuite extends AsyncFlatSpec with MonixTaskSpec with Fixture with Matchers with BeforeAndAfterEach {
+class MongoSingleSuite extends AsyncFlatSpec with MonixTaskTest with Fixture with Matchers with BeforeAndAfterEach {
 
   override implicit val scheduler: Scheduler = Scheduler.io("mongo-single-suite")
 

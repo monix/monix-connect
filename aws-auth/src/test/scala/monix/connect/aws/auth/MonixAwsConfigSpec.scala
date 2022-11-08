@@ -19,22 +19,21 @@ package monix.connect.aws.auth
 
 import java.net.URI
 import org.scalatest.flatspec.AsyncFlatSpec
-import pureconfig.{CamelCase, ConfigFieldMapping, ConfigSource, KebabCase, PascalCase, SnakeCase}
-import pureconfig.generic.auto._
+import pureconfig.{CamelCase, ConfigSource, KebabCase, PascalCase, SnakeCase}
 import org.scalatest.matchers.should.Matchers
 import pureconfig.error.ConfigReaderException
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import monix.connect.aws.auth.MonixAwsConf._
+import monix.connect.aws.auth.configreader.KebabConfigReader
 import monix.eval.Task
 import monix.execution.Scheduler
-import monix.testing.scalatest.MonixTaskSpec
-import pureconfig.generic.ProductHint
+import monix.testing.scalatest.MonixTaskTest
 
 import java.io.File
 import scala.util.Try
 
-class MonixAwsConfigSpec extends AsyncFlatSpec with MonixTaskSpec with Matchers {
+class MonixAwsConfigSpec extends AsyncFlatSpec with MonixTaskTest with Matchers {
 
   override implicit val scheduler: Scheduler = Scheduler.io("monix-aws-config-spec")
 
@@ -48,9 +47,7 @@ class MonixAwsConfigSpec extends AsyncFlatSpec with MonixTaskSpec with Matchers 
 
   it should "read the local endpoint as a uri" in {
 
-    implicit val hint: ProductHint[AppConf] =
-      ProductHint(ConfigFieldMapping(CamelCase, KebabCase), useDefaultArgs = false, allowUnknownKeys = true)
-
+    import KebabConfigReader._
     val configSource = ConfigSource.string(
       "" +
         s"""
@@ -72,6 +69,7 @@ class MonixAwsConfigSpec extends AsyncFlatSpec with MonixTaskSpec with Matchers 
   }
 
   it should "not require endpoint nor http client settings" in {
+    import KebabConfigReader._
     val configSource = ConfigSource.string(
       "" +
         s"""
@@ -94,6 +92,8 @@ class MonixAwsConfigSpec extends AsyncFlatSpec with MonixTaskSpec with Matchers 
   }
 
   it should "fail when credentials are not present" in {
+    import KebabConfigReader._
+
     val configSource = ConfigSource.string(
       "" +
         s"""
@@ -112,6 +112,8 @@ class MonixAwsConfigSpec extends AsyncFlatSpec with MonixTaskSpec with Matchers 
   }
 
   it should "fail when credentials region is not present" in {
+    import KebabConfigReader._
+
     val configSource = ConfigSource.string(
       "" +
         s"""

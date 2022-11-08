@@ -20,13 +20,13 @@ package monix.connect.mongodb
 import monix.connect.mongodb.client.{CollectionDocumentRef, MongoConnection}
 import monix.eval.Task
 import monix.execution.Scheduler
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.scalacheck.Gen
 import org.scalatest.{Assertion, BeforeAndAfterEach}
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class MongoDbSuite extends AsyncFlatSpec with MonixTaskSpec with Fixture with Matchers with BeforeAndAfterEach {
+class MongoDbSuite extends AsyncFlatSpec with MonixTaskTest with Fixture with Matchers with BeforeAndAfterEach {
 
   override implicit val scheduler: Scheduler = Scheduler.io("mongo-db-suite")
 

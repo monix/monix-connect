@@ -3,14 +3,13 @@ package monix.connect.gcp.storage
 import com.google.cloud.storage.contrib.nio.testing.LocalStorageHelper
 import com.google.cloud.storage.{BlobId, BlobInfo, Option => _}
 import monix.execution.Scheduler
-import monix.testing.scalatest.MonixTaskSpec
-import org.mockito.{ArgumentMatchersSugar, IdiomaticMockito}
+import monix.testing.scalatest.MonixTaskTest
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
 
-class GcsStorageSuite extends AsyncWordSpec with MonixTaskSpec with IdiomaticMockito with Matchers with ArgumentMatchersSugar with BeforeAndAfterAll {
+class GcsStorageSuite extends AsyncWordSpec with MonixTaskTest with Matchers with BeforeAndAfterAll {
 
   override implicit val scheduler: Scheduler = Scheduler.io("gcs-storage-suite")
   private val storage = LocalStorageHelper.getOptions.getService
@@ -39,7 +38,7 @@ class GcsStorageSuite extends AsyncWordSpec with MonixTaskSpec with IdiomaticMoc
         _.isDefined shouldBe true
       }
     }
-
+    
     "return empty when getting non existing blob from its id" in {
       val blobName = Gen.identifier.sample.get
       val gcsStorage = GcsStorage(storage)

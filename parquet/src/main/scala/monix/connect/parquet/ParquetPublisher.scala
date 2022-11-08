@@ -67,8 +67,9 @@ private[parquet] final class ParquetPublisher[T](reader: ParquetReader[T]) exten
 
     if (nextIndex > 0)
       fastLoop(o, c, em, nextIndex)
-    else if (nextIndex == 0 && !c.isCanceled)
+    else if (nextIndex == 0 && !c.isCanceled) {
       reschedule(ack, o, c, em)
+    }
   }
 
   def reschedule(ack: Future[Ack], o: Subscriber[T], c: BooleanCancelable, em: ExecutionModel)(

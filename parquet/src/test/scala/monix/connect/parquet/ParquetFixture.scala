@@ -22,9 +22,20 @@ import org.apache.parquet.hadoop.ParquetReader
 import org.scalacheck.Gen
 import org.scalatest.AsyncTestSuite
 
+import java.io.File
+
 trait ParquetFixture {
 
   this: AsyncTestSuite =>
+
+  def deleteRecursively(file: File): Unit = {
+    if (file.isDirectory) {
+      file.listFiles.foreach(deleteRecursively)
+    }
+    if (file.exists && !file.delete) {
+      throw new Exception(s"Unable to delete ${file.getAbsolutePath}")
+    }
+  }
 
   val folder: String = "./results/" + Gen.alphaLowerStr.sample.get
   val genFilePath: () => String = () => folder + "/" + Gen.alphaLowerStr.sample.get + ".parquet"
