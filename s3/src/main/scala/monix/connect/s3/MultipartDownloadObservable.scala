@@ -45,14 +45,14 @@ private[s3] class MultipartDownloadObservable(
     val scheduler = subscriber.scheduler
     val f = {
       for {
-        s3Object <- {
-          s3.listObjects(bucket, prefix = Some(key), maxTotalKeys = Some(1)).headL.onErrorHandleWith { ex =>
+        headObject <- {
+          s3.headObject(bucket, key).onErrorHandleWith { ex =>
             subscriber.onError(ex)
             Task.raiseError(ex)
           }
         }
         chunks <- {
-          downloadChunk(subscriber, s3Object.size(), chunkSize, initialRequest, 0)
+          downloadChunk(subscriber, headObject.contentLength(), chunkSize, initialRequest, 0)
         }
       } yield chunks
     }.runToFuture(scheduler)

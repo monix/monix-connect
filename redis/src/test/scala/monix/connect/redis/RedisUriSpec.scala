@@ -17,25 +17,14 @@
 
 package monix.connect.redis
 
-import io.lettuce.core.KeyValue
-import io.lettuce.core.api.StatefulRedisConnection
 import monix.connect.redis.client.RedisUri
-import monix.eval.Task
-import monix.reactive.Observable
-import org.mockito.IdiomaticMockito
-import org.mockito.MockitoSugar.{verify, when}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
-import scala.jdk.CollectionConverters._
 
-class RedisUriSpec
-  extends AnyFlatSpec with Matchers with IdiomaticMockito with BeforeAndAfterEach with BeforeAndAfterAll
-  with RedisFixture {
-
-  implicit val connection: StatefulRedisConnection[String, Int] = mock[StatefulRedisConnection[String, Int]]
+class RedisUriSpec extends AnyFlatSpec with Matchers with BeforeAndAfterEach with BeforeAndAfterAll {
 
   s"$RedisUri" should "allow to update its properties" in {
     val password = "password"

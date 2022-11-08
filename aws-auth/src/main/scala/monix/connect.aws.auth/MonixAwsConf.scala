@@ -17,12 +17,16 @@
 
 package monix.connect.aws.auth
 
+import monix.connect.aws.auth.configreader.{
+  CamelCaseConfigReader,
+  KebabConfigReader,
+  PascalConfigReader,
+  SnakeCaseConfigReader
+}
 import monix.eval.Task
 import software.amazon.awssdk.regions.Region
-import pureconfig._
-import pureconfig.error.{ConfigReaderException, ConfigReaderFailures}
-import pureconfig.generic.ProductHint
-import pureconfig.generic.auto._
+import pureconfig.{NamingConvention, _}
+import pureconfig.error.ConfigReaderFailures
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
 
 import java.io.File
@@ -72,13 +76,16 @@ object MonixAwsConf {
 
   private[auth] final case class AppConf(monixAws: MonixAwsConf)
 
-  implicit val credentialsProviderReader: ConfigReader[AwsCredentialsProvider] =
-    ConfigReader[AwsCredentialsConf].map(_.credentialsProvider)
-  implicit val providerReader: ConfigReader[Providers.Provider] = ConfigReader[String].map(Providers.fromString)
-  implicit val regionReader: ConfigReader[Region] = ConfigReader[String].map(Region.of)
-  implicit val uriReader: ConfigReader[URI] = ConfigReader[String].map(URI.create)
-  val customHint: NamingConvention => ProductHint[AppConf] = namingConvention =>
-    ProductHint(ConfigFieldMapping(CamelCase, namingConvention), useDefaultArgs = false, allowUnknownKeys = true)
+  private def withConfigReader[A](namingConvention: NamingConvention)(f: ConfigReader[AppConf] => Task[A]): Task[A] = {
+    val derivedConfigReaderTask = namingConvention match {
+      case CamelCase => Task.pure(CamelCaseConfigReader.appConfConfigReader)
+      case SnakeCase => Task.pure(SnakeCaseConfigReader.appConfConfigReader)
+      case PascalCase => Task.pure(PascalConfigReader.appConfConfigReader)
+      case KebabCase => Task.pure(KebabConfigReader.appConfConfigReader)
+      case _ => Task.raiseError(new IllegalArgumentException(s"Naming convention $namingConvention not supported."))
+    }
+    derivedConfigReaderTask.flatMap(f)
+  }
 
   /**
     * Loads the aws auth configuration from the config file with the specified naming
@@ -91,10 +98,13 @@ object MonixAwsConf {
     *
     */
   def load(namingConvention: NamingConvention = KebabCase): Task[MonixAwsConf] = {
-    implicit val hint: ProductHint[AppConf] = customHint(namingConvention)
-    Task
-      .fromEither[ConfigReaderFailures, AppConf] { ConfigReaderException(_) }(ConfigSource.default.load[AppConf])
-      .map(_.monixAws)
+    withConfigReader(namingConvention) { configReader =>
+      Task
+        .fromEither[ConfigReaderFailures, AppConf] { ex =>
+          new IllegalArgumentException(s"Cannot convert configuration to class, failures are: ${ex.prettyPrint(1)}")
+        }(ConfigSource.default.load[AppConf](configReader))
+        .map(_.monixAws)
+    }
   }
 
   /**
@@ -108,10 +118,13 @@ object MonixAwsConf {
     *
     */
   def file(file: File, namingConvention: NamingConvention = KebabCase): Task[MonixAwsConf] = {
-    implicit val hint: ProductHint[AppConf] = customHint(namingConvention)
-    Task
-      .fromEither[ConfigReaderFailures, AppConf] { ConfigReaderException(_) }(ConfigSource.file(file).load[AppConf])
-      .map(_.monixAws)
+    withConfigReader(namingConvention) { configReader =>
+      Task
+        .fromEither[ConfigReaderFailures, AppConf] { ex =>
+          new IllegalArgumentException(s"Cannot convert configuration to class, failures are: ${ex.prettyPrint(1)}")
+        }(ConfigSource.file(file).load[AppConf](configReader))
+        .map(_.monixAws)
+    }
   }
 
 }

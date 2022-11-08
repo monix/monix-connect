@@ -17,15 +17,15 @@
 
 package monix.connect.gcp.storage
 
-import com.google.cloud.storage.{Acl, BlobId, BlobInfo, Cors, StorageClass}
-import com.google.cloud.storage.Acl.{Entity, Group, Project, Role, User}
+import com.google.cloud.storage.Acl._
 import com.google.cloud.storage.BucketInfo.LifecycleRule.{LifecycleAction, LifecycleCondition}
 import com.google.cloud.storage.BucketInfo.{IamConfiguration, LifecycleRule, Logging}
+import com.google.cloud.storage._
 import monix.connect.gcp.storage.configuration.{GcsBlobInfo, GcsBucketInfo}
 import org.scalacheck.Gen
 
+import scala.concurrent.duration.DurationInt
 import scala.jdk.CollectionConverters._
-import scala.concurrent.duration._
 
 trait GscFixture {
 

@@ -17,28 +17,11 @@
 
 package monix.connect.redis
 
-import io.lettuce.core.api.StatefulRedisConnection
-import org.mockito.IdiomaticMockito
-import org.mockito.MockitoSugar.when
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
-class RedisSpec
-  extends AnyWordSpecLike with Matchers with IdiomaticMockito with BeforeAndAfterEach with BeforeAndAfterAll
-  with RedisFixture {
-
-  implicit val connection: StatefulRedisConnection[String, Int] = mock[StatefulRedisConnection[String, Int]]
-
-  override def beforeAll(): Unit = {
-    when(connection.reactive()).thenAnswer(reactiveRedisCommands)
-    super.beforeAll()
-  }
-
-  override def beforeEach(): Unit = {
-    reset(reactiveRedisCommands)
-    reset(reactiveRedisCommands)
-  }
+class RedisSpec extends AnyWordSpecLike with Matchers with BeforeAndAfterEach with BeforeAndAfterAll {
 
   s"${Redis} " should {
     " implement RedisKey" in {

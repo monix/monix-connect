@@ -7,7 +7,7 @@ import monix.eval.{Task, TaskLike}
 import monix.execution.Scheduler
 import monix.reactive.Observable
 import org.scalacheck.Gen
-import org.scalatest.{AsyncTestSuite, TestSuite}
+import org.scalatest.AsyncTestSuite
 import software.amazon.awssdk.regions.Region.AWS_GLOBAL
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.model.GetObjectRequest

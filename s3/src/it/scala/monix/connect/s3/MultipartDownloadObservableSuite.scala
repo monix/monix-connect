@@ -21,17 +21,15 @@ import java.io.FileInputStream
 import monix.eval.Task
 import monix.execution.Scheduler
 import monix.reactive.Observable
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-import software.amazon.awssdk.services.s3.model.NoSuchBucketException
-
-import scala.util.{Failure, Success, Try}
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException
 
 class MultipartDownloadObservableSuite
-  extends AsyncFlatSpec with Matchers with MonixTaskSpec with BeforeAndAfterAll with S3Fixture {
+  extends AsyncFlatSpec with Matchers with MonixTaskTest with BeforeAndAfterAll with S3Fixture {
 
   private val bucketName = "multipart-download-test-bucket"
   override implicit val scheduler = Scheduler.io("multipart-download-observable-suite")
@@ -82,7 +80,7 @@ class MultipartDownloadObservableSuite
         downloadedChunks <- unsafeS3.downloadMultipart(bucketName, key, 25000).toListL
       } yield {
         downloadedChunks.size shouldBe 10
-        expectedArrayByte shouldBe downloadedChunks.flatten
+        expectedArrayByte shouldBe downloadedChunks.flatten.toArray
       }
   }
 
@@ -90,7 +88,7 @@ class MultipartDownloadObservableSuite
       val bucket: String = "non-existing-bucket"
       val key: String = "non/existing/key"
 
-       unsafeS3.downloadMultipart(bucket, key).toListL.assertThrows[NoSuchBucketException] >>
+       unsafeS3.downloadMultipart(bucket, key).toListL.assertThrows[NoSuchKeyException] >>
          unsafeS3.existsObject(bucket, key).asserting(_ shouldBe false)
   }
 

@@ -21,31 +21,20 @@ import monix.eval.Task
 import monix.execution.Scheduler
 
 import java.io.File
-import monix.execution.Scheduler.Implicits.global
-import monix.execution.exceptions.DummyException
-import monix.execution.schedulers.TestScheduler
 import monix.reactive.Observable
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.apache.avro.generic.GenericRecord
 import org.apache.parquet.hadoop.ParquetWriter
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.{AnyWordSpecLike, AsyncWordSpec}
-import org.mockito.IdiomaticMockito
-import org.mockito.MockitoSugar.when
-
-import scala.concurrent.duration._
-import scala.util.Failure
+import org.scalatest.wordspec.AsyncWordSpec
 
 class ParquetSinkUnsafeSpec
-  extends AsyncWordSpec with MonixTaskSpec with IdiomaticMockito with Matchers with AvroParquetFixture
-  with BeforeAndAfterAll {
+  extends AsyncWordSpec with MonixTaskTest with Matchers with AvroParquetFixture with BeforeAndAfterAll {
 
   override implicit val scheduler: Scheduler = Scheduler.io("parquet-sync-unsafe-spec")
   override def afterAll(): Unit = {
-    import scala.reflect.io.Directory
-    val directory = new Directory(new File(folder))
-    directory.deleteRecursively()
+    deleteRecursively(new File(folder))
   }
 
   s"$ParquetSink" should {
@@ -92,25 +81,6 @@ class ParquetSinkUnsafeSpec
       Observable
         .fromIterable(records)
         .consumeWith(ParquetSink.fromWriterUnsafe(null))
-        .attempt
-        .asserting { writeAttempt =>
-          writeAttempt.isLeft shouldBe true
-          val file = new File(filePath)
-          file.exists() shouldBe false
-        }
-    }
-
-    "signals error when the underlying parquet writer throws an error" in {
-      val testScheduler = TestScheduler()
-      val filePath: String = genFilePath()
-      val record: GenericRecord = personToRecord(genPerson.sample.get)
-      val ex = DummyException("Boom!")
-      val parquetWriter = mock[ParquetWriter[GenericRecord]]
-      when(parquetWriter.write(record)).thenThrow(ex)
-
-      Observable
-        .now(record)
-        .consumeWith(ParquetSink.fromWriterUnsafe(parquetWriter))
         .attempt
         .asserting { writeAttempt =>
           writeAttempt.isLeft shouldBe true

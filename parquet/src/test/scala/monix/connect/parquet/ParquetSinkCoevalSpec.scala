@@ -20,32 +20,21 @@ package monix.connect.parquet
 import java.io.File
 import monix.eval.Coeval
 import monix.execution.Scheduler
-import monix.execution.Scheduler.Implicits.global
-import monix.execution.exceptions.DummyException
-import monix.execution.schedulers.TestScheduler
 import monix.reactive.Observable
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.apache.avro.generic.GenericRecord
 import org.apache.parquet.hadoop.ParquetWriter
-import org.mockito.MockitoSugar.when
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.{AnyWordSpecLike, AsyncWordSpec}
-import org.mockito.IdiomaticMockito
-
-import scala.concurrent.duration._
-import scala.util.Failure
+import org.scalatest.wordspec.AsyncWordSpec
 
 class ParquetSinkCoevalSpec
-  extends AsyncWordSpec with MonixTaskSpec with IdiomaticMockito with Matchers with AvroParquetFixture
-  with BeforeAndAfterAll {
+  extends AsyncWordSpec with MonixTaskTest with Matchers with AvroParquetFixture with BeforeAndAfterAll {
 
   override implicit val scheduler: Scheduler = Scheduler.io("parquet-sink-coeval-spec")
 
   override def afterAll(): Unit = {
-    import scala.reflect.io.Directory
-    val directory = new Directory(new File(folder))
-    directory.deleteRecursively()
+    deleteRecursively(new File(folder))
   }
 
   s"$ParquetSink" should {
@@ -69,11 +58,11 @@ class ParquetSinkCoevalSpec
 
     "materialises to 0 when an empty observable is passed" in {
       val filePath: String = genFilePath()
-      val writer: ParquetWriter[GenericRecord] = parquetWriter(filePath, conf, schema)
+      val w: ParquetWriter[GenericRecord] = parquetWriter(filePath, conf, schema)
 
       Observable
         .empty[GenericRecord]
-        .consumeWith(ParquetSink.fromWriter(Coeval(writer)))
+        .consumeWith(ParquetSink.fromWriter(Coeval(w)))
         .asserting { writtenRecords =>
           writtenRecords shouldBe 0
           val file = new File(filePath)
@@ -96,25 +85,6 @@ class ParquetSinkCoevalSpec
         .asserting { attempt =>
           attempt.isLeft shouldBe true
 
-          val file = new File(filePath)
-          file.exists() shouldBe false
-        }
-    }
-
-    "signals error when the underlying parquet writer throws an error" in {
-      val testScheduler = TestScheduler()
-      val filePath: String = genFilePath()
-      val record: GenericRecord = personToRecord(genPerson.sample.get)
-      val ex = DummyException("Boom!")
-      val parquetWriter = mock[ParquetWriter[GenericRecord]]
-      when(parquetWriter.write(record)).thenThrow(ex)
-
-      Observable
-        .now(record)
-        .consumeWith(ParquetSink.fromWriter(Coeval(parquetWriter)))
-        .attempt
-        .asserting { attempt =>
-          attempt.isLeft shouldBe true
           val file = new File(filePath)
           file.exists() shouldBe false
         }

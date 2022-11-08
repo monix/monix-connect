@@ -20,115 +20,42 @@ package monix.connect.dynamodb
 import monix.connect.dynamodb.domain.RetryStrategy
 import monix.eval.Task
 import monix.execution.exceptions.DummyException
-import monix.execution.schedulers.TestScheduler
-import org.mockito.IdiomaticMockito
-import org.mockito.MockitoSugar.{times, verify, when}
+import monix.execution.Scheduler.Implicits.global
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
-import software.amazon.awssdk.services.dynamodb.model._
 
-import scala.concurrent.duration._
-import scala.util.{Failure, Success}
-
-class DynamoDbOpSpec extends AnyWordSpecLike with Matchers with IdiomaticMockito {
-
-  implicit val client: DynamoDbAsyncClient = mock[DynamoDbAsyncClient]
-
-  implicit val s = TestScheduler()
+class DynamoDbOpSpec extends AnyWordSpecLike with Matchers with Fixture {
 
   s"$DynamoDbOp" should {
 
     "create the description of the operation's execution as a recursive function" that {
 
-      val req = mock[DynamoDbRequest]
-      val resp = mock[DynamoDbResponse]
       val retryStrategy = RetryStrategy(retries = 3)
 
       "retries on failure as many times as configured" in {
         //given
-        val req = mock[DynamoDbRequest]
-        val resp = mock[DynamoDbResponse]
-        val op = mock[DynamoDbOp[DynamoDbRequest, DynamoDbResponse]]
         val ex = DummyException("DynamoDB is busy.")
-        when(op.apply(req)(client))
-          .thenReturn(Task.raiseError(ex), Task.raiseError(ex), Task.raiseError(ex), Task(resp))
+        val op = withOperationStub(i => if (i <= 2) Task.raiseError(ex) else Task.pure(resp))
 
         //when
-        val f = DynamoDb.createUnsafe(client).single(req, retryStrategy)(op).runToFuture
+        val t = DynamoDb.createUnsafe(client).single(req, retryStrategy)(op)
 
         //then
-        verify(op, times(retryStrategy.retries + 1)).apply(req)
-        f.value shouldBe Some(Success(resp))
+        t.attempt.runSyncUnsafe() shouldBe Right(resp)
       }
 
       "retries failed executions and correctly returns the last error when retries were exhausted" in {
         //given
-        val req = mock[DynamoDbRequest]
-        val op = mock[DynamoDbOp[DynamoDbRequest, DynamoDbResponse]]
         val ex = DummyException("DynamoDB is busy.")
         val lastEx = DummyException("Final Exception")
-        when(op.apply(req)(client))
-          .thenReturn(Task.raiseError(ex), Task.raiseError(ex), Task.raiseError(ex), Task.raiseError(lastEx))
+        val op = withOperationStub(i => if (i < 2) Task.raiseError(ex) else Task.raiseError(lastEx))
 
         //when
-        val f = DynamoDb.createUnsafe(client).single(req, retryStrategy)(op).runToFuture
+        val t = DynamoDb.createUnsafe(client).single(req, retryStrategy)(op)
 
         //then
-        verify(op, times(retryStrategy.retries + 1)).apply(req)
-        f.value shouldBe Some(Failure(lastEx))
+        t.attempt.runSyncUnsafe() shouldBe Left(lastEx)
       }
-
-      "delays a single failed execution by the configured finite duration" in {
-        //given
-        val delay = 2.seconds
-        val op = mock[DynamoDbOp[DynamoDbRequest, DynamoDbResponse]]
-        val ex = DummyException("DynamoDB is busy.")
-        when(op.apply(req)(client))
-          .thenReturn(Task.raiseError(ex), Task(resp))
-
-        //when
-        val f = DynamoDb.createUnsafe(client).single(req, retryStrategy.copy(backoffDelay = delay))(op).runToFuture(s)
-
-        //then
-        s.tick(1.second)
-        verify(op, times(1)).apply(req)
-
-        //and
-        s.tick(delay * 2)
-        verify(op, times(2)).apply(req)
-        f.value shouldBe Some(Success(resp))
-      }
-
-      "delays each failed execution by the configured finite duration" in {
-        //given
-        val delay = 2.seconds
-        val op = mock[DynamoDbOp[DynamoDbRequest, DynamoDbResponse]]
-        val ex = DummyException("DynamoDB is busy.")
-        when(op.apply(req)(client))
-          .thenReturn(Task.raiseError(ex), Task.raiseError(ex), Task.raiseError(ex), Task(resp))
-
-        //when
-        val f = DynamoDb.createUnsafe(client).single(req, retryStrategy.copy(backoffDelay = delay))(op).runToFuture(s)
-
-        //then
-        s.tick(1.second)
-        verify(op, times(1)).apply(req)
-
-        //then
-        s.tick(2.seconds)
-        verify(op, times(2)).apply(req)
-
-        //then
-        s.tick(2.seconds)
-        verify(op, times(3)).apply(req)
-
-        //and
-        s.tick(delay * 2)
-        verify(op, times(4)).apply(req)
-        f.value shouldBe Some(Success(resp))
-      }
-
     }
   }
 }

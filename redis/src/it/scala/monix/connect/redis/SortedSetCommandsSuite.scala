@@ -4,7 +4,7 @@ import monix.connect.redis.client.RedisCmd
 import monix.connect.redis.domain.{VScore, ZArgs, ZRange}
 import monix.eval.Task
 import monix.execution.Scheduler
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.scalacheck.Gen
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AsyncFlatSpec
@@ -14,7 +14,7 @@ import org.scalatest.{Assertion, BeforeAndAfterAll, BeforeAndAfterEach}
 import scala.concurrent.duration._
 
 class SortedSetCommandsSuite
-  extends AsyncFlatSpec with MonixTaskSpec with RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll
+  extends AsyncFlatSpec with MonixTaskTest with RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll
     with Eventually {
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
@@ -559,11 +559,11 @@ class SortedSetCommandsSuite
       for {
         _ <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScoreC, vScoreD, vScore1, vScore2, vScore3)
         rangeAll <- sortedSet.zRangeByScore(k1, ZRange.unbounded()).toListL
-        rangeEmpty <- sortedSet.zRangeByScore(k1, ZRange(8, 13)).toListL
-        range25 <- sortedSet.zRangeByScore(k1, ZRange(1, 5)).toListL
-        range34 <- sortedSet.zRangeByScore(k1, ZRange(2, 4)).toListL
-        lt4 <- sortedSet.zRangeByScore(k1, ZRange.lt(4)).toListL
-        gte4 <- sortedSet.zRangeByScore(k1, ZRange.gte(4)).toListL
+        rangeEmpty <- sortedSet.zRangeByScore(k1, ZRange(BigInt(8), BigInt(13))).toListL
+        range25 <- sortedSet.zRangeByScore(k1, ZRange(BigInt(1), BigInt(5))).toListL
+        range34 <- sortedSet.zRangeByScore(k1, ZRange(BigInt(2), BigInt(4))).toListL
+        lt4 <- sortedSet.zRangeByScore(k1, ZRange.lt(BigInt(4))).toListL
+        gte4 <- sortedSet.zRangeByScore(k1, ZRange.gte(BigInt(4))).toListL
         limit <- sortedSet.zRangeByScore(k1, ZRange.unbounded(), 4, 0).toListL
         limitAndOffset <- sortedSet.zRangeByScore(k1, ZRange.unbounded(), 4, 4).toListL
       } yield {
@@ -592,11 +592,11 @@ class SortedSetCommandsSuite
       for {
         _ <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScoreC, vScoreD, vScore1, vScore2, vScore3)
         rangeAll <- sortedSet.zRangeByScoreWithScores(k1, ZRange.unbounded()).toListL
-        rangeEmpty <- sortedSet.zRangeByScoreWithScores(k1, ZRange(8, 13)).toListL
-        range25 <- sortedSet.zRangeByScoreWithScores(k1, ZRange(1, 5)).toListL
-        range34 <- sortedSet.zRangeByScoreWithScores(k1, ZRange(2, 4)).toListL
-        lt4 <- sortedSet.zRangeByScoreWithScores(k1, ZRange.lt(4)).toListL
-        gte4 <- sortedSet.zRangeByScoreWithScores(k1, ZRange.gte(4)).toListL
+        rangeEmpty <- sortedSet.zRangeByScoreWithScores(k1, ZRange(BigInt(8), BigInt(13))).toListL
+        range25 <- sortedSet.zRangeByScoreWithScores(k1, ZRange(BigInt(1), BigInt(5))).toListL
+        range34 <- sortedSet.zRangeByScoreWithScores(k1, ZRange(BigInt(2), BigInt(4))).toListL
+        lt4 <- sortedSet.zRangeByScoreWithScores(k1, ZRange.lt(BigInt(4))).toListL
+        gte4 <- sortedSet.zRangeByScoreWithScores(k1, ZRange.gte(BigInt(4))).toListL
         limit <- sortedSet.zRangeByScoreWithScores(k1, ZRange.unbounded(), 4, 0).toListL
         limitAndOffset <- sortedSet.zRangeByScoreWithScores(k1, ZRange.unbounded(), 4, 4).toListL
       } yield {
@@ -736,9 +736,9 @@ class SortedSetCommandsSuite
       for {
         _ <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScoreC, vScore1, vScore2, vScore3)
         l0 <- sortedSet.zRevRangeByScore(k1, ZRange.unbounded()).toListL
-        l1 <- sortedSet.zRevRangeByScore(k1, ZRange(1, 2)).toListL
-        l2 <- sortedSet.zRevRangeByScore(k1, ZRange.gt(2)).toListL
-        l3 <- sortedSet.zRevRangeByScore(k1, ZRange.lte(2)).toListL
+        l1 <- sortedSet.zRevRangeByScore(k1, ZRange(BigInt(1), BigInt(2))).toListL
+        l2 <- sortedSet.zRevRangeByScore(k1, ZRange.gt(BigInt(2))).toListL
+        l3 <- sortedSet.zRevRangeByScore(k1, ZRange.lte(BigInt(2))).toListL
         lLimit <- sortedSet.zRevRangeByScore(k1, ZRange.unbounded(), 4).toListL
         lLimitAndOffset <- sortedSet.zRevRangeByScore(k1, ZRange.unbounded(), 4, 3).toListL
       } yield {
@@ -764,10 +764,11 @@ class SortedSetCommandsSuite
     utfConnection.use[Task, Assertion] { case RedisCmd(_, _, _, _, _, sortedSet, _) =>
       for {
         _ <- sortedSet.zAdd(k1, vScoreA, vScoreB, vScoreC, vScore1, vScore2, vScore3)
+        zrange: ZRange[BigInt] =  ZRange(BigInt(1), BigInt(2))
         l0 <- sortedSet.zRevRangeByScoreWithScores(k1, ZRange.unbounded()).toListL
-        l1 <- sortedSet.zRevRangeByScoreWithScores(k1, ZRange(1, 2)).toListL
-        l2 <- sortedSet.zRevRangeByScoreWithScores(k1, ZRange.gt(2)).toListL
-        l3 <- sortedSet.zRevRangeByScoreWithScores(k1, ZRange.lte(2)).toListL
+        l1 <- sortedSet.zRevRangeByScoreWithScores(k1,zrange).toListL
+        l2 <- sortedSet.zRevRangeByScoreWithScores(k1, ZRange.gt(BigInt(2))).toListL
+        l3 <- sortedSet.zRevRangeByScoreWithScores(k1, ZRange.lte(BigInt(2))).toListL
         lLimit <- sortedSet.zRevRangeByScoreWithScores(k1, ZRange.unbounded(), 4).toListL
         lLimitAndOffset <- sortedSet.zRevRangeByScoreWithScores(k1, ZRange.unbounded(), 4, 3).toListL
       } yield {

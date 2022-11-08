@@ -2,7 +2,7 @@ package monix.connect.redis
 
 import monix.eval.Task
 import monix.execution.Scheduler
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.scalacheck.Gen
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -11,7 +11,7 @@ import org.scalatest.{Assertion, BeforeAndAfterAll, BeforeAndAfterEach}
 import scala.concurrent.duration._
 
 class StringCommandsSuite
-  extends AsyncFlatSpec with MonixTaskSpec with RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll {
+  extends AsyncFlatSpec with MonixTaskTest with RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll {
 
   override implicit val scheduler: Scheduler = Scheduler.io("string-commands-suite")
 
@@ -229,13 +229,17 @@ class StringCommandsSuite
   }
 
   "incrByFloat" should "increment the float value of a key by the given amount" in {
+    def truncateAt2AndRound(n: Double) = {BigDecimal(n).setScale(2, BigDecimal.RoundingMode.FLOOR).toDouble}
     val k1: K = genRedisKey.sample.get
-    val n: Double = BigDecimal(Gen.choose(0, 20).sample.get).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
-    val v1: Double = BigDecimal(Gen.choose(n + 1, 100).sample.get).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
+    val n: Int = Gen.choose(0, 20).sample.get
+    val v: Int = Gen.choose(n + 1, 100).sample.get
+
+    val num: Double = BigDecimal(n).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
+    val value: Double = BigDecimal(v).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
 
     utfConnection.use { cmd =>
-      cmd.string.append(k1, v1.toString) *> cmd.string.incrByFloat(k1, n)
-      }.asserting(_ shouldBe Some(v1 + n))
+      cmd.string.append(k1, value.toString) *> cmd.string.incrByFloat(k1, num)
+      }.asserting(_.map(truncateAt2AndRound) shouldBe Some(value + n).map(truncateAt2AndRound))
   }
 
   "mGet" should "get the values of all the given keys" in {

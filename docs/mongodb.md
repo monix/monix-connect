@@ -19,6 +19,11 @@ to interoperate with collections is `CollectionOperator[Doc]`, which is composed
 Each of these components is explained in detail in the following sub-sections, 
 but before we will see how configure and connect to the database server.
 
+### No Scala3 support
+
+This connector depends on the mongodb-scala-driver which is [not yet published for Scala3](https://mvnrepository.com/artifact/org.mongodb.scala/mongo-scala-driver) as it's build in gradle 
+and there is many code to be ported to the new Scala3 macros. See community status request.  https://www.mongodb.com/community/forums/t/scala-3-support/115681
+
 ## Dependency
 
 Add the following dependency to get started:
@@ -418,6 +423,25 @@ connection.use { operator =>
 }.runToFuture
 ```
 
+#### findOne
+
+Finds the first encountered document in the collection that matched the query filter if exists, or the empty 
+option if does not.
+```scala
+import cats.effect.Resource
+import com.mongodb.client.model.Filters
+import monix.connect.mongodb.client.CollectionOperator
+import monix.eval.Task
+import monix.reactive.Observable
+
+val connection: Resource[Task, CollectionOperator[Employee]]
+connection.use { operator =>
+  val rioEmployee: Task[Option[Employee]] = operator.source.findOne(Filters.eq("city", "Rio"))
+  //business logic here
+  rioEmployee
+}.runToFuture
+```
+
 #### findOneAndDelete
 
 Atomically _find_ a document and _remove_ it.
@@ -481,6 +505,8 @@ connection.use(_.source.findOneAndUpdate(filter, update)).runToFuture
 The `Single` and `Sink` components are documented together since they both implement exactly the same set of
 operations _insert_, _delete_, _replace_ and _update_, although with the difference that the first executes the
 operation in single task and the latter pipes the elements of the stream to a _Monix_ `Consumer` to execute them.
+Most of the `Sink` consumers have an alternative method with the suffix `Par`, which executes requests grouped
+in sequences in a parallel fashion as batch operations.
 
 The following sub-sections represent the list of different _operations_ and _sinks_ available to use, with a small
 example on each one.
@@ -512,11 +538,18 @@ import monix.connect.mongodb.client.CollectionOperator
 import monix.eval.Task
 import monix.reactive.Observable
 
-val employees = List(Employee("Luke", "London", 41))
+val employee = List(Employee("Luke", "London", 41))
 val connection: Resource[Task, CollectionOperator[Employee]]
 connection.use { operator =>
-  Observable.from(employees) // Observable[Employee]
+  Observable.from(employee) // Observable[Employee]
     .consumeWith(operator.sink.insertOne())
+}.runToFuture
+
+val employees = List(Employee("Luke", "London", 41), Employee("Matt", "Warsaw", 23), 
+  Employee("Jack", "Berlin", 24), Employee("John", "London", 41))
+connection.use { operator =>
+  Observable.from(employees.grouped(2).toList) // Observable[List[Employee]]
+    .consumeWith(operator.sink.insertOnePar())
 }.runToFuture
 ```
 
@@ -596,6 +629,13 @@ connection.use { operator =>
     .map(name => Filters.eq("name", name)) // Observable[Bson]
     .consumeWith(operator.sink.deleteOne())
 }.runToFuture
+
+connection.use { operator =>
+  // employees to be deleted from the collection
+  Observable.from(List("Lauren", "Marie", "Simon", "Matt").grouped(2).toList) // Observable[List[String]] 
+    .map(names => names.map(name => Filters.eq("name", name))) // Observable[List[Bson]]
+    .consumeWith(operator.sink.deleteOnePar())
+}.runToFuture
 ```
 
 #### deleteMany
@@ -633,6 +673,13 @@ connection.use { operator =>
   Observable.from(List("Germany", "Italy", "Turkey")) // Observable[String] 
     .map(city => Filters.eq("city", city)) // Observable[Bson]
     .consumeWith(operator.sink.deleteMany())
+}.runToFuture
+
+connection.use { operator =>
+  // all employees from `Germany`, `Italy` or `Turkey` were fired (deleted)
+  Observable.from(List("Germany", "Italy", "Turkey").grouped(2).toList) // Observable[List[String]] 
+    .map(cities => cities.map(city => Filters.eq("city", city))) // Observable[List[Bson]]
+    .consumeWith(operator.sink.deleteManyPar())
 }.runToFuture
 ```
 
@@ -680,6 +727,18 @@ connection.use { operator =>
   Observable.from(replacements) // Observable[(Bson, Employee)]
     .consumeWith(operator.sink.replaceOne())
 }.runToFuture
+
+val replacements2: Seq[(Bson, Employee)] =
+  List(
+    (Filters.eq("name", "Employee1"), Employee("Employee5", 43, "Rio")),
+    (Filters.eq("name", "Employee2"), Employee("Employee6", 37, "Rio")),
+    (Filters.eq("name", "Employee3"), Employee("Employee7", 43, "Rio")),
+    (Filters.eq("name", "Employee4"), Employee("Employee8", 37, "Rio"))
+  )
+connection.use { operator =>
+  Observable.from(replacements2.grouped(2).toList) // Observable[List[(Bson, Employee)]]
+    .consumeWith(operator.sink.replaceOnePar())
+}.runToFuture
 ```
 
 ### Update
@@ -724,6 +783,16 @@ connection.use { operator =>
   Observable.from(updateElements) // Observable[(Bson, Bson)]
     .consumeWith(operator.sink.updateOne())
 }.runToFuture
+
+connection.use { operator =>
+    val filter = Filters.eq("city", "Porto")
+    val update = Updates.set("city", "Lisbon")
+    val updateElements: List[List[(Bson, Bson)]] = List.fill(4)((filter, update)).grouped(2).toList
+    // imagine that a company wants to send four of its employees from Porto to Lisbon
+    Observable.from(updateElements) // Observable[List[(Bson, Bson)]]
+      .consumeWith(operator.sink.updateOnePar())
+  }.runToFuture
+
 ```
 
 #### updateMany
@@ -762,8 +831,61 @@ connection.use { operator =>
     .map(city => (Filters.eq("city", city), Updates.pull("hobbies", "Table Tennis"))) // Observable[(Bson, Bson)]
     .consumeWith(operator.sink.updateMany())
 }.runToFuture
+
+connection.use { operator =>
+  val cities: Set[String] = Set("Seattle", "Nairobi", "Dakar")
+  Observable.from(cities.grouped(2).toList) // Observable[String]
+    .map(cities => cities.map(city => (
+      Filters.eq("city", city),
+      Updates.pull("hobbies", "Table Tennis")
+    )).toList) // Observable[List[(Bson, Bson)]]
+    .consumeWith(operator.sink.updateManyPar())
+}.runToFuture
 ```
 
+### Indexing
+
+#### createIndex
+
+Creates an index on the collection according to the specified arguments.
+
+_Single_:
+
+```scala
+import cats.effect.Resource
+import com.mongodb.client.model.{Filters, IndexModel, Indexes, Updates}
+import monix.connect.mongodb.domain.UpdateResult
+import monix.connect.mongodb.client.CollectionOperator
+import monix.eval.Task
+
+val connection: Resource[Task, CollectionOperator[Employee]]
+val key = new IndexModel(Indexes.ascending("name")).getKeys
+val t: Task[UpdateResult] = connection.use(_.single.createIndex(key))
+```
+
+#### createIndexes
+
+Create multiple indexes on the collection according to the specified arguments.
+
+_Single_:
+
+```scala
+import cats.effect.Resource
+import com.mongodb.client.model.{CreateIndexOptions, Filters, IndexModel, IndexOptions, Indexes, Updates}
+import monix.connect.mongodb.domain.UpdateResult
+import monix.connect.mongodb.client.CollectionOperator
+import monix.eval.Task
+
+import java.util.concurrent.TimeUnit
+
+val connection: Resource[Task, CollectionOperator[Employee]]
+val indexes = List(
+  new IndexModel(Indexes.descending("name")),
+  new IndexModel(Indexes.ascending("city"), new IndexOptions().background(true).unique(false))
+)
+val options = new CreateIndexOptions().maxTime(5, TimeUnit.SECONDS)
+val t: Task[UpdateResult] = connection.use(_.single.createIndexes(indexes, options))
+```
 
 
  

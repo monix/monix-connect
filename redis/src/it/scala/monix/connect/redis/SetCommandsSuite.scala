@@ -3,7 +3,7 @@ package monix.connect.redis
 import monix.connect.redis.client.RedisCmd
 import monix.eval.Task
 import monix.execution.Scheduler
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.scalacheck.Gen
 import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AsyncFlatSpec
@@ -13,7 +13,7 @@ import org.scalatest.{Assertion, BeforeAndAfterAll, BeforeAndAfterEach}
 import scala.concurrent.duration._
 
 class SetCommandsSuite
-  extends AsyncFlatSpec with MonixTaskSpec with RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll
+  extends AsyncFlatSpec with MonixTaskTest with RedisIntegrationFixture with Matchers with BeforeAndAfterEach with BeforeAndAfterAll
     with Eventually {
 
   override implicit val patienceConfig: PatienceConfig = PatienceConfig(4.seconds, 100.milliseconds)
@@ -332,7 +332,7 @@ class SetCommandsSuite
           moved shouldBe true
           s1 shouldNot contain theSameElementsAs m1
           s2 shouldNot contain theSameElementsAs m2
-          union should contain theSameElementsAs m1 ++ m2
+          union should contain theSameElementsAs (m1 ++ m2).toSet
           //although the list are not equal as at the beginning because of the move operation, its union still is the same
           diff should contain theSameElementsAs List(m1.head)
           //the difference between the k3 and k1 is equal to the element that was moved

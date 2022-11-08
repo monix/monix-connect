@@ -3,7 +3,7 @@ package monix.connect.sqs
 import monix.connect.sqs.domain.{QueueName, QueueUrl}
 import monix.eval.Task
 import monix.execution.Scheduler
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AsyncFlatSpec
@@ -12,9 +12,9 @@ import software.amazon.awssdk.services.sqs.model.{QueueAttributeName, QueueDoesN
 
 import scala.concurrent.duration.DurationInt
 
-class OperatorSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with BeforeAndAfterAll with SqsITFixture {
+class OperatorSuite extends AsyncFlatSpec with MonixTaskTest with Matchers with BeforeAndAfterAll with SqsITFixture {
 
-  implicit val scheduler = Scheduler.io("sqs-operator-suite")
+  override implicit val scheduler = Scheduler.io("sqs-operator-suite")
 
   s"Sqs" can "create queue and check it exists" in {
     val queueName = randomQueueName

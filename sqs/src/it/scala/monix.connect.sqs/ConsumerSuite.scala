@@ -3,7 +3,7 @@ package monix.connect.sqs
 import monix.eval.Task
 import monix.execution.Scheduler
 import monix.reactive.Observable
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.scalacheck.Gen
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatest.concurrent.ScalaFutures
@@ -12,10 +12,10 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
 
-class ConsumerSuite extends AsyncFlatSpecLike with MonixTaskSpec with Matchers with ScalaFutures with BeforeAndAfterAll with SqsITFixture {
+class ConsumerSuite extends AsyncFlatSpecLike with MonixTaskTest with Matchers with ScalaFutures with BeforeAndAfterAll with SqsITFixture {
 
   implicit val defaultConfig: PatienceConfig = PatienceConfig(10.seconds, 300.milliseconds)
-  implicit def scheduler: Scheduler = Scheduler.io("sqs-consumer-suite")
+  override implicit def scheduler: Scheduler = Scheduler.io("sqs-consumer-suite")
 
   "receiveSingleManualDelete" should "respect `inFlightMessages` and process up to 10 messages at a time" in {
     val messages = Gen.listOfN(15, genFifoMessage(defaultGroupId)).sample.get
