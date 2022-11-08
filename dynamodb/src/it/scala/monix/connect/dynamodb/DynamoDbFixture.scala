@@ -4,13 +4,12 @@ import java.net.URI
 import monix.eval.Task
 import monix.execution.Scheduler
 import org.scalacheck.Gen
-import org.scalatest.{AsyncTestSuite, TestSuite}
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.{AttributeDefinition, AttributeValue, BillingMode, CreateTableRequest, CreateTableResponse, DeleteTableRequest, DeleteTableResponse, GetItemRequest, KeySchemaElement, KeyType, ProvisionedThroughput, PutItemRequest, ScalarAttributeType}
 
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 
 trait DynamoDbFixture {
@@ -22,7 +21,7 @@ trait DynamoDbFixture {
   val staticAwsCredProvider = StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x"))
   val tableName = "citizens"
 
-  protected implicit val client = DynamoDbAsyncClient
+  protected implicit val client: DynamoDbAsyncClient = DynamoDbAsyncClient
     .builder
     .credentialsProvider(staticAwsCredProvider)
     .endpointOverride(new URI("http://localhost:4569"))
@@ -34,7 +33,6 @@ trait DynamoDbFixture {
   val keyMap = (citizenId: String, city: String) => Map("citizenId" -> strAttr(citizenId), "city" -> strAttr(city))
 
   def citizenItem(citizenId: String, city: String, age: Int) =  Map("citizenId" -> strAttr(citizenId), "city" -> strAttr(city)) ++ Map("age" -> doubleAttr(age))
-
 
   def putItemRequest(tableName: String, citizen: Citizen): PutItemRequest = putItemRequest(tableName, citizen.citizenId, citizen.city, citizen.age)
 

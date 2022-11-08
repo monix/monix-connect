@@ -3,15 +3,15 @@ package monix.connect.sqs
 import monix.connect.aws.auth.MonixAwsConf
 import monix.eval.Task
 import monix.execution.Scheduler
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import pureconfig.KebabCase
 
-class SqsSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with BeforeAndAfterAll with SqsITFixture {
+class SqsSuite extends AsyncFlatSpec with MonixTaskTest with Matchers with BeforeAndAfterAll with SqsITFixture {
 
-  implicit val scheduler = Scheduler.io("sqs-suite")
+  override implicit val scheduler = Scheduler.io("sqs-suite")
 
   s"$Sqs" can "be created from config file" in {
     Sqs.fromConfig.use { sqs =>

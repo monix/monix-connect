@@ -9,3 +9,4 @@ addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.5.10")
 addSbtPlugin("pl.project13.scala"   % "sbt-jmh"         % "0.4.3")
 addSbtPlugin("com.thesamet" % "sbt-protoc" % "1.0.3")
 libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.11.11"
+addSbtPlugin("ch.epfl.scala" % "sbt-scala3-migrate" % "0.5.1")

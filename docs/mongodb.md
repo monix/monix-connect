@@ -19,6 +19,11 @@ to interoperate with collections is `CollectionOperator[Doc]`, which is composed
 Each of these components is explained in detail in the following sub-sections, 
 but before we will see how configure and connect to the database server.
 
+### No Scala3 support
+
+This connector depends on the mongodb-scala-driver which is [not yet published for Scala3](https://mvnrepository.com/artifact/org.mongodb.scala/mongo-scala-driver) as it's build in gradle 
+and there is many code to be ported to the new Scala3 macros. See community status request.  https://www.mongodb.com/community/forums/t/scala-3-support/115681
+
 ## Dependency
 
 Add the following dependency to get started:

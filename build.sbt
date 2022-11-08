@@ -1,6 +1,7 @@
+import Dependencies.Versions
 import sbt.Keys.version
 
-val monixConnectSeries = "0.5.1"
+val monixConnectSeries = "0.7.0"
 
 inThisBuild(List(
   organization := "io.monix",
@@ -16,13 +17,21 @@ inThisBuild(List(
   )
 ))
 
-skip in publish := true //requered by sbt-ci-release
+skip in publish := true //required by sbt-ci-release
 
-lazy val sharedSettings = Seq(
-  scalaVersion       := "2.13.8",
-  crossScalaVersions := Seq("2.12.17", "2.13.8"),
-  scalafmtOnCompile  := false,
-  scalacOptions ++= Seq(
+def sharedSettings(publishForScala3: Boolean= true) = {
+  Seq(
+    scalaVersion := "2.13.8",
+    crossScalaVersions := Seq("2.12.17", "2.13.8") ++ (if (publishForScala3) Seq("3.1.2") else Seq.empty)
+  ,
+    publishArtifact := (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((3, _)) => publishForScala3
+      case _ => true
+    }),
+    scalafmtOnCompile := false
+  ,
+    mimaFailOnNoPrevious := false,
+    scalacOptions ++= Seq(
     // warnings
     "-unchecked", // able additional warnings where generated code depends on assumptions
     "-deprecation", // emit warning for usages of deprecated APIs
@@ -33,8 +42,9 @@ lazy val sharedSettings = Seq(
     "-language:experimental.macros"
   ),
   //warnUnusedImports
-  scalacOptions in (Compile, console) ++= Seq("-Ywarn-unused:imports"),
-    // Linter
+  scalacOptions in(Compile, console) ++= Seq("-Ywarn-unused:imports")
+  ,
+  // Linter
   scalacOptions ++= Seq(
     "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
     "-Ywarn-dead-code", // Warn when dead code is identified.
@@ -52,11 +62,14 @@ lazy val sharedSettings = Seq(
     "-Xlint:option-implicit", // Option.apply used implicit view
     "-Xlint:delayedinit-select", // Selecting member of DelayedInit
     //"-Xlint:package-object-classes" // Class or object defined in package object
-  ),
+  )
+  ,
 
   // ScalaDoc settings
-  scalacOptions in (Compile, doc) ++= Seq("-no-link-warnings"),
-  autoAPIMappings := true,
+  scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings")
+  ,
+  autoAPIMappings := true
+  ,
   scalacOptions in ThisBuild ++= Seq(
     // Note, this is used by the doc-source-url feature to determine the
     // relative path of a given source file. If it's not a prefix of a the
@@ -65,22 +78,34 @@ lazy val sharedSettings = Seq(
     // definitely not what we want.
     "-sourcepath",
     file(".").getAbsolutePath.replaceAll("[.]$", "")
-  ),
-  parallelExecution in Test             := true,
-  parallelExecution in ThisBuild        := true,
-  testForkedParallel in Test            := true,
-  testForkedParallel in ThisBuild       := true,
-  concurrentRestrictions in Global += Tags.limit(Tags.Test, 3),
-  logBuffered in Test            := false,
-  logBuffered in IntegrationTest := false,
+  )
+  ,
+  parallelExecution in Test := true
+  ,
+  parallelExecution in ThisBuild := true
+  ,
+  testForkedParallel in Test := true
+  ,
+  testForkedParallel in ThisBuild := true
+  ,
+  concurrentRestrictions in Global += Tags.limit(Tags.Test, 3)
+  ,
+  logBuffered in Test := false
+  ,
+  logBuffered in IntegrationTest := false
+  ,
   //dependencyClasspath in IntegrationTest := (dependencyClasspath in IntegrationTest).value ++ (exportedProducts in Test).value,
   // https://github.com/sbt/sbt/issues/2654
-  incOptions := incOptions.value.withLogRecompileOnMacro(false),
-  pomIncludeRepository    := { _ => false }, // removes optional dependencies
+  incOptions := incOptions.value.withLogRecompileOnMacro(false)
+  ,
+  pomIncludeRepository := { _ => false }
+  , // removes optional dependencies
 
   // ScalaDoc settings
-  autoAPIMappings := true,
-  apiURL := Some(url("https://monix.github.io/monix-connect/api/")),
+  autoAPIMappings := true
+  ,
+  apiURL := Some(url("https://monix.github.io/monix-connect/api/"))
+  ,
 
   headerLicense := Some(HeaderLicense.Custom(
     """|Copyright (c) 2020-2021 by The Monix Connect Project Developers.
@@ -97,15 +122,32 @@ lazy val sharedSettings = Seq(
        |WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
        |See the License for the specific language governing permissions and
        |limitations under the License."""
-      .stripMargin)),
+      .stripMargin))
+  ,
 
-  doctestTestFramework      := DoctestTestFramework.ScalaTest,
-  doctestTestFramework      := DoctestTestFramework.ScalaCheck,
-  doctestOnlyCodeBlocksMode := true
-)
+  doctestTestFramework := DoctestTestFramework.ScalaTest
+  ,
+  doctestTestFramework := DoctestTestFramework.ScalaCheck
+  ,
+  doctestOnlyCodeBlocksMode := true,
+
+  )
+}
 
 def mimaSettings(projectName: String) = Seq(
-  mimaPreviousArtifacts := Set("io.monix" %% projectName % monixConnectSeries),
+  mimaPreviousArtifacts := {
+    /**
+      * Needed in order to avoid running mima compatibility checks when compatibility series is equal to the project
+      * version. Because in such case the compatibility series version does not exist and the mima checks would
+      * otherwise fail.
+      */
+    val isFirstCompatibilitySeriesRelease = monixConnectSeries.endsWith("0")
+    if (isFirstCompatibilitySeriesRelease) {
+      Set.empty
+    } else {
+      Set("io.monix" %% projectName % monixConnectSeries)
+    }
+  },
   mimaBinaryIssueFilters ++= MimaFilters.allMimaFilters
 )
 
@@ -119,7 +161,7 @@ val IT = config("it") extend Test
 //=> published modules
 lazy val monixConnect = (project in file("."))
   .configs(IntegrationTest, IT)
-  .settings(sharedSettings)
+  .settings(sharedSettings())
   .settings(name := "monix-connect")
   .aggregate(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, sqs, elasticsearch, awsAuth)
   .dependsOn(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, sqs, elasticsearch, awsAuth)
@@ -127,12 +169,32 @@ lazy val monixConnect = (project in file("."))
 lazy val akka = monixConnector("akka", Dependencies.Akka)
 
 lazy val dynamodb = monixConnector("dynamodb", Dependencies.DynamoDb).aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
+  .settings(libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+    case Some((3, _)) => Seq.empty
+    case _ => Seq("org.mockito" %% "mockito-scala" % Versions.Mockito % Test)
+  }))
 
 lazy val hdfs = monixConnector("hdfs", Dependencies.Hdfs)
+  .settings(libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+    case Some((3, _)) => Seq.empty
+    case _ => Seq("org.mockito" %% "mockito-scala" % Versions.Mockito % Test)
+  }))
 
-lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb, isMimaEnabled = false, isITParallelExecution = true)
 
-lazy val parquet = monixConnector("parquet", Dependencies.Parquet)
+lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb, isMimaEnabled = false, isITParallelExecution = true, scala3Publish = false)
+  .settings(libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+    case Some((3, _)) => Seq.empty
+    case _ => Seq(
+      "org.mongodb.scala" %% "mongo-scala-driver"           % Versions.MongoScala,
+      "org.mongodb.scala" %% "mongo-scala-bson"             % Versions.MongoScala % Test,
+      "org.mockito" %% "mockito-scala" % Versions.Mockito % Test cross CrossVersion.for3Use2_13)
+  }))
+
+lazy val parquet = monixConnector("parquet", Dependencies.Parquet, scala3Publish = false)
+  .settings(libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+    case Some((3, _)) => Seq.empty
+    case _ => Seq("org.mockito" %% "mockito-scala" % Versions.Mockito % Test)
+  }))
 
 val protoTestSettings = Seq(
     Compile / PB.targets := Seq(
@@ -150,28 +212,41 @@ lazy val s3 = monixConnector("s3", Dependencies.S3, isMimaEnabled = false, isITP
 lazy val sqs = monixConnector("sqs", Dependencies.Sqs, isMimaEnabled = false, isITParallelExecution = true)
   .aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
 
-lazy val gcs = monixConnector("gcs", Dependencies.GCS, isITParallelExecution = false)
+lazy val gcs = monixConnector("gcs", Dependencies.GCS , isITParallelExecution = false)
+  .settings(libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+    case Some((3, _)) => Seq.empty
+    case _ => Seq("org.mockito" %% "mockito-scala" % Versions.Mockito % Test)
+  }))
 
 lazy val elasticsearch =  monixConnector("elasticsearch", Dependencies.Elasticsearch, isITParallelExecution = true)
 
 //internal
-
 lazy val awsAuth = monixConnector("aws-auth", Dependencies.AwsAuth, isMimaEnabled = false)
 
 def monixConnector(
-  connectorName: String,
-  projectDependencies: Seq[ModuleID],
-  isMimaEnabled: Boolean = true,
-  isITParallelExecution: Boolean = false): Project = {
+                    connectorName: String,
+                    projectDependencies: Seq[ModuleID],
+                    isMimaEnabled: Boolean = true,
+                    isITParallelExecution: Boolean = false,
+                    scala3Publish: Boolean = true) = {
   Project(id = connectorName, base = file(connectorName))
     .enablePlugins(AutomateHeaderPlugin)
-    .settings(name := s"monix-$connectorName", libraryDependencies ++= projectDependencies, Defaults.itSettings,
+    .settings(name := s"monix-$connectorName",
+      libraryDependencies ++= projectDependencies,
+      Defaults.itSettings,
       IntegrationTest / parallelExecution := isITParallelExecution,
-      IntegrationTest / testForkedParallel := isITParallelExecution)
-    .settings(sharedSettings)
+      IntegrationTest / testForkedParallel := isITParallelExecution
+    )
+    .settings(sharedSettings(scala3Publish))
     .configs(IntegrationTest, IT)
     .enablePlugins(AutomateHeaderPlugin)
-    .settings(if(isMimaEnabled) mimaSettings(s"monix-$connectorName") else Seq.empty)
+    .settings(
+      if(isMimaEnabled) {
+        mimaSettings(s"monix-$connectorName")
+      } else { Seq.empty },
+      Compile / doc / sources := { if (scalaVersion.value.startsWith("3.")) Seq.empty else (Compile / doc / sources).value },
+      Test / doc / sources := { if (scalaVersion.value.startsWith("3.")) Seq.empty else (Compile / doc / sources).value }
+    )
 }
 
 //=> non published modules
@@ -187,7 +262,7 @@ lazy val docs = project
   .settings(
     moduleName := "monix-connect-docs",
     name := moduleName.value,
-    sharedSettings,
+    sharedSettings(publishForScala3 = false),
     skipOnPublishSettings,
     mdocSettings
   )
@@ -235,6 +310,7 @@ def minorVersion(version: String): String = {
   s"$major.$minor"
 }
 
+
 val updateSiteVariables = taskKey[Unit]("Update site variables")
 updateSiteVariables in ThisBuild := {
   val file =
@@ -263,3 +339,4 @@ updateSiteVariables in ThisBuild := {
 
   IO.write(file, fileContents)
 }
+
