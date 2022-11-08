@@ -22,7 +22,7 @@ skip in publish := true //required by sbt-ci-release
 def sharedSettings(publishForScala3: Boolean= true) = {
   Seq(
     scalaVersion := "2.13.8",
-    crossScalaVersions := Seq("2.12.17", "2.13.8") ++ (if (publishForScala3) Seq("3.1.2") else Seq.empty)
+    crossScalaVersions := Seq("2.12.17", "2.13.8") ++ (if (publishForScala3) Seq("3.1.3") else Seq.empty)
   ,
     publishArtifact := (CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((3, _)) => publishForScala3
