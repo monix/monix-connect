@@ -18,9 +18,9 @@
 package monix.connect.aws.auth
 
 import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
+import org.scalatest.matchers.should.Matchers._
 
-class ProviderSpec extends AnyFlatSpec with Matchers {
+class ProviderSpec extends AnyFlatSpec {
 
   s"$Providers" should "be parsed from anonymous,chain, default, environment, instance, profile, static and system" in {
     Providers.fromString("anonymous") shouldBe Providers.Anonymous

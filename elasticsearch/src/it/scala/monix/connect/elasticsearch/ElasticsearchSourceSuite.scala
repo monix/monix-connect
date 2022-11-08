@@ -3,7 +3,7 @@ package monix.connect.elasticsearch
 import monix.eval.Task
 import monix.execution.Scheduler
 import monix.execution.Scheduler.Implicits.global
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.{AnyFlatSpecLike, AsyncFlatSpec}
@@ -11,7 +11,7 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.util.Try
 
-class ElasticsearchSourceSuite extends AsyncFlatSpec with MonixTaskSpec with Fixture with Matchers with BeforeAndAfterEach {
+class ElasticsearchSourceSuite extends AsyncFlatSpec with MonixTaskTest with Fixture with Matchers with BeforeAndAfterEach {
   import com.sksamuel.elastic4s.ElasticDsl._
 
   override implicit val scheduler: Scheduler = Scheduler.io("elasticsearch-sink-suite")

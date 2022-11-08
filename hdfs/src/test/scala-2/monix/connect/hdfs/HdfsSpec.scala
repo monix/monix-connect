@@ -26,10 +26,10 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.apache.hadoop.hdfs.{HdfsConfiguration, MiniDFSCluster}
 import monix.reactive.{Consumer, Observable}
 import monix.execution.Scheduler
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 
 class HdfsSpec
-  extends AsyncWordSpec with MonixTaskSpec with Matchers with BeforeAndAfterAll with BeforeAndAfterEach
+  extends AsyncWordSpec with MonixTaskTest with Matchers with BeforeAndAfterAll with BeforeAndAfterEach
   with HdfsFixture {
 
   override implicit val scheduler = Scheduler.io("hdfs-spec")
@@ -74,7 +74,7 @@ class HdfsSpec
           .consumeWith(hdfsWriter)
         result <- Hdfs.read(fs, path).headL
       } yield {
-        result shouldBe chunks.flatten
+        result.toList shouldBe chunks.flatten
         offset shouldBe chunks.flatten.size
       }
     }
@@ -92,7 +92,7 @@ class HdfsSpec
         expectedResult: List[Byte] = chunks.flatten
       } yield {
         offset shouldBe chunks.flatten.size
-        result shouldBe expectedResult
+        result.toList shouldBe expectedResult
       }
     }
 
@@ -114,11 +114,11 @@ class HdfsSpec
       } yield {
         existedBefore shouldBe false
         existsA shouldBe true
-        resultA shouldBe chunksA.flatten
+        resultA.toList shouldBe chunksA.flatten
         offsetA shouldBe chunksA.flatten.size
 
         fs.exists(path) shouldBe true
-        resultB shouldBe chunksB.flatten
+        resultB.toList shouldBe chunksB.flatten
         offsetB shouldBe chunksB.flatten.size
       }
     }
@@ -143,12 +143,12 @@ class HdfsSpec
       } yield {
         existedBefore shouldBe false
         fs.exists(path) shouldBe true
-        resultA shouldBe chunksA.flatten
+        resultA.toList shouldBe chunksA.flatten
         offsetA shouldBe chunksA.flatten.size
         failedOverwriteAttempt.isLeft shouldBe true
         failedOverwriteAttempt.left.get shouldBe a[org.apache.hadoop.fs.FileAlreadyExistsException]
         fs.exists(path) shouldBe true
-        resultAfterOverwriteAttempt shouldBe chunksA.flatten
+        resultAfterOverwriteAttempt.toList shouldBe chunksA.flatten
         resultAfterOverwriteAttempt.length shouldBe chunksA.flatten.size
       }
     }
@@ -176,10 +176,10 @@ class HdfsSpec
       } yield {
         existedBefore shouldBe false
         fileExistsA shouldBe true
-        resultA shouldBe chunksA.flatten
+        resultA.toList shouldBe chunksA.flatten
         offsetA shouldBe chunksA.flatten.size
         finalExists shouldBe true
-        finalResult shouldBe expectedContent
+        finalResult.toList shouldBe expectedContent
         finalOffset shouldBe chunksB.flatten.size
       }
     }

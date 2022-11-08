@@ -18,17 +18,17 @@
 package monix.connect.mongodb
 
 import com.mongodb.client.model.{Filters, Updates}
-import monix.connect.mongodb.client.{CollectionOperator, MongoConnection}
+import monix.connect.mongodb.client.MongoConnection
 import monix.execution.Scheduler
 import monix.reactive.Observable
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.bson.conversions.Bson
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class MongoSinkSuite extends AsyncFlatSpec with MonixTaskSpec with Fixture with Matchers with BeforeAndAfterEach {
+class MongoSinkSuite extends AsyncFlatSpec with MonixTaskTest with Fixture with Matchers with BeforeAndAfterEach {
 
   override implicit val scheduler: Scheduler = Scheduler.io("mongo-sink-suite")
 

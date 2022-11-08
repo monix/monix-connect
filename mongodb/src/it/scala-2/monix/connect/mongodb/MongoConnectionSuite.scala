@@ -24,13 +24,13 @@ import monix.connect.mongodb.client.{CollectionCodecRef, CollectionOperator, Col
 import monix.connect.mongodb.domain.{Tuple4F, Tuple5F, Tuple6F, Tuple7F, Tuple8F}
 import monix.eval.Task
 import monix.execution.Scheduler
-import monix.testing.scalatest.MonixTaskSpec
+import monix.testing.scalatest.MonixTaskTest
 import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import scala.concurrent.duration._
 
-class MongoConnectionSuite extends AsyncFlatSpec with MonixTaskSpec with Matchers with MongoConnectionFixture {
+class MongoConnectionSuite extends AsyncFlatSpec with MonixTaskTest with Matchers with MongoConnectionFixture {
 
   override implicit val scheduler: Scheduler = Scheduler.io("mongo-connection-suite")
 
