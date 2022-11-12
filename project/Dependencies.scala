@@ -40,8 +40,6 @@ object Dependencies {
     "io.monix" %% "monix-testing-scalatest" % Versions.MonixTestingScalatest
   )
 
-  val Akka = Seq("com.typesafe.akka" %% "akka-stream" % Versions.AkkaStreams) ++ commonDependencies(hasIt = false)
-
   val AwsAuth = Seq(
     "software.amazon.awssdk"                     % "auth" % Versions.AwsSdk,
     "com.github.pureconfig" %% "pureconfig-core" % Versions.Pureconfig) ++ commonDependencies(hasIt = false)

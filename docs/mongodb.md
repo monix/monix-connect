@@ -29,7 +29,7 @@ and there is many code to be ported to the new Scala3 macros. See community stat
 Add the following dependency to get started:
 
 ```scala
-libraryDependencies += "io.monix" %% "monix-mongodb" % "0.6.0"
+libraryDependencies += "io.monix" %% "monix-mongodb" % "0.9.0"
 ```
 
 ## Collection Reference

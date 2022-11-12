@@ -15,7 +15,7 @@ Therefore, the `monix-parquet` _connector_ basically exposes stream integrations
 Add the following dependency:
  
  ```scala
- libraryDependencies += "io.monix" %% "monix-parquet" % "0.6.0"
+ libraryDependencies += "io.monix" %% "monix-parquet" % "0.9.0"
  ```
 
 ## Getting started

@@ -163,10 +163,8 @@ lazy val monixConnect = (project in file("."))
   .configs(IntegrationTest, IT)
   .settings(sharedSettings())
   .settings(name := "monix-connect")
-  .aggregate(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, sqs, elasticsearch, awsAuth)
-  .dependsOn(akka, dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, sqs, elasticsearch, awsAuth)
-
-lazy val akka = monixConnector("akka", Dependencies.Akka)
+  .aggregate(dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, sqs, elasticsearch, awsAuth)
+  .dependsOn(dynamodb, parquet, gcs, hdfs, mongodb, redis, s3, sqs, elasticsearch, awsAuth)
 
 lazy val dynamodb = monixConnector("dynamodb", Dependencies.DynamoDb).aggregate(awsAuth).dependsOn(awsAuth % "compile->compile;test->test")
   .settings(libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
@@ -276,7 +274,7 @@ lazy val skipOnPublishSettings = Seq(
 lazy val mdocSettings = Seq(
   scalacOptions --= Seq("-Xfatal-warnings", "-Ywarn-unused"),
   crossScalaVersions := Seq(scalaVersion.value),
-  unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(akka, parquet, dynamodb, s3, sqs, elasticsearch, gcs, hdfs, mongodb, redis),
+  unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(parquet, dynamodb, s3, sqs, elasticsearch, gcs, hdfs, mongodb, redis),
   target in (ScalaUnidoc, unidoc) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",
   cleanFiles += (target in (ScalaUnidoc, unidoc)).value,
   docusaurusCreateSite := docusaurusCreateSite
