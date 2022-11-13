@@ -163,7 +163,7 @@ class FifoQueueSuite extends AsyncFlatSpec with MonixTaskTest with Matchers with
     val deduplicationId = Gen.some(genId).sample.get
     val delayDuration = Some(5.seconds)
     val delayedMessage: Message = new Message(body, groupId = groupId, deduplicationId = deduplicationId, delayDuration = delayDuration)
-    Sqs.fromConfig.use { case Sqs(operator, producer, _) =>
+    Sqs.fromConfig().use { case Sqs(operator, producer, _) =>
       for {
         fifoQueueName <- Task.from(genFifoQueueName)
         queueUrl <- operator.createQueue(fifoQueueName, attributes = fifoDeduplicationQueueAttr)

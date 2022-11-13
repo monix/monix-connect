@@ -28,6 +28,7 @@ import monix.connect.aws.auth.MonixAwsConf._
 import monix.connect.aws.auth.configreader.KebabConfigReader
 import monix.eval.Task
 import monix.execution.Scheduler
+import monix.execution.exceptions.DummyException
 import monix.testing.scalatest.MonixTaskTest
 
 import java.io.File
@@ -128,8 +129,8 @@ class MonixAwsConfigSpec extends AsyncFlatSpec with MonixTaskTest with Matchers 
 
     Task(configSource.loadOrThrow[AppConf]).map(_.monixAws).attempt.asserting { monixAwsConf =>
       monixAwsConf.isLeft shouldBe true
-      monixAwsConf.left.get shouldBe a[ConfigReaderException[_]]
-      monixAwsConf.left.get.getMessage should include("Key not found: 'region'")
+      monixAwsConf.swap.getOrElse(DummyException("failed")) shouldBe a[ConfigReaderException[_]]
+      monixAwsConf.swap.getOrElse(DummyException("failed")).getMessage should include("Key not found: 'region'")
     }
   }
 

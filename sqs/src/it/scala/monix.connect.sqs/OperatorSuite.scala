@@ -1,8 +1,9 @@
 package monix.connect.sqs
 
-import monix.connect.sqs.domain.{QueueName, QueueUrl}
+import monix.connect.sqs.domain.QueueUrl
 import monix.eval.Task
 import monix.execution.Scheduler
+import monix.execution.exceptions.DummyException
 import monix.testing.scalatest.MonixTaskTest
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
@@ -65,7 +66,7 @@ class OperatorSuite extends AsyncFlatSpec with MonixTaskTest with Matchers with 
       } yield {
         appliedTags shouldBe initialTags ++ tagsByUrl
         nonExistingQueue.isLeft shouldBe true
-        nonExistingQueue.left.get.getMessage should include(invalidRequestErrorMsg)
+        nonExistingQueue.swap.getOrElse(DummyException("failed")).getMessage should include(invalidRequestErrorMsg)
       }
   }
 
@@ -88,7 +89,7 @@ class OperatorSuite extends AsyncFlatSpec with MonixTaskTest with Matchers with 
         untagByUrl shouldBe initialTags.filterNot(kv => kv._1 == queueType)
         untagByName shouldBe Map(dummyTagKey -> "123")
         nonExistingQueue.isLeft shouldBe true
-        nonExistingQueue.left.get.getMessage should include(invalidRequestErrorMsg)
+        nonExistingQueue.swap.getOrElse(DummyException("failed")).getMessage should include(invalidRequestErrorMsg)
       }
   }
 
@@ -105,7 +106,7 @@ class OperatorSuite extends AsyncFlatSpec with MonixTaskTest with Matchers with 
         val expectedAttributes = initialAttributes ++ attributesByUrl
         attributes.filter(kv => expectedAttributes.keys.toList.contains(kv._1)) should contain theSameElementsAs expectedAttributes
         nonExistingQueue.isLeft shouldBe true
-        nonExistingQueue.left.get.getMessage should include(invalidRequestErrorMsg)
+        nonExistingQueue.swap.getOrElse(DummyException("failed")).getMessage should include(invalidRequestErrorMsg)
       }
   }
 
@@ -120,7 +121,7 @@ class OperatorSuite extends AsyncFlatSpec with MonixTaskTest with Matchers with 
         createdQueueUrl shouldBe QueueUrl(queueUrlPrefix(queueName.name))
         queueUrl shouldBe QueueUrl(queueUrlPrefix(queueName.name))
         nonExistingQueue.isLeft shouldBe true
-        nonExistingQueue.left.get.isInstanceOf[QueueDoesNotExistException] shouldBe true
+        nonExistingQueue.swap.getOrElse(DummyException("failed")).isInstanceOf[QueueDoesNotExistException] shouldBe true
       }
   }
 

@@ -282,7 +282,6 @@ class HashCommandsSuite
         for {
           k1 <- Task.from(genRedisKey)
           k2 <- Task.from(genRedisKey)
-          k3 <- Task.from(genRedisKey)
           f1 <- Task.from(genRedisKey)
           f2 <- Task.from(genRedisKey)
           f3 <- Task.from(genRedisKey)

@@ -42,7 +42,7 @@ trait ParquetFixture {
 
   val conf = new Configuration()
 
-  def fromParquet[T](file: String, configuration: Configuration, reader: ParquetReader[T]): List[T] = {
+  def fromParquet[T](reader: ParquetReader[T]): List[T] = {
     var record: T = reader.read()
 
     var result: List[T] = List.empty[T]

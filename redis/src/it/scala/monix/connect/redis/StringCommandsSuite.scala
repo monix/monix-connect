@@ -243,7 +243,7 @@ class StringCommandsSuite
   }
 
   "mGet" should "get the values of all the given keys" in {
-    val kV: List[(K, Option[V])] = List.fill(10)(genRedisKey, genRedisValue).map{ case (k, v) => (k.sample.get, Some(v.sample.get)) }
+    val kV: List[(K, Option[V])] = List.fill(10)((genRedisKey, genRedisValue)).map{ case (k, v) => (k.sample.get, Some(v.sample.get)) }
     val nonExistingKey = genRedisKey.sample.get
 
     utfConnection.use[Task, Assertion] { cmd =>
@@ -259,12 +259,12 @@ class StringCommandsSuite
   }
 
   "mSet" should "set multiple keys to multiple values" in {
-    val kV: Map[K, V] = List.fill(10)(genRedisKey, genRedisValue).map{ case (k, v) => (k.sample.get, v.sample.get) }.toMap
+    val kV: Map[K, V] = List.fill(10)((genRedisKey, genRedisValue)).map{ case (k, v) => (k.sample.get, v.sample.get) }.toMap
 
     utfConnection.use { cmd =>
       cmd.string.mSet(kV) *>
         cmd.string.mGet(kV.keys.toList).toListL
-    }.asserting(_ should contain theSameElementsAs kV.mapValues(Some(_)).toList)
+    }.asserting(_ should contain theSameElementsAs kV.map{case (k, v) => (k, Some(v))}.toList)
   }
 
   "mSetNx" should "set multiple keys to multiple values, only if none of the keys exist" in {

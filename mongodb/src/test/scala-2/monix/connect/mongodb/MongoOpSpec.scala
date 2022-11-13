@@ -402,7 +402,6 @@ class MongoOpSpec
     //then
     s.tick(1.second)
     verify(col).updateOne(filter, update)
-    val expectedUpdateResult = UpdateResult(matchedCount = 0, modifiedCount = 0, wasAcknowledged = false)
     f.value.get shouldBe util.Success(UpdateResult(0, 0, false))
   }
 

@@ -1,5 +1,6 @@
 import Dependencies.Versions
-import sbt.Keys.version
+import sbt.Keys.{target, version}
+import sbt.Test
 
 val monixConnectSeries = "0.7.0"
 
@@ -17,9 +18,9 @@ inThisBuild(List(
   )
 ))
 
-skip in publish := true //required by sbt-ci-release
+publish / publish := true //required by sbt-ci-release
 
-def sharedSettings(publishForScala3: Boolean= true) = {
+def sharedSettings(publishForScala3: Boolean= true, fatalWarningsEnables: Boolean = true) = {
   Seq(
     scalaVersion := "2.13.8",
     crossScalaVersions := Seq("2.12.17", "2.13.8") ++ (if (publishForScala3) Seq("3.1.2") else Seq.empty)
@@ -40,60 +41,62 @@ def sharedSettings(publishForScala3: Boolean= true) = {
     "-language:higherKinds",
     "-language:implicitConversions",
     "-language:experimental.macros"
-  ),
-  //warnUnusedImports
-  scalacOptions in(Compile, console) ++= Seq("-Ywarn-unused:imports")
-  ,
-  // Linter
-  scalacOptions ++= Seq(
-    "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
-    "-Ywarn-dead-code", // Warn when dead code is identified.
-    // Turns all warnings into errors ;-)
-    //temporary disabled for mongodb warn, -YWarn (2.13) and Silencer (2.12) should fix it...
-    //"-Xfatal-warnings", //Turning of fatal warnings for the moment
-    // Enables linter options
-    "-Xlint:adapted-args", // warn if an argument list is modified to match the receiver
-    "-Xlint:infer-any", // warn when a type argument is inferred to be `Any`
-    "-Xlint:missing-interpolator", // a string literal appears to be missing an interpolator id
-    "-Xlint:doc-detached", // a ScalaDoc comment appears to be detached from its element
-    "-Xlint:private-shadow", // a private field (or class parameter) shadows a superclass field
-    "-Xlint:type-parameter-shadow", // a local type parameter shadows a type already in scope
-    "-Xlint:poly-implicit-overload", // parameterized overloaded implicit methods are not visible as view bounds
-    "-Xlint:option-implicit", // Option.apply used implicit view
-    "-Xlint:delayedinit-select", // Selecting member of DelayedInit
-    //"-Xlint:package-object-classes" // Class or object defined in package object
   )
   ,
 
+  // Linter
+  scalacOptions ++= (
+    (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((3, _)) => Seq.empty
+      case _ =>   Seq(
+        "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
+        "-Ywarn-dead-code", // Warn when dead code is identified.
+        // Turns all warnings into errors ;-)
+        //temporary disabled for mongodb warn, -YWarn (2.13) and Silencer (2.12) should fix it...
+        // Enables linter options
+        "-Xlint:adapted-args", // warn if an argument list is modified to match the receiver
+        "-Xlint:infer-any", // warn when a type argument is inferred to be `Any`
+        "-Xlint:missing-interpolator", // a string literal appears to be missing an interpolator id
+        "-Xlint:doc-detached", // a ScalaDoc comment appears to be detached from its element
+        "-Xlint:private-shadow", // a private field (or class parameter) shadows a superclass field
+        "-Xlint:type-parameter-shadow", // a local type parameter shadows a type already in scope
+        "-Xlint:poly-implicit-overload", // parameterized overloaded implicit methods are not visible as view bounds
+        "-Xlint:option-implicit", // Option.apply used implicit view
+        "-Xlint:delayedinit-select", // Selecting member of DelayedInit
+        "-Ywarn-unused"
+        //"-Xlint:package-object-classes" // Class or object defined in package object
+      ) ++ (if(fatalWarningsEnables) Seq("-Xfatal-warnings") else Seq.empty[String])
+    }) ++ Seq(
+    // Turns all warnings into errors ;-)
+    //temporary disabled for mongodb warn, -YWarn (2.13) and Silencer (2.12) should fix it...
+    // Enables linter options
+      // Note, this is used by the doc-source-url feature to determine the
+      // relative path of a given source file. If it's not a prefix of a the
+      // absolute path of the source file, the absolute path of that file
+      // will be put into the FILE_SOURCE variable, which is
+      // definitely not what we want.
+      "-sourcepath",
+      file(".").getAbsolutePath.replaceAll("[.]$", "")
+    //"-Xlint:package-object-classes" // Class or object defined in package objecz
+  ) ++ (if(fatalWarningsEnables) Seq("-Xfatal-warnings") else Seq.empty[String]))
+  ,
+
   // ScalaDoc settings
-  scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings")
+   (Compile / doc / scalacOptions) ++= Seq("-no-link-warnings")
   ,
   autoAPIMappings := true
   ,
-  scalacOptions in ThisBuild ++= Seq(
-    // Note, this is used by the doc-source-url feature to determine the
-    // relative path of a given source file. If it's not a prefix of a the
-    // absolute path of the source file, the absolute path of that file
-    // will be put into the FILE_SOURCE variable, which is
-    // definitely not what we want.
-    "-sourcepath",
-    file(".").getAbsolutePath.replaceAll("[.]$", "")
+    scalacOptions  ++= Seq(
+
   )
   ,
-  parallelExecution in Test := true
+    Test / parallelExecution := true
   ,
-  parallelExecution in ThisBuild := true
-  ,
-  testForkedParallel in Test := true
-  ,
-  testForkedParallel in ThisBuild := true
+    Test / testForkedParallel := true
   ,
   concurrentRestrictions in Global += Tags.limit(Tags.Test, 3)
   ,
-  logBuffered in Test := false
-  ,
-  logBuffered in IntegrationTest := false
-  ,
+    Test /logBuffered := false,
   //dependencyClasspath in IntegrationTest := (dependencyClasspath in IntegrationTest).value ++ (exportedProducts in Test).value,
   // https://github.com/sbt/sbt/issues/2654
   incOptions := incOptions.value.withLogRecompileOnMacro(false)
@@ -151,10 +154,8 @@ def mimaSettings(projectName: String) = Seq(
   mimaBinaryIssueFilters ++= MimaFilters.allMimaFilters
 )
 
-mimaFailOnNoPrevious in ThisBuild := false
-
 //ignores scaladoc link warnings (which are
-scalacOptions in (Compile, doc) ++= Seq("-no-link-warnings")
+ (Compile / doc / scalacOptions) ++= Seq("-no-link-warnings")
 
 val IT = config("it") extend Test
 
@@ -179,13 +180,13 @@ lazy val hdfs = monixConnector("hdfs", Dependencies.Hdfs)
   }))
 
 
-lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb, isMimaEnabled = false, isITParallelExecution = true, scala3Publish = false)
+lazy val mongodb = monixConnector("mongodb", Dependencies.MongoDb, isITParallelExecution = true, scala3Publish = false, fatalWarningsEnabled = false)
   .settings(libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
     case Some((3, _)) => Seq.empty
     case _ => Seq(
       "org.mongodb.scala" %% "mongo-scala-driver"           % Versions.MongoScala,
       "org.mongodb.scala" %% "mongo-scala-bson"             % Versions.MongoScala % Test,
-      "org.mockito" %% "mockito-scala" % Versions.Mockito % Test cross CrossVersion.for3Use2_13)
+      "org.mockito" %% "mockito-scala" % Versions.Mockito % Test)
   }))
 
 lazy val parquet = monixConnector("parquet", Dependencies.Parquet, scala3Publish = false)
@@ -226,7 +227,8 @@ def monixConnector(
                     projectDependencies: Seq[ModuleID],
                     isMimaEnabled: Boolean = true,
                     isITParallelExecution: Boolean = false,
-                    scala3Publish: Boolean = true) = {
+                    scala3Publish: Boolean = true,
+                    fatalWarningsEnabled: Boolean = true) = {
   Project(id = connectorName, base = file(connectorName))
     .enablePlugins(AutomateHeaderPlugin)
     .settings(name := s"monix-$connectorName",
@@ -235,16 +237,19 @@ def monixConnector(
       IntegrationTest / parallelExecution := isITParallelExecution,
       IntegrationTest / testForkedParallel := isITParallelExecution
     )
-    .settings(sharedSettings(scala3Publish))
+    .settings(sharedSettings(scala3Publish, fatalWarningsEnabled))
     .configs(IntegrationTest, IT)
     .enablePlugins(AutomateHeaderPlugin)
     .settings(
       if(isMimaEnabled) {
         mimaSettings(s"monix-$connectorName")
       } else { Seq.empty },
+      // skips publishing docs in scala3 due to a bug running task
       Compile / doc / sources := { if (scalaVersion.value.startsWith("3.")) Seq.empty else (Compile / doc / sources).value },
-      Test / doc / sources := { if (scalaVersion.value.startsWith("3.")) Seq.empty else (Compile / doc / sources).value }
-    )
+      Test / doc / sources := { if (scalaVersion.value.startsWith("3.")) Seq.empty else (Test / doc / sources).value },
+      doctestGenTests := { Seq.empty },
+      doctestOnlyCodeBlocksMode := false,
+      Test / unidoc / sources := {  Seq.empty })
 }
 
 //=> non published modules
@@ -267,34 +272,34 @@ lazy val docs = project
   .enablePlugins(DocusaurusPlugin, MdocPlugin, ScalaUnidocPlugin)
 
 lazy val skipOnPublishSettings = Seq(
-  skip in publish := true,
+  publish / skip := true,
   publishArtifact := false,
 )
 
 lazy val mdocSettings = Seq(
   scalacOptions --= Seq("-Xfatal-warnings", "-Ywarn-unused"),
   crossScalaVersions := Seq(scalaVersion.value),
-  unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(parquet, dynamodb, s3, sqs, elasticsearch, gcs, hdfs, mongodb, redis),
-  target in (ScalaUnidoc, unidoc) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",
-  cleanFiles += (target in (ScalaUnidoc, unidoc)).value,
+  (ScalaUnidoc / unidoc / unidocProjectFilter) := inProjects(parquet, dynamodb, s3, sqs, elasticsearch, gcs, hdfs, mongodb, redis),
+  (ScalaUnidoc / unidoc / target) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",
+  cleanFiles += (ScalaUnidoc / unidoc / target).value,
   docusaurusCreateSite := docusaurusCreateSite
-    .dependsOn(unidoc in Compile)
-    .dependsOn(updateSiteVariables in ThisBuild)
+    .dependsOn(Compile / unidoc)
+    .dependsOn(ThisBuild / updateSiteVariables)
     .value,
   docusaurusPublishGhpages :=
     docusaurusPublishGhpages
-      .dependsOn(unidoc in Compile)
-      .dependsOn(updateSiteVariables in ThisBuild)
+      .dependsOn(Compile / unidoc)
+      .dependsOn(ThisBuild / updateSiteVariables)
       .value,
-  scalacOptions in (ScalaUnidoc, unidoc) ++= Seq(
+  (ScalaUnidoc / unidoc / scalacOptions) ++= Seq(
     "-doc-source-url", s"https://github.com/monix/monix-connect/tree/v${version.value}€{FILE_PATH}.scala",
-    "-sourcepath", baseDirectory.in(LocalRootProject).value.getAbsolutePath,
+    "-sourcepath", (LocalRootProject / baseDirectory).value.getAbsolutePath,
     "-doc-title", "Monix Connect",
     "-doc-version", s"v${version.value}",
     "-groups"
   ),
   // Exclude monix.*.internal from ScalaDoc
-  sources in (ScalaUnidoc, unidoc) ~= (_ filterNot { file =>
+  ScalaUnidoc / unidoc / sources ~= (_ filterNot { file =>
     // Exclude protobuf generated files
     file.getCanonicalPath.contains("/src_managed/main/monix/connect/")
     file.getCanonicalPath.contains("monix-connect/redis/target/scala-2.12/src_managed")
@@ -310,17 +315,17 @@ def minorVersion(version: String): String = {
 
 
 val updateSiteVariables = taskKey[Unit]("Update site variables")
-updateSiteVariables in ThisBuild := {
+ThisBuild / updateSiteVariables  := {
   val file =
-    (baseDirectory in LocalRootProject).value / "website" / "variables.js"
+    (LocalRootProject / baseDirectory).value / "website" / "variables.js"
 
   val variables =
     Map[String, String](
-      "organization" -> (organization in LocalRootProject).value,
-      "coreModuleName" -> (moduleName in monixConnect).value,
+      "organization" -> (LocalRootProject / organization).value,
+      "coreModuleName" -> (monixConnect / moduleName).value,
       "latestVersion" -> version.value,
       "scalaPublishVersions" -> {
-        val minorVersions = (crossScalaVersions in monixConnect).value.map(minorVersion)
+        val minorVersions = (monixConnect / crossScalaVersions).value.map(minorVersion)
         if (minorVersions.size <= 2) minorVersions.mkString(" and ")
         else minorVersions.init.mkString(", ") ++ " and " ++ minorVersions.last
       }

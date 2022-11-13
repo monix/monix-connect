@@ -5,10 +5,11 @@ import monix.connect.aws.auth.MonixAwsConf
 import java.io.FileInputStream
 import monix.eval.Task
 import monix.execution.Scheduler
+import monix.execution.exceptions.DummyException
 import monix.reactive.Observable
 import monix.testing.scalatest.MonixTaskTest
 import org.scalacheck.Gen
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatest.BeforeAndAfterAll
 import software.amazon.awssdk.services.s3.model.{CopyObjectResponse, NoSuchBucketException, NoSuchKeyException, PutObjectResponse}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.concurrent.Eventually
@@ -29,7 +30,7 @@ class S3Suite
   }
 
   "S3" can "be created from config file" in {
-    val s3FromConf = S3.fromConfig
+    val s3FromConf = S3.fromConfig()
     val (k1, k2) = (Gen.identifier.sample.get, Gen.identifier.sample.get)
     for {
       _ <- s3FromConf.use(_.upload(bucketName, k1, k1.getBytes()))
@@ -248,7 +249,7 @@ class S3Suite
     } yield {
       existedBefore shouldBe false
       deleteAttempt.isLeft shouldBe true
-      deleteAttempt.left.get shouldBe a[NoSuchBucketException]
+      deleteAttempt.swap.getOrElse(DummyException("failed")) shouldBe a[NoSuchBucketException]
       existsAfterDeletion shouldBe false
     }
   }
@@ -329,7 +330,7 @@ class S3Suite
     val keys: List[String] =
       Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + str)).sample.get
 
-    S3.fromConfig.use { s3 =>
+    S3.fromConfig().use { s3 =>
       for {
         _ <- Task.traverse(keys) { key => s3.upload(bucketName, key, "dummyContent".getBytes()) }
         latest <- s3.listLatestObject(bucketName, prefix = Some(prefix))
@@ -350,7 +351,7 @@ class S3Suite
     val keys: List[String] =
       Gen.listOfN(n, Gen.alphaLowerStr.map(str => prefix + str)).sample.get
 
-    S3.fromConfig.use { s3 =>
+    S3.fromConfig().use { s3 =>
       for {
         _ <- Task
           .traverse(keys) { key => s3.upload(bucketName, key, "dummyContent".getBytes()) }
@@ -373,7 +374,7 @@ class S3Suite
       Gen.listOfN(10, Gen.alphaLowerStr.map(str => prefix + str)).sample.get
 
     //when
-    S3.fromConfig.use { s3 =>
+    S3.fromConfig().use { s3 =>
       for {
         _ <- Task
           .traverse(keys) { key => s3.upload(bucketName, key, "dummyContent".getBytes()) }
@@ -402,7 +403,7 @@ class S3Suite
       } yield download
     }
 
-    S3.fromConfig.use(runS3App).asserting(_ shouldBe content.getBytes)
+    S3.fromConfig().use(runS3App).asserting(_ shouldBe content.getBytes)
   }
 
 

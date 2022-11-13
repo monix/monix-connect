@@ -20,7 +20,6 @@ package monix.connect.parquet
 import monix.eval.Coeval
 import monix.execution.Scheduler
 import monix.execution.exceptions.DummyException
-import monix.execution.schedulers.TestScheduler
 import monix.reactive.Observable
 import monix.testing.scalatest.MonixTaskTest
 import org.apache.avro.generic.GenericRecord
@@ -65,7 +64,6 @@ class ParquetSinkErrorHandlingSpec
     }
 
     "signals error when the underlying parquet writer throws an error" in {
-      val testScheduler = TestScheduler()
       val filePath: String = genFilePath()
       val record: GenericRecord = personToRecord(genPerson.sample.get)
       val ex = DummyException("Boom!")

@@ -50,7 +50,7 @@ class AvroParquetSpec
         .consumeWith(Parquet.writer(w))
         .runSyncUnsafe()
 
-      val parquetContent: List[GenericRecord] = fromParquet[GenericRecord](file, conf, avroParquetReader(file, conf))
+      val parquetContent: List[GenericRecord] = fromParquet[GenericRecord](avroParquetReader(file, conf))
       parquetContent.length shouldEqual n
       parquetContent should contain theSameElementsAs records
     }

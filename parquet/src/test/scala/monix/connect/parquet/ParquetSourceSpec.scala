@@ -20,6 +20,7 @@ package monix.connect.parquet
 import java.io.{File, FileNotFoundException}
 import monix.eval.Task
 import monix.execution.Scheduler
+import monix.execution.exceptions.DummyException
 import monix.reactive.Observable
 import monix.testing.scalatest.MonixTaskTest
 import org.apache.avro.generic.GenericRecord
@@ -85,8 +86,9 @@ class ParquetSourceSpec
         cancelable2 <- ParquetSource.fromReaderUnsafe(null).toListL.attempt
       } yield {
         cancelable1.isLeft shouldBe true
+        cancelable1.swap.getOrElse(DummyException("failed")) shouldBe a[NullPointerException]
         cancelable2.isLeft shouldBe true
-        cancelable1.left.get shouldBe a[NullPointerException]
+        cancelable2.swap.getOrElse(DummyException("failed")) shouldBe a[NullPointerException]
       }
     }
 

@@ -150,9 +150,12 @@ private[s3] class MultipartUploadSubscriber(
     * It should be called either when the received chunk is bigger than minimum size,
     * or later when the last chunk arrives representing the completion of the stream.
     */
-  def uploadPart(bucket: String, key: String, partNumber: Int, uploadId: String, chunk: Array[Byte])(
-    implicit
-    scheduler: Scheduler): Task[CompletedPart] = {
+  def uploadPart(
+    bucket: String,
+    key: String,
+    partNumber: Int,
+    uploadId: String,
+    chunk: Array[Byte]): Task[CompletedPart] = {
     for {
       request <- Task {
         S3RequestBuilder.uploadPartRequest(

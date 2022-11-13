@@ -50,7 +50,7 @@ class ParquetSinkCoevalSpec
         .consumeWith(ParquetSink.fromWriter(Coeval(w)))
         .asserting { _ =>
           val parquetContent: List[GenericRecord] =
-            fromParquet[GenericRecord](filePath, conf, avroParquetReader(filePath, conf))
+            fromParquet[GenericRecord](avroParquetReader(filePath, conf))
           parquetContent.length shouldEqual n
           parquetContent should contain theSameElementsAs records
         }
@@ -67,7 +67,7 @@ class ParquetSinkCoevalSpec
           writtenRecords shouldBe 0
           val file = new File(filePath)
           val parquetContent: List[GenericRecord] =
-            fromParquet[GenericRecord](filePath, conf, avroParquetReader(filePath, conf))
+            fromParquet[GenericRecord](avroParquetReader(filePath, conf))
           file.exists() shouldBe true
           parquetContent.length shouldEqual 0
         }

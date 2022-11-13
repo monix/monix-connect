@@ -94,7 +94,7 @@ class MongoConnectionSuite extends AsyncFlatSpec with MonixTaskTest with Matcher
 
   it should "be created unsafely given the mongo client" in {
     def makeResource(col1: CollectionRef[Employee], col2: CollectionRef[Company]) =
-      Resource.liftF(MongoConnection.createUnsafe2(MongoClients.create(mongoEndpoint), (col1, col2)))
+      Resource.eval(MongoConnection.createUnsafe2(MongoClients.create(mongoEndpoint), (col1, col2)))
 
     createConnectionTest2(makeResource)
   }
@@ -115,7 +115,7 @@ class MongoConnectionSuite extends AsyncFlatSpec with MonixTaskTest with Matcher
 
   it should "be created unsafely given a mongo client" in {
     def makeResource(col1: CollectionRef[Company], col2: CollectionRef[Employee], col3: CollectionRef[Investor]) =
-      Resource.liftF(MongoConnection.createUnsafe3(MongoClients.create(mongoEndpoint), (col1, col2, col3)))
+      Resource.eval(MongoConnection.createUnsafe3(MongoClients.create(mongoEndpoint), (col1, col2, col3)))
 
     abstractCreateConnectionTest3(makeResource)
   }
@@ -134,7 +134,7 @@ class MongoConnectionSuite extends AsyncFlatSpec with MonixTaskTest with Matcher
 
   it should "be created unsafely given a mongo client" in {
     val makeResource = (collections: Tuple4F[CollectionRef, Employee, Employee, Employee, Company]) =>
-      Resource.liftF(
+      Resource.eval(
         MongoConnection.createUnsafe4(
           MongoClients.create(mongoEndpoint),
           (collections._1, collections._2, collections._3, collections._4))
@@ -158,7 +158,7 @@ class MongoConnectionSuite extends AsyncFlatSpec with MonixTaskTest with Matcher
 
   it should "be created unsafely given a mongo client" in {
     val makeResource = (collections: Tuple5F[CollectionRef, Employee, Employee, Employee, Employee, Company]) =>
-      Resource.liftF(
+      Resource.eval(
         MongoConnection.createUnsafe5(
           MongoClients.create(mongoEndpoint),
           (collections._1, collections._2, collections._3, collections._4, collections._5)
@@ -191,7 +191,7 @@ class MongoConnectionSuite extends AsyncFlatSpec with MonixTaskTest with Matcher
     val makeResource =
       (collections: Tuple6F[CollectionRef, Employee, Employee, Employee, Employee, Employee, Company]) => {
         val (c1, c2, c3, c4, c5, c6) = collections
-        Resource.liftF(
+        Resource.eval(
           MongoConnection
             .createUnsafe6(MongoClients.create(mongoEndpoint), (c1, c2, c3, c4, c5, c6))
         )
@@ -223,7 +223,7 @@ class MongoConnectionSuite extends AsyncFlatSpec with MonixTaskTest with Matcher
     val makeResource =
       (collections: Tuple7F[CollectionRef, Employee, Employee, Employee, Employee, Employee, Employee, Company]) => {
         val (c1, c2, c3, c4, c5, c6, c7) = collections
-        Resource.liftF(
+        Resource.eval(
           MongoConnection
             .createUnsafe7(MongoClients.create(mongoEndpoint), (c1, c2, c3, c4, c5, c6, c7))
         )
@@ -255,7 +255,7 @@ class MongoConnectionSuite extends AsyncFlatSpec with MonixTaskTest with Matcher
     val makeResource =
       (collections: Tuple8F[CollectionRef, Employee, Employee, Employee, Employee, Employee, Employee, Employee, Company]) => {
         val (c1, c2, c3, c4, c5, c6, c7, c8) = collections
-        Resource.liftF(
+        Resource.eval(
           MongoConnection
             .createUnsafe8(MongoClients.create(mongoEndpoint), (c1, c2, c3, c4, c5, c6, c7, c8))
         )

@@ -109,7 +109,7 @@ class S3RequestBuilderSpec
         .copyObjectRequest(sourceBucket, sourceKey, destinationBucket, destinationKey, copyObjectSettings)
 
     //then
-    request.copySource shouldBe sourceBucket + "/" + sourceKey
+    request.sourceKey shouldBe sourceBucket + "/" + sourceKey
     request.destinationBucket shouldBe destinationBucket
     request.destinationKey shouldBe destinationKey
     request.copySourceIfNoneMatch shouldBe copyObjectSettings.copySourceIfNoneMatch.orNull

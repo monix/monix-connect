@@ -48,7 +48,7 @@ trait Fixture {
 
       override def execute(dynamoDbRequest: GetItemRequest)(
         implicit client: DynamoDbAsyncClient): CompletableFuture[GetItemResponse] = {
-        incWithF.runToFuture.flatMap(r => Future.successful(r)).asJava.toCompletableFuture
+        incWithF().runToFuture.flatMap(r => Future.successful(r)).asJava.toCompletableFuture
       }
     }
 

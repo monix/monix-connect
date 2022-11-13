@@ -6,14 +6,13 @@ import com.google.cloud.storage.contrib.nio.testing.LocalStorageHelper
 import com.google.cloud.storage.{Blob, BlobId, BlobInfo, Option => _}
 import monix.connect.gcp.storage.components.GcsUploader
 import monix.execution.Scheduler
-import monix.execution.Scheduler.Implicits.global
 import monix.reactive.Observable
 import monix.testing.scalatest.MonixTaskTest
 import org.apache.commons.io.FileUtils
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.{AnyWordSpecLike, AsyncWordSpec}
+import org.scalatest.wordspec.AsyncWordSpec
 
 class GcsUploaderSuite extends AsyncWordSpec with MonixTaskTest with Matchers with BeforeAndAfterAll {
 

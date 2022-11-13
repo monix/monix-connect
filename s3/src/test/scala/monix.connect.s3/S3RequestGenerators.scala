@@ -200,7 +200,6 @@ trait S3RequestGenerators {
     ifModifiedSince      <- Gen.option(Gen.oneOf(Seq(Instant.now())))
     ifNoneMatch          <- genOptionStr
     ifUnmodifiedSince    <- Gen.option(Gen.oneOf(Seq(Instant.now())))
-    partNumber           <- Gen.option(Gen.chooseNum[Int](1, 200)) //maybe to be added in the future
     requestPayer         <- Gen.option(RequestPayer.fromValue("unknown"))
     sseCustomerAlgorithm <- genOptionStr
     sseCustomerKey       <- genOptionStr

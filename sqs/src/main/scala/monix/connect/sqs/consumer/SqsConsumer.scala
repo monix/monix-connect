@@ -265,7 +265,7 @@ class SqsConsumer private[sqs] (private[sqs] implicit val asyncClient: SqsAsyncC
     queueUrl: QueueUrl,
     maxMessages: Int,
     visibilityTimeout: FiniteDuration,
-    waitTimeSeconds: FiniteDuration = Duration.Zero): ReceiveMessageRequest = {
+    waitTimeSeconds: FiniteDuration): ReceiveMessageRequest = {
     val builder = ReceiveMessageRequest.builder
       .queueUrl(queueUrl.url)
       .maxNumberOfMessages(maxMessages)

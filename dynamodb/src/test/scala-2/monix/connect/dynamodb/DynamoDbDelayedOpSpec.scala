@@ -19,7 +19,6 @@ package monix.connect.dynamodb
 
 import monix.connect.dynamodb.domain.RetryStrategy
 import monix.eval.Task
-import monix.execution.Scheduler.Implicits.global
 import monix.execution.exceptions.DummyException
 import monix.execution.schedulers.TestScheduler
 import org.scalatest.matchers.should.Matchers

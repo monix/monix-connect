@@ -5,7 +5,7 @@ import monix.execution.Scheduler
 import monix.reactive.Observable
 import monix.testing.scalatest.MonixTaskTest
 import org.scalacheck.Gen
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AsyncFlatSpecLike
 import org.scalatest.matchers.should.Matchers
