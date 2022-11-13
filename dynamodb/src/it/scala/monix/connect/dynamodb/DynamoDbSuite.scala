@@ -14,7 +14,6 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.model.{GetItemRequest, ListTablesRequest, ListTablesResponse, PutItemRequest}
 
 import scala.concurrent.duration._
-import scala.collection.JavaConverters._
 
 class DynamoDbSuite extends AsyncFlatSpec with Matchers with MonixTaskTest with DynamoDbFixture with BeforeAndAfterAll {
 
@@ -24,9 +23,9 @@ class DynamoDbSuite extends AsyncFlatSpec with Matchers with MonixTaskTest with 
     import monix.connect.dynamodb.DynamoDbOp.Implicits.listTablesOp
     val listRequest = ListTablesRequest.builder.build
 
-    DynamoDb.fromConfig.use(_.single(listRequest)).asserting { listedTables =>
+    DynamoDb.fromConfig().use(_.single(listRequest)).asserting { listedTables =>
       listedTables shouldBe a[ListTablesResponse]
-      listedTables.tableNames().asScala.contains(tableName) shouldBe true
+      listedTables.tableNames().contains(tableName) shouldBe true
     }
   }
 
@@ -36,7 +35,7 @@ class DynamoDbSuite extends AsyncFlatSpec with Matchers with MonixTaskTest with 
 
     MonixAwsConf.load().memoizeOnSuccess.flatMap(DynamoDb.fromConfig(_).use(_.single(listRequest))).asserting { listTables =>
       listTables shouldBe a[ListTablesResponse]
-      listTables.tableNames().asScala.contains(tableName) shouldBe true
+      listTables.tableNames().contains(tableName) shouldBe true
     }
   }
 
@@ -47,7 +46,7 @@ class DynamoDbSuite extends AsyncFlatSpec with Matchers with MonixTaskTest with 
     val monixAwsConf = MonixAwsConf.load().memoizeOnSuccess
     DynamoDb.fromConfig(monixAwsConf).use(_.single(listRequest)).asserting { listTables =>
       listTables shouldBe a[ListTablesResponse]
-      listTables.tableNames().asScala.contains(tableName) shouldBe true
+      listTables.tableNames().contains(tableName) shouldBe true
     }
   }
 
@@ -61,7 +60,7 @@ class DynamoDbSuite extends AsyncFlatSpec with Matchers with MonixTaskTest with 
       Observable.now(listRequest).transform(dynamodb.transformer()).headL
     }.asserting { listedTables =>
       listedTables shouldBe a[ListTablesResponse]
-      listedTables.tableNames().asScala.contains(tableName) shouldBe true
+      listedTables.tableNames().contains(tableName) shouldBe true
     }
   }
 
@@ -74,7 +73,7 @@ class DynamoDbSuite extends AsyncFlatSpec with Matchers with MonixTaskTest with 
       _ <- Observable.now(request).consumeWith(DynamoDb.createUnsafe(client).sink())
       getResponse <- Task.from(client.getItem(getItemRequest(tableName, citizen.citizenId, citizen.city)))
     } yield {
-      getResponse.item().values().asScala.head.n().toDouble shouldBe citizen.age
+      getResponse.item().get(0).n().toDouble shouldBe citizen.age
     }
   }
 
@@ -84,7 +83,7 @@ class DynamoDbSuite extends AsyncFlatSpec with Matchers with MonixTaskTest with 
     val putItemRequests: List[PutItemRequest] = citizens.map(putItemRequest(tableName, _))
 
     for {
-      _ <- DynamoDb.fromConfig.use { dynamoDb =>
+      _ <- DynamoDb.fromConfig().use { dynamoDb =>
         Observable
           .fromIterable(putItemRequests)
           .consumeWith(dynamoDb.sink(RetryStrategy(retries = 3, backoffDelay = 1.second)))
@@ -93,7 +92,7 @@ class DynamoDbSuite extends AsyncFlatSpec with Matchers with MonixTaskTest with 
         Task.from(client.getItem(getItemRequest(tableName, citizen.citizenId, citizen.city)))
       }
     } yield {
-      val actualCitizens = getResponses.map(_.item().values().asScala.head.n().toDouble)
+      val actualCitizens = getResponses.map(_.item().get(0).n().toDouble)
       actualCitizens should contain theSameElementsAs citizens.map(_.age)
     }
   }
@@ -105,13 +104,13 @@ class DynamoDbSuite extends AsyncFlatSpec with Matchers with MonixTaskTest with 
     val getItemRequests: List[GetItemRequest] = List("citizen1", "citizen2").map(getItemRequest(tableName, _, city = "Rome"))
 
     Task.traverse(putItemRequests)(req => Task.from(client.putItem(req))) >>
-      DynamoDb.fromConfig.use { dynamoDb =>
+      DynamoDb.fromConfig().use { dynamoDb =>
         Observable
           .fromIterable(getItemRequests)
           .transform(dynamoDb.transformer(RetryStrategy(retries = 3, backoffDelay = 1.second)))
           .toListL
       }.map { result =>
-        val actualCitizens = result.map(_.item().values().asScala.head.n().toInt)
+        val actualCitizens = result.map(_.item().get(0).n().toInt)
         actualCitizens should contain theSameElementsAs citizens.map(_.age)
       }
   }

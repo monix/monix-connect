@@ -70,11 +70,11 @@ class SortedSetCommandsSuite
         min3 <- sortedSet.bZPopMin(1.seconds, k1, k2)
         empty <- sortedSet.bZPopMin(1.seconds, k1, k2)
       } yield {
-        min1 shouldBe Some(k1, vScore1)
-        min2 shouldBe Some(k1, vScore2) // returns 5 because is the min score in k1
-        min4 shouldBe Some(k1, vScore4)
-        min5 shouldBe Some(k1, vScore5)
-        min3 shouldBe Some(k2, vScore3)
+        min1 shouldBe Some((k1, vScore1))
+        min2 shouldBe Some((k1, vScore2)) // returns 5 because is the min score in k1
+        min4 shouldBe Some((k1, vScore4))
+        min5 shouldBe Some((k1, vScore5))
+        min3 shouldBe Some((k2, vScore3))
         empty shouldBe None
       }
     }
@@ -98,9 +98,9 @@ class SortedSetCommandsSuite
         thirdMax <- sortedSet.bZPopMax(1.seconds, k1, k2)
         empty <- sortedSet.bZPopMax(1.seconds, k1, k2)
       } yield {
-        firstMax shouldBe Some(k1, vScore5)
-        secondMax shouldBe Some(k1, vScore1) // returns 5 because is the min score in k1
-        thirdMax shouldBe Some(k2, vScore3)
+        firstMax shouldBe Some((k1, vScore5))
+        secondMax shouldBe Some((k1, vScore1)) // returns 5 because is the min score in k1
+        thirdMax shouldBe Some((k2, vScore3))
         empty shouldBe None
       }
     }

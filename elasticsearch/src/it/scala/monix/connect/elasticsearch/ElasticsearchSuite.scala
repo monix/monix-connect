@@ -3,11 +3,11 @@ package monix.connect.elasticsearch
 import com.sksamuel.elastic4s.Indexes
 import monix.eval.Task
 import monix.execution.Scheduler
-import monix.execution.Scheduler.Implicits.global
+import monix.execution.exceptions.DummyException
 import monix.testing.scalatest.MonixTaskTest
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.flatspec.{AnyFlatSpecLike, AsyncFlatSpec}
+import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 class ElasticsearchSuite extends AsyncFlatSpec with MonixTaskTest with Fixture with Matchers with BeforeAndAfterEach {
@@ -155,7 +155,7 @@ class ElasticsearchSuite extends AsyncFlatSpec with MonixTaskTest with Fixture w
       es.getIndex(getIndex(indexName)).map(_.result(indexName)).attempt
     }.asserting { getIndexAttempt =>
       getIndexAttempt.isLeft shouldBe true
-      getIndexAttempt.left.get shouldBe a[NoSuchElementException]
+      getIndexAttempt.swap.getOrElse(DummyException("failed")) shouldBe a[NoSuchElementException]
     }
   }
 

@@ -14,7 +14,7 @@ class SqsSuite extends AsyncFlatSpec with MonixTaskTest with Matchers with Befor
   override implicit val scheduler = Scheduler.io("sqs-suite")
 
   s"$Sqs" can "be created from config file" in {
-    Sqs.fromConfig.use { sqs =>
+    Sqs.fromConfig().use { sqs =>
       for {
         fifoQueueName <- Task.from(genFifoQueueName)
         createdQueueUrl <- sqs.operator.createQueue(fifoQueueName)

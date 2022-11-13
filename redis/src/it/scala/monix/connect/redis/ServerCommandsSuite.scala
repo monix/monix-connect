@@ -57,12 +57,10 @@ class ServerCommandsSuite
   "config parameters" can "be added and read" in {
     utfConnection.use[Task, Assertion](cmd =>
       for {
-        initialLoglevel <- cmd.server.configGet("loglevel")
         _ <- cmd.server.configSet("loglevel", "debug")
         updatedLoglevel <- cmd.server.configGet("loglevel")
         emptyParameter <- cmd.server.configGet("non-existing-param")
       } yield {
-        //initialLoglevel shouldBe Some("notice")
         updatedLoglevel shouldBe Some("debug")
         emptyParameter shouldBe None
       })

@@ -40,7 +40,7 @@ class GcsExamples extends AnyWordSpecLike with Matchers with BeforeAndAfterAll {
     "bucket donwload" in {
       val storage = GcsStorage(underlying)
       val bucket: Task[Option[GcsBucket]] = storage.getBucket("myBucket")
-      val ob: Observable[Array[Byte]] = {
+      val _: Observable[Array[Byte]] = {
         Observable.fromTask(bucket)
           .flatMap {
             case Some(blob) => blob.download("myBlob")
@@ -56,7 +56,7 @@ class GcsExamples extends AnyWordSpecLike with Matchers with BeforeAndAfterAll {
       val storage = GcsStorage.create()
       val memoizedBlob = storage.getBlob("myBucket", "myBlob").memoize
 
-      val ob: Observable[Array[Byte]] = {
+      val _: Observable[Array[Byte]] = {
         for {
           blob <- Observable.fromTask(memoizedBlob): Observable[Option[GcsBlob]]
           bytes <- {
@@ -79,7 +79,7 @@ class GcsExamples extends AnyWordSpecLike with Matchers with BeforeAndAfterAll {
       val storage = GcsStorage.create()
       val targetFile = new File("example/target/file.txt")
 
-      val t: Task[Unit] = {
+      val _: Task[Unit] = {
         for {
           maybeBucket <-  storage.getBucket("myBucket"): Task[Option[GcsBucket]]
           _ <- maybeBucket match {
@@ -98,7 +98,7 @@ class GcsExamples extends AnyWordSpecLike with Matchers with BeforeAndAfterAll {
 
       val storage = GcsStorage.create()
       val targetFile = new File("example/target/file.txt")
-      val t: Task[Unit] = {
+      val _: Task[Unit] = {
         for {
           maybeBucket <- storage.getBlob("myBucket", "myBlob"): Task[Option[GcsBlob]]
           _ <- maybeBucket match {
@@ -134,9 +134,9 @@ class GcsExamples extends AnyWordSpecLike with Matchers with BeforeAndAfterAll {
       val storage = GcsStorage.create()
       val sourceFile = new File("path/to/your/path.txt")
 
-      val t: Task[Unit] = for {
+      val _: Task[Unit] = for {
         bucket <- storage.createBucket("myBucket", GcsBucketInfo.Locations.`US-WEST1`): Task[GcsBucket]
-        unit <- bucket.uploadFromFile("myBlob", sourceFile.toPath)
+        _ <- bucket.uploadFromFile("myBlob", sourceFile.toPath)
       } yield ()
     }
 
@@ -165,7 +165,7 @@ class GcsExamples extends AnyWordSpecLike with Matchers with BeforeAndAfterAll {
       val storage = GcsStorage.create()
       val sourceFile = new File("path/to/your/path.txt")
 
-      val t: Task[Unit] = for {
+      val _: Task[Unit] = for {
         blob <- storage.createBlob("myBucket", "myBlob"): Task[GcsBlob]
         _ <- blob.uploadFromFile(sourceFile.toPath)
       } yield ()
@@ -184,14 +184,14 @@ class GcsExamples extends AnyWordSpecLike with Matchers with BeforeAndAfterAll {
         ),
         storageClass = Some(StorageClass.REGIONAL)
       )
-      val bucket: Task[GcsBucket] = storage.createBucket("mybucket", Locations.`EUROPE-WEST1`, Some(metadata)).memoizeOnSuccess
+      val _: Task[GcsBucket] = storage.createBucket("mybucket", Locations.`EUROPE-WEST1`, Some(metadata)).memoizeOnSuccess
     }
 
     "create blob" in {
       import monix.connect.gcp.storage.{GcsBlob, GcsStorage}
 
       val storage = GcsStorage.create()
-      val blob: Task[GcsBlob] = storage.createBlob("mybucket","myBlob").memoizeOnSuccess
+      val _: Task[GcsBlob] = storage.createBlob("mybucket","myBlob").memoizeOnSuccess
     }
 
 
@@ -201,7 +201,7 @@ class GcsExamples extends AnyWordSpecLike with Matchers with BeforeAndAfterAll {
 
       val storage = GcsStorage.create()
       val sourceBlob: Task[GcsBlob] = storage.createBlob("myBucket", "sourceBlob")
-      val targetBlob: Task[GcsBlob] =  sourceBlob.flatMap(_.copyTo("targetBlob"))
+      val _: Task[GcsBlob] =  sourceBlob.flatMap(_.copyTo("targetBlob"))
     }
   }
 

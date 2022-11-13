@@ -9,10 +9,12 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.{AttributeDefinition, AttributeValue, BillingMode, CreateTableRequest, CreateTableResponse, DeleteTableRequest, DeleteTableResponse, GetItemRequest, KeySchemaElement, KeyType, ProvisionedThroughput, PutItemRequest, ScalarAttributeType}
 
-import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 
+@scala.annotation.nowarn
 trait DynamoDbFixture {
+
+  import scala.collection.JavaConverters._
 
   case class Citizen(citizenId: String, city: String, age: Int)
   val strAttr: String => AttributeValue = value => AttributeValue.builder.s(value).build
@@ -84,8 +86,7 @@ trait DynamoDbFixture {
   def createTableRequest(
     tableName: String = Gen.identifier.sample.get,
     schema: List[KeySchemaElement],
-    attributeDefinition: List[AttributeDefinition],
-    provisionedThroughput: ProvisionedThroughput = baseProvisionedThroughput): CreateTableRequest = {
+    attributeDefinition: List[AttributeDefinition]): CreateTableRequest = {
     CreateTableRequest
       .builder
       .tableName(tableName)
