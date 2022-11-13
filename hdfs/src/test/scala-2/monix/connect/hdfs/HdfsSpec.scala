@@ -147,7 +147,8 @@ class HdfsSpec
         resultA.toList shouldBe chunksA.flatten
         offsetA shouldBe chunksA.flatten.size
         failedOverwriteAttempt.isLeft shouldBe true
-        failedOverwriteAttempt.swap.getOrElse(DummyException("failed")) shouldBe a[org.apache.hadoop.fs.FileAlreadyExistsException]
+        failedOverwriteAttempt.swap.getOrElse(DummyException("failed")) shouldBe a[
+          org.apache.hadoop.fs.FileAlreadyExistsException]
         fs.exists(path) shouldBe true
         resultAfterOverwriteAttempt.toList shouldBe chunksA.flatten
         resultAfterOverwriteAttempt.length shouldBe chunksA.flatten.size

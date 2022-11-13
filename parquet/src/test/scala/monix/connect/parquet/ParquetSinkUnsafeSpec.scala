@@ -48,10 +48,9 @@ class ParquetSinkUnsafeSpec
       Observable
         .fromIterable(records)
         .consumeWith(ParquetSink.fromWriterUnsafe(w)) >>
-        Task.eval(fromParquet[GenericRecord](avroParquetReader(filePath, conf))).asserting {
-          parquetContent =>
-            parquetContent.length shouldEqual n
-            parquetContent should contain theSameElementsAs records
+        Task.eval(fromParquet[GenericRecord](avroParquetReader(filePath, conf))).asserting { parquetContent =>
+          parquetContent.length shouldEqual n
+          parquetContent should contain theSameElementsAs records
         }
     }
 
