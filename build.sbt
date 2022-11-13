@@ -274,7 +274,7 @@ lazy val mdocSettings = Seq(
   scalacOptions --= Seq("-Xfatal-warnings", "-Ywarn-unused"),
   crossScalaVersions := Seq(scalaVersion.value),
   (ScalaUnidoc / unidoc / unidocProjectFilter) := inProjects(parquet, dynamodb, s3, sqs, elasticsearch, gcs, hdfs, mongodb, redis),
-  (ScalaUnidoc / unidoc / target) := (LocalRootProject / baseDirectory).value / "website" / "static" / "api",
+  (ScalaUnidoc / unidoc / target) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",
   cleanFiles += (ScalaUnidoc / unidoc / target).value,
   docusaurusCreateSite := docusaurusCreateSite
     .dependsOn(Compile / unidoc)
