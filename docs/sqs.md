@@ -15,7 +15,7 @@ used as a message broker to communicate different systems, providing backpressur
 
 Add the following dependency to get started:
 ```scala 
-libraryDependencies += "io.monix" %% "monix-sqs" % "0.6.0"
+libraryDependencies += "io.monix" %% "monix-sqs" % "0.9.0"
 ```
 
 ## Async Client
