@@ -41,32 +41,44 @@ def sharedSettings(publishForScala3: Boolean= true, fatalWarningsEnables: Boolea
     "-language:higherKinds",
     "-language:implicitConversions",
     "-language:experimental.macros"
-  ),
-  //warnUnusedImports
-    (Compile / console / scalacOptions) ++= Seq("-Ywarn-unused:imports")
+  )
   ,
+
   // Linter
   scalacOptions ++= (
-    Seq(
-    "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
-    "-Ywarn-dead-code", // Warn when dead code is identified.
+    (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((3, _)) => Seq.empty
+      case _ =>   Seq(
+        "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
+        "-Ywarn-dead-code", // Warn when dead code is identified.
+        // Turns all warnings into errors ;-)
+        //temporary disabled for mongodb warn, -YWarn (2.13) and Silencer (2.12) should fix it...
+        // Enables linter options
+        "-Xlint:adapted-args", // warn if an argument list is modified to match the receiver
+        "-Xlint:infer-any", // warn when a type argument is inferred to be `Any`
+        "-Xlint:missing-interpolator", // a string literal appears to be missing an interpolator id
+        "-Xlint:doc-detached", // a ScalaDoc comment appears to be detached from its element
+        "-Xlint:private-shadow", // a private field (or class parameter) shadows a superclass field
+        "-Xlint:type-parameter-shadow", // a local type parameter shadows a type already in scope
+        "-Xlint:poly-implicit-overload", // parameterized overloaded implicit methods are not visible as view bounds
+        "-Xlint:option-implicit", // Option.apply used implicit view
+        "-Xlint:delayedinit-select", // Selecting member of DelayedInit
+        "-Ywarn-unused"
+        //"-Xlint:package-object-classes" // Class or object defined in package object
+      ) ++ (if(fatalWarningsEnables) Seq("-Xfatal-warnings") else Seq.empty[String])
+    }) ++ Seq(
     // Turns all warnings into errors ;-)
     //temporary disabled for mongodb warn, -YWarn (2.13) and Silencer (2.12) should fix it...
     // Enables linter options
-    "-Xlint:adapted-args", // warn if an argument list is modified to match the receiver
-    "-Xlint:infer-any", // warn when a type argument is inferred to be `Any`
-    "-Xlint:missing-interpolator", // a string literal appears to be missing an interpolator id
-    "-Xlint:doc-detached", // a ScalaDoc comment appears to be detached from its element
-    "-Xlint:private-shadow", // a private field (or class parameter) shadows a superclass field
-    "-Xlint:type-parameter-shadow", // a local type parameter shadows a type already in scope
-    "-Xlint:poly-implicit-overload", // parameterized overloaded implicit methods are not visible as view bounds
-    "-Xlint:option-implicit", // Option.apply used implicit view
-    "-Xlint:delayedinit-select", // Selecting member of DelayedInit
-      "-Ywarn-unused"
-    //"-Xlint:package-object-classes" // Class or object defined in package object
-  ) ++ (if(fatalWarningsEnables) Seq("-Xfatal-warnings") else Seq.empty[String])
-  )//Turning of fatal warnings for the moment
-
+      // Note, this is used by the doc-source-url feature to determine the
+      // relative path of a given source file. If it's not a prefix of a the
+      // absolute path of the source file, the absolute path of that file
+      // will be put into the FILE_SOURCE variable, which is
+      // definitely not what we want.
+      "-sourcepath",
+      file(".").getAbsolutePath.replaceAll("[.]$", "")
+    //"-Xlint:package-object-classes" // Class or object defined in package objecz
+  ) ++ (if(fatalWarningsEnables) Seq("-Xfatal-warnings") else Seq.empty[String]))
   ,
 
   // ScalaDoc settings
@@ -74,14 +86,8 @@ def sharedSettings(publishForScala3: Boolean= true, fatalWarningsEnables: Boolea
   ,
   autoAPIMappings := true
   ,
-    ThisBuild / scalacOptions  ++= Seq(
-    // Note, this is used by the doc-source-url feature to determine the
-    // relative path of a given source file. If it's not a prefix of a the
-    // absolute path of the source file, the absolute path of that file
-    // will be put into the FILE_SOURCE variable, which is
-    // definitely not what we want.
-    "-sourcepath",
-    file(".").getAbsolutePath.replaceAll("[.]$", "")
+    scalacOptions  ++= Seq(
+
   )
   ,
     Test / parallelExecution := true
