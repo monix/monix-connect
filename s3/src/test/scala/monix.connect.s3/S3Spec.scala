@@ -35,7 +35,7 @@ class S3Spec extends AnyFlatSpec with BeforeAndAfterEach with Matchers with Befo
   override def beforeEach(): Unit = {}
 
   s"${S3}" should "use default configurable params" in {
-    S3.fromConfig.use { s3 => Task(s3 shouldBe a[S3]) }.runSyncUnsafe()
+    S3.fromConfig().use { s3 => Task(s3 shouldBe a[S3]) }.runSyncUnsafe()
   }
 
   it should "unsafely be created" in {

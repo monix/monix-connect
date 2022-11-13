@@ -136,7 +136,6 @@ class GcsBlobSpec extends AnyWordSpecLike with IdiomaticMockito with Matchers wi
         val blobSourceOption: BlobSourceOption = mock[BlobSourceOption]
         val copywriter = mock[CopyWriter]
         val bucketName = genNonEmtyStr.sample.get
-        val blobName = genNonEmtyStr.sample.get
         when(underlying.copyTo(bucketName, blobSourceOption)).thenReturn(copywriter)
 
         //when

@@ -74,7 +74,7 @@ class RedisUri(
       .map(uri => RedisURI.create(uri))
       .merge
     database.foreach(_ => redisUri.setDatabase(_))
-    password.foreach(pass => redisUri.setPassword(pass))
+    password.foreach(pass => redisUri.setPassword(pass.toCharArray))
     ssl.foreach(_ => redisUri.setSsl(_))
     verifyPeer.foreach(redisUri.setVerifyPeer)
     startTls.foreach(_ => redisUri.setStartTls(_))
@@ -127,7 +127,7 @@ object RedisUri {
     *   .withClientName("companyX")
     * }}}
     */
-  def apply(host: String, port: Int): RedisUri = new RedisUri(Right(host, port))
+  def apply(host: String, port: Int): RedisUri = new RedisUri(Right((host, port)))
 
   /**
     * Creates a [[RedisUri]] from a the plain string uri.

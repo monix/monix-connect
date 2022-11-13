@@ -18,7 +18,6 @@
 package monix.connect.hdfs
 
 import monix.eval.Task
-import monix.execution.Scheduler
 import monix.reactive.{Consumer, Observable}
 import org.apache.hadoop.fs.{FileSystem, Path}
 
@@ -36,9 +35,7 @@ object Hdfs {
     * @param scheduler An implicit [[Scheduler]] instance to be in the scope of the call.
     * @return A [[Long]] that represents the number of bytes that has been written.
     */
-  def append(fs: FileSystem, path: Path)(
-    implicit
-    scheduler: Scheduler): Consumer[Array[Byte], Long] = {
+  def append(fs: FileSystem, path: Path): Consumer[Array[Byte], Long] = {
     new HdfsSubscriber(fs, path, appendEnabled = true)
   }
 
@@ -65,7 +62,7 @@ object Hdfs {
     overwrite: Boolean = true,
     replication: Short = 3,
     bufferSize: Int = 4096,
-    blockSize: Int = 134217728)(implicit scheduler: Scheduler): Consumer[Array[Byte], Long] = {
+    blockSize: Int = 134217728): Consumer[Array[Byte], Long] = {
     new HdfsSubscriber(fs, path, overwrite, bufferSize, replication, blockSize, appendEnabled = false)
   }
 
@@ -78,9 +75,7 @@ object Hdfs {
     * @param scheduler An implicit [[Scheduler]] instance to be in the scope of the call.
     * @return An [[Observable]] of chunks of bytes with the size specified by [[chunkSize]].
     */
-  def read(fs: FileSystem, path: Path, chunkSize: Int = 8192)(
-    implicit
-    scheduler: Scheduler): Observable[Array[Byte]] = {
+  def read(fs: FileSystem, path: Path, chunkSize: Int = 8192): Observable[Array[Byte]] = {
     Observable.fromInputStream(Task(fs.open(path)), chunkSize)
   }
 

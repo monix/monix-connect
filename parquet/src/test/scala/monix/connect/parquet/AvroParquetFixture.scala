@@ -27,6 +27,8 @@ import org.apache.parquet.hadoop.util.HadoopInputFile
 import org.scalacheck.Gen
 import org.scalatest.AsyncTestSuite
 
+import scala.annotation.nowarn
+
 trait AvroParquetFixture extends ParquetFixture {
   this: AsyncTestSuite =>
 
@@ -43,8 +45,10 @@ trait AvroParquetFixture extends ParquetFixture {
 
   val genAvroUsers: Int => Gen[List[Person]] = n => Gen.listOfN(n, genPerson)
 
-  def parquetWriter(file: String, conf: Configuration, schema: Schema): ParquetWriter[GenericRecord] =
-    AvroParquetWriter.builder[GenericRecord](new Path(file)).withConf(conf).withSchema(schema).build()
+  @nowarn("")
+  def parquetWriter(file: String, conf: Configuration, schema: Schema): ParquetWriter[GenericRecord] = {
+    AvroParquetWriter.builder(new Path(file)).withConf(conf).withSchema(schema).build()
+  }
 
   def avroParquetReader[T <: GenericRecord](file: String, conf: Configuration): ParquetReader[T] =
     AvroParquetReader.builder[T](HadoopInputFile.fromPath(new Path(file), conf)).withConf(conf).build()

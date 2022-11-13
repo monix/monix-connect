@@ -119,7 +119,7 @@ private[s3] object ListObjectsObservable {
     requestPayer: Option[RequestPayer] = None,
     s3AsyncClient: S3AsyncClient): Observable[S3Object] = {
     for {
-      listResponse <- ListObjectsObservable(bucket, prefix, None, None, s3AsyncClient).foldLeft(List.empty[S3Object])(
+      listResponse <- ListObjectsObservable(bucket, prefix, Some(n), requestPayer, s3AsyncClient).foldLeft(List.empty[S3Object])(
         (prev, curr) => {
           (prev ++ curr.contents.asScala).sortWith(sort).take(n)
         })

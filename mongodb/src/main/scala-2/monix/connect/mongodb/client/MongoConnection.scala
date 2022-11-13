@@ -773,19 +773,19 @@ private[mongodb] trait MongoConnection[A <: Product, T2 <: Product] { self =>
   def create(connectionStr: String, collectionRefs: A): Resource[Task, T2] =
     for {
       client             <- Resource.fromAutoCloseable(Task.evalAsync(MongoClients.create(connectionStr)))
-      collectionOperator <- Resource.liftF(createCollectionOperator(client, collectionRefs))
+      collectionOperator <- Resource.eval(createCollectionOperator(client, collectionRefs))
     } yield collectionOperator
 
   def create(connectionStr: ConnectionString, collectionRefs: A): Resource[Task, T2] =
     for {
       client             <- Resource.fromAutoCloseable(Task.evalAsync(MongoClients.create(connectionStr)))
-      collectionOperator <- Resource.liftF(createCollectionOperator(client, collectionRefs))
+      collectionOperator <- Resource.eval(createCollectionOperator(client, collectionRefs))
     } yield collectionOperator
 
   def create(clientSettings: MongoClientSettings, collectionRefs: A): Resource[Task, T2] =
     for {
       client             <- Resource.fromAutoCloseable(Task.evalAsync(MongoClients.create(clientSettings)))
-      collectionOperator <- Resource.liftF(createCollectionOperator(client, collectionRefs))
+      collectionOperator <- Resource.eval(createCollectionOperator(client, collectionRefs))
     } yield collectionOperator
 
   @UnsafeBecauseImpure

@@ -40,7 +40,6 @@ class ObjectPackageSpec
   with IdiomaticMockito {
 
   private[this] implicit val col: MongoCollection[Employee] = mock[MongoCollection[Employee]]
-  private[this] implicit val defaultConfig: PatienceConfig = PatienceConfig(5.seconds, 300.milliseconds)
   private[this] val objectId = BsonObjectId.apply()
 
   override def beforeEach() = {

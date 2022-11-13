@@ -48,7 +48,7 @@ class ParquetSinkUnsafeSpec
       Observable
         .fromIterable(records)
         .consumeWith(ParquetSink.fromWriterUnsafe(w)) >>
-        Task.eval(fromParquet[GenericRecord](filePath, conf, avroParquetReader(filePath, conf))).asserting {
+        Task.eval(fromParquet[GenericRecord](avroParquetReader(filePath, conf))).asserting {
           parquetContent =>
             parquetContent.length shouldEqual n
             parquetContent should contain theSameElementsAs records
@@ -64,7 +64,7 @@ class ParquetSinkUnsafeSpec
           .empty[GenericRecord]
           .consumeWith(ParquetSink.fromWriterUnsafe(writer))
         file = new File(filePath)
-        parquetContent = fromParquet[GenericRecord](filePath, conf, avroParquetReader(filePath, conf))
+        parquetContent = fromParquet[GenericRecord](avroParquetReader(filePath, conf))
       } yield {
         writtenRecords shouldBe 0
         file.exists() shouldBe true

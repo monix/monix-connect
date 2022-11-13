@@ -30,7 +30,6 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 import com.mongodb.client.result.{InsertOneResult => MongoInsertOneResult}
-import org.mongodb.scala.bson.BsonObjectId
 
 import scala.concurrent.duration._
 
@@ -52,7 +51,6 @@ class MongoSinkSpec
     val s = TestScheduler()
     val e1 = genEmployee.sample.get
     val e2 = genEmployee.sample.get
-    val objectId = BsonObjectId.apply()
     val failedPub = Task.raiseError[MongoInsertOneResult](DummyException("Insert one failed")).toReactivePublisher(s)
     val successPub = Task(MongoInsertOneResult.unacknowledged()).toReactivePublisher(s)
 
