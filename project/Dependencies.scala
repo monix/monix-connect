@@ -13,7 +13,7 @@ object Dependencies {
     val MongoScala = "4.1.1"
     val Lettuce = "6.1.9.RELEASE"
     val MongoReactiveStreams = "4.6.1"
-    val Parquet = "1.12.3"
+    val Parquet = "1.13.1"
     val Elastic4s = "7.12.0"
     val Pureconfig = "0.17.1"
     val ScalaLogging = "3.9.5"
