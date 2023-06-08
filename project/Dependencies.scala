@@ -80,7 +80,7 @@ object Dependencies {
     "org.scala-lang.modules" %% "scala-collection-compat" % Versions.ScalaCompat,
     "com.google.cloud"                                    % "google-cloud-storage" % Versions.GCS,
     "com.google.cloud"                                    % "google-cloud-nio" % Versions.GCNio % IntegrationTest,
-    "commons-io"                                          % "commons-io" % "2.6" % Test
+    "commons-io"                                          % "commons-io" % "2.13.0" % Test
   ) ++ commonDependencies(hasIt = true)
 
   val Sqs = Seq(
